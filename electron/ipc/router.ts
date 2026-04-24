@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
-import type { IpcContract, IpcResult } from '@shared/ipc-contract'
+import { logger } from '../services/logger'
+import { IpcError, type IpcContract, type IpcErrorShape, type IpcResult } from '@shared/ipc-contract'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -22,10 +23,30 @@ export function registerHandlers(handlers: HandlerMap): void {
   }
 }
 
-// Placeholder — real implementation in Task 2.
 function wrap(
-  _channel: string,
-  _fn: (...args: unknown[]) => unknown
+  channel: string,
+  fn: (...args: unknown[]) => unknown
 ): (event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => Promise<IpcResult<unknown>> {
-  return async () => ({ ok: true, data: undefined })
+  return async (_event, ...args) => {
+    try {
+      const data = await fn(...args)
+      return { ok: true, data }
+    } catch (err) {
+      const error = normalize(err)
+      logger.error(`ipc handler failed: ${channel}`, {
+        code: error.code,
+        message: error.message,
+        stack: err instanceof Error ? err.stack : String(err)
+      })
+      return { ok: false, error }
+    }
+  }
+}
+
+export function normalize(err: unknown): IpcErrorShape {
+  if (err instanceof IpcError) {
+    return { code: err.code, message: err.message }
+  }
+  const message = err instanceof Error ? err.message : String(err)
+  return { code: 'E_INTERNAL', message }
 }
