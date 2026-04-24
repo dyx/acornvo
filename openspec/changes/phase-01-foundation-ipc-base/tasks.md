@@ -39,19 +39,19 @@
 
 ## 6. 日志服务（electron/services/logger.ts）
 
-- [ ] 6.1 配置 electron-log：文件路径 `~/.acornvo/logs/main-YYYY-MM-DD.log`，单文件 10 MB，保留 14 天
-- [ ] 6.2 level：`process.env.NODE_ENV === 'development'` → `debug`，否则 `info`
-- [ ] 6.3 启动日志："app started" 含 `app.getVersion()`、`process.platform`、`process.versions.electron`
-- [ ] 6.4 启动时清理 `~/.acornvo/logs/` 下 mtime 超过 14 天的文件
-- [ ] 6.5 `log` IPC handler 实现：按 level 写主进程 logger，前缀 `[renderer]`
+- [x] 6.1 配置 electron-log：文件路径 `~/.acornvo/logs/main-YYYY-MM-DD.log`，单文件 10 MB，保留 14 天
+- [x] 6.2 level：`process.env.NODE_ENV === 'development'` → `debug`，否则 `info`
+- [x] 6.3 启动日志："app started" 含 `app.getVersion()`、`process.platform`、`process.versions.electron`
+- [x] 6.4 启动时清理 `~/.acornvo/logs/` 下 mtime 超过 14 天的文件
+- [x] 6.5 `log` IPC handler 实现：按 level 写主进程 logger，前缀 `[renderer]`
 
 ## 7. 渲染端基座
 
-- [ ] 7.1 `src/main.tsx`：挂载 React 根、`<MemoryRouter>`、全局错误边界
-- [ ] 7.2 `src/App.tsx`：定义路由表（`/`、`/picker`、`/library`、`/editor/:path`、`/browser`、`/chat`、`/settings`），除 `/` 外全部挂 `<Placeholder name="xxx" />`
-- [ ] 7.3 `src/stores/root.ts`：Zustand store 含 `theme`、`locale`、`setTheme`、`setLocale`
-- [ ] 7.4 `setTheme` 副作用：写 `document.documentElement.dataset.theme`；`system` 时订阅 `matchMedia('(prefers-color-scheme: dark)')`
-- [ ] 7.5 `src/i18n/index.ts`：i18next 初始化，resources 只含 `zh-CN`，默认 `zh-CN`；占位 key 几条
+- [x] 7.1 `src/main.tsx`：挂载 React 根、`<MemoryRouter>`、全局错误边界
+- [x] 7.2 `src/App.tsx`：定义路由表（`/`、`/picker`、`/library`、`/editor/:path`、`/browser`、`/chat`、`/settings`），除 `/` 外全部挂 `<Placeholder name="xxx" />`
+- [x] 7.3 `src/stores/root.ts`：Zustand store 含 `theme`、`locale`、`setTheme`、`setLocale`
+- [x] 7.4 `setTheme` 副作用：写 `document.documentElement.dataset.theme`；`system` 时订阅 `matchMedia('(prefers-color-scheme: dark)')`
+- [x] 7.5 `src/i18n/index.ts`：i18next 初始化，resources 只含 `zh-CN`，默认 `zh-CN`；占位 key 几条
 - [ ] 7.6 `src/ipc/client.ts`：导出 `ipc = window.api` 的强类型 re-export；定义 `useIpc()` hook 占位
 - [ ] 7.7 `/` 路由渲染 "Hello Acornvo"，按钮 "ping" 调用 `window.api.ping.echo('hi')` 并把结果写 store 显示
 
