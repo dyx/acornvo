@@ -43,10 +43,27 @@ function wrap(
   }
 }
 
+const ABSOLUTE_PATH_PATTERNS: RegExp[] = [
+  /\/Users\/[^\s:)]+/g, // macOS
+  /\/home\/[^\s:)]+/g, // Linux
+  /[A-Za-z]:\\[^\s:)]+/g // Windows
+]
+
+function sanitizeMessage(message: string): string {
+  // Keep only the first line (drop stack trace) and scrub absolute paths.
+  const firstLine = message.split('\n', 1)[0] ?? message
+  return ABSOLUTE_PATH_PATTERNS.reduce(
+    (acc, pattern) => acc.replace(pattern, '<path>'),
+    firstLine
+  )
+}
+
 export function normalize(err: unknown): IpcErrorShape {
   if (err instanceof IpcError) {
-    return { code: err.code, message: err.message }
+    return { code: err.code, message: sanitizeMessage(err.message) }
   }
-  const message = err instanceof Error ? err.message : String(err)
-  return { code: 'E_INTERNAL', message }
+  if (err instanceof Error) {
+    return { code: 'E_INTERNAL', message: sanitizeMessage(err.message) }
+  }
+  return { code: 'E_INTERNAL', message: 'Unknown error' }
 }
