@@ -31,3 +31,17 @@ export class IpcError extends Error {
     this.name = 'IpcError'
   }
 }
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+
+export type IpcContract = {
+  ping: {
+    echo: (input: string) => string
+  }
+  log: {
+    debug: (msg: string, ctx?: Record<string, unknown>) => void
+    info: (msg: string, ctx?: Record<string, unknown>) => void
+    warn: (msg: string, ctx?: Record<string, unknown>) => void
+    error: (msg: string, ctx?: Record<string, unknown>) => void
+  }
+}
