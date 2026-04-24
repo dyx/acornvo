@@ -57,10 +57,10 @@
 
 ## 8. 验收
 
-- [ ] 8.1 `npm run dev` 启动桌面窗口，显示 Hello Acornvo
-- [ ] 8.2 DevTools Console 执行 `window.api.ping.echo('x')` 返回 `'x'`；`window.require` 为 `undefined`
-- [ ] 8.3 `~/.acornvo/logs/main-YYYY-MM-DD.log` 存在且含 "app started" 行
-- [ ] 8.4 `window.api.log.error('boom', { where: 'smoke' })` 能在日志文件里看到
-- [ ] 8.5 macOS `Cmd+W` 后点击 Dock 图标窗口重新出现
+- [x] 8.1 `npm run dev` 启动桌面窗口，显示 Hello Acornvo
+- [x] 8.2 DevTools Console 执行 `window.api.ping.echo('x')` 返回 `'x'`；`window.require` 为 `undefined`
+- [x] 8.3 `~/.acornvo/logs/main-YYYY-MM-DD.log` 存在且含 "app started" 行
+- [x] 8.4 `window.api.log.error('boom', { where: 'smoke' })` 能在日志文件里看到
+- [x] 8.5 macOS `Cmd+W` 后点击 Dock 图标窗口重新出现
 - [x] 8.6 TypeScript `tsc --noEmit` 无错；违反契约的改动（删掉某方法）编译报错
 - [x] 8.7 `openspec validate phase-01-foundation-ipc-base --strict` 通过
