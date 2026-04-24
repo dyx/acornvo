@@ -3,6 +3,8 @@ import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
+import { registerHandlers } from './ipc/router'
+import { ipcHandlers } from './ipc/handlers'
 
 export let mainWindow: BrowserWindow | null = null
 
@@ -49,6 +51,7 @@ async function bootstrap(): Promise<void> {
   await initLogger()
   await app.whenReady()
   installCsp()
+  registerHandlers(ipcHandlers)
   mainWindow = createMainWindow()
 }
 
