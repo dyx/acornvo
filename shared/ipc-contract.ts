@@ -45,3 +45,25 @@ export type IpcContract = {
     error: (msg: string, ctx?: Record<string, unknown>) => void
   }
 }
+
+/**
+ * Channel name template: `<namespace>.<method>`.
+ */
+export type IpcChannelName<
+  NS extends string,
+  M extends string
+> = `${NS}.${M}`
+
+/**
+ * Promisified + structurally-safe client type derived from any IPC contract.
+ * All methods return Promise<Awaited<R>> because they cross the process boundary.
+ */
+type Promisify<F> = F extends (...args: infer A) => infer R
+  ? (...args: A) => Promise<Awaited<R>>
+  : never
+
+export type IpcClient<C> = {
+  [NS in keyof C]: {
+    [M in keyof C[NS]]: Promisify<C[NS][M]>
+  }
+}
