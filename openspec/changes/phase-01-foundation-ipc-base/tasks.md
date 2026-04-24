@@ -52,8 +52,8 @@
 - [x] 7.3 `src/stores/root.ts`：Zustand store 含 `theme`、`locale`、`setTheme`、`setLocale`
 - [x] 7.4 `setTheme` 副作用：写 `document.documentElement.dataset.theme`；`system` 时订阅 `matchMedia('(prefers-color-scheme: dark)')`
 - [x] 7.5 `src/i18n/index.ts`：i18next 初始化，resources 只含 `zh-CN`，默认 `zh-CN`；占位 key 几条
-- [ ] 7.6 `src/ipc/client.ts`：导出 `ipc = window.api` 的强类型 re-export；定义 `useIpc()` hook 占位
-- [ ] 7.7 `/` 路由渲染 "Hello Acornvo"，按钮 "ping" 调用 `window.api.ping.echo('hi')` 并把结果写 store 显示
+- [x] 7.6 `src/ipc/client.ts`：导出 `ipc = window.api` 的强类型 re-export；定义 `useIpc()` hook 占位
+- [x] 7.7 `/` 路由渲染 "Hello Acornvo"，按钮 "ping" 调用 `window.api.ping.echo('hi')` 并把结果写 store 显示
 
 ## 8. 验收
 
@@ -62,5 +62,5 @@
 - [ ] 8.3 `~/.acornvo/logs/main-YYYY-MM-DD.log` 存在且含 "app started" 行
 - [ ] 8.4 `window.api.log.error('boom', { where: 'smoke' })` 能在日志文件里看到
 - [ ] 8.5 macOS `Cmd+W` 后点击 Dock 图标窗口重新出现
-- [ ] 8.6 TypeScript `tsc --noEmit` 无错；违反契约的改动（删掉某方法）编译报错
-- [ ] 8.7 `openspec validate phase-01-foundation-ipc-base --strict` 通过
+- [x] 8.6 TypeScript `tsc --noEmit` 无错；违反契约的改动（删掉某方法）编译报错
+- [x] 8.7 `openspec validate phase-01-foundation-ipc-base --strict` 通过
