@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   GroveSummary,
+  OpenGroveOutcome,
+  RecentItemView
+} from '@shared/grove'
+import type {
   IpcClient,
   IpcContract,
   IpcResult,
-  OpenGroveResult,
-  RecentItemDto,
   SelectDirectoryPurpose
 } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
@@ -38,10 +40,10 @@ const api = {
       invoke<void>('log.error', msg, ctx)
   },
   project: {
-    listRecent: () => rejectNotWired<RecentItemDto[]>(),
+    listRecent: () => rejectNotWired<RecentItemView[]>(),
     createGrove: (_parentDir: string, _name: string) => rejectNotWired<GroveSummary>(),
     openGrove: (_path: string, _opts?: { force?: boolean }) =>
-      rejectNotWired<OpenGroveResult>(),
+      rejectNotWired<OpenGroveOutcome>(),
     closeGrove: () => rejectNotWired<void>(),
     getCurrent: () => rejectNotWired<GroveSummary | null>(),
     removeFromRecent: (_id: string) => rejectNotWired<void>(),

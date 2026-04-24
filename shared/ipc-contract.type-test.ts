@@ -6,12 +6,10 @@ import type {
   IpcClient,
   IpcContract,
   IpcChannelName,
-  IpcResult,
-  GroveSummary,
-  OpenGroveResult,
-  RecentItemDto
+  IpcResult
 } from './ipc-contract'
 import { IpcError } from './ipc-contract'
+import type { GroveSummary, OpenGroveOutcome, RecentItemView } from './grove'
 
 type Assert<T extends true> = T
 
@@ -36,13 +34,13 @@ export const _types = { _e1, _e2 } as const
 export type _Exports = _EchoIsString | _LogIsVoid | _Channel | _ResultOk
 
 type _ListRecentReturn = Assert<
-  ReturnType<IpcClient<IpcContract>['project']['listRecent']> extends Promise<RecentItemDto[]>
+  ReturnType<IpcClient<IpcContract>['project']['listRecent']> extends Promise<RecentItemView[]>
     ? true
     : false
 >
 
 type _OpenGroveReturn = Assert<
-  ReturnType<IpcClient<IpcContract>['project']['openGrove']> extends Promise<OpenGroveResult>
+  ReturnType<IpcClient<IpcContract>['project']['openGrove']> extends Promise<OpenGroveOutcome>
     ? true
     : false
 >

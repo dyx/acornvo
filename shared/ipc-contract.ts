@@ -2,6 +2,15 @@
  * IPC contract — single source of truth for types shared between main, preload, and renderer.
  */
 
+import type {
+  GroveSummary,
+  LockInfo,
+  RecentItemView,
+  OpenGroveOutcome
+} from './grove'
+
+export type { GroveSummary, LockInfo } from './grove'
+
 export type IpcErrorCode =
   | 'E_INTERNAL'
   | 'E_INVALID_ARGS'
@@ -10,39 +19,6 @@ export type IpcErrorCode =
   | 'E_LOCKED'
   | 'E_EXISTS'
   | 'E_TIMEOUT'
-
-// Forward declarations — real shapes land in shared/grove.ts (Task 4).
-// Keep these mirror types in sync.
-type GroveColor = 'acorn' | 'leaf' | 'berry' | 'sky'
-
-export type GroveSummary = {
-  id: string
-  path: string
-  name: string
-  color: GroveColor
-  sync_warning?: string | null
-}
-
-export type RecentItemDto = {
-  id: string
-  path: string
-  name: string
-  color: GroveColor
-  pinned: boolean
-  last_opened_at: string
-  files_count: number
-  valid: boolean
-}
-
-export type LockHolderDto = {
-  pid: number
-  hostname: string
-  started_at: string
-}
-
-export type OpenGroveResult =
-  | { status: 'opened'; grove: GroveSummary }
-  | { status: 'locked'; holder: LockHolderDto }
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
 
@@ -83,9 +59,9 @@ export type IpcContract = {
     error: (msg: string, ctx?: Record<string, unknown>) => void
   }
   project: {
-    listRecent: () => RecentItemDto[]
+    listRecent: () => RecentItemView[]
     createGrove: (parentDir: string, name: string) => GroveSummary
-    openGrove: (path: string, opts?: { force?: boolean }) => OpenGroveResult
+    openGrove: (path: string, opts?: { force?: boolean }) => OpenGroveOutcome
     closeGrove: () => void
     getCurrent: () => GroveSummary | null
     removeFromRecent: (id: string) => void
@@ -102,8 +78,8 @@ export type IpcEventContract = {
   'project:changed': GroveSummary | null
   'bootstrap:ready': {
     initialRoute: '/picker' | '/library'
-    recent: RecentItemDto[]
-    locked?: { path: string; holder: LockHolderDto }
+    recent: RecentItemView[]
+    locked?: { path: string; holder: LockInfo }
   }
 }
 
