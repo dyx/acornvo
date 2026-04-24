@@ -22,4 +22,13 @@ export function installExternalLinkGuards(win: BrowserWindow): void {
     }
     return { action: 'deny' }
   })
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!isInternalUrl(url)) {
+      event.preventDefault()
+      void shell.openExternal(url).catch((err) => {
+        logger.warn('shell.openExternal failed', { url, error: String(err) })
+      })
+    }
+  })
 }
