@@ -1,10 +1,11 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, powerMonitor } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
+import { appLifecycle } from './app-lifecycle'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -68,8 +69,13 @@ bootstrap().catch((err) => {
   process.exit(1)
 })
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
+  if (isQuitting) return
+  event.preventDefault()
   isQuitting = true
+  void appLifecycle._runBeforeQuit().finally(() => {
+    app.quit()
+  })
 })
 
 app.on('window-all-closed', () => {
@@ -88,4 +94,8 @@ app.on('activate', () => {
   if (!mainWindow.isVisible()) {
     mainWindow.show()
   }
+})
+
+powerMonitor.on('resume', () => {
+  void appLifecycle._runWindowResume()
 })
