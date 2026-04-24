@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { IpcClient, IpcContract, IpcResult } from '@shared/ipc-contract'
+import type {
+  GroveSummary,
+  IpcClient,
+  IpcContract,
+  IpcResult,
+  OpenGroveResult,
+  RecentItemDto,
+  SelectDirectoryPurpose
+} from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -9,6 +17,11 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   }
   return res.data
 }
+
+const rejectNotWired = <T>(): Promise<T> =>
+  Promise.reject<T>(
+    new IpcError('E_INTERNAL', 'project handler not yet wired (phase-02 task 19)')
+  )
 
 const api = {
   ping: {
@@ -23,6 +36,16 @@ const api = {
       invoke<void>('log.warn', msg, ctx),
     error: (msg: string, ctx?: Record<string, unknown>) =>
       invoke<void>('log.error', msg, ctx)
+  },
+  project: {
+    listRecent: () => rejectNotWired<RecentItemDto[]>(),
+    createGrove: (_parentDir: string, _name: string) => rejectNotWired<GroveSummary>(),
+    openGrove: (_path: string, _opts?: { force?: boolean }) =>
+      rejectNotWired<OpenGroveResult>(),
+    closeGrove: () => rejectNotWired<void>(),
+    getCurrent: () => rejectNotWired<GroveSummary | null>(),
+    removeFromRecent: (_id: string) => rejectNotWired<void>(),
+    selectDirectory: (_purpose: SelectDirectoryPurpose) => rejectNotWired<string | null>()
   }
 } satisfies IpcClient<IpcContract>
 

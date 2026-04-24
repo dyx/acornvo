@@ -1,10 +1,15 @@
 import type { IpcContract } from '@shared/ipc-contract'
+import { IpcError } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
     [M in keyof IpcContract[NS]]: IpcContract[NS][M]
   }
+}
+
+const NOT_WIRED = (): never => {
+  throw new IpcError('E_INTERNAL', 'project handler not yet wired (phase-02 task 19)')
 }
 
 /**
@@ -28,5 +33,14 @@ export const ipcHandlers: HandlerMap = {
     error: (msg: string, ctx?: Record<string, unknown>): void => {
       logger.error(`[renderer] ${msg}`, ctx)
     }
+  },
+  project: {
+    listRecent: NOT_WIRED,
+    createGrove: NOT_WIRED,
+    openGrove: NOT_WIRED,
+    closeGrove: NOT_WIRED,
+    getCurrent: NOT_WIRED,
+    removeFromRecent: NOT_WIRED,
+    selectDirectory: NOT_WIRED
   }
 }

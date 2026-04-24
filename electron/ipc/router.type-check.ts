@@ -10,7 +10,7 @@ const _shape: IpcErrorShape = normalize(new IpcError('E_NOT_FOUND', 'nope'))
 const _shape2: IpcErrorShape = normalize(new Error('boom'))
 const _shape3: IpcErrorShape = normalize('not-an-error')
 
-// registerHandlers must accept the ping+log shape — exercise it structurally.
+// registerHandlers must accept the ping+log+project shape — exercise it structurally.
 const _accepts: Parameters<typeof registerHandlers>[0] = {
   ping: { echo: (input: string) => input },
   log: {
@@ -18,6 +18,18 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     info: () => undefined,
     warn: () => undefined,
     error: () => undefined
+  },
+  project: {
+    listRecent: () => [],
+    createGrove: () => ({ id: '', path: '', name: '', color: 'acorn', sync_warning: null }),
+    openGrove: () => ({
+      status: 'opened',
+      grove: { id: '', path: '', name: '', color: 'acorn', sync_warning: null }
+    }),
+    closeGrove: () => undefined,
+    getCurrent: () => null,
+    removeFromRecent: () => undefined,
+    selectDirectory: () => null
   }
 }
 
