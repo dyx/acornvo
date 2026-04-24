@@ -1,0 +1,19 @@
+{
+  "app": {
+    "title": "Acornvo",
+    "greeting": "你好，Acornvo"
+  },
+  "common": {
+    "loading": "加载中…",
+    "error": "发生错误"
+  },
+  "nav": {
+    "home": "首页",
+    "picker": "项目选择",
+    "library": "理果",
+    "editor": "编辑器",
+    "browser": "拾果",
+    "chat": "松语",
+    "settings": "设置"
+  }
+}
