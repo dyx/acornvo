@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { installCsp } from './security/csp'
+import { installExternalLinkGuards } from './security/external-links'
 
 export let mainWindow: BrowserWindow | null = null
 
@@ -38,6 +39,8 @@ function createMainWindow(): BrowserWindow {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  installExternalLinkGuards(win)
 
   return win
 }
