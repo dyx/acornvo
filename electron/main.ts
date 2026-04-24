@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
+import { installCsp } from './security/csp'
 
 export let mainWindow: BrowserWindow | null = null
 
@@ -44,6 +45,7 @@ function createMainWindow(): BrowserWindow {
 async function bootstrap(): Promise<void> {
   await initLogger()
   await app.whenReady()
+  installCsp()
   mainWindow = createMainWindow()
 }
 
