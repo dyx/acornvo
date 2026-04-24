@@ -2,9 +2,10 @@ import { readFile, writeFile, mkdir, access, constants } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectJsonSchema, type ProjectJson } from '@shared/schemas/project'
-import type { Grove, GroveColor, SyncProvider } from '@shared/grove'
+import type { Grove, GroveColor, GroveSummary, LockInfo, OpenGroveOutcome, SyncProvider } from '@shared/grove'
 import { IpcError } from '@shared/ipc-contract'
 import { atomicWriteJson } from './atomicWrite'
+import * as lockfile from './lockfile'
 import {
   groveAcornDir,
   groveAssetsDir,
@@ -182,4 +183,102 @@ export async function createGrove(parentDir: string, name: string): Promise<Grov
   const { project } = await initialize(target)
   logger.info('grove created', { grove: target, id: project.id })
   return toGrove(target, project)
+}
+
+let currentGrove: Grove | null = null
+
+export function getCurrent(): Grove | null {
+  return currentGrove
+}
+
+function toSummary(g: Grove): GroveSummary {
+  return {
+    id: g.id,
+    path: g.path,
+    name: g.name,
+    color: g.color,
+    sync_warning: g.sync_warning ?? null
+  }
+}
+
+export async function openGrove(
+  path: string,
+  opts: { force?: boolean } = {}
+): Promise<OpenGroveOutcome> {
+  if (!(await pathExists(path))) {
+    throw new IpcError('E_NOT_FOUND', 'grove path does not exist')
+  }
+
+  // If we already hold another grove, release its lock first.
+  if (currentGrove && currentGrove.path !== path) {
+    await lockfile.release(currentGrove.path)
+    currentGrove = null
+    notifyChange(null)
+  }
+
+  const lockResult = await lockfile.acquire(path, { force: opts.force })
+  if (lockResult.status === 'held') {
+    return { status: 'locked', holder: lockResult.holder as LockInfo }
+  }
+
+  const initResult = await initialize(path)
+  const now = new Date().toISOString()
+  const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
+  await atomicWriteJson(groveProjectFile(path), refreshed)
+
+  const grove = toGrove(path, refreshed)
+  currentGrove = grove
+
+  // Lazy import to avoid any circular module resolution surprises.
+  const recent = await import('./recent')
+  await recent.upsertToTop({
+    id: grove.id,
+    path: grove.path,
+    name: grove.name,
+    color: grove.color,
+    pinned: false,
+    last_opened_at: now,
+    files_count: 0
+  })
+
+  if (initResult.syncProvider) {
+    logger.warn('grove on cloud-sync path', {
+      grove: path,
+      provider: initResult.syncProvider
+    })
+  }
+
+  notifyChange(toSummary(grove))
+  logger.info('grove opened', { grove: path, id: grove.id })
+  return { status: 'opened', grove: toSummary(grove) }
+}
+
+export async function closeGrove(): Promise<void> {
+  if (!currentGrove) return
+  const path = currentGrove.path
+  currentGrove = null
+  await lockfile.release(path)
+  notifyChange(null)
+  logger.info('grove closed', { grove: path })
+}
+
+// --- change subscribers ---
+type ChangeHandler = (payload: GroveSummary | null) => void
+const changeHandlers = new Set<ChangeHandler>()
+function notifyChange(payload: GroveSummary | null): void {
+  for (const h of changeHandlers) {
+    try {
+      h(payload)
+    } catch (err) {
+      logger.error('project:changed handler threw', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
+  }
+}
+export function onChange(handler: ChangeHandler): () => void {
+  changeHandlers.add(handler)
+  return () => {
+    changeHandlers.delete(handler)
+  }
 }
