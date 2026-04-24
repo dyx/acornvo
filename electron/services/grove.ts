@@ -1,8 +1,9 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { basename } from 'node:path'
+import { readFile, writeFile, mkdir, access, constants } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectJsonSchema, type ProjectJson } from '@shared/schemas/project'
 import type { Grove, GroveColor, SyncProvider } from '@shared/grove'
+import { IpcError } from '@shared/ipc-contract'
 import { atomicWriteJson } from './atomicWrite'
 import {
   groveAcornDir,
@@ -138,4 +139,47 @@ export function toGrove(grovePath: string, project: ProjectJson): Grove {
     last_opened_at: project.last_opened_at,
     sync_warning: project.sync_warning ?? null
   }
+}
+
+const VALID_NAME = /^[^\\/:*?"<>|\x00]+$/
+
+async function isWritable(dir: string): Promise<boolean> {
+  try {
+    await access(dir, constants.W_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await access(p)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Create a new grove under `parentDir` with directory name `name`.
+ * Fails if the parent is not writable, the name is invalid, or the target
+ * already exists.
+ */
+export async function createGrove(parentDir: string, name: string): Promise<Grove> {
+  const trimmed = name.trim()
+  if (!trimmed || !VALID_NAME.test(trimmed)) {
+    throw new IpcError('E_INVALID_ARGS', `invalid grove name: ${JSON.stringify(name)}`)
+  }
+  if (!(await isWritable(parentDir))) {
+    throw new IpcError('E_PERMISSION', `parent directory is not writable`)
+  }
+  const target = join(parentDir, trimmed)
+  if (await pathExists(target)) {
+    throw new IpcError('E_EXISTS', `a file or directory already exists at the target`)
+  }
+  await mkdir(target, { recursive: false })
+  const { project } = await initialize(target)
+  logger.info('grove created', { grove: target, id: project.id })
+  return toGrove(target, project)
 }
