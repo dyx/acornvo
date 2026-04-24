@@ -28,14 +28,14 @@
 
 ## 5. 主进程入口（electron/main.ts）
 
-- [ ] 5.1 `app.whenReady()` 前调用 `logger.init()`（创建 `~/.acornvo/logs/` 并挂 electron-log）
-- [ ] 5.2 创建 `BrowserWindow`：尺寸 1280×800，最小 960×600，居中；WebPreferences 固定安全配置（见 design D6）
-- [ ] 5.3 挂 CSP：`session.defaultSession.webRequest.onHeadersReceived` 注入 `Content-Security-Policy`
-- [ ] 5.4 `window.webContents.setWindowOpenHandler`：非白名单 URL 走 `shell.openExternal`，返回 `{ action: 'deny' }`
-- [ ] 5.5 `window.webContents.on('will-navigate')`：同上拦截
-- [ ] 5.6 `registerHandlers(ipcHandlers)`（ping + log 两组）
-- [ ] 5.7 生命周期：macOS `window-all-closed` 不退出；`activate` 重新显示；`Cmd+W` 隐藏而非关闭；Win/Linux 关窗退出
-- [ ] 5.8 暴露 `appLifecycle.onBeforeQuit` / `onWindowResume` 订阅器；`app.on('before-quit')` 与 `powerMonitor.on('resume')` 串行触发订阅者
+- [x] 5.1 `app.whenReady()` 前调用 `logger.init()`（创建 `~/.acornvo/logs/` 并挂 electron-log）
+- [x] 5.2 创建 `BrowserWindow`：尺寸 1280×800，最小 960×600，居中；WebPreferences 固定安全配置（见 design D6）
+- [x] 5.3 挂 CSP：`session.defaultSession.webRequest.onHeadersReceived` 注入 `Content-Security-Policy`
+- [x] 5.4 `window.webContents.setWindowOpenHandler`：非白名单 URL 走 `shell.openExternal`，返回 `{ action: 'deny' }`
+- [x] 5.5 `window.webContents.on('will-navigate')`：同上拦截
+- [x] 5.6 `registerHandlers(ipcHandlers)`（ping + log 两组）
+- [x] 5.7 生命周期：macOS `window-all-closed` 不退出；`activate` 重新显示；`Cmd+W` 隐藏而非关闭；Win/Linux 关窗退出
+- [x] 5.8 暴露 `appLifecycle.onBeforeQuit` / `onWindowResume` 订阅器；`app.on('before-quit')` 与 `powerMonitor.on('resume')` 串行触发订阅者
 
 ## 6. 日志服务（electron/services/logger.ts）
 
