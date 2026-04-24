@@ -2,6 +2,7 @@ import log from 'electron-log/main'
 import { app } from 'electron'
 import { homedir } from 'node:os'
 import { mkdirSync } from 'node:fs'
+import { readdir, stat, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export type Logger = {
@@ -29,6 +30,32 @@ function resolveLogDir(): string {
   }
 }
 
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000
+
+async function cleanupOldLogs(dir: string): Promise<void> {
+  const now = Date.now()
+  let entries: string[]
+  try {
+    entries = await readdir(dir)
+  } catch {
+    return
+  }
+  await Promise.all(
+    entries.map(async (name) => {
+      if (!name.endsWith('.log')) return
+      const full = join(dir, name)
+      try {
+        const st = await stat(full)
+        if (now - st.mtimeMs > FOURTEEN_DAYS_MS) {
+          await unlink(full)
+        }
+      } catch {
+        // Swallow — one file failing should not block others.
+      }
+    })
+  )
+}
+
 let initialised = false
 
 export async function initLogger(): Promise<void> {
@@ -36,6 +63,8 @@ export async function initLogger(): Promise<void> {
   initialised = true
 
   const dir = resolveLogDir()
+  await cleanupOldLogs(dir)
+
   const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
   const filePath = join(dir, `main-${today}.log`)
 
