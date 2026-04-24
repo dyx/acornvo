@@ -26,10 +26,16 @@ const api = {
   }
 } satisfies IpcClient<IpcContract>
 
-// expose happens in Task 7; for now just assert the type matches.
 export type PreloadApi = typeof api
 export { api }
 
-// contextBridge is intentionally unused in this task; imported to keep the
-// module shape stable. Task 7 adds the exposeInMainWorld call.
-void contextBridge
+if (!process.contextIsolated) {
+  // Fail loudly during development — contextBridge requires isolation.
+  throw new Error('preload requires contextIsolation: true')
+}
+
+contextBridge.exposeInMainWorld('api', api)
+
+// Explicitly NOT exposed: ipcRenderer, process, require, Buffer, __dirname.
+// Exposing them would defeat the preload sandbox. Any future additions MUST
+// go through the `api` object defined above, not exposeInMainWorld directly.
