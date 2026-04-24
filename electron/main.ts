@@ -7,6 +7,7 @@ import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
 
 export let mainWindow: BrowserWindow | null = null
+let isQuitting = false
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -42,6 +43,13 @@ function createMainWindow(): BrowserWindow {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
+  win.on('close', (event) => {
+    if (process.platform === 'darwin' && !isQuitting) {
+      event.preventDefault()
+      win.hide()
+    }
+  })
+
   installExternalLinkGuards(win)
 
   return win
@@ -58,4 +66,26 @@ async function bootstrap(): Promise<void> {
 bootstrap().catch((err) => {
   console.error('bootstrap failed', err)
   process.exit(1)
+})
+
+app.on('before-quit', () => {
+  isQuitting = true
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+  // macOS: do nothing — app stays alive with no windows.
+})
+
+app.on('activate', () => {
+  // macOS: Dock click — re-show hidden window or recreate it.
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    mainWindow = createMainWindow()
+    return
+  }
+  if (!mainWindow.isVisible()) {
+    mainWindow.show()
+  }
 })
