@@ -7,6 +7,44 @@ export type IpcErrorCode =
   | 'E_INVALID_ARGS'
   | 'E_NOT_FOUND'
   | 'E_PERMISSION'
+  | 'E_LOCKED'
+  | 'E_EXISTS'
+  | 'E_TIMEOUT'
+
+// Forward declarations — real shapes land in shared/grove.ts (Task 4).
+// Keep these mirror types in sync.
+type GroveColor = 'acorn' | 'leaf' | 'berry' | 'sky'
+
+export type GroveSummary = {
+  id: string
+  path: string
+  name: string
+  color: GroveColor
+  sync_warning?: string | null
+}
+
+export type RecentItemDto = {
+  id: string
+  path: string
+  name: string
+  color: GroveColor
+  pinned: boolean
+  last_opened_at: string
+  files_count: number
+  valid: boolean
+}
+
+export type LockHolderDto = {
+  pid: number
+  hostname: string
+  started_at: string
+}
+
+export type OpenGroveResult =
+  | { status: 'opened'; grove: GroveSummary }
+  | { status: 'locked'; holder: LockHolderDto }
+
+export type SelectDirectoryPurpose = 'open' | 'createParent'
 
 export interface IpcErrorShape {
   code: IpcErrorCode
@@ -43,6 +81,15 @@ export type IpcContract = {
     info: (msg: string, ctx?: Record<string, unknown>) => void
     warn: (msg: string, ctx?: Record<string, unknown>) => void
     error: (msg: string, ctx?: Record<string, unknown>) => void
+  }
+  project: {
+    listRecent: () => RecentItemDto[]
+    createGrove: (parentDir: string, name: string) => GroveSummary
+    openGrove: (path: string, opts?: { force?: boolean }) => OpenGroveResult
+    closeGrove: () => void
+    getCurrent: () => GroveSummary | null
+    removeFromRecent: (id: string) => void
+    selectDirectory: (purpose: SelectDirectoryPurpose) => string | null
   }
 }
 
