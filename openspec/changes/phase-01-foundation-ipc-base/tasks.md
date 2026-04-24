@@ -1,16 +1,16 @@
 ## 1. 依赖与项目结构
 
-- [ ] 1.1 `package.json` 添加 `react-router-dom`、`zustand`、`electron-log`、`i18next`、`react-i18next`
-- [ ] 1.2 新建目录 `electron/ipc/`、`electron/services/`、`preload/`、`shared/`、`src/stores/`、`src/ipc/`、`src/i18n/`
-- [ ] 1.3 更新 `tsconfig.json` 路径别名 `@/` → `src/`、`@shared/` → `shared/`
-- [ ] 1.4 调整 `electron.vite.config.ts` 确保 main/preload/renderer 三段均启用 TS 严格模式且能互相 import `shared/`
+- [x] 1.1 `package.json` 添加 `react-router-dom`、`zustand`、`electron-log`、`i18next`、`react-i18next`
+- [x] 1.2 新建目录 `electron/ipc/`、`electron/services/`、`preload/`、`shared/`、`src/stores/`、`src/ipc/`、`src/i18n/`
+- [x] 1.3 更新 `tsconfig.json` 路径别名 `@/` → `src/`、`@shared/` → `shared/`
+- [x] 1.4 调整 `electron.vite.config.ts` 确保 main/preload/renderer 三段均启用 TS 严格模式且能互相 import `shared/`
 
 ## 2. IPC 契约（shared/ipc-contract.ts）
 
-- [ ] 2.1 定义 `IpcOk<T>` / `IpcErr` 联合类型与 `IpcError` 类（含 `code: IpcErrorCode`）
-- [ ] 2.2 枚举 `IpcErrorCode`：`E_INTERNAL` / `E_INVALID_ARGS` / `E_NOT_FOUND` / `E_PERMISSION`（预留扩展）
-- [ ] 2.3 声明 `IpcContract` 类型：`{ ping: { echo(input: string): string }, log: { debug/info/warn/error(msg, ctx?): void } }`
-- [ ] 2.4 导出 `IpcChannelName<NS, M>` 与 `IpcClient<C>` 工具类型，后续模块复用
+- [x] 2.1 定义 `IpcOk<T>` / `IpcErr` 联合类型与 `IpcError` 类（含 `code: IpcErrorCode`）
+- [x] 2.2 枚举 `IpcErrorCode`：`E_INTERNAL` / `E_INVALID_ARGS` / `E_NOT_FOUND` / `E_PERMISSION`（预留扩展）
+- [x] 2.3 声明 `IpcContract` 类型：`{ ping: { echo(input: string): string }, log: { debug/info/warn/error(msg, ctx?): void } }`
+- [x] 2.4 导出 `IpcChannelName<NS, M>` 与 `IpcClient<C>` 工具类型，后续模块复用
 
 ## 3. 主进程 IPC 路由（electron/ipc/router.ts）
 
