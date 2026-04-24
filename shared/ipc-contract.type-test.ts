@@ -57,3 +57,21 @@ export type _ProjectExports =
   | _ListRecentReturn
   | _OpenGroveReturn
   | _GetCurrentReturn
+
+import type { IpcEventApi, IpcEventChannel } from './ipc-contract'
+
+type _EventChannelUnion = Assert<
+  IpcEventChannel extends 'project:changed' | 'bootstrap:ready' ? true : false
+>
+
+declare const _eventApi: IpcEventApi
+const _unsub = _eventApi.on('project:changed', (payload) => {
+  // payload is GroveSummary | null — accessing .id on non-null is allowed only after narrowing
+  if (payload) {
+    const _id: string = payload.id
+    void _id
+  }
+})
+void _unsub
+
+export type _EventExports = _EventChannelUnion

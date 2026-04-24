@@ -94,6 +94,29 @@ export type IpcContract = {
 }
 
 /**
+ * Main-to-renderer push events. The renderer subscribes via `window.api.on(channel, handler)`.
+ * Event channel names follow `<namespace>:<event>` (colon) so they never collide with
+ * request channels which use `<namespace>.<method>` (dot).
+ */
+export type IpcEventContract = {
+  'project:changed': GroveSummary | null
+  'bootstrap:ready': {
+    initialRoute: '/picker' | '/library'
+    recent: RecentItemDto[]
+    locked?: { path: string; holder: LockHolderDto }
+  }
+}
+
+export type IpcEventChannel = keyof IpcEventContract
+
+export type IpcEventApi = {
+  on<K extends IpcEventChannel>(
+    channel: K,
+    handler: (payload: IpcEventContract[K]) => void
+  ): () => void // unsubscribe
+}
+
+/**
  * Channel name template: `<namespace>.<method>`.
  */
 export type IpcChannelName<
