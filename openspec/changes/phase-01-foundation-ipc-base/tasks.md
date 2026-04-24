@@ -14,17 +14,17 @@
 
 ## 3. 主进程 IPC 路由（electron/ipc/router.ts）
 
-- [ ] 3.1 `registerHandlers<C extends IpcContract>(handlers)`：遍历 ns/method，`ipcMain.handle('<ns>.<method>', wrap(fn))`
-- [ ] 3.2 `wrap(fn)`：`try { ok: true, data: await fn(input) } catch (e) { log + { ok: false, error: normalize(e) } }`
-- [ ] 3.3 `normalize(e)`：保留 `IpcError.code`，其他异常归为 `E_INTERNAL`，message 脱敏（去掉栈与内部路径）
-- [ ] 3.4 内建 ping 与 log 两组 handler
+- [x] 3.1 `registerHandlers<C extends IpcContract>(handlers)`：遍历 ns/method，`ipcMain.handle('<ns>.<method>', wrap(fn))`
+- [x] 3.2 `wrap(fn)`：`try { ok: true, data: await fn(input) } catch (e) { log + { ok: false, error: normalize(e) } }`
+- [x] 3.3 `normalize(e)`：保留 `IpcError.code`，其他异常归为 `E_INTERNAL`，message 脱敏（去掉栈与内部路径）
+- [x] 3.4 内建 ping 与 log 两组 handler
 
 ## 4. preload（preload/preload.ts）
 
-- [ ] 4.1 基于 `IpcContract` 类型自动生成 `window.api.<ns>.<method>` 代理（Proxy 或代码生成均可，先用显式对象写死 ping/log 两组）
-- [ ] 4.2 代理内部：`const res = await ipcRenderer.invoke('<ns>.<method>', input); if (!res.ok) throw new IpcError(res.error)`
-- [ ] 4.3 `contextBridge.exposeInMainWorld('api', api)`；禁止暴露 `ipcRenderer`、`process`、`require`
-- [ ] 4.4 TypeScript 声明文件 `src/global.d.ts`：`interface Window { api: IpcClient<IpcContract> }`
+- [x] 4.1 基于 `IpcContract` 类型自动生成 `window.api.<ns>.<method>` 代理（Proxy 或代码生成均可，先用显式对象写死 ping/log 两组）
+- [x] 4.2 代理内部：`const res = await ipcRenderer.invoke('<ns>.<method>', input); if (!res.ok) throw new IpcError(res.error)`
+- [x] 4.3 `contextBridge.exposeInMainWorld('api', api)`；禁止暴露 `ipcRenderer`、`process`、`require`
+- [x] 4.4 TypeScript 声明文件 `src/global.d.ts`：`interface Window { api: IpcClient<IpcContract> }`
 
 ## 5. 主进程入口（electron/main.ts）
 
