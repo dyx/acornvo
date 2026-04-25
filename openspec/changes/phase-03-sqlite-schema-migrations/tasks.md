@@ -1,17 +1,17 @@
 ## 1. 依赖与构建
 
-- [ ] 1.1 `npm install better-sqlite3`；dev 依赖 `@electron/rebuild`
-- [ ] 1.2 `package.json` 增加 `"postinstall": "electron-rebuild -f -w better-sqlite3"`
-- [ ] 1.3 `electron.vite.config.ts`：主进程 `build.rollupOptions.external` 追加 `'better-sqlite3'`
-- [ ] 1.4 CI（若有）在 `npm ci` 之后显式触发 rebuild；三平台各跑一次确保构建通过
-- [ ] 1.5 新增目录 `electron/services/db/`、`electron/services/db/migrations/`
+- [x] 1.1 `npm install better-sqlite3`；dev 依赖 `@electron/rebuild`
+- [x] 1.2 `package.json` 增加 `"postinstall": "electron-rebuild -f -w better-sqlite3"`
+- [x] 1.3 `electron.vite.config.ts`：主进程 `build.rollupOptions.external` 追加 `'better-sqlite3'`
+- [x] 1.4 CI（若有）在 `npm ci` 之后显式触发 rebuild；三平台各跑一次确保构建通过
+- [x] 1.5 新增目录 `electron/services/db/`、`electron/services/db/migrations/`
 
 ## 2. 迁移框架（electron/services/db/migrations.ts）
 
-- [ ] 2.1 `readMigrations(dir)`：扫 `NNN_*.sql`，按 NNN 升序返回 `{ version: number, name: string, sql: string }[]`
-- [ ] 2.2 `runMigrations(db)`：读 `PRAGMA user_version`，对每个 `m.version > current` 的迁移在单事务内执行 `db.exec(m.sql)` + `PRAGMA user_version = m.version`
-- [ ] 2.3 失败抛 `MigrationError`（含 version + 原始错误）；调用方触发重建
-- [ ] 2.4 `listApplied(db)`：返回 `user_version` 与 migrations 目录内 `<= user_version` 的文件名数组
+- [x] 2.1 `readMigrations(dir)`：扫 `NNN_*.sql`，按 NNN 升序返回 `{ version: number, name: string, sql: string }[]`
+- [x] 2.2 `runMigrations(db)`：读 `PRAGMA user_version`，对每个 `m.version > current` 的迁移在单事务内执行 `db.exec(m.sql)` + `PRAGMA user_version = m.version`
+- [x] 2.3 失败抛 `MigrationError`（含 version + 原始错误）；调用方触发重建
+- [x] 2.4 `listApplied(db)`：返回 `user_version` 与 migrations 目录内 `<= user_version` 的文件名数组
 
 ## 3. 初始 SQL（electron/services/db/migrations/001_init.sql）
 
