@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { App } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { initThemeEffect } from './stores/root'
+import { installGroveSubscriber } from '@/stores/grove'
 import './i18n'
 import './index.css'
 
@@ -13,6 +14,7 @@ if (!container) {
 }
 
 initThemeEffect()
+installGroveSubscriber()
 
 createRoot(container).render(
   <StrictMode>
