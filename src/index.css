@@ -1,23 +1,69 @@
-:root {
-  color-scheme: light dark;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+@import "tailwindcss";
+
+@theme {
+  /* oklch palette lifted from docs/ui/src/project-picker.jsx */
+  --color-paper: oklch(0.99 0.005 80);
+  --color-paper-2: oklch(0.97 0.008 75);
+  --color-paper-3: oklch(0.95 0.012 70);
+  --color-ink: oklch(0.26 0.015 45);
+  --color-ink-2: oklch(0.42 0.018 45);
+  --color-ink-3: oklch(0.58 0.015 50);
+  --color-ink-4: oklch(0.72 0.01 55);
+  --color-line: oklch(0.9 0.01 60);
+  --color-line-2: oklch(0.85 0.015 60);
+  --color-acorn: oklch(0.58 0.12 55);
+  --color-acorn-2: oklch(0.5 0.13 50);
+  --color-acorn-bg: oklch(0.95 0.035 65);
+  --color-leaf: oklch(0.55 0.12 145);
+  --color-leaf-bg: oklch(0.95 0.04 140);
+  --color-berry: oklch(0.55 0.16 25);
+  --color-berry-bg: oklch(0.94 0.03 25);
+  --color-sky: oklch(0.6 0.1 220);
+  --color-sky-bg: oklch(0.95 0.03 220);
+  --font-serif: "Noto Serif SC", "Source Han Serif", ui-serif, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-html[data-theme='dark'] {
-  background: #1e1e1e;
-  color: #eaeaea;
+[data-theme="dark"] {
+  --color-paper: oklch(0.2 0.015 60);
+  --color-paper-2: oklch(0.22 0.018 60);
+  --color-paper-3: oklch(0.25 0.02 60);
+  --color-ink: oklch(0.92 0.005 70);
+  --color-ink-2: oklch(0.78 0.008 70);
+  --color-ink-3: oklch(0.6 0.01 70);
+  --color-ink-4: oklch(0.48 0.01 70);
+  --color-line: oklch(0.32 0.015 60);
+  --color-line-2: oklch(0.4 0.018 60);
 }
 
-html[data-theme='light'] {
-  background: #fafafa;
-  color: #1e1e1e;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  min-height: 100vh;
+.serif {
+  font-family: var(--font-serif);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.3s ease-out both;
 }
