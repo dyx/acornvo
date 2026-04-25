@@ -45,26 +45,26 @@
 
 ## 6. Project Picker UI（src/pages/ProjectPicker.tsx）
 
-- [ ] 6.1 用 shadcn + Tailwind 复刻 `docs/ui/src/project-picker.jsx` 的两栏布局：左品牌区 + 右列表
-- [ ] 6.2 `AcornLogo` 抽为 `src/components/AcornLogo.tsx`（SVG props: size, theme）
-- [ ] 6.3 `ProjectCard`：颜色块 + 名称 + 路径 + 文件数 + 上次打开 + hover 动画；失效态置灰 + "移除"按钮；被占用态"接管"按钮
-- [ ] 6.4 "新建树林"按钮 → 调 `selectDirectory({ purpose: 'createParent' })` → 弹出命名 Dialog（shadcn `Dialog` + `Input`）→ 调 `createGrove`
-- [ ] 6.5 "打开已有目录"按钮 → 调 `selectDirectory({ purpose: 'open' })` → 调 `openGrove`
-- [ ] 6.6 成功打开后 `useNavigate()` 到 `/library`
-- [ ] 6.7 i18n key：`picker.title` / `picker.subtitle` / `picker.new` / `picker.open` / `picker.hint` / `picker.recent` / `picker.empty` 等写入 `zh-CN.json`
+- [x] 6.1 用 shadcn + Tailwind 复刻 `docs/ui/src/project-picker.jsx` 的两栏布局：左品牌区 + 右列表
+- [x] 6.2 `AcornLogo` 抽为 `src/components/AcornLogo.tsx`（SVG props: size, theme）
+- [x] 6.3 `ProjectCard`：颜色块 + 名称 + 路径 + 文件数 + 上次打开 + hover 动画；失效态置灰 + "移除"按钮；被占用态"接管"按钮
+- [x] 6.4 "新建树林"按钮 → 调 `selectDirectory({ purpose: 'createParent' })` → 弹出命名 Dialog（shadcn `Dialog` + `Input`）→ 调 `createGrove`
+- [x] 6.5 "打开已有目录"按钮 → 调 `selectDirectory({ purpose: 'open' })` → 调 `openGrove`
+- [x] 6.6 成功打开后 `useNavigate()` 到 `/library`
+- [x] 6.7 i18n key：`picker.title` / `picker.subtitle` / `picker.new` / `picker.open` / `picker.hint` / `picker.recent` / `picker.empty` 等写入 `zh-CN.json`
 
 ## 7. TitleBar 切换树林菜单（src/components/GroveSwitcher.tsx）
 
-- [ ] 7.1 组件：触发按钮显示当前树林颜色块 + 名称；点击弹 dropdown
-- [ ] 7.2 Dropdown 内容：最近 5 项 + 分隔线 + "新建树林" + "打开已有目录"
-- [ ] 7.3 路由守卫：若当前为 `/picker` 则组件返回 null
-- [ ] 7.4 集成到 TitleBar（在 `src/components/TitleBar.tsx` 或 `src/App.tsx` 的 header 内，依 phase 1 约定扩展）
+- [x] 7.1 组件：触发按钮显示当前树林颜色块 + 名称；点击弹 dropdown
+- [x] 7.2 Dropdown 内容：最近 5 项 + 分隔线 + "新建树林" + "打开已有目录"
+- [x] 7.3 路由守卫：若当前为 `/picker` 则组件返回 null
+- [x] 7.4 集成到 TitleBar（在 `src/components/TitleBar.tsx` 或 `src/App.tsx` 的 header 内，依 phase 1 约定扩展）
 
 ## 8. 接管对话框
 
-- [ ] 8.1 `src/components/TakeoverDialog.tsx`：显示 holder `{ pid, hostname, started_at }`
-- [ ] 8.2 按钮：`取消` / `强制接管`；后者调 `openGrove(path, { force: true })`
-- [ ] 8.3 接管成功后跳 `/library`；失败则 toast 错误
+- [x] 8.1 `src/components/TakeoverDialog.tsx`：显示 holder `{ pid, hostname, started_at }`
+- [x] 8.2 按钮：`取消` / `强制接管`；后者调 `openGrove(path, { force: true })`
+- [x] 8.3 接管成功后跳 `/library`；失败则 toast 错误
 
 ## 9. 验收
 
@@ -76,4 +76,4 @@
 - [ ] 9.6 打开 Obsidian vault → `.acornvo/` 被自动创建，`.obsidian/` 未被动
 - [ ] 9.7 树林路径含 `iCloud` → `project.json.sync_warning` = `"iCloud"`，日志有警告
 - [ ] 9.8 TitleBar 切换树林菜单可用；切换时发出 `project:changed` 事件
-- [ ] 9.9 `openspec validate phase-02-project-picker-grove --strict` 通过
+- [x] 9.9 `openspec validate phase-02-project-picker-grove --strict` 通过
