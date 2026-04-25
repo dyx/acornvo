@@ -55,11 +55,16 @@ function getCurrent(): GroveSummary | null {
   }
 }
 
-// Other methods are appended in Tasks 17–18. The full export lands in Task 18.
+async function removeFromRecent(id: string): Promise<void> {
+  await recent.removeById(id)
+}
+
+// Other methods are appended in Task 18. The full export lands in Task 18.
 export const partialHandlers = {
   listRecent,
   createGrove,
   openGrove,
   closeGrove,
-  getCurrent
+  getCurrent,
+  removeFromRecent
 } satisfies Partial<ProjectHandlers>
