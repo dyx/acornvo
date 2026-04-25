@@ -4,6 +4,7 @@ import { Placeholder } from './pages/Placeholder'
 import { ProjectPicker } from './pages/ProjectPicker'
 import { useBootstrap } from './hooks/useBootstrap'
 import { Toaster } from '@/components/ui/toaster'
+import { TitleBar } from '@/components/TitleBar'
 
 function BootstrapGate(): JSX.Element {
   const payload = useBootstrap()
@@ -13,17 +14,20 @@ function BootstrapGate(): JSX.Element {
 
 export function App(): JSX.Element {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<BootstrapGate />} />
-        <Route path="/picker" element={<ProjectPicker />} />
-        <Route path="/library" element={<Placeholder name="library" />} />
-        <Route path="/editor/:path" element={<Placeholder name="editor" />} />
-        <Route path="/browser" element={<Placeholder name="browser" />} />
-        <Route path="/chat" element={<Placeholder name="chat" />} />
-        <Route path="/settings" element={<Placeholder name="settings" />} />
-      </Routes>
+    <div className="flex h-full flex-col">
+      <TitleBar />
+      <main className="flex-1 overflow-hidden">
+        <Routes>
+          <Route path="/" element={<BootstrapGate />} />
+          <Route path="/picker" element={<ProjectPicker />} />
+          <Route path="/library" element={<Placeholder name="library" />} />
+          <Route path="/editor/:path" element={<Placeholder name="editor" />} />
+          <Route path="/browser" element={<Placeholder name="browser" />} />
+          <Route path="/chat" element={<Placeholder name="chat" />} />
+          <Route path="/settings" element={<Placeholder name="settings" />} />
+        </Routes>
+      </main>
       <Toaster />
-    </>
+    </div>
   )
 }
