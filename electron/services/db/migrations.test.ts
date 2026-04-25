@@ -88,3 +88,35 @@ describe('runMigrations', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(1)
   })
 })
+
+import { MigrationError } from './errors'
+
+describe('runMigrations error handling', () => {
+  let dir: string
+  let db: Database.Database
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mig-err-'))
+    db = new Database(':memory:')
+  })
+  afterEach(() => {
+    db.close()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('throws MigrationError with version + cause and rolls back user_version', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x INTEGER);')
+    writeFileSync(join(dir, '002_bad.sql'), 'CREATE TABLE a (x INTEGER); -- duplicate, should fail')
+    let caught: unknown
+    try {
+      runMigrations(db, dir)
+    } catch (err) {
+      caught = err
+    }
+    expect(caught).toBeInstanceOf(MigrationError)
+    const e = caught as MigrationError
+    expect(e.version).toBe(2)
+    expect(e.cause).toBeInstanceOf(Error)
+    // user_version stays at 1 because tx 002 rolled back
+    expect(db.pragma('user_version', { simple: true })).toBe(1)
+  })
+})

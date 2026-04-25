@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { MigrationError } from './errors'
 
 export interface Migration {
   version: number
@@ -45,7 +46,12 @@ export function runMigrations(db: Database.Database, dir: string): Migration[] {
       db.exec(m.sql)
       db.pragma(`user_version = ${m.version}`)
     })
-    tx()
+    try {
+      tx()
+    } catch (cause) {
+      const msg = cause instanceof Error ? cause.message : String(cause)
+      throw new MigrationError(m.version, `migration ${m.name} failed: ${msg}`, cause)
+    }
     applied.push(m)
   }
   return applied
