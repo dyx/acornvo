@@ -43,10 +43,23 @@ async function closeGrove(): Promise<void> {
   await grove.closeGrove()
 }
 
-// Other methods are appended in Tasks 16–18. The full export lands in Task 18.
+function getCurrent(): GroveSummary | null {
+  const g = grove.getCurrent()
+  if (!g) return null
+  return {
+    id: g.id,
+    path: g.path,
+    name: g.name,
+    color: g.color,
+    sync_warning: g.sync_warning ?? null
+  }
+}
+
+// Other methods are appended in Tasks 17–18. The full export lands in Task 18.
 export const partialHandlers = {
   listRecent,
   createGrove,
   openGrove,
-  closeGrove
+  closeGrove,
+  getCurrent
 } satisfies Partial<ProjectHandlers>
