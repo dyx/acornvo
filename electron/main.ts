@@ -8,6 +8,7 @@ import { ipcHandlers } from './ipc/handlers'
 import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
 import * as groveService from './services/grove'
+import { runBootstrap, type BootstrapResult } from './bootstrap'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -72,6 +73,12 @@ async function bootstrap(): Promise<void> {
       })
     })
   })
+  const bootstrapResult = await runBootstrap()
+  // TRANSIENT: Task 22 replaces this with `webContents.send('bootstrap:ready', ...)`
+  // keyed to the window's `did-finish-load` event. This stash is intentionally
+  // short-lived so each commit stays bisectable.
+  ;(globalThis as unknown as { __acornBootstrap: BootstrapResult }).__acornBootstrap =
+    bootstrapResult
   mainWindow = createMainWindow()
 }
 
