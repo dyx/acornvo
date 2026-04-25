@@ -8,6 +8,7 @@ import { useBootstrap } from '@/hooks/useBootstrap'
 import { AcornLogo } from '@/components/AcornLogo'
 import { ProjectCard } from '@/components/ProjectCard'
 import { NewGroveDialog } from '@/components/NewGroveDialog'
+import { TakeoverDialog } from '@/components/TakeoverDialog'
 import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
@@ -25,6 +26,8 @@ export function ProjectPicker(): JSX.Element {
   } | null>(null)
 
   const [newOpen, setNewOpen] = useState(false)
+  const [takeover, setTakeover] = useState<{ path: string; holder: LockInfo } | null>(null)
+  const [takeoverPending, setTakeoverPending] = useState(false)
 
   useEffect(() => {
     if (bootstrap) {
@@ -49,8 +52,7 @@ export function ProjectPicker(): JSX.Element {
       if (res.status === 'opened') {
         navigate('/library')
       } else if (res.status === 'locked') {
-        setLockedFromBootstrap({ path, holder: res.holder })
-        toast({ title: t('picker.locked'), description: path })
+        requestTakeover(path, res.holder)
       } else {
         toast({ title: t('common.error'), description: res.message, variant: 'destructive' })
       }
@@ -76,17 +78,29 @@ export function ProjectPicker(): JSX.Element {
     }
   }
 
-  async function handleTakeover(path: string): Promise<void> {
-    const res = await openExisting(path, { force: true })
+  function requestTakeover(path: string, holder: LockInfo): void {
+    setTakeover({ path, holder })
+  }
+
+  async function confirmTakeover(): Promise<void> {
+    if (!takeover) return
+    setTakeoverPending(true)
+    const res = await openExisting(takeover.path, { force: true })
+    setTakeoverPending(false)
     if (res.status === 'opened') {
       setLockedFromBootstrap(null)
+      setTakeover(null)
       navigate('/library')
     } else if (res.status === 'error') {
+      setTakeover(null)
       toast({
         title: t('takeover.title'),
         description: t('takeover.error', { message: res.message }),
         variant: 'destructive'
       })
+    } else {
+      // Still locked — refresh holder, keep the dialog open
+      setTakeover({ path: takeover.path, holder: res.holder })
     }
   }
 
@@ -148,7 +162,7 @@ export function ProjectPicker(): JSX.Element {
                     locked={locked}
                     onOpen={() => void handleOpen(item.id)}
                     onRemove={() => void removeFromRecent(item.id)}
-                    onTakeover={locked ? () => void handleTakeover(item.path) : undefined}
+                    onTakeover={locked ? () => requestTakeover(item.path, locked) : undefined}
                   />
                 )
               })}
@@ -198,6 +212,18 @@ export function ProjectPicker(): JSX.Element {
         onOpenChange={setNewOpen}
         onCreated={() => navigate('/library')}
       />
+      {takeover ? (
+        <TakeoverDialog
+          open={!!takeover}
+          onOpenChange={(o) => {
+            if (!o) setTakeover(null)
+          }}
+          grovePath={takeover.path}
+          holder={takeover.holder}
+          onConfirm={() => void confirmTakeover()}
+          pending={takeoverPending}
+        />
+      ) : null}
     </div>
   )
 }
