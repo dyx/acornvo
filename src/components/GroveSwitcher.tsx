@@ -1,7 +1,7 @@
 import { useEffect, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, FolderOpen } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { GroveColor } from '@shared/grove'
 import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
@@ -24,6 +24,7 @@ const dotColor: Record<GroveColor, string> = {
 
 export function GroveSwitcher({ className }: { className?: string }): JSX.Element | null {
   const { t } = useTranslation()
+  const location = useLocation()
   const current = useGroveStore((s) => s.current)
   const recent = useGroveStore((s) => s.recent)
   const loadRecent = useGroveStore((s) => s.loadRecent)
@@ -34,6 +35,8 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   useEffect(() => {
     void loadRecent()
   }, [loadRecent])
+
+  if (location.pathname === '/picker') return null
 
   const recentFive = recent.slice(0, 5)
 
