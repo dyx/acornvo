@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { readMigrations, runMigrations } from './migrations'
+import { MigrationError } from './errors'
 
 describe('readMigrations', () => {
   let dir: string
@@ -89,7 +90,6 @@ describe('runMigrations', () => {
   })
 })
 
-import { MigrationError } from './errors'
 
 describe('runMigrations error handling', () => {
   let dir: string
