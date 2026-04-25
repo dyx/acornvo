@@ -11,6 +11,9 @@ export default defineConfig({
       }
     },
     build: {
+      rollupOptions: {
+        external: ['better-sqlite3']
+      },
       lib: {
         entry: resolve(__dirname, 'electron/main.ts')
       }
