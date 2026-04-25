@@ -1,12 +1,18 @@
 import type { JSX } from 'react'
+import { useGroveStore } from '@/stores/grove'
 
-type Props = { name: string }
-
-export function Placeholder({ name }: Props): JSX.Element {
+export function Placeholder({ name }: { name: string }): JSX.Element {
+  const current = useGroveStore((s) => s.current)
   return (
-    <div style={{ padding: 24 }}>
-      <h2>{name}</h2>
-      <p>This route is a placeholder. It will be implemented in a later phase.</p>
+    <div className="p-6">
+      <h1 className="serif text-xl font-semibold">{name} (placeholder)</h1>
+      {current ? (
+        <pre className="mt-4 whitespace-pre-wrap font-mono text-xs text-[color:var(--color-ink-3)]">
+          {JSON.stringify(current, null, 2)}
+        </pre>
+      ) : (
+        <p className="text-sm text-[color:var(--color-ink-3)]">未打开任何树林</p>
+      )}
     </div>
   )
 }
