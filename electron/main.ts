@@ -6,6 +6,7 @@ import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
 import { appLifecycle } from './app-lifecycle'
+import { installGroveBroadcaster } from './services/grove-broadcast'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -61,6 +62,8 @@ async function bootstrap(): Promise<void> {
   await app.whenReady()
   installCsp()
   registerHandlers(ipcHandlers)
+  const disposeBroadcaster = installGroveBroadcaster()
+  app.on('will-quit', disposeBroadcaster)
   mainWindow = createMainWindow()
 }
 

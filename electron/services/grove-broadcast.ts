@@ -1,0 +1,26 @@
+import { webContents } from 'electron'
+import type { GroveSummary } from '@shared/grove'
+import { onChange } from './grove'
+import { logger } from './logger'
+
+const CHANNEL = 'project:changed'
+
+/**
+ * Subscribe to grove.onChange and fan out to every live `webContents`.
+ * Returns an unsubscribe; call it at app shutdown.
+ */
+export function installGroveBroadcaster(): () => void {
+  return onChange((payload: GroveSummary | null) => {
+    for (const wc of webContents.getAllWebContents()) {
+      if (wc.isDestroyed()) continue
+      try {
+        wc.send(CHANNEL, payload)
+      } catch (err) {
+        logger.warn('project:changed send failed', {
+          id: wc.id,
+          message: err instanceof Error ? err.message : String(err)
+        })
+      }
+    }
+  })
+}
