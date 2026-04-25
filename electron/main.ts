@@ -7,6 +7,7 @@ import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
 import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
+import * as groveService from './services/grove'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -64,6 +65,13 @@ async function bootstrap(): Promise<void> {
   registerHandlers(ipcHandlers)
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
+  app.on('will-quit', () => {
+    void groveService.closeGrove().catch((err) => {
+      logger.error('grove close on will-quit failed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    })
+  })
   mainWindow = createMainWindow()
 }
 
