@@ -1,3 +1,4 @@
+import type Database from 'better-sqlite3'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -32,4 +33,20 @@ export function readMigrations(dir: string): Migration[] {
   }
   out.sort((a, b) => a.version - b.version)
   return out
+}
+
+export function runMigrations(db: Database.Database, dir: string): Migration[] {
+  const all = readMigrations(dir)
+  const current = db.pragma('user_version', { simple: true }) as number
+  const pending = all.filter((m) => m.version > current)
+  const applied: Migration[] = []
+  for (const m of pending) {
+    const tx = db.transaction(() => {
+      db.exec(m.sql)
+      db.pragma(`user_version = ${m.version}`)
+    })
+    tx()
+    applied.push(m)
+  }
+  return applied
 }

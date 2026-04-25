@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { readMigrations } from './migrations'
+import Database from 'better-sqlite3'
+import { readMigrations, runMigrations } from './migrations'
 
 describe('readMigrations', () => {
   let dir: string
@@ -40,5 +41,50 @@ describe('readMigrations', () => {
     writeFileSync(join(dir, '001_a.sql'), '-- a')
     writeFileSync(join(dir, '001_b.sql'), '-- b')
     expect(() => readMigrations(dir)).toThrow(/duplicate migration version/i)
+  })
+})
+
+describe('runMigrations', () => {
+  let dir: string
+  let db: Database.Database
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mig-run-'))
+    db = new Database(':memory:')
+  })
+  afterEach(() => {
+    db.close()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('runs all migrations on a fresh db (user_version=0)', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x INTEGER);')
+    writeFileSync(join(dir, '002_more.sql'), 'CREATE TABLE b (y INTEGER);')
+    runMigrations(db, dir)
+    expect(db.pragma('user_version', { simple: true })).toBe(2)
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .all() as Array<{ name: string }>
+    expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
+  })
+
+  it('runs only the migrations greater than current user_version', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x INTEGER);')
+    writeFileSync(join(dir, '002_more.sql'), 'CREATE TABLE b (y INTEGER);')
+    db.exec('CREATE TABLE a (x INTEGER);')
+    db.pragma('user_version = 1')
+    runMigrations(db, dir)
+    expect(db.pragma('user_version', { simple: true })).toBe(2)
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .all() as Array<{ name: string }>
+    expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
+  })
+
+  it('is a no-op when user_version is already at the latest', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x INTEGER);')
+    db.exec('CREATE TABLE a (x INTEGER);')
+    db.pragma('user_version = 1')
+    runMigrations(db, dir)
+    expect(db.pragma('user_version', { simple: true })).toBe(1)
   })
 })
