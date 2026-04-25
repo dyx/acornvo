@@ -1,46 +1,28 @@
 import type { IpcContract } from '@shared/ipc-contract'
-import { IpcError } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
+import { projectHandlers } from './project'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
-    [M in keyof IpcContract[NS]]: IpcContract[NS][M]
+    [M in keyof IpcContract[NS]]: IpcContract[NS][M] extends (...args: infer A) => infer R
+      ? (...args: A) => R | Promise<Awaited<R>>
+      : never
   }
 }
 
-const NOT_WIRED = (): never => {
-  throw new IpcError('E_INTERNAL', 'project handler not yet wired (phase-02 task 19)')
-}
-
 /**
- * Built-in handlers shipped with phase-01. Later phases add more namespaces
- * to this map.
+ * Built-in handlers shipped with phase-01 (ping, log) and phase-02 (project).
+ * Later phases add more namespaces to this map.
  */
 export const ipcHandlers: HandlerMap = {
   ping: {
     echo: (input: string): string => input
   },
   log: {
-    debug: (msg: string, ctx?: Record<string, unknown>): void => {
-      logger.debug(`[renderer] ${msg}`, ctx)
-    },
-    info: (msg: string, ctx?: Record<string, unknown>): void => {
-      logger.info(`[renderer] ${msg}`, ctx)
-    },
-    warn: (msg: string, ctx?: Record<string, unknown>): void => {
-      logger.warn(`[renderer] ${msg}`, ctx)
-    },
-    error: (msg: string, ctx?: Record<string, unknown>): void => {
-      logger.error(`[renderer] ${msg}`, ctx)
-    }
+    debug: (msg, ctx) => logger.debug(`[renderer] ${msg}`, ctx),
+    info: (msg, ctx) => logger.info(`[renderer] ${msg}`, ctx),
+    warn: (msg, ctx) => logger.warn(`[renderer] ${msg}`, ctx),
+    error: (msg, ctx) => logger.error(`[renderer] ${msg}`, ctx)
   },
-  project: {
-    listRecent: NOT_WIRED,
-    createGrove: NOT_WIRED,
-    openGrove: NOT_WIRED,
-    closeGrove: NOT_WIRED,
-    getCurrent: NOT_WIRED,
-    removeFromRecent: NOT_WIRED,
-    selectDirectory: NOT_WIRED
-  }
+  project: projectHandlers
 }

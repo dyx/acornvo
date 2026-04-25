@@ -1,8 +1,8 @@
-import type { IpcClient, IpcContract } from '@shared/ipc-contract'
+import type { IpcClient, IpcContract, IpcEventApi } from '@shared/ipc-contract'
 
 declare global {
   interface Window {
-    api: IpcClient<IpcContract>
+    api: IpcClient<IpcContract> & Pick<IpcEventApi, 'on'>
   }
 }
 

@@ -1,12 +1,10 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import type {
-  GroveSummary,
-  OpenGroveOutcome,
-  RecentItemView
-} from '@shared/grove'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type {
   IpcClient,
   IpcContract,
+  IpcEventApi,
+  IpcEventChannel,
+  IpcEventContract,
   IpcResult,
   SelectDirectoryPurpose
 } from '@shared/ipc-contract'
@@ -14,42 +12,45 @@ import { IpcError } from '@shared/ipc-contract'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const res = (await ipcRenderer.invoke(channel, ...args)) as IpcResult<T>
-  if (!res.ok) {
-    throw new IpcError(res.error.code, res.error.message)
-  }
+  if (!res.ok) throw new IpcError(res.error.code, res.error.message)
   return res.data
 }
 
-const rejectNotWired = <T>(): Promise<T> =>
-  Promise.reject<T>(
-    new IpcError('E_INTERNAL', 'project handler not yet wired (phase-02 task 19)')
-  )
-
-const api = {
+const request: IpcClient<IpcContract> = {
   ping: {
     echo: (input: string) => invoke<string>('ping.echo', input)
   },
   log: {
-    debug: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.debug', msg, ctx),
-    info: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.info', msg, ctx),
-    warn: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.warn', msg, ctx),
-    error: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.error', msg, ctx)
+    debug: (msg, ctx) => invoke<void>('log.debug', msg, ctx),
+    info: (msg, ctx) => invoke<void>('log.info', msg, ctx),
+    warn: (msg, ctx) => invoke<void>('log.warn', msg, ctx),
+    error: (msg, ctx) => invoke<void>('log.error', msg, ctx)
   },
   project: {
-    listRecent: () => rejectNotWired<RecentItemView[]>(),
-    createGrove: (_parentDir: string, _name: string) => rejectNotWired<GroveSummary>(),
-    openGrove: (_path: string, _opts?: { force?: boolean }) =>
-      rejectNotWired<OpenGroveOutcome>(),
-    closeGrove: () => rejectNotWired<void>(),
-    getCurrent: () => rejectNotWired<GroveSummary | null>(),
-    removeFromRecent: (_id: string) => rejectNotWired<void>(),
-    selectDirectory: (_purpose: SelectDirectoryPurpose) => rejectNotWired<string | null>()
+    listRecent: () => invoke('project.listRecent'),
+    createGrove: (parent, name) => invoke('project.createGrove', parent, name),
+    openGrove: (path, opts) => invoke('project.openGrove', path, opts),
+    closeGrove: () => invoke('project.closeGrove'),
+    getCurrent: () => invoke('project.getCurrent'),
+    removeFromRecent: (id) => invoke('project.removeFromRecent', id),
+    selectDirectory: (purpose: SelectDirectoryPurpose) => invoke('project.selectDirectory', purpose)
   }
-} satisfies IpcClient<IpcContract>
+}
+
+const events: IpcEventApi = {
+  on<K extends IpcEventChannel>(
+    channel: K,
+    handler: (payload: IpcEventContract[K]) => void
+  ): () => void {
+    const listener = (_e: IpcRendererEvent, payload: IpcEventContract[K]): void => handler(payload)
+    ipcRenderer.on(channel, listener)
+    return () => {
+      ipcRenderer.removeListener(channel, listener)
+    }
+  }
+}
+
+const api = { ...request, on: events.on } as const
 
 export type PreloadApi = typeof api
 export { api }
