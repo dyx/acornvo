@@ -1,11 +1,16 @@
-import type { JSX } from 'react'
+import { useEffect, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus, FolderOpen } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { GroveColor } from '@shared/grove'
 import { useGroveStore } from '@/stores/grove'
+import { ipc } from '@/ipc/client'
+import { toast } from '@/hooks/use-toast'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -20,6 +25,48 @@ const dotColor: Record<GroveColor, string> = {
 export function GroveSwitcher({ className }: { className?: string }): JSX.Element | null {
   const { t } = useTranslation()
   const current = useGroveStore((s) => s.current)
+  const recent = useGroveStore((s) => s.recent)
+  const loadRecent = useGroveStore((s) => s.loadRecent)
+  const switchTo = useGroveStore((s) => s.switchTo)
+  const openExisting = useGroveStore((s) => s.openExisting)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    void loadRecent()
+  }, [loadRecent])
+
+  const recentFive = recent.slice(0, 5)
+
+  async function handleSwitch(id: string): Promise<void> {
+    const res = await switchTo(id)
+    if (res.status === 'opened') {
+      navigate('/library')
+    } else if (res.status === 'locked') {
+      toast({ title: t('picker.locked'), description: res.holder.hostname })
+    } else {
+      toast({ title: t('common.error'), description: res.message, variant: 'destructive' })
+    }
+  }
+
+  async function handleNew(): Promise<void> {
+    // Delegate to the Picker: navigate there and fire the custom event
+    navigate('/picker')
+    setTimeout(() => window.dispatchEvent(new CustomEvent('acorn:picker:new')), 0)
+  }
+
+  async function handleOpen(): Promise<void> {
+    const path = await ipc.project.selectDirectory('open')
+    if (!path) return
+    const res = await openExisting(path)
+    if (res.status === 'opened') {
+      navigate('/library')
+    } else if (res.status === 'locked') {
+      toast({ title: t('picker.locked'), description: path })
+    } else {
+      toast({ title: t('common.error'), description: res.message, variant: 'destructive' })
+    }
+    await loadRecent()
+  }
 
   return (
     <DropdownMenu>
@@ -47,7 +94,46 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {/* Populated in Task 11 */}
+        {recentFive.map((item) => (
+          <DropdownMenuItem
+            key={item.id}
+            disabled={!item.valid}
+            onSelect={(e) => {
+              e.preventDefault()
+              void handleSwitch(item.id)
+            }}
+          >
+            <span
+              className="h-2 w-2 rounded-sm"
+              style={{ background: dotColor[item.color] }}
+            />
+            <span className="flex-1 truncate">{item.name}</span>
+            {!item.valid ? (
+              <span className="font-mono text-[10px] text-[color:var(--color-berry)]">
+                {t('picker.invalid')}
+              </span>
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+        {recentFive.length > 0 ? <DropdownMenuSeparator /> : null}
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            void handleNew()
+          }}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {t('switcher.new')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            void handleOpen()
+          }}
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          {t('switcher.open')}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
