@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
-import { readMigrations, runMigrations } from './migrations'
+import { readMigrations, runMigrations, listApplied } from './migrations'
 import { MigrationError } from './errors'
 
 describe('readMigrations', () => {
@@ -118,5 +118,35 @@ describe('runMigrations error handling', () => {
     expect(e.cause).toBeInstanceOf(Error)
     // user_version stays at 1 because tx 002 rolled back
     expect(db.pragma('user_version', { simple: true })).toBe(1)
+  })
+})
+
+describe('listApplied', () => {
+  let dir: string
+  let db: Database.Database
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mig-list-'))
+    db = new Database(':memory:')
+  })
+  afterEach(() => {
+    db.close()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('returns user_version 0 and [] when nothing applied', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x);')
+    expect(listApplied(db, dir)).toEqual({ user_version: 0, migrations_applied: [] })
+  })
+
+  it('returns user_version + names of files with version <= current', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE a (x);')
+    writeFileSync(join(dir, '002_more.sql'), 'CREATE TABLE b (y);')
+    writeFileSync(join(dir, '003_future.sql'), 'CREATE TABLE c (z);')
+    runMigrations(db, dir)
+    db.pragma('user_version = 2') // simulate "we only got to 2"
+    expect(listApplied(db, dir)).toEqual({
+      user_version: 2,
+      migrations_applied: ['001_init.sql', '002_more.sql']
+    })
   })
 })

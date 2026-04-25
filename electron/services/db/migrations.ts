@@ -36,6 +36,18 @@ export function readMigrations(dir: string): Migration[] {
   return out
 }
 
+export interface AppliedSummary {
+  user_version: number
+  migrations_applied: string[]
+}
+
+export function listApplied(db: Database.Database, dir: string): AppliedSummary {
+  const user_version = db.pragma('user_version', { simple: true }) as number
+  const all = readMigrations(dir)
+  const migrations_applied = all.filter((m) => m.version <= user_version).map((m) => m.name)
+  return { user_version, migrations_applied }
+}
+
 export function runMigrations(db: Database.Database, dir: string): Migration[] {
   const all = readMigrations(dir)
   const current = db.pragma('user_version', { simple: true }) as number
