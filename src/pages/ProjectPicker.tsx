@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LockInfo } from '@shared/grove'
 import { useGroveStore } from '@/stores/grove'
+import { ipc } from '@/ipc/client'
 import { useBootstrap } from '@/hooks/useBootstrap'
 import { AcornLogo } from '@/components/AcornLogo'
 import { ProjectCard } from '@/components/ProjectCard'
@@ -39,6 +40,28 @@ export function ProjectPicker(): JSX.Element {
     window.addEventListener('acorn:picker:new', onNew)
     return () => window.removeEventListener('acorn:picker:new', onNew)
   }, [])
+
+  useEffect(() => {
+    const onOpen = async (): Promise<void> => {
+      const path = await ipc.project.selectDirectory('open')
+      if (!path) return
+      const res = await openExisting(path)
+      if (res.status === 'opened') {
+        navigate('/library')
+      } else if (res.status === 'locked') {
+        setLockedFromBootstrap({ path, holder: res.holder })
+        toast({ title: t('picker.locked'), description: path })
+      } else {
+        toast({ title: t('common.error'), description: res.message, variant: 'destructive' })
+      }
+      await loadRecent()
+    }
+    const listener = (): void => {
+      void onOpen()
+    }
+    window.addEventListener('acorn:picker:open', listener)
+    return () => window.removeEventListener('acorn:picker:open', listener)
+  }, [loadRecent, navigate, openExisting, t])
 
   const hasRecent = recent.length > 0
 
