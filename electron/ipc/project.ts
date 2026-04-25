@@ -1,9 +1,11 @@
 import { existsSync } from 'node:fs'
-import type { IpcContract } from '@shared/ipc-contract'
+import { dialog } from 'electron'
+import type { IpcContract, SelectDirectoryPurpose } from '@shared/ipc-contract'
 import type { RecentItemView } from '@shared/grove'
 import * as recent from '../services/recent'
 import * as grove from '../services/grove'
 import type { GroveSummary, OpenGroveOutcome } from '@shared/grove'
+import { mainWindow } from '../main'
 
 type ProjectHandlers = {
   [M in keyof IpcContract['project']]: IpcContract['project'][M] extends (
@@ -59,12 +61,29 @@ async function removeFromRecent(id: string): Promise<void> {
   await recent.removeById(id)
 }
 
-// Other methods are appended in Task 18. The full export lands in Task 18.
-export const partialHandlers = {
+async function selectDirectory(purpose: SelectDirectoryPurpose): Promise<string | null> {
+  const properties: Array<'openDirectory' | 'createDirectory'> =
+    purpose === 'createParent'
+      ? ['openDirectory', 'createDirectory']
+      : ['openDirectory']
+  const options = {
+    properties,
+    buttonLabel: purpose === 'createParent' ? '选择父目录' : '选择树林目录',
+    title: purpose === 'createParent' ? '选择要在其中创建树林的目录' : '选择一个目录作为树林'
+  } as const
+  const result = mainWindow
+    ? await dialog.showOpenDialog(mainWindow, options)
+    : await dialog.showOpenDialog(options)
+  if (result.canceled || result.filePaths.length === 0) return null
+  return result.filePaths[0]
+}
+
+export const projectHandlers = {
   listRecent,
   createGrove,
   openGrove,
   closeGrove,
   getCurrent,
-  removeFromRecent
-} satisfies Partial<ProjectHandlers>
+  removeFromRecent,
+  selectDirectory
+} satisfies ProjectHandlers
