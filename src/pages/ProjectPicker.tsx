@@ -6,6 +6,7 @@ import { useGroveStore } from '@/stores/grove'
 import { useBootstrap } from '@/hooks/useBootstrap'
 import { AcornLogo } from '@/components/AcornLogo'
 import { ProjectCard } from '@/components/ProjectCard'
+import { NewGroveDialog } from '@/components/NewGroveDialog'
 import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
@@ -22,6 +23,8 @@ export function ProjectPicker(): JSX.Element {
     holder: LockInfo
   } | null>(null)
 
+  const [newOpen, setNewOpen] = useState(false)
+
   useEffect(() => {
     if (bootstrap) {
       // seed recent from bootstrap payload so the list is visible immediately
@@ -30,6 +33,12 @@ export function ProjectPicker(): JSX.Element {
     }
     void loadRecent()
   }, [bootstrap, loadRecent])
+
+  useEffect(() => {
+    const onNew = (): void => setNewOpen(true)
+    window.addEventListener('acorn:picker:new', onNew)
+    return () => window.removeEventListener('acorn:picker:new', onNew)
+  }, [])
 
   const hasRecent = recent.length > 0
 
@@ -161,6 +170,11 @@ export function ProjectPicker(): JSX.Element {
           </p>
         </section>
       </div>
+      <NewGroveDialog
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onCreated={() => navigate('/library')}
+      />
     </div>
   )
 }
