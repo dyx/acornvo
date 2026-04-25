@@ -5,7 +5,11 @@
   },
   "common": {
     "loading": "加载中…",
-    "error": "发生错误"
+    "error": "发生错误",
+    "cancel": "取消",
+    "confirm": "确定",
+    "remove": "移除",
+    "open": "打开"
   },
   "nav": {
     "home": "首页",
@@ -15,5 +19,45 @@
     "browser": "拾果",
     "chat": "松语",
     "settings": "设置"
+  },
+  "picker": {
+    "title": "选择一片树林",
+    "subtitle": "像松鼠一样拾果·理果·松语——把散落的阅读整理成属于你的知识森林。",
+    "recentLabel": "最近打开",
+    "recentCount": "最近打开 · {{count}}",
+    "empty": "还没有任何树林。新建一片，或打开一个已有的目录。",
+    "new": "新建树林",
+    "open": "打开已有目录",
+    "hint": "提示：树林根目录下的 .acornvo/ 存放索引与历史，真实数据源永远是本地 markdown 文件。可从任意 Obsidian vault 直接打开。",
+    "invalid": "路径已失效",
+    "locked": "被占用",
+    "takeover": "接管",
+    "files": "{{count}} 篇",
+    "newDialog": {
+      "title": "新建树林",
+      "description": "将在所选父目录下创建一个新文件夹作为树林根目录。",
+      "parentLabel": "父目录",
+      "nameLabel": "树林名称",
+      "namePlaceholder": "例如：我的知识林",
+      "create": "创建",
+      "chooseParent": "选择父目录…",
+      "errorInvalidName": "名称不能包含 / \\ : * ? \" < > |",
+      "errorDuplicate": "该目录下已存在同名文件或文件夹",
+      "errorPermission": "父目录没有写入权限"
+    }
+  },
+  "switcher": {
+    "ariaLabel": "切换树林",
+    "new": "新建树林…",
+    "open": "打开已有目录…",
+    "noGrove": "未选择树林"
+  },
+  "takeover": {
+    "title": "树林已被占用",
+    "description": "这棵树林正在被另一个 Acornvo 实例使用。",
+    "held": "PID {{pid}} · {{hostname}} · {{startedAt}}",
+    "force": "强制接管",
+    "warning": "接管后原窗口可能在保存时报错。",
+    "error": "接管失败：{{message}}"
   }
 }
