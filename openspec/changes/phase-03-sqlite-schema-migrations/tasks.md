@@ -15,14 +15,14 @@
 
 ## 3. 初始 SQL（electron/services/db/migrations/001_init.sql）
 
-- [ ] 3.1 按 PRD 数据模型节 DDL 原样落：`files`（含 PK `path`、`mtime`、`content_hash`、`frontmatter_json` 列，+ `idx_files_category`、`idx_files_rating`）
-- [ ] 3.2 `tags` / `file_tags`（含 PK 与 FK 到 files）
-- [ ] 3.3 `files_fts`（`USING fts5(path UNINDEXED, title, summary, content, tokenize='simple')`）
-- [ ] 3.4 `bookmarks`（含 `sort_order`）
-- [ ] 3.5 `chats`（id TEXT PK、title、model、created_at、updated_at）
-- [ ] 3.6 `queue`（含 `idx_queue_status`；对 `(path, status IN pending/running)` 的 uniqueness 通过 partial index 实现：`CREATE UNIQUE INDEX uq_queue_active_path ON queue(payload_json ->> '$.path') WHERE status IN ('pending','running') AND kind = 'review'`——后续理果 change 可能再调，本阶段建基础索引；payload_json path 提取见注释）
-- [ ] 3.7 `usage`（含 `idx_usage_ts`、`idx_usage_model`、`idx_usage_purpose`）
-- [ ] 3.8 文件首行注释 `-- migration: 001_init` 便于排错
+- [x] 3.1 按 PRD 数据模型节 DDL 原样落：`files`（含 PK `path`、`mtime`、`content_hash`、`frontmatter_json` 列，+ `idx_files_category`、`idx_files_rating`）
+- [x] 3.2 `tags` / `file_tags`（含 PK 与 FK 到 files）
+- [x] 3.3 `files_fts`（`USING fts5(path UNINDEXED, title, summary, content, tokenize='simple')`）
+- [x] 3.4 `bookmarks`（含 `sort_order`）
+- [x] 3.5 `chats`（id TEXT PK、title、model、created_at、updated_at）
+- [x] 3.6 `queue`（含 `idx_queue_status`；对 `(path, status IN pending/running)` 的 uniqueness 通过 partial index 实现：`CREATE UNIQUE INDEX uq_queue_active_path ON queue(payload_json ->> '$.path') WHERE status IN ('pending','running') AND kind = 'review'`——后续理果 change 可能再调，本阶段建基础索引；payload_json path 提取见注释）
+- [x] 3.7 `usage`（含 `idx_usage_ts`、`idx_usage_model`、`idx_usage_purpose`）
+- [x] 3.8 文件首行注释 `-- migration: 001_init` 便于排错
 
 ## 4. 核心服务（electron/services/db.ts）
 
