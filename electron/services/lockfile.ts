@@ -1,8 +1,8 @@
-import { readFile, unlink, mkdir } from 'node:fs/promises'
+import { readFile, unlink, mkdir, chmod } from 'node:fs/promises'
 import { hostname } from 'node:os'
 import type { LockInfo } from '@shared/grove'
 import { LockInfoSchema } from '@shared/schemas/project'
-import { atomicWriteJson } from './atomicWrite'
+import { writeFileAtomic } from './fs-atomic'
 import { groveLockFile, groveAcornDir } from './paths'
 import { logger } from './logger'
 
@@ -67,7 +67,14 @@ export async function acquire(
     hostname: hostname(),
     started_at: new Date().toISOString()
   }
-  await atomicWriteJson(lockPath, info, { mode: 0o600 })
+  await writeFileAtomic(lockPath, JSON.stringify(info, null, 2) + '\n')
+  try {
+    await chmod(lockPath, 0o600)
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOTSUP' && process.platform !== 'win32') {
+      throw err
+    }
+  }
   if (existing && opts.force) {
     logger.warn('force-acquired grove lock', { grove: grovePath, previous: existing })
   }

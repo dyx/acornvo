@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { ProjectJsonSchema, type ProjectJson } from '@shared/schemas/project'
 import type { Grove, GroveColor, GroveSummary, LockInfo, OpenGroveOutcome, SyncProvider } from '@shared/grove'
 import { IpcError } from '@shared/ipc-contract'
-import { atomicWriteJson } from './atomicWrite'
+import { writeFileAtomic } from './fs-atomic'
 import * as lockfile from './lockfile'
 import {
   groveAcornDir,
@@ -104,7 +104,7 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
     // Healthy — may need to refresh sync_warning only.
     if (existing.sync_warning !== syncProvider) {
       const next: ProjectJson = { ...existing, sync_warning: syncProvider }
-      await atomicWriteJson(groveProjectFile(grovePath), next)
+      await writeFileAtomic(groveProjectFile(grovePath), JSON.stringify(next, null, 2) + '\n')
       return { project: next, createdFresh: false, syncProvider }
     }
     return { project: existing, createdFresh: false, syncProvider }
@@ -120,7 +120,7 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
     last_opened_at: now,
     sync_warning: syncProvider
   }
-  await atomicWriteJson(groveProjectFile(grovePath), fresh)
+  await writeFileAtomic(groveProjectFile(grovePath), JSON.stringify(fresh, null, 2) + '\n')
   logger.info('grove initialized', {
     grove: grovePath,
     id: fresh.id,
@@ -230,7 +230,7 @@ export async function openGrove(
 
     const now = new Date().toISOString()
     const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
-    await atomicWriteJson(groveProjectFile(path), refreshed)
+    await writeFileAtomic(groveProjectFile(path), JSON.stringify(refreshed, null, 2) + '\n')
 
     const grove = toGrove(path, refreshed)
     currentGrove = grove

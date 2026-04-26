@@ -4,7 +4,7 @@ import {
   RecentProjectsFileSchema,
   type RecentProjectsFile
 } from '@shared/schemas/project'
-import { atomicWriteJson } from './atomicWrite'
+import { writeFileAtomic } from './fs-atomic'
 import { recentProjectsFile } from './paths'
 import { logger } from './logger'
 
@@ -51,7 +51,7 @@ async function backupCorrupt(path: string, raw: string, reason: string): Promise
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
   const backup = `${path}.bak-${stamp}`
   try {
-    await atomicWriteJson(backup, { reason, raw })
+    await writeFileAtomic(backup, JSON.stringify({ reason, raw }, null, 2) + '\n')
   } catch (err) {
     logger.error('failed to backup corrupt recent-projects.json', {
       message: err instanceof Error ? err.message : String(err)
@@ -60,7 +60,7 @@ async function backupCorrupt(path: string, raw: string, reason: string): Promise
 }
 
 export async function save(file: RecentProjectsFile): Promise<void> {
-  await atomicWriteJson(recentProjectsFile(), file)
+  await writeFileAtomic(recentProjectsFile(), JSON.stringify(file, null, 2) + '\n')
 }
 
 /** Upsert an item to the top; if present by id, move to position 0 with updated fields. */

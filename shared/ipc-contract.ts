@@ -19,6 +19,22 @@ export type IpcErrorCode =
   | 'E_LOCKED'
   | 'E_EXISTS'
   | 'E_TIMEOUT'
+  | 'E_ENCODING'
+  | 'E_WRITE_VERIFY'
+  | 'E_MTIME_MISMATCH'
+
+export const IPC_ERROR_CODES = {
+  E_INTERNAL: 'E_INTERNAL',
+  E_INVALID_ARGS: 'E_INVALID_ARGS',
+  E_NOT_FOUND: 'E_NOT_FOUND',
+  E_PERMISSION: 'E_PERMISSION',
+  E_LOCKED: 'E_LOCKED',
+  E_EXISTS: 'E_EXISTS',
+  E_TIMEOUT: 'E_TIMEOUT',
+  E_ENCODING: 'E_ENCODING',
+  E_WRITE_VERIFY: 'E_WRITE_VERIFY',
+  E_MTIME_MISMATCH: 'E_MTIME_MISMATCH'
+} as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
 
@@ -53,6 +69,59 @@ export type DbVersionInfo = {
   migrations_applied: string[]
 }
 
+// --- file namespace types (phase-04) ---
+
+import type { Frontmatter } from './frontmatter-schema'
+
+export type EolStyle = 'lf' | 'crlf' | 'mixed'
+export type FileEncoding = 'utf8' | 'gbk'
+
+export interface FileReadResult {
+  content: string
+  eol: EolStyle
+  mtimeMs: number
+  sha256: string
+  hadBom: boolean
+  originalEncoding: FileEncoding
+}
+
+export interface FileReadParsedResult extends FileReadResult {
+  frontmatter: Frontmatter
+  body: string
+  rawYaml: string
+}
+
+export interface FileWriteOptions {
+  eol?: 'lf' | 'crlf'
+  expectedMtime?: number
+}
+
+export interface FileWriteResult {
+  mtimeMs: number
+  sha256: string
+}
+
+export interface FileStat {
+  size: number
+  mtimeMs: number
+  ctimeMs: number
+  isFile: boolean
+  isDirectory: boolean
+}
+
+export interface FileListEntry {
+  rel: string
+  isFile: boolean
+  isDirectory: boolean
+  size: number
+  mtimeMs: number
+}
+
+export interface FileListOptions {
+  recursive?: boolean
+  includeHidden?: boolean
+}
+
 export type IpcContract = {
   ping: {
     echo: (input: string) => string
@@ -75,6 +144,21 @@ export type IpcContract = {
   db: {
     version: () => DbVersionInfo
     integrityCheck: () => string
+  }
+  file: {
+    read: (rel: string) => FileReadResult
+    readParsed: (rel: string) => FileReadParsedResult
+    write: (rel: string, content: string, opts?: FileWriteOptions) => FileWriteResult
+    writeParsed: (
+      rel: string,
+      frontmatter: Frontmatter,
+      body: string,
+      opts?: FileWriteOptions
+    ) => FileWriteResult
+    stat: (rel: string) => FileStat
+    exists: (rel: string) => boolean
+    list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
+    rename: (oldRel: string, newRel: string) => void
   }
 }
 
