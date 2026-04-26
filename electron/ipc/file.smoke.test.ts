@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { encode as iconvEncode } from 'iconv-lite'
 
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 import * as groveSvc from '../services/grove'
@@ -57,5 +58,23 @@ describe('smoke 7.2: BOM-prefixed UTF-8 file', () => {
     const buf = readFileSync(join(dir, 'fresh.md'))
     expect(buf[0]).not.toBe(0xef)
     expect(buf.toString('utf8')).toBe('plain')
+  })
+})
+
+describe('smoke 7.3: GBK Chinese md file', () => {
+  it('reads as UTF-8 with originalEncoding=gbk; writes back as UTF-8', async () => {
+    const target = join(dir, 'gbk.md')
+    writeFileSync(target, iconvEncode('你好世界\n', 'gbk'))
+    const r = await fileHandlers.read('gbk.md')
+    expect(r.content).toBe('你好世界\n')
+    expect(r.originalEncoding).toBe('gbk')
+    expect(r.hadBom).toBe(false)
+    // Round-trip write defaults to UTF-8 (fileHandlers.write does NOT preserve original encoding)
+    await fileHandlers.write('gbk.md', r.content, { eol: 'lf' })
+    const after = readFileSync(join(dir, 'gbk.md'))
+    expect(after.toString('utf8')).toBe('你好世界\n')
+    // Re-read confirms the file is now UTF-8
+    const r2 = await fileHandlers.read('gbk.md')
+    expect(r2.originalEncoding).toBe('utf8')
   })
 })
