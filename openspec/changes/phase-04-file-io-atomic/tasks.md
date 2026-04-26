@@ -32,19 +32,19 @@
 
 ## 4. frontmatter codec（electron/services/frontmatter.ts）
 
-- [ ] 4.1 `parseFile(raw)`：`matter(raw)` → 用 `FrontmatterSchema.parse(data)`（passthrough）→ 返回 `{ frontmatter, body: content, rawYaml: matter.matter }`
-- [ ] 4.2 `stringify(frontmatter, body)`：`matter.stringify(body, frontmatter)`；空 frontmatter 时仅返回 body
-- [ ] 4.3 `shared/frontmatter-schema.ts` 完整实现（见 design D5），导出 `Frontmatter` 类型
-- [ ] 4.4 单元测试：全字段往返、未知字段保留、rating 越界报错、空 frontmatter 不加包裹块
+- [x] 4.1 `parseFile(raw)`：`matter(raw)` → 用 `FrontmatterSchema.parse(data)`（passthrough）→ 返回 `{ frontmatter, body: content, rawYaml: matter.matter }`
+- [x] 4.2 `stringify(frontmatter, body)`：`matter.stringify(body, frontmatter)`；空 frontmatter 时仅返回 body
+- [x] 4.3 `shared/frontmatter-schema.ts` 完整实现（见 design D5），导出 `Frontmatter` 类型
+- [x] 4.4 单元测试：全字段往返、未知字段保留、rating 越界报错、空 frontmatter 不加包裹块
 
 ## 5. IPC（electron/ipc/file.ts + 契约）
 
-- [ ] 5.1 `shared/ipc-contract.ts` 新增 `file` 命名空间：`read(rel): { content, eol, mtime, sha256, hadBom, originalEncoding }` / `readParsed(rel): { frontmatter, body, rawYaml, ...meta }` / `write(rel, content, opts?)` / `writeParsed(rel, frontmatter, body, opts?)` / `stat(rel)` / `exists(rel)` / `list(dirRel, opts)` / `rename(oldRel, newRel)`
-- [ ] 5.2 新错误码常量：`E_ENCODING` / `E_WRITE_VERIFY` / `E_MTIME_MISMATCH`；追加到 phase 1 的 `IpcErrorCode` 枚举
-- [ ] 5.3 handler 实现：每个 handler 先 `currentGrovePath || throw E_NOT_FOUND`，再 `safeResolve`
-- [ ] 5.4 `list(dirRel, { recursive, includeHidden })`：自实现 walker，`fs.lstat` 跳 symlink；`includeHidden=false` 时跳过 `.` 开头
-- [ ] 5.5 `rename`：两端均 `safeResolve`；跨目录允许，跨树林（理论不可能，已被 safeResolve 拦）额外安全检查
-- [ ] 5.6 `writeParsed(rel, fm, body, opts)`：`stringify(fm, body)` → `writeWithVerify`
+- [x] 5.1 `shared/ipc-contract.ts` 新增 `file` 命名空间：`read(rel): { content, eol, mtime, sha256, hadBom, originalEncoding }` / `readParsed(rel): { frontmatter, body, rawYaml, ...meta }` / `write(rel, content, opts?)` / `writeParsed(rel, frontmatter, body, opts?)` / `stat(rel)` / `exists(rel)` / `list(dirRel, opts)` / `rename(oldRel, newRel)`
+- [x] 5.2 新错误码常量：`E_ENCODING` / `E_WRITE_VERIFY` / `E_MTIME_MISMATCH`；追加到 phase 1 的 `IpcErrorCode` 枚举
+- [x] 5.3 handler 实现：每个 handler 先 `currentGrovePath || throw E_NOT_FOUND`，再 `safeResolve`
+- [x] 5.4 `list(dirRel, { recursive, includeHidden })`：自实现 walker，`fs.lstat` 跳 symlink；`includeHidden=false` 时跳过 `.` 开头
+- [x] 5.5 `rename`：两端均 `safeResolve`；跨目录允许，跨树林（理论不可能，已被 safeResolve 拦）额外安全检查
+- [x] 5.6 `writeParsed(rel, fm, body, opts)`：`stringify(fm, body)` → `writeWithVerify`
 
 ## 6. phase 2 回归改造
 
