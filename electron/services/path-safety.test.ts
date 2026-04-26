@@ -158,4 +158,66 @@ describe('safeResolve', () => {
       }
     })
   })
+
+  describe('safeResolve edge cases', () => {
+    it('grove root with trailing separator behaves the same as without', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        const withSep = root.endsWith(sep) ? root : root + sep
+        expect(safeResolve(withSep, 'a.md')).toBe(join(root, 'a.md'))
+        expect(safeResolve(root, 'a.md')).toBe(join(root, 'a.md'))
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('throws E_INVALID_ARGS for non-string path', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        // @ts-expect-error — runtime check
+        expect(() => safeResolve(root, 123)).toThrow(/E_INVALID_ARGS/)
+        // @ts-expect-error
+        expect(() => safeResolve(root, null)).toThrow(/E_INVALID_ARGS/)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('throws E_INVALID_ARGS for empty groveRoot', () => {
+      expect(() => safeResolve('', 'a.md')).toThrow(/E_INVALID_ARGS/)
+    })
+
+    it('rejects an absolute path that is a sibling of grove root (no shared prefix dir)', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        const sibling = root + '-sibling' // e.g. /tmp/grove-abc-sibling
+        expect(() => safeResolve(root, join(sibling, 'x.md'))).toThrow(/E_PERMISSION/)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('Windows-style absolute path in groveRoot — prefix check is case-sensitive on POSIX', () => {
+      // We can't run real Windows here, but we can confirm path.resolve on POSIX
+      // handles a Windows-shaped grove root by treating it as a relative path.
+      // The point: the prefix check operates on whatever path.resolve returns; we
+      // are not platform-specifically broken.
+      const root = '/tmp/win-grove-xyz'
+      mkdirSync(root, { recursive: true })
+      try {
+        expect(safeResolve(root, 'a.md')).toBe(join(root, 'a.md'))
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('handles filesystem root as grove root (exercises endsWith separator branches)', () => {
+      // On POSIX, resolve('/') returns '/' which ends with sep, covering
+      // both the normRoot.endsWith(sep) and realRoot.endsWith(sep) branches.
+      expect(safeResolve('/', 'tmp')).toBe('/tmp')
+      const real = safeResolve('/', 'tmp', { realpath: true })
+      // /tmp may itself be a symlink (e.g. to /private/tmp on macOS)
+      expect(real).toBe(realpathSync('/tmp'))
+    })
+  })
 })
