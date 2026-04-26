@@ -17,6 +17,11 @@ export function safeResolve(
   if (typeof p !== 'string') {
     throw new IpcError('E_INVALID_ARGS', 'safeResolve: path must be a string')
   }
+  // Reject any literal `..` path segment in the input. Use both / and \ as separators
+  // so we catch Windows-style inputs even on POSIX (defense in depth).
+  if (p.split(/[\\/]/).includes('..')) {
+    throw new IpcError('E_PERMISSION', `safeResolve: E_PERMISSION — path contains .. segment (${p})`)
+  }
   const normRoot = resolve(groveRoot)
   const normRootSep = normRoot.endsWith(sep) ? normRoot : normRoot + sep
   const abs = resolve(groveRoot, p)

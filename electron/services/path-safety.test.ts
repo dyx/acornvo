@@ -72,4 +72,44 @@ describe('safeResolve', () => {
       }
     })
   })
+
+  describe('rejects .. segments', () => {
+    it('rejects an input that contains a single .. segment', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        expect(() => safeResolve(root, '../outside.md')).toThrow(/E_PERMISSION/)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('rejects an input that contains a .. segment even if it resolves inside the grove', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        // a/../b.md → resolves to <root>/b.md, but we still reject it
+        expect(() => safeResolve(root, 'a/../b.md')).toThrow(/E_PERMISSION/)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('rejects backslash-separated .. on any platform (defense in depth)', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        expect(() => safeResolve(root, 'a\\..\\b.md')).toThrow(/E_PERMISSION/)
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+
+    it('does NOT confuse "..bar" or "bar.." with the .. segment', () => {
+      const root = mkdtempSync(join(tmpdir(), 'grove-'))
+      try {
+        expect(safeResolve(root, '..bar/x.md')).toBe(join(root, '..bar', 'x.md'))
+        expect(safeResolve(root, 'bar../x.md')).toBe(join(root, 'bar..', 'x.md'))
+      } finally {
+        rmSync(root, { recursive: true, force: true })
+      }
+    })
+  })
 })
