@@ -58,14 +58,14 @@
 
 ## 8. 验收
 
-- [ ] 8.1 打开新树林 → `<grove>/.acornvo/index.db` 存在；`PRAGMA user_version` = 1
-- [ ] 8.2 DevTools 执行 `window.api.db.version()` 返回 `{ user_version: 1, migrations_applied: ['001_init.sql'] }`
-- [ ] 8.3 `window.api.db.integrityCheck()` 返回 `'ok'`
-- [ ] 8.4 检查 `sqlite_master`：所有 PRD 列出的表与索引均存在
-- [ ] 8.5 手动损坏：关闭应用 → 往 `index.db` 写入乱字节 → 启动应用
-  - [ ] 8.5a 出现"正在重建"提示
-  - [ ] 8.5b `index.db.corrupt-<ts>` 文件存在
-  - [ ] 8.5c 新 `index.db` `user_version` = 1
-- [ ] 8.6 切换树林 → 旧 db 文件出现 `.wal` 大小归零；新树林的 db 正常打开
-- [ ] 8.7 macOS / Windows / Linux 开发机各跑通 `postinstall` + 启动
-- [ ] 8.8 `openspec validate phase-03-sqlite-schema-migrations --strict` 通过
+- [x] 8.1 打开新树林 → `<grove>/.acornvo/index.db` 存在；`PRAGMA user_version` = 1
+- [x] 8.2 DevTools 执行 `window.api.db.version()` 返回 `{ user_version: 1, migrations_applied: ['001_init.sql'] }`
+- [x] 8.3 `window.api.db.integrityCheck()` 返回 `'ok'`
+- [x] 8.4 检查 `sqlite_master`：所有 PRD 列出的表与索引均存在
+- [x] 8.5 手动损坏：关闭应用 → 往 `index.db` 写入乱字节 → 启动应用
+  - [x] 8.5a 出现"正在重建"提示
+  - [x] 8.5b `index.db.corrupt-<ts>` 文件存在
+  - [x] 8.5c 新 `index.db` `user_version` = 1
+- [x] 8.6 切换树林 → 旧 db 文件出现 `.wal` 大小归零；新树林的 db 正常打开
+- [x] 8.7 macOS / Windows / Linux 开发机各跑通 `postinstall` + 启动
+- [x] 8.8 `openspec validate phase-03-sqlite-schema-migrations --strict` 通过
