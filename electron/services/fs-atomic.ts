@@ -1,6 +1,19 @@
-// electron/services/fs-atomic.ts
-// Implemented in Plan 2 of phase-04-file-io-atomic (tasks 3.1-3.7).
-// This file is a placeholder so type-only imports compile cleanly.
+import { open, rename, mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
+import { randomUUID } from 'node:crypto'
+
+export async function writeFileAtomic(abs: string, data: string | Uint8Array): Promise<void> {
+  await mkdir(dirname(abs), { recursive: true })
+  const tmp = `${abs}.${randomUUID()}.tmp`
+  const fd = await open(tmp, 'w')
+  try {
+    await fd.writeFile(data)
+    await fd.sync()
+  } finally {
+    await fd.close()
+  }
+  await rename(tmp, abs)
+}
 
 export interface ReadFileDetectResult {
   content: string
@@ -14,10 +27,6 @@ export interface ReadFileDetectResult {
 export interface WriteWithVerifyOptions {
   eol?: 'lf' | 'crlf'
   expectedMtime?: number
-}
-
-export function writeFileAtomic(_abs: string, _data: string | Uint8Array): Promise<void> {
-  throw new Error('writeFileAtomic: not yet implemented (phase-04 plan 2)')
 }
 
 export function readFileDetect(_abs: string): Promise<ReadFileDetectResult> {
