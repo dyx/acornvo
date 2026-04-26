@@ -62,5 +62,5 @@
 - [x] 7.6 路径越界：`file.write('../outside.md', 'x')` → `E_PERMISSION`
 - [x] 7.7 mtime 乐观锁：人为先改 mtime，再带旧 `expectedMtime` 写入 → `E_MTIME_MISMATCH`
 - [x] 7.8 frontmatter 全字段 md 往返：写入后读出完全等价
-- [ ] 7.9 单元测试覆盖率：`fs-atomic.ts` 与 `path-safety.ts` >= 85%
-- [ ] 7.10 `openspec validate phase-04-file-io-atomic --strict` 通过
+- [x] 7.9 单元测试覆盖率：`fs-atomic.ts` 与 `path-safety.ts` >= 85%
+- [x] 7.10 `openspec validate phase-04-file-io-atomic --strict` 通过
