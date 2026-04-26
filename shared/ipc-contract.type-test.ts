@@ -59,7 +59,7 @@ export type _ProjectExports =
 import type { IpcEventApi, IpcEventChannel } from './ipc-contract'
 
 type _EventChannelUnion = Assert<
-  IpcEventChannel extends 'project:changed' | 'bootstrap:ready' ? true : false
+  IpcEventChannel extends 'project:changed' | 'bootstrap:ready' | 'db:rebuilding' | 'db:rebuilt' ? true : false
 >
 
 declare const _eventApi: IpcEventApi

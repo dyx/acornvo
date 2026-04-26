@@ -34,6 +34,10 @@ const request: IpcClient<IpcContract> = {
     getCurrent: () => invoke('project.getCurrent'),
     removeFromRecent: (id) => invoke('project.removeFromRecent', id),
     selectDirectory: (purpose: SelectDirectoryPurpose) => invoke('project.selectDirectory', purpose)
+  },
+  db: {
+    version: () => invoke('db.version'),
+    integrityCheck: () => invoke('db.integrityCheck')
   }
 }
 
