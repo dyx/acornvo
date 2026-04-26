@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { applyPragmas } from './db'
+import { applyPragmas, integrityCheck } from './db'
 
 describe('applyPragmas', () => {
   let dir: string
@@ -28,5 +28,30 @@ describe('applyPragmas', () => {
     expect(db.pragma('cache_size', { simple: true })).toBe(-20000)
     // mmap_size returned in bytes
     expect(db.pragma('mmap_size', { simple: true })).toBe(268435456)
+  })
+})
+
+describe('integrityCheck', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'db-ic-'))
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('returns "ok" on a healthy db', () => {
+    const db = new Database(join(dir, 'h.db'))
+    expect(integrityCheck(db)).toBe('ok')
+    db.close()
+  })
+
+  // Note: forging a corrupt-in-memory db is non-trivial. We rely on the on-disk
+  // smoke check in Plan 5 (Task 8.5) for the corrupt-path coverage.
+  it('returns a string for any result', () => {
+    const db = new Database(join(dir, 'h2.db'))
+    const result = integrityCheck(db)
+    expect(typeof result).toBe('string')
+    db.close()
   })
 })

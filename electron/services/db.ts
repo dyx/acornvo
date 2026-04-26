@@ -36,3 +36,8 @@ export function applyPragmas(db: Database.Database): void {
   db.pragma('cache_size = -20000')
   db.pragma('mmap_size = 268435456')
 }
+
+export function integrityCheck(db: Database.Database): string {
+  const r = db.pragma('integrity_check', { simple: true }) as string
+  return r
+}
