@@ -1,5 +1,6 @@
-import { stat as fsStat, access } from 'node:fs/promises'
+import { lstat, readdir, stat as fsStat, access } from 'node:fs/promises'
 import { constants } from 'node:fs'
+import { join, relative } from 'node:path'
 import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
 import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
@@ -97,8 +98,50 @@ export const fileHandlers = {
     }
   },
 
-  async list(_dirRel: string, _opts: FileListOptions = {}): Promise<FileListEntry[]> {
-    throw new IpcError('E_INTERNAL', 'list not yet implemented (phase-04 plan 3 task 8)')
+  async list(dirRel: string, opts: FileListOptions = {}): Promise<FileListEntry[]> {
+    const root = requireGroveRoot()
+    const absDir = safeResolve(root, dirRel)
+    const recursive = opts.recursive === true
+    const includeHidden = opts.includeHidden === true
+    const out: FileListEntry[] = []
+    await walk(absDir)
+    return out
+
+    async function walk(curAbs: string): Promise<void> {
+      let entries: string[]
+      try {
+        entries = await readdir(curAbs)
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+          throw new IpcError('E_NOT_FOUND', `${dirRel}: not found`)
+        }
+        throw err
+      }
+      for (const name of entries) {
+        if (!includeHidden && name.startsWith('.')) continue
+        const childAbs = join(curAbs, name)
+        let st
+        try {
+          st = await lstat(childAbs)
+        } catch (err) {
+          // Race with deletion — skip.
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue
+          throw err
+        }
+        if (st.isSymbolicLink()) continue // policy: skip symlinks entirely
+        const isFile = st.isFile()
+        const isDirectory = st.isDirectory()
+        const rel = relative(root, childAbs)
+        out.push({
+          rel,
+          isFile,
+          isDirectory,
+          size: st.size,
+          mtimeMs: st.mtimeMs
+        })
+        if (recursive && isDirectory) await walk(childAbs)
+      }
+    }
   },
 
   async rename(_oldRel: string, _newRel: string): Promise<void> {

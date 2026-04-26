@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -61,5 +61,65 @@ describe('fileHandlers (read/write/stat/exists)', () => {
     writeFileSync(join(dir, 'a.md'), 'x')
     expect(await fileHandlers.exists('a.md')).toBe(true)
     expect(await fileHandlers.exists('missing.md')).toBe(false)
+  })
+})
+
+describe('fileHandlers.list', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ipclist-'))
+    setGroveRoot(dir)
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('lists top-level files (non-recursive default)', async () => {
+    writeFileSync(join(dir, 'a.md'), 'a')
+    writeFileSync(join(dir, 'b.md'), 'b')
+    mkdirSync(join(dir, 'sub'))
+    writeFileSync(join(dir, 'sub', 'c.md'), 'c')
+    const r = await fileHandlers.list('.')
+    const names = r.map((e) => e.rel).sort()
+    expect(names).toEqual(['a.md', 'b.md', 'sub'])
+    const sub = r.find((e) => e.rel === 'sub')!
+    expect(sub.isDirectory).toBe(true)
+  })
+
+  it('descends recursively when { recursive: true }', async () => {
+    writeFileSync(join(dir, 'a.md'), 'a')
+    mkdirSync(join(dir, 'sub'))
+    writeFileSync(join(dir, 'sub', 'b.md'), 'b')
+    mkdirSync(join(dir, 'sub', 'deeper'))
+    writeFileSync(join(dir, 'sub', 'deeper', 'c.md'), 'c')
+    const r = await fileHandlers.list('.', { recursive: true })
+    const files = r.filter((e) => e.isFile).map((e) => e.rel).sort()
+    expect(files).toEqual(['a.md', join('sub', 'b.md'), join('sub', 'deeper', 'c.md')])
+  })
+
+  it('hides dot-prefixed entries by default', async () => {
+    writeFileSync(join(dir, 'visible.md'), 'v')
+    writeFileSync(join(dir, '.hidden.md'), 'h')
+    const r = await fileHandlers.list('.')
+    expect(r.map((e) => e.rel)).toEqual(['visible.md'])
+  })
+
+  it('includes dot-prefixed entries when { includeHidden: true }', async () => {
+    writeFileSync(join(dir, 'visible.md'), 'v')
+    writeFileSync(join(dir, '.hidden.md'), 'h')
+    const r = await fileHandlers.list('.', { includeHidden: true })
+    expect(r.map((e) => e.rel).sort()).toEqual(['.hidden.md', 'visible.md'])
+  })
+
+  it('skips symlinks (neither follows nor lists)', async () => {
+    writeFileSync(join(dir, 'real.md'), 'r')
+    symlinkSync(join(dir, 'real.md'), join(dir, 'link.md'), 'file')
+    const r = await fileHandlers.list('.', { recursive: true })
+    expect(r.map((e) => e.rel)).toEqual(['real.md'])
+  })
+
+  it('rejects a path traversal in dirRel with E_PERMISSION', async () => {
+    await expect(fileHandlers.list('../')).rejects.toMatchObject({ code: 'E_PERMISSION' })
   })
 })
