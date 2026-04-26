@@ -48,6 +48,11 @@ export class IpcError extends Error {
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
+export type DbVersionInfo = {
+  user_version: number
+  migrations_applied: string[]
+}
+
 export type IpcContract = {
   ping: {
     echo: (input: string) => string
@@ -67,6 +72,10 @@ export type IpcContract = {
     removeFromRecent: (id: string) => void
     selectDirectory: (purpose: SelectDirectoryPurpose) => string | null
   }
+  db: {
+    version: () => DbVersionInfo
+    integrityCheck: () => string
+  }
 }
 
 /**
@@ -81,6 +90,8 @@ export type IpcEventContract = {
     recent: RecentItemView[]
     locked?: { path: string; holder: LockInfo }
   }
+  'db:rebuilding': void
+  'db:rebuilt': void
 }
 
 export type IpcEventChannel = keyof IpcEventContract
