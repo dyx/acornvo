@@ -52,9 +52,9 @@
 
 ## 7. 渲染端最小 UX 联动
 
-- [ ] 7.1 `src/App.tsx` 订阅 `db:rebuilding` → 显示全屏遮罩 + 文案"索引损坏，正在重建"
-- [ ] 7.2 订阅 `db:rebuilt` → 移除遮罩 + toast "索引已重建，部分数据将在后续步骤中恢复"
-- [ ] 7.3 `src/components/DbHealthBadge.tsx`：可在 TitleBar 或 StatusBar 占位，显示 `user_version` + ✅/⚠️（本阶段可先不挂，留后续接入）
+- [x] 7.1 `src/App.tsx` 订阅 `db:rebuilding` → 显示全屏遮罩 + 文案"索引损坏，正在重建"
+- [x] 7.2 订阅 `db:rebuilt` → 移除遮罩 + toast "索引已重建，部分数据将在后续步骤中恢复"
+- [x] 7.3 `src/components/DbHealthBadge.tsx`：可在 TitleBar 或 StatusBar 占位，显示 `user_version` + ✅/⚠️（本阶段可先不挂，留后续接入）
 
 ## 8. 验收
 
