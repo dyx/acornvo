@@ -87,4 +87,12 @@ describe('001_init.sql', () => {
     const r2 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://y', '2026-01-01') RETURNING id").get() as { id: number }
     expect(r2.id).toBe(r1.id + 1)
   })
+
+  it('creates chats with TEXT primary key', () => {
+    expect(tableNames(db)).toContain('chats')
+    const cols = columnNames(db, 'chats')
+    expect(cols).toEqual(expect.arrayContaining(['id', 'title', 'model', 'created_at', 'updated_at']))
+    db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")
+    expect(() => db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")).toThrow(/UNIQUE/i)
+  })
 })

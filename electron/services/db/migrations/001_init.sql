@@ -49,3 +49,12 @@ CREATE TABLE bookmarks (
   created_at TEXT NOT NULL,
   sort_order INTEGER
 );
+
+-- 松语对话（元数据索引；消息正文落 .acornvo/chats/<id>.json）
+CREATE TABLE chats (
+  id TEXT PRIMARY KEY,
+  title TEXT,
+  model TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
