@@ -66,12 +66,43 @@ async function bootstrap(): Promise<void> {
   registerHandlers(ipcHandlers)
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
+  const disposeDbSubscriber = groveService.onChange((payload) => {
+    try {
+      // Lazy require to avoid circular import surprises at module load.
+      const { dbService } = require('./services/db') as typeof import('./services/db')
+      if (payload === null) {
+        dbService.closeCurrent()
+      } else if (dbService.getCurrentGrovePath() !== payload.path) {
+        // Idempotent: openGrove (Task 1) already opened the db inline; this is
+        // the catch-all for future code paths that change the project without
+        // going through openGrove.
+        dbService.openForGrove(payload.path)
+      }
+    } catch (err) {
+      logger.error('db subscriber failed on project:changed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
+  })
+  app.on('will-quit', disposeDbSubscriber)
   app.on('will-quit', () => {
     void groveService.closeGrove().catch((err) => {
       logger.error('grove close on will-quit failed', {
         message: err instanceof Error ? err.message : String(err)
       })
     })
+  })
+  app.on('will-quit', () => {
+    try {
+      // Defensive: closeGrove cascades to closeCurrent, but also handle the
+      // "no grove open but stray db handle" edge case.
+      const { dbService } = require('./services/db') as typeof import('./services/db')
+      dbService.closeCurrent()
+    } catch (err) {
+      logger.error('db close on will-quit failed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
   })
   const bootstrapResult = await runBootstrap()
   mainWindow = createMainWindow()
