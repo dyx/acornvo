@@ -134,4 +134,15 @@ describe('001_init.sql', () => {
     expect(idx).toContain('idx_usage_model')
     expect(idx).toContain('idx_usage_purpose')
   })
+
+  it('matches the spec scenario "初始 schema 完整" — every required table + index exists', () => {
+    const tables = tableNames(db)
+    for (const t of ['files', 'tags', 'file_tags', 'files_fts', 'bookmarks', 'chats', 'queue', 'usage']) {
+      expect(tables).toContain(t)
+    }
+    const idx = indexNames(db)
+    for (const i of ['idx_files_category', 'idx_files_rating', 'idx_queue_status', 'idx_usage_ts', 'idx_usage_model']) {
+      expect(idx).toContain(i)
+    }
+  })
 })
