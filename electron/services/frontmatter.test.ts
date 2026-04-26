@@ -46,3 +46,48 @@ describe('frontmatter.stringify', () => {
     expect(round.body.trim()).toBe('# Body')
   })
 })
+
+describe('frontmatter codec — integration', () => {
+  it('roundtrips the full PRD field set without loss', () => {
+    const fm = {
+      title: 'hi',
+      url: 'https://example.com/a',
+      site: 'example.com',
+      author: 'me',
+      published_at: '2025-01-01',
+      clipped_at: '2025-01-02T03:04:05.000Z',
+      source_type: 'article' as const,
+      summary: 'tl;dr',
+      highlights: ['quote a', 'quote b'],
+      rating: 4,
+      category: 'tech',
+      tags: ['x', 'y'],
+      reviewed_at: '2025-01-03T00:00:00.000Z',
+      reviewed_model: 'claude-opus-4-7',
+      reviewed_version: 1
+    }
+    const body = '\n# Body\n\nLorem ipsum.\n'
+    const md = stringify(fm as never, body)
+    const back = parseFile(md)
+    expect(back.frontmatter).toMatchObject(fm)
+    expect(back.body.trim()).toBe('# Body\n\nLorem ipsum.'.trim())
+  })
+
+  it('parseFile bubbles a Zod error for invalid rating', () => {
+    const raw = '---\nrating: 9\n---\nbody\n'
+    expect(() => parseFile(raw)).toThrow(/rating|5|too_big|too_small/i)
+  })
+
+  it('stringify of empty frontmatter does NOT add wrapper bytes', () => {
+    const body = '# just a body\n'
+    const out = stringify({} as never, body)
+    expect(out).toBe(body)
+    expect(out.startsWith('---')).toBe(false)
+  })
+
+  it('stringify of a 1-key frontmatter starts with --- and has the key', () => {
+    const out = stringify({ title: 'x' } as never, 'body')
+    expect(out.startsWith('---\n')).toBe(true)
+    expect(out).toMatch(/^---\n[\s\S]*title:\s*x/)
+  })
+})
