@@ -1,5 +1,6 @@
 import type { IpcContract } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
+import { dbHandlers } from './db'
 import { projectHandlers } from './project'
 
 type HandlerMap = {
@@ -24,5 +25,6 @@ export const ipcHandlers: HandlerMap = {
     warn: (msg, ctx) => logger.warn(`[renderer] ${msg}`, ctx),
     error: (msg, ctx) => logger.error(`[renderer] ${msg}`, ctx)
   },
-  project: projectHandlers
+  project: projectHandlers,
+  db: dbHandlers
 }

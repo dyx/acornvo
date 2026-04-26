@@ -10,7 +10,7 @@ const _shape: IpcErrorShape = normalize(new IpcError('E_NOT_FOUND', 'nope'))
 const _shape2: IpcErrorShape = normalize(new Error('boom'))
 const _shape3: IpcErrorShape = normalize('not-an-error')
 
-// registerHandlers must accept the ping+log+project shape — exercise it structurally.
+// registerHandlers must accept the ping+log+project+db shape — exercise it structurally.
 const _accepts: Parameters<typeof registerHandlers>[0] = {
   ping: { echo: (input: string) => input },
   log: {
@@ -30,6 +30,10 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     getCurrent: () => null,
     removeFromRecent: () => undefined,
     selectDirectory: () => null
+  },
+  db: {
+    version: () => ({ user_version: 0, migrations_applied: [] }),
+    integrityCheck: () => 'ok'
   }
 }
 
