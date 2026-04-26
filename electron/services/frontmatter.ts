@@ -20,7 +20,10 @@ export function parseFile(raw: string): ParsedFile {
   }
 }
 
-// Keep the throwing stub for stringify until Task 2.
-export function stringify(_frontmatter: Frontmatter, _body: string): string {
-  throw new Error('frontmatter.stringify: not yet implemented (phase-04 plan 3 task 2)')
+export function stringify(frontmatter: Frontmatter, body: string): string {
+  if (!frontmatter || Object.keys(frontmatter).length === 0) {
+    return body
+  }
+  // gray-matter's stringify takes (content, data) and returns a fenced string.
+  return matter.stringify(body, frontmatter as Record<string, unknown>)
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseFile } from './frontmatter'
+import { parseFile, stringify } from './frontmatter'
 
 describe('frontmatter.parseFile', () => {
   it('extracts frontmatter, body, and rawYaml from a wrapped md', () => {
@@ -22,5 +22,27 @@ describe('frontmatter.parseFile', () => {
     const raw = '---\ncustom_key: some_value\n---\nbody\n'
     const r = parseFile(raw)
     expect(r.frontmatter).toMatchObject({ custom_key: 'some_value' })
+  })
+})
+
+describe('frontmatter.stringify', () => {
+  it('emits a fenced frontmatter block when frontmatter is non-empty', () => {
+    const out = stringify({ title: 'hi' } as never, '# Body\n')
+    expect(out.startsWith('---\n')).toBe(true)
+    expect(out).toMatch(/title:\s*hi/)
+    expect(out).toMatch(/---\n+# Body/)
+  })
+
+  it('returns body unchanged when frontmatter is empty', () => {
+    const body = 'plain body, no frontmatter\n'
+    expect(stringify({} as never, body)).toBe(body)
+  })
+
+  it('round-trips: parseFile(stringify(...)) preserves data', () => {
+    const fm = { title: 'hi', tags: ['a', 'b'], rating: 3 }
+    const body = '\n# Body\n'
+    const round = parseFile(stringify(fm as never, body))
+    expect(round.frontmatter).toMatchObject(fm)
+    expect(round.body.trim()).toBe('# Body')
   })
 })
