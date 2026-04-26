@@ -1,10 +1,13 @@
 import type { JSX } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Placeholder } from './pages/Placeholder'
 import { ProjectPicker } from './pages/ProjectPicker'
 import { useBootstrap } from './hooks/useBootstrap'
 import { Toaster } from '@/components/ui/toaster'
+import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
+import { ipc } from '@/ipc/client'
 
 function BootstrapGate(): JSX.Element {
   const payload = useBootstrap()
@@ -12,7 +15,43 @@ function BootstrapGate(): JSX.Element {
   return <Navigate to={payload.initialRoute} replace />
 }
 
+function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
+  if (!visible) return null
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm text-foreground"
+      role="alert"
+      aria-live="assertive"
+    >
+      <div className="text-center">
+        <div className="text-lg font-medium">索引损坏，正在重建</div>
+        <div className="mt-2 text-sm text-muted-foreground">这通常只需要几秒钟</div>
+      </div>
+    </div>
+  )
+}
+
 export function App(): JSX.Element {
+  const { toast } = useToast()
+  const [isRebuilding, setIsRebuilding] = useState(false)
+
+  useEffect(() => {
+    const offRebuilding = ipc.on('db:rebuilding', () => {
+      setIsRebuilding(true)
+    })
+    const offRebuilt = ipc.on('db:rebuilt', () => {
+      setIsRebuilding(false)
+      toast({
+        title: '索引已重建',
+        description: '部分数据将在后续步骤中恢复'
+      })
+    })
+    return () => {
+      offRebuilding()
+      offRebuilt()
+    }
+  }, [toast])
+
   return (
     <div className="flex h-full flex-col">
       <TitleBar />
@@ -27,6 +66,7 @@ export function App(): JSX.Element {
           <Route path="/settings" element={<Placeholder name="settings" />} />
         </Routes>
       </main>
+      <DbRebuildOverlay visible={isRebuilding} />
       <Toaster />
     </div>
   )

@@ -42,3 +42,7 @@ export function useToasts(): ToastItem[] {
     () => items
   )
 }
+
+export function useToast(): { toast: typeof toast } {
+  return { toast }
+}
