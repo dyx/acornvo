@@ -3,8 +3,8 @@ import Database from 'better-sqlite3'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { existsSync, writeFileSync, readdirSync } from 'node:fs'
-import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest } from './db'
+import { existsSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs'
+import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent } from './db'
 
 describe('applyPragmas', () => {
   let dir: string
@@ -94,5 +94,46 @@ describe('backupCorruptDb', () => {
     const acorn = join(dir, '.acornvo')
     require('node:fs').mkdirSync(acorn, { recursive: true })
     expect(() => backupCorruptDb(dir)).not.toThrow()
+  })
+})
+
+describe('openForGrove', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'db-open-'))
+    mkdirSync(join(dir, '.acornvo'), { recursive: true })
+  })
+  afterEach(() => {
+    __resetForTest()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('creates index.db, applies pragmas, runs 001 migration', () => {
+    openForGrove(dir)
+    expect(existsSync(join(dir, '.acornvo', 'index.db'))).toBe(true)
+    const db = getCurrent()!
+    expect(db.pragma('user_version', { simple: true })).toBe(1)
+    expect(db.pragma('journal_mode', { simple: true })).toBe('wal')
+    // files table exists from 001_init
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='files'")
+      .all()
+    expect(tables.length).toBe(1)
+  })
+
+  it('closes a previous handle before opening a new one', () => {
+    const dir2 = mkdtempSync(join(tmpdir(), 'db-open2-'))
+    mkdirSync(join(dir2, '.acornvo'), { recursive: true })
+    try {
+      openForGrove(dir)
+      const first = getCurrent()!
+      expect(first.open).toBe(true)
+      openForGrove(dir2)
+      expect(first.open).toBe(false)
+      const second = getCurrent()!
+      expect(second).not.toBe(first)
+    } finally {
+      rmSync(dir2, { recursive: true, force: true })
+    }
   })
 })

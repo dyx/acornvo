@@ -1,7 +1,9 @@
 // electron/services/db.ts
 import Database from 'better-sqlite3'
-import { renameSync, existsSync } from 'node:fs'
+import { renameSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { runMigrations } from './db/migrations'
+import { migrationsDir } from './db/migrations/index'
 
 let current: Database.Database | null = null
 // @ts-ignore TS6133 — write-only in skeleton; read by later tasks (openForGrove, closeCurrent)
@@ -88,4 +90,45 @@ export function backupCorruptDb(grovePath: string): void {
 
 export function emitRebuilt(): void {
   emit('db:rebuilt')
+}
+
+export function closeCurrent(): void {
+  if (!current) return
+  try {
+    try {
+      current.pragma('wal_checkpoint(TRUNCATE)')
+    } catch {
+      try {
+        current.pragma('wal_checkpoint(PASSIVE)')
+      } catch {
+        /* ignore */
+      }
+    }
+    current.close()
+  } finally {
+    current = null
+    currentGrovePath = null
+  }
+}
+
+export function openForGrove(grovePath: string): void {
+  closeCurrent()
+  mkdirSync(join(grovePath, '.acornvo'), { recursive: true })
+  const file = join(grovePath, '.acornvo', 'index.db')
+  let db = new Database(file)
+  applyPragmas(db)
+  if (integrityCheck(db) !== 'ok') {
+    db.close()
+    backupCorruptDb(grovePath)
+    db = new Database(file)
+    applyPragmas(db)
+    runMigrations(db, migrationsDir())
+    current = db
+    currentGrovePath = grovePath
+    emitRebuilt()
+    return
+  }
+  runMigrations(db, migrationsDir())
+  current = db
+  currentGrovePath = grovePath
 }
