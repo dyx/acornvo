@@ -221,36 +221,58 @@ export async function openGrove(
     return { status: 'locked', holder: lockResult.holder as LockInfo }
   }
 
-  const initResult = await initialize(path)
-  const now = new Date().toISOString()
-  const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
-  await atomicWriteJson(groveProjectFile(path), refreshed)
+  try {
+    const initResult = await initialize(path)
 
-  const grove = toGrove(path, refreshed)
-  currentGrove = grove
+    // Open db BEFORE bumping last_opened_at — failure rolls back cleanly.
+    const { dbService } = await import('./db')
+    dbService.openForGrove(path)
 
-  // Lazy import to avoid any circular module resolution surprises.
-  const recent = await import('./recent')
-  await recent.upsertToTop({
-    id: grove.id,
-    path: grove.path,
-    name: grove.name,
-    color: grove.color,
-    pinned: false,
-    last_opened_at: now,
-    files_count: 0
-  })
+    const now = new Date().toISOString()
+    const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
+    await atomicWriteJson(groveProjectFile(path), refreshed)
 
-  if (initResult.syncProvider) {
-    logger.warn('grove on cloud-sync path', {
-      grove: path,
-      provider: initResult.syncProvider
+    const grove = toGrove(path, refreshed)
+    currentGrove = grove
+
+    const recent = await import('./recent')
+    await recent.upsertToTop({
+      id: grove.id,
+      path: grove.path,
+      name: grove.name,
+      color: grove.color,
+      pinned: false,
+      last_opened_at: now,
+      files_count: 0
     })
-  }
 
-  notifyChange(toSummary(grove))
-  logger.info('grove opened', { grove: path, id: grove.id })
-  return { status: 'opened', grove: toSummary(grove) }
+    if (initResult.syncProvider) {
+      logger.warn('grove on cloud-sync path', {
+        grove: path,
+        provider: initResult.syncProvider
+      })
+    }
+
+    notifyChange(toSummary(grove))
+    logger.info('grove opened', { grove: path, id: grove.id })
+    return { status: 'opened', grove: toSummary(grove) }
+  } catch (err) {
+    // Best-effort cleanup: close any partially-opened db, release lock.
+    try {
+      const { dbService } = await import('./db')
+      dbService.closeCurrent()
+    } catch {
+      /* ignore */
+    }
+    await lockfile.release(path).catch(() => {
+      /* ignore */
+    })
+    logger.error('openGrove failed', {
+      grove: path,
+      message: err instanceof Error ? err.message : String(err)
+    })
+    throw err
+  }
 }
 
 export async function closeGrove(): Promise<void> {
