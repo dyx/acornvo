@@ -90,3 +90,49 @@ describe('writeFileAtomic EXDEV fallback', () => {
     expect(stragglers).toEqual([])
   })
 })
+
+describe('writeFileAtomic EPERM/EBUSY retry', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'fsatomic-retry-'))
+  })
+  afterEach(async () => {
+    rmSync(dir, { recursive: true, force: true })
+    vi.mocked(fsp.rename).mockReset()
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+    vi.mocked(fsp.rename).mockImplementation(actual.rename)
+  })
+
+  it('retries on EPERM up to 2 times then succeeds', async () => {
+    let attempts = 0
+    const realRename = vi.mocked(fsp.rename).getMockImplementation()
+    vi.mocked(fsp.rename).mockImplementation(async (src, dest) => {
+      attempts++
+      if (attempts <= 2) {
+        const err = new Error('EPERM') as NodeJS.ErrnoException
+        err.code = 'EPERM'
+        throw err
+      }
+      // Call the real rename on the 3rd attempt
+      const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+      return actual.rename(src as string, dest as string)
+    })
+    const target = join(dir, 'a.md')
+    await writeFileAtomic(target, 'retried')
+    expect(attempts).toBe(3) // 2 failures + 1 success
+    expect(readFileSync(target, 'utf8')).toBe('retried')
+  })
+
+  it('retries on EBUSY then gives up after 3 attempts (raises last error)', async () => {
+    let attempts = 0
+    vi.mocked(fsp.rename).mockImplementation(async () => {
+      attempts++
+      const err = new Error('EBUSY') as NodeJS.ErrnoException
+      err.code = 'EBUSY'
+      throw err
+    })
+    const target = join(dir, 'a.md')
+    await expect(writeFileAtomic(target, 'never')).rejects.toMatchObject({ code: 'EBUSY' })
+    expect(attempts).toBe(3) // 1 initial + 2 retries
+  })
+})

@@ -2,6 +2,23 @@ import { open, rename, mkdir, copyFile, unlink } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
+async function renameWithAvRetry(tmp: string, abs: string): Promise<void> {
+  let lastErr: NodeJS.ErrnoException | undefined
+  for (let i = 0; i < 3; i++) {
+    try {
+      await rename(tmp, abs)
+      return
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code
+      if (code === 'EXDEV') throw err // bubble up — caller does the copyFile fallback
+      if (code !== 'EPERM' && code !== 'EBUSY') throw err
+      lastErr = err as NodeJS.ErrnoException
+      if (i < 2) await new Promise((r) => setTimeout(r, 50))
+    }
+  }
+  throw lastErr
+}
+
 export async function writeFileAtomic(abs: string, data: string | Uint8Array): Promise<void> {
   await mkdir(dirname(abs), { recursive: true })
   const tmp = `${abs}.${randomUUID()}.tmp`
@@ -13,7 +30,7 @@ export async function writeFileAtomic(abs: string, data: string | Uint8Array): P
     await fd.close()
   }
   try {
-    await rename(tmp, abs)
+    await renameWithAvRetry(tmp, abs)
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'EXDEV') {
       await copyFile(tmp, abs)
