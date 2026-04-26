@@ -154,3 +154,39 @@ describe('smoke 7.7: mtime optimistic lock', () => {
     expect(readFileSync(join(dir, 'b.md'), 'utf8')).toBe('v2')
   })
 })
+
+describe('smoke 7.8: frontmatter full-field roundtrip via IPC', () => {
+  it('writeParsed → readParsed preserves all PRD fields', async () => {
+    const fm = {
+      title: 'hi',
+      url: 'https://example.com/a',
+      site: 'example.com',
+      author: 'me',
+      published_at: '2025-01-01',
+      clipped_at: '2025-01-02T03:04:05.000Z',
+      source_type: 'article' as const,
+      summary: 'tl;dr',
+      highlights: ['quote a', 'quote b'],
+      rating: 4,
+      category: 'tech',
+      tags: ['x', 'y'],
+      reviewed_at: '2025-01-03T00:00:00.000Z',
+      reviewed_model: 'claude-opus-4-7',
+      reviewed_version: 1
+    }
+    const body = '\n# Body\n\nLorem ipsum.\n'
+    await fileHandlers.writeParsed('full.md', fm as never, body, { eol: 'lf' })
+    const r = await fileHandlers.readParsed('full.md')
+    expect(r.frontmatter).toMatchObject(fm)
+    // body must be semantically equal (gray-matter may normalize leading/trailing newlines).
+    expect(r.body.trim()).toBe(body.trim())
+    expect(r.eol).toBe('lf')
+    expect(r.hadBom).toBe(false)
+  })
+
+  it('writeParsed with empty frontmatter writes plain body (no --- wrapper)', async () => {
+    await fileHandlers.writeParsed('plain.md', {} as never, '# just body\n')
+    const onDisk = readFileSync(join(dir, 'plain.md'), 'utf8')
+    expect(onDisk.startsWith('---')).toBe(false)
+  })
+})
