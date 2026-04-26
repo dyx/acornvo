@@ -2,6 +2,7 @@
 import Database from 'better-sqlite3'
 import { renameSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { IpcError } from '@shared/ipc-contract'
 import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
 
@@ -11,6 +12,17 @@ let currentGrovePath: string | null = null
 
 export function getCurrent(): Database.Database | null {
   return current
+}
+
+export function requireCurrent(): Database.Database {
+  if (!current) {
+    throw new IpcError('E_NOT_FOUND', 'no grove opened')
+  }
+  return current
+}
+
+export function getCurrentGrovePath(): string | null {
+  return currentGrovePath
 }
 
 // Stubs (filled in by later tasks)

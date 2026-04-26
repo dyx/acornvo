@@ -4,7 +4,8 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { existsSync, writeFileSync, readdirSync, mkdirSync, statSync } from 'node:fs'
-import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent, closeCurrent } from './db'
+import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent, closeCurrent, requireCurrent } from './db'
+import { IpcError } from '@shared/ipc-contract'
 
 describe('applyPragmas', () => {
   let dir: string
@@ -169,5 +170,31 @@ describe('closeCurrent', () => {
       const size = statSync(wal).size
       expect(size).toBe(0)
     }
+  })
+})
+
+describe('requireCurrent', () => {
+  afterEach(() => __resetForTest())
+
+  it('returns the current db when open', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'db-req-'))
+    mkdirSync(join(dir, '.acornvo'), { recursive: true })
+    try {
+      openForGrove(dir)
+      expect(requireCurrent()).toBe(getCurrent())
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('throws IpcError(E_NOT_FOUND) when nothing is open', () => {
+    let caught: unknown
+    try {
+      requireCurrent()
+    } catch (e) {
+      caught = e
+    }
+    expect(caught).toBeInstanceOf(IpcError)
+    expect((caught as IpcError).code).toBe('E_NOT_FOUND')
   })
 })
