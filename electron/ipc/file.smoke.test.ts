@@ -78,3 +78,25 @@ describe('smoke 7.3: GBK Chinese md file', () => {
     expect(r2.originalEncoding).toBe('utf8')
   })
 })
+
+describe('smoke 7.4: CRLF preservation', () => {
+  it('reads CRLF as eol="crlf"; explicit eol:"crlf" write keeps it CRLF on disk', async () => {
+    const target = join(dir, 'crlf.md')
+    writeFileSync(target, 'a\r\nb\r\nc\r\n', 'utf8')
+    const r = await fileHandlers.read('crlf.md')
+    expect(r.eol).toBe('crlf')
+    // Caller now writes back with eol: 'crlf' (the natural pattern from read.eol)
+    await fileHandlers.write('crlf.md', 'x\ny\nz\n', { eol: 'crlf' })
+    const onDisk = readFileSync(join(dir, 'crlf.md'), 'utf8')
+    expect(onDisk).toBe('x\r\ny\r\nz\r\n')
+    // Confirm read still classifies as crlf
+    const r2 = await fileHandlers.read('crlf.md')
+    expect(r2.eol).toBe('crlf')
+  })
+
+  it('default write (no eol option) emits LF', async () => {
+    await fileHandlers.write('default-eol.md', 'a\nb\n')
+    const onDisk = readFileSync(join(dir, 'default-eol.md'), 'utf8')
+    expect(onDisk).toBe('a\nb\n')
+  })
+})
