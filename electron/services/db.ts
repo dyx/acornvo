@@ -1,5 +1,7 @@
 // electron/services/db.ts
 import Database from 'better-sqlite3'
+import { renameSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
 
 let current: Database.Database | null = null
 // @ts-ignore TS6133 — write-only in skeleton; read by later tasks (openForGrove, closeCurrent)
@@ -40,4 +42,50 @@ export function applyPragmas(db: Database.Database): void {
 export function integrityCheck(db: Database.Database): string {
   const r = db.pragma('integrity_check', { simple: true }) as string
   return r
+}
+
+type WindowLike = { webContents: { send: (channel: string, payload?: unknown) => void } }
+
+let mainWindowForTest: WindowLike | null = null
+export function __setMainWindowForTest(win: WindowLike | null): void {
+  mainWindowForTest = win
+}
+
+function getMainWindow(): WindowLike | null {
+  if (mainWindowForTest) return mainWindowForTest
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const main = require('../main') as { mainWindow: WindowLike | null }
+    return main.mainWindow ?? null
+  } catch {
+    return null
+  }
+}
+
+function emit(channel: 'db:rebuilding' | 'db:rebuilt'): void {
+  const win = getMainWindow()
+  try {
+    win?.webContents.send(channel)
+  } catch {
+    /* renderer may have been destroyed; safe to ignore */
+  }
+}
+
+export function backupCorruptDb(grovePath: string): void {
+  const acorn = join(grovePath, '.acornvo')
+  const base = join(acorn, 'index.db')
+  if (!existsSync(base)) return
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  for (const suffix of ['', '-wal', '-shm']) {
+    const src = base + suffix
+    if (existsSync(src)) {
+      const dst = join(acorn, `index.db.corrupt-${stamp}${suffix}`)
+      renameSync(src, dst)
+    }
+  }
+  emit('db:rebuilding')
+}
+
+export function emitRebuilt(): void {
+  emit('db:rebuilt')
 }

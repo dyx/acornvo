@@ -3,7 +3,8 @@ import Database from 'better-sqlite3'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { applyPragmas, integrityCheck } from './db'
+import { existsSync, writeFileSync, readdirSync } from 'node:fs'
+import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest } from './db'
 
 describe('applyPragmas', () => {
   let dir: string
@@ -53,5 +54,45 @@ describe('integrityCheck', () => {
     const result = integrityCheck(db)
     expect(typeof result).toBe('string')
     db.close()
+  })
+})
+
+describe('backupCorruptDb', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'db-bk-'))
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    __setMainWindowForTest(null)
+  })
+
+  it('renames index.db + sidecars to index.db.corrupt-<ts>* and emits db:rebuilding', () => {
+    // Set up a fake "db" file plus -wal / -shm sidecars
+    const acorn = join(dir, '.acornvo')
+    require('node:fs').mkdirSync(acorn, { recursive: true })
+    writeFileSync(join(acorn, 'index.db'), 'garbage')
+    writeFileSync(join(acorn, 'index.db-wal'), 'wal')
+    writeFileSync(join(acorn, 'index.db-shm'), 'shm')
+
+    const sent: Array<{ channel: string; payload?: unknown }> = []
+    __setMainWindowForTest({
+      webContents: { send: (channel: string, payload?: unknown) => sent.push({ channel, payload }) }
+    } as unknown as { webContents: { send: (c: string, p?: unknown) => void } })
+
+    backupCorruptDb(dir)
+
+    const left = readdirSync(acorn)
+    expect(left.some((n) => n === 'index.db')).toBe(false)
+    expect(left.some((n) => /^index\.db\.corrupt-.+$/.test(n))).toBe(true)
+    expect(left.some((n) => /^index\.db\.corrupt-.+-wal$/.test(n))).toBe(true)
+    expect(left.some((n) => /^index\.db\.corrupt-.+-shm$/.test(n))).toBe(true)
+    expect(sent.find((e) => e.channel === 'db:rebuilding')).toBeTruthy()
+  })
+
+  it('is a no-op (does not throw) when index.db does not exist', () => {
+    const acorn = join(dir, '.acornvo')
+    require('node:fs').mkdirSync(acorn, { recursive: true })
+    expect(() => backupCorruptDb(dir)).not.toThrow()
   })
 })
