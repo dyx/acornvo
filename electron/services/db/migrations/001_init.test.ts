@@ -95,4 +95,27 @@ describe('001_init.sql', () => {
     db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")
     expect(() => db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")).toThrow(/UNIQUE/i)
   })
+
+  it('creates queue with idx_queue_status + partial unique index for active reviews', () => {
+    expect(tableNames(db)).toContain('queue')
+    const idx = indexNames(db)
+    expect(idx).toContain('idx_queue_status')
+    expect(idx).toContain('uq_queue_active_path')
+
+    // The partial unique index should reject a second active review for the same path.
+    const insert = db.prepare(
+      "INSERT INTO queue (kind, payload_json, status, created_at, updated_at) VALUES (?, ?, ?, '2026-01-01', '2026-01-01')"
+    )
+    insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')
+    expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')).toThrow(/UNIQUE/i)
+
+    // But a different path is fine.
+    expect(() => insert.run('review', JSON.stringify({ path: 'b.md' }), 'pending')).not.toThrow()
+
+    // And a 'failed' row for the same path is fine (not in the partial set).
+    expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'failed')).not.toThrow()
+
+    // And a non-review kind is fine.
+    expect(() => insert.run('reindex', JSON.stringify({ path: 'a.md' }), 'pending')).not.toThrow()
+  })
 })

@@ -58,3 +58,21 @@ CREATE TABLE chats (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+-- 持久化队列
+CREATE TABLE queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,                 -- 'review' | 'reindex' | ...
+  payload_json TEXT NOT NULL,
+  status TEXT NOT NULL,               -- 'pending' | 'running' | 'failed'
+  retry_count INTEGER DEFAULT 0,
+  last_error TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX idx_queue_status ON queue(status);
+
+-- 同一 path 在 pending/running 的 review 任务唯一（payload_json ->> '$.path' 提取 JSON 字段）
+CREATE UNIQUE INDEX uq_queue_active_path
+  ON queue(payload_json ->> '$.path')
+  WHERE status IN ('pending','running') AND kind = 'review';
