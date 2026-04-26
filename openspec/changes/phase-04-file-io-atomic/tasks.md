@@ -1,16 +1,16 @@
 ## 1. 依赖与目录
 
-- [ ] 1.1 `npm install iconv-lite gray-matter`
-- [ ] 1.2 `npm install -D @types/gray-matter`
-- [ ] 1.3 新增目录 `electron/services/`（若不存在）下的 `fs-atomic.ts` / `frontmatter.ts` / `path-safety.ts`
-- [ ] 1.4 新增 `shared/frontmatter-schema.ts`
+- [x] 1.1 `npm install iconv-lite gray-matter`
+- [x] 1.2 `npm install -D @types/gray-matter`
+- [x] 1.3 新增目录 `electron/services/`（若不存在）下的 `fs-atomic.ts` / `frontmatter.ts` / `path-safety.ts`
+- [x] 1.4 新增 `shared/frontmatter-schema.ts`
 
 ## 2. safeResolve（electron/services/path-safety.ts）
 
-- [ ] 2.1 `safeResolve(groveRoot, p)`：`path.resolve` → 比较 `path.resolve(groveRoot) + sep` 前缀 → 失败抛 `IpcError('E_PERMISSION')`
-- [ ] 2.2 拒绝包含 `..` 段的相对路径（`p.split(/[\\/]/).includes('..')`）
-- [ ] 2.3 可选 `{ realpath: true }` 选项走 `fs.realpath` 解析 symlink 后再校验
-- [ ] 2.4 单元测试：windows `C:\` 与 posix `/` 均通过；极端用例（空字符串、单个 `.`、以 `/` 结尾的 groveRoot）
+- [x] 2.1 `safeResolve(groveRoot, p)`：`path.resolve` → 比较 `path.resolve(groveRoot) + sep` 前缀 → 失败抛 `IpcError('E_PERMISSION')`
+- [x] 2.2 拒绝包含 `..` 段的相对路径（`p.split(/[\\/]/).includes('..')`）
+- [x] 2.3 可选 `{ realpath: true }` 选项走 `fs.realpath` 解析 symlink 后再校验
+- [x] 2.4 单元测试：windows `C:\` 与 posix `/` 均通过；极端用例（空字符串、单个 `.`、以 `/` 结尾的 groveRoot）
 
 ## 3. fs-atomic（electron/services/fs-atomic.ts）
 
