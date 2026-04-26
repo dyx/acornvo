@@ -23,6 +23,19 @@ export type IpcErrorCode =
   | 'E_WRITE_VERIFY'
   | 'E_MTIME_MISMATCH'
 
+export const IPC_ERROR_CODES = {
+  E_INTERNAL: 'E_INTERNAL',
+  E_INVALID_ARGS: 'E_INVALID_ARGS',
+  E_NOT_FOUND: 'E_NOT_FOUND',
+  E_PERMISSION: 'E_PERMISSION',
+  E_LOCKED: 'E_LOCKED',
+  E_EXISTS: 'E_EXISTS',
+  E_TIMEOUT: 'E_TIMEOUT',
+  E_ENCODING: 'E_ENCODING',
+  E_WRITE_VERIFY: 'E_WRITE_VERIFY',
+  E_MTIME_MISMATCH: 'E_MTIME_MISMATCH'
+} as const satisfies Record<IpcErrorCode, IpcErrorCode>
+
 export type SelectDirectoryPurpose = 'open' | 'createParent'
 
 export interface IpcErrorShape {
