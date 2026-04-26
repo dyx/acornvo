@@ -78,4 +78,13 @@ describe('001_init.sql', () => {
     const rows = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH 'hello'").all() as Array<{ path: string }>
     expect(rows.map((r) => r.path)).toEqual(['a.md'])
   })
+
+  it('creates bookmarks with autoincrement id + sort_order', () => {
+    expect(tableNames(db)).toContain('bookmarks')
+    const cols = columnNames(db, 'bookmarks')
+    expect(cols).toEqual(expect.arrayContaining(['id', 'url', 'title', 'favicon', 'created_at', 'sort_order']))
+    const r1 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://x', '2026-01-01') RETURNING id").get() as { id: number }
+    const r2 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://y', '2026-01-01') RETURNING id").get() as { id: number }
+    expect(r2.id).toBe(r1.id + 1)
+  })
 })

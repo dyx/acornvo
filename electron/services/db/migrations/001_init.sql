@@ -39,3 +39,13 @@ CREATE VIRTUAL TABLE files_fts USING fts5(
   content,
   tokenize='unicode61'
 );
+
+-- 标记
+CREATE TABLE bookmarks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  url TEXT NOT NULL,
+  title TEXT,
+  favicon TEXT,
+  created_at TEXT NOT NULL,
+  sort_order INTEGER
+);
