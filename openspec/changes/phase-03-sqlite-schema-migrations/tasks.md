@@ -37,18 +37,18 @@
 
 ## 5. 与 grove 生命周期联动
 
-- [ ] 5.1 在 `services/grove.ts` 的 `openGrove` 成功获取 lock + 读 project.json 之后串行调 `dbService.openForGrove(path)`
-- [ ] 5.2 任一步骤失败：释放 lock、`dbService.closeCurrent()`、不更新 `last_opened_at`、IPC 返回 `E_INTERNAL`
-- [ ] 5.3 `closeGrove()` 里先 `dbService.closeCurrent()` 再 release lock
-- [ ] 5.4 `app.on('will-quit')` 里保底 `dbService.closeCurrent()`
-- [ ] 5.5 `project:changed` 事件订阅逻辑集中在 `electron/main.ts`；收到新 path 调 `dbService.openForGrove`，null 则 `closeCurrent`
+- [x] 5.1 在 `services/grove.ts` 的 `openGrove` 成功获取 lock + 读 project.json 之后串行调 `dbService.openForGrove(path)`
+- [x] 5.2 任一步骤失败：释放 lock、`dbService.closeCurrent()`、不更新 `last_opened_at`、IPC 返回 `E_INTERNAL`
+- [x] 5.3 `closeGrove()` 里先 `dbService.closeCurrent()` 再 release lock
+- [x] 5.4 `app.on('will-quit')` 里保底 `dbService.closeCurrent()`
+- [x] 5.5 `project:changed` 事件订阅逻辑集中在 `electron/main.ts`；收到新 path 调 `dbService.openForGrove`，null 则 `closeCurrent`
 
 ## 6. IPC（electron/ipc/db.ts）
 
-- [ ] 6.1 `shared/ipc-contract.ts` 添加 `db` 命名空间：`version(): { user_version: number, migrations_applied: string[] }`、`integrityCheck(): 'ok' | string`
-- [ ] 6.2 添加事件通道声明：`db:rebuilding`、`db:rebuilt`
-- [ ] 6.3 handler 实现：`version` 委托 `dbService.current!`；若无 current 返回 `E_NOT_FOUND`
-- [ ] 6.4 渲染端侧 `src/ipc/client.ts` 为 `on('db:rebuilding'|'db:rebuilt', cb)` 提供类型
+- [x] 6.1 `shared/ipc-contract.ts` 添加 `db` 命名空间：`version(): { user_version: number, migrations_applied: string[] }`、`integrityCheck(): 'ok' | string`
+- [x] 6.2 添加事件通道声明：`db:rebuilding`、`db:rebuilt`
+- [x] 6.3 handler 实现：`version` 委托 `dbService.current!`；若无 current 返回 `E_NOT_FOUND`
+- [x] 6.4 渲染端侧 `src/ipc/client.ts` 为 `on('db:rebuilding'|'db:rebuilt', cb)` 提供类型
 
 ## 7. 渲染端最小 UX 联动
 
