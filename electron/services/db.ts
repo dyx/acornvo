@@ -7,7 +7,6 @@ import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
 
 let current: Database.Database | null = null
-// @ts-ignore TS6133 — write-only in skeleton; read by later tasks (openForGrove, closeCurrent)
 let currentGrovePath: string | null = null
 
 export function getCurrent(): Database.Database | null {
