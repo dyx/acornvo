@@ -28,16 +28,17 @@ CREATE TABLE tags (
 CREATE TABLE file_tags (
   path TEXT NOT NULL,
   tag TEXT NOT NULL,
-  PRIMARY KEY (path, tag)
+  PRIMARY KEY (path, tag),
+  FOREIGN KEY (path) REFERENCES files(path) ON DELETE CASCADE
 );
 
--- 全文搜索（tokenizer=unicode61；中文由应用层 jieba 预分词后写入 content）
+-- 全文搜索（tokenizer=simple；中文由应用层 jieba 预分词后写入 content）
 CREATE VIRTUAL TABLE files_fts USING fts5(
   path UNINDEXED,
   title,
   summary,
   content,
-  tokenize='unicode61'
+  tokenize='simple'
 );
 
 -- 标记
