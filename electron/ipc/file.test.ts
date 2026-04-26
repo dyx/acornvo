@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -121,5 +121,50 @@ describe('fileHandlers.list', () => {
 
   it('rejects a path traversal in dirRel with E_PERMISSION', async () => {
     await expect(fileHandlers.list('../')).rejects.toMatchObject({ code: 'E_PERMISSION' })
+  })
+})
+
+describe('fileHandlers.rename', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ipcrename-'))
+    setGroveRoot(dir)
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('renames a file inside the grove', async () => {
+    writeFileSync(join(dir, 'a.md'), 'x')
+    await fileHandlers.rename('a.md', 'b.md')
+    expect(readFileSync(join(dir, 'b.md'), 'utf8')).toBe('x')
+    expect(await fileHandlers.exists('a.md')).toBe(false)
+  })
+
+  it('cross-directory rename inside grove is allowed; mkdir -p the parent', async () => {
+    writeFileSync(join(dir, 'a.md'), 'x')
+    await fileHandlers.rename('a.md', 'sub/deeper/b.md')
+    expect(readFileSync(join(dir, 'sub', 'deeper', 'b.md'), 'utf8')).toBe('x')
+  })
+
+  it('rejects newRel that escapes the grove with E_PERMISSION; source untouched', async () => {
+    writeFileSync(join(dir, 'a.md'), 'x')
+    await expect(fileHandlers.rename('a.md', '../escape.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+    expect(readFileSync(join(dir, 'a.md'), 'utf8')).toBe('x')
+  })
+
+  it('rejects oldRel that escapes the grove with E_PERMISSION', async () => {
+    await expect(fileHandlers.rename('../outside.md', 'a.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('throws E_NOT_FOUND when oldRel does not exist', async () => {
+    await expect(fileHandlers.rename('missing.md', 'b.md')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 })

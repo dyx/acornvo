@@ -1,6 +1,6 @@
-import { lstat, readdir, stat as fsStat, access } from 'node:fs/promises'
+import { lstat, mkdir, readdir, rename as fsRename, stat as fsStat, access } from 'node:fs/promises'
 import { constants } from 'node:fs'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
 import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
@@ -144,7 +144,18 @@ export const fileHandlers = {
     }
   },
 
-  async rename(_oldRel: string, _newRel: string): Promise<void> {
-    throw new IpcError('E_INTERNAL', 'rename not yet implemented (phase-04 plan 3 task 9)')
-  }
+  async rename(oldRel: string, newRel: string): Promise<void> {
+    const root = requireGroveRoot()
+    const absOld = safeResolve(root, oldRel)
+    const absNew = safeResolve(root, newRel)
+    await mkdir(dirname(absNew), { recursive: true })
+    try {
+      await fsRename(absOld, absNew)
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new IpcError('E_NOT_FOUND', `${oldRel}: not found`)
+      }
+      throw err
+    }
+  },
 }
