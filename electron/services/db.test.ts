@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { existsSync, writeFileSync, readdirSync, mkdirSync, statSync } from 'node:fs'
+import { dbService } from './db'
 import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent, closeCurrent, requireCurrent } from './db'
 import { IpcError } from '@shared/ipc-contract'
 
@@ -196,5 +197,16 @@ describe('requireCurrent', () => {
     }
     expect(caught).toBeInstanceOf(IpcError)
     expect((caught as IpcError).code).toBe('E_NOT_FOUND')
+  })
+})
+
+describe('dbService surface', () => {
+  it('exposes the documented methods', () => {
+    expect(typeof dbService.openForGrove).toBe('function')
+    expect(typeof dbService.closeCurrent).toBe('function')
+    expect(typeof dbService.getCurrent).toBe('function')
+    expect(typeof dbService.requireCurrent).toBe('function')
+    expect(typeof dbService.integrityCheck).toBe('function')
+    expect(typeof dbService.getCurrentGrovePath).toBe('function')
   })
 })

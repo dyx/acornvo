@@ -25,9 +25,16 @@ export function getCurrentGrovePath(): string | null {
   return currentGrovePath
 }
 
-// Stubs (filled in by later tasks)
 export const dbService = {
-  getCurrent
+  openForGrove,
+  closeCurrent,
+  getCurrent,
+  requireCurrent,
+  getCurrentGrovePath,
+  integrityCheck: (): string => {
+    const db = requireCurrent()
+    return integrityCheck(db)
+  }
 }
 
 // Test-only escape hatch — removed in production builds via tree-shaking when unused.

@@ -1,5 +1,3 @@
-import { join } from 'node:path'
-
 /**
  * Returns the absolute path of the `migrations/` directory.
  *
