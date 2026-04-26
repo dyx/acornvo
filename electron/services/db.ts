@@ -1,5 +1,5 @@
 // electron/services/db.ts
-import type Database from 'better-sqlite3'
+import Database from 'better-sqlite3'
 
 let current: Database.Database | null = null
 // @ts-ignore TS6133 — write-only in skeleton; read by later tasks (openForGrove, closeCurrent)
@@ -25,4 +25,14 @@ export function __resetForTest(): void {
   }
   current = null
   currentGrovePath = null
+}
+
+export function applyPragmas(db: Database.Database): void {
+  db.pragma('journal_mode = WAL')
+  db.pragma('synchronous = NORMAL')
+  db.pragma('foreign_keys = ON')
+  db.pragma('busy_timeout = 5000')
+  db.pragma('temp_store = MEMORY')
+  db.pragma('cache_size = -20000')
+  db.pragma('mmap_size = 268435456')
 }
