@@ -34,6 +34,39 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
   db: {
     version: () => ({ user_version: 0, migrations_applied: [] }),
     integrityCheck: () => 'ok'
+  },
+  file: {
+    read: () => ({
+      content: '',
+      eol: 'lf' as const,
+      mtimeMs: 0,
+      sha256: '',
+      hadBom: false,
+      originalEncoding: 'utf8' as const
+    }),
+    readParsed: () => ({
+      content: '',
+      eol: 'lf' as const,
+      mtimeMs: 0,
+      sha256: '',
+      hadBom: false,
+      originalEncoding: 'utf8' as const,
+      frontmatter: {},
+      body: '',
+      rawYaml: ''
+    }),
+    write: () => ({ mtimeMs: 0, sha256: '' }),
+    writeParsed: () => ({ mtimeMs: 0, sha256: '' }),
+    stat: () => ({
+      size: 0,
+      mtimeMs: 0,
+      ctimeMs: 0,
+      isFile: false,
+      isDirectory: false
+    }),
+    exists: () => false,
+    list: () => [],
+    rename: () => undefined
   }
 }
 
