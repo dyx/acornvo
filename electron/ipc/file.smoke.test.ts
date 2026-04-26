@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { encode as iconvEncode } from 'iconv-lite'
+import { IpcError } from '@shared/ipc-contract'
 
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 import * as groveSvc from '../services/grove'
@@ -98,5 +99,31 @@ describe('smoke 7.4: CRLF preservation', () => {
     await fileHandlers.write('default-eol.md', 'a\nb\n')
     const onDisk = readFileSync(join(dir, 'default-eol.md'), 'utf8')
     expect(onDisk).toBe('a\nb\n')
+  })
+})
+
+describe('smoke 7.6: path traversal rejected', () => {
+  it('write("../outside.md") throws E_PERMISSION', async () => {
+    await expect(fileHandlers.write('../outside.md', 'x')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('read("../outside.md") throws E_PERMISSION', async () => {
+    await expect(fileHandlers.read('../outside.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('list("../") throws E_PERMISSION', async () => {
+    await expect(fileHandlers.list('../')).rejects.toMatchObject({ code: 'E_PERMISSION' })
+  })
+
+  it('rename("a.md", "../escape.md") leaves the source untouched', async () => {
+    writeFileSync(join(dir, 'a.md'), 'orig')
+    await expect(fileHandlers.rename('a.md', '../escape.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+    expect(readFileSync(join(dir, 'a.md'), 'utf8')).toBe('orig')
   })
 })
