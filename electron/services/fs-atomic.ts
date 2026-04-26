@@ -142,10 +142,46 @@ export function normalizeForDisk(content: string, opts: { eol: 'lf' | 'crlf' }):
   return lf.replace(/\n/g, '\r\n')
 }
 
-export function writeWithVerify(
-  _abs: string,
-  _content: string,
-  _opts: WriteWithVerifyOptions
+export async function writeWithVerify(
+  abs: string,
+  content: string,
+  opts: WriteWithVerifyOptions = {}
 ): Promise<{ mtimeMs: number; sha256: string }> {
-  throw new Error('writeWithVerify: not yet implemented (phase-04 plan 2)')
+  const eol = opts.eol ?? 'lf'
+
+  // 3.7.1 mtime preflight
+  if (opts.expectedMtime !== undefined) {
+    let currentMtime: number | undefined
+    try {
+      currentMtime = (await stat(abs)).mtimeMs
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+      // File doesn't exist — caller said "I read mtime X" but the file is gone.
+      // Treat as mismatch so they re-read and retry.
+      throw new IpcError('E_MTIME_MISMATCH', `${abs}: file not found (expected mtime ${opts.expectedMtime})`)
+    }
+    if (currentMtime !== opts.expectedMtime) {
+      throw new IpcError(
+        'E_MTIME_MISMATCH',
+        `${abs}: mtime is ${currentMtime}, expected ${opts.expectedMtime}`
+      )
+    }
+  }
+
+  // 3.7.2 normalize + atomic write
+  const onDisk = normalizeForDisk(content, { eol })
+  const expectedSha = createHash('sha256').update(Buffer.from(onDisk, 'utf8')).digest('hex')
+  await writeFileAtomic(abs, onDisk)
+
+  // 3.7.3 verify (1 retry at 50ms)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt === 1) await new Promise((r) => setTimeout(r, 50))
+    const got = await readFile(abs)
+    const gotSha = createHash('sha256').update(got).digest('hex')
+    if (gotSha === expectedSha) {
+      const st = await stat(abs)
+      return { mtimeMs: st.mtimeMs, sha256: expectedSha }
+    }
+  }
+  throw new IpcError('E_WRITE_VERIFY', `${abs}: post-write sha256 mismatch after retry`)
 }

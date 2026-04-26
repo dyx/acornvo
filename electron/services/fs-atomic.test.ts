@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { encode as iconvEncode } from 'iconv-lite'
 import * as fsp from 'node:fs/promises'
-import { writeFileAtomic, readFileDetect, normalizeForDisk } from './fs-atomic'
+import { writeFileAtomic, readFileDetect, normalizeForDisk, writeWithVerify } from './fs-atomic'
 import { IpcError } from '@shared/ipc-contract'
 
 // Mock node:fs/promises to make exports spyable/mockable.
@@ -15,6 +15,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   return {
     ...original,
     rename: vi.fn(original.rename),
+    readFile: vi.fn(original.readFile),
   }
 })
 
@@ -295,5 +296,87 @@ describe('normalizeForDisk', () => {
   it('strips lone CR when normalizing to LF', () => {
     // Defensive: if some upstream wrote bare \r, don't preserve it as CR-only.
     expect(normalizeForDisk('a\rb\n', { eol: 'lf' })).toBe('a\nb\n')
+  })
+})
+
+describe('writeWithVerify', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'fsatomic-verify-'))
+  })
+  afterEach(async () => {
+    rmSync(dir, { recursive: true, force: true })
+    vi.mocked(fsp.readFile).mockReset()
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+    vi.mocked(fsp.readFile)?.mockImplementation?.(actual.readFile)
+  })
+
+  // 3.7.1 mtime preflight
+  it('writes successfully when expectedMtime matches current mtime', async () => {
+    const target = join(dir, 'a.md')
+    writeFileSync(target, 'old', 'utf8')
+    const before = (await fsp.stat(target)).mtimeMs
+    const r = await writeWithVerify(target, 'new', { eol: 'lf', expectedMtime: before })
+    expect(readFileSync(target, 'utf8')).toBe('new')
+    expect(r.sha256).toBe(createHash('sha256').update('new').digest('hex'))
+  })
+
+  it('writes when expectedMtime is omitted (no preflight)', async () => {
+    const target = join(dir, 'a.md')
+    const r = await writeWithVerify(target, 'fresh', { eol: 'lf' })
+    expect(readFileSync(target, 'utf8')).toBe('fresh')
+    expect(typeof r.mtimeMs).toBe('number')
+  })
+
+  it('throws E_MTIME_MISMATCH when expectedMtime does not match current mtime', async () => {
+    const target = join(dir, 'a.md')
+    writeFileSync(target, 'old', 'utf8')
+    const wrongMtime = 1
+    await expect(
+      writeWithVerify(target, 'new', { eol: 'lf', expectedMtime: wrongMtime })
+    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+    // Original content untouched.
+    expect(readFileSync(target, 'utf8')).toBe('old')
+  })
+
+  // 3.7.2 normalize + atomic write
+  it('honors eol=crlf by normalizing on the way to disk', async () => {
+    const target = join(dir, 'a.md')
+    await writeWithVerify(target, 'a\nb\n', { eol: 'crlf' })
+    expect(readFileSync(target, 'utf8')).toBe('a\r\nb\r\n')
+  })
+
+  it('does not leave .tmp residue', async () => {
+    const target = join(dir, 'a.md')
+    await writeWithVerify(target, 'x', { eol: 'lf' })
+    const stragglers = readdirSync(dir).filter((f) => f.includes('.tmp'))
+    expect(stragglers).toEqual([])
+  })
+
+  // 3.7.3 verify + retry
+  it('retries the verify-read once after a 50ms delay then succeeds', async () => {
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+    const realReadFile = actual.readFile
+    let calls = 0
+    vi.mocked(fsp.readFile).mockImplementation(async (...args: unknown[]) => {
+      calls++
+      // Only the FIRST call is the verify-read; return wrong content to trigger retry.
+      if (calls === 1) return Buffer.from('wrong-content', 'utf8') as never
+      return realReadFile(args[0] as never, args[1] as never) as never
+    })
+    const target = join(dir, 'a.md')
+    const r = await writeWithVerify(target, 'right', { eol: 'lf' })
+    expect(r.sha256).toBe(createHash('sha256').update('right').digest('hex'))
+    expect(calls).toBeGreaterThanOrEqual(2)
+  })
+
+  it('throws E_WRITE_VERIFY when the verify-read keeps mismatching after retry', async () => {
+    vi.mocked(fsp.readFile).mockImplementation(
+      async () => Buffer.from('always-wrong', 'utf8') as never
+    )
+    const target = join(dir, 'a.md')
+    await expect(writeWithVerify(target, 'right', { eol: 'lf' })).rejects.toMatchObject({
+      code: 'E_WRITE_VERIFY'
+    })
   })
 })

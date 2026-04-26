@@ -20,6 +20,8 @@ export type IpcErrorCode =
   | 'E_EXISTS'
   | 'E_TIMEOUT'
   | 'E_ENCODING'
+  | 'E_WRITE_VERIFY'
+  | 'E_MTIME_MISMATCH'
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
 
