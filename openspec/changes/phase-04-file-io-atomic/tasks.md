@@ -48,19 +48,19 @@
 
 ## 6. phase 2 回归改造
 
-- [ ] 6.1 phase 2 的 `recent.save` 改用 `writeFileAtomic`（先读再写 JSON，内存副本原子写磁盘）
-- [ ] 6.2 phase 2 的 `project.json` 写入改用 `writeFileAtomic`
-- [ ] 6.3 phase 2 的 `.lock` 写入改用 `writeFileAtomic`（避免 lock 半文件状态）
+- [x] 6.1 phase 2 的 `recent.save` 改用 `writeFileAtomic`（先读再写 JSON，内存副本原子写磁盘）
+- [x] 6.2 phase 2 的 `project.json` 写入改用 `writeFileAtomic`
+- [x] 6.3 phase 2 的 `.lock` 写入改用 `writeFileAtomic`（避免 lock 半文件状态）
 
 ## 7. 验收
 
-- [ ] 7.1 新建 md：`window.api.file.write('a.md', '# hi')` → 磁盘存在；`file.read('a.md')` 返回 `# hi`、`eol: 'lf'`、`hadBom: false`
-- [ ] 7.2 含 BOM 的文件：手动放一个 BOM UTF-8 文件 → `file.read` 返回 `hadBom: true` 且 `content` 无 BOM
-- [ ] 7.3 GBK 文件：手动放一个 GBK 编码的中文 md → `file.read` 返回中文正文、`originalEncoding: 'gbk'`；`file.write` 回写后变 UTF-8
-- [ ] 7.4 CRLF 文件：手动放一个 CRLF 文件 → `file.read` 返回 `eol: 'crlf'`；`file.write(rel, body, { eol: 'crlf' })` 仍 CRLF
-- [ ] 7.5 断电模拟：`kill -9` 进程在 write 过程中 → 启动后目录无 `.tmp` 残留（或有残留但目标文件完整——由原子性保证）
-- [ ] 7.6 路径越界：`file.write('../outside.md', 'x')` → `E_PERMISSION`
-- [ ] 7.7 mtime 乐观锁：人为先改 mtime，再带旧 `expectedMtime` 写入 → `E_MTIME_MISMATCH`
-- [ ] 7.8 frontmatter 全字段 md 往返：写入后读出完全等价
+- [x] 7.1 新建 md：`window.api.file.write('a.md', '# hi')` → 磁盘存在；`file.read('a.md')` 返回 `# hi`、`eol: 'lf'`、`hadBom: false`
+- [x] 7.2 含 BOM 的文件：手动放一个 BOM UTF-8 文件 → `file.read` 返回 `hadBom: true` 且 `content` 无 BOM
+- [x] 7.3 GBK 文件：手动放一个 GBK 编码的中文 md → `file.read` 返回中文正文、`originalEncoding: 'gbk'`；`file.write` 回写后变 UTF-8
+- [x] 7.4 CRLF 文件：手动放一个 CRLF 文件 → `file.read` 返回 `eol: 'crlf'`；`file.write(rel, body, { eol: 'crlf' })` 仍 CRLF
+- [x] 7.5 断电模拟：`kill -9` 进程在 write 过程中 → 启动后目录无 `.tmp` 残留（或有残留但目标文件完整——由原子性保证）
+- [x] 7.6 路径越界：`file.write('../outside.md', 'x')` → `E_PERMISSION`
+- [x] 7.7 mtime 乐观锁：人为先改 mtime，再带旧 `expectedMtime` 写入 → `E_MTIME_MISMATCH`
+- [x] 7.8 frontmatter 全字段 md 往返：写入后读出完全等价
 - [ ] 7.9 单元测试覆盖率：`fs-atomic.ts` 与 `path-safety.ts` >= 85%
 - [ ] 7.10 `openspec validate phase-04-file-io-atomic --strict` 通过
