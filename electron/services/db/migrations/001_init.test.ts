@@ -71,4 +71,11 @@ describe('001_init.sql', () => {
     db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")
     expect(() => db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")).toThrow(/UNIQUE/i)
   })
+
+  it('creates files_fts FTS5 virtual table that supports MATCH', () => {
+    expect(tableNames(db)).toContain('files_fts')
+    db.exec("INSERT INTO files_fts (path, title, summary, content) VALUES ('a.md', 'hello world', 's', 'body')")
+    const rows = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH 'hello'").all() as Array<{ path: string }>
+    expect(rows.map((r) => r.path)).toEqual(['a.md'])
+  })
 })

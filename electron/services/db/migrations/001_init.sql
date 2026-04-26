@@ -30,3 +30,12 @@ CREATE TABLE file_tags (
   tag TEXT NOT NULL,
   PRIMARY KEY (path, tag)
 );
+
+-- 全文搜索（tokenizer=unicode61；中文由应用层 jieba 预分词后写入 content）
+CREATE VIRTUAL TABLE files_fts USING fts5(
+  path UNINDEXED,
+  title,
+  summary,
+  content,
+  tokenize='unicode61'
+);
