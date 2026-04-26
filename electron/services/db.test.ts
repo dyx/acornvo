@@ -3,8 +3,8 @@ import Database from 'better-sqlite3'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { existsSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs'
-import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent } from './db'
+import { existsSync, writeFileSync, readdirSync, mkdirSync, statSync } from 'node:fs'
+import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent, closeCurrent } from './db'
 
 describe('applyPragmas', () => {
   let dir: string
@@ -134,6 +134,40 @@ describe('openForGrove', () => {
       expect(second).not.toBe(first)
     } finally {
       rmSync(dir2, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('closeCurrent', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'db-close-'))
+    mkdirSync(join(dir, '.acornvo'), { recursive: true })
+  })
+  afterEach(() => {
+    __resetForTest()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('is a no-op when nothing is open', () => {
+    expect(() => closeCurrent()).not.toThrow()
+    expect(getCurrent()).toBeNull()
+  })
+
+  it('closes current handle, truncates WAL, clears state', () => {
+    openForGrove(dir)
+    const db = getCurrent() as Database.Database
+    expect(db.open).toBe(true)
+    // create some WAL pages
+    db.exec("INSERT INTO files (path, mtime) VALUES ('p', 0)")
+    closeCurrent()
+    expect(db.open).toBe(false)
+    expect(getCurrent()).toBeNull()
+    // -wal file should be 0 bytes or absent after TRUNCATE checkpoint
+    const wal = join(dir, '.acornvo', 'index.db-wal')
+    if (existsSync(wal)) {
+      const size = statSync(wal).size
+      expect(size).toBe(0)
     }
   })
 })
