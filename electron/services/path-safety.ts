@@ -1,5 +1,5 @@
-// electron/services/path-safety.ts
-// Implemented across tasks 2.1-2.3 of this plan.
+import { resolve, sep } from 'node:path'
+import { IpcError } from '@shared/ipc-contract'
 
 export interface SafeResolveOptions {
   /** When true, resolves symlinks via fs.realpathSync and verifies the real path is still inside groveRoot. */
@@ -7,9 +7,21 @@ export interface SafeResolveOptions {
 }
 
 export function safeResolve(
-  _groveRoot: string,
-  _p: string,
+  groveRoot: string,
+  p: string,
   _opts: SafeResolveOptions = {}
 ): string {
-  throw new Error('safeResolve: not yet implemented (phase-04 plan 1, task 2.1)')
+  if (typeof groveRoot !== 'string' || groveRoot.length === 0) {
+    throw new IpcError('E_INVALID_ARGS', 'safeResolve: groveRoot must be a non-empty string')
+  }
+  if (typeof p !== 'string') {
+    throw new IpcError('E_INVALID_ARGS', 'safeResolve: path must be a string')
+  }
+  const normRoot = resolve(groveRoot)
+  const normRootSep = normRoot.endsWith(sep) ? normRoot : normRoot + sep
+  const abs = resolve(groveRoot, p)
+  if (abs !== normRoot && !abs.startsWith(normRootSep)) {
+    throw new IpcError('E_PERMISSION', `safeResolve: path escapes grove (${p})`)
+  }
+  return abs
 }
