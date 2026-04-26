@@ -1,4 +1,5 @@
-import { resolve, sep } from 'node:path'
+import { dirname, resolve, sep } from 'node:path'
+import { realpathSync } from 'node:fs'
 import { IpcError } from '@shared/ipc-contract'
 
 export interface SafeResolveOptions {
@@ -9,7 +10,7 @@ export interface SafeResolveOptions {
 export function safeResolve(
   groveRoot: string,
   p: string,
-  _opts: SafeResolveOptions = {}
+  opts: SafeResolveOptions = {}
 ): string {
   if (typeof groveRoot !== 'string' || groveRoot.length === 0) {
     throw new IpcError('E_INVALID_ARGS', 'safeResolve: groveRoot must be a non-empty string')
@@ -28,5 +29,35 @@ export function safeResolve(
   if (abs !== normRoot && !abs.startsWith(normRootSep)) {
     throw new IpcError('E_PERMISSION', `safeResolve: path escapes grove (${p})`)
   }
-  return abs
+  if (!opts.realpath) return abs
+
+  const realRoot = realpathSync(normRoot)
+  const realRootSep = realRoot.endsWith(sep) ? realRoot : realRoot + sep
+  const realAbs = realpathOrAncestor(abs)
+  if (realAbs !== realRoot && !realAbs.startsWith(realRootSep)) {
+    throw new IpcError('E_PERMISSION', `safeResolve: E_PERMISSION — realpath escapes grove (${p})`)
+  }
+  return realAbs
+}
+
+/**
+ * Resolve `abs` via realpath. If the path doesn't exist, walk up to the
+ * nearest existing ancestor and re-attach the unresolved tail. This lets
+ * write-paths use { realpath: true } without crashing on the first call.
+ */
+function realpathOrAncestor(abs: string): string {
+  let ancestor = abs
+  const tail: string[] = []
+  for (;;) {
+    try {
+      const real = realpathSync(ancestor)
+      return tail.length === 0 ? real : resolve(real, ...tail.reverse())
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+      const parent = dirname(ancestor)
+      if (parent === ancestor) return abs // hit fs root, give up — return lexical
+      tail.push(ancestor.slice(parent.length + 1))
+      ancestor = parent
+    }
+  }
 }
