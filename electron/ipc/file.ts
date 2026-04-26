@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
+import { parseFile, stringify } from '../services/frontmatter'
 import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import {
@@ -44,8 +45,30 @@ export const fileHandlers = {
     }
   },
 
-  async readParsed(_rel: string): Promise<FileReadParsedResult> {
-    throw new IpcError('E_INTERNAL', 'readParsed not yet implemented (phase-04 plan 3 task 10)')
+  async readParsed(rel: string): Promise<FileReadParsedResult> {
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, rel)
+    let r
+    try {
+      r = await readFileDetect(abs)
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new IpcError('E_NOT_FOUND', `${rel}: not found`)
+      }
+      throw err
+    }
+    const parsed = parseFile(r.content)
+    return {
+      content: r.content,
+      eol: r.eol,
+      mtimeMs: r.mtimeMs,
+      sha256: r.sha256,
+      hadBom: r.hadBom,
+      originalEncoding: r.originalEncoding,
+      frontmatter: parsed.frontmatter,
+      body: parsed.body,
+      rawYaml: parsed.rawYaml
+    }
   },
 
   async write(
@@ -59,12 +82,15 @@ export const fileHandlers = {
   },
 
   async writeParsed(
-    _rel: string,
-    _frontmatter: Frontmatter,
-    _body: string,
-    _opts?: FileWriteOptions
+    rel: string,
+    frontmatter: Frontmatter,
+    body: string,
+    opts: FileWriteOptions = {}
   ): Promise<FileWriteResult> {
-    throw new IpcError('E_INTERNAL', 'writeParsed not yet implemented (phase-04 plan 3 task 10)')
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, rel)
+    const md = stringify(frontmatter, body)
+    return writeWithVerify(abs, md, opts)
   },
 
   async stat(rel: string): Promise<FileStat> {

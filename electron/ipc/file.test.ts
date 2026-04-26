@@ -168,3 +168,48 @@ describe('fileHandlers.rename', () => {
     })
   })
 })
+
+describe('fileHandlers.writeParsed / readParsed', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ipcparsed-'))
+    setGroveRoot(dir)
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('writeParsed then readParsed roundtrips frontmatter + body', async () => {
+    const fm = { title: 'hi', tags: ['a'], rating: 4 }
+    await fileHandlers.writeParsed('a.md', fm as never, '# Body\n', { eol: 'lf' })
+    const r = await fileHandlers.readParsed('a.md')
+    expect(r.frontmatter).toMatchObject(fm)
+    expect(r.body).toContain('# Body')
+    expect(r.eol).toBe('lf')
+    expect(r.hadBom).toBe(false)
+  })
+
+  it('writeParsed with empty frontmatter writes plain body (no --- wrapper)', async () => {
+    await fileHandlers.writeParsed('plain.md', {} as never, '# just body\n')
+    const onDisk = readFileSync(join(dir, 'plain.md'), 'utf8')
+    expect(onDisk.startsWith('---')).toBe(false)
+    expect(onDisk).toContain('# just body')
+  })
+
+  it('writeParsed honors expectedMtime → throws E_MTIME_MISMATCH on stale read', async () => {
+    await fileHandlers.writeParsed('a.md', { title: 'old' } as never, 'body\n')
+    await expect(
+      fileHandlers.writeParsed('a.md', { title: 'new' } as never, 'body\n', {
+        expectedMtime: 1
+      })
+    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+  })
+
+  it('writeParsed validates frontmatter — invalid rating is rejected', async () => {
+    // gray-matter will accept whatever we hand it; the schema check happens on PARSE.
+    // We simulate: write plain content with invalid rating in YAML, then readParsed should fail.
+    await fileHandlers.write('bad.md', '---\nrating: 9\n---\nbody\n', { eol: 'lf' })
+    await expect(fileHandlers.readParsed('bad.md')).rejects.toThrow(/rating|too_big|too_small|5/i)
+  })
+})
