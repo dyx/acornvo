@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { encode as iconvEncode } from 'iconv-lite'
 import * as fsp from 'node:fs/promises'
-import { writeFileAtomic, readFileDetect } from './fs-atomic'
+import { writeFileAtomic, readFileDetect, normalizeForDisk } from './fs-atomic'
 import { IpcError } from '@shared/ipc-contract'
 
 // Mock node:fs/promises to make exports spyable/mockable.
@@ -276,5 +276,24 @@ describe('readFileDetect', () => {
     writeFileSync(target, 'abc', 'utf8')
     const r = await readFileDetect(target)
     expect(r.sha256).toBe(createHash('sha256').update('abc').digest('hex'))
+  })
+})
+
+describe('normalizeForDisk', () => {
+  it('returns the input unchanged for { eol: "lf" }', () => {
+    expect(normalizeForDisk('a\nb\n', { eol: 'lf' })).toBe('a\nb\n')
+  })
+
+  it('converts LF → CRLF for { eol: "crlf" }', () => {
+    expect(normalizeForDisk('a\nb\n', { eol: 'crlf' })).toBe('a\r\nb\r\n')
+  })
+
+  it('does not double-encode existing CRLF when eol=crlf', () => {
+    expect(normalizeForDisk('a\r\nb\r\n', { eol: 'crlf' })).toBe('a\r\nb\r\n')
+  })
+
+  it('strips lone CR when normalizing to LF', () => {
+    // Defensive: if some upstream wrote bare \r, don't preserve it as CR-only.
+    expect(normalizeForDisk('a\rb\n', { eol: 'lf' })).toBe('a\nb\n')
   })
 })

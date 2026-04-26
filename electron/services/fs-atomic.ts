@@ -135,8 +135,11 @@ function detectEol(s: string): 'lf' | 'crlf' | 'mixed' {
   return 'mixed'
 }
 
-export function normalizeForDisk(_content: string, _opts: { eol: 'lf' | 'crlf' }): string {
-  throw new Error('normalizeForDisk: not yet implemented (phase-04 plan 2)')
+export function normalizeForDisk(content: string, opts: { eol: 'lf' | 'crlf' }): string {
+  // First, canonicalize to LF: any CRLF or lone CR → LF.
+  const lf = content.replace(/\r\n?/g, '\n')
+  if (opts.eol === 'lf') return lf
+  return lf.replace(/\n/g, '\r\n')
 }
 
 export function writeWithVerify(
