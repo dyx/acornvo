@@ -26,14 +26,14 @@
 
 ## 4. 核心服务（electron/services/db.ts）
 
-- [ ] 4.1 module-scoped `current: Database.Database | null`、`currentGrovePath: string | null`
-- [ ] 4.2 `applyPragmas(db)`：设置 WAL / synchronous=NORMAL / foreign_keys=ON / busy_timeout=5000 / temp_store=MEMORY / cache_size=-20000 / mmap_size=268435456
-- [ ] 4.3 `integrityCheck(db)`：`db.pragma('integrity_check', { simple: true })`；返回 `'ok'` 或错误串
-- [ ] 4.4 `backupAndRebuild(grovePath)`：rename `index.db*` → `index.db.corrupt-<ts>*`；新建空 db 并跑 migrations；过程中 `webContents.send('db:rebuilding' | 'db:rebuilt')`
-- [ ] 4.5 `openForGrove(grovePath)`：close current → ensure `.acornvo/` → new Database → applyPragmas → integrityCheck → 失败 backupAndRebuild → runMigrations → 登记 current
-- [ ] 4.6 `closeCurrent()`：若 current 非空，尝试 `wal_checkpoint(TRUNCATE)`（失败退 PASSIVE）→ `db.close()` → 清 current
-- [ ] 4.7 `getCurrent()` / `requireCurrent()`：后者在 null 时抛 `IpcError('E_NOT_FOUND', 'no grove opened')`（供后续模块使用）
-- [ ] 4.8 对外暴露 `dbService` 单例（后续 indexer/search/queue/usage/bookmarks/chats 都通过此单例拿 db）
+- [x] 4.1 module-scoped `current: Database.Database | null`、`currentGrovePath: string | null`
+- [x] 4.2 `applyPragmas(db)`：设置 WAL / synchronous=NORMAL / foreign_keys=ON / busy_timeout=5000 / temp_store=MEMORY / cache_size=-20000 / mmap_size=268435456
+- [x] 4.3 `integrityCheck(db)`：`db.pragma('integrity_check', { simple: true })`；返回 `'ok'` 或错误串
+- [x] 4.4 `backupAndRebuild(grovePath)`：rename `index.db*` → `index.db.corrupt-<ts>*`；新建空 db 并跑 migrations；过程中 `webContents.send('db:rebuilding' | 'db:rebuilt')`
+- [x] 4.5 `openForGrove(grovePath)`：close current → ensure `.acornvo/` → new Database → applyPragmas → integrityCheck → 失败 backupAndRebuild → runMigrations → 登记 current
+- [x] 4.6 `closeCurrent()`：若 current 非空，尝试 `wal_checkpoint(TRUNCATE)`（失败退 PASSIVE）→ `db.close()` → 清 current
+- [x] 4.7 `getCurrent()` / `requireCurrent()`：后者在 null 时抛 `IpcError('E_NOT_FOUND', 'no grove opened')`（供后续模块使用）
+- [x] 4.8 对外暴露 `dbService` 单例（后续 indexer/search/queue/usage/bookmarks/chats 都通过此单例拿 db）
 
 ## 5. 与 grove 生命周期联动
 
