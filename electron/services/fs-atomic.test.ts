@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { createHash } from 'node:crypto'
+import { encode as iconvEncode } from 'iconv-lite'
 import * as fsp from 'node:fs/promises'
-import { writeFileAtomic } from './fs-atomic'
+import { writeFileAtomic, readFileDetect } from './fs-atomic'
+import { IpcError } from '@shared/ipc-contract'
 
 // Mock node:fs/promises to make exports spyable/mockable.
 // The default mock implementation delegates to the real functions.
@@ -105,7 +108,6 @@ describe('writeFileAtomic EPERM/EBUSY retry', () => {
 
   it('retries on EPERM up to 2 times then succeeds', async () => {
     let attempts = 0
-    const realRename = vi.mocked(fsp.rename).getMockImplementation()
     vi.mocked(fsp.rename).mockImplementation(async (src, dest) => {
       attempts++
       if (attempts <= 2) {
@@ -181,10 +183,7 @@ describe('writeFileAtomic per-path serialization lock', () => {
   })
 
   it('clears the lock map on failure (subsequent writes still work)', async () => {
-    const target = join(dir, 'a.md')
-    // First, use a write that will throw post-fsync — easiest: pass an invalid type.
-    // We instead simulate failure by calling on a path whose parent we then chmod 0.
-    // Simpler approach: trigger ENOTDIR by writing under an existing file.
+    // Trigger ENOTDIR by writing under an existing file.
     writeFileSync(join(dir, 'file'), 'x')
     const bad = join(dir, 'file', 'inside.md')
     await expect(writeFileAtomic(bad, 'will-fail')).rejects.toThrow()
@@ -192,5 +191,90 @@ describe('writeFileAtomic per-path serialization lock', () => {
     const good = join(dir, 'good.md')
     await writeFileAtomic(good, 'ok')
     expect(readFileSync(good, 'utf8')).toBe('ok')
+  })
+})
+
+function sha256Hex(s: string): string {
+  return createHash('sha256').update(Buffer.from(s, 'utf8')).digest('hex')
+}
+
+describe('readFileDetect', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'fsatomic-read-'))
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('reads plain UTF-8 LF — no BOM, eol=lf, originalEncoding=utf8', async () => {
+    const target = join(dir, 'a.md')
+    writeFileSync(target, 'hello\nworld\n', 'utf8')
+    const r = await readFileDetect(target)
+    expect(r.content).toBe('hello\nworld\n')
+    expect(r.hadBom).toBe(false)
+    expect(r.eol).toBe('lf')
+    expect(r.originalEncoding).toBe('utf8')
+    expect(r.sha256).toBe(sha256Hex('hello\nworld\n'))
+    expect(typeof r.mtimeMs).toBe('number')
+  })
+
+  it('strips a UTF-8 BOM and reports hadBom=true', async () => {
+    const target = join(dir, 'bom.md')
+    writeFileSync(target, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')]))
+    const r = await readFileDetect(target)
+    expect(r.content).toBe('hi')
+    expect(r.hadBom).toBe(true)
+    expect(r.originalEncoding).toBe('utf8')
+    expect(r.sha256).toBe(sha256Hex('hi'))
+  })
+
+  it('decodes a GBK-encoded Chinese file', async () => {
+    const target = join(dir, 'gbk.md')
+    writeFileSync(target, iconvEncode('你好世界', 'gbk'))
+    const r = await readFileDetect(target)
+    expect(r.content).toBe('你好世界')
+    expect(r.originalEncoding).toBe('gbk')
+    expect(r.hadBom).toBe(false)
+  })
+
+  it('detects pure CRLF', async () => {
+    const target = join(dir, 'crlf.md')
+    writeFileSync(target, 'a\r\nb\r\nc\r\n', 'utf8')
+    const r = await readFileDetect(target)
+    expect(r.eol).toBe('crlf')
+    // content stays in original bytes — line endings preserved in `content`
+    // (renderer / IPC layer will decide whether to normalize on display).
+    // The contract: `content` is the decoded UTF-8 string. We do NOT collapse
+    // CRLF→LF inside readFileDetect; eol is metadata that callers use on write.
+    expect(r.content).toBe('a\r\nb\r\nc\r\n')
+  })
+
+  it('classifies mixed line endings as "mixed"', async () => {
+    const target = join(dir, 'mix.md')
+    writeFileSync(target, 'a\nb\r\nc\nd\r\n', 'utf8')
+    const r = await readFileDetect(target)
+    expect(r.eol).toBe('mixed')
+  })
+
+  it('throws E_ENCODING on a clearly non-text binary file', async () => {
+    const target = join(dir, 'bin.md')
+    // Bytes that are neither valid UTF-8 nor plausible GBK text.
+    // 0xc0 0x80 is a long-form NUL — invalid UTF-8 modified-UTF-8 form,
+    // and high-byte sequences interleaved with control chars trigger GBK
+    // replacement chars.
+    writeFileSync(
+      target,
+      Buffer.from([0xc0, 0x80, 0xfe, 0xff, 0xff, 0xfe, 0xc0, 0x80, 0xfe, 0xff])
+    )
+    await expect(readFileDetect(target)).rejects.toBeInstanceOf(IpcError)
+    await expect(readFileDetect(target)).rejects.toMatchObject({ code: 'E_ENCODING' })
+  })
+
+  it('produces a sha256 that matches the decoded UTF-8 content', async () => {
+    const target = join(dir, 'sha.md')
+    writeFileSync(target, 'abc', 'utf8')
+    const r = await readFileDetect(target)
+    expect(r.sha256).toBe(createHash('sha256').update('abc').digest('hex'))
   })
 })

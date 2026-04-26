@@ -19,6 +19,7 @@ export type IpcErrorCode =
   | 'E_LOCKED'
   | 'E_EXISTS'
   | 'E_TIMEOUT'
+  | 'E_ENCODING'
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
 

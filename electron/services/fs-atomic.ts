@@ -1,6 +1,9 @@
-import { open, rename, mkdir, copyFile, unlink } from 'node:fs/promises'
+import { open, rename, mkdir, copyFile, unlink, readFile, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
+import { isUtf8 } from 'node:buffer'
+import iconv from 'iconv-lite'
+import { IpcError } from '@shared/ipc-contract'
 
 const inflight = new Map<string, Promise<unknown>>()
 
@@ -75,8 +78,61 @@ export interface WriteWithVerifyOptions {
   expectedMtime?: number
 }
 
-export function readFileDetect(_abs: string): Promise<ReadFileDetectResult> {
-  throw new Error('readFileDetect: not yet implemented (phase-04 plan 2)')
+export async function readFileDetect(abs: string): Promise<ReadFileDetectResult> {
+  const buf = await readFile(abs)
+  const st = await stat(abs)
+
+  // 1. UTF-8 BOM
+  let body = buf
+  let hadBom = false
+  if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
+    body = buf.subarray(3)
+    hadBom = true
+  }
+
+  // 2. Encoding detect (UTF-8 first, then GBK fallback)
+  let content: string
+  let originalEncoding: 'utf8' | 'gbk'
+  if (isUtf8(body)) {
+    content = body.toString('utf8')
+    originalEncoding = 'utf8'
+  } else {
+    try {
+      const decoded = iconv.decode(body, 'gbk')
+      // iconv-lite emits U+FFFD for un-decodable bytes; treat presence as failure.
+      if (decoded.includes('�')) {
+        throw new IpcError('E_ENCODING', `unable to decode ${abs} as utf-8 or gbk`)
+      }
+      content = decoded
+      originalEncoding = 'gbk'
+    } catch (err) {
+      if (err instanceof IpcError) throw err
+      throw new IpcError('E_ENCODING', `unable to decode ${abs}: ${(err as Error).message}`)
+    }
+  }
+
+  // 3. EOL detection
+  const eol = detectEol(content)
+
+  // 4. sha256 of decoded UTF-8 content
+  const sha256 = createHash('sha256').update(Buffer.from(content, 'utf8')).digest('hex')
+
+  return { content, eol, originalEncoding, hadBom, mtimeMs: st.mtimeMs, sha256 }
+}
+
+function detectEol(s: string): 'lf' | 'crlf' | 'mixed' {
+  let crlf = 0
+  let lfOnly = 0
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\n') {
+      if (i > 0 && s[i - 1] === '\r') crlf++
+      else lfOnly++
+    }
+  }
+  if (crlf === 0 && lfOnly === 0) return 'lf' // no newlines → default lf
+  if (crlf > 0 && lfOnly === 0) return 'crlf'
+  if (lfOnly > 0 && crlf === 0) return 'lf'
+  return 'mixed'
 }
 
 export function normalizeForDisk(_content: string, _opts: { eol: 'lf' | 'crlf' }): string {
