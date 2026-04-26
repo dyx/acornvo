@@ -3,7 +3,6 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { encode as iconvEncode } from 'iconv-lite'
-import { IpcError } from '@shared/ipc-contract'
 import { utimes } from 'node:fs/promises'
 
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
