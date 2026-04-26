@@ -14,21 +14,21 @@
 
 ## 3. fs-atomic（electron/services/fs-atomic.ts）
 
-- [ ] 3.1 `writeFileAtomic(abs, data)`：`<abs>.<uuid>.tmp` + `fd.writeFile` + `fd.sync` + `fs.rename`
-- [ ] 3.2 `EXDEV` 回退：`copyFile + unlink`
-- [ ] 3.3 `EPERM/EBUSY`（Windows AV）重试：最多 2 次，间隔 50ms
-- [ ] 3.4 同路径串行锁：模块 scope 的 `Map<absPath, Promise>` 链式串行
-- [ ] 3.5 `readFileDetect(abs)`：返回 `{ content, eol, originalEncoding, hadBom, mtimeMs, sha256 }`
-  - [ ] 3.5.1 剥离 UTF-8 BOM
-  - [ ] 3.5.2 判断 `isUtf8(buf)`，否则 `iconv-lite` 尝试 `gbk` → 成功则转 UTF-8
-  - [ ] 3.5.3 扫描换行：纯 `\r\n` → `crlf`，纯 `\n` → `lf`，混合 → `mixed`（统计多数派）
-  - [ ] 3.5.4 计算 sha256 hex
-  - [ ] 3.5.5 全部失败 → 抛 `E_ENCODING`
-- [ ] 3.6 `normalizeForDisk(content, { eol })`：把 LF 转为指定 eol
-- [ ] 3.7 `writeWithVerify(abs, content, { eol, expectedMtime? })`：
-  - [ ] 3.7.1 读当前 mtime；若 `expectedMtime` 提供且不符 → 抛 `E_MTIME_MISMATCH`（返回 currentMtime）
-  - [ ] 3.7.2 `normalizeForDisk` → `writeFileAtomic`
-  - [ ] 3.7.3 读回校验 sha256；首次不符 → 50ms 重试一次；仍不符 → 抛 `E_WRITE_VERIFY`
+- [x] 3.1 `writeFileAtomic(abs, data)`：`<abs>.<uuid>.tmp` + `fd.writeFile` + `fd.sync` + `fs.rename`
+- [x] 3.2 `EXDEV` 回退：`copyFile + unlink`
+- [x] 3.3 `EPERM/EBUSY`（Windows AV）重试：最多 2 次，间隔 50ms
+- [x] 3.4 同路径串行锁：模块 scope 的 `Map<absPath, Promise>` 链式串行
+- [x] 3.5 `readFileDetect(abs)`：返回 `{ content, eol, originalEncoding, hadBom, mtimeMs, sha256 }`
+  - [x] 3.5.1 剥离 UTF-8 BOM
+  - [x] 3.5.2 判断 `isUtf8(buf)`，否则 `iconv-lite` 尝试 `gbk` → 成功则转 UTF-8
+  - [x] 3.5.3 扫描换行：纯 `\r\n` → `crlf`，纯 `\n` → `lf`，混合 → `mixed`（统计多数派）
+  - [x] 3.5.4 计算 sha256 hex
+  - [x] 3.5.5 全部失败 → 抛 `E_ENCODING`
+- [x] 3.6 `normalizeForDisk(content, { eol })`：把 LF 转为指定 eol
+- [x] 3.7 `writeWithVerify(abs, content, { eol, expectedMtime? })`：
+  - [x] 3.7.1 读当前 mtime；若 `expectedMtime` 提供且不符 → 抛 `E_MTIME_MISMATCH`（返回 currentMtime）
+  - [x] 3.7.2 `normalizeForDisk` → `writeFileAtomic`
+  - [x] 3.7.3 读回校验 sha256；首次不符 → 50ms 重试一次；仍不符 → 抛 `E_WRITE_VERIFY`
 
 ## 4. frontmatter codec（electron/services/frontmatter.ts）
 
