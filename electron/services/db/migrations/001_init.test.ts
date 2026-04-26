@@ -118,4 +118,20 @@ describe('001_init.sql', () => {
     // And a non-review kind is fine.
     expect(() => insert.run('reindex', JSON.stringify({ path: 'a.md' }), 'pending')).not.toThrow()
   })
+
+  it('creates usage with ts/model/purpose indices', () => {
+    expect(tableNames(db)).toContain('usage')
+    const cols = columnNames(db, 'usage')
+    expect(cols).toEqual(
+      expect.arrayContaining([
+        'id', 'ts', 'purpose', 'model_id', 'model_name',
+        'input_tokens', 'output_tokens', 'estimated_cost_usd',
+        'file_path', 'chat_id'
+      ])
+    )
+    const idx = indexNames(db)
+    expect(idx).toContain('idx_usage_ts')
+    expect(idx).toContain('idx_usage_model')
+    expect(idx).toContain('idx_usage_purpose')
+  })
 })

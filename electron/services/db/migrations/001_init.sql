@@ -76,3 +76,20 @@ CREATE INDEX idx_queue_status ON queue(status);
 CREATE UNIQUE INDEX uq_queue_active_path
   ON queue(payload_json ->> '$.path')
   WHERE status IN ('pending','running') AND kind = 'review';
+
+-- AI 用量记录
+CREATE TABLE usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts TEXT NOT NULL,
+  purpose TEXT NOT NULL,              -- 'review' | 'chat' | 'title-derive'
+  model_id TEXT NOT NULL,
+  model_name TEXT NOT NULL,
+  input_tokens INTEGER NOT NULL,
+  output_tokens INTEGER NOT NULL,
+  estimated_cost_usd REAL,
+  file_path TEXT,
+  chat_id TEXT
+);
+CREATE INDEX idx_usage_ts ON usage(ts);
+CREATE INDEX idx_usage_model ON usage(model_id);
+CREATE INDEX idx_usage_purpose ON usage(purpose);
