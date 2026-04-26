@@ -38,3 +38,24 @@ describe('smoke 7.1: write+read fresh md', () => {
     expect(r.originalEncoding).toBe('utf8')
   })
 })
+
+describe('smoke 7.2: BOM-prefixed UTF-8 file', () => {
+  it('strips the BOM and reports hadBom=true', async () => {
+    const target = join(dir, 'bom.md')
+    writeFileSync(
+      target,
+      Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi\n', 'utf8')])
+    )
+    const r = await fileHandlers.read('bom.md')
+    expect(r.hadBom).toBe(true)
+    expect(r.content).toBe('hi\n')
+    expect(r.originalEncoding).toBe('utf8')
+  })
+
+  it('writeFile output for a fresh file has no BOM', async () => {
+    await fileHandlers.write('fresh.md', 'plain', { eol: 'lf' })
+    const buf = readFileSync(join(dir, 'fresh.md'))
+    expect(buf[0]).not.toBe(0xef)
+    expect(buf.toString('utf8')).toBe('plain')
+  })
+})
