@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { encode as iconvEncode } from 'iconv-lite'
 import { IpcError } from '@shared/ipc-contract'
+import { utimes } from 'node:fs/promises'
 
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 import * as groveSvc from '../services/grove'
@@ -125,5 +126,31 @@ describe('smoke 7.6: path traversal rejected', () => {
       code: 'E_PERMISSION'
     })
     expect(readFileSync(join(dir, 'a.md'), 'utf8')).toBe('orig')
+  })
+})
+
+describe('smoke 7.7: mtime optimistic lock', () => {
+  it('throws E_MTIME_MISMATCH when expectedMtime is stale', async () => {
+    // Write once to establish a baseline.
+    const r1 = await fileHandlers.write('a.md', 'v1', { eol: 'lf' })
+    const staleMtime = r1.mtimeMs
+
+    // Bump the mtime artificially (simulates a concurrent write by another process).
+    const future = staleMtime + 5000
+    await utimes(join(dir, 'a.md'), future / 1000, future / 1000)
+
+    // Caller still holds the OLD expectedMtime — must be rejected.
+    await expect(
+      fileHandlers.write('a.md', 'v2', { eol: 'lf', expectedMtime: staleMtime })
+    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+
+    // Original file content (post-utimes) must still be 'v1' — write was rejected.
+    expect(readFileSync(join(dir, 'a.md'), 'utf8')).toBe('v1')
+  })
+
+  it('writes succeed when expectedMtime matches the current value', async () => {
+    const r1 = await fileHandlers.write('b.md', 'v1', { eol: 'lf' })
+    await fileHandlers.write('b.md', 'v2', { eol: 'lf', expectedMtime: r1.mtimeMs })
+    expect(readFileSync(join(dir, 'b.md'), 'utf8')).toBe('v2')
   })
 })
