@@ -18,3 +18,15 @@ CREATE TABLE files (
 CREATE INDEX idx_files_category ON files(category);
 CREATE INDEX idx_files_rating ON files(rating);
 CREATE INDEX idx_files_content_hash ON files(content_hash);
+
+-- 标签索引（多对多）
+CREATE TABLE tags (
+  name TEXT PRIMARY KEY,
+  usage_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE file_tags (
+  path TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  PRIMARY KEY (path, tag)
+);

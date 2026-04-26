@@ -58,4 +58,17 @@ describe('001_init.sql', () => {
     expect(idx).toContain('idx_files_content_hash')
     expect(db.pragma('user_version', { simple: true })).toBe(1)
   })
+
+  it('creates tags + file_tags with composite PK', () => {
+    expect(tableNames(db)).toEqual(expect.arrayContaining(['tags', 'file_tags']))
+    expect(columnNames(db, 'tags')).toEqual(expect.arrayContaining(['name', 'usage_count']))
+    expect(columnNames(db, 'file_tags')).toEqual(expect.arrayContaining(['path', 'tag']))
+    const ftInfo = db.pragma("table_info('file_tags')") as Array<{ name: string; pk: number }>
+    expect(ftInfo.find((c) => c.name === 'path')?.pk).toBeGreaterThan(0)
+    expect(ftInfo.find((c) => c.name === 'tag')?.pk).toBeGreaterThan(0)
+    // composite PK rejects duplicates
+    db.exec("INSERT INTO files (path, mtime) VALUES ('a.md', 0)")
+    db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")
+    expect(() => db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")).toThrow(/UNIQUE/i)
+  })
 })
