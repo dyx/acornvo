@@ -279,6 +279,15 @@ export async function closeGrove(): Promise<void> {
   if (!currentGrove) return
   const path = currentGrove.path
   currentGrove = null
+  try {
+    const { dbService } = await import('./db')
+    dbService.closeCurrent()
+  } catch (err) {
+    logger.error('dbService.closeCurrent during closeGrove failed', {
+      grove: path,
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
   await lockfile.release(path)
   notifyChange(null)
   logger.info('grove closed', { grove: path })

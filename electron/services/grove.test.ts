@@ -83,3 +83,28 @@ describe('grove.openGrove rollback on db failure', () => {
     expect(after).toBe(before)
   })
 })
+
+describe('grove.closeGrove + db integration', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'grove-close-'))
+  })
+  afterEach(() => {
+    resetDb()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('closes the db before releasing the lock', async () => {
+    await grove.openGrove(dir)
+    expect(dbService.getCurrent()).not.toBeNull()
+    await grove.closeGrove()
+    expect(dbService.getCurrent()).toBeNull()
+    expect(grove.getCurrent()).toBeNull()
+  })
+
+  it('is idempotent — calling closeGrove twice does not throw', async () => {
+    await grove.openGrove(dir)
+    await grove.closeGrove()
+    await expect(grove.closeGrove()).resolves.not.toThrow()
+  })
+})
