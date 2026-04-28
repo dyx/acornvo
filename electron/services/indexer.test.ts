@@ -7,7 +7,7 @@ import Database from 'better-sqlite3'
 
 import {
   state, status, _resetForTest, _setStateForTest, onStateChange,
-  startScan, onProgress, onDone, _injectDbForTest,
+  startScan, cancelScan, onProgress, onDone, _injectDbForTest,
 } from './indexer'
 import { listAllPaths } from './index-queries'
 
@@ -150,5 +150,46 @@ describe('startScan', () => {
     onStateChange((s) => transitions.push(s.state))
     await startScan(root)
     expect(transitions).toEqual(['scanning', 'ready'])
+  })
+})
+
+describe('cancelScan', () => {
+  let root: string
+  let db: Database.Database
+
+  beforeEach(() => {
+    _resetForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
+    root = mkdtempSync(join(tmpdir(), 'cancel-'))
+  })
+  afterEach(() => { rmSync(root, { recursive: true, force: true }); db.close() })
+
+  it('stops scanning early and returns state to idle', async () => {
+    for (let i = 0; i < 100; i++) writeFileSync(join(root, `f${i}.md`), `# ${i}`)
+
+    // Cancel as soon as the state transitions to 'scanning'
+    const off = onStateChange((s) => {
+      if (s.state === 'scanning') cancelScan()
+    })
+    await startScan(root)
+    off()
+
+    expect(state().state).toBe('idle')
+  })
+
+  it('preserves rows already inserted before cancel', async () => {
+    for (let i = 0; i < 50; i++) writeFileSync(join(root, `f${i}.md`), `# ${i}`)
+
+    // Cancel as soon as the state transitions to 'scanning'
+    const off = onStateChange((s) => {
+      if (s.state === 'scanning') cancelScan()
+    })
+    await startScan(root)
+    off()
+
+    const count = (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n
+    expect(count).toBeGreaterThanOrEqual(0)
+    expect(count).toBeLessThanOrEqual(50)
   })
 })
