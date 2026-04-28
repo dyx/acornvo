@@ -7,7 +7,9 @@ import { useBootstrap } from './hooks/useBootstrap'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
+import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { ipc } from '@/ipc/client'
+import type { IndexStateName } from '@shared/ipc-contract'
 
 function BootstrapGate(): JSX.Element {
   const payload = useBootstrap()
@@ -34,6 +36,8 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 export function App(): JSX.Element {
   const { toast } = useToast()
   const [isRebuilding, setIsRebuilding] = useState(false)
+  const [indexState, setIndexState] = useState<IndexStateName>('idle')
+  const [progress, setProgress] = useState<{ scanned: number; total: number; currentPath?: string }>({ scanned: 0, total: 0 })
 
   useEffect(() => {
     const offRebuilding = ipc.on('db:rebuilding', () => {
@@ -52,6 +56,15 @@ export function App(): JSX.Element {
     }
   }, [toast])
 
+  useEffect(() => {
+    const offState = ipc.on('index:stateChange', (p) => setIndexState(p.state))
+    const offProg = ipc.on('index:progress', (p) => setProgress(p))
+    return () => {
+      offState()
+      offProg()
+    }
+  }, [])
+
   return (
     <div className="flex h-full flex-col">
       <TitleBar />
@@ -67,6 +80,13 @@ export function App(): JSX.Element {
         </Routes>
       </main>
       <DbRebuildOverlay visible={isRebuilding} />
+      <IndexProgressOverlay
+        visible={indexState === 'scanning'}
+        scanned={progress.scanned}
+        total={progress.total}
+        currentPath={progress.currentPath}
+        onCancel={() => ipc.index.cancelScan()}
+      />
       <Toaster />
     </div>
   )

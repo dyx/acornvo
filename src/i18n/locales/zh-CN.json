@@ -59,5 +59,11 @@
     "force": "强制接管",
     "warning": "接管后原窗口可能在保存时报错。",
     "error": "接管失败：{{message}}"
+  },
+  "index": {
+    "progress": {
+      "title": "索引中…",
+      "background": "后台继续"
+    }
   }
 }
