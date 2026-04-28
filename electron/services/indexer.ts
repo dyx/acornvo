@@ -40,6 +40,8 @@ function setState(next: IndexStateName, error?: string): void {
   emitter.emit('stateChange', state())
 }
 
+export const status = state  // alias
+
 // --- test hooks ---
 export function _resetForTest(): void {
   _state = 'idle'
