@@ -7,6 +7,7 @@ import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
 import { upsertFile, syncTags, upsertFts, deleteFile, renameFile, getTokenizer } from './index-queries'
 import { parseFile } from './frontmatter'
+import { _setStateForTest as _indexerSetState } from './indexer'
 
 const SELF_WRITE_TTL_MS = 3000
 const MTIME_TOLERANCE_MS = 50
@@ -79,6 +80,47 @@ let _watcher: FSWatcher | null = null
 let _root: string | null = null
 let _db: Database.Database | null = null
 
+const RESTART_MAX_ATTEMPTS = 3
+const RESTART_DELAY_MS = 2000
+
+let _restartInProgress = false
+
+async function tryRestart(intervalMs: number = RESTART_DELAY_MS, attemptsAllowed: number = RESTART_MAX_ATTEMPTS, simulateFailures = 0): Promise<boolean> {
+  if (_restartInProgress) return false
+  _restartInProgress = true
+  try {
+    let failuresLeft = simulateFailures
+    for (let attempt = 1; attempt <= attemptsAllowed; attempt++) {
+      await new Promise((r) => setTimeout(r, intervalMs))
+      try {
+        if (failuresLeft > 0) { failuresLeft--; throw new Error('simulated restart failure') }
+        if (!_root || !_db) return false
+        const root = _root, db = _db
+        if (_watcher) await _watcher.close()
+        _watcher = null
+        await start(root, db)
+        return true
+      } catch {
+        if (attempt === attemptsAllowed) {
+          _indexerSetState('error')
+          return false
+        }
+      }
+    }
+    return false
+  } finally {
+    _restartInProgress = false
+  }
+}
+
+function handleWatcherError(_err: unknown): void {
+  void tryRestart()
+}
+
+export async function _simulateWatcherErrorForTest(opts: { failRestarts: number; intervalMs?: number }): Promise<void> {
+  await tryRestart(opts.intervalMs ?? 1, RESTART_MAX_ATTEMPTS, opts.failRestarts)
+}
+
 export async function start(groveRoot: string, db: Database.Database): Promise<void> {
   if (_watcher) await stop()
   _root = groveRoot
@@ -106,7 +148,7 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
   _watcher.on('add', (p) => onAddOrChange(p, 'add'))
   _watcher.on('change', (p) => onAddOrChange(p, 'change'))
   _watcher.on('unlink', (p) => onUnlink(p))
-  _watcher.on('error', (_err) => { /* restart logic added later */ })
+  _watcher.on('error', (err) => handleWatcherError(err))
 
   await new Promise<void>((resolve, reject) => {
     if (!_watcher) return reject(new Error('watcher gone'))

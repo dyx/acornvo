@@ -15,9 +15,11 @@ import {
   stop,
   onFileChanged,
   onFileDeleted,
-  onFileRenamed
+  onFileRenamed,
+  _simulateWatcherErrorForTest
 } from './watcher'
 import { upsertFile } from './index-queries'
+import { _setStateForTest as _indexerSetState, state as indexerState } from './indexer'
 
 function makeIndexedDb(): Database.Database {
   const db = new Database(':memory:')
@@ -251,5 +253,23 @@ describe('watcher emits aggregate events', () => {
     writeFileSync(join(root, 'new.md'), 'same body')
     await waitFor(() => events.length > 0)
     expect(events[0]).toEqual({ oldPath: 'old.md', newPath: 'new.md' })
+  })
+})
+
+describe('watcher restart logic', () => {
+  let root: string; let db: Database.Database
+  beforeEach(() => { _resetSelfWritesForTest(); _indexerSetState('idle'); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'err-')) })
+  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+
+  it('flips IndexState to error after 3 failed restarts', async () => {
+    await start(root, db)
+    await _simulateWatcherErrorForTest({ failRestarts: 3, intervalMs: 1 })
+    expect(indexerState().state).toBe('error')
+  })
+
+  it('returns to watching when a restart succeeds', async () => {
+    await start(root, db)
+    await _simulateWatcherErrorForTest({ failRestarts: 0, intervalMs: 1 })
+    expect(indexerState().state).not.toBe('error')
   })
 })
