@@ -94,6 +94,51 @@ export function listAllPaths(db: Database.Database): Set<string> {
   return new Set(rows.map((r) => r.path))
 }
 
+export interface QueryOptions {
+  category?: string
+  tag?: string
+  rating?: number  // minimum rating
+  limit: number
+  offset: number
+  orderBy: 'updated_at_desc' | 'updated_at_asc' | 'created_at_desc' | 'created_at_asc'
+}
+
+const ORDER_BY_SQL: Record<QueryOptions['orderBy'], string> = {
+  updated_at_desc: 'updated_at DESC',
+  updated_at_asc: 'updated_at ASC',
+  created_at_desc: 'created_at DESC',
+  created_at_asc: 'created_at ASC'
+}
+
+export function queryBy(db: Database.Database, opts: QueryOptions): FileRow[] {
+  const where: string[] = []
+  const params: Record<string, unknown> = {}
+
+  if (opts.category !== undefined) {
+    where.push('files.category = @category')
+    params.category = opts.category
+  }
+  if (opts.rating !== undefined) {
+    where.push('files.rating >= @rating')
+    params.rating = opts.rating
+  }
+  let from = 'files'
+  if (opts.tag !== undefined) {
+    from = 'files INNER JOIN file_tags ON file_tags.path = files.path'
+    where.push('file_tags.tag = @tag')
+    params.tag = opts.tag
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  const sql = `
+    SELECT files.* FROM ${from}
+    ${whereSql}
+    ORDER BY ${ORDER_BY_SQL[opts.orderBy]}
+    LIMIT @limit OFFSET @offset
+  `
+  return db.prepare(sql).all({ ...params, limit: opts.limit, offset: opts.offset }) as FileRow[]
+}
+
 export function syncTags(db: Database.Database, path: string, tags: string[]): void {
   const wanted = new Set(tags)
   const existing = new Set(

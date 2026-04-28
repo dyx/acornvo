@@ -195,3 +195,43 @@ describe('listAllPaths', () => {
     expect(listAllPaths(db)).toEqual(new Set(['a.md', 'b.md']))
   })
 })
+
+describe('queryBy', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = makeDb()
+    upsertFile(db, baseRow({ path: 'a.md', category: 'note', rating: 3, updated_at: 1 }))
+    upsertFile(db, baseRow({ path: 'b.md', category: 'note', rating: 5, updated_at: 2 }))
+    upsertFile(db, baseRow({ path: 'c.md', category: 'idea', rating: 4, updated_at: 3 }))
+    syncTags(db, 'a.md', ['x'])
+    syncTags(db, 'b.md', ['x', 'y'])
+    syncTags(db, 'c.md', ['y'])
+  })
+
+  it('returns all rows ordered by updated_at desc when no filters', () => {
+    const rows = queryBy(db, { limit: 10, offset: 0, orderBy: 'updated_at_desc' })
+    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md', 'a.md'])
+  })
+
+  it('filters by category', () => {
+    const rows = queryBy(db, { category: 'note', limit: 10, offset: 0, orderBy: 'updated_at_desc' })
+    expect(rows.map((r) => r.path)).toEqual(['b.md', 'a.md'])
+  })
+
+  it('filters by tag (joins file_tags)', () => {
+    const rows = queryBy(db, { tag: 'y', limit: 10, offset: 0, orderBy: 'updated_at_desc' })
+    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md'])
+  })
+
+  it('filters by minimum rating', () => {
+    const rows = queryBy(db, { rating: 4, limit: 10, offset: 0, orderBy: 'updated_at_desc' })
+    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md'])
+  })
+
+  it('paginates with limit + offset', () => {
+    const page1 = queryBy(db, { limit: 1, offset: 0, orderBy: 'updated_at_desc' })
+    const page2 = queryBy(db, { limit: 1, offset: 1, orderBy: 'updated_at_desc' })
+    expect(page1.map((r) => r.path)).toEqual(['c.md'])
+    expect(page2.map((r) => r.path)).toEqual(['b.md'])
+  })
+})
