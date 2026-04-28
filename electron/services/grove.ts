@@ -279,6 +279,28 @@ export async function closeGrove(): Promise<void> {
   if (!currentGrove) return
   const path = currentGrove.path
   currentGrove = null
+
+  // Stop watcher and reset indexer BEFORE closing the db — pending watcher
+  // flush ops need a live db, and the scan loop reads from it too.
+  try {
+    const { stop: watcherStop } = await import('./watcher')
+    await watcherStop()
+  } catch (err) {
+    logger.error('watcher stop during closeGrove failed', {
+      grove: path,
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
+  try {
+    const { reset: resetIndexer } = await import('./indexer')
+    resetIndexer()
+  } catch (err) {
+    logger.error('indexer reset during closeGrove failed', {
+      grove: path,
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
+
   try {
     const { dbService } = await import('./db')
     dbService.closeCurrent()

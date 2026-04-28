@@ -7,7 +7,7 @@ import Database from 'better-sqlite3'
 
 import {
   state, status, _resetForTest, _setStateForTest, onStateChange,
-  startScan, cancelScan, onProgress, onDone, _injectDbForTest,
+  startScan, cancelScan, onProgress, onDone, _injectDbForTest, reset,
 } from './indexer'
 import { listAllPaths } from './index-queries'
 
@@ -191,5 +191,15 @@ describe('cancelScan', () => {
     const count = (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n
     expect(count).toBeGreaterThanOrEqual(0)
     expect(count).toBeLessThanOrEqual(50)
+  })
+})
+
+describe('indexer.reset()', () => {
+  beforeEach(() => { _resetForTest() })
+
+  it('returns state to idle and clears counters', () => {
+    _setStateForTest('watching')
+    reset()
+    expect(state()).toEqual({ state: 'idle', total: 0, scanned: 0 })
   })
 })

@@ -37,8 +37,7 @@ CREATE VIRTUAL TABLE files_fts USING fts5(
   path UNINDEXED,
   title,
   summary,
-  content,
-  tokenize='simple'
+  content
 );
 
 -- 标记

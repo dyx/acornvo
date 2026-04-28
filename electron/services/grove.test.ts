@@ -108,3 +108,24 @@ describe('grove.closeGrove + db integration', () => {
     await expect(grove.closeGrove()).resolves.not.toThrow()
   })
 })
+
+describe('closeGrove ordering', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'grove-order-'))
+  })
+  afterEach(async () => {
+    await grove.closeGrove().catch(() => {})
+    resetDb()
+    vi.restoreAllMocks()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('calls watcher.stop during closeGrove', async () => {
+    await grove.openGrove(dir)
+    const watcherModule = await import('./watcher')
+    const stopSpy = vi.spyOn(watcherModule, 'stop').mockImplementation(async () => {})
+    await grove.closeGrove()
+    expect(stopSpy).toHaveBeenCalledTimes(1)
+  })
+})

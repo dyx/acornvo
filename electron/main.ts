@@ -9,6 +9,8 @@ import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
 import * as groveService from './services/grove'
 import { runBootstrap } from './bootstrap'
+import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
+import { start as watcherStart, stop as watcherStop } from './services/watcher'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -67,24 +69,42 @@ async function bootstrap(): Promise<void> {
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
   const disposeDbSubscriber = groveService.onChange((payload) => {
-    try {
-      // Lazy require to avoid circular import surprises at module load.
-      const { dbService } = require('./services/db') as typeof import('./services/db')
-      if (payload === null) {
-        dbService.closeCurrent()
-      } else if (dbService.getCurrentGrovePath() !== payload.path) {
-        // Idempotent: openGrove (Task 1) already opened the db inline; this is
-        // the catch-all for future code paths that change the project without
-        // going through openGrove.
-        dbService.openForGrove(payload.path)
+    void (async () => {
+      try {
+        // Lazy require to avoid circular import surprises at module load.
+        const { dbService } = require('./services/db') as typeof import('./services/db')
+        if (payload === null) {
+          // Grove closed — stop watcher, reset indexer, close db
+          await watcherStop()
+          resetIndexer()
+          dbService.closeCurrent()
+        } else {
+          // Grove opened or switched — ensure db is open
+          if (dbService.getCurrentGrovePath() !== payload.path) {
+            // Idempotent: openGrove (Task 1) already opened the db inline; this is
+            // the catch-all for future code paths that change the project without
+            // going through openGrove.
+            dbService.openForGrove(payload.path)
+          }
+          const db = dbService.getCurrent()
+          if (db) {
+            setIndexerDb(db)
+            await startScan(payload.path)
+            await watcherStart(payload.path, db)
+          }
+        }
+      } catch (err) {
+        logger.error('db subscriber failed on project:changed', {
+          message: err instanceof Error ? err.message : String(err)
+        })
       }
-    } catch (err) {
-      logger.error('db subscriber failed on project:changed', {
-        message: err instanceof Error ? err.message : String(err)
-      })
-    }
+    })()
   })
   app.on('will-quit', disposeDbSubscriber)
+  appLifecycle.onBeforeQuit(async () => {
+    await watcherStop()
+    resetIndexer()
+  })
   app.on('will-quit', () => {
     void groveService.closeGrove().catch((err) => {
       logger.error('grove close on will-quit failed', {
