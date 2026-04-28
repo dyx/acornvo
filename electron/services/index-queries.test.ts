@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, listAllPaths, queryBy, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -178,5 +178,20 @@ describe('upsertFts', () => {
     upsertFts(db, { rowid: 1, path: 'a.md', title: 'A2', summary: 's', content: 'second' })
     const rows = db.prepare('SELECT title, content FROM files_fts WHERE path=?').all('a.md')
     expect(rows).toEqual([{ title: 'A2', content: 'second' }])
+  })
+})
+
+describe('listAllPaths', () => {
+  let db: Database.Database
+  beforeEach(() => { db = makeDb() })
+
+  it('returns empty Set on empty table', () => {
+    expect(listAllPaths(db)).toEqual(new Set<string>())
+  })
+
+  it('returns all paths', () => {
+    upsertFile(db, baseRow({ path: 'a.md' }))
+    upsertFile(db, baseRow({ path: 'b.md' }))
+    expect(listAllPaths(db)).toEqual(new Set(['a.md', 'b.md']))
   })
 })

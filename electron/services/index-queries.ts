@@ -89,6 +89,11 @@ export function upsertFts(
   tx()
 }
 
+export function listAllPaths(db: Database.Database): Set<string> {
+  const rows = db.prepare('SELECT path FROM files').all() as { path: string }[]
+  return new Set(rows.map((r) => r.path))
+}
+
 export function syncTags(db: Database.Database, path: string, tags: string[]): void {
   const wanted = new Set(tags)
   const existing = new Set(
