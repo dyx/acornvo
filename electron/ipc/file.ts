@@ -5,6 +5,7 @@ import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
 import { parseFile, stringify } from '../services/frontmatter'
 import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
+import { registerSelfWrite } from '../services/watcher'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import {
   IpcError,
@@ -78,7 +79,10 @@ export const fileHandlers = {
   ): Promise<FileWriteResult> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
-    return writeWithVerify(abs, content, opts)
+    const result = await writeWithVerify(abs, content, opts)
+    const finalStat = await fsStat(abs)
+    registerSelfWrite(abs, finalStat.mtimeMs)
+    return result
   },
 
   async writeParsed(
@@ -177,6 +181,9 @@ export const fileHandlers = {
     await mkdir(dirname(absNew), { recursive: true })
     try {
       await fsRename(absOld, absNew)
+      const newStat = await fsStat(absNew)
+      registerSelfWrite(absOld, 0)              // suppress unlink event
+      registerSelfWrite(absNew, newStat.mtimeMs) // suppress add event
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
         throw new IpcError('E_NOT_FOUND', `${oldRel}: not found`)

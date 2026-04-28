@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -7,6 +7,7 @@ import { join } from 'node:path'
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 import * as groveSvc from '../services/grove'
 import { fileHandlers } from './file'
+import { _selfWritesSizeForTest, _resetSelfWritesForTest, shouldIgnore } from '../services/watcher'
 
 function setGroveRoot(root: string | null): void {
   ;(groveSvc.getCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
@@ -211,5 +212,54 @@ describe('fileHandlers.writeParsed / readParsed', () => {
     // We simulate: write plain content with invalid rating in YAML, then readParsed should fail.
     await fileHandlers.write('bad.md', '---\nrating: 9\n---\nbody\n', { eol: 'lf' })
     await expect(fileHandlers.readParsed('bad.md')).rejects.toThrow(/rating|too_big|too_small|5/i)
+  })
+})
+
+describe('file.write registers selfWrite', () => {
+  let dir: string
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    dir = mkdtempSync(join(tmpdir(), 'fw-'))
+    setGroveRoot(dir)
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('registers absolute path + final mtime after a successful write', async () => {
+    await fileHandlers.write('a.md', 'hello')
+
+    const abs = join(dir, 'a.md')
+    const mtime = statSync(abs).mtimeMs
+    expect(_selfWritesSizeForTest()).toBe(1)
+    expect(shouldIgnore(abs, mtime)).toBe(true)
+  })
+})
+
+describe('file.rename registers selfWrite for both paths', () => {
+  let dir: string
+  beforeEach(async () => {
+    _resetSelfWritesForTest()
+    dir = mkdtempSync(join(tmpdir(), 'fr-'))
+    setGroveRoot(dir)
+    await fileHandlers.write('a.md', 'body')
+    _resetSelfWritesForTest()
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('registers oldAbs (mtime 0) + newAbs (real mtime)', async () => {
+    await fileHandlers.rename('a.md', 'b.md')
+
+    const oldAbs = join(dir, 'a.md')
+    const newAbs = join(dir, 'b.md')
+    const newMtime = statSync(newAbs).mtimeMs
+
+    expect(_selfWritesSizeForTest()).toBe(2)
+    expect(shouldIgnore(oldAbs, 0)).toBe(true)
+    expect(shouldIgnore(newAbs, newMtime)).toBe(true)
   })
 })
