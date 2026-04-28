@@ -61,3 +61,28 @@ export function renameFile(db: Database.Database, oldPath: string, newPath: stri
   })
   tx()
 }
+
+export function syncTags(db: Database.Database, path: string, tags: string[]): void {
+  const wanted = new Set(tags)
+  const existing = new Set(
+    (db.prepare('SELECT tag FROM file_tags WHERE path=?').all(path) as { tag: string }[]).map(
+      (r) => r.tag
+    )
+  )
+
+  const toAdd = [...wanted].filter((t) => !existing.has(t))
+  const toRemove = [...existing].filter((t) => !wanted.has(t))
+
+  const tx = db.transaction(() => {
+    for (const tag of toAdd) {
+      db.prepare('INSERT OR IGNORE INTO tags(name, usage_count) VALUES (?, 0)').run(tag)
+      db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run(path, tag)
+      db.prepare('UPDATE tags SET usage_count = usage_count + 1 WHERE name=?').run(tag)
+    }
+    for (const tag of toRemove) {
+      db.prepare('DELETE FROM file_tags WHERE path=? AND tag=?').run(path, tag)
+      db.prepare('UPDATE tags SET usage_count = usage_count - 1 WHERE name=?').run(tag)
+    }
+  })
+  tx()
+}

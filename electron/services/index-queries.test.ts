@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, renameFile, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, renameFile, syncTags, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -112,5 +112,41 @@ describe('renameFile', () => {
   it('is a no-op when oldPath does not exist', () => {
     expect(() => renameFile(db, 'missing.md', 'new.md')).not.toThrow()
     expect(db.prepare('SELECT COUNT(*) AS n FROM files').get()).toEqual({ n: 0 })
+  })
+})
+
+describe('syncTags', () => {
+  let db: Database.Database
+  beforeEach(() => { db = makeDb(); upsertFile(db, baseRow()) })
+
+  it('inserts new tag rows and bumps usage_count from 0', () => {
+    syncTags(db, 'notes/a.md', ['attention', 'transformer'])
+    expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
+      { name: 'attention', usage_count: 1 },
+      { name: 'transformer', usage_count: 1 }
+    ])
+    expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 2 })
+  })
+
+  it('decrements usage_count for removed tags and increments for added ones', () => {
+    syncTags(db, 'notes/a.md', ['x', 'y'])
+    syncTags(db, 'notes/a.md', ['y', 'z'])  // remove x, keep y, add z
+
+    expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
+      { name: 'x', usage_count: 0 },
+      { name: 'y', usage_count: 1 },
+      { name: 'z', usage_count: 1 }
+    ])
+  })
+
+  it('is idempotent when tags do not change', () => {
+    syncTags(db, 'notes/a.md', ['x'])
+    syncTags(db, 'notes/a.md', ['x'])
+    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({ usage_count: 1 })
+  })
+
+  it('handles deduplication of input tags', () => {
+    syncTags(db, 'notes/a.md', ['x', 'x', 'y'])
+    expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 2 })
   })
 })
