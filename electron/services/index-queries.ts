@@ -62,6 +62,33 @@ export function renameFile(db: Database.Database, oldPath: string, newPath: stri
   tx()
 }
 
+export interface FtsRow {
+  rowid: number
+  path: string
+  title: string
+  summary: string
+  content: string
+}
+
+export type Tokenizer = (text: string) => string
+
+const identityTokenizer: Tokenizer = (t) => t
+
+export function upsertFts(
+  db: Database.Database,
+  row: FtsRow,
+  tokenizer: Tokenizer = identityTokenizer
+): void {
+  const tokenized = tokenizer(row.content)
+  const tx = db.transaction(() => {
+    db.prepare('DELETE FROM files_fts WHERE path=?').run(row.path)
+    db.prepare(
+      'INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (?, ?, ?, ?, ?)'
+    ).run(row.rowid, row.path, row.title, row.summary, tokenized)
+  })
+  tx()
+}
+
 export function syncTags(db: Database.Database, path: string, tags: string[]): void {
   const wanted = new Set(tags)
   const existing = new Set(

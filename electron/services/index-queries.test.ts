@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, renameFile, syncTags, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -148,5 +148,35 @@ describe('syncTags', () => {
   it('handles deduplication of input tags', () => {
     syncTags(db, 'notes/a.md', ['x', 'x', 'y'])
     expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 2 })
+  })
+})
+
+describe('upsertFts', () => {
+  let db: Database.Database
+  beforeEach(() => { db = makeDb() })
+
+  it('inserts a new row using identity tokenizer by default', () => {
+    upsertFts(db, { rowid: 1, path: 'a.md', title: 'A', summary: '', content: 'hello world' })
+    expect(db.prepare('SELECT path, title, content FROM files_fts').get()).toEqual({
+      path: 'a.md', title: 'A', content: 'hello world'
+    })
+  })
+
+  it('passes content through the tokenizer arg', () => {
+    upsertFts(
+      db,
+      { rowid: 2, path: 'b.md', title: '', summary: '', content: 'hello world' },
+      (text) => text.split('').join(' ')
+    )
+    expect(db.prepare('SELECT content FROM files_fts WHERE path=?').get('b.md')).toEqual({
+      content: 'h e l l o   w o r l d'
+    })
+  })
+
+  it('overwrites an existing row (delete-then-insert)', () => {
+    upsertFts(db, { rowid: 1, path: 'a.md', title: 'A', summary: '', content: 'first' })
+    upsertFts(db, { rowid: 1, path: 'a.md', title: 'A2', summary: 's', content: 'second' })
+    const rows = db.prepare('SELECT title, content FROM files_fts WHERE path=?').all('a.md')
+    expect(rows).toEqual([{ title: 'A2', content: 'second' }])
   })
 })
