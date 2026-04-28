@@ -3,6 +3,7 @@ import { logger } from '../services/logger'
 import { dbHandlers } from './db'
 import { fileHandlers } from './file'
 import { projectHandlers } from './project'
+import { indexHandlers } from './index'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -29,9 +30,5 @@ export const ipcHandlers: HandlerMap = {
   project: projectHandlers,
   db: dbHandlers,
   file: fileHandlers,
-  index: {
-    status: () => ({ state: 'idle' as const, total: 0, scanned: 0 }),
-    startScan: () => undefined,
-    cancelScan: () => undefined
-  }
+  index: indexHandlers,
 }

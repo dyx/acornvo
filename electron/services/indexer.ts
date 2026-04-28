@@ -106,6 +106,10 @@ export function _setStateForTest(next: IndexStateName): void {
   setState(next)
 }
 
+export function _emitProgressForTest(s: IndexStatus): void {
+  progressEmitter.emit('progress', s)
+}
+
 async function preCount(root: string, skipSet = DEFAULT_SKIP_SET): Promise<number> {
   let n = 0
   async function visit(dir: string): Promise<void> {
@@ -124,6 +128,16 @@ async function preCount(root: string, skipSet = DEFAULT_SKIP_SET): Promise<numbe
   }
   await visit(root)
   return n
+}
+
+export function reset(): void {
+  _abort = true
+  _scanned = 0
+  _total = 0
+  _currentPath = undefined
+  _error = undefined
+  _db = null
+  setState('idle')
 }
 
 export function cancelScan(): void {
