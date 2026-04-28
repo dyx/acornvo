@@ -28,5 +28,10 @@ export const ipcHandlers: HandlerMap = {
   },
   project: projectHandlers,
   db: dbHandlers,
-  file: fileHandlers
+  file: fileHandlers,
+  index: {
+    status: () => ({ state: 'idle' as const, total: 0, scanned: 0 }),
+    startScan: () => undefined,
+    cancelScan: () => undefined
+  }
 }

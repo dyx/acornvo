@@ -67,6 +67,11 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     exists: () => false,
     list: () => [],
     rename: () => undefined
+  },
+  index: {
+    status: () => ({ state: 'idle' as const, total: 0, scanned: 0 }),
+    startScan: () => undefined,
+    cancelScan: () => undefined
   }
 }
 

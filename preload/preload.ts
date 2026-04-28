@@ -48,6 +48,11 @@ const request: IpcClient<IpcContract> = {
     exists: (rel) => invoke('file.exists', rel),
     list: (dirRel, opts) => invoke('file.list', dirRel, opts),
     rename: (oldRel, newRel) => invoke('file.rename', oldRel, newRel)
+  },
+  index: {
+    status: () => invoke('index.status'),
+    startScan: () => invoke('index.startScan'),
+    cancelScan: () => invoke('index.cancelScan')
   }
 }
 

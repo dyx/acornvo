@@ -122,6 +122,18 @@ export interface FileListOptions {
   includeHidden?: boolean
 }
 
+// --- index namespace types (phase-05) ---
+
+export type IndexStateName = 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
+
+export interface IndexStatusView {
+  state: IndexStateName
+  total: number
+  scanned: number
+  currentPath?: string
+  error?: string
+}
+
 export type IpcContract = {
   ping: {
     echo: (input: string) => string
@@ -160,6 +172,11 @@ export type IpcContract = {
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
     rename: (oldRel: string, newRel: string) => void
   }
+  index: {
+    status: () => IndexStatusView
+    startScan: () => void
+    cancelScan: () => void
+  }
 }
 
 /**
@@ -176,6 +193,13 @@ export type IpcEventContract = {
   }
   'db:rebuilding': void
   'db:rebuilt': void
+  'index:progress': { scanned: number; total: number; currentPath?: string }
+  'index:done': Record<string, never>
+  'index:error': { message: string }
+  'index:stateChange': { state: IndexStateName }
+  'index:fileChanged': { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }
+  'index:fileDeleted': { path: string }
+  'index:fileRenamed': { oldPath: string; newPath: string }
 }
 
 export type IpcEventChannel = keyof IpcEventContract
