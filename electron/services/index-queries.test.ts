@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, renameFile, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -90,5 +90,27 @@ describe('deleteFile', () => {
 
   it('is a no-op when the path does not exist', () => {
     expect(() => deleteFile(db, 'never.md')).not.toThrow()
+  })
+})
+
+describe('renameFile', () => {
+  let db: Database.Database
+  beforeEach(() => { db = makeDb() })
+
+  it('updates path across files, file_tags, files_fts in one transaction', () => {
+    upsertFile(db, baseRow({ path: 'old.md' }))
+    db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run('old.md', 'foo')
+    db.prepare("INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1,'old.md','','','')").run()
+
+    renameFile(db, 'old.md', 'new.md')
+
+    expect(db.prepare('SELECT path FROM files').get()).toEqual({ path: 'new.md' })
+    expect(db.prepare('SELECT path FROM file_tags').get()).toEqual({ path: 'new.md' })
+    expect(db.prepare('SELECT path FROM files_fts').get()).toEqual({ path: 'new.md' })
+  })
+
+  it('is a no-op when oldPath does not exist', () => {
+    expect(() => renameFile(db, 'missing.md', 'new.md')).not.toThrow()
+    expect(db.prepare('SELECT COUNT(*) AS n FROM files').get()).toEqual({ n: 0 })
   })
 })

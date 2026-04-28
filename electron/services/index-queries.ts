@@ -52,3 +52,12 @@ export function deleteFile(db: Database.Database, path: string): void {
   db.prepare('DELETE FROM file_tags WHERE path=?').run(path)
   db.prepare('DELETE FROM files WHERE path=?').run(path)
 }
+
+export function renameFile(db: Database.Database, oldPath: string, newPath: string): void {
+  const tx = db.transaction(() => {
+    db.prepare('UPDATE files SET path=? WHERE path=?').run(newPath, oldPath)
+    db.prepare('UPDATE file_tags SET path=? WHERE path=?').run(newPath, oldPath)
+    db.prepare('UPDATE files_fts SET path=? WHERE path=?').run(newPath, oldPath)
+  })
+  tx()
+}
