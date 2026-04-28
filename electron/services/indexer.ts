@@ -9,6 +9,7 @@ import {
   upsertFts,
   listAllPaths,
   deleteFile,
+  getTokenizer,
   type FileRow,
 } from './index-queries'
 import { parseFile } from './frontmatter'
@@ -125,6 +126,10 @@ async function preCount(root: string, skipSet = DEFAULT_SKIP_SET): Promise<numbe
   return n
 }
 
+export function cancelScan(): void {
+  if (_state === 'scanning') _abort = true
+}
+
 export async function startScan(groveRoot: string): Promise<void> {
   if (_state === 'scanning') return
   _abort = false
@@ -179,7 +184,7 @@ export async function startScan(groveRoot: string): Promise<void> {
           title: row.title ?? '',
           summary: row.summary ?? '',
           content: body,
-        })
+        }, getTokenizer())
       }
       seen.add(entry.relPath)
       _scanned++

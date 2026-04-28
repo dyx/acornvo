@@ -139,6 +139,10 @@ export function queryBy(db: Database.Database, opts: QueryOptions): FileRow[] {
   return db.prepare(sql).all({ ...params, limit: opts.limit, offset: opts.offset }) as FileRow[]
 }
 
+let _activeTokenizer: Tokenizer = identityTokenizer
+export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
+export function getTokenizer(): Tokenizer { return _activeTokenizer }
+
 export function syncTags(db: Database.Database, path: string, tags: string[]): void {
   const wanted = new Set(tags)
   const existing = new Set(

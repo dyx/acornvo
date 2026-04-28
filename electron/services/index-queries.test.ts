@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, listAllPaths, queryBy, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, listAllPaths, queryBy, setTokenizer, getTokenizer, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -193,6 +193,18 @@ describe('listAllPaths', () => {
     upsertFile(db, baseRow({ path: 'a.md' }))
     upsertFile(db, baseRow({ path: 'b.md' }))
     expect(listAllPaths(db)).toEqual(new Set(['a.md', 'b.md']))
+  })
+})
+
+describe('tokenizer injection', () => {
+  it('default tokenizer is identity', () => {
+    expect(getTokenizer()('foo bar')).toBe('foo bar')
+  })
+
+  it('setTokenizer swaps the active tokenizer', () => {
+    setTokenizer((t) => `[[${t}]]`)
+    expect(getTokenizer()('hello')).toBe('[[hello]]')
+    setTokenizer((t) => t)  // restore
   })
 })
 
