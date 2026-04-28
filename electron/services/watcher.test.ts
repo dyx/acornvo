@@ -1,6 +1,6 @@
 // electron/services/watcher.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
-import { registerSelfWrite, shouldIgnore, _resetSelfWritesForTest } from './watcher'
+import { registerSelfWrite, shouldIgnore, _resetSelfWritesForTest, _gcSelfWrites, _selfWritesSizeForTest } from './watcher'
 
 describe('selfWrites map', () => {
   beforeEach(() => { _resetSelfWritesForTest() })
@@ -40,5 +40,18 @@ describe('selfWrites map', () => {
     expect(shouldIgnore('/p.md', 1000, now + 2999)).toBe(true)
     registerSelfWrite('/p.md', 1000, now)
     expect(shouldIgnore('/p.md', 1000, now + 3001)).toBe(false)
+  })
+})
+
+describe('selfWrites GC', () => {
+  beforeEach(() => { _resetSelfWritesForTest() })
+
+  it('removes entries past their expiresAt', () => {
+    const now = Date.now()
+    registerSelfWrite('/a.md', 1, now - 4000)  // already expired
+    registerSelfWrite('/b.md', 1, now)         // fresh
+    expect(_selfWritesSizeForTest()).toBe(2)
+    _gcSelfWrites(now)
+    expect(_selfWritesSizeForTest()).toBe(1)
   })
 })
