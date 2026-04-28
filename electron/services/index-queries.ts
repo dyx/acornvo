@@ -46,3 +46,9 @@ export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
 
   return existing ? 'updated' : 'inserted'
 }
+
+export function deleteFile(db: Database.Database, path: string): void {
+  db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
+  db.prepare('DELETE FROM file_tags WHERE path=?').run(path)
+  db.prepare('DELETE FROM files WHERE path=?').run(path)
+}

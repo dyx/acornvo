@@ -23,7 +23,7 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, type FileRow } from './index-queries'
+import { upsertFile, deleteFile, type FileRow } from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -69,5 +69,26 @@ describe('upsertFile', () => {
     upsertFile(db, baseRow())
     const result = upsertFile(db, baseRow({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 200 }))
     expect(result).toBe('updated')
+  })
+})
+
+describe('deleteFile', () => {
+  let db: Database.Database
+  beforeEach(() => { db = makeDb() })
+
+  it('removes the row from files, file_tags, and files_fts', () => {
+    upsertFile(db, baseRow())
+    db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run('notes/a.md', 'foo')
+    db.prepare("INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1, 'notes/a.md', 'A', '', 'body')").run()
+
+    deleteFile(db, 'notes/a.md')
+
+    expect(db.prepare('SELECT COUNT(*) AS n FROM files').get()).toEqual({ n: 0 })
+    expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 0 })
+    expect(db.prepare('SELECT COUNT(*) AS n FROM files_fts').get()).toEqual({ n: 0 })
+  })
+
+  it('is a no-op when the path does not exist', () => {
+    expect(() => deleteFile(db, 'never.md')).not.toThrow()
   })
 })
