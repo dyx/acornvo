@@ -8,7 +8,7 @@ export default defineConfig({
     }
   },
   test: {
-    include: ['electron/**/*.test.ts', 'shared/**/*.test.ts', 'src/**/*.test.{ts,tsx}'],
+    include: ['electron/**/*.test.ts', 'shared/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts'],
     environment: 'node',
     pool: 'threads',
     testTimeout: 5000,
