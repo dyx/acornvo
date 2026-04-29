@@ -139,6 +139,12 @@ export function queryBy(db: Database.Database, opts: QueryOptions): FileRow[] {
   return db.prepare(sql).all({ ...params, limit: opts.limit, offset: opts.offset }) as FileRow[]
 }
 
+// PHASE-08 DEPRECATED: the tokenizer-injection point is unused after migration 002.
+// FTS5's built-in `trigram` tokenizer handles index-side segmentation; query-side
+// jieba lives in `electron/services/search/jiebaSegment.ts` (Plan 2).
+// `setTokenizer/getTokenizer` are kept as no-ops only to avoid breaking phase-05 tests
+// in this commit; Plan 2 task 3.1 deletes them along with the `tokenizer` parameter
+// of `upsertFts` and switches `upsertFts` to write the new (path, title, body) schema.
 let _activeTokenizer: Tokenizer = identityTokenizer
 export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
 export function getTokenizer(): Tokenizer { return _activeTokenizer }
