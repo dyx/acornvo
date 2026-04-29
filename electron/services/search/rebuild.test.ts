@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { runMigrations } from '../db/migrations'
-import { maybeRebuildFts } from './rebuild'
+import { maybeRebuildFts, rebuildFts, rebuildEvents, type RebuildProgressPayload } from './rebuild'
 
 const migrationsDir = join(__dirname, '..', 'db', 'migrations')
 
@@ -70,5 +70,53 @@ describe('maybeRebuildFts (detector)', () => {
       "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
     ).get() as { path: string } | undefined
     expect(hit?.path).toBe('notes/x.md')
+  })
+})
+
+describe('rebuildFts progress events', () => {
+  let db: Database.Database
+  let grove: string
+
+  beforeEach(() => {
+    db = makeFreshDb()
+    grove = makeGrove()
+    rebuildEvents.removeAllListeners()
+  })
+
+  it('emits progress at most once per 5% step (250-row corpus)', async () => {
+    // Seed 250 files in one transaction
+    const insert = db.prepare(
+      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, ?, ?)'
+    )
+    for (let i = 0; i < 250; i++) {
+      const rel = `notes/n${i}.md`
+      mkdirSync(join(grove, 'notes'), { recursive: true })
+      writeFileSync(join(grove, rel), `---\ntitle: T${i}\n---\nbody ${i}`, 'utf8')
+      insert.run(rel, `T${i}`, 0, `h${i}`)
+    }
+
+    const events: RebuildProgressPayload[] = []
+    rebuildEvents.on('progress', (p: RebuildProgressPayload) => events.push(p))
+
+    await rebuildFts(db, grove)
+
+    // 250 rows / 100-batch cadence → 3 batches → 3 events. With 5% threshold (12.5 rows),
+    // the cadence is dominated by BATCH_SIZE here, so we expect exactly 3 progress events.
+    expect(events.length).toBeGreaterThanOrEqual(3)
+    expect(events.length).toBeLessThanOrEqual(20) // way below 250 — proves cadence not per-row
+    expect(events[events.length - 1]).toEqual({ done: 250, total: 250 })
+  })
+
+  it('emits done event with total at the end', async () => {
+    mkdirSync(join(grove, 'notes'), { recursive: true })
+    writeFileSync(join(grove, 'notes', 'a.md'), 'body a', 'utf8')
+    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run('notes/a.md', 0, 'h')
+
+    const doneEvents: { total: number }[] = []
+    rebuildEvents.on('done', (p: { total: number }) => doneEvents.push(p))
+
+    await rebuildFts(db, grove)
+
+    expect(doneEvents).toEqual([{ total: 1 }])
   })
 })
