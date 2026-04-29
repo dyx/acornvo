@@ -215,6 +215,8 @@ export type IpcEventContract = {
   'index:fileChanged': { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }
   'index:fileDeleted': { path: string }
   'index:fileRenamed': { oldPath: string; newPath: string }
+  'index:rebuildProgress': { done: number; total: number }
+  'index:rebuildDone': { total: number }
 }
 
 export type IpcEventChannel = keyof IpcEventContract

@@ -65,5 +65,19 @@
       "title": "索引中…",
       "background": "后台继续"
     }
+  },
+  "search": {
+    "placeholder_quick": "搜索文件名 / 路径",
+    "recent": "最近打开",
+    "placeholder_full": "搜索全文（支持中文分词）",
+    "empty_q": "输入关键词开始搜索（支持中文分词）",
+    "no_results": "无匹配结果",
+    "no_results_full": "无匹配结果。尝试减少关键词 / 使用引号做精确短语",
+    "pending": "索引构建中，请稍候…构建完成后将自动重试",
+    "syntax_error": "搜索语法错误",
+    "recent_searches": "最近搜索",
+    "total_count": "{{count}} 条结果",
+    "phrase_hint": "输入 \"xxxx\" 做精确短语搜索",
+    "rebuilding": "索引构建中 {{done}} / {{total}}"
   }
 }

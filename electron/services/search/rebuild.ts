@@ -6,6 +6,20 @@ import log from 'electron-log'
 import { parseFile } from '../frontmatter'
 import { writeRebuildTimestamp } from './stats'
 
+function broadcastEvent(channel: string, payload: unknown): void {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const electron = require('electron') as {
+      BrowserWindow: { getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[] }
+    }
+    for (const win of electron.BrowserWindow.getAllWindows()) {
+      try { win.webContents.send(channel, payload) } catch { /* destroyed */ }
+    }
+  } catch {
+    // running outside electron (unit tests) — silently no-op
+  }
+}
+
 const PROGRESS_EVERY_PCT = 5
 const BATCH_SIZE = 100
 
@@ -90,9 +104,11 @@ export async function rebuildFts(
       lastEmittedPct = pct
       const payload: RebuildProgressPayload = { done, total }
       rebuildEvents.emit('progress', payload)
+      broadcastEvent('index:rebuildProgress', payload)
     }
   }
 
   rebuildEvents.emit('done', { total })
+  broadcastEvent('index:rebuildDone', { total })
   writeRebuildTimestamp(groveRoot)
 }
