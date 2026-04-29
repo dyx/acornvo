@@ -72,6 +72,7 @@ export type DbVersionInfo = {
 // --- file namespace types (phase-04) ---
 
 import type { Frontmatter } from './frontmatter-schema'
+import type { FileSummary } from './file-types'
 
 export type EolStyle = 'lf' | 'crlf' | 'mixed'
 export type FileEncoding = 'utf8' | 'gbk'
@@ -178,15 +179,18 @@ export type IpcContract = {
     cancelScan: () => void
   }
   search: {
-    rebuild: () => { ok: true }
+    quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]
     fullText: (
       q: string,
       opts?: { limit?: number; offset?: number }
     ) => {
-      items: { summary: import('./file-types').FileSummary; snippet: string }[]
+      items: { summary: FileSummary; snippet: string }[]
       total: number
       pending: boolean
     }
+    suggest: (q: string) => FileSummary[]
+    stats: () => { fts_rows: number; last_rebuild_at: string | null }
+    rebuild: () => { ok: true }
   }
 }
 

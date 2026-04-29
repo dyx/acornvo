@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import { parseFile } from '../frontmatter'
+import { writeRebuildTimestamp } from './stats'
 
 const PROGRESS_EVERY_PCT = 5
 const BATCH_SIZE = 100
@@ -93,4 +94,5 @@ export async function rebuildFts(
   }
 
   rebuildEvents.emit('done', { total })
+  writeRebuildTimestamp(groveRoot)
 }
