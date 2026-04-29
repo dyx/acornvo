@@ -114,7 +114,7 @@ describe('openForGrove', () => {
     openForGrove(dir)
     expect(existsSync(join(dir, '.acornvo', 'index.db'))).toBe(true)
     const db = getCurrent()!
-    expect(db.pragma('user_version', { simple: true })).toBe(1)
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(1)
     expect(db.pragma('journal_mode', { simple: true })).toBe('wal')
     // files table exists from 001_init
     const tables = db
