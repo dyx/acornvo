@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { relative } from 'node:path'
 import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
-import { upsertFile, syncTags, upsertFts, deleteFile, renameFile, getTokenizer } from './index-queries'
+import { upsertFileWithBodyDelta, syncTags, upsertFts, deleteFile, renameFile } from './index-queries'
 import { parseFile } from './frontmatter'
 import { _setStateForTest as _indexerSetState } from './indexer'
 
@@ -283,13 +283,15 @@ async function flush(): Promise<void> {
         created_at: typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),
         updated_at: Date.now()
       }
-      upsertFile(_db!, row)
+      const { bodyChanged } = upsertFileWithBodyDelta(_db!, row)
       const tags = Array.isArray(ev.frontmatter.tags)
         ? (ev.frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
         : []
       syncTags(_db!, row.path, tags)
-      const ftsRowid = (_db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
-      upsertFts(_db!, { rowid: ftsRowid, path: row.path, title: row.title ?? '', summary: row.summary ?? '', content: ev.body }, getTokenizer())
+      if (bodyChanged) {
+        const ftsRowid = (_db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
+        upsertFts(_db!, { rowid: ftsRowid, path: row.path, title: row.title ?? '', body: ev.body! })
+      }
     }
   })
   tx()

@@ -66,25 +66,20 @@ export interface FtsRow {
   rowid: number
   path: string
   title: string
-  summary: string
-  content: string
+  body: string
 }
 
-export type Tokenizer = (text: string) => string
+/** Escape HTML-special chars so SQLite snippet wrappers (<mark></mark>) are unambiguous. */
+function escapeForFts(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
-const identityTokenizer: Tokenizer = (t) => t
-
-export function upsertFts(
-  db: Database.Database,
-  row: FtsRow,
-  tokenizer: Tokenizer = identityTokenizer
-): void {
-  const tokenized = tokenizer(row.content)
+export function upsertFts(db: Database.Database, row: FtsRow): void {
   const tx = db.transaction(() => {
-    db.prepare('DELETE FROM files_fts WHERE path=?').run(row.path)
+    db.prepare('DELETE FROM files_fts WHERE rowid=?').run(row.rowid)
     db.prepare(
-      'INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (?, ?, ?, ?, ?)'
-    ).run(row.rowid, row.path, row.title, row.summary, tokenized)
+      'INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
+    ).run(row.rowid, row.path, row.title, escapeForFts(row.body))
   })
   tx()
 }
@@ -139,15 +134,21 @@ export function queryBy(db: Database.Database, opts: QueryOptions): FileRow[] {
   return db.prepare(sql).all({ ...params, limit: opts.limit, offset: opts.offset }) as FileRow[]
 }
 
-// PHASE-08 DEPRECATED: the tokenizer-injection point is unused after migration 002.
-// FTS5's built-in `trigram` tokenizer handles index-side segmentation; query-side
-// jieba lives in `electron/services/search/jiebaSegment.ts` (Plan 2).
-// `setTokenizer/getTokenizer` are kept as no-ops only to avoid breaking phase-05 tests
-// in this commit; Plan 2 task 3.1 deletes them along with the `tokenizer` parameter
-// of `upsertFts` and switches `upsertFts` to write the new (path, title, body) schema.
-let _activeTokenizer: Tokenizer = identityTokenizer
-export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
-export function getTokenizer(): Tokenizer { return _activeTokenizer }
+export interface UpsertWithBodyDelta {
+  result: UpsertResult
+  bodyChanged: boolean
+}
+
+/** Like upsertFile but also returns whether the body content changed (content_hash diff). */
+export function upsertFileWithBodyDelta(db: Database.Database, row: FileRow): UpsertWithBodyDelta {
+  const existing = db
+    .prepare('SELECT content_hash FROM files WHERE path=?')
+    .get(row.path) as { content_hash: string } | undefined
+
+  const bodyChanged = !existing || existing.content_hash !== row.content_hash
+  const result = upsertFile(db, row)
+  return { result, bodyChanged }
+}
 
 export function syncTags(db: Database.Database, path: string, tags: string[]): void {
   const wanted = new Set(tags)
