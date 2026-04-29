@@ -4,6 +4,7 @@ import { dbHandlers } from './db'
 import { fileHandlers } from './file'
 import { projectHandlers } from './project'
 import { indexHandlers } from './index'
+import { searchHandlers } from './search'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -31,4 +32,5 @@ export const ipcHandlers: HandlerMap = {
   db: dbHandlers,
   file: fileHandlers,
   index: indexHandlers,
+  search: searchHandlers,
 }

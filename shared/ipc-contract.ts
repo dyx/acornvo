@@ -177,6 +177,17 @@ export type IpcContract = {
     startScan: () => void
     cancelScan: () => void
   }
+  search: {
+    rebuild: () => { ok: true }
+    fullText: (
+      q: string,
+      opts?: { limit?: number; offset?: number }
+    ) => {
+      items: { summary: import('./file-types').FileSummary; snippet: string }[]
+      total: number
+      pending: boolean
+    }
+  }
 }
 
 /**

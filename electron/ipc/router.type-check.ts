@@ -72,6 +72,10 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     status: () => ({ state: 'idle' as const, total: 0, scanned: 0 }),
     startScan: () => undefined,
     cancelScan: () => undefined
+  },
+  search: {
+    rebuild: async () => ({ ok: true } as const),
+    fullText: async () => ({ items: [], total: 0, pending: false })
   }
 }
 

@@ -53,6 +53,10 @@ const request: IpcClient<IpcContract> = {
     status: () => invoke('index.status'),
     startScan: () => invoke('index.startScan'),
     cancelScan: () => invoke('index.cancelScan')
+  },
+  search: {
+    rebuild: () => invoke('search.rebuild'),
+    fullText: (q, opts) => invoke('search.fullText', q, opts)
   }
 }
 
