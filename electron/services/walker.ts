@@ -27,15 +27,16 @@ async function* walkDir(
   dir: string,
   skipSet: Set<string>
 ): AsyncGenerator<WalkEntry> {
-  let entries: Awaited<ReturnType<typeof readdir>>
+  let entries: import('node:fs').Dirent[]
   try {
     entries = await readdir(dir, { withFileTypes: true })
   } catch {
     return
   }
   for (const entry of entries) {
-    if (skipSet.has(entry.name)) continue
-    const abs = join(dir, entry.name)
+    const name = String(entry.name)
+    if (skipSet.has(name)) continue
+    const abs = join(dir, name)
     const stat = await lstat(abs)
     if (stat.isSymbolicLink()) continue
     if (stat.isDirectory()) {
@@ -43,7 +44,7 @@ async function* walkDir(
       continue
     }
     if (!entry.isFile()) continue
-    if (!entry.name.endsWith('.md')) continue
+    if (!name.endsWith('.md')) continue
     const rel = relative(groveRoot, abs).split(/[\\/]/).join('/')
     yield { absPath: abs, relPath: rel }
   }
