@@ -304,3 +304,82 @@ describe('library store — select / detailsByPath', () => {
     expect(s.detailsByPath.has('a.md')).toBe(true)
   })
 })
+
+describe('library store — project:changed reset', () => {
+  let handlers: Partial<{
+    [K in IpcEventChannel]: (payload: IpcEventContract[K]) => void
+  }>
+
+  beforeEach(async () => {
+    const { _resetLibrarySubscriber } = await import('./library')
+    _resetLibrarySubscriber()
+    useLibraryStore.setState(useLibraryStore.getInitialState(), true)
+    vi.clearAllMocks()
+    handlers = {}
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
+      <K extends IpcEventChannel>(
+        ch: K,
+        h: (p: IpcEventContract[K]) => void
+      ) => {
+        handlers[ch] = h
+        return () => {}
+      }
+    )
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
+      items: [],
+      total: 0
+    })
+    ;(ipc.files.getCategoryTree as ReturnType<typeof vi.fn>).mockResolvedValue([])
+    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([])
+  })
+
+  it('subscribes to project:changed', async () => {
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    expect(ipc.on).toHaveBeenCalledWith('project:changed', expect.any(Function))
+  })
+
+  it('project:changed clears items / detailsByPath / selectedPath / categoryTree / tagCloud', async () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md')],
+      total: 1,
+      selectedPath: 'a.md',
+      detailsByPath: new Map([
+        ['a.md', { summary: makeSummary('a.md'), frontmatter: {}, body: '' }]
+      ]),
+      categoryTree: [{ name: 'x', count: 1, children: [] }],
+      tagCloud: [{ name: 't', usage_count: 1 }],
+      filter: { tag: 'x' },
+      pagination: { limit: 50, offset: 100, orderBy: 'title_asc' }
+    })
+
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['project:changed']?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    const s = useLibraryStore.getState()
+    expect(s.items).toEqual([])
+    expect(s.total).toBe(0)
+    expect(s.selectedPath).toBeNull()
+    expect(s.detailsByPath.size).toBe(0)
+    expect(s.categoryTree).toEqual([])
+    expect(s.tagCloud).toEqual([])
+    expect(s.filter).toEqual({})
+    expect(s.pagination.offset).toBe(0)
+  })
+
+  it('project:changed triggers reload of list / categoryTree / tagCloud', async () => {
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['project:changed']?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(ipc.files.list).toHaveBeenCalled()
+    expect(ipc.files.getCategoryTree).toHaveBeenCalled()
+    expect(ipc.files.getTagCloud).toHaveBeenCalled()
+  })
+})

@@ -189,11 +189,28 @@ export function installLibrarySubscriber(): () => void {
     void useLibraryStore.getState().refresh()
   })
 
+  const offProject = ipc.on('project:changed', () => {
+    useLibraryStore.setState({
+      filter: {},
+      orderBy: 'clipped_desc',
+      pagination: DEFAULT_PAGINATION,
+      items: [],
+      total: 0,
+      selectedPath: null,
+      detailsByPath: new Map(),
+      categoryTree: [],
+      tagCloud: [],
+      isLoading: false
+    })
+    void useLibraryStore.getState().refresh()
+  })
+
   return () => {
     subscriberInstalled = false
     offChanged()
     offDeleted()
     offRenamed()
+    offProject()
   }
 }
 
