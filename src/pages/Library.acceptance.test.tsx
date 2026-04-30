@@ -18,6 +18,7 @@ vi.mock('@/ipc/client', () => ({
 }))
 
 import { ipc } from '@/ipc/client'
+import type { FileSummary } from '@shared/ipc-contract'
 import { useGroveStore } from '@/stores/grove'
 import { useLibraryStore, _resetLibrarySubscriber } from '@/stores/library'
 import { Library } from './Library'
@@ -276,5 +277,134 @@ describe('OpenSpec acceptance 7.9 — right-click → Reveal in Finder', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'library.reveal' }))
     await act(async () => { await Promise.resolve() })
     expect(ipc.files.revealInFinder).toHaveBeenCalledWith('a.md')
+  })
+})
+
+describe('OpenSpec acceptance 7.10 — external new md → list updates via index:fileChanged', () => {
+  it('index:fileChanged triggers a re-list', async () => {
+    const before = sortByClippedDesc(buildSummaries([{ path: 'a.md' }]))
+    const after = sortByClippedDesc(buildSummaries([{ path: 'a.md' }, { path: 'b.md' }]))
+
+    let listCallCount = 0
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      listCallCount++
+      return listCallCount === 1 ? { items: before, total: 1 } : { items: after, total: 2 }
+    })
+
+    let onChanged: ((p: any) => void) | null = null
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation((channel: string, h: any) => {
+      if (channel === 'index:fileChanged') onChanged = h
+      return () => {}
+    })
+
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    expect(useLibraryStore.getState().items.length).toBe(1)
+
+    await act(async () => {
+      onChanged?.({ path: 'b.md', contentHash: 'x', mtime: 1, frontmatter: {} })
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    expect(useLibraryStore.getState().items.length).toBe(2)
+  })
+})
+
+describe('OpenSpec acceptance 7.11 — external delete of selected file clears row + preview', () => {
+  it('index:fileDeleted clears selectedPath and re-fetches list', async () => {
+    const before = sortByClippedDesc(buildSummaries([{ path: 'a.md' }, { path: 'b.md' }]))
+    const after = sortByClippedDesc(buildSummaries([{ path: 'b.md' }]))
+
+    let listCallCount = 0
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      listCallCount++
+      return listCallCount === 1 ? { items: before, total: 2 } : { items: after, total: 1 }
+    })
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: before[0], frontmatter: {}, body: ''
+    })
+
+    let onDeleted: ((p: any) => void) | null = null
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation((channel: string, h: any) => {
+      if (channel === 'index:fileDeleted') onDeleted = h
+      return () => {}
+    })
+
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+
+    await act(async () => { await useLibraryStore.getState().select('a.md') })
+    expect(useLibraryStore.getState().selectedPath).toBe('a.md')
+
+    // Delete 'a.md' externally
+    await act(async () => {
+      onDeleted?.({ path: 'a.md' })
+      await new Promise((r) => setTimeout(r, 50))
+    })
+
+    expect(useLibraryStore.getState().selectedPath).toBeNull()
+    expect(useLibraryStore.getState().items.map((i: FileSummary) => i.path)).toEqual(['b.md'])
+    expect(screen.getByTestId('preview-empty')).toBeTruthy()
+  })
+})
+
+describe('OpenSpec acceptance 7.12 — index scanning shows banner', () => {
+  it('index:stateChange={state:"scanning"} renders the scanning banner', async () => {
+    let onState: ((p: any) => void) | null = null
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation((channel: string, h: any) => {
+      if (channel === 'index:stateChange') onState = h
+      return () => {}
+    })
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: [], total: 0 })
+
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+
+    // No banner yet
+    expect(screen.queryByText('library.banner_scanning')).toBeNull()
+
+    await act(async () => { onState?.({ state: 'scanning' }) })
+    expect(screen.getByText('library.banner_scanning')).toBeTruthy()
+
+    await act(async () => { onState?.({ state: 'watching' }) })
+    expect(screen.queryByText('library.banner_scanning')).toBeNull()
+  })
+})
+
+describe('OpenSpec acceptance 7.13 — switching grove resets library state', () => {
+  it('project:changed clears items / cache and reloads', async () => {
+    const groveA = sortByClippedDesc(buildSummaries([{ path: 'a.md' }]))
+    const groveB = sortByClippedDesc(buildSummaries([{ path: 'x.md' }, { path: 'y.md' }]))
+    let callCount = 0
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++
+      return callCount === 1 ? { items: groveA, total: 1 } : { items: groveB, total: 2 }
+    })
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: groveA[0], frontmatter: {}, body: ''
+    })
+
+    let onProject: ((p: any) => void) | null = null
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation((channel: string, h: any) => {
+      if (channel === 'project:changed') onProject = h
+      return () => {}
+    })
+
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    await act(async () => { await useLibraryStore.getState().select('a.md') })
+    expect(useLibraryStore.getState().selectedPath).toBe('a.md')
+    expect(useLibraryStore.getState().detailsByPath.size).toBe(1)
+
+    // Switch grove
+    await act(async () => {
+      onProject?.({ id: 'new', path: '/new', name: 'New', color: null, sync_warning: null })
+      await new Promise((r) => setTimeout(r, 50))
+    })
+
+    const s = useLibraryStore.getState()
+    expect(s.selectedPath).toBeNull()
+    expect(s.detailsByPath.size).toBe(0)
+    expect(s.items.map((i: FileSummary) => i.path).sort()).toEqual(['x.md', 'y.md'])
+    expect(s.filter).toEqual({})
   })
 })
