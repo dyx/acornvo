@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Placeholder } from './pages/Placeholder'
+import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
 import { useBootstrap } from './hooks/useBootstrap'
 import { Toaster } from '@/components/ui/toaster'
@@ -72,7 +73,7 @@ export function App(): JSX.Element {
         <Routes>
           <Route path="/" element={<BootstrapGate />} />
           <Route path="/picker" element={<ProjectPicker />} />
-          <Route path="/library" element={<Placeholder name="library" />} />
+          <Route path="/library" element={<Library />} />
           <Route path="/editor/:path" element={<Placeholder name="editor" />} />
           <Route path="/browser" element={<Placeholder name="browser" />} />
           <Route path="/chat" element={<Placeholder name="chat" />} />
