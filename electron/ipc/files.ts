@@ -10,6 +10,9 @@ import type {
 } from '@shared/ipc-contract'
 import { fileHandlers } from './file'
 import type { Frontmatter } from '@shared/frontmatter-schema'
+import { shell } from 'electron'
+import { safeResolve } from '../services/path-safety'
+import * as groveSvc from '../services/grove'
 
 type FileQueryHandlers = {
   [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (
@@ -195,10 +198,23 @@ async function getTagCloud(opts: { limit: number }): Promise<TagCloudItem[]> {
   return rows
 }
 
+function requireGroveRoot(): string {
+  const grove = groveSvc.getCurrent()
+  if (!grove) throw new IpcError('E_NOT_FOUND', 'no grove is currently open')
+  return grove.path
+}
+
+async function revealInFinder(path: string): Promise<{ ok: true }> {
+  const root = requireGroveRoot()
+  const abs = safeResolve(root, path)
+  shell.showItemInFolder(abs)
+  return { ok: true }
+}
+
 export const fileQueryHandlers: FileQueryHandlers = {
   list,
   get,
   getCategoryTree,
   getTagCloud,
-  revealInFinder: notImplemented
+  revealInFinder
 }

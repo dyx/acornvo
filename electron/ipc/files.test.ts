@@ -1,16 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync as wfs } from 'node:fs'
 import { stringify } from '../services/frontmatter'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { IpcError } from '@shared/ipc-contract'
 
+vi.mock('electron', () => ({
+  shell: { showItemInFolder: vi.fn() }
+}))
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 vi.mock('../services/db', () => ({
   dbService: { requireCurrent: vi.fn() }
 }))
 
+import { shell } from 'electron'
 import * as groveSvc from '../services/grove'
 import { dbService } from '../services/db'
 import { fileQueryHandlers } from './files'
@@ -382,7 +386,7 @@ describe('fileQueryHandlers.get', () => {
       path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x']
     })
     const md = stringify({ title: 'A', rating: 4 }, '# Hello\n\nbody')
-    writeFileSync(join(dir, 'a.md'), md)
+    wfs(join(dir, 'a.md'), md)
 
     const r = await fileQueryHandlers.get('a.md')
     expect(r.summary.path).toBe('a.md')
@@ -403,6 +407,41 @@ describe('fileQueryHandlers.get', () => {
     insertFile(db, { path: 'a.md', title: 'A' })
     // No file written to disk
     await expect(fileQueryHandlers.get('a.md')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
+  })
+})
+
+describe('fileQueryHandlers.revealInFinder', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'libreveal-'))
+    setGroveRoot(dir)
+    ;(shell.showItemInFolder as unknown as ReturnType<typeof vi.fn>).mockClear()
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('returns { ok: true } and calls shell.showItemInFolder with the abs path', async () => {
+    wfs(join(dir, 'a.md'), 'x')
+    const r = await fileQueryHandlers.revealInFinder('a.md')
+    expect(r).toEqual({ ok: true })
+    expect(shell.showItemInFolder).toHaveBeenCalledTimes(1)
+    expect(shell.showItemInFolder).toHaveBeenCalledWith(join(dir, 'a.md'))
+  })
+
+  it('rejects path traversal with E_PERMISSION', async () => {
+    await expect(fileQueryHandlers.revealInFinder('../escape')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+    expect(shell.showItemInFolder).not.toHaveBeenCalled()
+  })
+
+  it('throws E_NOT_FOUND when no grove is open', async () => {
+    setGroveRoot(null)
+    await expect(fileQueryHandlers.revealInFinder('a.md')).rejects.toMatchObject({
       code: 'E_NOT_FOUND'
     })
   })
