@@ -127,7 +127,21 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ tagCloud: cloud })
   },
 
-  select: async () => {},
+  async select(path) {
+    if (path === null) {
+      set({ selectedPath: null })
+      return
+    }
+    const cache = get().detailsByPath
+    if (cache.has(path)) {
+      set({ selectedPath: path })
+      return
+    }
+    const detail = await ipc.files.get(path)
+    const next = new Map(cache)
+    next.set(path, detail)
+    set({ selectedPath: path, detailsByPath: next })
+  },
   refresh: async () => {}
 }))
 

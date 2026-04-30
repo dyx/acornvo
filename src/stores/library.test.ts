@@ -160,3 +160,47 @@ describe('library store — load / loadMore / order / filter', () => {
     expect(useLibraryStore.getState().isLoading).toBe(false)
   })
 })
+
+describe('library store — select / detailsByPath', () => {
+  beforeEach(() => {
+    useLibraryStore.setState(useLibraryStore.getInitialState(), true)
+    vi.clearAllMocks()
+  })
+
+  it('select(path) calls files.get and caches the FullDetail', async () => {
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: makeSummary('a.md', { rating: 4 }),
+      frontmatter: { title: 'A' },
+      body: 'hello'
+    })
+    await useLibraryStore.getState().select('a.md')
+    const s = useLibraryStore.getState()
+    expect(s.selectedPath).toBe('a.md')
+    expect(s.detailsByPath.get('a.md')?.body).toBe('hello')
+    expect(s.detailsByPath.get('a.md')?.summary.rating).toBe(4)
+  })
+
+  it('select(path) hits cache on second call (no extra IPC)', async () => {
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: makeSummary('a.md'),
+      frontmatter: {},
+      body: 'x'
+    })
+    await useLibraryStore.getState().select('a.md')
+    await useLibraryStore.getState().select('a.md')
+    expect(ipc.files.get).toHaveBeenCalledTimes(1)
+  })
+
+  it('select(null) clears selectedPath without touching the cache', async () => {
+    useLibraryStore.setState({
+      selectedPath: 'a.md',
+      detailsByPath: new Map([
+        ['a.md', { summary: makeSummary('a.md'), frontmatter: {}, body: 'x' }]
+      ])
+    })
+    await useLibraryStore.getState().select(null)
+    const s = useLibraryStore.getState()
+    expect(s.selectedPath).toBeNull()
+    expect(s.detailsByPath.has('a.md')).toBe(true)
+  })
+})
