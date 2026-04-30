@@ -161,6 +161,106 @@ describe('library store — load / loadMore / order / filter', () => {
   })
 })
 
+import type { IpcEventChannel, IpcEventContract } from '@shared/ipc-contract'
+
+describe('library store — refresh + index event subscriptions', () => {
+  let handlers: Partial<{
+    [K in IpcEventChannel]: (payload: IpcEventContract[K]) => void
+  }>
+
+  beforeEach(async () => {
+    useLibraryStore.setState(useLibraryStore.getInitialState(), true)
+    const lib = await import('./library')
+    lib._resetLibrarySubscriber()
+    vi.clearAllMocks()
+    handlers = {}
+    ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
+      <K extends IpcEventChannel>(
+        ch: K,
+        h: (p: IpcEventContract[K]) => void
+      ) => {
+        handlers[ch] = h
+        return () => {
+          delete handlers[ch]
+        }
+      }
+    )
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
+      items: [],
+      total: 0
+    })
+    ;(ipc.files.getCategoryTree as ReturnType<typeof vi.fn>).mockResolvedValue([])
+    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([])
+  })
+
+  it('refresh() re-runs list + categoryTree + tagCloud', async () => {
+    await useLibraryStore.getState().refresh()
+    expect(ipc.files.list).toHaveBeenCalledTimes(1)
+    expect(ipc.files.getCategoryTree).toHaveBeenCalledTimes(1)
+    expect(ipc.files.getTagCloud).toHaveBeenCalledTimes(1)
+  })
+
+  it('installLibrarySubscriber() subscribes to index events', async () => {
+    const { installLibrarySubscriber } = await import('./library')
+    const unsub = installLibrarySubscriber()
+    expect(ipc.on).toHaveBeenCalledWith('index:fileChanged', expect.any(Function))
+    expect(ipc.on).toHaveBeenCalledWith('index:fileDeleted', expect.any(Function))
+    expect(ipc.on).toHaveBeenCalledWith('index:fileRenamed', expect.any(Function))
+    unsub()
+  })
+
+  it('index:fileChanged → refresh()', async () => {
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['index:fileChanged']?.({
+      path: 'a.md',
+      contentHash: 'x',
+      mtime: 1,
+      frontmatter: {}
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(ipc.files.list).toHaveBeenCalled()
+  })
+
+  it('index:fileDeleted → refresh + clears selectedPath if it matches', async () => {
+    useLibraryStore.setState({ selectedPath: 'a.md' })
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['index:fileDeleted']?.({ path: 'a.md' })
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(useLibraryStore.getState().selectedPath).toBeNull()
+  })
+
+  it('index:fileDeleted does not clear selectedPath when paths differ', async () => {
+    useLibraryStore.setState({ selectedPath: 'b.md' })
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['index:fileDeleted']?.({ path: 'a.md' })
+    await Promise.resolve()
+    expect(useLibraryStore.getState().selectedPath).toBe('b.md')
+  })
+
+  it('index:fileRenamed updates selectedPath when oldPath matches', async () => {
+    useLibraryStore.setState({ selectedPath: 'a.md' })
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    handlers['index:fileRenamed']?.({ oldPath: 'a.md', newPath: 'a-renamed.md' })
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(useLibraryStore.getState().selectedPath).toBe('a-renamed.md')
+  })
+
+  it('installLibrarySubscriber is idempotent', async () => {
+    const { installLibrarySubscriber } = await import('./library')
+    installLibrarySubscriber()
+    const callsAfterFirst = (ipc.on as ReturnType<typeof vi.fn>).mock.calls.length
+    installLibrarySubscriber()
+    expect((ipc.on as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterFirst)
+  })
+})
+
 describe('library store — select / detailsByPath', () => {
   beforeEach(() => {
     useLibraryStore.setState(useLibraryStore.getInitialState(), true)

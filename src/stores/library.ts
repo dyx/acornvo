@@ -142,7 +142,62 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     next.set(path, detail)
     set({ selectedPath: path, detailsByPath: next })
   },
-  refresh: async () => {}
+  async refresh() {
+    await Promise.all([
+      get().load(),
+      get().loadCategoryTree(),
+      get().loadTagCloud()
+    ])
+  }
 }))
 
 export type { FullDetail as LibraryFullDetail }
+
+let subscriberInstalled = false
+
+export function installLibrarySubscriber(): () => void {
+  if (subscriberInstalled) return () => {}
+  subscriberInstalled = true
+
+  const offChanged = ipc.on('index:fileChanged', () => {
+    void useLibraryStore.getState().refresh()
+  })
+  const offDeleted = ipc.on('index:fileDeleted', (payload) => {
+    if (useLibraryStore.getState().selectedPath === payload.path) {
+      useLibraryStore.setState({ selectedPath: null })
+    }
+    const cache = useLibraryStore.getState().detailsByPath
+    if (cache.has(payload.path)) {
+      const next = new Map(cache)
+      next.delete(payload.path)
+      useLibraryStore.setState({ detailsByPath: next })
+    }
+    void useLibraryStore.getState().refresh()
+  })
+  const offRenamed = ipc.on('index:fileRenamed', (payload) => {
+    if (useLibraryStore.getState().selectedPath === payload.oldPath) {
+      useLibraryStore.setState({ selectedPath: payload.newPath })
+    }
+    const cache = useLibraryStore.getState().detailsByPath
+    if (cache.has(payload.oldPath)) {
+      const next = new Map(cache)
+      const detail = next.get(payload.oldPath)
+      next.delete(payload.oldPath)
+      if (detail) next.set(payload.newPath, detail)
+      useLibraryStore.setState({ detailsByPath: next })
+    }
+    void useLibraryStore.getState().refresh()
+  })
+
+  return () => {
+    subscriberInstalled = false
+    offChanged()
+    offDeleted()
+    offRenamed()
+  }
+}
+
+/** @internal reset for test isolation — not part of public API */
+export function _resetLibrarySubscriber() {
+  subscriberInstalled = false
+}
