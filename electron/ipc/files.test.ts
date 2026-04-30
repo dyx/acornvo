@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { stringify } from '../services/frontmatter'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { IpcError } from '@shared/ipc-contract'
 
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 vi.mock('../services/db', () => ({
@@ -214,5 +216,102 @@ describe('fileQueryHandlers.list', () => {
     expect(new Set(a.tags)).toEqual(new Set(['x', 'y']))
     expect(a.is_reviewing).toBe(false)
     expect(b.is_reviewing).toBe(false)
+  })
+
+  it('returns empty tags array for file with no tags (NULL tags_concat)', async () => {
+    insertFile(db, { path: 'a.md', title: 'A' })
+    const r = await fileQueryHandlers.list(
+      {},
+      { limit: 50, offset: 0, orderBy: 'title_asc' }
+    )
+    expect(r.items).toHaveLength(1)
+    expect(r.items[0].tags).toEqual([])
+  })
+
+  it('filters by combined category and tag', async () => {
+    insertFile(db, { path: 'a.md', title: 'A', category: '技术', tags: ['attention'] })
+    insertFile(db, { path: 'b.md', title: 'B', category: '技术', tags: ['other'] })
+    insertFile(db, { path: 'c.md', title: 'C', category: '产品', tags: ['attention'] })
+    const r = await fileQueryHandlers.list(
+      { category: '技术', tag: 'attention' },
+      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+    )
+    expect(r.items.map((i) => i.path)).toEqual(['a.md'])
+  })
+
+  it('filters by combined tag and rating', async () => {
+    insertFile(db, { path: 'a.md', title: 'A', rating: 4, tags: ['attention'] })
+    insertFile(db, { path: 'b.md', title: 'B', rating: 2, tags: ['attention'] })
+    insertFile(db, { path: 'c.md', title: 'C', rating: 5, tags: ['other'] })
+    const r = await fileQueryHandlers.list(
+      { tag: 'attention', rating: { min: 4 } },
+      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+    )
+    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['a.md']))
+  })
+
+  it('wraps SQL exceptions in IpcError with E_INTERNAL', async () => {
+    db.exec('DROP TABLE file_tags')
+    db.exec('DROP TABLE files')
+    try {
+      await fileQueryHandlers.list(
+        {},
+        { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+      )
+      expect.unreachable('Expected list() to throw')
+    } catch (err) {
+      expect(err).toBeInstanceOf(IpcError)
+      const ipcErr = err as IpcError
+      expect(ipcErr.code).toBe('E_INTERNAL')
+      expect(ipcErr.message).toContain('files.list:')
+    }
+  })
+})
+
+describe('fileQueryHandlers.get', () => {
+  let dir: string
+  let db: Database.Database
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'libget-'))
+    setGroveRoot(dir)
+    db = new Database(':memory:')
+    buildSchema(db)
+    setDb(db)
+  })
+  afterEach(() => {
+    db.close()
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+    setDb(null)
+  })
+
+  it('returns summary + frontmatter + body when path exists', async () => {
+    insertFile(db, {
+      path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x']
+    })
+    const md = stringify({ title: 'A', rating: 4 }, '# Hello\n\nbody')
+    writeFileSync(join(dir, 'a.md'), md)
+
+    const r = await fileQueryHandlers.get('a.md')
+    expect(r.summary.path).toBe('a.md')
+    expect(r.summary.rating).toBe(4)
+    expect(r.summary.tags).toContain('x')
+    expect(r.summary.is_reviewing).toBe(false)
+    expect(r.frontmatter.title).toBe('A')
+    expect(r.body).toContain('Hello')
+  })
+
+  it('throws E_NOT_FOUND when path is not in SQLite', async () => {
+    await expect(fileQueryHandlers.get('missing.md')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
+  })
+
+  it('throws E_NOT_FOUND when SQLite has the row but file is missing on disk', async () => {
+    insertFile(db, { path: 'a.md', title: 'A' })
+    // No file written to disk
+    await expect(fileQueryHandlers.get('a.md')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 })

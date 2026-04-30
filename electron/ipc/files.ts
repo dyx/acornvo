@@ -6,6 +6,8 @@ import type {
   Pagination,
   IpcContract
 } from '@shared/ipc-contract'
+import { fileHandlers } from './file'
+import type { Frontmatter } from '@shared/frontmatter-schema'
 
 type FileQueryHandlers = {
   [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (
@@ -17,7 +19,7 @@ type FileQueryHandlers = {
 
 // Stub bodies that throw — replaced in tasks 2.2–2.6.
 function notImplemented(): never {
-  throw new Error('not implemented')
+  throw new IpcError('E_INTERNAL', 'not implemented')
 }
 
 const TAG_SEP = '\x01'
@@ -48,7 +50,7 @@ async function list(
       f.clipped_at,
       json_extract(f.frontmatter_json, '$.site') AS site,
       CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-      GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat,
+      GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1) ORDER BY ft.tag) AS tags_concat,
       COUNT(*) OVER() AS total
     FROM files f
     LEFT JOIN file_tags ft ON ft.path = f.path
@@ -57,7 +59,7 @@ async function list(
       AND (:pathPrefix IS NULL OR f.path LIKE :pathPrefix || '%')
       AND (:minRating IS NULL OR f.rating >= :minRating)
       AND (:maxRating IS NULL OR f.rating <= :maxRating)
-      AND (:q IS NULL OR f.title LIKE '%' || :q || '%' OR f.path LIKE '%' || :q || '%')
+      AND (:q IS NULL OR f.title LIKE '%' || :q || '%' ESCAPE '\\' OR f.path LIKE '%' || :q || '%' ESCAPE '\\')
       AND (:tag IS NULL OR f.path IN (SELECT path FROM file_tags WHERE tag = :tag))
     GROUP BY f.path
     ORDER BY
@@ -66,13 +68,15 @@ async function list(
     LIMIT :limit OFFSET :offset
   `
 
+  const q = filter.q ? filter.q.replace(/%/g, '\\%').replace(/_/g, '\\_') : null
+
   const params = {
     category: filter.category ?? null,
     tag: filter.tag ?? null,
     pathPrefix: filter.pathPrefix ?? null,
     minRating: filter.rating?.min ?? null,
     maxRating: filter.rating?.max ?? null,
-    q: filter.q ?? null,
+    q,
     orderBy: pagination.orderBy,
     limit: pagination.limit,
     offset: pagination.offset
@@ -102,9 +106,50 @@ async function list(
   return { items, total }
 }
 
+async function get(path: string): Promise<{
+  summary: FileSummary
+  frontmatter: Frontmatter
+  body: string
+}> {
+  const db = dbService.requireCurrent()
+  const row = db
+    .prepare(
+      `SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
+              json_extract(f.frontmatter_json, '$.site') AS site,
+              CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
+              GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat
+       FROM files f
+       LEFT JOIN file_tags ft ON ft.path = f.path
+       WHERE f.path = ?
+       GROUP BY f.path`
+    )
+    .get(path) as
+    | (Omit<ListRow, 'total'>)
+    | undefined
+
+  if (!row) {
+    throw new IpcError('E_NOT_FOUND', `files.get: ${path} not in index`)
+  }
+
+  const parsed = await fileHandlers.readParsed(path)
+
+  const summary: FileSummary = {
+    path: row.path,
+    title: row.title,
+    category: row.category,
+    rating: row.rating,
+    clipped_at: row.clipped_at,
+    site: row.site,
+    has_summary: row.has_summary === 1,
+    tags: row.tags_concat ? row.tags_concat.split(TAG_SEP).filter(Boolean) : [],
+    is_reviewing: false
+  }
+  return { summary, frontmatter: parsed.frontmatter, body: parsed.body }
+}
+
 export const fileQueryHandlers: FileQueryHandlers = {
   list,
-  get: notImplemented,
+  get,
   getCategoryTree: notImplemented,
   getTagCloud: notImplemented,
   revealInFinder: notImplemented
