@@ -446,3 +446,53 @@ describe('fileQueryHandlers.revealInFinder', () => {
     })
   })
 })
+
+describe('fileQueryHandlers — error / empty fallbacks', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = new Database(':memory:')
+    buildSchema(db)
+    setDb(db)
+  })
+  afterEach(() => {
+    db.close()
+    setDb(null)
+  })
+
+  it('list: empty grove returns total=0 (not E_*)', async () => {
+    const r = await fileQueryHandlers.list(
+      {},
+      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+    )
+    expect(r).toEqual({ items: [], total: 0 })
+  })
+
+  it('getCategoryTree: empty grove returns []', async () => {
+    expect(await fileQueryHandlers.getCategoryTree()).toEqual([])
+  })
+
+  it('getTagCloud: empty grove returns []', async () => {
+    expect(await fileQueryHandlers.getTagCloud({ limit: 30 })).toEqual([])
+  })
+
+  it('list: SQL exception → E_INTERNAL', async () => {
+    db.exec('DROP TABLE files')
+    await expect(
+      fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
+    ).rejects.toMatchObject({ code: 'E_INTERNAL' })
+  })
+
+  it('getCategoryTree: SQL exception → E_INTERNAL', async () => {
+    db.exec('DROP TABLE files')
+    await expect(fileQueryHandlers.getCategoryTree()).rejects.toMatchObject({
+      code: 'E_INTERNAL'
+    })
+  })
+
+  it('getTagCloud: SQL exception → E_INTERNAL', async () => {
+    db.exec('DROP TABLE tags')
+    await expect(fileQueryHandlers.getTagCloud({ limit: 30 })).rejects.toMatchObject({
+      code: 'E_INTERNAL'
+    })
+  })
+})

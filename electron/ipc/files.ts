@@ -117,20 +117,25 @@ async function get(path: string): Promise<{
   body: string
 }> {
   const db = dbService.requireCurrent()
-  const row = db
-    .prepare(
-      `SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
-              json_extract(f.frontmatter_json, '$.site') AS site,
-              CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-              GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat
-       FROM files f
-       LEFT JOIN file_tags ft ON ft.path = f.path
-       WHERE f.path = ?
-       GROUP BY f.path`
-    )
-    .get(path) as
-    | (Omit<ListRow, 'total'>)
-    | undefined
+  let row: (Omit<ListRow, 'total'>) | undefined
+  try {
+    row = db
+      .prepare(
+        `SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
+                json_extract(f.frontmatter_json, '$.site') AS site,
+                CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
+                GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat
+         FROM files f
+         LEFT JOIN file_tags ft ON ft.path = f.path
+         WHERE f.path = ?
+         GROUP BY f.path`
+      )
+      .get(path) as
+      | (Omit<ListRow, 'total'>)
+      | undefined
+  } catch (err) {
+    throw new IpcError('E_INTERNAL', `files.get: ${(err as Error).message}`)
+  }
 
   if (!row) {
     throw new IpcError('E_NOT_FOUND', `files.get: ${path} not in index`)
@@ -156,14 +161,19 @@ const MAX_TREE_DEPTH = 3
 
 async function getCategoryTree(): Promise<CategoryNode[]> {
   const db = dbService.requireCurrent()
-  const rows = db
-    .prepare(
-      `SELECT category, COUNT(*) AS count
-       FROM files
-       WHERE category IS NOT NULL AND category <> ''
-       GROUP BY category`
-    )
-    .all() as Array<{ category: string; count: number }>
+  let rows: Array<{ category: string; count: number }>
+  try {
+    rows = db
+      .prepare(
+        `SELECT category, COUNT(*) AS count
+         FROM files
+         WHERE category IS NOT NULL AND category <> ''
+         GROUP BY category`
+      )
+      .all() as Array<{ category: string; count: number }>
+  } catch (err) {
+    throw new IpcError('E_INTERNAL', `files.getCategoryTree: ${(err as Error).message}`)
+  }
 
   const root: CategoryNode = { name: '', count: 0, children: [] }
 
@@ -186,15 +196,20 @@ async function getCategoryTree(): Promise<CategoryNode[]> {
 
 async function getTagCloud(opts: { limit: number }): Promise<TagCloudItem[]> {
   const db = dbService.requireCurrent()
-  const rows = db
-    .prepare(
-      `SELECT name, usage_count
-       FROM tags
-       WHERE usage_count > 0
-       ORDER BY usage_count DESC, name ASC
-       LIMIT ?`
-    )
-    .all(opts.limit) as TagCloudItem[]
+  let rows: TagCloudItem[]
+  try {
+    rows = db
+      .prepare(
+        `SELECT name, usage_count
+         FROM tags
+         WHERE usage_count > 0
+         ORDER BY usage_count DESC, name ASC
+         LIMIT ?`
+      )
+      .all(opts.limit) as TagCloudItem[]
+  } catch (err) {
+    throw new IpcError('E_INTERNAL', `files.getTagCloud: ${(err as Error).message}`)
+  }
   return rows
 }
 
