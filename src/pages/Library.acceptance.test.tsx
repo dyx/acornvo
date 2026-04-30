@@ -233,3 +233,48 @@ describe('OpenSpec acceptance 7.7 — selecting a file populates the preview + o
     expect(stars.filter((s) => s.dataset.filled === 'true').length).toBe(4)
   })
 })
+
+describe('OpenSpec acceptance 7.8 — rating IS NULL shows 理果中 in row and preview', () => {
+  it('row renders the · 理果中 placeholder when rating is null', async () => {
+    const fixture = sortByClippedDesc(
+      buildSummaries([{ path: 'a.md', title: 'Unrated', rating: null }])
+    )
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    expect(screen.getAllByText(/library.reviewing/).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('preview shows reviewing loader card when summary is missing', async () => {
+    const fixture = sortByClippedDesc(
+      buildSummaries([{ path: 'a.md', rating: null, has_summary: false }])
+    )
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: fixture[0], frontmatter: {}, body: ''
+    })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
+    await userEvent.click(row)
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    expect(screen.getByTestId('preview-reviewing-loader')).toBeTruthy()
+  })
+})
+
+describe('OpenSpec acceptance 7.9 — right-click → Reveal in Finder', () => {
+  it('right-click opens the menu, "在 Finder 中显示" calls files.revealInFinder', async () => {
+    const fixture = sortByClippedDesc(buildSummaries([{ path: 'a.md', title: 'A' }]))
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
+    fireEvent.contextMenu(row, { clientX: 50, clientY: 50 })
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    const menu = screen.getByTestId('file-row-menu')
+    expect(menu).toBeTruthy()
+    await userEvent.click(screen.getByRole('menuitem', { name: 'library.reveal' }))
+    await act(async () => { await Promise.resolve() })
+    expect(ipc.files.revealInFinder).toHaveBeenCalledWith('a.md')
+  })
+})
