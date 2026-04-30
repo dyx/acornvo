@@ -76,6 +76,65 @@ function insertFile(
   }
 }
 
+describe('fileQueryHandlers.getCategoryTree', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = new Database(':memory:')
+    buildSchema(db)
+    setDb(db)
+  })
+  afterEach(() => {
+    db.close()
+    setDb(null)
+  })
+
+  it('returns empty array on empty grove', async () => {
+    expect(await fileQueryHandlers.getCategoryTree()).toEqual([])
+  })
+
+  it('aggregates simple top-level categories', async () => {
+    insertFile(db, { path: 'a.md', category: '技术' })
+    insertFile(db, { path: 'b.md', category: '产品' })
+    insertFile(db, { path: 'c.md', category: '产品' })
+    const tree = await fileQueryHandlers.getCategoryTree()
+    expect(tree.find((n) => n.name === '产品')?.count).toBe(2)
+    expect(tree.find((n) => n.name === '技术')?.count).toBe(1)
+  })
+
+  it('builds a 2-level tree with parent counts that include children', async () => {
+    insertFile(db, { path: 'a.md', category: '技术/深度学习' })
+    insertFile(db, { path: 'b.md', category: '技术/深度学习' })
+    insertFile(db, { path: 'c.md', category: '技术/工具链' })
+    insertFile(db, { path: 'd.md', category: '产品' })
+
+    const tree = await fileQueryHandlers.getCategoryTree()
+    const tech = tree.find((n) => n.name === '技术')!
+    expect(tech.count).toBe(3)
+    const dl = tech.children.find((n) => n.name === '深度学习')!
+    const tools = tech.children.find((n) => n.name === '工具链')!
+    expect(dl.count).toBe(2)
+    expect(tools.count).toBe(1)
+    expect(tree.find((n) => n.name === '产品')?.count).toBe(1)
+  })
+
+  it('caps at 3 levels — deeper segments are flattened into the third level', async () => {
+    insertFile(db, { path: 'a.md', category: 'a/b/c/d/e' })
+    const tree = await fileQueryHandlers.getCategoryTree()
+    const a = tree.find((n) => n.name === 'a')!
+    const b = a.children.find((n) => n.name === 'b')!
+    const c = b.children.find((n) => n.name === 'c')!
+    expect(c.children).toEqual([])
+  })
+
+  it('skips rows where category IS NULL', async () => {
+    insertFile(db, { path: 'a.md', category: null })
+    insertFile(db, { path: 'b.md', category: 'X' })
+    const tree = await fileQueryHandlers.getCategoryTree()
+    expect(tree.length).toBe(1)
+    expect(tree[0].name).toBe('X')
+  })
+})
+
 describe('fileQueryHandlers.list', () => {
   let dir: string
   let db: Database.Database

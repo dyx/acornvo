@@ -4,7 +4,8 @@ import type {
   FileSummary,
   FileFilter,
   Pagination,
-  IpcContract
+  IpcContract,
+  CategoryNode
 } from '@shared/ipc-contract'
 import { fileHandlers } from './file'
 import type { Frontmatter } from '@shared/frontmatter-schema'
@@ -147,10 +148,42 @@ async function get(path: string): Promise<{
   return { summary, frontmatter: parsed.frontmatter, body: parsed.body }
 }
 
+const MAX_TREE_DEPTH = 3
+
+async function getCategoryTree(): Promise<CategoryNode[]> {
+  const db = dbService.requireCurrent()
+  const rows = db
+    .prepare(
+      `SELECT category, COUNT(*) AS count
+       FROM files
+       WHERE category IS NOT NULL AND category <> ''
+       GROUP BY category`
+    )
+    .all() as Array<{ category: string; count: number }>
+
+  const root: CategoryNode = { name: '', count: 0, children: [] }
+
+  for (const r of rows) {
+    const segments = r.category.split('/').slice(0, MAX_TREE_DEPTH)
+    let cursor = root
+    for (let i = 0; i < segments.length; i++) {
+      const name = segments[i]
+      let next = cursor.children.find((c) => c.name === name)
+      if (!next) {
+        next = { name, count: 0, children: [] }
+        cursor.children.push(next)
+      }
+      next.count += r.count
+      cursor = next
+    }
+  }
+  return root.children
+}
+
 export const fileQueryHandlers: FileQueryHandlers = {
   list,
   get,
-  getCategoryTree: notImplemented,
+  getCategoryTree,
   getTagCloud: notImplemented,
   revealInFinder: notImplemented
 }
