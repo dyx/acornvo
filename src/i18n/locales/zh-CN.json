@@ -75,9 +75,13 @@
     "tags": "标签云",
     "search_ph": "搜索…",
     "reviewing": "理果中",
-    "empty_preview": "选择一篇笔记查看详情",
+    "empty_grove": "还没有文件",
+    "empty_preview": "从列表选一篇开始",
     "open_editor": "打开编辑器",
     "reveal": "在 Finder 中显示",
+    "banner_scanning": "索引中，数据可能不完整",
+    "banner_error": "索引出错，部分数据可能丢失",
+    "banner_view_logs": "查看日志",
     "shown_total": "{{shown}} / {{total}}"
   }
 }
