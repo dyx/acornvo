@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Placeholder } from './pages/Placeholder'
 import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
+import { EditorPlaceholder } from './pages/EditorPlaceholder'
 import { useBootstrap } from './hooks/useBootstrap'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
@@ -74,7 +75,7 @@ export function App(): JSX.Element {
           <Route path="/" element={<BootstrapGate />} />
           <Route path="/picker" element={<ProjectPicker />} />
           <Route path="/library" element={<Library />} />
-          <Route path="/editor/:path" element={<Placeholder name="editor" />} />
+          <Route path="/editor/:path" element={<EditorPlaceholder />} />
           <Route path="/browser" element={<Placeholder name="browser" />} />
           <Route path="/chat" element={<Placeholder name="chat" />} />
           <Route path="/settings" element={<Placeholder name="settings" />} />
