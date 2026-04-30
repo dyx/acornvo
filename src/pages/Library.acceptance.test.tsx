@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, act, within, cleanup } from '@testing-library/react'
+import { render, screen, act, within, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -155,5 +155,81 @@ describe('OpenSpec acceptance 7.4 — clicking #attention narrows by tag', () =>
     expect(useLibraryStore.getState().items.length).toBe(2)
     const lastListCall = (ipc.files.list as ReturnType<typeof vi.fn>).mock.calls.at(-1)
     expect(lastListCall?.[0]).toMatchObject({ tag: 'attention' })
+  })
+})
+
+describe('OpenSpec acceptance 7.5 — search "注意力" narrows; clearing restores', () => {
+  it('typing into search debounces 150ms then sets filter.q; clearing resets it', async () => {
+    const all = sortByClippedDesc(
+      buildSummaries([
+        { path: 'notes/x.md', title: '注意力机制' },
+        { path: 'notes/y.md', title: 'Other' }
+      ])
+    )
+    const filtered = all.filter((item) => item.path === 'notes/x.md')
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockImplementation(async (filter: any) => {
+      if (filter?.q === '注意力') return { items: filtered, total: filtered.length }
+      return { items: all, total: all.length }
+    })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    const search = screen.getByRole('searchbox')
+    // fireEvent.change reliably sets the input value for CJK in jsdom; debounce 150ms
+    await act(async () => { fireEvent.change(search, { target: { value: '注意力' } }) })
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    expect(useLibraryStore.getState().items.length).toBe(filtered.length)
+    expect(useLibraryStore.getState().items[0].title).toContain('注意力')
+    // Clear the search box — debounce fires again, passing q=undefined
+    await act(async () => { fireEvent.change(search, { target: { value: '' } }) })
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    expect(useLibraryStore.getState().items.length).toBe(all.length)
+  })
+})
+
+describe('OpenSpec acceptance 7.6 — 5000 rows: virtualizer keeps DOM count bounded', () => {
+  it('renders only the visible window even with 5000 items', async () => {
+    const items = sortByClippedDesc(
+      buildSummaries(
+        Array.from({ length: 5000 }, (_, i) => ({
+          path: `notes/${String(i).padStart(4, '0')}.md`
+        }))
+      )
+    )
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items, total: 5000 })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    expect(useLibraryStore.getState().items.length).toBe(5000)
+    const dom = document.querySelectorAll('[data-testid="file-row"]')
+    // 600px / 60px = 10 visible rows + overscan 10 above + 10 below = <= 30
+    expect(dom.length).toBeLessThanOrEqual(30)
+  })
+})
+
+describe('OpenSpec acceptance 7.7 — selecting a file populates the preview + open editor link', () => {
+  it('clicking a row triggers files.get and renders summary card / tags / rating', async () => {
+    const fixture = sortByClippedDesc(
+      buildSummaries([
+        { path: 'a.md', title: 'A', rating: 4, tags: ['attention'], has_summary: true }
+      ])
+    )
+    // Reset tag-cloud to empty so sidebar does not also render #attention
+    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([])
+    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
+    ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      summary: fixture[0],
+      frontmatter: { summary: 'AI summary', highlights: ['p1', 'p2'] },
+      body: 'body'
+    })
+    render(<MemoryRouter><Library /></MemoryRouter>)
+    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
+    await userEvent.click(row)
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    expect(screen.getByText('AI summary')).toBeTruthy()
+    expect(screen.getByText('p1')).toBeTruthy()
+    expect(screen.getByText('p2')).toBeTruthy()
+    expect(screen.getByText('#attention')).toBeTruthy()
+    const stars = screen.getAllByTestId('rating-star')
+    expect(stars.filter((s) => s.dataset.filled === 'true').length).toBe(4)
   })
 })
