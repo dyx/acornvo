@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLibraryStore } from '@/stores/library'
 import { FileRow } from './FileRow'
+import { FileRowContextMenu } from './FileRowContextMenu'
 import { Search } from 'lucide-react'
 
 const ROW_HEIGHT = 60
@@ -20,6 +21,7 @@ export function VirtualFileList(): JSX.Element {
   const select = useLibraryStore((s) => s.select)
   const setFilter = useLibraryStore((s) => s.setFilter)
   const [query, setQuery] = useState('')
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null)
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -84,7 +86,11 @@ export function VirtualFileList(): JSX.Element {
               }}>
                 <FileRow file={file} active={file.path === selectedPath}
                   onClick={() => void select(file.path)}
-                  onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)} />
+                  onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setMenu({ x: e.clientX, y: e.clientY, path: file.path })
+                  }} />
               </div>
             )
           })}
@@ -94,6 +100,10 @@ export function VirtualFileList(): JSX.Element {
       <div className="border-t-[0.5px] border-[color:var(--line)] bg-[color:var(--paper-2)] px-3.5 py-2 font-mono text-[10.5px] text-[color:var(--ink-3)]">
         {t('library.shown_total', { shown: items.length, total })}
       </div>
+
+      {menu ? (
+        <FileRowContextMenu open x={menu.x} y={menu.y} path={menu.path} onClose={() => setMenu(null)} />
+      ) : null}
     </div>
   )
 }
