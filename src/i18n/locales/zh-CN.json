@@ -75,6 +75,8 @@
     "tags": "标签云",
     "search_ph": "搜索…",
     "reviewing": "理果中",
+    "empty_preview": "选择一篇笔记查看详情",
+    "open_editor": "打开编辑器",
     "shown_total": "{{shown}} / {{total}}"
   }
 }
