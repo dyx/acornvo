@@ -65,5 +65,13 @@
       "title": "索引中…",
       "background": "后台继续"
     }
+  },
+  "library": {
+    "views": "视图",
+    "all": "全部",
+    "inbox": "果篮",
+    "unreviewed": "待理果",
+    "categories": "分类",
+    "tags": "标签云"
   }
 }
