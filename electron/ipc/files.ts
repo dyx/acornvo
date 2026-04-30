@@ -5,7 +5,8 @@ import type {
   FileFilter,
   Pagination,
   IpcContract,
-  CategoryNode
+  CategoryNode,
+  TagCloudItem
 } from '@shared/ipc-contract'
 import { fileHandlers } from './file'
 import type { Frontmatter } from '@shared/frontmatter-schema'
@@ -180,10 +181,24 @@ async function getCategoryTree(): Promise<CategoryNode[]> {
   return root.children
 }
 
+async function getTagCloud(opts: { limit: number }): Promise<TagCloudItem[]> {
+  const db = dbService.requireCurrent()
+  const rows = db
+    .prepare(
+      `SELECT name, usage_count
+       FROM tags
+       WHERE usage_count > 0
+       ORDER BY usage_count DESC, name ASC
+       LIMIT ?`
+    )
+    .all(opts.limit) as TagCloudItem[]
+  return rows
+}
+
 export const fileQueryHandlers: FileQueryHandlers = {
   list,
   get,
   getCategoryTree,
-  getTagCloud: notImplemented,
+  getTagCloud,
   revealInFinder: notImplemented
 }

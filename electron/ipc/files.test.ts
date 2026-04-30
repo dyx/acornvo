@@ -327,6 +327,39 @@ describe('fileQueryHandlers.list', () => {
   })
 })
 
+describe('fileQueryHandlers.getTagCloud', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = new Database(':memory:')
+    buildSchema(db)
+    setDb(db)
+  })
+  afterEach(() => {
+    db.close()
+    setDb(null)
+  })
+
+  it('returns empty when no tags', async () => {
+    expect(await fileQueryHandlers.getTagCloud({ limit: 30 })).toEqual([])
+  })
+
+  it('orders by usage_count desc and respects limit', async () => {
+    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('a', 10)
+    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('b', 1)
+    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('c', 5)
+    const r = await fileQueryHandlers.getTagCloud({ limit: 2 })
+    expect(r.map((t) => t.name)).toEqual(['a', 'c'])
+    expect(r[0].usage_count).toBe(10)
+  })
+
+  it('skips tags with usage_count = 0', async () => {
+    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('zero', 0)
+    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('one', 1)
+    const r = await fileQueryHandlers.getTagCloud({ limit: 30 })
+    expect(r.map((t) => t.name)).toEqual(['one'])
+  })
+})
+
 describe('fileQueryHandlers.get', () => {
   let dir: string
   let db: Database.Database
