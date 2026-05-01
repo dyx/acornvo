@@ -159,3 +159,46 @@ const _unsub8 = _eventApi2.on('index:fileRenamed', (payload) => {
 void _unsub8
 
 export type _EventExports = _EventChannelUnion
+
+// ── files namespace (phase-06) ──────────────────────────────────────────
+
+import type { FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
+
+// files.list returns { items: FileSummary[]; total: number }
+type _ListReturn = ReturnType<IpcContract['files']['list']>
+const _listOk: _ListReturn = { items: [], total: 0 }
+void _listOk
+
+// files.get returns Frontmatter+body+summary
+type _GetReturn = ReturnType<IpcContract['files']['get']>
+const _getOk: _GetReturn = {
+  summary: {
+    path: 'a.md', title: null, category: null, rating: null,
+    clipped_at: null, site: null, has_summary: false, tags: [], is_reviewing: false
+  },
+  frontmatter: {},
+  body: ''
+}
+void _getOk
+
+// getCategoryTree
+type _TreeReturn = ReturnType<IpcContract['files']['getCategoryTree']>
+const _treeOk: _TreeReturn = []
+void _treeOk
+
+// getTagCloud
+type _CloudReturn = ReturnType<IpcContract['files']['getTagCloud']>
+const _cloudOk: _CloudReturn = []
+void _cloudOk
+
+// revealInFinder
+type _RevealReturn = ReturnType<IpcContract['files']['revealInFinder']>
+const _revealOk: _RevealReturn = { ok: true }
+void _revealOk
+
+// Argument shape sanity
+const _filter: FileFilter = {}
+const _pagination: Pagination = { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+const _node: CategoryNode = { name: 'x', count: 0, children: [] }
+const _tag: TagCloudItem = { name: 'x', usage_count: 0 }
+void _filter; void _pagination; void _node; void _tag
