@@ -22,11 +22,6 @@ type FileQueryHandlers = {
     : never
 }
 
-// Stub bodies that throw — replaced in tasks 2.2–2.6.
-function notImplemented(): never {
-  throw new IpcError('E_INTERNAL', 'not implemented')
-}
-
 const TAG_SEP = '\x01'
 
 interface ListRow {
