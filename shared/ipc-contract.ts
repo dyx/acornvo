@@ -41,6 +41,8 @@ export type SelectDirectoryPurpose = 'open' | 'createParent'
 export interface IpcErrorShape {
   code: IpcErrorCode
   message: string
+  /** Error-specific extra fields. For E_MTIME_MISMATCH: `{ remoteMtimeMs: number }`. */
+  context?: Record<string, unknown>
 }
 
 export type IpcOk<T> = { ok: true; data: T }
@@ -49,14 +51,21 @@ export type IpcResult<T> = IpcOk<T> | IpcErr
 
 export class IpcError extends Error {
   public readonly code: IpcErrorCode
+  public readonly context?: Record<string, unknown>
 
-  constructor(codeOrShape: IpcErrorCode | IpcErrorShape, message?: string) {
+  constructor(
+    codeOrShape: IpcErrorCode | IpcErrorShape,
+    message?: string,
+    context?: Record<string, unknown>
+  ) {
     if (typeof codeOrShape === 'string') {
       super(message ?? '')
       this.code = codeOrShape
+      this.context = context
     } else {
       super(codeOrShape.message)
       this.code = codeOrShape.code
+      this.context = codeOrShape.context
     }
     this.name = 'IpcError'
   }
@@ -104,6 +113,12 @@ export interface FileReadParsedResult extends FileReadResult {
 export interface FileWriteOptions {
   eol?: 'lf' | 'crlf'
   expectedMtime?: number
+  /**
+   * When true, skip the mtime guard and overwrite unconditionally.
+   * The main-side handler MUST emit a `force-write` audit log entry.
+   * `force: true` and `expectedMtime` may be set together; `force` wins.
+   */
+  force?: boolean
 }
 
 export interface FileWriteResult {

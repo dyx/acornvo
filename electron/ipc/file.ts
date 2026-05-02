@@ -80,6 +80,8 @@ export const fileHandlers = {
   ): Promise<FileWriteResult> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
+    // opts.force / opts.expectedMtime / opts.eol all flow through to writeWithVerify,
+    // which is responsible for the mtime guard and force-write audit.
     const result = await writeWithVerify(abs, content, opts)
     const finalStat = await fsStat(abs)
     registerSelfWrite(abs, finalStat.mtimeMs)
