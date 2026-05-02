@@ -504,3 +504,21 @@ describe('editor store — debounce coalescing', () => {
     }
   })
 })
+
+describe('editor store — file removed during edit', () => {
+  it('save throwing E_NOT_FOUND transitions store to error state', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed = vi
+      .fn()
+      .mockRejectedValueOnce(new IpcError('E_NOT_FOUND', 'file gone'))
+
+    await useEditorStore.getState().save()
+
+    const s = useEditorStore.getState().state
+    expect(s.kind).toBe('error')
+    if (s.kind !== 'error') throw new Error('unreachable')
+    expect(s.path).toBe('a.md')
+    expect(s.error).toBe('E_NOT_FOUND')
+  })
+})

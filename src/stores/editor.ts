@@ -97,6 +97,12 @@ async function _doSave(): Promise<void> {
       }, 0)
     }
   } catch (err) {
+    if (err instanceof IpcError && err.code === 'E_NOT_FOUND') {
+      useEditorStore.setState({
+        state: { kind: 'error', path: cur.path, error: 'E_NOT_FOUND' }
+      })
+      return
+    }
     const next = useEditorStore.getState().state
     if (next.kind !== 'ready') return
     if (err instanceof IpcError && err.code === 'E_MTIME_MISMATCH') {
