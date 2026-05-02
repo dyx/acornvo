@@ -96,7 +96,65 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (isDirty) _scheduleSave()
   },
 
-  save: notImplemented,
+  async save() {
+    const cur = get().state
+    if (cur.kind !== 'ready') return
+    if (cur.saving) return
+    if (!cur.dirty) return
+
+    const bodyAtSendTime = cur.body
+    const mtimeAtSendTime = cur.savedMtimeMs
+
+    set({
+      state: {
+        ...cur,
+        saving: true
+      }
+    })
+
+    try {
+      const r = await ipc.file.writeParsed(
+        cur.path,
+        cur.frontmatter,
+        bodyAtSendTime,
+        { expectedMtime: mtimeAtSendTime }
+      )
+      const next = get().state
+      if (next.kind !== 'ready') return
+      const newDirty = next.body !== bodyAtSendTime
+      set({
+        state: {
+          ...next,
+          savedBody: bodyAtSendTime,
+          savedMtimeMs: r.mtimeMs,
+          saving: false,
+          dirty: newDirty,
+          lastError: null,
+          saveErrorCount: 0
+        }
+      })
+      if (newDirty) {
+        // Re-iterate immediately — the user typed during the in-flight save.
+        setTimeout(() => {
+          void get().save()
+        }, 0)
+      }
+    } catch (err) {
+      // Error handling lands in task 9 — for now, surface saving=false and
+      // store the code so the test hooks see it.
+      const code = err instanceof IpcError ? err.code : String(err)
+      const next = get().state
+      if (next.kind !== 'ready') return
+      set({
+        state: {
+          ...next,
+          saving: false,
+          lastError: code,
+          saveErrorCount: next.saveErrorCount + 1
+        }
+      })
+    }
+  },
   flushSave: notImplemented,
   close: () => {
     _cancelDebounce()

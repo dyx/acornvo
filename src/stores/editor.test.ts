@@ -7,7 +7,8 @@ vi.mock('@/ipc/client', () => ({
   ipc: {
     file: {
       readParsed: vi.fn(),
-      write: vi.fn()
+      write: vi.fn(),
+      writeParsed: vi.fn()
     },
     files: {
       get: vi.fn()
@@ -22,6 +23,7 @@ const ipcMock = ipc as unknown as {
   file: {
     readParsed: ReturnType<typeof vi.fn>
     write: ReturnType<typeof vi.fn>
+    writeParsed: ReturnType<typeof vi.fn>
   }
   files: { get: ReturnType<typeof vi.fn> }
 }
@@ -34,6 +36,7 @@ beforeEach(() => {
   resetStore()
   ipcMock.file.readParsed.mockReset()
   ipcMock.file.write.mockReset()
+  ipcMock.file.writeParsed.mockReset()
 })
 
 afterEach(() => {
@@ -166,5 +169,95 @@ describe('editor store — setBody', () => {
     useEditorStore.getState().setBody('foo')
     const s = useEditorStore.getState().state
     expect(s.kind).toBe('idle')
+  })
+})
+
+describe('editor store — save (success path)', () => {
+  it('writes body via file.writeParsed with expectedMtime, then advances saved* on success', async () => {
+    await openReady('# Body', 100)
+    useEditorStore.setState((prev) => ({
+      ...prev,
+      state:
+        prev.state.kind === 'ready'
+          ? { ...prev.state, body: '# New body', dirty: true }
+          : prev.state
+    }))
+
+    ipcMock.file.writeParsed.mockResolvedValueOnce({ mtimeMs: 200, sha256: 'h2' })
+
+    await useEditorStore.getState().save()
+
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
+      'a.md',
+      {},
+      '# New body',
+      { expectedMtime: 100 }
+    )
+
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.savedBody).toBe('# New body')
+    expect(s.savedMtimeMs).toBe(200)
+    expect(s.dirty).toBe(false)
+    expect(s.saving).toBe(false)
+    expect(s.saveErrorCount).toBe(0)
+  })
+
+  it('returns immediately when called while saving=true', async () => {
+    await openReady('# Body', 1)
+    useEditorStore.setState((prev) =>
+      prev.state.kind === 'ready'
+        ? { ...prev, state: { ...prev.state, body: '# x', dirty: true, saving: true } }
+        : prev
+    )
+    ipcMock.file.writeParsed.mockReset()
+    await useEditorStore.getState().save()
+    expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+  })
+
+  it('self-iterates: if body changes during in-flight save, runs again with the new body', async () => {
+    await openReady('A', 10)
+    let resolveFirst!: (v: { mtimeMs: number; sha256: string }) => void
+    ipcMock.file.writeParsed
+      .mockImplementationOnce(
+        () =>
+          new Promise((res) => {
+            resolveFirst = res
+          })
+      )
+      .mockResolvedValueOnce({ mtimeMs: 22, sha256: 'h2' })
+
+    // First save kicks off
+    useEditorStore.setState((prev) =>
+      prev.state.kind === 'ready'
+        ? { ...prev, state: { ...prev.state, body: 'B', dirty: true } }
+        : prev
+    )
+    const p1 = useEditorStore.getState().save()
+
+    // While it's pending, user types more
+    useEditorStore.getState().setBody('C')
+
+    // Resolve the first write — it should commit savedBody=B and then re-save (C)
+    resolveFirst({ mtimeMs: 11, sha256: 'h1' })
+
+    await p1
+
+    // Wait for the iterated save to complete (it's scheduled via setTimeout(0))
+    await new Promise((r) => setTimeout(r, 5))
+
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(2)
+    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(
+      1, 'a.md', {}, 'B', { expectedMtime: 10 }
+    )
+    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(
+      2, 'a.md', {}, 'C', { expectedMtime: 11 }
+    )
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.savedBody).toBe('C')
+    expect(s.savedMtimeMs).toBe(22)
+    expect(s.dirty).toBe(false)
   })
 })
