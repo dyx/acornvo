@@ -90,4 +90,22 @@ describe('Editor page', () => {
       expect(ipcMock.file.readParsed).toHaveBeenCalledWith('notes/中文 with space.md')
     )
   })
+
+  it('flushSave fires on visibilitychange → hidden', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+    })
+    renderAt(encodeURIComponent('a.md'))
+    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'hidden'
+    })
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    expect(flushSpy).toHaveBeenCalled()
+  })
 })
