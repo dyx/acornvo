@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type { Frontmatter } from '@shared/frontmatter-schema'
+import { ipc } from '@/ipc/client'
+import { IpcError } from '@shared/ipc-contract'
 
 export type EditorReadyState = {
   kind: 'ready'
@@ -34,11 +36,37 @@ function notImplemented(): never {
   throw new Error('editor store action not implemented yet')
 }
 
-export const useEditorStore = create<EditorStore>(() => ({
+export const useEditorStore = create<EditorStore>((set) => ({
   state: { kind: 'idle' },
-  open: notImplemented,
+
+  async open(path) {
+    set({ state: { kind: 'loading', path } })
+    try {
+      const r = await ipc.file.readParsed(path)
+      set({
+        state: {
+          kind: 'ready',
+          path,
+          frontmatter: r.frontmatter,
+          body: r.body,
+          savedBody: r.body,
+          savedMtimeMs: r.mtimeMs,
+          dirty: false,
+          saving: false,
+          lastError: null,
+          saveErrorCount: 0
+        }
+      })
+    } catch (err) {
+      const code = err instanceof IpcError ? err.code : String(err)
+      set({ state: { kind: 'error', path, error: code } })
+    }
+  },
+
   setBody: notImplemented,
   save: notImplemented,
   flushSave: notImplemented,
-  close: () => {}
+  close: () => {
+    set({ state: { kind: 'idle' } })
+  }
 }))
