@@ -66,7 +66,22 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     }),
     exists: () => false,
     list: () => [],
-    rename: () => undefined
+    rename: () => undefined,
+    openExternal: () => ({ ok: true as const })
+  },
+  files: {
+    list: () => ({ items: [], total: 0 }),
+    get: () => ({
+      summary: {
+        path: '', title: null, category: null, rating: null,
+        clipped_at: null, site: null, has_summary: false, tags: [], is_reviewing: false
+      },
+      frontmatter: {},
+      body: ''
+    }),
+    getCategoryTree: () => [],
+    getTagCloud: () => [],
+    revealInFinder: () => ({ ok: true as const })
   },
   index: {
     status: () => ({ state: 'idle' as const, total: 0, scanned: 0 }),

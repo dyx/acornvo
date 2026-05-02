@@ -7,7 +7,9 @@ import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
 import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
+import { attachIndexEventForwarders } from './ipc/index'
 import * as groveService from './services/grove'
+import { dbService } from './services/db'
 import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
@@ -71,19 +73,15 @@ async function bootstrap(): Promise<void> {
   const disposeDbSubscriber = groveService.onChange((payload) => {
     void (async () => {
       try {
-        // Lazy require to avoid circular import surprises at module load.
-        const { dbService } = require('./services/db') as typeof import('./services/db')
         if (payload === null) {
-          // Grove closed — stop watcher, reset indexer, close db
-          await watcherStop()
-          resetIndexer()
-          dbService.closeCurrent()
+          // Grove closed or switching away — cleanup (watcherStop, resetIndexer,
+          // closeCurrent) is already done by openGrove / closeGrove BEFORE they
+          // fire notifyChange(null). Nothing to do here.
         } else {
-          // Grove opened or switched — ensure db is open
+          // Grove opened or switched to — ensure db is open
           if (dbService.getCurrentGrovePath() !== payload.path) {
-            // Idempotent: openGrove (Task 1) already opened the db inline; this is
-            // the catch-all for future code paths that change the project without
-            // going through openGrove.
+            // openGrove already called openForGrove; this is the catch-all for
+            // future code paths that change the project without going through it.
             dbService.openForGrove(payload.path)
           }
           const db = dbService.getCurrent()
@@ -116,7 +114,6 @@ async function bootstrap(): Promise<void> {
     try {
       // Defensive: closeGrove cascades to closeCurrent, but also handle the
       // "no grove open but stray db handle" edge case.
-      const { dbService } = require('./services/db') as typeof import('./services/db')
       dbService.closeCurrent()
     } catch (err) {
       logger.error('db close on will-quit failed', {
@@ -126,6 +123,8 @@ async function bootstrap(): Promise<void> {
   })
   const bootstrapResult = await runBootstrap()
   mainWindow = createMainWindow()
+  const disposeIndexForwarders = attachIndexEventForwarders(mainWindow)
+  app.on('will-quit', disposeIndexForwarders)
   mainWindow.webContents.once('did-finish-load', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('bootstrap:ready', bootstrapResult)

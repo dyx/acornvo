@@ -11,10 +11,20 @@ export interface ParsedFile {
 
 export function parseFile(raw: string): ParsedFile {
   const m = matter(raw)
-  // m.data: parsed YAML object, m.content: body, m.matter: raw YAML string (between ---)
-  const frontmatter = FrontmatterSchema.parse(m.data ?? {})
+  const result = FrontmatterSchema.safeParse(m.data ?? {})
+  if (!result.success) {
+    // Invalid frontmatter fields — fall back to empty frontmatter so the file
+    // still gets indexed. The raw YAML is preserved for the editor.
+    const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')
+    console.warn(`[frontmatter] parse warnings in file: ${issues}`)
+    return {
+      frontmatter: {},
+      body: m.content,
+      rawYaml: m.matter ?? ''
+    }
+  }
   return {
-    frontmatter,
+    frontmatter: result.data,
     body: m.content,
     rawYaml: m.matter ?? ''
   }

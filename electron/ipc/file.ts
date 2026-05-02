@@ -1,6 +1,7 @@
 import { lstat, mkdir, readdir, rename as fsRename, stat as fsStat, access } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
+import { shell } from 'electron'
 import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
 import { parseFile, stringify } from '../services/frontmatter'
@@ -172,6 +173,16 @@ export const fileHandlers = {
         if (recursive && isDirectory) await walk(childAbs)
       }
     }
+  },
+
+  async openExternal(rel: string): Promise<{ ok: true }> {
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, rel)
+    const result = await shell.openPath(abs)
+    if (result !== '') {
+      throw new IpcError('E_INTERNAL', `openExternal failed: ${result}`)
+    }
+    return { ok: true }
   },
 
   async rename(oldRel: string, newRel: string): Promise<void> {

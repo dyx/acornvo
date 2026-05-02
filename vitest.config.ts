@@ -4,12 +4,22 @@ import { resolve } from 'node:path'
 export default defineConfig({
   resolve: {
     alias: {
+      '@': resolve(__dirname, 'src'),
       '@shared': resolve(__dirname, 'shared')
     }
   },
   test: {
-    include: ['electron/**/*.test.ts', 'shared/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts'],
+    include: [
+      'electron/**/*.test.ts',
+      'shared/**/*.test.ts',
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'tests/**/*.test.ts'
+    ],
     environment: 'node',
+    environmentMatchGlobs: [
+      ['src/**/*.test.tsx', 'jsdom']
+    ],
     pool: 'threads',
     testTimeout: 5000,
     passWithNoTests: true

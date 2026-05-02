@@ -2,6 +2,7 @@ import type { IpcContract } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
 import { dbHandlers } from './db'
 import { fileHandlers } from './file'
+import { fileQueryHandlers } from './files'
 import { projectHandlers } from './project'
 import { indexHandlers } from './index'
 import { searchHandlers } from './search'
@@ -31,6 +32,7 @@ export const ipcHandlers: HandlerMap = {
   project: projectHandlers,
   db: dbHandlers,
   file: fileHandlers,
+  files: fileQueryHandlers,
   index: indexHandlers,
   search: searchHandlers,
 }

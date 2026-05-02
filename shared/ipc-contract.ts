@@ -72,7 +72,16 @@ export type DbVersionInfo = {
 // --- file namespace types (phase-04) ---
 
 import type { Frontmatter } from './frontmatter-schema'
-import type { FileSummary } from './file-types'
+import type { FileSummary, FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
+
+export type {
+  FileSummary,
+  FileFilter,
+  Pagination,
+  OrderBy,
+  CategoryNode,
+  TagCloudItem
+} from './file-types'
 
 export type EolStyle = 'lf' | 'crlf' | 'mixed'
 export type FileEncoding = 'utf8' | 'gbk'
@@ -172,6 +181,21 @@ export type IpcContract = {
     exists: (rel: string) => boolean
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
     rename: (oldRel: string, newRel: string) => void
+    openExternal: (rel: string) => { ok: true }
+  }
+  files: {
+    list: (
+      filter: FileFilter,
+      pagination: Pagination
+    ) => { items: FileSummary[]; total: number }
+    get: (path: string) => {
+      summary: FileSummary
+      frontmatter: Frontmatter
+      body: string
+    }
+    getCategoryTree: () => CategoryNode[]
+    getTagCloud: (opts: { limit: number }) => TagCloudItem[]
+    revealInFinder: (path: string) => { ok: true }
   }
   index: {
     status: () => IndexStatusView
