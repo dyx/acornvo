@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useEditorStore } from './editor'
+import { useEditorStore, _cancelDebounce } from './editor'
 import type { EditorState } from './editor'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 
@@ -37,6 +37,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  _cancelDebounce()
   resetStore()
 })
 
@@ -127,5 +128,43 @@ describe('editor store — open(path)', () => {
     expect(s.kind).toBe('error')
     if (s.kind !== 'error') throw new Error('unreachable')
     expect(s.error).toContain('socket boom')
+  })
+})
+
+async function openReady(body = '# Body', mtime = 1000): Promise<void> {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: body, eol: 'lf', mtimeMs: mtime, sha256: 'h', hadBom: false,
+    originalEncoding: 'utf8', frontmatter: {}, body, rawYaml: ''
+  })
+  await useEditorStore.getState().open('a.md')
+}
+
+describe('editor store — setBody', () => {
+  it('updates body and flips dirty when in ready state', async () => {
+    await openReady('# Body', 1)
+    useEditorStore.getState().setBody('# Body edited')
+    const s = useEditorStore.getState().state
+    expect(s.kind).toBe('ready')
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.body).toBe('# Body edited')
+    expect(s.dirty).toBe(true)
+    expect(s.savedBody).toBe('# Body') // unchanged
+    expect(s.savedMtimeMs).toBe(1) // unchanged
+  })
+
+  it('un-dirties when body is reverted to savedBody', async () => {
+    await openReady('# Body', 1)
+    useEditorStore.getState().setBody('# tmp')
+    useEditorStore.getState().setBody('# Body')
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.dirty).toBe(false)
+  })
+
+  it('is a no-op outside ready state', () => {
+    // store is in idle (set by beforeEach resetStore)
+    useEditorStore.getState().setBody('foo')
+    const s = useEditorStore.getState().state
+    expect(s.kind).toBe('idle')
   })
 })
