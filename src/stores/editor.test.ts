@@ -517,6 +517,49 @@ describe('editor store — debounce coalescing', () => {
 
 import type { ConflictState } from '@shared/conflict-types'
 
+describe('editor store retry counter (phase-09 5.6)', () => {
+  it('E_MTIME_MISMATCH does not increment saveErrorCount', async () => {
+    await openReady('A', 1)
+    for (let i = 0; i < 3; i++) {
+      // Reset conflictState back to none so subsequent save() isn't blocked
+      useEditorStore.setState((prev) => ({
+        ...prev,
+        state:
+          prev.state.kind === 'ready'
+            ? { ...prev.state, conflictState: { kind: 'none' } }
+            : prev.state
+      }))
+      useEditorStore.getState().setBody('L' + i)
+      ipcMock.file.writeParsed.mockRejectedValueOnce(
+        new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 999 })
+      )
+      ipcMock.files.get.mockResolvedValueOnce({
+        summary: { path: 'a.md', mtimeMs: 999 },
+        frontmatter: {},
+        body: 'remote'
+      })
+      await useEditorStore.getState().save()
+    }
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.saveErrorCount).toBe(0)
+  })
+
+  it('E_PERMISSION DOES increment saveErrorCount', async () => {
+    await openReady('A', 1)
+    for (let i = 0; i < 3; i++) {
+      useEditorStore.getState().setBody('L' + i)
+      ipcMock.file.writeParsed.mockRejectedValueOnce(
+        new IpcError('E_PERMISSION', 'no perms')
+      )
+      await useEditorStore.getState().save()
+    }
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.saveErrorCount).toBe(3)
+  })
+})
+
 describe('editor store save lock during conflict (phase-09 5.5)', () => {
   it('scheduleSave is a no-op during externalModified', async () => {
     vi.useFakeTimers()
