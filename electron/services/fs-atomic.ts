@@ -76,7 +76,11 @@ export interface ReadFileDetectResult {
 export interface WriteWithVerifyOptions {
   eol?: 'lf' | 'crlf'
   expectedMtime?: number
+  /** Skip the mtime guard. Logs a `force-write` audit entry. */
+  force?: boolean
 }
+
+const MTIME_TOLERANCE_MS = 2
 
 export async function readFileDetect(abs: string): Promise<ReadFileDetectResult> {
   const buf = await readFile(abs)
@@ -149,21 +153,37 @@ export async function writeWithVerify(
 ): Promise<{ mtimeMs: number; sha256: string }> {
   const eol = opts.eol ?? 'lf'
 
-  // 3.7.1 mtime preflight
-  if (opts.expectedMtime !== undefined) {
-    let currentMtime: number | undefined
-    try {
-      currentMtime = (await stat(abs)).mtimeMs
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
-      // File doesn't exist — caller said "I read mtime X" but the file is gone.
-      // Treat as mismatch so they re-read and retry.
-      throw new IpcError('E_MTIME_MISMATCH', `${abs}: file not found (expected mtime ${opts.expectedMtime})`)
-    }
-    if (currentMtime !== opts.expectedMtime) {
+  // 3.7.1 mtime preflight (force bypasses; otherwise ±2ms tolerance)
+  let preWriteMtime: number | undefined
+  try {
+    preWriteMtime = (await stat(abs)).mtimeMs
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+  }
+
+  if (opts.force === true) {
+    // Audit log: include both old and stated-expected mtimes so we can
+    // reconstruct the diff if a user complains about lost remote edits.
+    const { logger } = await import('./logger')
+    logger.info('force-write', {
+      path: abs,
+      old_mtime: preWriteMtime ?? null,
+      expected_mtime: opts.expectedMtime ?? null
+    })
+  } else if (opts.expectedMtime !== undefined) {
+    if (preWriteMtime === undefined) {
+      // File vanished between caller's read and our write
       throw new IpcError(
         'E_MTIME_MISMATCH',
-        `${abs}: mtime is ${currentMtime}, expected ${opts.expectedMtime}`
+        `${abs}: file not found (expected mtime ${opts.expectedMtime})`,
+        { remoteMtimeMs: 0 }
+      )
+    }
+    if (Math.abs(preWriteMtime - opts.expectedMtime) > MTIME_TOLERANCE_MS) {
+      throw new IpcError(
+        'E_MTIME_MISMATCH',
+        `${abs}: mtime is ${preWriteMtime}, expected ${opts.expectedMtime}`,
+        { remoteMtimeMs: preWriteMtime }
       )
     }
   }

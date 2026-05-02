@@ -299,6 +299,65 @@ describe('normalizeForDisk', () => {
   })
 })
 
+describe('writeWithVerify (phase-09 2.2)', () => {
+  let tmp: string
+  beforeEach(async () => {
+    tmp = await fsp.mkdtemp(join(tmpdir(), 'wwv-09-'))
+  })
+  afterEach(async () => {
+    if (tmp) rmSync(tmp, { recursive: true, force: true })
+  })
+
+  it('force: true bypasses mtime guard and succeeds', async () => {
+    const abs = join(tmp, 'a.md')
+    await fsp.writeFile(abs, 'old')
+    const before = (await fsp.stat(abs)).mtimeMs
+    // pretend caller has stale mtime
+    const result = await writeWithVerify(abs, 'new', {
+      expectedMtime: before - 5000,
+      force: true
+    })
+    expect(result.mtimeMs).toBeGreaterThan(before - 1) // monotonic-ish
+  })
+
+  it('mtime tolerance ±2ms: 1ms drift is treated as match', async () => {
+    const abs = join(tmp, 'b.md')
+    await fsp.writeFile(abs, 'x')
+    const real = (await fsp.stat(abs)).mtimeMs
+    // expectedMtime within 1ms of real → must succeed
+    await expect(
+      writeWithVerify(abs, 'y', { expectedMtime: real - 1 })
+    ).resolves.toBeTruthy()
+  })
+
+  it('mtime mismatch >2ms throws E_MTIME_MISMATCH with remoteMtimeMs in context', async () => {
+    const abs = join(tmp, 'c.md')
+    await fsp.writeFile(abs, 'x')
+    const real = (await fsp.stat(abs)).mtimeMs
+    let caught: IpcError | undefined
+    try {
+      await writeWithVerify(abs, 'y', { expectedMtime: real - 5000 })
+    } catch (e) {
+      caught = e as IpcError
+    }
+    expect(caught).toBeInstanceOf(IpcError)
+    expect(caught!.code).toBe('E_MTIME_MISMATCH')
+    expect(caught!.context?.remoteMtimeMs).toBeCloseTo(real, 0)
+  })
+
+  it('force + concurrent writes serialised by per-path lock', async () => {
+    const abs = join(tmp, 'd.md')
+    await fsp.writeFile(abs, 'init')
+    await Promise.all([
+      writeWithVerify(abs, 'A', { force: true }),
+      writeWithVerify(abs, 'B', { force: true })
+    ])
+    // last writer wins; file must contain one of the two values, never garbled
+    const got = await fsp.readFile(abs, 'utf8')
+    expect(['A', 'B']).toContain(got)
+  })
+})
+
 describe('writeWithVerify', () => {
   let dir: string
   beforeEach(() => {
