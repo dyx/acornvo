@@ -73,9 +73,12 @@ describe('frontmatter codec — integration', () => {
     expect(back.body.trim()).toBe('# Body\n\nLorem ipsum.'.trim())
   })
 
-  it('parseFile bubbles a Zod error for invalid rating', () => {
+  it('parseFile falls back to empty frontmatter on invalid rating instead of throwing', () => {
     const raw = '---\nrating: 9\n---\nbody\n'
-    expect(() => parseFile(raw)).toThrow(/rating|5|too_big|too_small/i)
+    const result = parseFile(raw)
+    // Invalid frontmatter is gracefully downgraded; file still gets indexed.
+    expect(result.frontmatter).toEqual({})
+    expect(result.body).toBe('body\n')
   })
 
   it('stringify of empty frontmatter does NOT add wrapper bytes', () => {

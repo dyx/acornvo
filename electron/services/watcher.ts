@@ -230,8 +230,8 @@ async function flush(): Promise<void> {
       const { body, frontmatter } = parseFile(raw)
       const content_hash = createHash('sha256').update(body).digest('hex')
       enriched.push({ ...ev, body, frontmatter, content_hash, mtimeMs: st.mtimeMs, size: st.size })
-    } catch {
-      // file vanished between event and read — ignore
+    } catch (err) {
+      console.error(`[watcher] failed to process ${ev.rel}:`, err instanceof Error ? err.message : String(err))
     }
   }
 
