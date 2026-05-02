@@ -261,3 +261,71 @@ describe('editor store — save (success path)', () => {
     expect(s.dirty).toBe(false)
   })
 })
+
+describe('editor store — flushSave', () => {
+  it('cancels the debounce timer and resolves immediately when not dirty', async () => {
+    await openReady('A', 1)
+    // No setBody — not dirty. flushSave should be a fast no-op.
+    await useEditorStore.getState().flushSave()
+    expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+  })
+
+  it('awaits an in-flight save before resolving', async () => {
+    await openReady('A', 1)
+    let release!: (v: { mtimeMs: number; sha256: string }) => void
+    ipcMock.file.writeParsed.mockImplementationOnce(
+      () =>
+        new Promise((res) => {
+          release = res
+        })
+    )
+    useEditorStore.getState().setBody('B')
+    const savePromise = useEditorStore.getState().save()
+    // flushSave is called while save is still pending
+    let flushed = false
+    const flushPromise = useEditorStore.getState().flushSave().then(() => {
+      flushed = true
+    })
+    expect(flushed).toBe(false)
+    release({ mtimeMs: 2, sha256: 'h2' })
+    await savePromise
+    await flushPromise
+    expect(flushed).toBe(true)
+  })
+
+  it('if dirty after in-flight completes, fires another save', async () => {
+    await openReady('A', 1)
+    ipcMock.file.writeParsed
+      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+      .mockResolvedValueOnce({ mtimeMs: 3, sha256: 'h3' })
+
+    useEditorStore.getState().setBody('B')
+    await useEditorStore.getState().save()
+    // Now: savedBody=B, dirty=false. Type more then flushSave.
+    useEditorStore.getState().setBody('C')
+    await useEditorStore.getState().flushSave()
+
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(2)
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.savedBody).toBe('C')
+    expect(s.savedMtimeMs).toBe(3)
+    expect(s.dirty).toBe(false)
+  })
+
+  it('cancels a pending debounce timer (no second IPC call from the timer)', async () => {
+    vi.useFakeTimers()
+    try {
+      await openReady('A', 1)
+      ipcMock.file.writeParsed
+        .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+      useEditorStore.getState().setBody('B') // schedules a 1s timer
+      await useEditorStore.getState().flushSave() // should fire save and cancel timer
+      vi.advanceTimersByTime(2000) // would fire the canceled timer if not canceled
+      await vi.runAllTimersAsync?.()
+      expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

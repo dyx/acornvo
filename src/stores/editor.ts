@@ -34,6 +34,7 @@ type EditorStore = { state: EditorState } & EditorActions
 
 const SAVE_DEBOUNCE_MS = 1000
 let _debounceTimer: ReturnType<typeof setTimeout> | null = null
+let _inflight: Promise<void> | null = null
 
 /** Cancels any pending debounce timer. Exported for tests + flushSave. */
 export function _cancelDebounce(): void {
@@ -49,6 +50,63 @@ function _scheduleSave(): void {
     _debounceTimer = null
     void useEditorStore.getState().save()
   }, SAVE_DEBOUNCE_MS)
+}
+
+async function _doSave(): Promise<void> {
+  const cur = useEditorStore.getState().state
+  if (cur.kind !== 'ready') return
+  if (cur.saving) return
+  if (!cur.dirty) return
+
+  const bodyAtSendTime = cur.body
+  const mtimeAtSendTime = cur.savedMtimeMs
+  const path = cur.path
+  const frontmatter = cur.frontmatter
+
+  useEditorStore.setState((prev) => ({
+    ...prev,
+    state:
+      prev.state.kind === 'ready'
+        ? { ...prev.state, saving: true }
+        : prev.state
+  }))
+
+  try {
+    const r = await ipc.file.writeParsed(path, frontmatter, bodyAtSendTime, {
+      expectedMtime: mtimeAtSendTime
+    })
+    const next = useEditorStore.getState().state
+    if (next.kind !== 'ready') return
+    const newDirty = next.body !== bodyAtSendTime
+    useEditorStore.setState({
+      state: {
+        ...next,
+        savedBody: bodyAtSendTime,
+        savedMtimeMs: r.mtimeMs,
+        saving: false,
+        dirty: newDirty,
+        lastError: null,
+        saveErrorCount: 0
+      }
+    })
+    if (newDirty) {
+      setTimeout(() => {
+        void useEditorStore.getState().save()
+      }, 0)
+    }
+  } catch (err) {
+    const code = err instanceof IpcError ? err.code : String(err)
+    const next = useEditorStore.getState().state
+    if (next.kind !== 'ready') return
+    useEditorStore.setState({
+      state: {
+        ...next,
+        saving: false,
+        lastError: code,
+        saveErrorCount: next.saveErrorCount + 1
+      }
+    })
+  }
 }
 
 function notImplemented(): never {
@@ -97,65 +155,24 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   async save() {
+    if (_inflight) return _inflight
+    const p = _doSave().finally(() => {
+      _inflight = null
+    })
+    _inflight = p
+    return p
+  },
+  async flushSave() {
+    _cancelDebounce()
+    if (_inflight) {
+      await _inflight
+    }
     const cur = get().state
     if (cur.kind !== 'ready') return
-    if (cur.saving) return
-    if (!cur.dirty) return
-
-    const bodyAtSendTime = cur.body
-    const mtimeAtSendTime = cur.savedMtimeMs
-
-    set({
-      state: {
-        ...cur,
-        saving: true
-      }
-    })
-
-    try {
-      const r = await ipc.file.writeParsed(
-        cur.path,
-        cur.frontmatter,
-        bodyAtSendTime,
-        { expectedMtime: mtimeAtSendTime }
-      )
-      const next = get().state
-      if (next.kind !== 'ready') return
-      const newDirty = next.body !== bodyAtSendTime
-      set({
-        state: {
-          ...next,
-          savedBody: bodyAtSendTime,
-          savedMtimeMs: r.mtimeMs,
-          saving: false,
-          dirty: newDirty,
-          lastError: null,
-          saveErrorCount: 0
-        }
-      })
-      if (newDirty) {
-        // Re-iterate immediately — the user typed during the in-flight save.
-        setTimeout(() => {
-          void get().save()
-        }, 0)
-      }
-    } catch (err) {
-      // Error handling lands in task 9 — for now, surface saving=false and
-      // store the code so the test hooks see it.
-      const code = err instanceof IpcError ? err.code : String(err)
-      const next = get().state
-      if (next.kind !== 'ready') return
-      set({
-        state: {
-          ...next,
-          saving: false,
-          lastError: code,
-          saveErrorCount: next.saveErrorCount + 1
-        }
-      })
+    if (cur.dirty) {
+      await get().save()
     }
   },
-  flushSave: notImplemented,
   close: () => {
     _cancelDebounce()
     set({ state: { kind: 'idle' } })
