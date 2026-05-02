@@ -12,33 +12,33 @@
 - [x] 2.4 `save()`：若 in-flight 直接返回；否则走 `file.write(path, stringify(fm, body), { expectedMtime: savedMtimeMs })`；完成后若 `body !== savedBody` 再发一次（自迭代）
 - [x] 2.5 `flushSave()`：清 debounce timer；await in-flight；如 dirty 立即 save
 - [x] 2.6 错误处理：`E_MTIME_MISMATCH` → `lastError='conflict'` toast；`E_PERMISSION/E_NOSPACE` → 错误计数 +1，≥3 弹 modal；其他 → toast
-- [ ] 2.7 保存成功后 `savedBody=body` / `savedMtimeMs=newMtime` / 错误计数清零
-- [ ] 2.8 `close()`：切换路由或窗口关闭前统一回收 debounce timer + flushSave
+- [x] 2.7 保存成功后 `savedBody=body` / `savedMtimeMs=newMtime` / 错误计数清零
+- [x] 2.8 `close()`：切换路由或窗口关闭前统一回收 debounce timer + flushSave
 
 ## 3. Editor 页与组件（src/pages/Editor.tsx + src/components/editor/*）
 
-- [ ] 3.1 `Editor.tsx`：读路由参数 `decodeURIComponent(encodedPath)` → 调 `editor.open(path)`；根据 state 渲染 loading/ready/error
-- [ ] 3.2 `EditorTitleBar.tsx`：左侧"← 返回果仓"（调 `flushSave` 后 `navigate(-1)`）；中间路径 + dirty 点 + saving 脉动；右侧快捷键提示
-- [ ] 3.3 `VditorEditor.tsx`：
-  - [ ] 3.3.1 `useEffect` 挂载 Vditor，传 `mode:'ir'`、`cdn:'/vditor'`、`lang` 随 i18n
-  - [ ] 3.3.2 `upload: { url: '' }` + `paste` 拦截图片并 toast
-  - [ ] 3.3.3 `input` 回调 → `editor.setBody(getValue())`
-  - [ ] 3.3.4 `blur` 回调 → `editor.flushSave()`
-  - [ ] 3.3.5 `destroy()` 清理实例防内存泄漏
+- [x] 3.1 `Editor.tsx`：读路由参数 `decodeURIComponent(encodedPath)` → 调 `editor.open(path)`；根据 state 渲染 loading/ready/error
+- [x] 3.2 `EditorTitleBar.tsx`：左侧"← 返回果仓"（调 `flushSave` 后 `navigate(-1)`）；中间路径 + dirty 点 + saving 脉动；右侧快捷键提示
+- [x] 3.3 `VditorEditor.tsx`：
+  - [x] 3.3.1 `useEffect` 挂载 Vditor，传 `mode:'ir'`、`cdn:'/vditor'`、`lang` 随 i18n
+  - [x] 3.3.2 `upload: { url: '' }` + `paste` 拦截图片并 toast
+  - [x] 3.3.3 `input` 回调 → `editor.setBody(getValue())`
+  - [x] 3.3.4 `blur` 回调 → `editor.flushSave()`
+  - [x] 3.3.5 `destroy()` 清理实例防内存泄漏
   - [ ] 3.3.6 主题随 app 主题切换（watch 主题 store 重新 init 或调 `setTheme`）
-- [ ] 3.4 `FrontmatterCard.tsx`（右侧 320px 只读卡）：
-  - [ ] 3.4.1 header: category/site
-  - [ ] 3.4.2 title + rating 5 星
-  - [ ] 3.4.3 summary + highlights（bullet list）
-  - [ ] 3.4.4 tags chips
-  - [ ] 3.4.5 published_at / clipped_at
-  - [ ] 3.4.6 "在系统文本编辑器中打开"按钮 → `shell.openPath(absPath)`（新 IPC `file.openExternal(path)` 或复用 phase 6 的 reveal 入口——选 `file.openExternal` 更贴合语义）
-- [ ] 3.5 `EditorErrorState.tsx`：根据 error code 显示文案；"返回果仓"按钮
+- [x] 3.4 `FrontmatterCard.tsx`（右侧 320px 只读卡）：
+  - [x] 3.4.1 header: category/site
+  - [x] 3.4.2 title + rating 5 星
+  - [x] 3.4.3 summary + highlights（bullet list）
+  - [x] 3.4.4 tags chips
+  - [x] 3.4.5 published_at / clipped_at
+  - [x] 3.4.6 "在系统文本编辑器中打开"按钮 → `shell.openPath(absPath)`（新 IPC `file.openExternal(path)` 或复用 phase 6 的 reveal 入口——选 `file.openExternal` 更贴合语义）
+- [x] 3.5 `EditorErrorState.tsx`：根据 error code 显示文案；"返回果仓"按钮
 
 ## 4. 自动保存调度接线
 
-- [ ] 4.1 `scheduleSave()` debounce 1000ms
-- [ ] 4.2 `onVisibilityChange` 监听 → hidden 时 `flushSave()`
+- [x] 4.1 `scheduleSave()` debounce 1000ms
+- [x] 4.2 `onVisibilityChange` 监听 → hidden 时 `flushSave()`
 - [ ] 4.3 全局 keydown：`Cmd/Ctrl+S` → `flushSave()`；阻止浏览器默认保存
 - [ ] 4.4 `Cmd/Ctrl+W` → `flushSave()` 后 `navigate(-1)`
 - [ ] 4.5 `useBlocker`（React Router v6+）在 dirty 且 saving 未完成时：先 await flushSave 再放行
