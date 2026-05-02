@@ -74,16 +74,14 @@ async function bootstrap(): Promise<void> {
     void (async () => {
       try {
         if (payload === null) {
-          // Grove closed — stop watcher, reset indexer, close db
-          await watcherStop()
-          resetIndexer()
-          dbService.closeCurrent()
+          // Grove closed or switching away — cleanup (watcherStop, resetIndexer,
+          // closeCurrent) is already done by openGrove / closeGrove BEFORE they
+          // fire notifyChange(null). Nothing to do here.
         } else {
-          // Grove opened or switched — ensure db is open
+          // Grove opened or switched to — ensure db is open
           if (dbService.getCurrentGrovePath() !== payload.path) {
-            // Idempotent: openGrove (Task 1) already opened the db inline; this is
-            // the catch-all for future code paths that change the project without
-            // going through openGrove.
+            // openGrove already called openForGrove; this is the catch-all for
+            // future code paths that change the project without going through it.
             dbService.openForGrove(payload.path)
           }
           const db = dbService.getCurrent()

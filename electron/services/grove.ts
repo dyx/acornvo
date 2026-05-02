@@ -213,6 +213,33 @@ export async function openGrove(
   if (currentGrove && currentGrove.path !== path) {
     await lockfile.release(currentGrove.path)
     currentGrove = null
+    // Await cleanup of old grove BEFORE opening new one. The onChange
+    // subscribers rely on these side effects having completed when they
+    // receive the null notification.
+    try {
+      const { stop: watcherStop } = await import('./watcher')
+      await watcherStop()
+    } catch (err) {
+      logger.error('watcher stop during grove switch failed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
+    try {
+      const { reset: resetIndexer } = await import('./indexer')
+      resetIndexer()
+    } catch (err) {
+      logger.error('indexer reset during grove switch failed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
+    try {
+      const { dbService } = await import('./db')
+      dbService.closeCurrent()
+    } catch (err) {
+      logger.error('db close during grove switch failed', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
     notifyChange(null)
   }
 
