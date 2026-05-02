@@ -47,7 +47,16 @@ export function _cancelDebounce(): void {
   }
 }
 
+function isBlockedByConflict(s: EditorState): boolean {
+  if (s.kind !== 'ready') return false
+  return (
+    s.conflictState.kind === 'externalModified' ||
+    s.conflictState.kind === 'saveConflict'
+  )
+}
+
 function _scheduleSave(): void {
+  if (isBlockedByConflict(useEditorStore.getState().state)) return
   if (_debounceTimer) clearTimeout(_debounceTimer)
   _debounceTimer = setTimeout(() => {
     _debounceTimer = null
@@ -207,6 +216,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   async save() {
+    if (isBlockedByConflict(get().state)) return
     if (_inflight) return _inflight
     const p = _doSave().finally(() => {
       _inflight = null
@@ -215,6 +225,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     return p
   },
   async flushSave() {
+    if (isBlockedByConflict(get().state)) return
     _cancelDebounce()
     if (_inflight) {
       await _inflight

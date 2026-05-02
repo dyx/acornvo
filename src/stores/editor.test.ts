@@ -517,6 +517,79 @@ describe('editor store — debounce coalescing', () => {
 
 import type { ConflictState } from '@shared/conflict-types'
 
+describe('editor store save lock during conflict (phase-09 5.5)', () => {
+  it('scheduleSave is a no-op during externalModified', async () => {
+    vi.useFakeTimers()
+    try {
+      await openReady('A', 1)
+      // Set conflict to externalModified
+      useEditorStore.setState((prev) => ({
+        ...prev,
+        state:
+          prev.state.kind === 'ready'
+            ? { ...prev.state, conflictState: { kind: 'externalModified', remoteMtimeMs: 9 } }
+            : prev.state
+      }))
+      // setBody triggers _scheduleSave internally — should be blocked by conflict
+      useEditorStore.getState().setBody('NEW')
+      // Advance past debounce window
+      vi.advanceTimersByTime(1100)
+      await vi.runAllTimersAsync?.()
+      expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('flushSave is a no-op during saveConflict', async () => {
+    vi.useFakeTimers()
+    try {
+      await openReady('A', 1)
+      // Set conflict to saveConflict and make it dirty in one shot
+      useEditorStore.setState((prev) => ({
+        ...prev,
+        state:
+          prev.state.kind === 'ready'
+            ? {
+                ...prev.state,
+                body: 'NEW',
+                dirty: true,
+                conflictState: {
+                  kind: 'saveConflict',
+                  remoteMtimeMs: 9,
+                  remoteBody: '',
+                  remoteFrontmatter: {}
+                }
+              }
+            : prev.state
+      }))
+      await useEditorStore.getState().flushSave()
+      expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('save is a no-op during externalModified', async () => {
+    await openReady('A', 1)
+    // Set conflict to externalModified and make dirty
+    useEditorStore.setState((prev) => ({
+      ...prev,
+      state:
+        prev.state.kind === 'ready'
+          ? {
+              ...prev.state,
+              body: 'NEW',
+              dirty: true,
+              conflictState: { kind: 'externalModified', remoteMtimeMs: 9 }
+            }
+          : prev.state
+    }))
+    await useEditorStore.getState().save()
+    expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+  })
+})
+
 describe('editor store conflictState (phase-09 5.2)', () => {
   it('initialises to { kind: none } after open', async () => {
     ipcMock.file.readParsed.mockResolvedValueOnce({
