@@ -28,7 +28,7 @@ export type EditorActions = {
   setBody: (newBody: string) => void
   save: () => Promise<void>
   flushSave: () => Promise<void>
-  close: () => void
+  close: () => Promise<void>
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -189,7 +189,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       await get().save()
     }
   },
-  close: () => {
+  async close() {
+    await get().flushSave()
     _cancelDebounce()
     set({ state: { kind: 'idle' } })
   }

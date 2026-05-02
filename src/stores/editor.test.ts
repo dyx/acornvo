@@ -434,3 +434,43 @@ describe('editor store — save error branches', () => {
     }
   })
 })
+
+describe('editor store — close()', () => {
+  it('flushes pending save before returning to idle', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed
+      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h' })
+
+    await useEditorStore.getState().close()
+
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
+      'a.md', {}, 'B', { expectedMtime: 1 }
+    )
+    expect(useEditorStore.getState().state.kind).toBe('idle')
+  })
+
+  it('cancels the pending debounce timer', async () => {
+    vi.useFakeTimers()
+    try {
+      await openReady('A', 1)
+      ipcMock.file.writeParsed
+        .mockResolvedValue({ mtimeMs: 2, sha256: 'h' })
+      useEditorStore.getState().setBody('B') // schedules 1s timer
+      await useEditorStore.getState().close()
+      vi.advanceTimersByTime(2000) // would re-fire if not cancelled
+      await vi.runAllTimersAsync?.()
+      // close already flushed → save called once. No second call.
+      expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('is idempotent when called from idle', async () => {
+    await useEditorStore.getState().close()
+    await useEditorStore.getState().close()
+    expect(useEditorStore.getState().state.kind).toBe('idle')
+  })
+})
