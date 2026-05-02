@@ -63,7 +63,8 @@ describe('editor store — state machine', () => {
       dirty: false,
       saving: false,
       lastError: null,
-      saveErrorCount: 0
+      saveErrorCount: 0,
+      persistentFailure: false
     }
     const error: EditorState = {
       kind: 'error',
@@ -312,6 +313,59 @@ describe('editor store — flushSave', () => {
     expect(s.savedMtimeMs).toBe(3)
     expect(s.dirty).toBe(false)
   })
+
+describe('editor store — save error branches', () => {
+  it('E_MTIME_MISMATCH: lastError="conflict", dirty preserved, saveErrorCount unchanged', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed
+      .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'changed externally'))
+
+    await useEditorStore.getState().save()
+
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.lastError).toBe('conflict')
+    expect(s.dirty).toBe(true)
+    expect(s.saving).toBe(false)
+    expect(s.saveErrorCount).toBe(0)
+    expect(s.persistentFailure).toBe(false)
+  })
+
+  it('E_PERMISSION: lastError=code, saveErrorCount=1, dirty preserved', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed
+      .mockRejectedValueOnce(new IpcError('E_PERMISSION', 'EACCES'))
+
+    await useEditorStore.getState().save()
+
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.lastError).toBe('E_PERMISSION')
+    expect(s.dirty).toBe(true)
+    expect(s.saveErrorCount).toBe(1)
+    expect(s.persistentFailure).toBe(false)
+  })
+
+  it('three consecutive non-conflict errors flip persistentFailure=true', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+
+    await useEditorStore.getState().save()
+    await useEditorStore.getState().save()
+    await useEditorStore.getState().save()
+
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.saveErrorCount).toBe(3)
+    expect(s.persistentFailure).toBe(true)
+  })
+})
 
   it('cancels a pending debounce timer (no second IPC call from the timer)', async () => {
     vi.useFakeTimers()

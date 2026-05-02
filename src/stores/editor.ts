@@ -14,6 +14,7 @@ export type EditorReadyState = {
   saving: boolean
   lastError: string | null
   saveErrorCount: number
+  persistentFailure: boolean
 }
 
 export type EditorState =
@@ -86,7 +87,8 @@ async function _doSave(): Promise<void> {
         saving: false,
         dirty: newDirty,
         lastError: null,
-        saveErrorCount: 0
+        saveErrorCount: 0,
+        persistentFailure: false
       }
     })
     if (newDirty) {
@@ -95,15 +97,28 @@ async function _doSave(): Promise<void> {
       }, 0)
     }
   } catch (err) {
-    const code = err instanceof IpcError ? err.code : String(err)
     const next = useEditorStore.getState().state
     if (next.kind !== 'ready') return
+    if (err instanceof IpcError && err.code === 'E_MTIME_MISMATCH') {
+      // Conflict — leave dirty, leave count, distinct lastError.
+      useEditorStore.setState({
+        state: {
+          ...next,
+          saving: false,
+          lastError: 'conflict'
+        }
+      })
+      return
+    }
+    const code = err instanceof IpcError ? err.code : String(err)
+    const newCount = next.saveErrorCount + 1
     useEditorStore.setState({
       state: {
         ...next,
         saving: false,
         lastError: code,
-        saveErrorCount: next.saveErrorCount + 1
+        saveErrorCount: newCount,
+        persistentFailure: newCount >= 3
       }
     })
   }
@@ -131,7 +146,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           dirty: false,
           saving: false,
           lastError: null,
-          saveErrorCount: 0
+          saveErrorCount: 0,
+          persistentFailure: false
         }
       })
     } catch (err) {
