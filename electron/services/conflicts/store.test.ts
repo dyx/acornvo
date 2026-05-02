@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import * as groveSvc from '../grove'
 import { writeFileAtomic } from '../fs-atomic'
 import * as store from './store'
-import { buildId, writeSnapshot, prune, _internals } from './store'
+import { buildId, writeSnapshot, prune, listSnapshots, _internals } from './store'
 
 let tmp: string
 
@@ -130,6 +130,68 @@ async function seedSnapshot(opts: { ts: string; path: string; ageDays?: number }
   }
   return id
 }
+
+describe('listSnapshots', () => {
+  it('returns items sorted by ts descending with total', async () => {
+    await writeSnapshot({
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'keep_local'
+    })
+    await new Promise((r) => setTimeout(r, 5)) // ensure distinct ts
+    await writeSnapshot({
+      path: 'b.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'load_remote'
+    })
+    const { items, total } = await listSnapshots({})
+    expect(total).toBe(2)
+    expect(items[0].path).toBe('b.md') // newest first
+    expect(items[1].path).toBe('a.md')
+    expect(items[0].resolved_by).toBe('load_remote')
+  })
+
+  it('respects limit + offset', async () => {
+    for (let i = 0; i < 5; i++) {
+      await writeSnapshot({
+        path: `n${i}.md`,
+        baseText: '',
+        localText: '',
+        remoteText: '',
+        resolvedBy: 'keep_local'
+      })
+      await new Promise((r) => setTimeout(r, 2))
+    }
+    const { items, total } = await listSnapshots({ limit: 2, offset: 1 })
+    expect(total).toBe(5)
+    expect(items.length).toBe(2)
+    // newest first → offset 1 means skip the newest one
+    expect(items[0].path).toBe('n3.md')
+    expect(items[1].path).toBe('n2.md')
+  })
+
+  it('skips entries with corrupt meta.json (does not throw)', async () => {
+    await writeSnapshot({
+      path: 'good.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'keep_local'
+    })
+    // Inject a corrupt entry
+    const root = _internals.requireConflictsRoot()
+    const badDir = join(root, 'corrupt-id')
+    await mkdir(badDir, { recursive: true })
+    await writeFileAtomic(join(badDir, 'meta.json'), 'not json {{{')
+    const { items, total } = await listSnapshots({})
+    expect(total).toBe(1)
+    expect(items[0].path).toBe('good.md')
+  })
+})
 
 describe('prune', () => {
   it('deletes oldest entries when count > 100', async () => {

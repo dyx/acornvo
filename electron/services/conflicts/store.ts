@@ -123,11 +123,47 @@ export async function prune(): Promise<{ deleted: number }> {
   return { deleted: toDelete.length }
 }
 
-export async function listSnapshots(_opts?: {
-  limit?: number
-  offset?: number
-}): Promise<{ items: ConflictItem[]; total: number }> {
-  throw new Error('not implemented')
+export async function listSnapshots(
+  opts: { limit?: number; offset?: number } = {}
+): Promise<{ items: ConflictItem[]; total: number }> {
+  const root = requireConflictsRoot()
+  let dirEntries: string[]
+  try {
+    dirEntries = await readdir(root)
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { items: [], total: 0 }
+    }
+    throw err
+  }
+
+  const items: ConflictItem[] = []
+  for (const id of dirEntries) {
+    const dir = join(root, id)
+    try {
+      const st = await stat(dir)
+      if (!st.isDirectory()) continue
+      const raw = await readFile(join(dir, 'meta.json'), 'utf8')
+      const meta = JSON.parse(raw) as ConflictMeta
+      items.push({
+        id,
+        path: meta.path,
+        ts: meta.ts,
+        resolved_by: meta.resolved_by,
+        ...(meta.winner_path ? { winner_path: meta.winner_path } : {})
+      })
+    } catch {
+      // Skip corrupt or unreadable entries
+      continue
+    }
+  }
+
+  items.sort((a, b) => b.ts.localeCompare(a.ts))
+  const total = items.length
+  const offset = opts.offset ?? 0
+  const limit = opts.limit ?? Number.MAX_SAFE_INTEGER
+  const slice = items.slice(offset, offset + limit)
+  return { items: slice, total }
 }
 
 export interface ReadSnapshotResult {
