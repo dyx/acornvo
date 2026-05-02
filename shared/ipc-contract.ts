@@ -181,6 +181,7 @@ export type IpcContract = {
     exists: (rel: string) => boolean
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
     rename: (oldRel: string, newRel: string) => void
+    openExternal: (rel: string) => { ok: true }
   }
   files: {
     list: (

@@ -66,7 +66,8 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     }),
     exists: () => false,
     list: () => [],
-    rename: () => undefined
+    rename: () => undefined,
+    openExternal: () => ({ ok: true as const })
   },
   files: {
     list: () => ({ items: [], total: 0 }),

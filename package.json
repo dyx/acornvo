@@ -18,7 +18,7 @@
     "predev": "electron-rebuild -w better-sqlite3",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps && node scripts/copy-vditor-assets.mjs",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
@@ -52,6 +52,7 @@
     "tailwindcss": "^4.2.4",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^14.0.0",
+    "vditor": "^3.11.2",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

@@ -47,7 +47,8 @@ const request: IpcClient<IpcContract> = {
     stat: (rel) => invoke('file.stat', rel),
     exists: (rel) => invoke('file.exists', rel),
     list: (dirRel, opts) => invoke('file.list', dirRel, opts),
-    rename: (oldRel, newRel) => invoke('file.rename', oldRel, newRel)
+    rename: (oldRel, newRel) => invoke('file.rename', oldRel, newRel),
+    openExternal: (rel) => invoke('file.openExternal', rel)
   },
   files: {
     list: (filter, pagination) => invoke('files.list', filter, pagination),
