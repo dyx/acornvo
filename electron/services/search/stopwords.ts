@@ -1,0 +1,19 @@
+/** Hardcoded CJK + EN stopwords. Filtered after segmentation, before query-builder dispatch. */
+export const STOPWORDS: ReadonlySet<string> = new Set([
+  // Chinese function words / particles
+  '的', '了', '是', '在', '和', '或', '与', '及', '而', '于', '也', '都', '就', '还', '又',
+  '等', '但', '把', '被', '给', '让', '使', '从', '到', '为', '由', '以', '对', '向', '及',
+  '吗', '呢', '吧', '啊', '哦', '哇', '嗯', '哎', '呀',
+  '这', '那', '其', '它', '他', '她', '我', '你', '们', '你们', '我们', '他们',
+  '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+  // English stopwords (subset; non-exhaustive)
+  'a', 'an', 'and', 'or', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'to', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'as', 'from',
+  'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their',
+  'i', 'you', 'we', 'he', 'she', 'him', 'her', 'me', 'us',
+  'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would', 'shall', 'should', 'can', 'could'
+])
+
+export function filterStopwords(tokens: readonly string[]): string[] {
+  return tokens.filter((t) => !STOPWORDS.has(t.toLowerCase()))
+}

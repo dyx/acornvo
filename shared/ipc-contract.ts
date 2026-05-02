@@ -202,6 +202,20 @@ export type IpcContract = {
     startScan: () => void
     cancelScan: () => void
   }
+  search: {
+    quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]
+    fullText: (
+      q: string,
+      opts?: { limit?: number; offset?: number }
+    ) => {
+      items: { summary: FileSummary; snippet: string }[]
+      total: number
+      pending: boolean
+    }
+    suggest: (q: string) => FileSummary[]
+    stats: () => { fts_rows: number; last_rebuild_at: string | null }
+    rebuild: () => { ok: true }
+  }
 }
 
 /**
@@ -225,6 +239,8 @@ export type IpcEventContract = {
   'index:fileChanged': { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }
   'index:fileDeleted': { path: string }
   'index:fileRenamed': { oldPath: string; newPath: string }
+  'index:rebuildProgress': { done: number; total: number }
+  'index:rebuildDone': { total: number }
 }
 
 export type IpcEventChannel = keyof IpcEventContract

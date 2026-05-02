@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { IpcError } from '@shared/ipc-contract'
 import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
+import { maybeRebuildFts } from './search/index'
 
 let current: Database.Database | null = null
 let currentGrovePath: string | null = null
@@ -144,9 +145,19 @@ export function openForGrove(grovePath: string): void {
     current = db
     currentGrovePath = grovePath
     emitRebuilt()
+    void maybeRebuildFts(db, grovePath).catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err)
+      // eslint-disable-next-line no-console
+      console.error('[db] maybeRebuildFts failed', msg)
+    })
     return
   }
   runMigrations(db, migrationsDir())
   current = db
   currentGrovePath = grovePath
+  void maybeRebuildFts(db, grovePath).catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err)
+    // eslint-disable-next-line no-console
+    console.error('[db] maybeRebuildFts failed', msg)
+  })
 }

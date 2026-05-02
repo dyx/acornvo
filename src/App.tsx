@@ -10,6 +10,10 @@ import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
+import { IndexBanner } from '@/components/IndexBanner'
+import { QuickSwitcher } from '@/components/search/QuickSwitcher'
+import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
+import Search from '@/pages/Search'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
 
@@ -37,6 +41,7 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 
 export function App(): JSX.Element {
   const { toast } = useToast()
+  useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
   const [indexState, setIndexState] = useState<IndexStateName>('idle')
   const [progress, setProgress] = useState<{ scanned: number; total: number; currentPath?: string }>({ scanned: 0, total: 0 })
@@ -79,9 +84,12 @@ export function App(): JSX.Element {
           <Route path="/browser" element={<Placeholder name="browser" />} />
           <Route path="/chat" element={<Placeholder name="chat" />} />
           <Route path="/settings" element={<Placeholder name="settings" />} />
+          <Route path="/search" element={<Search />} />
         </Routes>
       </main>
+      <IndexBanner />
       <DbRebuildOverlay visible={isRebuilding} />
+      <QuickSwitcher />
       <IndexProgressOverlay
         visible={indexState === 'scanning'}
         scanned={progress.scanned}

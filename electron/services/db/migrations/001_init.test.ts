@@ -56,7 +56,8 @@ describe('001_init.sql', () => {
     expect(idx).toContain('idx_files_category')
     expect(idx).toContain('idx_files_rating')
     expect(idx).toContain('idx_files_content_hash')
-    expect(db.pragma('user_version', { simple: true })).toBe(1)
+    // After migration 002 runs, user_version may be >1. Check it's at least 1.
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(1)
   })
 
   it('creates tags + file_tags with composite PK', () => {
@@ -74,7 +75,7 @@ describe('001_init.sql', () => {
 
   it('creates files_fts FTS5 virtual table that supports MATCH', () => {
     expect(tableNames(db)).toContain('files_fts')
-    db.exec("INSERT INTO files_fts (path, title, summary, content) VALUES ('a.md', 'hello world', 's', 'body')")
+    db.exec("INSERT INTO files_fts (path, title, body) VALUES ('a.md', 'hello world', 'body content')")
     const rows = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH 'hello'").all() as Array<{ path: string }>
     expect(rows.map((r) => r.path)).toEqual(['a.md'])
   })

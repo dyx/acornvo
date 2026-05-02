@@ -4,12 +4,11 @@ import { readFile, stat as fsStat, readdir } from 'node:fs/promises'
 import type Database from 'better-sqlite3'
 import { walk, DEFAULT_SKIP_SET } from './walker'
 import {
-  upsertFile,
+  upsertFileWithBodyDelta,
   syncTags,
   upsertFts,
   listAllPaths,
   deleteFile,
-  getTokenizer,
   type FileRow,
 } from './index-queries'
 import { parseFile } from './frontmatter'
@@ -183,22 +182,23 @@ export async function startScan(groveRoot: string): Promise<void> {
         updated_at: Date.now(),
       }
 
-      const result = upsertFile(db, row)
+      const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
       if (result !== 'unchanged') {
         const tags = Array.isArray(frontmatter.tags)
           ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
           : []
         syncTags(db, row.path, tags)
-        const ftsRowid = (
-          db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
-        ).rowid
-        upsertFts(db, {
-          rowid: ftsRowid,
-          path: row.path,
-          title: row.title ?? '',
-          summary: row.summary ?? '',
-          content: body,
-        }, getTokenizer())
+        if (bodyChanged) {
+          const ftsRowid = (
+            db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+          ).rowid
+          upsertFts(db, {
+            rowid: ftsRowid,
+            path: row.path,
+            title: row.title ?? '',
+            body
+          })
+        }
       }
       seen.add(entry.relPath)
       _scanned++

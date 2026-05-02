@@ -96,6 +96,8 @@ type _EventChannelUnion = Assert<
     | 'index:fileChanged'
     | 'index:fileDeleted'
     | 'index:fileRenamed'
+    | 'index:rebuildProgress'
+    | 'index:rebuildDone'
     ? true
     : false
 >
