@@ -365,6 +365,57 @@ describe('editor store — save error branches', () => {
     expect(s.saveErrorCount).toBe(3)
     expect(s.persistentFailure).toBe(true)
   })
+
+  it('successful save after errors clears the count and persistentFailure flag', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed = vi
+      .fn()
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+
+    await useEditorStore.getState().save()
+    await useEditorStore.getState().save()
+    await useEditorStore.getState().save()
+    let s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.saveErrorCount).toBe(3)
+    expect(s.persistentFailure).toBe(true)
+
+    // User retries
+    await useEditorStore.getState().save()
+
+    s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.saveErrorCount).toBe(0)
+    expect(s.lastError).toBeNull()
+    expect(s.persistentFailure).toBe(false)
+    expect(s.savedBody).toBe('B')
+    expect(s.savedMtimeMs).toBe(2)
+  })
+
+  it('conflict-then-success leaves saveErrorCount untouched on the conflict but resets on success', async () => {
+    await openReady('A', 1)
+    useEditorStore.getState().setBody('B')
+    ipcMock.file.writeParsed = vi
+      .fn()
+      .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
+      .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
+
+    await useEditorStore.getState().save()
+    let s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.saveErrorCount).toBe(0)
+    expect(s.lastError).toBe('conflict')
+
+    await useEditorStore.getState().save()
+    s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('unreachable')
+    expect(s.lastError).toBeNull()
+    expect(s.saveErrorCount).toBe(0)
+  })
 })
 
   it('cancels a pending debounce timer (no second IPC call from the timer)', async () => {
