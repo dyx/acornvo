@@ -53,11 +53,11 @@
 - [x] 6.1 `FilePreviewPanel` 的"打开编辑器"按钮 onClick → `navigate('/editor/' + encodeURIComponent(selectedPath))`
 - [x] 6.2 `VirtualFileList` 的 Enter 键 → 同上
 - [x] 6.3 `FileRow` onDoubleClick → 同上
-- [ ] 6.4 移除占位路由 `/editor-placeholder`（若 phase 6 建立过）
+- [x] 6.4 移除占位路由 `/editor-placeholder`（若 phase 6 建立过）
 
 ## 7. i18n 文本
 
-- [ ] 7.1 `editor.back` / `editor.saving` / `editor.saved` / `editor.dirty` / `editor.error.not_found` / `editor.error.encoding` / `editor.error.conflict` / `editor.error.save_failed` / `editor.paste_image_unsupported` / `editor.open_external`
+- [x] 7.1 `editor.back` / `editor.saving` / `editor.saved` / `editor.dirty` / `editor.error.not_found` / `editor.error.encoding` / `editor.error.conflict` / `editor.error.save_failed` / `editor.paste_image_unsupported` / `editor.open_external`
 
 ## 8. 验收
 
