@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
+import { ipc } from '@/ipc/client'
 
 function StarRow({ rating }: { rating: number }): JSX.Element {
   const filled = Math.max(0, Math.min(5, Math.round(rating)))
@@ -22,6 +23,7 @@ export function FrontmatterCard(): JSX.Element {
   const fm = useEditorStore((s) =>
     s.state.kind === 'ready' ? s.state.frontmatter : null
   )
+  const path = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.path : null))
   const { t } = useTranslation()
 
   if (!fm) return <div className="p-4 text-sm" />
@@ -83,6 +85,10 @@ export function FrontmatterCard(): JSX.Element {
       <button
         type="button"
         className="w-full rounded border border-[color:var(--color-line-1)] px-2 py-1 text-xs hover:bg-[color:var(--color-bg-2)]"
+        onClick={async () => {
+          if (!path) return
+          try { await ipc.file.openExternal(path) } catch { /* silent */ }
+        }}
       >
         {t('editor.open_external')}
       </button>

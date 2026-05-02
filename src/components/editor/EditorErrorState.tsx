@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
+import { ipc } from '@/ipc/client'
 
 export function EditorErrorState(): JSX.Element {
   const { t } = useTranslation()
@@ -21,6 +22,9 @@ export function EditorErrorState(): JSX.Element {
         <button
           type="button"
           className="rounded border border-[color:var(--color-line-1)] px-3 py-1 text-sm"
+          onClick={async () => {
+            try { await ipc.file.openExternal(err.path) } catch { /* silent */ }
+          }}
         >
           {t('editor.open_external')}
         </button>

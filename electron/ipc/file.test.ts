@@ -5,7 +5,11 @@ import { join } from 'node:path'
 
 // We mock the grove service so handlers see whichever grove root we pick per-test.
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
+vi.mock('electron', () => ({
+  shell: { openPath: vi.fn() }
+}))
 import * as groveSvc from '../services/grove'
+import { shell } from 'electron'
 import { fileHandlers } from './file'
 import { _selfWritesSizeForTest, _resetSelfWritesForTest, shouldIgnore } from '../services/watcher'
 
@@ -234,6 +238,42 @@ describe('file.write registers selfWrite', () => {
     const mtime = statSync(abs).mtimeMs
     expect(_selfWritesSizeForTest()).toBe(1)
     expect(shouldIgnore(abs, mtime)).toBe(true)
+  })
+})
+
+describe('fileHandlers.openExternal', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ipcopen-'))
+    setGroveRoot(dir)
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('resolves rel against grove and calls shell.openPath with abs — returns { ok: true }', async () => {
+    ;(shell.openPath as unknown as ReturnType<typeof vi.fn>).mockResolvedValue('')
+    const result = await fileHandlers.openExternal('a.md')
+    expect(shell.openPath).toHaveBeenCalledWith(join(dir, 'a.md'))
+    expect(result).toEqual({ ok: true })
+  })
+
+  it('rejects path traversal with E_PERMISSION', async () => {
+    await expect(fileHandlers.openExternal('../escape.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('throws E_NOT_FOUND when no grove is open', async () => {
+    setGroveRoot(null)
+    await expect(fileHandlers.openExternal('a.md')).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+  })
+
+  it('throws E_INTERNAL when shell.openPath returns a failure string', async () => {
+    ;(shell.openPath as unknown as ReturnType<typeof vi.fn>).mockResolvedValue('some error')
+    await expect(fileHandlers.openExternal('a.md')).rejects.toMatchObject({ code: 'E_INTERNAL' })
   })
 })
 
