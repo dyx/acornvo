@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { VditorEditor } from '@/components/editor/VditorEditor'
@@ -13,6 +13,7 @@ export function Editor(): JSX.Element {
   const path = encodedPath ? decodeURIComponent(encodedPath) : null
   const kind = useEditorStore((s) => s.state.kind)
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!path) return
@@ -40,10 +41,17 @@ export function Editor(): JSX.Element {
         e.preventDefault()
         void useEditorStore.getState().flushSave()
       }
+      if (e.key === 'w' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+        e.preventDefault()
+        void (async () => {
+          await useEditorStore.getState().flushSave()
+          navigate(-1)
+        })()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [kind])
+  }, [kind, navigate])
 
   if (!path) {
     return (

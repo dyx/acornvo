@@ -2,6 +2,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, cleanup } from '@testing-library/react'
+
+const navigateSpy = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => navigateSpy }
+})
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { useEditorStore } from '@/stores/editor'
 
@@ -136,5 +142,20 @@ describe('Editor page', () => {
     const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
     expect(flushSpy).toHaveBeenCalled()
+  })
+
+  it('Cmd+W flushes then navigates -1', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+    })
+    navigateSpy.mockReset()
+
+    renderAt(encodeURIComponent('a.md'))
+    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', metaKey: true, cancelable: true }))
+    // flushSave resolves immediately in the mock, so navigate(-1) follows synchronously.
+    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith(-1))
   })
 })
