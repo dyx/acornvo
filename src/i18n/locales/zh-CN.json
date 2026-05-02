@@ -83,5 +83,26 @@
     "banner_error": "索引出错，部分数据可能丢失",
     "banner_view_logs": "查看日志",
     "shown_total": "{{shown}} / {{total}}"
+  },
+  "editor": {
+    "loading": "正在加载文件…",
+    "back": "返回果仓",
+    "saving": "保存中…",
+    "saved": "已保存",
+    "dirty": "未保存",
+    "shortcut_save": "Cmd+S 保存",
+    "shortcut_save_win": "Ctrl+S 保存",
+    "open_external": "在系统文本编辑器中打开",
+    "paste_image_unsupported": "尚未支持图片粘贴，将在拾果阶段接入",
+    "no_frontmatter": "该文件暂无 frontmatter",
+    "error": {
+      "title": "无法加载文件",
+      "not_found": "文件已被移除或重命名",
+      "encoding": "无法解析文件编码，请检查文件",
+      "conflict": "文件在外部被修改，请先刷新",
+      "save_failed": "保存失败：{{code}}",
+      "save_failed_persistent": "保存持续失败，已尝试 3 次",
+      "open_logs": "查看日志"
+    }
   }
 }
