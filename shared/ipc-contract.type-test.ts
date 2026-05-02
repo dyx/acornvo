@@ -202,3 +202,8 @@ const _pagination: Pagination = { limit: 50, offset: 0, orderBy: 'clipped_desc' 
 const _node: CategoryNode = { name: 'x', count: 0, children: [] }
 const _tag: TagCloudItem = { name: 'x', usage_count: 0 }
 void _filter; void _pagination; void _node; void _tag
+
+// file.openExternal returns { ok: true }
+type _OpenExternalReturn = ReturnType<IpcContract['file']['openExternal']>
+const _openExternalOk: _OpenExternalReturn = { ok: true }
+void _openExternalOk
