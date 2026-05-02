@@ -45,8 +45,38 @@ export interface WriteSnapshotInput {
   winnerPath?: string
 }
 
-export async function writeSnapshot(_input: WriteSnapshotInput): Promise<{ id: string }> {
-  throw new Error('not implemented')
+export async function writeSnapshot(input: WriteSnapshotInput): Promise<{ id: string }> {
+  const root = requireConflictsRoot()
+  const ts = new Date().toISOString()
+  const id = buildId(input.path, ts)
+  const dir = safeResolve(root, id)
+  await mkdir(dir, { recursive: true })
+
+  const meta: ConflictMeta = {
+    path: input.path,
+    ts,
+    resolved_by: input.resolvedBy,
+    ...(input.winnerPath ? { winner_path: input.winnerPath } : {})
+  }
+
+  await Promise.all([
+    writeFileAtomic(join(dir, 'local.md'), input.localText),
+    writeFileAtomic(join(dir, 'remote.md'), input.remoteText),
+    writeFileAtomic(join(dir, 'base.md'), input.baseText),
+    writeFileAtomic(join(dir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n')
+  ])
+
+  // Best-effort prune; failures here MUST NOT break the write.
+  try {
+    await prune()
+  } catch (err) {
+    const { logger } = await import('../logger')
+    logger.warn('conflict prune failed (non-fatal)', {
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
+
+  return { id }
 }
 
 export async function prune(): Promise<{ deleted: number }> {
