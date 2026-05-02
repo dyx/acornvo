@@ -147,6 +147,25 @@ export interface FileListOptions {
   includeHidden?: boolean
 }
 
+// --- conflict namespace types (phase-09) ---
+
+import type {
+  ConflictItem,
+  ConflictMeta
+} from './conflict-types'
+
+export interface ConflictListResult {
+  items: ConflictItem[]
+  total: number
+}
+
+export interface ConflictReadResult {
+  meta: ConflictMeta
+  localText: string
+  remoteText: string
+  baseText: string
+}
+
 // --- index namespace types (phase-05) ---
 
 export type IndexStateName = 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
@@ -216,6 +235,11 @@ export type IpcContract = {
     status: () => IndexStatusView
     startScan: () => void
     cancelScan: () => void
+  }
+  conflict: {
+    list: (opts?: { limit?: number; offset?: number }) => ConflictListResult
+    read: (id: string) => ConflictReadResult
+    delete: (id: string) => { ok: true }
   }
   search: {
     quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]

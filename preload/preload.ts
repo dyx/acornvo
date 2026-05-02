@@ -62,6 +62,11 @@ const request: IpcClient<IpcContract> = {
     startScan: () => invoke('index.startScan'),
     cancelScan: () => invoke('index.cancelScan')
   },
+  conflict: {
+    list: (opts) => invoke('conflict.list', opts),
+    read: (id) => invoke('conflict.read', id),
+    delete: (id) => invoke('conflict.delete', id)
+  },
   search: {
     rebuild: () => invoke('search.rebuild'),
     quickSwitch: (q, opts) => invoke('search.quickSwitch', q, opts),
