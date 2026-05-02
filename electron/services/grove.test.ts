@@ -133,8 +133,13 @@ describe('closeGrove ordering', () => {
 })
 
 describe('grove.initialize', () => {
+  let tmp: string
+  afterEach(() => {
+    if (tmp) rmSync(tmp, { recursive: true, force: true })
+  })
+
   it('initialize creates .acornvo/conflicts/', async () => {
-    const tmp = await mkdtemp(join(tmpdir(), 'grove-conflicts-'))
+    tmp = await mkdtemp(join(tmpdir(), 'grove-conflicts-'))
     await grove.initialize(tmp)
     const st = await stat(groveConflictsDir(tmp))
     expect(st.isDirectory()).toBe(true)

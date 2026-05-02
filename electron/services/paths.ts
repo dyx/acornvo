@@ -32,6 +32,7 @@ export function groveAssetsDir(grovePath: string): string {
   return join(grovePath, 'assets')
 }
 
+/** `<grove>/.acornvo/conflicts` — snapshot store directory. */
 export function groveConflictsDir(grovePath: string): string {
   return join(groveAcornDir(grovePath), 'conflicts')
 }
