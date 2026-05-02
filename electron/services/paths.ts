@@ -31,3 +31,7 @@ export function groveInboxDir(grovePath: string): string {
 export function groveAssetsDir(grovePath: string): string {
   return join(grovePath, 'assets')
 }
+
+export function groveConflictsDir(grovePath: string): string {
+  return join(groveAcornDir(grovePath), 'conflicts')
+}

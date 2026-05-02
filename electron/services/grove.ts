@@ -9,6 +9,7 @@ import * as lockfile from './lockfile'
 import {
   groveAcornDir,
   groveAssetsDir,
+  groveConflictsDir,
   groveInboxDir,
   groveProjectFile
 } from './paths'
@@ -88,6 +89,7 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
   await ensureDir(groveAcornDir(grovePath))
   await ensureDir(groveInboxDir(grovePath))
   await ensureDir(groveAssetsDir(grovePath))
+  await ensureDir(groveConflictsDir(grovePath))
   // Placeholders that help cloud-sync clients exclude `.acornvo/`.
   await ensureFile(`${groveAcornDir(grovePath)}/.nosync`, '')
   await ensureFile(`${groveAcornDir(grovePath)}/.icloud`, '')

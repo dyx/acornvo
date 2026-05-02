@@ -1,8 +1,10 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtemp, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as grove from './grove'
+import { groveConflictsDir } from './paths'
 import { dbService, __resetForTest as resetDb } from './db'
 
 describe('grove.openGrove + db integration', () => {
@@ -127,5 +129,14 @@ describe('closeGrove ordering', () => {
     const stopSpy = vi.spyOn(watcherModule, 'stop').mockImplementation(async () => {})
     await grove.closeGrove()
     expect(stopSpy).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('grove.initialize', () => {
+  it('initialize creates .acornvo/conflicts/', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'grove-conflicts-'))
+    await grove.initialize(tmp)
+    const st = await stat(groveConflictsDir(tmp))
+    expect(st.isDirectory()).toBe(true)
   })
 })
