@@ -1,17 +1,17 @@
 ## 1. 依赖与资源
 
-- [ ] 1.1 `npm install vditor`
-- [ ] 1.2 拷贝 `node_modules/vditor/dist` 到 `public/vditor/`（postinstall 脚本：`cp -r node_modules/vditor/dist public/vditor`）
-- [ ] 1.3 `src/pages/Editor.tsx` 目录占位 + `src/components/editor/*.tsx` + `src/stores/editor.ts`
+- [x] 1.1 `npm install vditor`
+- [x] 1.2 拷贝 `node_modules/vditor/dist` 到 `public/vditor/`（postinstall 脚本：`cp -r node_modules/vditor/dist public/vditor`）
+- [x] 1.3 `src/pages/Editor.tsx` 目录占位 + `src/components/editor/*.tsx` + `src/stores/editor.ts`
 
 ## 2. Editor store（src/stores/editor.ts）
 
-- [ ] 2.1 Zustand slice：`state: EditorState`（idle / loading / ready / error）
-- [ ] 2.2 `open(path)`：state → loading → 调 `files.get(path)` → ready 或 error
-- [ ] 2.3 `setBody(newBody)`：仅在 ready 下更新；重置 debounce timer，调 `scheduleSave()`
-- [ ] 2.4 `save()`：若 in-flight 直接返回；否则走 `file.write(path, stringify(fm, body), { expectedMtime: savedMtimeMs })`；完成后若 `body !== savedBody` 再发一次（自迭代）
-- [ ] 2.5 `flushSave()`：清 debounce timer；await in-flight；如 dirty 立即 save
-- [ ] 2.6 错误处理：`E_MTIME_MISMATCH` → `lastError='conflict'` toast；`E_PERMISSION/E_NOSPACE` → 错误计数 +1，≥3 弹 modal；其他 → toast
+- [x] 2.1 Zustand slice：`state: EditorState`（idle / loading / ready / error）
+- [x] 2.2 `open(path)`：state → loading → 调 `files.get(path)` → ready 或 error
+- [x] 2.3 `setBody(newBody)`：仅在 ready 下更新；重置 debounce timer，调 `scheduleSave()`
+- [x] 2.4 `save()`：若 in-flight 直接返回；否则走 `file.write(path, stringify(fm, body), { expectedMtime: savedMtimeMs })`；完成后若 `body !== savedBody` 再发一次（自迭代）
+- [x] 2.5 `flushSave()`：清 debounce timer；await in-flight；如 dirty 立即 save
+- [x] 2.6 错误处理：`E_MTIME_MISMATCH` → `lastError='conflict'` toast；`E_PERMISSION/E_NOSPACE` → 错误计数 +1，≥3 弹 modal；其他 → toast
 - [ ] 2.7 保存成功后 `savedBody=body` / `savedMtimeMs=newMtime` / 错误计数清零
 - [ ] 2.8 `close()`：切换路由或窗口关闭前统一回收 debounce timer + flushSave
 
