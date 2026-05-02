@@ -39,20 +39,20 @@
 
 - [x] 4.1 `scheduleSave()` debounce 1000ms
 - [x] 4.2 `onVisibilityChange` 监听 → hidden 时 `flushSave()`
-- [ ] 4.3 全局 keydown：`Cmd/Ctrl+S` → `flushSave()`；阻止浏览器默认保存
-- [ ] 4.4 `Cmd/Ctrl+W` → `flushSave()` 后 `navigate(-1)`
-- [ ] 4.5 `useBlocker`（React Router v6+）在 dirty 且 saving 未完成时：先 await flushSave 再放行
+- [x] 4.3 全局 keydown：`Cmd/Ctrl+S` → `flushSave()`；阻止浏览器默认保存
+- [x] 4.4 `Cmd/Ctrl+W` → `flushSave()` 后 `navigate(-1)`
+- [x] 4.5 `useBlocker`（React Router v6+）在 dirty 且 saving 未完成时：先 await flushSave 再放行
 
 ## 5. IPC 补丁（main 侧）
 
-- [ ] 5.1 `shared/ipc-contract.ts` 新增 `file.openExternal(path)`（封装 `shell.openPath`）
-- [ ] 5.2 `electron/ipc/files.ts` 新增 handler：`safeResolve` + `shell.openPath(abs)`；返回 `{ ok: true }`
+- [x] 5.1 `shared/ipc-contract.ts` 新增 `file.openExternal(path)`（封装 `shell.openPath`）
+- [x] 5.2 `electron/ipc/files.ts` 新增 handler：`safeResolve` + `shell.openPath(abs)`；返回 `{ ok: true }`
 
 ## 6. Library 侧接线（library-view MODIFIED）
 
-- [ ] 6.1 `FilePreviewPanel` 的"打开编辑器"按钮 onClick → `navigate('/editor/' + encodeURIComponent(selectedPath))`
-- [ ] 6.2 `VirtualFileList` 的 Enter 键 → 同上
-- [ ] 6.3 `FileRow` onDoubleClick → 同上
+- [x] 6.1 `FilePreviewPanel` 的"打开编辑器"按钮 onClick → `navigate('/editor/' + encodeURIComponent(selectedPath))`
+- [x] 6.2 `VirtualFileList` 的 Enter 键 → 同上
+- [x] 6.3 `FileRow` onDoubleClick → 同上
 - [ ] 6.4 移除占位路由 `/editor-placeholder`（若 phase 6 建立过）
 
 ## 7. i18n 文本
