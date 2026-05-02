@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { encode as iconvEncode } from 'iconv-lite'
+import { mkdtemp, writeFile, stat } from 'node:fs/promises'
 import * as fsp from 'node:fs/promises'
 import { writeFileAtomic, readFileDetect, normalizeForDisk, writeWithVerify } from './fs-atomic'
 import { IpcError } from '@shared/ipc-contract'
@@ -437,5 +438,41 @@ describe('writeWithVerify', () => {
     await expect(writeWithVerify(target, 'right', { eol: 'lf' })).rejects.toMatchObject({
       code: 'E_WRITE_VERIFY'
     })
+  })
+})
+
+describe('writeWithVerify tolerance boundaries (phase-09 2.3)', () => {
+  let tmp: string
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'wwv-bound-'))
+  })
+
+  it('exactly 2ms drift: PASS', async () => {
+    const abs = join(tmp, 'a.md')
+    await writeFile(abs, 'x')
+    const real = (await stat(abs)).mtimeMs
+    await expect(
+      writeWithVerify(abs, 'y', { expectedMtime: real - 2 })
+    ).resolves.toBeTruthy()
+  })
+
+  it('exactly 3ms drift: FAIL with mismatch', async () => {
+    const abs = join(tmp, 'b.md')
+    await writeFile(abs, 'x')
+    const real = (await stat(abs)).mtimeMs
+    await expect(
+      writeWithVerify(abs, 'y', { expectedMtime: real - 3 })
+    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+  })
+
+  it('force + expectedMtime stale: force wins, audit logs both', async () => {
+    const abs = join(tmp, 'c.md')
+    await writeFile(abs, 'x')
+    await expect(
+      writeWithVerify(abs, 'y', {
+        expectedMtime: 1, // very stale
+        force: true
+      })
+    ).resolves.toBeTruthy()
   })
 })
