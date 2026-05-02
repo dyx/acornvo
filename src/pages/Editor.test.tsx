@@ -1,12 +1,14 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { Editor } from './Editor'
 
 describe('Editor page (stub)', () => {
-  it('renders an idle placeholder when no encodedPath is mounted', () => {
+  it('renders an idle placeholder when a path is mounted', () => {
     render(
-      <MemoryRouter initialEntries={['/editor/']}>
+      <MemoryRouter initialEntries={['/editor/notes%2Fa.md']}>
         <Routes>
           <Route path="/editor/:encodedPath" element={<Editor />} />
         </Routes>
