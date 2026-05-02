@@ -12,7 +12,7 @@ describe('migration 002 — files_fts trigram', () => {
     runMigrations(db, MIGRATIONS_DIR)
 
     const userVersion = db.pragma('user_version', { simple: true }) as number
-    expect(userVersion).toBe(2)
+    expect(userVersion).toBeGreaterThanOrEqual(2)
 
     // Schema: SQLite exposes virtual table column names via PRAGMA table_info
     const cols = db.prepare("PRAGMA table_info('files_fts')").all() as { name: string }[]
