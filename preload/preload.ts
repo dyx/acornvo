@@ -12,7 +12,7 @@ import { IpcError } from '@shared/ipc-contract'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const res = (await ipcRenderer.invoke(channel, ...args)) as IpcResult<T>
-  if (!res.ok) throw new IpcError(res.error.code, res.error.message)
+  if (!res.ok) throw new IpcError(res.error.code, res.error.message, res.error.context)
   return res.data
 }
 

@@ -277,6 +277,22 @@ describe('fileHandlers.openExternal', () => {
   })
 })
 
+describe('file.write force flag end-to-end (phase-09 4.3)', () => {
+  it('overwrites stale-mtime file when force=true', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'fw-force-'))
+    setGroveRoot(tmp)
+    writeFileSync(join(tmp, 'x.md'), 'old')
+    const result = await fileHandlers.write('x.md', 'new', {
+      expectedMtime: 1, // very stale
+      force: true
+    })
+    expect(result.mtimeMs).toBeGreaterThan(0)
+    expect(readFileSync(join(tmp, 'x.md'), 'utf8')).toBe('new')
+    rmSync(tmp, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+})
+
 describe('file.rename registers selfWrite for both paths', () => {
   let dir: string
   beforeEach(async () => {

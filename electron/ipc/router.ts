@@ -60,7 +60,11 @@ function sanitizeMessage(message: string): string {
 
 export function normalize(err: unknown): IpcErrorShape {
   if (err instanceof IpcError) {
-    return { code: err.code, message: sanitizeMessage(err.message) }
+    return {
+      code: err.code,
+      message: sanitizeMessage(err.message),
+      ...(err.context ? { context: err.context } : {})
+    }
   }
   if (err instanceof Error) {
     return { code: 'E_INTERNAL', message: sanitizeMessage(err.message) }
