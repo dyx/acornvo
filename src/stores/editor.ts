@@ -108,15 +108,42 @@ async function _doSave(): Promise<void> {
     const next = useEditorStore.getState().state
     if (next.kind !== 'ready') return
     if (err instanceof IpcError && err.code === 'E_MTIME_MISMATCH') {
-      // Conflict — leave dirty, leave count, distinct lastError.
-      useEditorStore.setState({
-        state: {
-          ...next,
-          saving: false,
-          lastError: 'conflict'
-        }
-      })
-      return
+      // Phase-09: enter saveConflict state instead of toast
+      try {
+        const fresh = await ipc.files.get(path)
+        useEditorStore.setState((prev) => {
+          if (prev.state.kind !== 'ready' || prev.state.path !== path) return prev
+          return {
+            ...prev,
+            state: {
+              ...prev.state,
+              saving: false,
+              conflictState: {
+                kind: 'saveConflict',
+                remoteMtimeMs:
+                  (err.context?.remoteMtimeMs as number | undefined) ??
+                  fresh.summary.mtimeMs,
+                remoteBody: fresh.body,
+                remoteFrontmatter: fresh.frontmatter
+              }
+            }
+          }
+        })
+      } catch (_refetchErr) {
+        // Even if remote fetch fails, surface error
+        useEditorStore.setState((prev) => {
+          if (prev.state.kind !== 'ready') return prev
+          return {
+            ...prev,
+            state: {
+              ...prev.state,
+              saving: false,
+              lastError: 'E_MTIME_MISMATCH'
+            }
+          }
+        })
+      }
+      return // do NOT count toward retry counter
     }
     const code = err instanceof IpcError ? err.code : String(err)
     const newCount = next.saveErrorCount + 1

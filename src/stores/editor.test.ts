@@ -315,17 +315,22 @@ describe('editor store — flushSave', () => {
   })
 
 describe('editor store — save error branches', () => {
-  it('E_MTIME_MISMATCH: lastError="conflict", dirty preserved, saveErrorCount unchanged', async () => {
+  it('E_MTIME_MISMATCH: sets conflictState=saveConflict, dirty preserved, saveErrorCount unchanged', async () => {
     await openReady('A', 1)
     useEditorStore.getState().setBody('B')
     ipcMock.file.writeParsed
       .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'changed externally'))
+    ipcMock.files.get.mockResolvedValueOnce({
+      summary: { path: 'a.md', mtimeMs: 999 },
+      frontmatter: {},
+      body: 'remote'
+    })
 
     await useEditorStore.getState().save()
 
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.lastError).toBe('conflict')
+    expect(s.conflictState.kind).toBe('saveConflict')
     expect(s.dirty).toBe(true)
     expect(s.saving).toBe(false)
     expect(s.saveErrorCount).toBe(0)
@@ -403,12 +408,17 @@ describe('editor store — save error branches', () => {
       .fn()
       .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
       .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
+    ipcMock.files.get.mockResolvedValueOnce({
+      summary: { path: 'a.md', mtimeMs: 999 },
+      frontmatter: {},
+      body: 'remote'
+    })
 
     await useEditorStore.getState().save()
     let s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
     expect(s.saveErrorCount).toBe(0)
-    expect(s.lastError).toBe('conflict')
+    expect(s.conflictState.kind).toBe('saveConflict')
 
     await useEditorStore.getState().save()
     s = useEditorStore.getState().state
@@ -543,5 +553,47 @@ describe('editor store — file removed during edit', () => {
     if (s.kind !== 'error') throw new Error('unreachable')
     expect(s.path).toBe('a.md')
     expect(s.error).toBe('E_NOT_FOUND')
+  })
+})
+
+describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
+  it('on E_MTIME_MISMATCH: fetches remote and sets conflictState=saveConflict', async () => {
+    await openReady('B0', 1)
+    useEditorStore.getState().setBody('LOCAL')
+    ipcMock.file.writeParsed.mockRejectedValueOnce(
+      new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 999 })
+    )
+    ipcMock.files.get.mockResolvedValueOnce({
+      summary: { path: 'a.md', mtimeMs: 999 },
+      frontmatter: { title: 'remote' },
+      body: 'REMOTE'
+    })
+    await useEditorStore.getState().save()
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.body).toBe('LOCAL')
+    expect(s.conflictState.kind).toBe('saveConflict')
+    if (s.conflictState.kind === 'saveConflict') {
+      expect(s.conflictState.remoteMtimeMs).toBe(999)
+      expect(s.conflictState.remoteBody).toBe('REMOTE')
+      expect(s.conflictState.remoteFrontmatter).toEqual({ title: 'remote' })
+    }
+  })
+
+  it('saving=false after the conflict transition', async () => {
+    await openReady('B0', 1)
+    useEditorStore.getState().setBody('L')
+    ipcMock.file.writeParsed.mockRejectedValueOnce(
+      new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 999 })
+    )
+    ipcMock.files.get.mockResolvedValueOnce({
+      summary: { path: 'a.md', mtimeMs: 999 },
+      frontmatter: {},
+      body: 'R'
+    })
+    await useEditorStore.getState().save()
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.saving).toBe(false)
   })
 })
