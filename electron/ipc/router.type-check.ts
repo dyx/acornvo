@@ -88,6 +88,16 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     startScan: () => undefined,
     cancelScan: () => undefined
   },
+  conflict: {
+    list: async () => ({ items: [], total: 0 }),
+    read: async () => ({
+      meta: { path: '', ts: '', resolved_by: 'keep_local' as const },
+      localText: '',
+      remoteText: '',
+      baseText: ''
+    }),
+    delete: async () => ({ ok: true as const })
+  },
   search: {
     rebuild: async () => ({ ok: true } as const),
     quickSwitch: () => [],
