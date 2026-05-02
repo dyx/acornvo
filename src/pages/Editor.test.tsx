@@ -8,7 +8,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
   return { ...actual, useNavigate: () => navigateSpy }
 })
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { useEditorStore } from '@/stores/editor'
 
 vi.mock('@/ipc/client', () => ({
@@ -49,13 +49,11 @@ afterEach(() => {
 })
 
 function renderAt(encodedPath: string): void {
-  render(
-    <MemoryRouter initialEntries={[`/editor/${encodedPath}`]}>
-      <Routes>
-        <Route path="/editor/:encodedPath" element={<Editor />} />
-      </Routes>
-    </MemoryRouter>
+  const router = createMemoryRouter(
+    [{ path: '/editor/:encodedPath', element: <Editor /> }],
+    { initialEntries: [`/editor/${encodedPath}`] }
   )
+  render(<RouterProvider router={router} />)
 }
 
 describe('Editor page', () => {
@@ -142,6 +140,15 @@ describe('Editor page', () => {
     const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
     expect(flushSpy).toHaveBeenCalled()
+  })
+
+  it('useBlocker smoke: component renders without crashing', () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+    })
+    renderAt(encodeURIComponent('a.md'))
+    expect(screen.getByTestId('editor-loading')).toBeTruthy()
   })
 
   it('Cmd+W flushes then navigates -1', async () => {

@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { VditorEditor } from '@/components/editor/VditorEditor'
@@ -14,6 +14,21 @@ export function Editor(): JSX.Element {
   const kind = useEditorStore((s) => s.state.kind)
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    if (currentLocation.pathname === nextLocation.pathname) return false
+    const s = useEditorStore.getState().state
+    return s.kind === 'ready' && (s.dirty || s.saving)
+  })
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      void (async () => {
+        await useEditorStore.getState().flushSave()
+        blocker.proceed?.()
+      })()
+    }
+  }, [blocker])
 
   useEffect(() => {
     if (!path) return
