@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Frontmatter } from '@shared/frontmatter-schema'
+import type { ConflictState } from '@shared/conflict-types'
 import { ipc } from '@/ipc/client'
 import { IpcError } from '@shared/ipc-contract'
 
@@ -15,6 +16,7 @@ export type EditorReadyState = {
   lastError: string | null
   saveErrorCount: number
   persistentFailure: boolean
+  conflictState: ConflictState
 }
 
 export type EditorState =
@@ -153,7 +155,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           saving: false,
           lastError: null,
           saveErrorCount: 0,
-          persistentFailure: false
+          persistentFailure: false,
+          conflictState: { kind: 'none' }
         }
       })
     } catch (err) {

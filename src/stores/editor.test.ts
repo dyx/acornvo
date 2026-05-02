@@ -505,6 +505,29 @@ describe('editor store — debounce coalescing', () => {
   })
 })
 
+import type { ConflictState } from '@shared/conflict-types'
+
+describe('editor store conflictState (phase-09 5.2)', () => {
+  it('initialises to { kind: none } after open', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'a',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'b',
+      rawYaml: ''
+    })
+    await useEditorStore.getState().open('a.md')
+    const s = useEditorStore.getState()
+    if (s.state.kind !== 'ready') throw new Error('expected ready')
+    const cs: ConflictState = s.state.conflictState
+    expect(cs).toEqual({ kind: 'none' })
+  })
+})
+
 describe('editor store — file removed during edit', () => {
   it('save throwing E_NOT_FOUND transitions store to error state', async () => {
     await openReady('A', 1)
