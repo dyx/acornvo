@@ -22,8 +22,18 @@ function requireConflictsRoot(): string {
 
 // --- public API (filled by tasks 3.1–3.6) ---
 
+const SLUG_CAP = 40
+const ILLEGAL = /[^A-Za-z0-9._-]/g
+
+function slugifyPath(path: string): string {
+  // POSIX-only: convert '/' → '_', other illegal chars → '-'
+  const normalised = path.replace(/\//g, '_').replace(ILLEGAL, '-')
+  return normalised.length > SLUG_CAP ? normalised.slice(0, SLUG_CAP) : normalised
+}
+
 export function buildId(path: string, isoTs: string): string {
-  throw new Error('not implemented')
+  const safeTs = isoTs.replace(/:/g, '-')
+  return `${safeTs}-${slugifyPath(path)}`
 }
 
 export interface WriteSnapshotInput {
