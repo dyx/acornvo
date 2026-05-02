@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import * as groveSvc from '../grove'
 import { writeFileAtomic } from '../fs-atomic'
 import * as store from './store'
-import { buildId, writeSnapshot, prune, listSnapshots, readSnapshot, _internals } from './store'
+import { buildId, writeSnapshot, prune, listSnapshots, readSnapshot, deleteSnapshot, _internals } from './store'
 
 let tmp: string
 
@@ -220,6 +220,30 @@ describe('readSnapshot', () => {
     await expect(readSnapshot('../../etc/passwd')).rejects.toMatchObject({
       code: 'E_PERMISSION'
     })
+  })
+})
+
+describe('deleteSnapshot', () => {
+  it('removes the directory recursively', async () => {
+    const { id } = await writeSnapshot({
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'keep_local'
+    })
+    await deleteSnapshot(id)
+    await expect(readSnapshot(id)).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+  })
+
+  it('throws E_PERMISSION on path-escape attempt', async () => {
+    await expect(deleteSnapshot('../../etc')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('is idempotent: deleting non-existent id resolves OK', async () => {
+    await expect(deleteSnapshot('does-not-exist')).resolves.toBeUndefined()
   })
 })
 

@@ -204,8 +204,16 @@ export async function readSnapshot(id: string): Promise<ReadSnapshotResult> {
   }
 }
 
-export async function deleteSnapshot(_id: string): Promise<void> {
-  throw new Error('not implemented')
+export async function deleteSnapshot(id: string): Promise<void> {
+  const root = requireConflictsRoot()
+  let target: string
+  try {
+    target = safeResolve(root, id)
+  } catch (err) {
+    if (err instanceof IpcError) throw err
+    throw new IpcError('E_PERMISSION', `invalid snapshot id: ${id}`)
+  }
+  await rm(target, { recursive: true, force: true })
 }
 
 // --- internal helpers exported for testing ---
