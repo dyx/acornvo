@@ -1,19 +1,44 @@
 import { create } from 'zustand'
+import type { Frontmatter } from '@shared/frontmatter-schema'
 
-// Editor store — full implementation lands across tasks 2.1–2.8 (state
-// machine, save/flush/scheduleSave/close).
-//
-// Stub shape: a tagged union with only the `idle` variant, so other modules
-// can already import the type and call `.getState().kind` today.
-
-export type EditorState = { kind: 'idle' }
-
-export type EditorActions = {
-  // Implemented in tasks 2.2–2.8.
-  _phase: 'stub'
+export type EditorReadyState = {
+  kind: 'ready'
+  path: string
+  frontmatter: Frontmatter
+  body: string
+  savedBody: string
+  savedMtimeMs: number
+  dirty: boolean
+  saving: boolean
+  lastError: string | null
+  saveErrorCount: number
 }
 
-export const useEditorStore = create<EditorState & EditorActions>(() => ({
-  kind: 'idle',
-  _phase: 'stub'
+export type EditorState =
+  | { kind: 'idle' }
+  | { kind: 'loading'; path: string }
+  | EditorReadyState
+  | { kind: 'error'; path: string; error: string }
+
+export type EditorActions = {
+  open: (path: string) => Promise<void>
+  setBody: (newBody: string) => void
+  save: () => Promise<void>
+  flushSave: () => Promise<void>
+  close: () => void
+}
+
+type EditorStore = { state: EditorState } & EditorActions
+
+function notImplemented(): never {
+  throw new Error('editor store action not implemented yet')
+}
+
+export const useEditorStore = create<EditorStore>(() => ({
+  state: { kind: 'idle' },
+  open: notImplemented,
+  setBody: notImplemented,
+  save: notImplemented,
+  flushSave: notImplemented,
+  close: () => {}
 }))
