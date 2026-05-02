@@ -80,7 +80,47 @@ export async function writeSnapshot(input: WriteSnapshotInput): Promise<{ id: st
 }
 
 export async function prune(): Promise<{ deleted: number }> {
-  throw new Error('not implemented')
+  const root = requireConflictsRoot()
+  let entries: string[]
+  try {
+    entries = await readdir(root)
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return { deleted: 0 }
+    throw err
+  }
+
+  // Stat each entry, drop missing/invalid
+  const stats: Array<{ id: string; mtimeMs: number }> = []
+  for (const id of entries) {
+    try {
+      const st = await stat(join(root, id))
+      if (st.isDirectory()) stats.push({ id, mtimeMs: st.mtimeMs })
+    } catch {
+      /* skip */
+    }
+  }
+
+  // Sort newest first
+  stats.sort((a, b) => b.mtimeMs - a.mtimeMs)
+
+  const cutoff = Date.now() - MAX_AGE_MS
+  const toDelete: string[] = []
+
+  // Age-based prune: anything older than cutoff
+  for (const e of stats) {
+    if (e.mtimeMs < cutoff) toDelete.push(e.id)
+  }
+  // Count-based prune: keep at most MAX_KEEP newest (after age filter)
+  const keepers = stats.filter((e) => e.mtimeMs >= cutoff)
+  if (keepers.length > MAX_KEEP) {
+    for (const e of keepers.slice(MAX_KEEP)) toDelete.push(e.id)
+  }
+
+  for (const id of toDelete) {
+    const target = safeResolve(root, id)
+    await rm(target, { recursive: true, force: true })
+  }
+  return { deleted: toDelete.length }
 }
 
 export async function listSnapshots(_opts?: {

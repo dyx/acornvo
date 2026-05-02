@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as groveSvc from '../grove'
+import { writeFileAtomic } from '../fs-atomic'
 import * as store from './store'
-import { buildId, writeSnapshot, _internals } from './store'
+import { buildId, writeSnapshot, prune, _internals } from './store'
 
 let tmp: string
 
@@ -107,5 +108,57 @@ describe('writeSnapshot', () => {
         resolvedBy: 'load_remote'
       })
     ).resolves.toMatchObject({ id: expect.any(String) })
+  })
+})
+
+async function seedSnapshot(opts: { ts: string; path: string; ageDays?: number }): Promise<string> {
+  const id = buildId(opts.path, opts.ts)
+  const dir = join(_internals.requireConflictsRoot(), id)
+  await mkdir(dir, { recursive: true })
+  await Promise.all([
+    writeFileAtomic(join(dir, 'local.md'), 'L'),
+    writeFileAtomic(join(dir, 'remote.md'), 'R'),
+    writeFileAtomic(join(dir, 'base.md'), 'B'),
+    writeFileAtomic(
+      join(dir, 'meta.json'),
+      JSON.stringify({ path: opts.path, ts: opts.ts, resolved_by: 'keep_local' })
+    )
+  ])
+  if (opts.ageDays !== undefined) {
+    const t = (Date.now() - opts.ageDays * 24 * 60 * 60 * 1000) / 1000
+    await utimes(dir, t, t)
+  }
+  return id
+}
+
+describe('prune', () => {
+  it('deletes oldest entries when count > 100', async () => {
+    // Seed 102 snapshots — distinct TS so distinct ids
+    for (let i = 0; i < 102; i++) {
+      await seedSnapshot({
+        ts: new Date(Date.now() + i).toISOString(),
+        path: `n/${i}.md`
+      })
+    }
+    const result = await prune()
+    expect(result.deleted).toBe(2)
+    const remaining = await readdir(_internals.requireConflictsRoot())
+    expect(remaining.length).toBe(100)
+  })
+
+  it('deletes entries older than 30 days', async () => {
+    await seedSnapshot({
+      ts: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+      path: 'old.md',
+      ageDays: 31
+    })
+    await seedSnapshot({
+      ts: new Date().toISOString(),
+      path: 'new.md'
+    })
+    const result = await prune()
+    expect(result.deleted).toBe(1)
+    const remaining = await readdir(_internals.requireConflictsRoot())
+    expect(remaining.length).toBe(1)
   })
 })
