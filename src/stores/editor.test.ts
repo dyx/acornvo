@@ -474,3 +474,33 @@ describe('editor store — close()', () => {
     expect(useEditorStore.getState().state.kind).toBe('idle')
   })
 })
+
+describe('editor store — debounce coalescing', () => {
+  it('20 setBody calls in <1s produce a single save call', async () => {
+    vi.useFakeTimers()
+    try {
+      await openReady('A', 1)
+      ipcMock.file.writeParsed = vi.fn().mockResolvedValueOnce({
+        mtimeMs: 2, sha256: 'h'
+      })
+
+      for (let i = 0; i < 20; i++) {
+        useEditorStore.getState().setBody(`B${i}`)
+        vi.advanceTimersByTime(40)
+      }
+
+      // Not yet — debounce not elapsed.
+      expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(1000)
+      await vi.runAllTimersAsync?.()
+      // Now the debounce timer fired and triggered save().
+      expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
+      expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
+        'a.md', {}, 'B19', { expectedMtime: 1 }
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
