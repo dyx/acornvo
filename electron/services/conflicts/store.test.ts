@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import * as groveSvc from '../grove'
 import { writeFileAtomic } from '../fs-atomic'
 import * as store from './store'
-import { buildId, writeSnapshot, prune, listSnapshots, _internals } from './store'
+import { buildId, writeSnapshot, prune, listSnapshots, readSnapshot, _internals } from './store'
 
 let tmp: string
 
@@ -190,6 +190,36 @@ describe('listSnapshots', () => {
     const { items, total } = await listSnapshots({})
     expect(total).toBe(1)
     expect(items[0].path).toBe('good.md')
+  })
+})
+
+describe('readSnapshot', () => {
+  it('returns meta + 3 text bodies', async () => {
+    const { id } = await writeSnapshot({
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
+      resolvedBy: 'keep_local'
+    })
+    const result = await readSnapshot(id)
+    expect(result.localText).toBe('L')
+    expect(result.remoteText).toBe('R')
+    expect(result.baseText).toBe('B')
+    expect(result.meta.path).toBe('a.md')
+    expect(result.meta.resolved_by).toBe('keep_local')
+  })
+
+  it('throws E_NOT_FOUND for missing id', async () => {
+    await expect(readSnapshot('does-not-exist')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
+  })
+
+  it('throws E_PERMISSION on path-escape attempt', async () => {
+    await expect(readSnapshot('../../etc/passwd')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
   })
 })
 

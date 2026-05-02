@@ -173,8 +173,35 @@ export interface ReadSnapshotResult {
   baseText: string
 }
 
-export async function readSnapshot(_id: string): Promise<ReadSnapshotResult> {
-  throw new Error('not implemented')
+export async function readSnapshot(id: string): Promise<ReadSnapshotResult> {
+  const root = requireConflictsRoot()
+  let dir: string
+  try {
+    dir = safeResolve(root, id)
+  } catch (err) {
+    // safeResolve throws on escape; map to E_PERMISSION
+    if (err instanceof IpcError) throw err
+    throw new IpcError('E_PERMISSION', `invalid snapshot id: ${id}`)
+  }
+  try {
+    const [metaRaw, localText, remoteText, baseText] = await Promise.all([
+      readFile(join(dir, 'meta.json'), 'utf8'),
+      readFile(join(dir, 'local.md'), 'utf8'),
+      readFile(join(dir, 'remote.md'), 'utf8'),
+      readFile(join(dir, 'base.md'), 'utf8')
+    ])
+    return {
+      meta: JSON.parse(metaRaw) as ConflictMeta,
+      localText,
+      remoteText,
+      baseText
+    }
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new IpcError('E_NOT_FOUND', `conflict snapshot ${id} not found`)
+    }
+    throw err
+  }
 }
 
 export async function deleteSnapshot(_id: string): Promise<void> {
