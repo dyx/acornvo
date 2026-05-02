@@ -5,7 +5,7 @@
 // electron-vite bundles electron/main.ts → out/main/main.js.
 // __dirname at runtime is out/main/, so .sql files must live alongside main.js.
 
-import { existsSync, mkdirSync, cpSync } from 'node:fs'
+import { existsSync, mkdirSync, cpSync, readdirSync } from 'node:fs'
 import { resolve, join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -20,7 +20,7 @@ if (!existsSync(src)) {
 }
 
 mkdirSync(dest, { recursive: true })
-for (const file of ['001_init.sql']) {
+for (const file of readdirSync(src).filter((name) => name.endsWith('.sql')).sort()) {
   cpSync(join(src, file), join(dest, file))
 }
 console.log(`[copy-sql-migrations] copied SQL files to ${dest}`)

@@ -142,7 +142,8 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
     followSymlinks: false,
-    usePolling: false
+    usePolling: true,
+    interval: 100
   })
 
   _watcher.on('add', (p) => onAddOrChange(p, 'add'))

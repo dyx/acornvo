@@ -1,5 +1,5 @@
 import { resolve, join } from 'path'
-import { cpSync, existsSync, mkdirSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
@@ -12,7 +12,7 @@ function copyMigrationFiles(): Plugin {
       const dest = outputOptions.dir ?? ''
       if (!existsSync(src)) return
       mkdirSync(dest, { recursive: true })
-      for (const file of ['001_init.sql']) {
+      for (const file of readdirSync(src).filter((name) => name.endsWith('.sql')).sort()) {
         cpSync(resolve(src, file), join(dest, file))
       }
       console.log('[copy-migration-files] copied SQL files to', dest)

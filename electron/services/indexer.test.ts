@@ -21,7 +21,7 @@ function makeIndexedDb(): Database.Database {
     );
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER NOT NULL DEFAULT 0);
     CREATE TABLE file_tags (path TEXT NOT NULL, tag TEXT NOT NULL, PRIMARY KEY (path, tag));
-    CREATE VIRTUAL TABLE files_fts USING fts5(path, title, summary, content);
+    CREATE VIRTUAL TABLE files_fts USING fts5(path UNINDEXED, title, body, tokenize='trigram');
   `)
   return db
 }
