@@ -7,6 +7,7 @@ import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
 import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
+import { attachIndexEventForwarders } from './ipc/index'
 import * as groveService from './services/grove'
 import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
@@ -126,6 +127,8 @@ async function bootstrap(): Promise<void> {
   })
   const bootstrapResult = await runBootstrap()
   mainWindow = createMainWindow()
+  const disposeIndexForwarders = attachIndexEventForwarders(mainWindow)
+  app.on('will-quit', disposeIndexForwarders)
   mainWindow.webContents.once('did-finish-load', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('bootstrap:ready', bootstrapResult)
