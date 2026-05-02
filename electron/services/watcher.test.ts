@@ -26,7 +26,7 @@ function makeIndexedDb(): Database.Database {
   db.exec(`
     CREATE TABLE files (
       path TEXT PRIMARY KEY, title TEXT, summary TEXT, category TEXT, rating INTEGER,
-      content_hash TEXT NOT NULL, mtime_ms INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
+      content_hash TEXT NOT NULL, mtime INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
       frontmatter_json TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER NOT NULL DEFAULT 0);
@@ -178,7 +178,7 @@ describe('watcher transactional flush + rename', () => {
     upsertFile(db, {
       path: 'old.md', title: null, summary: null, category: null, rating: null,
       content_hash: createHash('sha256').update('same body').digest('hex'),
-      mtime_ms: 1, size_bytes: 9, frontmatter_json: '{}',
+      mtime: 1, size_bytes: 9, frontmatter_json: '{}',
       created_at: 1, updated_at: 1
     })
 
@@ -199,7 +199,7 @@ describe('watcher transactional flush + rename', () => {
     upsertFile(db, {
       path: 'a.md', title: null, summary: null, category: null, rating: null,
       content_hash: createHash('sha256').update('A body').digest('hex'),
-      mtime_ms: 1, size_bytes: 6, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime: 1, size_bytes: 6, frontmatter_json: '{}', created_at: 1, updated_at: 1
     })
     rmSync(join(root, 'a.md'))
     writeFileSync(join(root, 'b.md'), 'totally different')
@@ -230,7 +230,7 @@ describe('watcher emits aggregate events', () => {
     await start(root, db)
     upsertFile(db, {
       path: 'a.md', title: null, summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 1, size_bytes: 4, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      content_hash: 'h', mtime: 1, size_bytes: 4, frontmatter_json: '{}', created_at: 1, updated_at: 1
     })
     const events: { path: string }[] = []
     onFileDeleted((p) => events.push(p))
@@ -245,7 +245,7 @@ describe('watcher emits aggregate events', () => {
     upsertFile(db, {
       path: 'old.md', title: null, summary: null, category: null, rating: null,
       content_hash: createHash('sha256').update('same body').digest('hex'),
-      mtime_ms: 1, size_bytes: 9, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime: 1, size_bytes: 9, frontmatter_json: '{}', created_at: 1, updated_at: 1
     })
     const events: { oldPath: string; newPath: string }[] = []
     onFileRenamed((p) => events.push(p))

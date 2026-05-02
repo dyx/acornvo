@@ -277,7 +277,7 @@ async function flush(): Promise<void> {
         category: typeof ev.frontmatter.category === 'string' ? ev.frontmatter.category : null,
         rating: typeof ev.frontmatter.rating === 'number' ? ev.frontmatter.rating : null,
         content_hash: ev.content_hash,
-        mtime_ms: ev.mtimeMs!,
+        mtime: ev.mtimeMs!,
         size_bytes: ev.size!,
         frontmatter_json: JSON.stringify(ev.frontmatter),
         created_at: typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),

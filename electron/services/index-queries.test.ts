@@ -10,7 +10,7 @@ function makeDb(): Database.Database {
       title TEXT, summary TEXT,
       category TEXT, rating INTEGER,
       content_hash TEXT NOT NULL,
-      mtime_ms INTEGER NOT NULL,
+      mtime INTEGER NOT NULL,
       size_bytes INTEGER NOT NULL,
       frontmatter_json TEXT,
       created_at INTEGER NOT NULL,
@@ -32,7 +32,7 @@ const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   category: null,
   rating: null,
   content_hash: 'h1',
-  mtime_ms: 1000,
+  mtime: 1000,
   size_bytes: 10,
   frontmatter_json: '{}',
   created_at: 100,
@@ -51,7 +51,7 @@ describe('upsertFile', () => {
     expect(row).toEqual({ path: 'notes/a.md', content_hash: 'h1' })
   })
 
-  it('returns "unchanged" when content_hash and mtime_ms match', () => {
+  it('returns "unchanged" when content_hash and mtime match', () => {
     upsertFile(db, baseRow())
     const result = upsertFile(db, baseRow())
     expect(result).toBe('unchanged')
@@ -158,7 +158,7 @@ describe('upsertFts (phase-08)', () => {
   function seedFile(path: string): number {
     const row: FileRow = {
       path, title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
+      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
       created_at: 0, updated_at: 0
     }
     upsertFile(db, row)
@@ -215,7 +215,7 @@ describe('upsertFileWithBodyDelta (phase-08)', () => {
 
   const r = (overrides: Partial<FileRow> = {}): FileRow => ({
     path: 'notes/a.md', title: 'A', summary: null, category: null, rating: null,
-    content_hash: 'h1', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
+    content_hash: 'h1', mtime: 0, size_bytes: 0, frontmatter_json: null,
     created_at: 0, updated_at: 0,
     ...overrides
   })
@@ -251,7 +251,7 @@ describe('deleteFile (phase-08 FTS)', () => {
   it('removes both files row and files_fts row in one logical operation', () => {
     const row: FileRow = {
       path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
+      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
       created_at: 0, updated_at: 0
     }
     upsertFile(db, row)
@@ -274,7 +274,7 @@ describe('renameFile (phase-08 FTS)', () => {
   it('updates files_fts.path; rowid stays stable', () => {
     const row: FileRow = {
       path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
+      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
       created_at: 0, updated_at: 0
     }
     upsertFile(db, row)

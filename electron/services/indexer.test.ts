@@ -16,7 +16,7 @@ function makeIndexedDb(): Database.Database {
   db.exec(`
     CREATE TABLE files (
       path TEXT PRIMARY KEY, title TEXT, summary TEXT, category TEXT, rating INTEGER,
-      content_hash TEXT NOT NULL, mtime_ms INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
+      content_hash TEXT NOT NULL, mtime INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
       frontmatter_json TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER NOT NULL DEFAULT 0);
@@ -109,7 +109,7 @@ describe('startScan', () => {
     expect(listAllPaths(db)).toEqual(new Set(['keep.md']))
   })
 
-  it('skips files whose content_hash + mtime_ms unchanged', async () => {
+  it('skips files whose content_hash + mtime unchanged', async () => {
     writeFileSync(join(root, 'a.md'), '# A')
     await startScan(root)
     const before = db

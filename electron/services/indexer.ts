@@ -174,7 +174,7 @@ export async function startScan(groveRoot: string): Promise<void> {
         category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
         rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
         content_hash,
-        mtime_ms: stat.mtimeMs,
+        mtime: stat.mtimeMs,
         size_bytes: stat.size,
         frontmatter_json: JSON.stringify(frontmatter),
         created_at:

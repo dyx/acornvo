@@ -8,7 +8,7 @@ export function makeIndexedDb(): Database.Database {
   db.exec(`
     CREATE TABLE files (
       path TEXT PRIMARY KEY, title TEXT, summary TEXT, category TEXT, rating INTEGER,
-      content_hash TEXT NOT NULL, mtime_ms INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
+      content_hash TEXT NOT NULL, mtime INTEGER NOT NULL, size_bytes INTEGER NOT NULL,
       frontmatter_json TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER NOT NULL DEFAULT 0);
