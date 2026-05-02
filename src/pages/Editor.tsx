@@ -33,6 +33,18 @@ export function Editor(): JSX.Element {
     return () => document.removeEventListener('visibilitychange', handler)
   }, [])
 
+  useEffect(() => {
+    if (kind !== 'ready') return
+    function onKey(e: KeyboardEvent): void {
+      if (e.key === 's' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+        e.preventDefault()
+        void useEditorStore.getState().flushSave()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [kind])
+
   if (!path) {
     return (
       <div data-testid="editor-error-state" className="flex h-full items-center justify-center text-sm">

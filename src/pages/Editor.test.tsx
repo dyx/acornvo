@@ -108,4 +108,33 @@ describe('Editor page', () => {
 
     expect(flushSpy).toHaveBeenCalled()
   })
+
+  it('Cmd+S triggers flushSave and prevents browser default', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+    })
+    renderAt(encodeURIComponent('a.md'))
+    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+
+    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+    const ev = new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true })
+    const prevented = !window.dispatchEvent(ev)
+
+    expect(flushSpy).toHaveBeenCalled()
+    expect(prevented).toBe(true)
+  })
+
+  it('Ctrl+S also triggers flushSave (Win/Linux)', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+    })
+    renderAt(encodeURIComponent('a.md'))
+    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+
+    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
+    expect(flushSpy).toHaveBeenCalled()
+  })
 })
