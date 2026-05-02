@@ -73,5 +73,5 @@
 - [ ] 8.10 编辑中 Library 面板 5000 行无闪动（selfWrites 工作，watcher 不触发事件）
 - [ ] 8.11 断网启动 → Vditor 加载正常（本地 assets）
 - [ ] 8.12 文件 frontmatter 全字段侧卡渲染正确；"在系统文本编辑器中打开"跳转生效
-- [ ] 8.13 删除打开中的文件（phase 5 watcher 触发） → editor store 感知并显示"文件已被移除"态（本阶段可只在保存时遇到 `E_NOT_FOUND` 后转错误态；观察即可）
-- [ ] 8.14 `openspec validate phase-07-vditor-editor-autosave --strict` 通过
+- [x] 8.13 删除打开中的文件（phase 5 watcher 触发） → editor store 感知并显示"文件已被移除"态（本阶段可只在保存时遇到 `E_NOT_FOUND` 后转错误态；观察即可）
+- [x] 8.14 `openspec validate phase-07-vditor-editor-autosave --strict` 通过
