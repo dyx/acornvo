@@ -7,6 +7,7 @@ import type {
   Pagination,
   TagCloudItem
 } from '@shared/ipc-contract'
+import type { GroveSummary } from '@shared/grove'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import { ipc } from '@/ipc/client'
 
@@ -189,7 +190,9 @@ export function installLibrarySubscriber(): () => void {
     void useLibraryStore.getState().refresh()
   })
 
-  const offProject = ipc.on('project:changed', () => {
+  const offProject = ipc.on('project:changed', (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if ((payload as GroveSummary | null) === null) return // grove closed — wait for the real open event
     useLibraryStore.setState({
       filter: {},
       orderBy: 'clipped_desc',

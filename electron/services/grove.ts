@@ -240,7 +240,9 @@ export async function openGrove(
         message: err instanceof Error ? err.message : String(err)
       })
     }
-    notifyChange(null)
+    // Do NOT fire notifyChange(null) here — we are switching, not closing.
+    // The renderer will receive a single notifyChange(newGrove) after the new
+    // DB is opened, avoiding a transient "no grove opened" IPC error.
   }
 
   const lockResult = await lockfile.acquire(path, { force: opts.force })
