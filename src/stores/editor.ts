@@ -85,19 +85,21 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   setBody(newBody) {
     const cur = get().state
     if (cur.kind !== 'ready') return
+    const isDirty = newBody !== cur.savedBody
     set({
       state: {
         ...cur,
         body: newBody,
-        dirty: newBody !== cur.savedBody
+        dirty: isDirty
       }
     })
-    _scheduleSave()
+    if (isDirty) _scheduleSave()
   },
 
   save: notImplemented,
   flushSave: notImplemented,
   close: () => {
+    _cancelDebounce()
     set({ state: { kind: 'idle' } })
   }
 }))
