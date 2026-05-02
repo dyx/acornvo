@@ -9,6 +9,7 @@ import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
 import { attachIndexEventForwarders } from './ipc/index'
 import * as groveService from './services/grove'
+import { dbService } from './services/db'
 import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
@@ -72,8 +73,6 @@ async function bootstrap(): Promise<void> {
   const disposeDbSubscriber = groveService.onChange((payload) => {
     void (async () => {
       try {
-        // Lazy require to avoid circular import surprises at module load.
-        const { dbService } = require('./services/db') as typeof import('./services/db')
         if (payload === null) {
           // Grove closed — stop watcher, reset indexer, close db
           await watcherStop()
@@ -117,7 +116,6 @@ async function bootstrap(): Promise<void> {
     try {
       // Defensive: closeGrove cascades to closeCurrent, but also handle the
       // "no grove open but stray db handle" edge case.
-      const { dbService } = require('./services/db') as typeof import('./services/db')
       dbService.closeCurrent()
     } catch (err) {
       logger.error('db close on will-quit failed', {
