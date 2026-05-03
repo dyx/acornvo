@@ -153,4 +153,28 @@ describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
     fireEvent.click(screen.getByTestId('dlg-save-as'))
     expect(saveAsCopy).toHaveBeenCalled()
   })
+
+  it('diff link is non-clickable and shows diff_soon tooltip', () => {
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+    } as any)
+    render(<ConflictDialog />)
+    const link = screen.getByTestId('dlg-diff-link')
+    expect(link).toHaveAttribute('title', '差异视图将于后续版本提供')
+    expect(link.tagName).toBe('SPAN')
+  })
+
+  it('later button has the 稍后处理 label from i18n', () => {
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+    } as any)
+    render(<ConflictDialog />)
+    expect(screen.getByTestId('dlg-later')).toHaveTextContent('稍后处理')
+  })
 })
