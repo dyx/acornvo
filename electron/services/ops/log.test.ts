@@ -65,4 +65,17 @@ describe('opsLog.record', () => {
     expect(row.path).toBe('old/a.md')
     expect(JSON.parse(row.meta_json).new_path).toBe('new/a.md')
   })
+
+  it('returns without throwing when getCurrent returns null', () => {
+    vi.spyOn(dbSvc, 'getCurrent').mockReturnValue(null)
+    expect(() => opsLog.record({ op: 'trash', path: 'notes/a.md' })).not.toThrow()
+  })
+})
+
+describe('opsLog.list null-db guard', () => {
+  it('returns empty result when getCurrent returns null', () => {
+    vi.spyOn(dbSvc, 'getCurrent').mockReturnValue(null)
+    const result = opsLog.list({ limit: 10, offset: 0 })
+    expect(result).toEqual({ items: [], total: 0 })
+  })
 })

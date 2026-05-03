@@ -68,31 +68,41 @@ export function list(opts: OpsLogListOptions): OpsLogListResult {
   const db = getCurrent()
   if (!db) return { items: [], total: 0 }
 
-  const where = opts.op ? `WHERE op = ?` : ``
-  const args: unknown[] = opts.op ? [opts.op] : []
-  const totalRow = db
-    .prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`)
-    .get(...args) as { n: number }
-  const itemRows = db
-    .prepare(
-      `SELECT id, op, path, ts, meta_json FROM ops_log ${where}
-       ORDER BY ts DESC LIMIT ? OFFSET ?`
-    )
-    .all(...args, opts.limit, opts.offset) as Array<{
-    id: number
-    op: string
-    path: string
-    ts: string
-    meta_json: string | null
-  }>
-  const items: OpsItem[] = itemRows.map((r) => ({
-    id: r.id,
-    op: r.op as Op,
-    path: r.path,
-    ts: r.ts,
-    meta: r.meta_json ? safeParse(r.meta_json) : null
-  }))
-  return { items, total: totalRow.n }
+  try {
+    const where = opts.op ? `WHERE op = ?` : ``
+    const args: unknown[] = opts.op ? [opts.op] : []
+    const totalRow = db
+      .prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`)
+      .get(...args) as { n: number }
+    const itemRows = db
+      .prepare(
+        `SELECT id, op, path, ts, meta_json FROM ops_log ${where}
+         ORDER BY ts DESC LIMIT ? OFFSET ?`
+      )
+      .all(...args, opts.limit, opts.offset) as Array<{
+      id: number
+      op: string
+      path: string
+      ts: string
+      meta_json: string | null
+    }>
+    const items: OpsItem[] = itemRows.map((r) => ({
+      id: r.id,
+      op: r.op as Op,
+      path: r.path,
+      ts: r.ts,
+      meta: r.meta_json ? safeParse(r.meta_json) : null
+    }))
+    return { items, total: totalRow.n }
+  } catch (err) {
+    logger.warn('opsLog.list failed (non-fatal)', {
+      op: opts.op,
+      limit: opts.limit,
+      offset: opts.offset,
+      message: err instanceof Error ? err.message : String(err)
+    })
+    return { items: [], total: 0 }
+  }
 }
 
 function safeParse(s: string): Record<string, unknown> | null {
