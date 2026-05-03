@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import * as opsLog from '../ops/log'
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -276,5 +277,60 @@ describe('prune', () => {
     expect(result.deleted).toBe(1)
     const remaining = await readdir(_internals.requireConflictsRoot())
     expect(remaining.length).toBe(1)
+  })
+})
+
+describe('writeSnapshot wires opsLog.record (phase-10 2.4)', () => {
+  it('records op=conflict_resolve with id + resolved_by for keep_local', async () => {
+    const recordSpy = vi.spyOn(opsLog, 'record')
+    const { id } = await writeSnapshot({
+      path: 'notes/a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
+      resolvedBy: 'keep_local'
+    })
+    expect(recordSpy).toHaveBeenCalledWith({
+      op: 'conflict_resolve',
+      path: 'notes/a.md',
+      meta: { id, resolved_by: 'keep_local' }
+    })
+  })
+
+  it('records op=conflict_resolve with winner_path for save_as', async () => {
+    const recordSpy = vi.spyOn(opsLog, 'record')
+    const { id } = await writeSnapshot({
+      path: 'notes/a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
+      resolvedBy: 'save_as',
+      winnerPath: 'notes/a.conflict.2026-04-30T12-30-45.md'
+    })
+    expect(recordSpy).toHaveBeenCalledWith({
+      op: 'conflict_resolve',
+      path: 'notes/a.md',
+      meta: {
+        id,
+        resolved_by: 'save_as',
+        winner_path: 'notes/a.conflict.2026-04-30T12-30-45.md'
+      }
+    })
+  })
+
+  it('records op=conflict_resolve for load_remote', async () => {
+    const recordSpy = vi.spyOn(opsLog, 'record')
+    const { id } = await writeSnapshot({
+      path: 'notes/a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
+      resolvedBy: 'load_remote'
+    })
+    expect(recordSpy).toHaveBeenCalledWith({
+      op: 'conflict_resolve',
+      path: 'notes/a.md',
+      meta: { id, resolved_by: 'load_remote' }
+    })
   })
 })
