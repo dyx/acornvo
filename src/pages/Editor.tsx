@@ -7,6 +7,7 @@ import { VditorEditor } from '@/components/editor/VditorEditor'
 import { EditorTitleBar } from '@/components/editor/EditorTitleBar'
 import { FrontmatterCard } from '@/components/editor/FrontmatterCard'
 import { EditorErrorState } from '@/components/editor/EditorErrorState'
+import { ExternalModifiedBanner } from '@/components/editor/ExternalModifiedBanner'
 
 export function Editor(): JSX.Element {
   const { encodedPath } = useParams<{ encodedPath: string }>()
@@ -95,6 +96,7 @@ export function Editor(): JSX.Element {
     <div className="grid h-full grid-cols-[1fr_320px] grid-rows-[auto_1fr] overflow-hidden">
       <div className="col-span-2">
         <EditorTitleBar />
+        <ExternalModifiedBanner />
       </div>
       <div className="overflow-auto bg-[color:var(--color-bg-1)]">
         <VditorEditor />

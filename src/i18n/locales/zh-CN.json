@@ -105,6 +105,13 @@
       "open_logs": "查看日志"
     }
   },
+  "conflict": {
+    "banner": {
+      "external_modified": "这个文件在外部被修改了。",
+      "reload": "重载",
+      "ignore": "忽略"
+    }
+  },
   "search": {
     "placeholder_quick": "搜索文件名 / 路径",
     "recent": "最近打开",
