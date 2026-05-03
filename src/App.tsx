@@ -1,11 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { Placeholder } from './pages/Placeholder'
-import { Library } from './pages/Library'
-import { ProjectPicker } from './pages/ProjectPicker'
-import { Editor } from './pages/Editor'
-import { useBootstrap } from './hooks/useBootstrap'
+import { Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
@@ -13,15 +8,8 @@ import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
 import { QuickSwitcher } from '@/components/search/QuickSwitcher'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
-import Search from '@/pages/Search'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
-
-function BootstrapGate(): JSX.Element {
-  const payload = useBootstrap()
-  if (!payload) return <Placeholder name="loading" />
-  return <Navigate to={payload.initialRoute} replace />
-}
 
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
   if (!visible) return null
@@ -76,16 +64,7 @@ export function App(): JSX.Element {
     <div className="flex h-full flex-col">
       <TitleBar />
       <main className="flex-1 overflow-hidden">
-        <Routes>
-          <Route path="/" element={<BootstrapGate />} />
-          <Route path="/picker" element={<ProjectPicker />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/editor/:encodedPath" element={<Editor />} />
-          <Route path="/browser" element={<Placeholder name="browser" />} />
-          <Route path="/chat" element={<Placeholder name="chat" />} />
-          <Route path="/settings" element={<Placeholder name="settings" />} />
-          <Route path="/search" element={<Search />} />
-        </Routes>
+        <Outlet />
       </main>
       <IndexBanner />
       <DbRebuildOverlay visible={isRebuilding} />
