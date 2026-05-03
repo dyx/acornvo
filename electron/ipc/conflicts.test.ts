@@ -70,3 +70,25 @@ describe('conflictHandlers.delete', () => {
     })
   })
 })
+
+describe('conflictHandlers.diff (stub)', () => {
+  it('is a function', () => {
+    expect(typeof conflictHandlers.diff).toBe('function')
+  })
+
+  it('throws not implemented', async () => {
+    await expect(conflictHandlers.diff('any-id', 'local-remote')).rejects.toThrow(
+      'not implemented'
+    )
+  })
+})
+
+describe('conflictHandlers.deleteAll (stub)', () => {
+  it('is a function', () => {
+    expect(typeof conflictHandlers.deleteAll).toBe('function')
+  })
+
+  it('throws not implemented', async () => {
+    await expect(conflictHandlers.deleteAll()).rejects.toThrow('not implemented')
+  })
+})

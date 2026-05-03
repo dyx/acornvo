@@ -8,7 +8,9 @@ import { IpcError } from '@shared/ipc-contract'
 import type { ConflictResolvedBy } from '@shared/conflict-types'
 import type {
   ConflictListResult,
-  ConflictReadResult
+  ConflictReadResult,
+  DiffResult,
+  DiffSidesPair
 } from '@shared/ipc-contract'
 
 export const conflictHandlers = {
@@ -55,5 +57,13 @@ export const conflictHandlers = {
       throw new IpcError('E_INVALID_ARGS', `invalid resolvedBy: ${input.resolvedBy}`)
     }
     return storeWriteSnapshot(input)
+  },
+
+  async diff(id: string, sides: DiffSidesPair): Promise<DiffResult> {
+    throw new Error('not implemented')
+  },
+
+  async deleteAll(): Promise<{ ok: true; deleted: number }> {
+    throw new Error('not implemented')
   }
 }
