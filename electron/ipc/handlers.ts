@@ -7,6 +7,8 @@ import { projectHandlers } from './project'
 import { indexHandlers } from './index'
 import { searchHandlers } from './search'
 import { conflictHandlers } from './conflicts'
+import { trashHandlers } from './trash'
+import { opsHandlers } from './ops'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -32,9 +34,10 @@ export const ipcHandlers: HandlerMap = {
   },
   project: projectHandlers,
   db: dbHandlers,
-  file: fileHandlers,
+  file: { ...fileHandlers, ...trashHandlers },
   files: fileQueryHandlers,
   index: indexHandlers,
   conflict: conflictHandlers,
   search: searchHandlers,
+  ops: opsHandlers,
 }
