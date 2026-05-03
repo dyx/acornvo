@@ -16,7 +16,11 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
     >
       <span>{t('conflict.banner.external_modified')}</span>
       <div className="flex gap-2">
-        <button data-testid="banner-reload" className="text-sm underline">
+        <button
+          data-testid="banner-reload"
+          className="text-sm underline"
+          onClick={() => useEditorStore.getState().reloadFromDisk()}
+        >
           {t('conflict.banner.reload')}
         </button>
         <button data-testid="banner-ignore" className="text-sm underline">

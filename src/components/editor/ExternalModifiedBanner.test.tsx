@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ExternalModifiedBanner } from './ExternalModifiedBanner'
 import { useEditorStore } from '@/stores/editor'
@@ -58,5 +58,21 @@ describe('ExternalModifiedBanner visibility', () => {
     } as any)
     render(<ExternalModifiedBanner />)
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
+
+describe('ExternalModifiedBanner interactions', () => {
+  it('clicking 重载 invokes reloadFromDisk', async () => {
+    const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
+      reloadFromDisk
+    } as any)
+    render(<ExternalModifiedBanner />)
+    fireEvent.click(screen.getByTestId('banner-reload'))
+    expect(reloadFromDisk).toHaveBeenCalled()
   })
 })

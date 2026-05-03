@@ -12,6 +12,9 @@ vi.mock('@/ipc/client', () => ({
     },
     files: {
       get: vi.fn()
+    },
+    conflict: {
+      writeSnapshot: vi.fn()
     }
   }
 }))
@@ -26,6 +29,7 @@ const ipcMock = ipc as unknown as {
     writeParsed: ReturnType<typeof vi.fn>
   }
   files: { get: ReturnType<typeof vi.fn> }
+  conflict: { writeSnapshot: ReturnType<typeof vi.fn> }
 }
 
 function resetStore(): void {
@@ -37,6 +41,8 @@ beforeEach(() => {
   ipcMock.file.readParsed.mockReset()
   ipcMock.file.write.mockReset()
   ipcMock.file.writeParsed.mockReset()
+  ipcMock.files.get.mockReset()
+  ipcMock.conflict.writeSnapshot.mockReset()
 })
 
 afterEach(() => {
@@ -58,13 +64,18 @@ describe('editor store — state machine', () => {
       path: 'a.md',
       frontmatter: {},
       body: 'hello',
+      savedFrontmatter: {},
       savedBody: 'hello',
       savedMtimeMs: 1,
+      baseFrontmatter: {},
+      baseBody: 'hello',
+      baseMtimeMs: 1,
       dirty: false,
       saving: false,
       lastError: null,
       saveErrorCount: 0,
-      persistentFailure: false
+      persistentFailure: false,
+      conflictState: { kind: 'none' }
     }
     const error: EditorState = {
       kind: 'error',
@@ -711,5 +722,61 @@ describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('expected ready')
     expect(s.saving).toBe(false)
+  })
+})
+
+describe('editor.reloadFromDisk (phase-09 6.2)', () => {
+  it('writes snapshot resolved_by=load_remote_banner then reloads body+savedBody', async () => {
+    // First: openReady seeds the store
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '---\ntitle: old\n---\nOLD',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: { title: 'old' },
+      body: 'OLD',
+      rawYaml: 'title: old'
+    })
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('LOCAL')
+    useEditorStore.setState((cur: any) => {
+      const s = typeof cur.state !== 'undefined' ? cur.state : cur
+      if (s.kind !== 'ready') return cur
+      return typeof cur.state !== 'undefined'
+        ? { ...cur, state: { ...s, conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } } }
+        : { ...cur, conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } }
+    })
+
+    // reloadFromDisk calls ipc.file.readParsed for the fresh disk content
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '---\ntitle: remote\n---\nREMOTE',
+      eol: 'lf',
+      mtimeMs: 999,
+      sha256: 'h2',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: { title: 'remote' },
+      body: 'REMOTE',
+      rawYaml: 'title: remote'
+    })
+    ipcMock.conflict.writeSnapshot.mockResolvedValue({ id: 'snap-1' })
+
+    await useEditorStore.getState().reloadFromDisk()
+
+    expect(ipcMock.conflict.writeSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: 'a.md',
+        resolvedBy: 'load_remote_banner'
+      })
+    )
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.body).toBe('REMOTE')
+    expect(s.savedBody).toBe('REMOTE')
+    expect(s.savedMtimeMs).toBe(999)
+    expect(s.baseBody).toBe('REMOTE')
+    expect(s.conflictState).toEqual({ kind: 'none' })
   })
 })

@@ -96,7 +96,8 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
       remoteText: '',
       baseText: ''
     }),
-    delete: async () => ({ ok: true as const })
+    delete: async () => ({ ok: true as const }),
+    writeSnapshot: async () => ({ id: '' })
   },
   search: {
     rebuild: async () => ({ ok: true } as const),

@@ -65,7 +65,8 @@ const request: IpcClient<IpcContract> = {
   conflict: {
     list: (opts) => invoke('conflict.list', opts),
     read: (id) => invoke('conflict.read', id),
-    delete: (id) => invoke('conflict.delete', id)
+    delete: (id) => invoke('conflict.delete', id),
+    writeSnapshot: (input) => invoke('conflict.writeSnapshot', input)
   },
   search: {
     rebuild: () => invoke('search.rebuild'),

@@ -9,8 +9,12 @@ export type EditorReadyState = {
   path: string
   frontmatter: Frontmatter
   body: string
+  savedFrontmatter: Frontmatter
   savedBody: string
   savedMtimeMs: number
+  baseFrontmatter: Frontmatter
+  baseBody: string
+  baseMtimeMs: number
   dirty: boolean
   saving: boolean
   lastError: string | null
@@ -31,6 +35,7 @@ export type EditorActions = {
   save: () => Promise<void>
   flushSave: () => Promise<void>
   close: () => Promise<void>
+  reloadFromDisk: () => Promise<void>
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -168,8 +173,37 @@ async function _doSave(): Promise<void> {
   }
 }
 
-function notImplemented(): never {
-  throw new Error('editor store action not implemented yet')
+/**
+ * Minimal markdown frontmatter + body composer for conflict snapshot texts.
+ * Produces ---\n<yaml>\n---\n<body> when frontmatter is non-empty, else plain body.
+ */
+function stringify(fm: Frontmatter, body: string): string {
+  if (!fm || Object.keys(fm).length === 0) return body
+  const lines: string[] = ['---']
+  for (const [key, value] of Object.entries(fm)) {
+    if (value === undefined || value === null) continue
+    if (Array.isArray(value)) {
+      lines.push(`${key}:`)
+      for (const item of value) {
+        if (typeof item === 'string' && (item.includes(':') || item.includes('#'))) {
+          lines.push(`  - "${item}"`)
+        } else {
+          lines.push(`  - ${item}`)
+        }
+      }
+    } else if (typeof value === 'string' && value.includes('\n')) {
+      lines.push(`${key}: |`)
+      for (const line of value.split('\n')) {
+        lines.push(`  ${line}`)
+      }
+    } else if (typeof value === 'string') {
+      lines.push(`${key}: ${value}`)
+    } else {
+      lines.push(`${key}: ${value}`)
+    }
+  }
+  lines.push('---', '', body)
+  return lines.join('\n')
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -185,8 +219,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           path,
           frontmatter: r.frontmatter,
           body: r.body,
+          savedFrontmatter: r.frontmatter,
           savedBody: r.body,
           savedMtimeMs: r.mtimeMs,
+          baseFrontmatter: r.frontmatter,
+          baseBody: r.body,
+          baseMtimeMs: r.mtimeMs,
           dirty: false,
           saving: false,
           lastError: null,
@@ -236,6 +274,41 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       await get().save()
     }
   },
+  async reloadFromDisk() {
+    const cur = get().state
+    if (cur.kind !== 'ready') return
+    const isBanner = cur.conflictState.kind === 'externalModified'
+    const resolvedBy = isBanner ? 'load_remote_banner' : 'load_remote'
+    const fresh = await ipc.file.readParsed(cur.path)
+    const localText = stringify(cur.frontmatter, cur.body)
+    const remoteText = stringify(fresh.frontmatter, fresh.body)
+    const baseText = stringify(cur.baseFrontmatter, cur.baseBody)
+    await ipc.conflict.writeSnapshot({
+      path: cur.path,
+      baseText, localText, remoteText, resolvedBy
+    })
+    set({
+      state: {
+        kind: 'ready',
+        path: cur.path,
+        frontmatter: fresh.frontmatter,
+        body: fresh.body,
+        savedFrontmatter: fresh.frontmatter,
+        savedBody: fresh.body,
+        savedMtimeMs: fresh.mtimeMs,
+        baseFrontmatter: fresh.frontmatter,
+        baseBody: fresh.body,
+        baseMtimeMs: fresh.mtimeMs,
+        dirty: false,
+        saving: false,
+        lastError: null,
+        saveErrorCount: 0,
+        persistentFailure: false,
+        conflictState: { kind: 'none' }
+      }
+    })
+  },
+
   async close() {
     await get().flushSave()
     _cancelDebounce()

@@ -151,7 +151,8 @@ export interface FileListOptions {
 
 import type {
   ConflictItem,
-  ConflictMeta
+  ConflictMeta,
+  ConflictResolvedBy
 } from './conflict-types'
 
 export interface ConflictListResult {
@@ -240,6 +241,14 @@ export type IpcContract = {
     list: (opts?: { limit?: number; offset?: number }) => ConflictListResult
     read: (id: string) => ConflictReadResult
     delete: (id: string) => { ok: true }
+    writeSnapshot: (input: {
+      path: string
+      baseText: string
+      localText: string
+      remoteText: string
+      resolvedBy: ConflictResolvedBy
+      winnerPath?: string
+    }) => { id: string }
   }
   search: {
     quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]

@@ -14,8 +14,11 @@ import { FrontmatterCard } from './FrontmatterCard'
 function ready(fm: Record<string, unknown>): EditorReadyState {
   return {
     kind: 'ready', path: 'a.md', frontmatter: fm,
-    body: '', savedBody: '', savedMtimeMs: 1, dirty: false, saving: false,
-    lastError: null, saveErrorCount: 0, persistentFailure: false
+    body: '', savedFrontmatter: {}, savedBody: '', savedMtimeMs: 1,
+    baseFrontmatter: {}, baseBody: '', baseMtimeMs: 1,
+    dirty: false, saving: false,
+    lastError: null, saveErrorCount: 0, persistentFailure: false,
+    conflictState: { kind: 'none' }
   }
 }
 
