@@ -8,6 +8,7 @@ import { EditorTitleBar } from '@/components/editor/EditorTitleBar'
 import { FrontmatterCard } from '@/components/editor/FrontmatterCard'
 import { EditorErrorState } from '@/components/editor/EditorErrorState'
 import { ExternalModifiedBanner } from '@/components/editor/ExternalModifiedBanner'
+import { ConflictDialog } from '@/components/editor/ConflictDialog'
 
 export function Editor(): JSX.Element {
   const { encodedPath } = useParams<{ encodedPath: string }>()
@@ -97,6 +98,7 @@ export function Editor(): JSX.Element {
       <div className="col-span-2">
         <EditorTitleBar />
         <ExternalModifiedBanner />
+        <ConflictDialog />
       </div>
       <div className="overflow-auto bg-[color:var(--color-bg-1)]">
         <VditorEditor />

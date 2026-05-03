@@ -106,6 +106,21 @@
     }
   },
   "conflict": {
+    "dialog": {
+      "title": "这个文件在 Acornvo 之外被修改过。你想怎么处理？",
+      "meta_path": "{{path}}",
+      "meta_words": "本地未保存：{{count}} 字",
+      "meta_remote_time": "远端修改：{{time}}",
+      "keep_local": "保留本地",
+      "keep_local_sub": "将覆盖磁盘上的外部修改。快照仍会保留。",
+      "load_remote": "重载磁盘",
+      "load_remote_sub": "丢弃你在 Acornvo 中未保存的修改。",
+      "save_as": "另存副本",
+      "save_as_sub": "把你的修改另存为 <name>.conflict.<ts>.md。磁盘原文件保留外部版本。",
+      "view_diff": "查看差异",
+      "diff_soon": "差异视图将于后续版本提供",
+      "later": "稍后处理"
+    },
     "banner": {
       "external_modified": "这个文件在外部被修改了。",
       "reload": "重载",
