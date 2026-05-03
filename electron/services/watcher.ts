@@ -8,6 +8,7 @@ import type Database from 'better-sqlite3'
 import { upsertFileWithBodyDelta, syncTags, upsertFts, deleteFile, renameFile } from './index-queries'
 import { parseFile } from './frontmatter'
 import { _setStateForTest as _indexerSetState } from './indexer'
+import * as opsLog from './ops/log'
 
 const SELF_WRITE_TTL_MS = 3000
 const MTIME_TOLERANCE_MS = 50
@@ -263,6 +264,11 @@ async function flush(): Promise<void> {
   const tx = _db!.transaction(() => {
     for (const [oldRel, newRel] of renamedFromTo) {
       renameFile(_db!, oldRel, newRel)
+      opsLog.record({
+        op: 'rename',
+        path: oldRel,
+        meta: { new_path: newRel }
+      })
     }
     for (const oldRel of pendingRenames.keys()) {
       deleteFile(_db!, oldRel)
