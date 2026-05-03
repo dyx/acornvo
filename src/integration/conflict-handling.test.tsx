@@ -47,7 +47,8 @@ vi.mock('@/ipc/client', () => ({
     file: {
       readParsed: vi.fn(),
       write: vi.fn(),
-      writeParsed: vi.fn()
+      writeParsed: vi.fn(),
+      exists: vi.fn()
     },
     files: {
       get: vi.fn()
@@ -67,6 +68,7 @@ const ipcMock = ipc as unknown as {
     readParsed: ReturnType<typeof vi.fn>
     write: ReturnType<typeof vi.fn>
     writeParsed: ReturnType<typeof vi.fn>
+    exists: ReturnType<typeof vi.fn>
   }
   files: { get: ReturnType<typeof vi.fn> }
   conflict: { writeSnapshot: ReturnType<typeof vi.fn> }
@@ -288,10 +290,9 @@ describe('9.3 banner 重载 → snapshot, local discarded', () => {
 describe('9.4 banner 忽略 + next save → ConflictDialog opens', () => {
   it('after ignore, save fails with E_MTIME_MISMATCH and dialog appears', async () => {
     // First readParsed: open() returns B
-    // Second readParsed: the external change watcher reads REMOTE (but we skip that here)
-    ipcMock.file.readParsed
-      .mockResolvedValueOnce(parsed('B', 1))
-      .mockResolvedValueOnce(parsed('REMOTE', 999))
+    // (No second readParsed: dirty watcher sets banner without reloading;
+    //  E_MTIME_MISMATCH handler fetches via files.get, not readParsed)
+    ipcMock.file.readParsed.mockResolvedValueOnce(parsed('B', 1))
 
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('LOCAL') // make dirty
@@ -332,5 +333,151 @@ describe('9.4 banner 忽略 + next save → ConflictDialog opens', () => {
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('expected ready')
     expect(s.conflictState.kind).toBe('saveConflict')
+  })
+})
+
+// ════════════════════════════════════════════════════
+// 9.8  Dialog 稍后处理 → banner re-shows; next save re-opens dialog
+// ════════════════════════════════════════════════════
+describe('9.8 Dialog 稍后处理 → banner re-shown; next save re-opens dialog', () => {
+  it('saveConflict → dismiss → externalModified → ignore → save fails → saveConflict', async () => {
+    // open() returns B
+    ipcMock.file.readParsed.mockResolvedValueOnce(parsed('B', 1))
+
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('L')
+
+    // First save attempt fails with E_MTIME_MISMATCH → enters saveConflict
+    ipcMock.file.writeParsed.mockRejectedValueOnce(
+      new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 999 })
+    )
+    ipcMock.files.get.mockResolvedValueOnce(filesGet('R', 999))
+
+    await act(async () => {
+      await useEditorStore.getState().flushSave()
+    })
+
+    render(
+      <>
+        <ExternalModifiedBanner />
+        <ConflictDialog />
+      </>
+    )
+
+    // Dialog should be visible (saveConflict)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    // Click 稍后处理 → dismissDialog reverts to externalModified banner
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('dlg-later'))
+    })
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+
+    // Verify dirty preserved
+    let s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.body).toBe('L')
+    expect(s.savedBody).toBe('B')
+
+    // Click 忽略 to unlock save
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('banner-ignore'))
+    })
+
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    // Now save again — should fail and re-open dialog
+    ipcMock.file.writeParsed.mockRejectedValueOnce(
+      new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 999 })
+    )
+    ipcMock.files.get.mockResolvedValueOnce(filesGet('R', 999))
+
+    await act(async () => {
+      await useEditorStore.getState().flushSave()
+    })
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+})
+
+// ════════════════════════════════════════════════════
+// 9.9  同秒再次 另存副本 → -1 suffix
+// ════════════════════════════════════════════════════
+describe('9.9 同秒再次 另存副本 → -1 后缀', () => {
+  it('falls back to -1 suffix when desired path exists', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce(parsed('B', 1))
+
+    await useEditorStore.getState().open('notes/a.md')
+    useEditorStore.getState().setBody('L')
+
+    // Manually set saveConflict state
+    useEditorStore.setState((prev) => {
+      if (prev.state.kind !== 'ready') return prev
+      return {
+        ...prev,
+        state: {
+          ...prev.state,
+          conflictState: {
+            kind: 'saveConflict' as const,
+            remoteMtimeMs: 9,
+            remoteBody: 'R',
+            remoteFrontmatter: {}
+          }
+        }
+      }
+    })
+
+    // Mock exists: base path taken, -1 suffix free
+    ipcMock.file.exists
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false)
+
+    ipcMock.file.write.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
+    ipcMock.conflict.writeSnapshot.mockResolvedValueOnce({ id: 's' })
+
+    await useEditorStore.getState().saveAsCopy()
+
+    expect(ipcMock.file.write.mock.calls[0][0]).toMatch(/-1\.md$/)
+  })
+})
+
+// ════════════════════════════════════════════════════
+// 9.13  Dialog 打开期间 Cmd+S/输入 都不触发 save
+// ════════════════════════════════════════════════════
+describe('9.13 Dialog 打开期间 Cmd+S/输入 都不触发 save', () => {
+  it('flushSave and scheduleSave are no-ops during saveConflict', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce(parsed('B', 1))
+
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('L')
+
+    // First save fails with E_MTIME_MISMATCH → enters saveConflict
+    ipcMock.file.writeParsed.mockRejectedValueOnce(
+      new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 9 })
+    )
+    ipcMock.files.get.mockResolvedValueOnce(filesGet('R', 9))
+
+    await act(async () => {
+      await useEditorStore.getState().flushSave()
+    })
+
+    // Verify we are in saveConflict
+    let s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.conflictState.kind).toBe('saveConflict')
+
+    ipcMock.file.writeParsed.mockClear()
+
+    // Now in saveConflict — try to flush again (simulates Cmd+S)
+    await useEditorStore.getState().flushSave()
+    await new Promise((r) => setTimeout(r, 100))
+
+    // Also simulate typing to trigger internal scheduleSave
+    useEditorStore.getState().setBody('L2')
+    await new Promise((r) => setTimeout(r, 1100))
+
+    expect(ipcMock.file.writeParsed).not.toHaveBeenCalled()
   })
 })
