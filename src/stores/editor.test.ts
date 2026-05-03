@@ -893,6 +893,30 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
   })
 })
 
+describe('editor.dismissDialog (phase-09 7.5)', () => {
+  it('saveConflict → externalModified (banner shows; dirty preserved)', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'B', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: 'B', rawYaml: ''
+    })
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('L')
+    // Set saveConflict
+    useEditorStore.setState((cur: any) => {
+      const s = typeof cur.state !== 'undefined' ? cur.state : cur
+      if (s.kind !== 'ready') return cur
+      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} } }
+      return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
+    })
+    useEditorStore.getState().dismissDialog()
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.conflictState).toEqual({ kind: 'externalModified', remoteMtimeMs: 9 })
+    expect(s.body).toBe('L')
+    expect(s.savedBody).toBe('B') // dirty preserved
+  })
+})
+
 describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
   it('uses resolved_by=load_remote (not load_remote_banner)', async () => {
     // Mock readParsed for open()

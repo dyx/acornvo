@@ -40,6 +40,7 @@ export type EditorActions = {
   ignoreExternalChange: () => void
   keepLocal: () => Promise<void>
   saveAsCopy: () => Promise<void>
+  dismissDialog: () => void
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -382,6 +383,17 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     await get().flushSave()
     _cancelDebounce()
     set({ state: { kind: 'idle' } })
+  },
+
+  dismissDialog: () => {
+    const cur = get().state
+    if (cur.kind !== 'ready' || cur.conflictState.kind !== 'saveConflict') return
+    set({
+      state: {
+        ...cur,
+        conflictState: { kind: 'externalModified', remoteMtimeMs: cur.conflictState.remoteMtimeMs }
+      }
+    })
   },
 
   async saveAsCopy() {
