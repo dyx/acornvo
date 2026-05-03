@@ -285,6 +285,17 @@ export async function openGrove(
     }
 
     notifyChange(toSummary(grove))
+
+    // Phase-09 retention: opportunistically prune .acornvo/conflicts/
+    try {
+      const { prune } = await import('./conflicts/store')
+      await prune()
+    } catch (err) {
+      logger.warn('conflicts prune at openGrove failed (non-fatal)', {
+        message: err instanceof Error ? err.message : String(err)
+      })
+    }
+
     logger.info('grove opened', { grove: path, id: grove.id })
     return { status: 'opened', grove: toSummary(grove) }
   } catch (err) {
