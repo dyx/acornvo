@@ -40,7 +40,7 @@ export function VditorEditor(): JSX.Element {
     })
     vditorRef.current = v
     return () => {
-      v.destroy()
+      try { v.destroy() } catch { /* Vditor may throw if its DOM element was already removed */ }
       vditorRef.current = null
     }
     // We deliberately do NOT depend on `initialBody` — Vditor owns its own
