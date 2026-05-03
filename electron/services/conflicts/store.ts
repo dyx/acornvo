@@ -216,6 +216,19 @@ export async function readSnapshot(id: string): Promise<ReadSnapshotResult> {
   }
 }
 
+/**
+ * Record a banner-reload (no snapshot, no dialog) into ops_log.
+ * Renderer reaches this via Plan 2's `ops.record` IPC; this helper
+ * exists so the call shape matches `writeSnapshot`-paired writes.
+ */
+export function recordBannerReload(path: string): void {
+  opsLog.record({
+    op: 'conflict_resolve',
+    path,
+    meta: { resolved_by: 'load_remote_banner' }
+  })
+}
+
 export async function deleteSnapshot(id: string): Promise<void> {
   const root = requireConflictsRoot()
   let target: string

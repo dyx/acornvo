@@ -280,6 +280,18 @@ describe('prune', () => {
   })
 })
 
+describe('recordBannerReload (phase-10 2.5)', () => {
+  it('records op=conflict_resolve with resolved_by=load_remote_banner', () => {
+    const recordSpy = vi.spyOn(opsLog, 'record')
+    store.recordBannerReload('notes/a.md')
+    expect(recordSpy).toHaveBeenCalledWith({
+      op: 'conflict_resolve',
+      path: 'notes/a.md',
+      meta: { resolved_by: 'load_remote_banner' }
+    })
+  })
+})
+
 describe('writeSnapshot wires opsLog.record (phase-10 2.4)', () => {
   it('records op=conflict_resolve with id + resolved_by for keep_local', async () => {
     const recordSpy = vi.spyOn(opsLog, 'record')
