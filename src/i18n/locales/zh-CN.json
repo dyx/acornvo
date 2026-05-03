@@ -122,9 +122,9 @@
       "later": "稍后处理"
     },
     "banner": {
-      "external_modified": "这个文件在外部被修改了。",
-      "reload": "重载",
-      "ignore": "忽略"
+      "external_modified": "这个文件在 Acornvo 之外被修改了。",
+      "reload": "重载（丢弃我的修改）",
+      "ignore": "忽略（我自己处理）"
     }
   },
   "search": {
