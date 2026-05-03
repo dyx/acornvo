@@ -6,7 +6,7 @@ const NONE_STATE = { kind: 'none' as const }
 export function ExternalModifiedBanner(): React.JSX.Element | null {
   const { t } = useTranslation()
   const conflictState = useEditorStore((s) =>
-    s.kind === 'ready' ? s.conflictState : NONE_STATE
+    s.state.kind === 'ready' ? s.state.conflictState : NONE_STATE
   )
   if (conflictState.kind !== 'externalModified') return null
   return (

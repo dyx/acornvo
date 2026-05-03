@@ -20,42 +20,51 @@ vi.mock('react-i18next', () => ({
 }))
 
 beforeEach(() => {
-  useEditorStore.setState({ kind: 'idle' } as any)
+  useEditorStore.setState({ state: { kind: 'idle' } })
 })
 
 afterEach(cleanup)
 
+function setReadyState(overrides: Record<string, unknown> = {}, actionMocks?: Record<string, unknown>) {
+  useEditorStore.setState({
+    state: {
+      kind: 'ready',
+      path: 'a.md',
+      body: 'x',
+      savedBody: '',
+      frontmatter: {},
+      savedFrontmatter: {},
+      savedMtimeMs: 1,
+      baseBody: '',
+      baseFrontmatter: {},
+      baseMtimeMs: 1,
+      saving: false,
+      conflictState: { kind: 'none' },
+      ...overrides
+    },
+    ...actionMocks
+  } as any)
+}
+
 describe('ExternalModifiedBanner visibility', () => {
   it('hidden when conflictState.kind = none', () => {
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: '', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false, conflictState: { kind: 'none' }
-    } as any)
+    setReadyState({ conflictState: { kind: 'none' } })
     render(<ExternalModifiedBanner />)
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('visible when conflictState.kind = externalModified', () => {
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'externalModified', remoteMtimeMs: 999 }
-    } as any)
+    setReadyState({ conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } })
     render(<ExternalModifiedBanner />)
     expect(screen.getByRole('alert')).toBeInTheDocument()
   })
 
   it('hidden when conflictState.kind = saveConflict (dialog takes over)', () => {
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
+    setReadyState({
       conflictState: {
         kind: 'saveConflict', remoteMtimeMs: 999, remoteBody: '', remoteFrontmatter: {}
       }
-    } as any)
+    })
     render(<ExternalModifiedBanner />)
     expect(screen.queryByRole('alert')).toBeNull()
   })
@@ -64,13 +73,10 @@ describe('ExternalModifiedBanner visibility', () => {
 describe('ExternalModifiedBanner interactions', () => {
   it('clicking 忽略 invokes ignoreExternalChange', () => {
     const ignoreExternalChange = vi.fn()
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
-      ignoreExternalChange
-    } as any)
+    setReadyState(
+      { conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } },
+      { ignoreExternalChange }
+    )
     render(<ExternalModifiedBanner />)
     fireEvent.click(screen.getByTestId('banner-ignore'))
     expect(ignoreExternalChange).toHaveBeenCalled()
@@ -78,13 +84,10 @@ describe('ExternalModifiedBanner interactions', () => {
 
   it('clicking 重载 invokes reloadFromDisk', async () => {
     const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
-      reloadFromDisk
-    } as any)
+    setReadyState(
+      { conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } },
+      { reloadFromDisk }
+    )
     render(<ExternalModifiedBanner />)
     fireEvent.click(screen.getByTestId('banner-reload'))
     expect(reloadFromDisk).toHaveBeenCalled()

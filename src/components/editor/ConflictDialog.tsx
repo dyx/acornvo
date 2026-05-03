@@ -14,7 +14,7 @@ function wordsCount(s: string): number {
 
 export function ConflictDialog(): React.JSX.Element | null {
   const { t } = useTranslation()
-  const state = useEditorStore((s) => (s.kind === 'ready' ? s : null))
+  const state = useEditorStore((s) => (s.state.kind === 'ready' ? s.state : null))
   if (!state) return null
   const cs = state.conflictState
   if (cs.kind !== 'saveConflict') return null

@@ -15,10 +15,12 @@ vi.mock('@/ipc/client', () => ({
   ipc: {
     file: {
       readParsed: vi.fn(),
-      writeParsed: vi.fn(),
-      write: vi.fn()
+      write: vi.fn(),
+      writeParsed: vi.fn()
     },
-    files: { get: vi.fn() }
+    files: { get: vi.fn() },
+    conflict: { writeSnapshot: vi.fn() },
+    on: vi.fn(() => () => {})
   }
 }))
 import { ipc } from '@/ipc/client'

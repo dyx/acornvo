@@ -57,6 +57,78 @@ export function _cancelDebounce(): void {
   }
 }
 
+// ── phase-09 watcher: index:fileChanged → silent reload (clean) or banner (dirty) ──
+let _editorSubscriberInstalled = false
+
+/** Returns an unsubscribe function. Exported for tests. */
+export function installEditorSubscriber(): () => void {
+  if (_editorSubscriberInstalled) return () => {}
+  _editorSubscriberInstalled = true
+
+  const off = ipc.on('index:fileChanged', (payload) => {
+    const cur = useEditorStore.getState().state
+    if (cur.kind !== 'ready') return
+    if (cur.path !== payload.path) return
+    if (payload.mtime <= cur.savedMtimeMs) return // self-write or stale event
+
+    if (cur.dirty) {
+      // Banner path: show externalModified
+      useEditorStore.setState((prev) => {
+        if (prev.state.kind !== 'ready' || prev.state.path !== payload.path) return prev
+        return {
+          ...prev,
+          state: {
+            ...prev.state,
+            conflictState: {
+              kind: 'externalModified',
+              remoteMtimeMs: payload.mtime
+            }
+          }
+        }
+      })
+    } else {
+      // Silent reload path
+      void (async () => {
+        try {
+          const fresh = await ipc.file.readParsed(cur.path)
+          useEditorStore.setState((prev2) => {
+            if (prev2.state.kind !== 'ready' || prev2.state.path !== cur.path) return prev2
+            if (prev2.state.dirty) return prev2 // dirty in the meantime → don't overwrite
+            return {
+              ...prev2,
+              state: {
+                kind: 'ready',
+                path: cur.path,
+                frontmatter: fresh.frontmatter,
+                body: fresh.body,
+                savedFrontmatter: fresh.frontmatter,
+                savedBody: fresh.body,
+                savedMtimeMs: fresh.mtimeMs,
+                baseFrontmatter: fresh.frontmatter,
+                baseBody: fresh.body,
+                baseMtimeMs: fresh.mtimeMs,
+                dirty: false,
+                saving: false,
+                lastError: null,
+                saveErrorCount: 0,
+                persistentFailure: false,
+                conflictState: { kind: 'none' }
+              }
+            }
+          })
+        } catch (_) { /* ignore read errors during silent reload */ }
+      })()
+    }
+  })
+
+  return off
+}
+
+/** Reset subscriber guard for tests. */
+export function _resetEditorSubscriber(): void {
+  _editorSubscriberInstalled = false
+}
+
 function isBlockedByConflict(s: EditorState): boolean {
   if (s.kind !== 'ready') return false
   return (

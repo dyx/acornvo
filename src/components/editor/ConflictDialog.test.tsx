@@ -28,31 +28,53 @@ vi.mock('react-i18next', () => ({
 }))
 
 beforeEach(() => {
-  useEditorStore.setState({ kind: 'idle' } as any)
+  useEditorStore.setState({ state: { kind: 'idle' } })
 })
 
 afterEach(cleanup)
 
-function setSaveConflict(opts?: { localBody?: string }) {
+function setSaveConflict(opts?: { localBody?: string; actionMocks?: Record<string, unknown> }) {
   useEditorStore.setState({
-    kind: 'ready', path: 'notes/a.md',
-    frontmatter: {}, body: opts?.localBody ?? 'L', savedFrontmatter: {}, savedBody: 'B',
-    savedMtimeMs: 1, baseFrontmatter: {}, baseBody: 'B', baseMtimeMs: 1, saving: false,
-    conflictState: {
-      kind: 'saveConflict',
-      remoteMtimeMs: 1700000000000,
-      remoteBody: 'R',
-      remoteFrontmatter: {}
-    }
+    state: {
+      kind: 'ready',
+      path: 'notes/a.md',
+      frontmatter: {},
+      body: opts?.localBody ?? 'L',
+      savedFrontmatter: {},
+      savedBody: 'B',
+      savedMtimeMs: 1,
+      baseFrontmatter: {},
+      baseBody: 'B',
+      baseMtimeMs: 1,
+      saving: false,
+      conflictState: {
+        kind: 'saveConflict',
+        remoteMtimeMs: 1700000000000,
+        remoteBody: 'R',
+        remoteFrontmatter: {}
+      }
+    },
+    ...opts?.actionMocks
   } as any)
 }
 
 describe('ConflictDialog visibility', () => {
   it('hidden when conflictState.kind != saveConflict', () => {
     useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: '', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false, conflictState: { kind: 'none' }
+      state: {
+        kind: 'ready',
+        path: 'a.md',
+        body: '',
+        savedBody: '',
+        frontmatter: {},
+        savedFrontmatter: {},
+        savedMtimeMs: 1,
+        baseBody: '',
+        baseFrontmatter: {},
+        baseMtimeMs: 1,
+        saving: false,
+        conflictState: { kind: 'none' }
+      }
     } as any)
     render(<ConflictDialog />)
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -84,13 +106,7 @@ describe('ConflictDialog meta', () => {
 
   it('clicking 保留本地 calls keepLocal()', () => {
     const keepLocal = vi.fn().mockResolvedValue(undefined)
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
-      keepLocal
-    } as any)
+    setSaveConflict({ actionMocks: { keepLocal } })
     render(<ConflictDialog />)
     fireEvent.click(screen.getByTestId('dlg-keep-local'))
     expect(keepLocal).toHaveBeenCalled()
@@ -98,28 +114,24 @@ describe('ConflictDialog meta', () => {
 
   it('clicking 重载磁盘 calls reloadFromDisk()', () => {
     const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
-      reloadFromDisk
-    } as any)
+    setSaveConflict({ actionMocks: { reloadFromDisk } })
     render(<ConflictDialog />)
     fireEvent.click(screen.getByTestId('dlg-load-remote'))
     expect(reloadFromDisk).toHaveBeenCalled()
   })
 
+  it('clicking 另存副本 calls saveAsCopy()', () => {
+    const saveAsCopy = vi.fn().mockResolvedValue(undefined)
+    setSaveConflict({ actionMocks: { saveAsCopy } })
+    render(<ConflictDialog />)
+    fireEvent.click(screen.getByTestId('dlg-save-as'))
+    expect(saveAsCopy).toHaveBeenCalled()
+  })
+
 describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
   it('clicking 稍后处理 calls dismissDialog()', () => {
     const dismissDialog = vi.fn()
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
-      dismissDialog
-    } as any)
+    setSaveConflict({ actionMocks: { dismissDialog } })
     render(<ConflictDialog />)
     fireEvent.click(screen.getByTestId('dlg-later'))
     expect(dismissDialog).toHaveBeenCalled()
@@ -127,40 +139,15 @@ describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
 
   it('Esc/onOpenChange(false) also calls dismissDialog()', () => {
     const dismissDialog = vi.fn()
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
-      dismissDialog
-    } as any)
+    setSaveConflict({ actionMocks: { dismissDialog } })
     render(<ConflictDialog />)
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(dismissDialog).toHaveBeenCalled()
   })
 })
 
-  it('clicking 另存副本 calls saveAsCopy()', () => {
-    const saveAsCopy = vi.fn().mockResolvedValue(undefined)
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
-      saveAsCopy
-    } as any)
-    render(<ConflictDialog />)
-    fireEvent.click(screen.getByTestId('dlg-save-as'))
-    expect(saveAsCopy).toHaveBeenCalled()
-  })
-
   it('diff link is non-clickable and shows diff_soon tooltip', () => {
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
-    } as any)
+    setSaveConflict()
     render(<ConflictDialog />)
     const link = screen.getByTestId('dlg-diff-link')
     expect(link).toHaveAttribute('title', '差异视图将于后续版本提供')
@@ -168,12 +155,7 @@ describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
   })
 
   it('later button has the 稍后处理 label from i18n', () => {
-    useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
-      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
-    } as any)
+    setSaveConflict()
     render(<ConflictDialog />)
     expect(screen.getByTestId('dlg-later')).toHaveTextContent('稍后处理')
   })
