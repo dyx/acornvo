@@ -6,13 +6,13 @@ import { runMigrations } from '../migrations'
 
 const MIGRATIONS_DIR = dirname(fileURLToPath(import.meta.url))
 
-describe('migration 003 — file columns alignment', () => {
+describe('migration 004 — file columns alignment', () => {
   it('adds size_bytes, created_at, updated_at to files table', () => {
     const db = new Database(':memory:')
     runMigrations(db, MIGRATIONS_DIR)
 
     const userVersion = db.pragma('user_version', { simple: true }) as number
-    expect(userVersion).toBe(3)
+    expect(userVersion).toBe(4)
 
     const cols = db.pragma("table_info('files')") as Array<{ name: string }>
     const names = cols.map((c) => c.name)
