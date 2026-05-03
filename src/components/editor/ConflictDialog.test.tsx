@@ -95,4 +95,18 @@ describe('ConflictDialog meta', () => {
     fireEvent.click(screen.getByTestId('dlg-keep-local'))
     expect(keepLocal).toHaveBeenCalled()
   })
+
+  it('clicking 重载磁盘 calls reloadFromDisk()', () => {
+    const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+      reloadFromDisk
+    } as any)
+    render(<ConflictDialog />)
+    fireEvent.click(screen.getByTestId('dlg-load-remote'))
+    expect(reloadFromDisk).toHaveBeenCalled()
+  })
 })

@@ -852,3 +852,34 @@ describe('editor.reloadFromDisk (phase-09 6.2)', () => {
     expect(s.conflictState).toEqual({ kind: 'none' })
   })
 })
+
+describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
+  it('uses resolved_by=load_remote (not load_remote_banner)', async () => {
+    // Mock readParsed for open()
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'B', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: 'B', rawYaml: ''
+    })
+    // Mock readParsed for reloadFromDisk()
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'R', eol: 'lf', mtimeMs: 999, sha256: 'h2', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: {}, body: 'R', rawYaml: ''
+    })
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('L')
+    // Set saveConflict state
+    useEditorStore.setState((cur: any) => {
+      const s = typeof cur.state !== 'undefined' ? cur.state : cur
+      if (s.kind !== 'ready') return cur
+      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 999, remoteBody: 'R', remoteFrontmatter: {} } }
+      return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
+    })
+    ipcMock.conflict.writeSnapshot = vi.fn().mockResolvedValue({ id: 'snap' })
+
+    await useEditorStore.getState().reloadFromDisk()
+
+    expect(ipcMock.conflict.writeSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({ resolvedBy: 'load_remote' })
+    )
+  })
+})
