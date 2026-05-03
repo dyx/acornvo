@@ -1,17 +1,17 @@
 ## 1. 依赖与 schema
 
-- [ ] 1.1 `npm install diff`（jsdiff）
-- [ ] 1.2 `migrations/003_ops_log.sql`：建 `ops_log` + 索引 + `user_version=3`
-- [ ] 1.3 `shared/ops-types.ts`：`OpsItem` / `Op` 枚举
+- [x] 1.1 `npm install diff`（jsdiff）
+- [x] 1.2 `migrations/003_ops_log.sql`：建 `ops_log` + 索引 + `user_version=3`
+- [x] 1.3 `shared/ops-types.ts`：`OpsItem` / `Op` 枚举
 
 ## 2. Ops 写入器（main）
 
-- [ ] 2.1 `src/main/ops/log.ts`：`record({ op, path, meta? })` + 内部 `prune()`（90 天 + 10000 上限）
-- [ ] 2.2 prune 在每次 record 前跑（同事务）
-- [ ] 2.3 `list({ limit, offset, op? })` + total
-- [ ] 2.4 串接到 phase 9 `ConflictDialog` 三个分支（keep_local/load_remote/save_as）写 record
-- [ ] 2.5 串接到 phase 9 `banner 重载`（resolved_by='load_remote_banner'）写 record
-- [ ] 2.6 串接到 phase 5 rename 识别：watcher 确定 rename 后 `opsLog.record({op:'rename', path: oldPath, meta: {new_path: newPath}})`
+- [x] 2.1 `src/main/ops/log.ts`：`record({ op, path, meta? })` + 内部 `prune()`（90 天 + 10000 上限）
+- [x] 2.2 prune 在每次 record 前跑（同事务）
+- [x] 2.3 `list({ limit, offset, op? })` + total
+- [x] 2.4 串接到 phase 9 `ConflictDialog` 三个分支（keep_local/load_remote/save_as）写 record
+- [x] 2.5 串接到 phase 9 `banner 重载`（resolved_by='load_remote_banner'）写 record
+- [x] 2.6 串接到 phase 5 rename 识别：watcher 确定 rename 后 `opsLog.record({op:'rename', path: oldPath, meta: {new_path: newPath}})`
 
 ## 3. IPC（main）
 
