@@ -853,6 +853,46 @@ describe('editor.reloadFromDisk (phase-09 6.2)', () => {
   })
 })
 
+describe('editor.saveAsCopy (phase-09 7.4)', () => {
+  it('builds path notes/a.conflict.<ts>.md and writes + snapshots', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '---\ntitle: t\n---\nB',
+      eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: { title: 't' }, body: 'B', rawYaml: 'title: t'
+    })
+    await useEditorStore.getState().open('notes/a.md')
+    useEditorStore.getState().setBody('L')
+    // Set saveConflict state
+    useEditorStore.setState((cur: any) => {
+      const s = typeof cur.state !== 'undefined' ? cur.state : cur
+      if (s.kind !== 'ready') return cur
+      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} } }
+      return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
+    })
+    // Mock file.exists to return false (first slot free)
+    if (!(ipcMock.file as any).exists) (ipcMock.file as any).exists = vi.fn()
+    ;(ipcMock.file as any).exists.mockResolvedValue(false)
+    ipcMock.file.write.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
+    ipcMock.conflict.writeSnapshot = vi.fn().mockResolvedValue({ id: 'snap' })
+
+    await useEditorStore.getState().saveAsCopy()
+
+    const writeCall = (ipcMock.file.write as any).mock.calls[0]
+    expect(writeCall[0]).toMatch(/^notes\/a\.conflict\.\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.md$/)
+    expect(ipcMock.conflict.writeSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolvedBy: 'save_as',
+        winnerPath: writeCall[0]
+      })
+    )
+    // Check pendingNavigateTo is set
+    const s = useEditorStore.getState()
+    if (s.state.kind === 'ready') {
+      expect(s.state.pendingNavigateTo).toBe(writeCall[0])
+    }
+  })
+})
+
 describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
   it('uses resolved_by=load_remote (not load_remote_banner)', async () => {
     // Mock readParsed for open()

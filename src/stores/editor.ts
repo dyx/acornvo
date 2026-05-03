@@ -21,6 +21,7 @@ export type EditorReadyState = {
   saveErrorCount: number
   persistentFailure: boolean
   conflictState: ConflictState
+  pendingNavigateTo?: string
 }
 
 export type EditorState =
@@ -38,6 +39,7 @@ export type EditorActions = {
   reloadFromDisk: () => Promise<void>
   ignoreExternalChange: () => void
   keepLocal: () => Promise<void>
+  saveAsCopy: () => Promise<void>
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -208,6 +210,34 @@ function stringify(fm: Frontmatter, body: string): string {
   return lines.join('\n')
 }
 
+function buildCopyPath(originalPath: string, ts: string): string {
+  const dotIdx = originalPath.lastIndexOf('.')
+  const slashIdx = originalPath.lastIndexOf('/')
+  const stem = dotIdx > slashIdx ? originalPath.slice(0, dotIdx) : originalPath
+  const ext = dotIdx > slashIdx ? originalPath.slice(dotIdx) : '.md'
+  return `${stem}.conflict.${ts}${ext}`
+}
+
+async function findFreeCopyPath(basePath: string): Promise<string> {
+  // Check if ipc.file.exists is available; if not, probe by trying to read
+  if (typeof (ipc.file as any).exists === 'function') {
+    if (!(await (ipc.file as any).exists(basePath))) return basePath
+  }
+  for (let i = 1; i < 100; i++) {
+    const dotIdx = basePath.lastIndexOf('.')
+    const stem = basePath.slice(0, dotIdx)
+    const ext = basePath.slice(dotIdx)
+    const cand = `${stem}-${i}${ext}`
+    if (typeof (ipc.file as any).exists === 'function') {
+      if (!(await (ipc.file as any).exists(cand))) return cand
+    } else {
+      // Fallback: always use first candidate if exists not available
+      return i === 1 ? basePath : cand
+    }
+  }
+  throw new Error(`no free copy slot for ${basePath}`)
+}
+
 export const useEditorStore = create<EditorStore>((set, get) => ({
   state: { kind: 'idle' },
 
@@ -352,5 +382,38 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     await get().flushSave()
     _cancelDebounce()
     set({ state: { kind: 'idle' } })
+  },
+
+  async saveAsCopy() {
+    const cur = get().state
+    if (cur.kind !== 'ready' || cur.conflictState.kind !== 'saveConflict') return
+    const remote = cur.conflictState
+    const ts = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
+    const desired = buildCopyPath(cur.path, ts)
+    const newPath = await findFreeCopyPath(desired)
+
+    const localText = stringify(cur.frontmatter, cur.body)
+    const remoteText = stringify(remote.remoteFrontmatter, remote.remoteBody)
+    const baseText = stringify(cur.baseFrontmatter, cur.baseBody)
+    // Write the new file FIRST so the snapshot's winner_path points to a real file
+    await ipc.file.write(newPath, localText)
+    await ipc.conflict.writeSnapshot({
+      path: cur.path,
+      baseText, localText, remoteText,
+      resolvedBy: 'save_as',
+      winnerPath: newPath
+    })
+    // Set pendingNavigateTo — Editor page watches this and navigates
+    set((cur2) => {
+      if (cur2.state.kind !== 'ready') return cur2
+      return {
+        ...cur2,
+        state: {
+          ...cur2.state,
+          conflictState: { kind: 'none' },
+          pendingNavigateTo: newPath
+        }
+      }
+    })
   }
 }))

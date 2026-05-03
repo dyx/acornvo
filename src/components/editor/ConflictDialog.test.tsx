@@ -109,4 +109,18 @@ describe('ConflictDialog meta', () => {
     fireEvent.click(screen.getByTestId('dlg-load-remote'))
     expect(reloadFromDisk).toHaveBeenCalled()
   })
+
+  it('clicking 另存副本 calls saveAsCopy()', () => {
+    const saveAsCopy = vi.fn().mockResolvedValue(undefined)
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+      saveAsCopy
+    } as any)
+    render(<ConflictDialog />)
+    fireEvent.click(screen.getByTestId('dlg-save-as'))
+    expect(saveAsCopy).toHaveBeenCalled()
+  })
 })

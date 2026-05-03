@@ -70,6 +70,20 @@ export function Editor(): JSX.Element {
     return () => window.removeEventListener('keydown', onKey)
   }, [kind, navigate])
 
+  // Watch for saveAsCopy navigation
+  const pendingNav = useEditorStore((s) =>
+    s.state.kind === 'ready' ? s.state.pendingNavigateTo : undefined
+  )
+  useEffect(() => {
+    if (pendingNav) {
+      useEditorStore.setState((cur) => {
+        if (cur.state.kind !== 'ready') return cur
+        return { ...cur, state: { ...cur.state, pendingNavigateTo: undefined } }
+      })
+      navigate('/editor/' + encodeURIComponent(pendingNav))
+    }
+  }, [pendingNav, navigate])
+
   if (!path) {
     return (
       <div data-testid="editor-error-state" className="flex h-full items-center justify-center text-sm">
