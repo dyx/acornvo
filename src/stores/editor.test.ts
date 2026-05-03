@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useEditorStore, _cancelDebounce } from './editor'
 import type { EditorState } from './editor'
 import type { Frontmatter } from '@shared/frontmatter-schema'
+import type { ConflictState } from '@shared/conflict-types'
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
@@ -526,8 +527,6 @@ describe('editor store — debounce coalescing', () => {
   })
 })
 
-import type { ConflictState } from '@shared/conflict-types'
-
 describe('editor store retry counter (phase-09 5.6)', () => {
   it('E_MTIME_MISMATCH does not increment saveErrorCount', async () => {
     await openReady('A', 1)
@@ -945,5 +944,97 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
     expect(ipcMock.conflict.writeSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({ resolvedBy: 'load_remote' })
     )
+  })
+})
+
+describe('9.12 base fields stable across multiple saves', () => {
+  it('after 3 saves, baseBody/baseFrontmatter/baseMtimeMs == values at open()', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '---\ntitle: load\n---\nINITIAL',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: { title: 'load' },
+      body: 'INITIAL',
+      rawYaml: 'title: load'
+    })
+    await useEditorStore.getState().open('a.md')
+    for (let i = 0; i < 3; i++) {
+      useEditorStore.getState().setBody(`v${i}`)
+      ipcMock.file.writeParsed.mockResolvedValueOnce({ mtimeMs: 100 + i, sha256: 'x' })
+      await useEditorStore.getState().save()
+    }
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.baseBody).toBe('INITIAL')
+    expect(s.baseFrontmatter).toEqual({ title: 'load' })
+    expect(s.baseMtimeMs).toBe(1)
+    expect(s.savedMtimeMs).toBe(102) // last save's result
+  })
+})
+
+describe('9.14 3x E_MTIME_MISMATCH → no persistent-failure', () => {
+  it('persistentFailure stays false after 3 mismatches each followed by dismiss+ignore', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'B',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'B',
+      rawYaml: ''
+    })
+    await useEditorStore.getState().open('a.md')
+    for (let i = 0; i < 3; i++) {
+      useEditorStore.getState().setBody(`v${i}`)
+      ipcMock.file.writeParsed.mockRejectedValueOnce(
+        new IpcError('E_MTIME_MISMATCH', 'mismatch', { remoteMtimeMs: 9 })
+      )
+      ipcMock.files.get.mockResolvedValueOnce({
+        summary: { path: 'a.md', mtimeMs: 9 },
+        frontmatter: {},
+        body: 'R'
+      })
+      await useEditorStore.getState().save()
+      // user picks dismiss then ignore to unlock
+      useEditorStore.getState().dismissDialog()
+      useEditorStore.getState().ignoreExternalChange()
+    }
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.saveErrorCount).toBe(0)
+    expect(s.persistentFailure).toBe(false)
+  })
+})
+
+describe('9.15 3x E_PERMISSION → persistent-failure trips', () => {
+  it('saveErrorCount reaches 3 after 3 consecutive non-mtime errors', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: 'B',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'B',
+      rawYaml: ''
+    })
+    await useEditorStore.getState().open('a.md')
+    for (let i = 0; i < 3; i++) {
+      useEditorStore.getState().setBody(`v${i}`)
+      ipcMock.file.writeParsed.mockRejectedValueOnce(
+        new IpcError('E_PERMISSION', 'no perms')
+      )
+      await useEditorStore.getState().save()
+    }
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.saveErrorCount).toBe(3)
+    expect(s.persistentFailure).toBe(true)
   })
 })
