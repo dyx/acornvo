@@ -23,7 +23,11 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
         >
           {t('conflict.banner.reload')}
         </button>
-        <button data-testid="banner-ignore" className="text-sm underline">
+        <button
+          data-testid="banner-ignore"
+          className="text-sm underline"
+          onClick={() => useEditorStore.getState().ignoreExternalChange()}
+        >
           {t('conflict.banner.ignore')}
         </button>
       </div>

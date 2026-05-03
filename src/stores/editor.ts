@@ -36,6 +36,7 @@ export type EditorActions = {
   flushSave: () => Promise<void>
   close: () => Promise<void>
   reloadFromDisk: () => Promise<void>
+  ignoreExternalChange: () => void
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -306,6 +307,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         persistentFailure: false,
         conflictState: { kind: 'none' }
       }
+    })
+  },
+
+  ignoreExternalChange: () => {
+    const cur = get().state
+    if (cur.kind !== 'ready') return
+    set({
+      state: { ...cur, conflictState: { kind: 'none' } }
     })
   },
 

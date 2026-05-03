@@ -725,6 +725,43 @@ describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
   })
 })
 
+describe('editor.ignoreExternalChange (phase-09 6.3)', () => {
+  it('flips conflictState to none and preserves dirty', async () => {
+    await openReady('B0', 1)
+    useEditorStore.getState().setBody('USER')
+    // Set externalModified state
+    useEditorStore.setState((prev) => ({
+      ...prev,
+      state:
+        prev.state.kind === 'ready'
+          ? { ...prev.state, conflictState: { kind: 'externalModified', remoteMtimeMs: 9 } }
+          : prev.state
+    }))
+    useEditorStore.getState().ignoreExternalChange()
+    const s = useEditorStore.getState().state
+    if (s.kind !== 'ready') throw new Error('expected ready')
+    expect(s.conflictState).toEqual({ kind: 'none' })
+    expect(s.body).toBe('USER')
+    expect(s.savedBody).toBe('B0') // dirty preserved
+  })
+
+  it('after ignore, flushSave is no longer locked', async () => {
+    await openReady('B0', 1)
+    ipcMock.file.writeParsed.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
+    useEditorStore.getState().setBody('USER')
+    useEditorStore.setState((prev) => ({
+      ...prev,
+      state:
+        prev.state.kind === 'ready'
+          ? { ...prev.state, conflictState: { kind: 'externalModified', remoteMtimeMs: 9 } }
+          : prev.state
+    }))
+    useEditorStore.getState().ignoreExternalChange()
+    await useEditorStore.getState().flushSave()
+    expect(ipcMock.file.writeParsed).toHaveBeenCalled()
+  })
+})
+
 describe('editor.reloadFromDisk (phase-09 6.2)', () => {
   it('writes snapshot resolved_by=load_remote_banner then reloads body+savedBody', async () => {
     // First: openReady seeds the store

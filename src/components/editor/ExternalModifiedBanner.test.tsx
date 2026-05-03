@@ -62,6 +62,20 @@ describe('ExternalModifiedBanner visibility', () => {
 })
 
 describe('ExternalModifiedBanner interactions', () => {
+  it('clicking 忽略 invokes ignoreExternalChange', () => {
+    const ignoreExternalChange = vi.fn()
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
+      ignoreExternalChange
+    } as any)
+    render(<ExternalModifiedBanner />)
+    fireEvent.click(screen.getByTestId('banner-ignore'))
+    expect(ignoreExternalChange).toHaveBeenCalled()
+  })
+
   it('clicking 重载 invokes reloadFromDisk', async () => {
     const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
     useEditorStore.setState({
