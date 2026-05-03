@@ -37,6 +37,7 @@ export type EditorActions = {
   close: () => Promise<void>
   reloadFromDisk: () => Promise<void>
   ignoreExternalChange: () => void
+  keepLocal: () => Promise<void>
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -315,6 +316,35 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     if (cur.kind !== 'ready') return
     set({
       state: { ...cur, conflictState: { kind: 'none' } }
+    })
+  },
+
+  async keepLocal() {
+    const s = get().state
+    if (s.kind !== 'ready' || s.conflictState.kind !== 'saveConflict') return
+    const remote = s.conflictState
+    const localText = stringify(s.frontmatter, s.body)
+    const remoteText = stringify(remote.remoteFrontmatter, remote.remoteBody)
+    const baseText = stringify(s.baseFrontmatter, s.baseBody)
+    await ipc.conflict.writeSnapshot({
+      path: s.path,
+      baseText, localText, remoteText,
+      resolvedBy: 'keep_local'
+    })
+    const result = await ipc.file.write(s.path, localText, { force: true })
+    set((cur2) => {
+      if (cur2.state.kind !== 'ready' || cur2.state.path !== s.path) return cur2
+      return {
+        ...cur2,
+        state: {
+          ...cur2.state,
+          savedBody: cur2.state.body,
+          savedFrontmatter: cur2.state.frontmatter,
+          savedMtimeMs: result.mtimeMs,
+          saving: false,
+          conflictState: { kind: 'none' }
+        }
+      }
     })
   },
 

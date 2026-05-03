@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ConflictDialog } from './ConflictDialog'
 import { useEditorStore } from '@/stores/editor'
@@ -80,5 +80,19 @@ describe('ConflictDialog meta', () => {
     expect(screen.getByTestId('dlg-save-as')).toBeInTheDocument()
     expect(screen.getByTestId('dlg-diff-link')).toBeInTheDocument()
     expect(screen.getByTestId('dlg-later')).toBeInTheDocument()
+  })
+
+  it('clicking 保留本地 calls keepLocal()', () => {
+    const keepLocal = vi.fn().mockResolvedValue(undefined)
+    useEditorStore.setState({
+      kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
+      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
+      baseMtimeMs: 1, saving: false,
+      conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+      keepLocal
+    } as any)
+    render(<ConflictDialog />)
+    fireEvent.click(screen.getByTestId('dlg-keep-local'))
+    expect(keepLocal).toHaveBeenCalled()
   })
 })

@@ -762,6 +762,41 @@ describe('editor.ignoreExternalChange (phase-09 6.3)', () => {
   })
 })
 
+describe('editor.keepLocal (phase-09 7.2)', () => {
+  it('writes snapshot then file.write force=true; updates saved* and resets conflictState', async () => {
+    ipcMock.file.readParsed.mockResolvedValueOnce({
+      content: '---\ntitle: t\n---\nB',
+      eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
+      originalEncoding: 'utf8', frontmatter: { title: 't' }, body: 'B', rawYaml: 'title: t'
+    })
+    await useEditorStore.getState().open('a.md')
+    useEditorStore.getState().setBody('LOCAL')
+    // Set saveConflict state
+    useEditorStore.setState((cur: any) => {
+      const s = typeof cur.state !== 'undefined' ? cur.state : cur
+      if (s.kind !== 'ready') return cur
+      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 999, remoteBody: 'REMOTE', remoteFrontmatter: { title: 't' } } }
+      return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
+    })
+    ipcMock.conflict.writeSnapshot = vi.fn().mockResolvedValue({ id: 'snap' })
+    ipcMock.file.write.mockResolvedValueOnce({ mtimeMs: 1500, sha256: 'x' })
+
+    await useEditorStore.getState().keepLocal()
+
+    expect(ipcMock.conflict.writeSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({ resolvedBy: 'keep_local', path: 'a.md' })
+    )
+    expect(ipcMock.file.write).toHaveBeenCalledWith(
+      'a.md', expect.any(String), expect.objectContaining({ force: true })
+    )
+    const s = useEditorStore.getState()
+    if (s.state.kind !== 'ready') throw new Error('expected ready')
+    expect(s.state.savedBody).toBe('LOCAL')
+    expect(s.state.savedMtimeMs).toBe(1500)
+    expect(s.state.conflictState).toEqual({ kind: 'none' })
+  })
+})
+
 describe('editor.reloadFromDisk (phase-09 6.2)', () => {
   it('writes snapshot resolved_by=load_remote_banner then reloads body+savedBody', async () => {
     // First: openReady seeds the store
