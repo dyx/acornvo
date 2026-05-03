@@ -173,3 +173,69 @@ describe('opsLog.record combined prune', () => {
     expect(newest.path).toBe('after.md')
   })
 })
+
+describe('opsLog.list', () => {
+  it('returns items in ts DESC order with total count', () => {
+    opsLog.record({ op: 'trash', path: 'a.md' })
+    // tiny pause so ISO ts strings differ
+    const t0 = Date.now()
+    while (Date.now() - t0 < 2) {
+      /* spin 2ms to ensure distinct ISO ms */
+    }
+    opsLog.record({ op: 'rename', path: 'b.md', meta: { new_path: 'b2.md' } })
+    const result = opsLog.list({ limit: 10, offset: 0 })
+    expect(result.total).toBe(2)
+    expect(result.items.length).toBe(2)
+    // newest first
+    expect(result.items[0].path).toBe('b.md')
+    expect(result.items[1].path).toBe('a.md')
+  })
+
+  it('respects limit and offset', () => {
+    for (let i = 0; i < 5; i++) {
+      opsLog.record({ op: 'trash', path: `n${i}.md` })
+      const t0 = Date.now()
+      while (Date.now() - t0 < 2) {
+        /* spin */
+      }
+    }
+    const page = opsLog.list({ limit: 2, offset: 1 })
+    expect(page.total).toBe(5)
+    expect(page.items.length).toBe(2)
+    // newest first → offset 1 means skip n4
+    expect(page.items.map((i) => i.path)).toEqual(['n3.md', 'n2.md'])
+  })
+
+  it('filters by op when supplied', () => {
+    opsLog.record({ op: 'trash', path: 'a.md' })
+    opsLog.record({ op: 'rename', path: 'b.md', meta: { new_path: 'b2.md' } })
+    opsLog.record({ op: 'trash', path: 'c.md' })
+    const onlyTrash = opsLog.list({ limit: 50, offset: 0, op: 'trash' })
+    expect(onlyTrash.total).toBe(2)
+    expect(onlyTrash.items.every((i) => i.op === 'trash')).toBe(true)
+    const onlyRename = opsLog.list({ limit: 50, offset: 0, op: 'rename' })
+    expect(onlyRename.total).toBe(1)
+    expect(onlyRename.items[0].path).toBe('b.md')
+  })
+
+  it('returns parsed meta object (not the raw string)', () => {
+    opsLog.record({
+      op: 'conflict_resolve',
+      path: 'a.md',
+      meta: { id: 'c1', resolved_by: 'keep_local' }
+    })
+    const result = opsLog.list({ limit: 1, offset: 0 })
+    expect(result.items[0].meta).toEqual({ id: 'c1', resolved_by: 'keep_local' })
+    // null when meta absent
+    opsLog.record({ op: 'trash', path: 'b.md' })
+    const all = opsLog.list({ limit: 10, offset: 0 })
+    const trashItem = all.items.find((i) => i.path === 'b.md')!
+    expect(trashItem.meta).toBeNull()
+  })
+
+  it('returns empty result when table empty', () => {
+    const result = opsLog.list({ limit: 10, offset: 0 })
+    expect(result.total).toBe(0)
+    expect(result.items).toEqual([])
+  })
+})
