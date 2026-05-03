@@ -22,6 +22,7 @@ export type IpcErrorCode =
   | 'E_ENCODING'
   | 'E_WRITE_VERIFY'
   | 'E_MTIME_MISMATCH'
+  | 'E_TRASH'
 
 export const IPC_ERROR_CODES = {
   E_INTERNAL: 'E_INTERNAL',
@@ -33,7 +34,8 @@ export const IPC_ERROR_CODES = {
   E_TIMEOUT: 'E_TIMEOUT',
   E_ENCODING: 'E_ENCODING',
   E_WRITE_VERIFY: 'E_WRITE_VERIFY',
-  E_MTIME_MISMATCH: 'E_MTIME_MISMATCH'
+  E_MTIME_MISMATCH: 'E_MTIME_MISMATCH',
+  E_TRASH: 'E_TRASH'
 } as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
@@ -82,6 +84,7 @@ export type DbVersionInfo = {
 
 import type { Frontmatter } from './frontmatter-schema'
 import type { FileSummary, FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
+import type { Op, OpsItem } from './ops-types'
 
 export type {
   FileSummary,
@@ -145,6 +148,37 @@ export interface FileListEntry {
 export interface FileListOptions {
   recursive?: boolean
   includeHidden?: boolean
+}
+
+// --- trash / hard-delete result (phase-10) ---
+
+export type FileTrashResult = { ok: true } | { ok: false; error: IpcErrorShape }
+
+// --- diff types (phase-10) ---
+
+export type DiffSide = 'local' | 'remote' | 'base'
+
+export interface DiffSidesPair {
+  left: DiffSide
+  right: DiffSide
+}
+
+export interface DiffLineLeft {
+  index: number
+  text: string
+  type: 'same' | 'add' | 'remove'
+}
+
+export interface DiffLineRight {
+  index: number
+  text: string
+  type: 'same' | 'add' | 'remove'
+}
+
+export interface DiffResult {
+  sides: DiffSidesPair
+  left: DiffLineLeft[]
+  right: DiffLineRight[]
 }
 
 // --- conflict namespace types (phase-09) ---
@@ -217,6 +251,8 @@ export type IpcContract = {
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
     rename: (oldRel: string, newRel: string) => void
     openExternal: (rel: string) => { ok: true }
+    trash: (rel: string) => FileTrashResult
+    hardDelete: (rel: string) => FileTrashResult
   }
   files: {
     list: (
@@ -237,6 +273,12 @@ export type IpcContract = {
     startScan: () => void
     cancelScan: () => void
   }
+  ops: {
+    list: (opts: { limit: number; offset: number; op?: Op }) => {
+      items: OpsItem[]
+      total: number
+    }
+  }
   conflict: {
     list: (opts?: { limit?: number; offset?: number }) => ConflictListResult
     read: (id: string) => ConflictReadResult
@@ -249,6 +291,8 @@ export type IpcContract = {
       resolvedBy: ConflictResolvedBy
       winnerPath?: string
     }) => { id: string }
+    diff: (id: string, sides: DiffSidesPair) => DiffResult
+    deleteAll: () => { ok: true; deleted: number }
   }
   search: {
     quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]
