@@ -129,22 +129,47 @@ describe('opsLog.record prune (10000 cap)', () => {
       .prepare('SELECT path FROM ops_log ORDER BY ts DESC LIMIT 1')
       .get() as { path: string }
     expect(newest.path).toBe('newest.md')
+    // 5 oldest rows (seed/0..seed/4) were pruned; oldest remaining is seed/5
+    const oldest = db
+      .prepare('SELECT path FROM ops_log ORDER BY ts ASC LIMIT 1')
+      .get() as { path: string }
+    expect(oldest.path).toBe('seed/5.md')
   })
 })
 
-describe('opsLog.record atomicity', () => {
-  it('prune and insert are committed atomically (single transaction)', () => {
-    // Seed an old row that should be pruned
-    const oldTs = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString()
-    db.prepare('INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, ?, ?)').run(
-      'trash',
-      'old.md',
-      oldTs,
-      null
+describe('opsLog.record combined prune', () => {
+  it('applies age-prune and cap-prune together in one transaction', () => {
+    // Seed 10007 rows: 3 old (100+ days), 10004 recent
+    const stmt = db.prepare(
+      'INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, ?, ?)'
     )
-    // After record returns, both effects (prune of old + insert of new) are visible
-    opsLog.record({ op: 'trash', path: 'new.md' })
-    const rows = db.prepare('SELECT path FROM ops_log').all() as Array<{ path: string }>
-    expect(rows.map((r) => r.path).sort()).toEqual(['new.md'])
+    const oldBase = Date.now() - 100 * 24 * 60 * 60 * 1000
+    for (let i = 0; i < 3; i++) {
+      stmt.run('trash', `old/${i}.md`, new Date(oldBase + i).toISOString(), null)
+    }
+    const recentBase = Date.now() - 60 * 60 * 1000
+    for (let i = 0; i < 10004; i++) {
+      stmt.run('trash', `recent/${i}.md`, new Date(recentBase + i).toISOString(), null)
+    }
+    expect(
+      (db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as { n: number }).n
+    ).toBe(10007)
+
+    // record() prunes 3 old rows (age), then caps to 10000 + inserts → 10001
+    opsLog.record({ op: 'trash', path: 'after.md' })
+
+    const count = (db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as { n: number }).n
+    // 10007 - 3 (age prune) - 4 (cap prune) + 1 (insert) = 10001
+    expect(count).toBe(10001)
+    // No old rows survived
+    const oldPaths = db
+      .prepare("SELECT path FROM ops_log WHERE path LIKE 'old/%'")
+      .all() as Array<{ path: string }>
+    expect(oldPaths).toEqual([])
+    // Newest row is the inserted one
+    const newest = db
+      .prepare('SELECT path FROM ops_log ORDER BY ts DESC LIMIT 1')
+      .get() as { path: string }
+    expect(newest.path).toBe('after.md')
   })
 })
