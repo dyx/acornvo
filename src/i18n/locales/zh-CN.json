@@ -108,9 +108,9 @@
   "conflict": {
     "dialog": {
       "title": "这个文件在 Acornvo 之外被修改过。你想怎么处理？",
-      "meta_path": "{{path}}",
-      "meta_words": "本地未保存：{{count}} 字",
-      "meta_remote_time": "远端修改：{{time}}",
+      "meta_path": "文件：{{path}}",
+      "meta_words": "本地未保存：约 {{count}} 字",
+      "meta_remote_time": "远端修改时间：{{time}}",
       "keep_local": "保留本地",
       "keep_local_sub": "将覆盖磁盘上的外部修改。快照仍会保留。",
       "load_remote": "重载磁盘",
