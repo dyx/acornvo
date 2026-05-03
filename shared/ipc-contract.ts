@@ -154,31 +154,25 @@ export interface FileListOptions {
 
 export type FileTrashResult = { ok: true } | { ok: false; error: IpcErrorShape }
 
-// --- diff types (phase-10) ---
+// --- conflict diff structured result (phase-10) ---
 
 export type DiffSide = 'local' | 'remote' | 'base'
-
-export interface DiffSidesPair {
-  left: DiffSide
-  right: DiffSide
-}
+export type DiffSidesPair = 'local-remote' | 'local-base' | 'remote-base'
 
 export interface DiffLineLeft {
-  index: number
+  num: number
   text: string
-  type: 'same' | 'add' | 'remove'
+  kind: 'equal' | 'del'
 }
-
 export interface DiffLineRight {
-  index: number
+  num: number
   text: string
-  type: 'same' | 'add' | 'remove'
+  kind: 'equal' | 'add'
 }
-
 export interface DiffResult {
-  sides: DiffSidesPair
-  left: DiffLineLeft[]
-  right: DiffLineRight[]
+  left: { label: DiffSide; lines: DiffLineLeft[] }
+  right: { label: DiffSide; lines: DiffLineRight[] }
+  stats: { added: number; removed: number }
 }
 
 // --- conflict namespace types (phase-09) ---
