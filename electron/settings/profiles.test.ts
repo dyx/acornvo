@@ -137,3 +137,51 @@ describe('profilesStore', () => {
     expect(() => profilesStore.delete('nope')).toThrow(/E_PROFILE_NOT_FOUND/)
   })
 })
+
+describe('security audit — profile CRUD never leaks apiKey plaintext', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    resetSafe()
+    initSafeStorageAvailability()
+    db = new Database(':memory:')
+    runMigrations(db, MIGRATIONS)
+    reqCur.mockReturnValue(db)
+  })
+  afterEach(() => db.close())
+
+  it('list() output is JSON-serializable and does not contain "apiKey"', () => {
+    profilesStore.create({ name: 'a', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-secret' })
+    const list = profilesStore.list()
+    const json = JSON.stringify(list)
+    expect(json).not.toMatch(/apiKey"\s*:/)
+    expect(json).not.toMatch(/sk-secret/)
+    expect(json).toMatch(/apiKeyRef/)
+  })
+
+  it('create() return shape is { id } only — does not echo apiKey', () => {
+    const result = profilesStore.create({ name: 'a', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-secret' })
+    expect(result).toEqual({ id: expect.any(String) })
+    expect(JSON.stringify(result)).not.toMatch(/sk-secret/)
+  })
+
+  it('after delete, secrets.get(oldRef) returns null AND no orphan row remains', () => {
+    const { id } = profilesStore.create({ name: 'audit', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-x' })
+    const ref = `ai.key.${id}`
+    expect(secretsStore.get(ref)).toBe('sk-x')
+    profilesStore.delete(id)
+    expect(secretsStore.get(ref)).toBeNull()
+    const remaining = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key = ?').get(ref) as { n: number }
+    expect(remaining.n).toBe(0)
+    const profileRow = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?').get(id)
+    expect(profileRow).toBeUndefined()
+  })
+
+  it('delete is atomic at the SQL level — verify with a fresh select', () => {
+    const { id } = profilesStore.create({ name: 'x', provider: 'openai', model: 'gpt-4o', apiKey: 'k' })
+    profilesStore.delete(id)
+    const profiles = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as { n: number }
+    const secrets = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets').get() as { n: number }
+    expect(profiles.n).toBe(0)
+    expect(secrets.n).toBe(0)
+  })
+})

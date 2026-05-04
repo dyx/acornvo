@@ -34,3 +34,28 @@ describe('preload exposes settings.* but NEVER secret or getDecryptedKey', () =>
     expect(api.settings.aiProfilesGetDecryptedKey).toBeUndefined()
   })
 })
+
+describe('security audit — preload contextBridge', () => {
+  it('does not expose any property whose name suggests secret or decrypt', async () => {
+    await import('./preload')
+    const api = exposeInMainWorld.mock.calls[0][1]
+
+    function walk(obj: unknown, path = 'api'): void {
+      if (!obj || typeof obj !== 'object') return
+      for (const key of Object.keys(obj as Record<string, unknown>)) {
+        const child = (obj as Record<string, unknown>)[key]
+        const lower = key.toLowerCase()
+        expect(lower.includes('secret') || lower.includes('decrypt') || lower === 'getdecryptedkey').toBe(false)
+        if (typeof child === 'object' && child !== null) walk(child, `${path}.${key}`)
+      }
+    }
+    walk(api)
+  })
+
+  it('exposes settings without nested secret object', async () => {
+    await import('./preload')
+    const api = exposeInMainWorld.mock.calls[0][1]
+    expect(api.settings).toBeDefined()
+    expect(api.settings.secret).toBeUndefined()
+  })
+})

@@ -1,0 +1,317 @@
+{
+  "app": {
+    "title": "Acornvo",
+    "greeting": "Hello, Acornvo"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "remove": "Remove",
+    "open": "Open",
+    "save": "Save",
+    "copy": "Copy",
+    "coming_soon": "Coming soon",
+    "dismiss": "Dismiss"
+  },
+  "nav": {
+    "home": "Home",
+    "picker": "Project Picker",
+    "library": "Library",
+    "editor": "Editor",
+    "browser": "Browser",
+    "chat": "Chat",
+    "settings": "Settings"
+  },
+  "picker": {
+    "title": "Pick a Grove",
+    "subtitle": "Like a squirrel — gather, organize, talk. Turn scattered reading into your own knowledge forest.",
+    "recentLabel": "Recent",
+    "recentCount": "Recent · {{count}}",
+    "empty": "No groves yet. Create a new one or open an existing folder.",
+    "new": "New Grove",
+    "open": "Open Existing Folder",
+    "hint": "The .acornvo/ folder under each grove holds the index and history. Source data is always your local markdown files. You can open any Obsidian vault directly.",
+    "invalid": "Path no longer valid",
+    "locked": "Locked",
+    "takeover": "Take over",
+    "files": "{{count}} files",
+    "newDialog": {
+      "title": "New Grove",
+      "description": "A new folder will be created under the parent directory you choose.",
+      "parentLabel": "Parent directory",
+      "nameLabel": "Grove name",
+      "namePlaceholder": "e.g. My Knowledge Forest",
+      "create": "Create",
+      "chooseParent": "Choose a parent directory...",
+      "errorInvalidName": "Name cannot include / \\ : * ? \" < > |",
+      "errorDuplicate": "A file or folder with this name already exists",
+      "errorPermission": "Parent directory is not writable"
+    }
+  },
+  "switcher": {
+    "ariaLabel": "Switch grove",
+    "new": "New grove...",
+    "open": "Open existing folder...",
+    "noGrove": "No grove selected"
+  },
+  "takeover": {
+    "title": "Grove is in use",
+    "description": "This grove is being used by another Acornvo instance.",
+    "held": "PID {{pid}} · {{hostname}} · {{startedAt}}",
+    "force": "Force takeover",
+    "warning": "After takeover, the original window may error on save.",
+    "error": "Takeover failed: {{message}}"
+  },
+  "index": {
+    "progress": {
+      "title": "Indexing...",
+      "background": "Continue in background"
+    }
+  },
+  "library": {
+    "views": "Views",
+    "all": "All",
+    "inbox": "Inbox",
+    "unreviewed": "To Review",
+    "categories": "Categories",
+    "tags": "Tags",
+    "search_ph": "Search...",
+    "reviewing": "Reviewing",
+    "empty_grove": "No files yet",
+    "empty_preview": "Pick one to start",
+    "open_editor": "Open in Editor",
+    "reveal": "Reveal in Finder",
+    "trash": "Move to Trash",
+    "banner_scanning": "Indexing — data may be incomplete",
+    "banner_error": "Indexing error — some data may be missing",
+    "banner_view_logs": "View logs",
+    "shown_total": "{{shown}} / {{total}}"
+  },
+  "editor": {
+    "loading": "Loading file...",
+    "back": "Back to Library",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "dirty": "Unsaved",
+    "shortcut_save": "Cmd+S to save",
+    "shortcut_save_win": "Ctrl+S to save",
+    "open_external": "Open in system editor",
+    "paste_image_unsupported": "Image paste not yet supported — coming with the clipper phase",
+    "no_frontmatter": "No frontmatter on this file",
+    "error": {
+      "title": "Cannot load file",
+      "not_found": "File was removed or renamed",
+      "encoding": "Cannot decode file — check the encoding",
+      "conflict": "File was modified externally — refresh first",
+      "save_failed": "Save failed: {{code}}",
+      "save_failed_persistent": "Persistent save failure — tried 3 times",
+      "open_logs": "View logs"
+    }
+  },
+  "conflict": {
+    "dialog": {
+      "title": "This file was modified outside Acornvo. How do you want to handle it?",
+      "meta_path": "File: {{path}}",
+      "meta_words": "Unsaved locally: about {{count}} words",
+      "meta_remote_time": "Remote modified at: {{time}}",
+      "keep_local": "Keep local",
+      "keep_local_sub": "Overwrite the external changes on disk. Snapshot will be kept.",
+      "load_remote": "Reload from disk",
+      "load_remote_sub": "Discard your unsaved changes in Acornvo.",
+      "save_as": "Save a copy",
+      "save_as_sub": "Save your changes as <name>.conflict.<ts>.md. Disk keeps the external version.",
+      "view_diff": "View diff",
+      "diff_soon": "Diff view coming in a future version",
+      "later": "Decide later"
+    },
+    "banner": {
+      "external_modified": "This file was modified outside Acornvo.",
+      "reload": "Reload (discard my changes)",
+      "ignore": "Ignore (I will handle it)"
+    }
+  },
+  "search": {
+    "placeholder_quick": "Search file name or path",
+    "recent": "Recent",
+    "placeholder_full": "Search content (Chinese tokenized)",
+    "empty_q": "Type a keyword to start (Chinese tokenized)",
+    "no_results": "No matches",
+    "no_results_full": "No matches. Try fewer keywords or use quotes for exact phrases.",
+    "pending": "Index is being built — will retry automatically",
+    "syntax_error": "Search syntax error",
+    "recent_searches": "Recent searches",
+    "total_count": "{{count}} results",
+    "phrase_hint": "Type \"...\" for exact phrase search",
+    "rebuilding": "Rebuilding index {{done}} / {{total}}"
+  },
+  "history": {
+    "tabs": {
+      "trash": "Trash",
+      "conflicts": "Conflicts",
+      "ops": "Operation Log"
+    },
+    "trash": {
+      "notice": "Files deleted from the system trash will appear here and are kept for 90 days."
+    },
+    "conflicts": {
+      "clearAll": "Clear all snapshots",
+      "clearAllConfirm": "Delete all conflict snapshots? This cannot be undone.",
+      "clearAllSuccess": "All conflict snapshots deleted",
+      "emptyTitle": "No conflicts",
+      "emptyDescription": "The system will automatically detect conflicting files"
+    }
+  },
+  "trash": {
+    "confirmTitle": "Move to Trash?",
+    "confirmButton": "Move to Trash",
+    "cancelButton": "Cancel",
+    "fallbackTitle": "Cannot move to system trash",
+    "fallbackCheckbox": "I understand this cannot be recovered",
+    "fallbackButton": "Delete permanently",
+    "permanentlyDeleted": "Permanently deleted"
+  },
+  "diff": {
+    "view": {
+      "local": "Local",
+      "remote": "Remote",
+      "base": "Base",
+      "stats": "Added {{added}} lines, removed {{removed}} lines",
+      "empty": "No differences",
+      "sideSelector": "Compare view",
+      "localRemote": "Local-Remote",
+      "localBase": "Local-Base",
+      "remoteBase": "Remote-Base",
+      "openFile": "Open file",
+      "deleteSnapshot": "Delete this snapshot",
+      "deleteSnapshotConfirm": "Delete this conflict snapshot?",
+      "close": "Close"
+    }
+  },
+  "ops": {
+    "op": {
+      "trash": "Moved to trash",
+      "hard_delete": "Permanently deleted",
+      "conflict_resolve": "Conflict resolved",
+      "conflict_delete": "Conflict deleted",
+      "rename": "Renamed"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "common": {
+      "comingSoon": "Coming soon"
+    },
+    "general": {
+      "locale": "Language",
+      "autoBackup": "Auto-backup",
+      "vaultPath": "Vault path"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "theme.system": "Follow system",
+      "theme.light": "Light",
+      "theme.dark": "Dark",
+      "fontScale": "Font size",
+      "editorFont": "Editor font"
+    },
+    "tab": {
+      "general": "General",
+      "appearance": "Appearance",
+      "ai": "AI",
+      "browser": "Browser"
+    },
+    "ai": {
+      "profiles": "AI Profiles",
+      "addProfile": "Add profile",
+      "editProfile": "Edit",
+      "deleteProfile": "Delete",
+      "setDefault": "Set as default",
+      "default": "default",
+      "empty": "No profiles yet — click \"Add profile\" above",
+      "name": "Name",
+      "provider": "Provider",
+      "baseUrl": "Base URL",
+      "model": "Model",
+      "temperature": "Temperature",
+      "topP": "Top P",
+      "maxTokens": "Max tokens",
+      "apiKey": "API Key",
+      "apiKeyKeepEmpty": "Leave empty to keep existing",
+      "save": "Save",
+      "confirmDelete": "Delete profile \"{{name}}\"?",
+      "errorDuplicateName": "Name already in use"
+    },
+    "secret": {
+      "saved": "Saved",
+      "unavailable": "OS keychain unavailable — cannot save API keys"
+    },
+    "browser": {
+      "blockAds": "Block ads",
+      "clipImages": "Localize clipped images",
+      "searchEngine": "Search engine",
+      "clearCookies": "Clear browser cookies",
+      "clearCookiesConfirm": "Clear all browser cookies?"
+    }
+  },
+  "browser": {
+    "new_tab": {
+      "welcome": "Browser",
+      "hint": "Enter a URL or search term in the address bar",
+      "recent": "Recent bookmarks"
+    },
+    "no_tab": "No page opened yet",
+    "address": "Address bar",
+    "back": "Back",
+    "forward": "Forward",
+    "reload": "Reload",
+    "search": "Search",
+    "reader": "Reader mode",
+    "reader_on": "Reader mode on",
+    "bookmark": "Bookmark",
+    "clip": "Clip this page",
+    "clip_soon": "Clipping will be available in the clipper phase",
+    "paste_open": "Paste and open",
+    "clip.tooltip": "Clip this page (Cmd+Shift+S)",
+    "clip.extracting": "Extracting...",
+    "clip.saved": "Clipped",
+    "clip.error": "Clip failed",
+    "clip.unsupported": "This page cannot be clipped",
+    "clip.exists": {
+      "title": "Already clipped",
+      "body": "This page has been clipped before. Open it?",
+      "open": "Open"
+    },
+    "clip.preview": {
+      "title": "Clip preview",
+      "title_field": "Title",
+      "tags": "Tags",
+      "excerpt": "Excerpt",
+      "target": "Target path",
+      "save": "Save",
+      "cancel": "Cancel",
+      "reextract": "Re-extract",
+      "degraded": "Partial extraction, quality may be lower"
+    },
+    "clip.error.extract": "Could not extract content",
+    "clip.error.transform": "HTML to Markdown conversion failed",
+    "clip.error.write": "Save failed",
+    "clip.error.unknown": "Clip failed",
+    "clip.error.force_save": "Force save full page",
+    "clip.error.save_raw": "Save as .clip.html",
+    "clip.error.retry": "Retry",
+    "bookmarks": {
+      "search": "Search bookmarks",
+      "expand": "Expand bookmarks",
+      "collapse": "Collapse bookmarks",
+      "empty": "No bookmarks yet. Click the star while browsing to bookmark the current page."
+    },
+    "bookmark.save": "Bookmark",
+    "bookmark.saved": "Bookmarked",
+    "bookmark.edit": "Edit bookmark",
+    "bookmark.delete": "Delete",
+    "bookmark.delete_confirm": "Delete this bookmark?",
+    "bookmark.empty": "No bookmarks yet"
+  }
+}

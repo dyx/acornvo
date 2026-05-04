@@ -199,8 +199,22 @@
     }
   },
   "settings": {
+    "title": "设置",
     "common": {
       "comingSoon": "即将推出"
+    },
+    "general": {
+      "locale": "语言",
+      "autoBackup": "自动备份",
+      "vaultPath": "知识库路径"
+    },
+    "appearance": {
+      "theme": "主题",
+      "theme.system": "跟随系统",
+      "theme.light": "浅色",
+      "theme.dark": "深色",
+      "fontScale": "字体大小",
+      "editorFont": "编辑器字体"
     },
     "tab": {
       "general": "通用",
@@ -209,6 +223,7 @@
       "browser": "浏览器"
     },
     "ai": {
+      "profiles": "AI 提供商",
       "addProfile": "添加 AI 提供商",
       "editProfile": "编辑 AI 提供商",
       "deleteProfile": "删除",
@@ -229,6 +244,7 @@
       "errorDuplicateName": "该名称已被占用"
     },
     "secret": {
+      "saved": "已保存",
       "unavailable": "系统密钥环不可用：无法存储 API 密钥。"
     },
     "browser": {
