@@ -7,6 +7,7 @@ import { useSearchStore } from '@/stores/search'
  *
  * - Cmd/Ctrl+P → open QuickSwitcher (preventDefault to override browser/system print)
  * - Cmd/Ctrl+Shift+F → open /search or select all if already there
+ * - Cmd/Ctrl+, → navigate to /settings
  */
 export function useGlobalHotkeys(): void {
   const openQuickSwitcher = useSearchStore((s) => s.quickSwitcher.open)
@@ -31,6 +32,11 @@ export function useGlobalHotkeys(): void {
         } else {
           navigate('/search')
         }
+        return
+      }
+      if (key === ',' && !ev.shiftKey) {
+        ev.preventDefault()
+        navigate('/settings')
         return
       }
     }

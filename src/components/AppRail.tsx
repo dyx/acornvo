@@ -2,55 +2,66 @@
 import type { JSX } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { BookMarked, Compass, MessagesSquare, Settings as SettingsIcon } from 'lucide-react'
 
-interface RailItem {
+interface RailEntry {
   to: string
   labelKey: string
-  defaultLabel: string
-  icon: string
+  Icon: typeof BookMarked
+  disabled?: boolean
+  bottom?: boolean
 }
 
-const items: RailItem[] = [
-  { to: '/library', labelKey: 'nav.library', defaultLabel: '果仓', icon: '📚' },
-  { to: '/browser', labelKey: 'nav.browser', defaultLabel: '拾果', icon: '🌐' }
+const ENTRIES: RailEntry[] = [
+  { to: '/library', labelKey: 'nav.library', Icon: BookMarked },
+  { to: '/browser', labelKey: 'nav.browser', Icon: Compass },
+  { to: '/chat', labelKey: 'nav.chat', Icon: MessagesSquare, disabled: true },
+  { to: '/settings', labelKey: 'nav.settings', Icon: SettingsIcon, bottom: true }
 ]
 
 export function AppRail(): JSX.Element {
   const { t } = useTranslation()
   return (
     <nav
-      aria-label="App modules"
-      className="flex w-12 shrink-0 flex-col items-stretch border-r border-[color:var(--color-line)] bg-[color:var(--color-bg-2)]"
-      data-testid="app-rail"
+      aria-label="app navigation"
+      className="flex w-[60px] shrink-0 flex-col items-stretch border-r bg-muted/40 py-2"
     >
-      {items.map((it) => (
-        <NavLink
-          key={it.to}
-          to={it.to}
-          aria-label={t(it.labelKey, it.defaultLabel)}
-          className={({ isActive }) =>
-            [
-              'flex flex-col items-center gap-1 border-l-2 px-1 py-2 text-[10px]',
-              isActive
-                ? 'border-l-[color:var(--color-accent)] bg-[color:var(--color-bg)] text-[color:var(--color-ink)]'
-                : 'border-l-transparent text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-bg-3)]'
-            ].join(' ')
-          }
-        >
-          <span aria-hidden="true">{it.icon}</span>
-          <span>{t(it.labelKey, it.defaultLabel)}</span>
-        </NavLink>
-      ))}
-      <button
-        type="button"
-        disabled
-        title={t('common.coming_soon', '即将推出')}
-        aria-label={t('nav.chat', '松语')}
-        className="mt-auto flex flex-col items-center gap-1 border-l-2 border-l-transparent px-1 py-2 text-[10px] text-[color:var(--color-ink-3)] opacity-40"
-      >
-        <span aria-hidden="true">💬</span>
-        <span>{t('nav.chat', '松语')}</span>
-      </button>
+      {ENTRIES.map((entry) => {
+        const label = t(entry.labelKey)
+        const baseCls = 'flex flex-col items-center gap-1 px-1 py-3 text-[11px] transition-colors'
+        if (entry.disabled) {
+          return (
+            <a
+              key={entry.to}
+              href="#"
+              role="link"
+              aria-disabled="true"
+              title={t('settings.common.comingSoon')}
+              onClick={(e) => e.preventDefault()}
+              className={`${baseCls} cursor-not-allowed text-muted-foreground/50 ${entry.bottom ? 'mt-auto' : ''}`}
+            >
+              <entry.Icon size={20} />
+              <span>{label}</span>
+            </a>
+          )
+        }
+        return (
+          <NavLink
+            key={entry.to}
+            to={entry.to}
+            className={({ isActive }) =>
+              `${baseCls} ${entry.bottom ? 'mt-auto' : ''} ${
+                isActive
+                  ? 'bg-accent text-accent-foreground border-l-2 border-primary'
+                  : 'text-foreground hover:bg-muted'
+              }`
+            }
+          >
+            <entry.Icon size={20} />
+            <span>{label}</span>
+          </NavLink>
+        )
+      })}
     </nav>
   )
 }
