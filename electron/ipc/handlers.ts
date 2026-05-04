@@ -44,4 +44,5 @@ export const ipcHandlers: HandlerMap = {
   ops: opsHandlers,
   browser: browserHandlers,
   bookmarks: bookmarkHandlers,
+  settings: {} as never
 }

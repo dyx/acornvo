@@ -55,6 +55,29 @@ export type {
   ClipsListResult
 } from './clip-types'
 
+import type {
+  AiProviderProfile,
+  ProfileCreateInput,
+  ProfileUpdateInput,
+  SettingsByNs,
+  SettingsNamespace,
+  SettingsChangedPayload
+} from './settings-types'
+
+export type {
+  AiProviderProfile,
+  AiProviderKind,
+  ProfileCreateInput,
+  ProfileUpdateInput,
+  SettingsByNs,
+  SettingsNamespace,
+  SettingsChangedPayload,
+  GeneralSettings,
+  AppearanceSettings,
+  AiSettings,
+  BrowserSettings
+} from './settings-types'
+
 export type IpcErrorCode =
   | 'E_INTERNAL'
   | 'E_INVALID_ARGS'
@@ -405,6 +428,15 @@ export type IpcContract = {
     getById: (id: number) => Clip | null
     delete: (id: number) => { ok: true }
   }
+  settings: {
+    get: <NS extends SettingsNamespace>(ns: NS) => SettingsByNs[NS]
+    set: <NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[NS]>) => { ok: true }
+    aiProfilesList: () => AiProviderProfile[]
+    aiProfilesCreate: (input: ProfileCreateInput) => { id: string }
+    aiProfilesUpdate: (id: string, patch: ProfileUpdateInput) => { ok: true }
+    aiProfilesDelete: (id: string) => { ok: true }
+    browserClearCookies: () => { ok: true }
+  }
 }
 
 /**
@@ -431,6 +463,7 @@ export type IpcEventContract = {
   'index:rebuildProgress': { done: number; total: number }
   'index:rebuildDone': { total: number }
   'browser:tabStateChanged': TabStateChangedPayload
+  'settings:changed': SettingsChangedPayload
 }
 
 export type IpcEventChannel = keyof IpcEventContract

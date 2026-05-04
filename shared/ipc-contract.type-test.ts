@@ -98,6 +98,8 @@ type _EventChannelUnion = Assert<
     | 'index:fileRenamed'
     | 'index:rebuildProgress'
     | 'index:rebuildDone'
+    | 'browser:tabStateChanged'
+    | 'settings:changed'
     ? true
     : false
 >
