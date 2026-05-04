@@ -15,20 +15,20 @@
 
 ## 3. IPC（main）
 
-- [ ] 3.1 `shared/ipc-contract.ts` 追加 `file.trash` / `file.hardDelete` / `ops.list` / `conflict.diff` / `conflict.deleteAll`
-- [ ] 3.2 `electron/ipc/trash.ts`：`file.trash` + `file.hardDelete`（后者无二次弹窗）
-- [ ] 3.3 `electron/ipc/ops.ts`：`ops.list`
-- [ ] 3.4 `electron/ipc/conflicts.ts` 扩展：`conflict.diff` + `conflict.deleteAll`
-- [ ] 3.5 `conflict.diff` 实现：读 3 份 md → 依 sides 选 2 份 → jsdiff `diffLines` → 结构化返回
-- [ ] 3.6 `conflict.delete` / `conflict.deleteAll` 成功时写 `op='conflict_delete'` ops_log
+- [x] 3.1 `shared/ipc-contract.ts` 追加 `file.trash` / `file.hardDelete` / `ops.list` / `conflict.diff` / `conflict.deleteAll`
+- [x] 3.2 `electron/ipc/trash.ts`：`file.trash` + `file.hardDelete`（后者无二次弹窗）
+- [x] 3.3 `electron/ipc/ops.ts`：`ops.list`
+- [x] 3.4 `electron/ipc/conflicts.ts` 扩展：`conflict.diff` + `conflict.deleteAll`
+- [x] 3.5 `conflict.diff` 实现：读 3 份 md → 依 sides 选 2 份 → jsdiff `diffLines` → 结构化返回
+- [x] 3.6 `conflict.delete` / `conflict.deleteAll` 成功时写 `op='conflict_delete'` ops_log
 
 ## 4. Library 集成（library-view MODIFIED）
 
-- [ ] 4.1 `FileRowContextMenu.tsx` 增"移到废纸篓"项（分隔线 + 底部）
-- [ ] 4.2 `TrashConfirmDialog.tsx`：共享 modal，含路径 + 取消/确认按钮；失败时切换到降级模式（含"永久删除" + checkbox）
-- [ ] 4.3 `VirtualFileList` 容器 `onKeyDown`：聚焦 + 有选中时 `Cmd/Ctrl+Backspace` / `Delete` → 打开 TrashConfirmDialog
-- [ ] 4.4 trash 成功后 library store 从 items 移除该行；若 selectedPath 等于被删 → 清空 selectedPath
-- [ ] 4.5 hard_delete 路径：降级 modal → 调 `file.hardDelete` → 同上更新 library
+- [x] 4.1 `FileRowContextMenu.tsx` 增"移到废纸篓"项（分隔线 + 底部）
+- [x] 4.2 `TrashConfirmDialog.tsx`：共享 modal，含路径 + 取消/确认按钮；失败时切换到降级模式（含"永久删除" + checkbox）
+- [x] 4.3 `VirtualFileList` 容器 `onKeyDown`：聚焦 + 有选中时 `Cmd/Ctrl+Backspace` / `Delete` → 打开 TrashConfirmDialog
+- [x] 4.4 trash 成功后 library store 从 items 移除该行；若 selectedPath 等于被删 → 清空 selectedPath
+- [x] 4.5 hard_delete 路径：降级 modal → 调 `file.hardDelete` → 同上更新 library
 
 ## 5. History 页面（src/pages/History.tsx）
 
