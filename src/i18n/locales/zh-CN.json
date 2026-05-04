@@ -141,5 +141,57 @@
     "total_count": "{{count}} 条结果",
     "phrase_hint": "输入 \"xxxx\" 做精确短语搜索",
     "rebuilding": "索引构建中 {{done}} / {{total}}"
+  },
+  "history": {
+    "tabs": {
+      "trash": "废纸篓",
+      "conflicts": "冲突",
+      "ops": "操作记录"
+    },
+    "trash": {
+      "notice": "系统回收站中删除的文件会在此显示，保留 90 天。"
+    },
+    "conflicts": {
+      "clearAll": "清空所有快照",
+      "clearAllConfirm": "确定要删除所有冲突快照吗？此操作不可撤销。",
+      "clearAllSuccess": "所有冲突快照已删除",
+      "emptyTitle": "没有冲突",
+      "emptyDescription": "系统会自动检测冲突文件"
+    }
+  },
+  "trash": {
+    "confirmTitle": "移到废纸篓？",
+    "confirmButton": "移到废纸篓",
+    "cancelButton": "取消",
+    "fallbackTitle": "无法移到系统回收站",
+    "fallbackCheckbox": "我知道这无法恢复",
+    "fallbackButton": "永久删除",
+    "permanentlyDeleted": "已永久删除"
+  },
+  "diff": {
+    "view": {
+      "local": "本地",
+      "remote": "远端",
+      "base": "基准",
+      "stats": "添加了 {{added}} 行，删除了 {{removed}} 行",
+      "empty": "没有差异",
+      "sideSelector": "对比视图",
+      "localRemote": "本地-远端",
+      "localBase": "本地-基准",
+      "remoteBase": "远端-基准",
+      "openFile": "打开文件",
+      "deleteSnapshot": "删除此快照",
+      "deleteSnapshotConfirm": "确定要删除此冲突快照吗？",
+      "close": "关闭"
+    }
+  },
+  "ops": {
+    "op": {
+      "trash": "移到废纸篓",
+      "hard_delete": "永久删除",
+      "conflict_resolve": "冲突解决",
+      "conflict_delete": "冲突删除",
+      "rename": "重命名"
+    }
   }
 }
