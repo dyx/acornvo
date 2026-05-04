@@ -48,14 +48,48 @@ export function listApplied(db: Database.Database, dir: string): AppliedSummary 
   return { user_version, migrations_applied }
 }
 
+/**
+ * Split `sql` into individual statements, skipping empty lines and comments.
+ * Each statement is executed separately so that idempotent-safe errors
+ * (e.g. "duplicate column name" from ALTER TABLE ADD COLUMN when the column
+ * already exists on a DB that ran an earlier migration) can be skipped.
+ */
+function splitSQL(sql: string): string[] {
+  const stmts: string[] = []
+  let buf = ''
+  for (const line of sql.split('\n')) {
+    const trimmed = line.trim()
+    if (trimmed === '' || trimmed.startsWith('--')) continue
+    buf += (buf ? '\n' : '') + line
+    if (trimmed.endsWith(';')) {
+      stmts.push(buf)
+      buf = ''
+    }
+  }
+  if (buf.trim()) stmts.push(buf)
+  return stmts
+}
+
+function isIdempotentError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err)
+  return /duplicate column name/i.test(msg)
+}
+
 export function runMigrations(db: Database.Database, dir: string): Migration[] {
   const all = readMigrations(dir)
   const current = db.pragma('user_version', { simple: true }) as number
   const pending = all.filter((m) => m.version > current)
   const applied: Migration[] = []
   for (const m of pending) {
+    const stmts = splitSQL(m.sql)
     const tx = db.transaction(() => {
-      db.exec(m.sql)
+      for (const stmt of stmts) {
+        try {
+          db.exec(stmt)
+        } catch (err) {
+          if (!isIdempotentError(err)) throw err
+        }
+      }
       db.pragma(`user_version = ${m.version}`)
     })
     try {
