@@ -1,15 +1,20 @@
 // src/pages/Settings.tsx
 import type { JSX } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import { GeneralTab } from '@/components/settings/GeneralTab'
 import { AppearanceTab } from '@/components/settings/AppearanceTab'
+import { AiTab } from '@/components/settings/AiTab'
+import { BrowserTab } from '@/components/settings/BrowserTab'
+import { ipc } from '@/ipc/client'
 
-function AiTabStub(): JSX.Element {
-  return <div data-testid="settings-tab-ai">AI tab (Plan 3)</div>
-}
-function BrowserTabStub(): JSX.Element {
-  return <div data-testid="settings-tab-browser">Browser tab (Plan 3)</div>
+function AiTabRoute(): JSX.Element {
+  const [keychainAvailable, setKeychainAvailable] = useState(true)
+  useEffect(() => {
+    void ipc.settings.keychainAvailable().then(setKeychainAvailable)
+  }, [])
+  return <AiTab keychainAvailable={keychainAvailable} />
 }
 
 export function Settings(): JSX.Element {
@@ -19,8 +24,8 @@ export function Settings(): JSX.Element {
         <Route index element={<Navigate to="general" replace />} />
         <Route path="general" element={<GeneralTab />} />
         <Route path="appearance" element={<AppearanceTab />} />
-        <Route path="ai" element={<AiTabStub />} />
-        <Route path="browser" element={<BrowserTabStub />} />
+        <Route path="ai" element={<AiTabRoute />} />
+        <Route path="browser" element={<BrowserTab />} />
       </Routes>
     </SettingsLayout>
   )

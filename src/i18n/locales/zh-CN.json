@@ -11,6 +11,7 @@
     "remove": "移除",
     "open": "打开",
     "save": "保存",
+    "copy": "复制",
     "coming_soon": "即将推出",
     "dismiss": "关闭"
   },
@@ -195,6 +196,47 @@
       "conflict_resolve": "冲突解决",
       "conflict_delete": "冲突删除",
       "rename": "重命名"
+    }
+  },
+  "settings": {
+    "common": {
+      "comingSoon": "即将推出"
+    },
+    "tab": {
+      "general": "通用",
+      "appearance": "外观",
+      "ai": "AI 提供商",
+      "browser": "浏览器"
+    },
+    "ai": {
+      "addProfile": "添加 AI 提供商",
+      "editProfile": "编辑 AI 提供商",
+      "deleteProfile": "删除",
+      "setDefault": "设为默认",
+      "default": "默认",
+      "empty": "尚无 AI 提供商配置",
+      "name": "提供商名称",
+      "provider": "提供商",
+      "baseUrl": "Base URL",
+      "model": "模型",
+      "temperature": "温度",
+      "topP": "Top P",
+      "maxTokens": "最大 Token 数",
+      "apiKey": "API 密钥",
+      "apiKeyKeepEmpty": "留空则保留现有密钥",
+      "save": "保存",
+      "confirmDelete": "确定要删除「{{name}}」吗？",
+      "errorDuplicateName": "该名称已被占用"
+    },
+    "secret": {
+      "unavailable": "系统密钥环不可用：无法存储 API 密钥。"
+    },
+    "browser": {
+      "blockAds": "广告拦截",
+      "clipImages": "剪藏图片本地化",
+      "searchEngine": "搜索引擎",
+      "clearCookies": "清除浏览器 Cookie",
+      "clearCookiesConfirm": "确认清除所有浏览器 Cookie？"
     }
   },
   "browser": {

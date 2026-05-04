@@ -436,6 +436,7 @@ export type IpcContract = {
     aiProfilesUpdate: (id: string, patch: ProfileUpdateInput) => { ok: true }
     aiProfilesDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
+    keychainAvailable: () => boolean
   }
 }
 

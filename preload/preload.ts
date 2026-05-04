@@ -107,7 +107,8 @@ const request: IpcClient<IpcContract> = {
     aiProfilesCreate: (input) => invoke('settings.aiProfilesCreate', input),
     aiProfilesUpdate: (id, patch) => invoke('settings.aiProfilesUpdate', id, patch),
     aiProfilesDelete: (id) => invoke('settings.aiProfilesDelete', id),
-    browserClearCookies: () => invoke('settings.browserClearCookies')
+    browserClearCookies: () => invoke('settings.browserClearCookies'),
+    keychainAvailable: () => invoke('settings.keychainAvailable')
   }
 }
 
