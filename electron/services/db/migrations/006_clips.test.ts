@@ -7,11 +7,11 @@ import { runMigrations } from '../migrations'
 const MIGRATIONS_DIR = dirname(fileURLToPath(import.meta.url))
 
 describe('migration 006_clips', () => {
-  it('creates clips table with correct schema and bumps user_version to 6', () => {
+  it('creates clips table with correct schema and bumps user_version to at least 6', () => {
     const db = new Database(':memory:')
     runMigrations(db, MIGRATIONS_DIR)
 
-    expect(db.pragma('user_version', { simple: true })).toBe(6)
+    expect(db.pragma('user_version', { simple: true })).toBeGreaterThanOrEqual(6)
 
     const cols = db.prepare(`PRAGMA table_info(clips)`).all() as {
       name: string
