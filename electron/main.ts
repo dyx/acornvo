@@ -13,6 +13,7 @@ import { dbService } from './services/db'
 import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
+import { initBrowserSubsystem } from './browser/init'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -123,6 +124,7 @@ async function bootstrap(): Promise<void> {
   })
   const bootstrapResult = await runBootstrap()
   mainWindow = createMainWindow()
+  initBrowserSubsystem(mainWindow)
   const disposeIndexForwarders = attachIndexEventForwarders(mainWindow)
   app.on('will-quit', disposeIndexForwarders)
   mainWindow.webContents.once('did-finish-load', () => {
