@@ -1,6 +1,6 @@
 // electron/browser/adblock.test.ts
 import { describe, it, expect } from 'vitest'
-import { createAdblock } from './adblock'
+import { createAdblock, bindAdblockToSession } from './adblock'
 
 describe('adblock', () => {
   it('shouldBlock matches exact hostname (case-insensitive)', () => {
@@ -35,5 +35,26 @@ describe('adblock', () => {
   it('empty host set never blocks', () => {
     const ab = createAdblock(new Set())
     expect(ab.shouldBlock('https://anywhere.com/')).toBe(false)
+  })
+})
+
+describe('bindAdblockToSession', () => {
+  it('cancels matching requests and counts them; non-matching requests pass through', () => {
+    const handlers: { cb?: (d: any, c: any) => void } = {}
+    const fakeSession: any = {
+      webRequest: { onBeforeRequest: (cb: any) => { handlers.cb = cb } }
+    }
+    const ab = createAdblock(new Set(['googletagmanager.com']))
+    bindAdblockToSession(fakeSession, ab)
+
+    let last: any = null
+    handlers.cb!({ url: 'https://googletagmanager.com/gtm.js' }, (r: any) => { last = r })
+    expect(last).toEqual({ cancel: true })
+
+    last = null
+    handlers.cb!({ url: 'https://example.com/normal.js' }, (r: any) => { last = r })
+    expect(last).toEqual({ cancel: false })
+
+    expect(ab.drainCount()).toBe(1)
   })
 })
