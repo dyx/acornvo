@@ -1,6 +1,7 @@
 // src/hooks/useBrowserHotkeys.ts
 import { useEffect } from 'react'
 import { useBrowserStore } from '@/stores/browser'
+import { useClipperStore } from '@/stores/clipper'
 
 /**
  * Browser-scoped keyboard shortcuts. Mount from /browser only.
@@ -16,6 +17,23 @@ export function useBrowserHotkeys(): void {
     function onKeyDown(ev: KeyboardEvent): void {
       const mod = ev.metaKey || ev.ctrlKey
       const key = ev.key.toLowerCase()
+
+      // Cmd/Ctrl+Shift+S → clip page
+      if (mod && ev.shiftKey && key === 's') {
+        ev.preventDefault()
+        if (!activeTabId) return
+        const t = tabs.find((x) => x.id === activeTabId)
+        const tabUrl = t?.url ?? ''
+        if (!/^https?:\/\//i.test(tabUrl)) {
+          useClipperStore.setState({
+            stage: 'error',
+            error: { code: 'E_UNSUPPORTED_SCHEME', message: 'unsupported scheme', stage: 'precheck' }
+          })
+          return
+        }
+        void useClipperStore.getState().start(activeTabId)
+        return
+      }
 
       if (mod && !ev.shiftKey) {
         // Cmd/Ctrl+T → new tab

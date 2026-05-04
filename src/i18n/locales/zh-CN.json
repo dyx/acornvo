@@ -11,7 +11,8 @@
     "remove": "移除",
     "open": "打开",
     "save": "保存",
-    "coming_soon": "即将推出"
+    "coming_soon": "即将推出",
+    "dismiss": "关闭"
   },
   "nav": {
     "home": "首页",
@@ -211,9 +212,37 @@
     "reader": "阅读模式",
     "reader_on": "阅读模式已开启",
     "bookmark": "加入书签",
-    "clip": "剪藏",
+    "clip": "剪藏此页",
     "clip_soon": "剪藏功能将在拾果阶段实装",
     "paste_open": "粘贴并打开",
+    "clip.tooltip": "剪藏此页（Cmd+Shift+S）",
+    "clip.extracting": "正在抽取……",
+    "clip.saved": "已剪藏",
+    "clip.error": "剪藏失败",
+    "clip.unsupported": "当前页面不支持剪藏",
+    "clip.exists": {
+      "title": "已剪藏",
+      "body": "该页面已剪藏过，是否打开？",
+      "open": "打开"
+    },
+    "clip.preview": {
+      "title": "剪藏预览",
+      "title_field": "标题",
+      "tags": "标签",
+      "excerpt": "摘要",
+      "target": "目标路径",
+      "save": "保存",
+      "cancel": "取消",
+      "reextract": "重新抽取",
+      "degraded": "部分抽取，效果可能较差"
+    },
+    "clip.error.extract": "无法抽取正文",
+    "clip.error.transform": "HTML 转 Markdown 失败",
+    "clip.error.write": "保存失败",
+    "clip.error.unknown": "剪藏失败",
+    "clip.error.force_save": "强制保存整页",
+    "clip.error.save_raw": "保存为 .clip.html",
+    "clip.error.retry": "重试",
     "bookmarks": {
       "search": "搜索书签",
       "expand": "展开书签",
