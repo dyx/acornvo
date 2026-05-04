@@ -79,6 +79,7 @@
     "empty_preview": "从列表选一篇开始",
     "open_editor": "打开编辑器",
     "reveal": "在 Finder 中显示",
+    "trash": "移到废纸篓",
     "banner_scanning": "索引中，数据可能不完整",
     "banner_error": "索引出错，部分数据可能丢失",
     "banner_view_logs": "查看日志",
