@@ -1,0 +1,9 @@
+# Minimal phase-13 list — phase-11 will replace with the canonical list.
+googletagmanager.com
+www.googletagmanager.com
+doubleclick.net
+www.googleadservices.com
+google-analytics.com
+www.google-analytics.com
+analytics.google.com
+adservice.google.com

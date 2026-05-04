@@ -1,61 +1,84 @@
-// electron/browser/adblock.ts
-import type { Session } from 'electron'
+// electron/browser/ad-block.ts
+import { session } from 'electron'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { settingsStore } from '../settings/store'
+import { logger } from '../services/logger'
 
-export interface Adblock {
-  shouldBlock(url: string): boolean
-  markBlocked(): void
-  drainCount(): number
-}
+const BROWSER_PARTITION = 'persist:browser-default'
 
-export function createAdblock(hosts: Set<string>): Adblock {
-  // Normalise hosts to lower-case for case-insensitive comparison
-  const normalised = new Set<string>()
-  for (const h of hosts) normalised.add(h.toLowerCase())
+let blockedHosts: Set<string> | null = null
+let listener: ((details: Electron.OnBeforeRequestListenerDetails, cb: (r: { cancel: boolean }) => void) => void) | null = null
+let unsubFromSettings: (() => void) | null = null
+let cancelCount = 0
 
-  let blockedCount = 0
-
-  return {
-    shouldBlock(url) {
-      let host: string
-      try {
-        host = new URL(url).hostname.toLowerCase()
-      } catch {
-        return false
-      }
-      return normalised.has(host)
-    },
-    markBlocked() {
-      blockedCount++
-    },
-    drainCount() {
-      const n = blockedCount
-      blockedCount = 0
-      return n
+function loadBlockList(): Set<string> {
+  if (blockedHosts) return blockedHosts
+  const candidates = [
+    join(__dirname, '..', '..', 'src', 'public', 'hosts', 'block-domains.txt'),
+    join(__dirname, 'block-domains.txt')
+  ]
+  for (const path of candidates) {
+    try {
+      const content = readFileSync(path, 'utf8')
+      blockedHosts = new Set(
+        content.split('\n').map((line) => line.trim()).filter((line) => line.length > 0 && !line.startsWith('#'))
+      )
+      return blockedHosts
+    } catch {
+      // try next candidate
     }
   }
+  blockedHosts = new Set()
+  return blockedHosts
 }
 
-/**
- * Wires onBeforeRequest on the given session. Should be called once per
- * partitioned session; binds to the singleton ad-block matcher.
- */
-export function bindAdblockToSession(s: Session, adblock: Adblock): void {
-  s.webRequest.onBeforeRequest((details, callback) => {
-    if (adblock.shouldBlock(details.url)) {
-      adblock.markBlocked()
-      callback({ cancel: true })
-      return
+function register(): void {
+  if (listener) return
+  const ses = session.fromPartition(BROWSER_PARTITION)
+  const blocked = loadBlockList()
+
+  listener = (details, cb): void => {
+    try {
+      const url = new URL(details.url)
+      if (blocked.has(url.hostname)) {
+        cancelCount++
+        cb({ cancel: true })
+        return
+      }
+    } catch {
+      /* malformed url — let it through */
     }
-    callback({ cancel: false })
+    cb({ cancel: false })
+  }
+
+  ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, listener)
+}
+
+function unregister(): void {
+  if (!listener) return
+  const ses = session.fromPartition(BROWSER_PARTITION)
+  ses.webRequest.onBeforeRequest(null as any)
+  listener = null
+}
+
+export function initAdBlock(opts: { initialEnabled: boolean }): void {
+  if (opts.initialEnabled) register()
+  unsubFromSettings = settingsStore.onChange((ev) => {
+    if (ev.ns !== 'browser' || ev.key !== 'blockAds') return
+    if (ev.newValue === true) register()
+    else unregister()
   })
 }
 
-// --- singleton wiring (host set populated by Plan 2 task 3.2) ---
-let singleton: Adblock | null = null
-export function setAdblock(ab: Adblock): void {
-  singleton = ab
+export function getCancelCount(): number {
+  return cancelCount
 }
-export function getAdblock(): Adblock {
-  if (!singleton) singleton = createAdblock(new Set())
-  return singleton
+
+export function __resetForTest(): void {
+  unregister()
+  unsubFromSettings?.()
+  unsubFromSettings = null
+  cancelCount = 0
+  blockedHosts = null
 }

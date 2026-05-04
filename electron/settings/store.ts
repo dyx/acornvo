@@ -73,6 +73,11 @@ function __resetSubscribers(): void {
   emitter.removeAllListeners('change')
 }
 
+/** Test-only: emit a change event without a DB write. */
+function __emitForTest(event: SettingChangeEvent): void {
+  emitter.emit('change', event)
+}
+
 /** Convenience for the broadcaster (Plan 2): emit shape matches the IPC payload. */
 export type { SettingChangeEvent, SettingsChangedPayload }
 
@@ -80,5 +85,6 @@ export const settingsStore = {
   get,
   set,
   onChange,
-  __resetSubscribers
+  __resetSubscribers,
+  __emitForTest
 }

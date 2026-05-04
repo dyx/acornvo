@@ -14,11 +14,14 @@ import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
+import { initAdBlock, __resetForTest as resetAdBlock } from './browser/adblock'
+import { settingsStore } from './settings/store'
 import { initSafeStorageAvailability } from './settings/safe-storage-state'
 import { installSettingsBroadcaster } from './settings/broadcast'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
+let adBlockInstalled = false
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -89,6 +92,12 @@ async function bootstrap(): Promise<void> {
             // openGrove already called openForGrove; this is the catch-all for
             // future code paths that change the project without going through it.
             dbService.openForGrove(payload.path)
+          }
+          // After DB is open, init ad-block with current setting (one-shot)
+          if (!adBlockInstalled) {
+            adBlockInstalled = true
+            const browser = settingsStore.get('browser')
+            initAdBlock({ initialEnabled: browser.blockAds })
           }
           const db = dbService.getCurrent()
           if (db) {
