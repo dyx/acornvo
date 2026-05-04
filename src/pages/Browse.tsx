@@ -5,8 +5,10 @@ import { TabBar } from '@/components/browser/TabBar'
 import { AddressBar } from '@/components/browser/AddressBar'
 import { BookmarkSidebar } from '@/components/browser/BookmarkSidebar'
 import { NewTabPage } from '@/components/browser/NewTabPage'
+import { useBrowserHotkeys } from '@/hooks/useBrowserHotkeys'
 
 export function Browse(): JSX.Element {
+  useBrowserHotkeys()
   const tabs = useBrowserStore((s) => s.tabs)
   const activeTabId = useBrowserStore((s) => s.activeTabId)
   const bookmarksOpen = useBrowserStore((s) => s.bookmarksOpen)

@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
+import { AppRail } from '@/components/AppRail'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
 import { QuickSwitcher } from '@/components/search/QuickSwitcher'
@@ -63,9 +64,12 @@ export function App(): JSX.Element {
   return (
     <div className="flex h-full flex-col">
       <TitleBar />
-      <main className="flex-1 overflow-hidden">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        <AppRail />
+        <main className="flex-1 overflow-hidden">
+          <Outlet />
+        </main>
+      </div>
       <IndexBanner />
       <DbRebuildOverlay visible={isRebuilding} />
       <QuickSwitcher />

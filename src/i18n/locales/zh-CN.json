@@ -9,7 +9,9 @@
     "cancel": "取消",
     "confirm": "确定",
     "remove": "移除",
-    "open": "打开"
+    "open": "打开",
+    "save": "保存",
+    "coming_soon": "即将推出"
   },
   "nav": {
     "home": "首页",
@@ -193,5 +195,36 @@
       "conflict_delete": "冲突删除",
       "rename": "重命名"
     }
+  },
+  "browser": {
+    "new_tab": {
+      "welcome": "拾果",
+      "hint": "在地址栏输入网址或搜索词",
+      "recent": "最近收藏"
+    },
+    "no_tab": "尚未打开任何页面",
+    "address": "地址栏",
+    "back": "后退",
+    "forward": "前进",
+    "reload": "刷新",
+    "search": "搜索",
+    "reader": "阅读模式",
+    "reader_on": "阅读模式已开启",
+    "bookmark": "加入书签",
+    "clip": "剪藏",
+    "clip_soon": "剪藏功能将在拾果阶段实装",
+    "paste_open": "粘贴并打开",
+    "bookmarks": {
+      "search": "搜索书签",
+      "expand": "展开书签",
+      "collapse": "收起书签",
+      "empty": "还没有书签。浏览时点星号收藏当前页面。"
+    },
+    "bookmark.save": "加入书签",
+    "bookmark.saved": "已加入书签",
+    "bookmark.edit": "编辑书签",
+    "bookmark.delete": "删除",
+    "bookmark.delete_confirm": "确认删除这个书签？",
+    "bookmark.empty": "还没有书签"
   }
 }
