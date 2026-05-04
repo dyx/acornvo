@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { GroveSummary, RecentItemView } from '@shared/grove'
 import { ipc } from '@/ipc/client'
+import { useSettingsStore } from './settings'
 import { grove as groveSwitchHooks } from './grove-switch-hooks'
 
 export type OpenOutcomeLite =
@@ -92,6 +93,11 @@ export function installGroveSubscriber(): () => void {
   const unsub = ipc.on('project:changed', (payload) => {
     useGroveStore.getState()._setCurrent(payload)
     groveSwitchHooks._fire(payload)
+    if (payload) {
+      void useSettingsStore.getState().loadAll().catch((err) => {
+        console.error('settings.loadAll failed', err)
+      })
+    }
   })
   return () => {
     subscriberInstalled = false

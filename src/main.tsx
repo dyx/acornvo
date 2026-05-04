@@ -5,6 +5,7 @@ import { App } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { initThemeEffect } from './stores/root'
 import { installGroveSubscriber } from '@/stores/grove'
+import { installSettingsSubscriber } from '@/stores/settings'
 import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
 import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { Placeholder } from './pages/Placeholder'
@@ -51,6 +52,7 @@ if (!container) {
 
 initThemeEffect()
 installGroveSubscriber()
+installSettingsSubscriber()
 setBrowserPort(browserPort)
 setBrowserEventPort(browserEventPort)
 
