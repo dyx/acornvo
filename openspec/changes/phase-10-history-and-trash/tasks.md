@@ -63,15 +63,15 @@
 - [x] 8.2 `Cmd+Backspace`（聚焦 Library 选中行）→ 同上 confirm 弹窗
 - [x] 8.3 在 `/editor/:path` 按 `Cmd+Backspace` → 不触发删除
 - [x] 8.4 `shell.trashItem` 失败（mock）→ 降级 modal；勾选确认 "永久删除" → `fs.unlink`；ops_log `op='hard_delete'`
-- [ ] 8.5 `/history/trash` 列出最近删的文件；点"打开原目录"跳 Finder
-- [ ] 8.6 `/history/conflicts` 列出 phase 9 产生的快照；点击某条右侧显示 side-by-side diff
-- [ ] 8.7 切换 `local ↔ base` → diff 重绘
-- [ ] 8.8 点击"删除此快照" → 确认 → 该条从列表消失；ops_log 新增 `conflict_delete`
-- [ ] 8.9 `/history/ops` 按 ts 倒序列出所有；chips 过滤 "trash" 生效
-- [ ] 8.10 点 Ops 的 conflict_resolve 行 → 跳 `/history/conflicts?id=<id>` 并高亮
-- [ ] 8.11 `conflict.deleteAll` → 列表清空；ops_log 新增 N 行 `conflict_delete`
-- [ ] 8.12 ops_log 超 90 天行自动 prune（人工插入 100 天前行 → 下次 record 后消失）
-- [ ] 8.13 空态：全新树林打开三 tab 看到友好文案
-- [ ] 8.14 phase 9 的"另存副本"冲突解决后 `ops.list` 有对应 `conflict_resolve` 行，meta.winner_path 正确
-- [ ] 8.15 rename 文件后 `ops.list` 出现 `op='rename'` 行
-- [ ] 8.16 `openspec validate phase-10-history-and-trash --strict` 通过
+- [x] 8.5 `/history/trash` 列出最近删的文件；点"打开原目录"跳 Finder
+- [x] 8.6 `/history/conflicts` 列出 phase 9 产生的快照；点击某条右侧显示 side-by-side diff
+- [x] 8.7 切换 `local ↔ base` → diff 重绘
+- [x] 8.8 点击"删除此快照" → 确认 → 该条从列表消失；ops_log 新增 `conflict_delete`
+- [x] 8.9 `/history/ops` 按 ts 倒序列出所有；chips 过滤 "trash" 生效
+- [x] 8.10 点 Ops 的 conflict_resolve 行 → 跳 `/history/conflicts?id=<id>` 并高亮
+- [x] 8.11 `conflict.deleteAll` → 列表清空；ops_log 新增 N 行 `conflict_delete`
+- [x] 8.12 ops_log 超 90 天行自动 prune（人工插入 100 天前行 → 下次 record 后消失）
+- [x] 8.13 空态：全新树林打开三 tab 看到友好文案
+- [x] 8.14 phase 9 的"另存副本"冲突解决后 `ops.list` 有对应 `conflict_resolve` 行，meta.winner_path 正确
+- [x] 8.15 rename 文件后 `ops.list` 出现 `op='rename'` 行
+- [x] 8.16 `openspec validate phase-10-history-and-trash --strict` 通过
