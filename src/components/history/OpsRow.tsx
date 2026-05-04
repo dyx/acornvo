@@ -47,15 +47,28 @@ function formatTime(ts: string): string {
 
 export interface OpsRowProps {
   item: OpsItem
+  onClick?: (item: OpsItem) => void
 }
 
-export function OpsRow({ item }: OpsRowProps): JSX.Element {
+export function OpsRow({ item, onClick }: OpsRowProps): JSX.Element {
+  const isClickable = onClick && item.op === 'conflict_resolve' && item.meta && typeof item.meta.id === 'string'
+
   return (
     <div
       data-testid="ops-row"
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)]"
+      className={`flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)] ${isClickable ? 'cursor-pointer hover:bg-[color:var(--paper-2)] transition-colors' : ''}`}
       role="listitem"
       aria-label={`${item.op}: ${item.path}`}
+      onClick={() => {
+        if (isClickable && onClick) onClick(item)
+      }}
+      onKeyDown={(e) => {
+        if (isClickable && onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onClick(item)
+        }
+      }}
+      {...(isClickable ? { tabIndex: 0 } : {})}
     >
       <span
         className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0 ${opBadgeColor(item.op)}`}

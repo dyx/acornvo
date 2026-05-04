@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 // Initialize i18n before anything uses useTranslation
 import { i18n } from '@/i18n'
+
+const navigateMock = vi.fn()
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
@@ -15,6 +17,14 @@ vi.mock('@/ipc/client', () => ({
     on: vi.fn(() => () => {})
   }
 }))
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => navigateMock
+  }
+})
 
 import { ipc } from '@/ipc/client'
 import { OpsTab } from './OpsTab'
@@ -88,5 +98,84 @@ describe('OpsTab', () => {
     await waitFor(() => {
       expect(screen.getByText('暂无操作记录')).toBeTruthy()
     })
+  })
+
+  it('navigates to /history/conflicts?id=<id> when conflict_resolve row is clicked', async () => {
+    vi.mocked(ipc.ops.list).mockResolvedValue({
+      items: [
+        makeItem({
+          id: 10,
+          op: 'conflict_resolve',
+          path: 'notes/doc.md',
+          meta: { id: 'c-42', resolved_by: 'keep_local' }
+        })
+      ],
+      total: 1
+    })
+
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('notes/doc.md')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByTestId('ops-row'))
+    expect(navigateMock).toHaveBeenCalledWith('/history/conflicts?id=c-42')
+  })
+
+  it('does NOT navigate when clicking non-conflict_resolve rows', async () => {
+    vi.mocked(ipc.ops.list).mockResolvedValue({
+      items: [
+        makeItem({ id: 1, op: 'trash', path: 'a.md', meta: null }),
+        makeItem({ id: 2, op: 'rename', path: 'b.md', meta: { new_path: 'b2.md' } })
+      ],
+      total: 2
+    })
+
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('a.md')).toBeTruthy()
+    })
+
+    const rows = screen.getAllByTestId('ops-row')
+    fireEvent.click(rows[0])
+    fireEvent.click(rows[1])
+    expect(navigateMock).not.toHaveBeenCalled()
+  })
+
+  it('does NOT navigate when conflict_resolve meta has no id', async () => {
+    vi.mocked(ipc.ops.list).mockResolvedValue({
+      items: [
+        makeItem({
+          id: 5,
+          op: 'conflict_resolve',
+          path: 'banner.md',
+          meta: { resolved_by: 'load_remote_banner' } // no id
+        })
+      ],
+      total: 1
+    })
+
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('banner.md')).toBeTruthy()
+    })
+
+    fireEvent.click(screen.getByTestId('ops-row'))
+    expect(navigateMock).not.toHaveBeenCalled()
   })
 })

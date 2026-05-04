@@ -18,12 +18,13 @@ const TAB_TITLES: Record<TabId, string> = {
 
 interface HistoryLayoutProps {
   tab: TabId
+  initialSelectedConflictId?: string
 }
 
-export function HistoryLayout({ tab }: HistoryLayoutProps) {
+export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutProps) {
   const navigate = useNavigate()
   const setTitle = useTitleStore((s) => s.setTitle)
-  const [selectedConflictId, setSelectedConflictId] = useState<string | null>(null)
+  const [selectedConflictId, setSelectedConflictId] = useState<string | null>(initialSelectedConflictId ?? null)
 
   useEffect(() => {
     setTitle(TAB_TITLES[tab])

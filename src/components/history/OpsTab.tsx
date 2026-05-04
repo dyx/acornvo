@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { JSX } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ipc } from '@/ipc/client'
 import { EmptyState } from './EmptyState'
 import { OpsRow } from './OpsRow'
@@ -9,6 +10,7 @@ import { History } from 'lucide-react'
 const LIMIT = 100
 
 export function OpsTab(): JSX.Element {
+  const navigate = useNavigate()
   const [items, setItems] = useState<OpsItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -53,10 +55,16 @@ export function OpsTab(): JSX.Element {
     )
   }
 
+  const handleRowClick = (item: OpsItem) => {
+    if (item.op === 'conflict_resolve' && item.meta && typeof item.meta.id === 'string') {
+      navigate(`/history/conflicts?id=${encodeURIComponent(item.meta.id)}`)
+    }
+  }
+
   return (
     <div data-testid="ops-tab" className="flex flex-col h-full overflow-y-auto" role="list">
       {items.map((item) => (
-        <OpsRow key={item.id} item={item} />
+        <OpsRow key={item.id} item={item} onClick={handleRowClick} />
       ))}
     </div>
   )

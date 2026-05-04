@@ -185,4 +185,24 @@ describe('HistoryLayout', () => {
       expect(screen.queryByTestId('conflict-detail-panel')).toBeFalsy()
     })
   })
+
+  it('auto-selects conflict when initialSelectedConflictId is provided', async () => {
+    vi.mocked(ipc.conflict.list).mockResolvedValue({
+      items: [makeConflict({ id: 'c-77', path: 'docs/preload.md' })],
+      total: 1
+    })
+
+    render(
+      <MemoryRouter>
+        <HistoryLayout tab="conflicts" initialSelectedConflictId="c-77" />
+      </MemoryRouter>
+    )
+
+    // Detail panel should open immediately (after conflict.read resolves)
+    await waitFor(() => {
+      expect(screen.getByTestId('conflict-detail-panel')).toBeTruthy()
+    })
+
+    expect(ipc.conflict.read).toHaveBeenCalledWith('c-77')
+  })
 })
