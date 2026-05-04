@@ -11,6 +11,7 @@ import { trashHandlers } from './trash'
 import { opsHandlers } from './ops'
 import { browserHandlers } from './browser'
 import { bookmarkHandlers } from './bookmarks'
+import { settingsHandlers } from './settings'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -44,5 +45,5 @@ export const ipcHandlers: HandlerMap = {
   ops: opsHandlers,
   browser: browserHandlers,
   bookmarks: bookmarkHandlers,
-  settings: {} as never
+  settings: settingsHandlers
 }
