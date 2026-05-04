@@ -17,6 +17,13 @@ import type {
   BookmarkListOpts,
   BookmarkListResult
 } from './browser-types'
+import type {
+  ClipRunId,
+  ClipInput,
+  ClipResult,
+  ClipPreview,
+  ClipErrorEnvelope
+} from './clipper-types'
 
 export type { GroveSummary, LockInfo } from './grove'
 export type {
@@ -28,6 +35,13 @@ export type {
   BookmarkListOpts,
   BookmarkListResult
 } from './browser-types'
+export type {
+  ClipRunId,
+  ClipInput,
+  ClipResult,
+  ClipPreview,
+  ClipErrorEnvelope
+} from './clipper-types'
 
 export type IpcErrorCode =
   | 'E_INTERNAL'
@@ -42,6 +56,13 @@ export type IpcErrorCode =
   | 'E_MTIME_MISMATCH'
   | 'E_TRASH'
   | 'E_DUPLICATE'
+  | 'E_UNSUPPORTED_SCHEME'
+  | 'E_ALREADY_CLIPPED'
+  | 'E_EXTRACT_TIMEOUT'
+  | 'E_EXTRACT_EMPTY'
+  | 'E_TRANSFORM_FAILED'
+  | 'E_WRITE_FAILED'
+  | 'E_INDEX_FAILED'
 
 export const IPC_ERROR_CODES = {
   E_INTERNAL: 'E_INTERNAL',
@@ -55,7 +76,14 @@ export const IPC_ERROR_CODES = {
   E_WRITE_VERIFY: 'E_WRITE_VERIFY',
   E_MTIME_MISMATCH: 'E_MTIME_MISMATCH',
   E_TRASH: 'E_TRASH',
-  E_DUPLICATE: 'E_DUPLICATE'
+  E_DUPLICATE: 'E_DUPLICATE',
+  E_UNSUPPORTED_SCHEME: 'E_UNSUPPORTED_SCHEME',
+  E_ALREADY_CLIPPED: 'E_ALREADY_CLIPPED',
+  E_EXTRACT_TIMEOUT: 'E_EXTRACT_TIMEOUT',
+  E_EXTRACT_EMPTY: 'E_EXTRACT_EMPTY',
+  E_TRANSFORM_FAILED: 'E_TRANSFORM_FAILED',
+  E_WRITE_FAILED: 'E_WRITE_FAILED',
+  E_INDEX_FAILED: 'E_INDEX_FAILED'
 } as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
@@ -343,6 +371,12 @@ export type IpcContract = {
     update: (id: number, patch: { title?: string | null; favicon?: string | null; tags?: string[] }) => Bookmark
     delete: (id: number) => { ok: true }
     getByUrl: (url: string) => Bookmark | null
+  }
+  clipper: {
+    clip: (tabId: TabId) => ClipPreview
+    saveClip: (input: ClipInput) => ClipResult
+    cancelClip: (runId: ClipRunId) => void
+    reextract: (runId: ClipRunId, tabId: TabId) => ClipPreview
   }
 }
 
