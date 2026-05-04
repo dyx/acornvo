@@ -78,3 +78,26 @@ describe('extract', () => {
     expect(r.error).toBe('E_EXTRACT_EMPTY')
   })
 })
+
+describe('extract — degraded fallback', () => {
+  it('returns ok=true degraded=true when Readability parse returns null', async () => {
+    const wc = makeWebContents({
+      parseImpl: async () => ({
+        ok: true,
+        degraded: true,
+        title: 'Doc Title',
+        content: '<body><p>raw</p></body>',
+        textContent: 'raw',
+        length: 3,
+        url: 'https://example.com/x',
+        lang: 'en'
+      })
+    })
+    const e = createExtractor({ timeoutMs: 5000 })
+    const r = await e.extract(wc)
+    expect(r.ok).toBe(true)
+    expect(r.degraded).toBe(true)
+    expect(r.title).toBe('Doc Title')
+    expect(r.content).toBe('<body><p>raw</p></body>')
+  })
+})

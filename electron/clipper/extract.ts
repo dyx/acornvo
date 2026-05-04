@@ -25,20 +25,40 @@ const PARSE_SNIPPET = `
     const docClone = document.cloneNode(true);
     const reader = new Readability(docClone);
     const article = reader.parse();
-    if (!article) {
-      return { ok: false, error: 'no_article' };
+    if (article) {
+      return {
+        ok: true,
+        degraded: false,
+        title: article.title || document.title || '',
+        byline: article.byline || '',
+        content: article.content || '',
+        textContent: article.textContent || '',
+        length: article.length || 0,
+        excerpt: article.excerpt || '',
+        siteName: article.siteName || '',
+        lang: article.lang || document.documentElement.lang || '',
+        publishedTime: article.publishedTime || '',
+        url: location.href
+      };
     }
+    // Fallback: Readability could not extract an article. Capture full body.
+    const bodyHtml = document.body ? document.body.innerHTML : '';
+    if (!bodyHtml) {
+      return { ok: false, error: 'no_article_no_body' };
+    }
+    const text = (document.body && document.body.innerText) ? document.body.innerText : '';
     return {
       ok: true,
-      title: article.title || document.title || '',
-      byline: article.byline || '',
-      content: article.content || '',
-      textContent: article.textContent || '',
-      length: article.length || 0,
-      excerpt: article.excerpt || '',
-      siteName: article.siteName || '',
-      lang: article.lang || document.documentElement.lang || '',
-      publishedTime: article.publishedTime || '',
+      degraded: true,
+      title: document.title || '',
+      byline: '',
+      content: bodyHtml,
+      textContent: text,
+      length: text.length,
+      excerpt: text.slice(0, 160),
+      siteName: '',
+      lang: document.documentElement.lang || '',
+      publishedTime: '',
       url: location.href
     };
   } catch (e) {
@@ -96,6 +116,7 @@ export function createExtractor(deps: ExtractorDeps): Extractor {
 
       return {
         ok: true,
+        degraded: r.degraded === true ? true : undefined,
         title: (r.title as string) || undefined,
         byline: (r.byline as string) || undefined,
         content: (r.content as string) || undefined,
