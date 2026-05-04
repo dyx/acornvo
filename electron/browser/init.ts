@@ -6,6 +6,7 @@ import { logger } from '../services/logger'
 import { configureBounds, getBounds } from './bounds'
 import { setMainWindow, getManager, setBoundsApplier } from './manager'
 import { createAdblock, bindAdblockToSession, setAdblock, getAdblock } from './adblock'
+import { setMainWindowForBrowser } from '../ipc/browser'
 
 export const BROWSER_SESSION_PARTITION = 'persist:browser-default'
 
@@ -69,6 +70,7 @@ function startAdblockReporter(): NodeJS.Timeout {
  */
 export function initBrowserSubsystem(mainWindow: BrowserWindow): void {
   setMainWindow(mainWindow)
+  setMainWindowForBrowser(mainWindow)
   configureBounds(() => {
     const id = getManager().attachedTabId()
     if (!id) return null
