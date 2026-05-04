@@ -1,5 +1,5 @@
 // electron/browser/contents.ts
-import { WebContentsView, BrowserWindow, session } from 'electron'
+import { WebContentsView, BrowserWindow, session, shell } from 'electron'
 import type { TabId, TabPatch, TabStateChangedPayload } from '@shared/browser-types'
 
 export interface CreateTabViewOpts {
@@ -109,4 +109,55 @@ export function makeTabStateSender(window: BrowserWindow): SendTabStateChanged {
       window.webContents.send(TAB_STATE_CHANGED_CHANNEL, payload)
     }
   }
+}
+
+// --- Window open handler (task 2.5) ---
+
+export interface AdoptionContext {
+  /** Called by the adoption hook to register a freshly-spawned popup as a new tab. */
+  registerNewTab: (newWebContents: Electron.WebContents) => void
+}
+
+/**
+ * Per-tab window-open handler:
+ *  - http(s)  → allow + adopt as a new tab via `app.on('web-contents-created')` listener
+ *  - other    → deny + shell.openExternal(url)
+ */
+export function attachWindowOpenHandler(
+  webContents: Electron.WebContents,
+  ctx: AdoptionContext
+): void {
+  webContents.setWindowOpenHandler(({ url }) => {
+    let parsed: URL
+    try {
+      parsed = new URL(url)
+    } catch {
+      return { action: 'deny' }
+    }
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          show: false, // we never actually show the spawned BrowserWindow; we adopt the WebContents
+          webPreferences: {
+            sandbox: true,
+            contextIsolation: true,
+            nodeIntegration: false,
+            preload: ''
+          }
+        },
+        outlivesOpener: false
+      }
+    }
+    void shell.openExternal(url).catch(() => {})
+    return { action: 'deny' }
+  })
+
+  webContents.on('did-create-window', (childWindow) => {
+    // Adopt: hide the auto-spawned window, then register its WebContents as a new tab
+    // and close the BrowserWindow shell. The WebContents stays alive because we keep
+    // a reference to it via the manager.
+    childWindow.hide()
+    ctx.registerNewTab(childWindow.webContents)
+  })
 }
