@@ -9,6 +9,8 @@ import { searchHandlers } from './search'
 import { conflictHandlers } from './conflicts'
 import { trashHandlers } from './trash'
 import { opsHandlers } from './ops'
+import { browserHandlers } from './browser'
+import { bookmarkHandlers } from './bookmarks'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -40,4 +42,6 @@ export const ipcHandlers: HandlerMap = {
   conflict: conflictHandlers,
   search: searchHandlers,
   ops: opsHandlers,
+  browser: browserHandlers,
+  bookmarks: bookmarkHandlers,
 }
