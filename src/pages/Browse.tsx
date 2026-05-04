@@ -5,6 +5,8 @@ import { TabBar } from '@/components/browser/TabBar'
 import { AddressBar } from '@/components/browser/AddressBar'
 import { BookmarkSidebar } from '@/components/browser/BookmarkSidebar'
 import { NewTabPage } from '@/components/browser/NewTabPage'
+import { ClipPreviewDialog } from '@/components/browser/ClipPreviewDialog'
+import { ClipErrorToast } from '@/components/browser/ClipErrorToast'
 import { useBrowserHotkeys } from '@/hooks/useBrowserHotkeys'
 
 export function Browse(): JSX.Element {
@@ -80,6 +82,8 @@ export function Browse(): JSX.Element {
           )}
         </div>
       </div>
+      <ClipPreviewDialog />
+      <ClipErrorToast />
     </div>
   )
 }
