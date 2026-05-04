@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { App } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { initThemeEffect } from './stores/root'
+import { installSettingsEffects } from '@/stores/settings-effects'
 import { installGroveSubscriber } from '@/stores/grove'
 import { installSettingsSubscriber } from '@/stores/settings'
 import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
@@ -51,7 +51,7 @@ if (!container) {
   throw new Error('root element not found in src/index.html')
 }
 
-initThemeEffect()
+installSettingsEffects()
 installGroveSubscriber()
 installSettingsSubscriber()
 setBrowserPort(browserPort)
