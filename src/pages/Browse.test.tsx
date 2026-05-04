@@ -1,8 +1,22 @@
 // src/pages/Browse.test.tsx
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import '@testing-library/jest-dom/vitest'
 import { Browse } from './Browse'
 import { useBrowserStore, setBrowserPort } from '@/stores/browser'
+
+vi.mock('@/ipc/client', () => ({
+  ipc: {
+    bookmarks: {
+      list: vi.fn(async () => ({ items: [], total: 0 })),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      getByUrl: vi.fn(async () => null)
+    },
+    on: vi.fn(() => () => {})
+  }
+}))
 
 // jsdom polyfill: getBoundingClientRect returns zeros by default
 Element.prototype.getBoundingClientRect = vi.fn(() => ({
@@ -27,9 +41,11 @@ function reset() {
   })
 }
 
+let _mockId = 0
 function mockPort() {
+  const id = `mock-${++_mockId}`
   return {
-    createTab: vi.fn(async (url: string | undefined) => ({ id: 'first', url: url ?? 'about:blank' })),
+    createTab: vi.fn(async (url: string | undefined) => ({ id, url: url ?? 'about:blank' })),
     closeTab: vi.fn(),
     activateTab: vi.fn(),
     navigate: vi.fn(),
