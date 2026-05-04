@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+:root {
+  --font-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
 @theme {
   /* oklch palette lifted from docs/ui/src/project-picker.jsx */
   --color-paper: oklch(0.99 0.005 80);
