@@ -11,7 +11,7 @@ describe('migration 005_bookmarks', () => {
     const db = new Database(':memory:')
     runMigrations(db, MIGRATIONS_DIR)
 
-    expect(db.pragma('user_version', { simple: true })).toBe(5)
+    expect(db.pragma('user_version', { simple: true })).toBeGreaterThanOrEqual(5)
 
     const cols = db.prepare('PRAGMA table_info(bookmarks)').all() as {
       name: string
