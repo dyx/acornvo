@@ -76,6 +76,29 @@ const request: IpcClient<IpcContract> = {
     fullText: (q, opts) => invoke('search.fullText', q, opts),
     suggest: (q) => invoke('search.suggest', q),
     stats: () => invoke('search.stats')
+  },
+  ops: {
+    list: (opts) => invoke('ops.list', opts)
+  },
+  browser: {
+    createTab: (url) => invoke('browser.createTab', url),
+    closeTab: (id) => invoke('browser.closeTab', id),
+    activateTab: (id) => invoke('browser.activateTab', id),
+    navigate: (id, url) => invoke('browser.navigate', id, url),
+    reload: (id) => invoke('browser.reload', id),
+    goBack: (id) => invoke('browser.goBack', id),
+    goForward: (id) => invoke('browser.goForward', id),
+    setReaderMode: (id, on) => invoke('browser.setReaderMode', id, on),
+    setViewport: (rect) => invoke('browser.setViewport', rect),
+    suspendTab: (id) => invoke('browser.suspendTab', id),
+    resumeTab: (id) => invoke('browser.resumeTab', id)
+  },
+  bookmarks: {
+    list: (opts) => invoke('bookmarks.list', opts),
+    create: (input) => invoke('bookmarks.create', input),
+    update: (id, patch) => invoke('bookmarks.update', id, patch),
+    delete: (id) => invoke('bookmarks.delete', id),
+    getByUrl: (url) => invoke('bookmarks.getByUrl', url)
   }
 }
 

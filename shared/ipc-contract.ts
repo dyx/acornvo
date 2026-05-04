@@ -8,8 +8,26 @@ import type {
   RecentItemView,
   OpenGroveOutcome
 } from './grove'
+import type {
+  TabId,
+  TabStateChangedPayload,
+  SetViewportArgs,
+  Bookmark,
+  BookmarkInput,
+  BookmarkListOpts,
+  BookmarkListResult
+} from './browser-types'
 
 export type { GroveSummary, LockInfo } from './grove'
+export type {
+  TabId,
+  TabStateChangedPayload,
+  SetViewportArgs,
+  Bookmark,
+  BookmarkInput,
+  BookmarkListOpts,
+  BookmarkListResult
+} from './browser-types'
 
 export type IpcErrorCode =
   | 'E_INTERNAL'
@@ -23,6 +41,7 @@ export type IpcErrorCode =
   | 'E_WRITE_VERIFY'
   | 'E_MTIME_MISMATCH'
   | 'E_TRASH'
+  | 'E_DUPLICATE'
 
 export const IPC_ERROR_CODES = {
   E_INTERNAL: 'E_INTERNAL',
@@ -35,7 +54,8 @@ export const IPC_ERROR_CODES = {
   E_ENCODING: 'E_ENCODING',
   E_WRITE_VERIFY: 'E_WRITE_VERIFY',
   E_MTIME_MISMATCH: 'E_MTIME_MISMATCH',
-  E_TRASH: 'E_TRASH'
+  E_TRASH: 'E_TRASH',
+  E_DUPLICATE: 'E_DUPLICATE'
 } as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
@@ -304,6 +324,26 @@ export type IpcContract = {
     stats: () => { fts_rows: number; last_rebuild_at: string | null }
     rebuild: () => { ok: true }
   }
+  browser: {
+    createTab: (url?: string) => { id: TabId; url: string }
+    closeTab: (id: TabId) => void
+    activateTab: (id: TabId) => void
+    navigate: (id: TabId, url: string) => void
+    reload: (id: TabId) => void
+    goBack: (id: TabId) => void
+    goForward: (id: TabId) => void
+    setReaderMode: (id: TabId, on: boolean) => void
+    setViewport: (rect: SetViewportArgs) => void
+    suspendTab: (id: TabId) => void
+    resumeTab: (id: TabId) => { id: TabId; url: string }
+  }
+  bookmarks: {
+    list: (opts: BookmarkListOpts) => BookmarkListResult
+    create: (input: BookmarkInput) => Bookmark
+    update: (id: number, patch: { title?: string | null; favicon?: string | null; tags?: string[] }) => Bookmark
+    delete: (id: number) => { ok: true }
+    getByUrl: (url: string) => Bookmark | null
+  }
 }
 
 /**
@@ -329,6 +369,7 @@ export type IpcEventContract = {
   'index:fileRenamed': { oldPath: string; newPath: string }
   'index:rebuildProgress': { done: number; total: number }
   'index:rebuildDone': { total: number }
+  'browser:tabStateChanged': TabStateChangedPayload
 }
 
 export type IpcEventChannel = keyof IpcEventContract

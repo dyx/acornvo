@@ -1,0 +1,87 @@
+# public/hosts/block-domains.txt
+# Curated subset of Steven Black's unified hosts list.
+# Format: one hostname per line. Lines starting with `#` are comments.
+# Loaded into a Set<string>; matched against new URL(req.url).hostname.
+
+# --- Trackers (Google) ---
+google-analytics.com
+www.google-analytics.com
+ssl.google-analytics.com
+googletagmanager.com
+www.googletagmanager.com
+googletagservices.com
+googleadservices.com
+googlesyndication.com
+adservice.google.com
+pagead2.googlesyndication.com
+stats.g.doubleclick.net
+ad.doubleclick.net
+
+# --- Trackers (Meta/Facebook) ---
+connect.facebook.net
+
+# --- Trackers (Twitter/X) ---
+analytics.twitter.com
+ads-twitter.com
+
+# --- Trackers (Microsoft) ---
+bat.bing.com
+clarity.ms
+
+# --- Trackers (TikTok) ---
+analytics.tiktok.com
+business-api.tiktok.com
+
+# --- Trackers (LinkedIn) ---
+px.ads.linkedin.com
+
+# --- Generic ad networks ---
+adnxs.com
+ib.adnxs.com
+casalemedia.com
+rubiconproject.com
+openx.net
+pubmatic.com
+contextweb.com
+3lift.com
+adform.net
+indexww.com
+yieldmo.com
+mediavine.com
+
+# --- Mobile ad SDKs ---
+adcolony.com
+applovin.com
+unityads.unity3d.com
+tapjoy.com
+
+# --- Common analytics ---
+mixpanel.com
+segment.io
+api.segment.io
+amplitude.com
+api.amplitude.com
+heap.io
+heapanalytics.com
+hotjar.com
+static.hotjar.com
+fullstory.com
+rs.fullstory.com
+intercom.io
+api.intercom.io
+
+# --- Chinese trackers (added for zh-CN audience) ---
+hm.baidu.com
+push.zhanzhang.baidu.com
+cnzz.com
+w1.cnzz.com
+umeng.com
+plus1.umeng.com
+jpush.cn
+
+# --- Crash/error reporting (often optional) ---
+api.bugsnag.com
+sentry.io
+o.sentry.io
+
+# End of list.

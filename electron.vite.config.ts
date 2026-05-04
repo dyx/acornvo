@@ -4,6 +4,22 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
 
+function copyPublicHosts(): Plugin {
+  return {
+    name: 'copy-public-hosts',
+    writeBundle(outputOptions) {
+      const src = resolve(__dirname, 'public/hosts')
+      const dest = join(outputOptions.dir ?? '', 'hosts')
+      if (!existsSync(src)) return
+      mkdirSync(dest, { recursive: true })
+      for (const file of readdirSync(src).sort()) {
+        cpSync(resolve(src, file), join(dest, file))
+      }
+      console.log('[copy-public-hosts] copied hosts files to', dest)
+    }
+  }
+}
+
 function copyMigrationFiles(): Plugin {
   return {
     name: 'copy-migration-files',
@@ -22,7 +38,7 @@ function copyMigrationFiles(): Plugin {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin(), copyMigrationFiles()],
+    plugins: [externalizeDepsPlugin(), copyMigrationFiles(), copyPublicHosts()],
     resolve: {
       alias: {
         '@shared': resolve(__dirname, 'shared')

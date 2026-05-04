@@ -83,9 +83,9 @@ describe('001_init.sql', () => {
   it('creates bookmarks with autoincrement id + sort_order', () => {
     expect(tableNames(db)).toContain('bookmarks')
     const cols = columnNames(db, 'bookmarks')
-    expect(cols).toEqual(expect.arrayContaining(['id', 'url', 'title', 'favicon', 'created_at', 'sort_order']))
-    const r1 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://x', '2026-01-01') RETURNING id").get() as { id: number }
-    const r2 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://y', '2026-01-01') RETURNING id").get() as { id: number }
+    expect(cols).toEqual(expect.arrayContaining(['id', 'url', 'title', 'favicon', 'created_at', 'sort_order', 'updated_at', 'tags_json']))
+    const r1 = db.prepare("INSERT INTO bookmarks (url, title, created_at, updated_at) VALUES ('https://x', 'X', '2026-01-01', '2026-01-01') RETURNING id").get() as { id: number }
+    const r2 = db.prepare("INSERT INTO bookmarks (url, title, created_at, updated_at) VALUES ('https://y', 'Y', '2026-01-01', '2026-01-01') RETURNING id").get() as { id: number }
     expect(r2.id).toBe(r1.id + 1)
   })
 

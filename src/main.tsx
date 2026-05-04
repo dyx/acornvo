@@ -5,6 +5,8 @@ import { App } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { initThemeEffect } from './stores/root'
 import { installGroveSubscriber } from '@/stores/grove'
+import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
+import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { Placeholder } from './pages/Placeholder'
 import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
@@ -14,6 +16,7 @@ import { Navigate } from 'react-router-dom'
 import type { JSX } from 'react'
 import Search from '@/pages/Search'
 import History from '@/pages/History'
+import { Browse } from '@/pages/Browse'
 import './i18n'
 import './index.css'
 
@@ -31,7 +34,7 @@ const router = createMemoryRouter([
       { path: 'picker', element: <ProjectPicker /> },
       { path: 'library', element: <Library /> },
       { path: 'editor/:encodedPath', element: <Editor /> },
-      { path: 'browser', element: <Placeholder name="browser" /> },
+      { path: 'browser', element: <Browse /> },
       { path: 'chat', element: <Placeholder name="chat" /> },
       { path: 'settings', element: <Placeholder name="settings" /> },
       { path: 'history', element: <Navigate to="/history/trash" replace /> },
@@ -48,6 +51,8 @@ if (!container) {
 
 initThemeEffect()
 installGroveSubscriber()
+setBrowserPort(browserPort)
+setBrowserEventPort(browserEventPort)
 
 createRoot(container).render(
   <StrictMode>
