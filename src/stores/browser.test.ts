@@ -23,8 +23,8 @@ function makePort(overrides: Partial<BrowserPort> = {}): BrowserPort {
     goForward: vi.fn(async () => {}),
     setReaderMode: vi.fn(async () => {}),
     setViewport: vi.fn(async () => {}),
-    suspendTab: vi.fn(async () => {}),
-    resumeTab: vi.fn(async () => {}),
+    suspendTab: vi.fn(async (_id: string) => {}),
+    resumeTab: vi.fn(async (id: string) => ({ id, url: 'about:blank' })),
     ...overrides
   }
 }

@@ -57,7 +57,7 @@ export function TabBar(): JSX.Element {
               dragId.current = t.id
               e.currentTarget.setPointerCapture(e.pointerId)
             }}
-            onPointerUp={(e) => {
+            onPointerUp={(_e) => {
               if (dragId.current && dragId.current !== t.id) {
                 const targetIndex = tabs.findIndex((x) => x.id === t.id)
                 reorderTab(dragId.current, targetIndex)
