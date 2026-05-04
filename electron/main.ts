@@ -15,6 +15,7 @@ import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './servi
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
 import { initSafeStorageAvailability } from './settings/safe-storage-state'
+import { installSettingsBroadcaster } from './settings/broadcast'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -73,6 +74,8 @@ async function bootstrap(): Promise<void> {
   registerHandlers(ipcHandlers)
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
+  const disposeSettingsBroadcaster = installSettingsBroadcaster()
+  app.on('will-quit', disposeSettingsBroadcaster)
   const disposeDbSubscriber = groveService.onChange((payload) => {
     void (async () => {
       try {
