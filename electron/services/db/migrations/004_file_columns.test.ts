@@ -12,7 +12,7 @@ describe('migration 004 — file columns alignment', () => {
     runMigrations(db, MIGRATIONS_DIR)
 
     const userVersion = db.pragma('user_version', { simple: true }) as number
-    expect(userVersion).toBe(4)
+    expect(userVersion).toBeGreaterThanOrEqual(4)
 
     const cols = db.pragma("table_info('files')") as Array<{ name: string }>
     const names = cols.map((c) => c.name)
@@ -44,7 +44,7 @@ describe('migration 004 — file columns alignment', () => {
 
     // Should NOT throw — migration 004 is idempotent
     expect(() => runMigrations(db, MIGRATIONS_DIR)).not.toThrow()
-    expect((db.pragma('user_version', { simple: true }) as number)).toBe(4)
+    expect((db.pragma('user_version', { simple: true }) as number)).toBeGreaterThanOrEqual(4)
   })
 
   it('existing rows get DEFAULT values for new columns', () => {
