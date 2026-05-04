@@ -305,6 +305,64 @@ describe('library store — select / detailsByPath', () => {
   })
 })
 
+describe('library store — removeItem', () => {
+  beforeEach(() => {
+    useLibraryStore.setState(useLibraryStore.getInitialState(), true)
+    vi.clearAllMocks()
+  })
+
+  it('removes the row from items', () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md'), makeSummary('b.md'), makeSummary('c.md')],
+      total: 3
+    })
+    useLibraryStore.getState().removeItem('b.md')
+    const s = useLibraryStore.getState()
+    expect(s.items.map((i) => i.path)).toEqual(['a.md', 'c.md'])
+  })
+
+  it('clears selectedPath when it matches the deleted path', () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md'), makeSummary('b.md')],
+      total: 2,
+      selectedPath: 'b.md'
+    })
+    useLibraryStore.getState().removeItem('b.md')
+    expect(useLibraryStore.getState().selectedPath).toBeNull()
+  })
+
+  it('preserves selectedPath when deleting a different row', () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md'), makeSummary('b.md')],
+      total: 2,
+      selectedPath: 'a.md'
+    })
+    useLibraryStore.getState().removeItem('b.md')
+    expect(useLibraryStore.getState().selectedPath).toBe('a.md')
+  })
+
+  it('removes the detail from detailsByPath cache', () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md')],
+      total: 1,
+      detailsByPath: new Map([
+        ['a.md', { summary: makeSummary('a.md'), frontmatter: {}, body: 'x' }]
+      ])
+    })
+    useLibraryStore.getState().removeItem('a.md')
+    expect(useLibraryStore.getState().detailsByPath.has('a.md')).toBe(false)
+  })
+
+  it('decrements total', () => {
+    useLibraryStore.setState({
+      items: [makeSummary('a.md'), makeSummary('b.md')],
+      total: 2
+    })
+    useLibraryStore.getState().removeItem('b.md')
+    expect(useLibraryStore.getState().total).toBe(1)
+  })
+})
+
 describe('library store — project:changed reset', () => {
   let handlers: Partial<{
     [K in IpcEventChannel]: (payload: IpcEventContract[K]) => void
