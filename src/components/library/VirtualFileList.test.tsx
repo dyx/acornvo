@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, act, cleanup, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 // Initialize i18n before anything uses useTranslation
@@ -15,10 +15,15 @@ vi.mock('@/ipc/client', () => ({
       getTagCloud: vi.fn(),
       revealInFinder: vi.fn()
     },
+    file: {
+      trash: vi.fn().mockResolvedValue({ ok: true }),
+      hardDelete: vi.fn().mockResolvedValue({ ok: true })
+    },
     on: vi.fn(() => () => {})
   }
 }))
 
+import { ipc } from '@/ipc/client'
 import { useLibraryStore } from '@/stores/library'
 import { VirtualFileList } from './VirtualFileList'
 import type { FileSummary } from '@shared/ipc-contract'
@@ -118,5 +123,148 @@ describe('VirtualFileList', () => {
     useLibraryStore.setState({ items: [row('a.md')], total: 1, selectedPath: 'a.md' })
     render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
     expect(screen.getByRole('listbox')).toBeTruthy()
+  })
+
+  it('Delete key opens trash confirm dialog when a row is selected', () => {
+    useLibraryStore.setState({
+      items: [row('a.md', { title: 'A' }), row('b.md', { title: 'B' })],
+      total: 2,
+      selectedPath: 'a.md'
+    })
+    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    const listbox = screen.getByRole('listbox')
+    fireEvent.keyDown(listbox, { key: 'Delete' })
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: '移到废纸篓' })).toBeTruthy()
+  })
+
+  it('Cmd+Backspace opens trash confirm dialog when a row is selected', () => {
+    useLibraryStore.setState({
+      items: [row('a.md', { title: 'A' })],
+      total: 1,
+      selectedPath: 'a.md'
+    })
+    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    const listbox = screen.getByRole('listbox')
+    fireEvent.keyDown(listbox, { key: 'Backspace', metaKey: true })
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+
+  it('trash shortcut does nothing when no row is selected', () => {
+    useLibraryStore.setState({
+      items: [row('a.md', { title: 'A' })],
+      total: 1,
+      selectedPath: null
+    })
+    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    const listbox = screen.getByRole('listbox')
+    fireEvent.keyDown(listbox, { key: 'Delete' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('E_TRASH fallback: checkbox enables permanent delete, calls hardDelete and cleans store', async () => {
+    vi.mocked(ipc.file.trash).mockResolvedValue({
+      ok: false,
+      error: { code: 'E_TRASH', message: 'Trash failed' }
+    })
+    const hardDelete = vi.fn().mockResolvedValue({ ok: true })
+    vi.mocked(ipc.file.hardDelete).mockImplementation(hardDelete)
+
+    useLibraryStore.setState({
+      items: [row('a.md', { title: 'A' })],
+      total: 1,
+      selectedPath: 'a.md'
+    })
+
+    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+
+    // Trigger Cmd+Backspace to open dialog
+    const listbox = screen.getByRole('listbox')
+    fireEvent.keyDown(listbox, { key: 'Backspace', metaKey: true })
+
+    // Verify initial confirm dialog
+    expect(screen.getByRole('heading', { name: '移到废纸篓' })).toBeTruthy()
+
+    // Click "移到废纸篓" -- trash fails, enters fallback
+    fireEvent.click(screen.getByRole('button', { name: '移到废纸篓' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '无法移到废纸篓' })).toBeTruthy()
+    })
+
+    // Checkbox exists, initially unchecked; "永久删除" disabled
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement
+    expect(checkbox.checked).toBe(false)
+    const hardDeleteButton = screen.getByRole('button', { name: '永久删除' }) as HTMLButtonElement
+    expect(hardDeleteButton.disabled).toBe(true)
+
+    // Check the checkbox to enable "永久删除"
+    fireEvent.click(checkbox)
+    expect(hardDeleteButton.disabled).toBe(false)
+
+    // Click "永久删除"
+    fireEvent.click(hardDeleteButton)
+
+    await waitFor(() => {
+      expect(hardDelete).toHaveBeenCalledWith('a.md')
+    })
+
+    // Store item removed
+    expect(useLibraryStore.getState().items).toHaveLength(0)
+  })
+
+  it('hardDelete failure keeps dialog open and preserves store item', async () => {
+    // Catch expected unhandled rejection from hardDelete throwing IpcError
+    const rejectionCaught = vi.fn<[unknown]>()
+    const onRejection = (reason: unknown) => { rejectionCaught(reason) }
+    process.on('unhandledRejection', onRejection)
+
+    vi.mocked(ipc.file.trash).mockResolvedValue({
+      ok: false,
+      error: { code: 'E_TRASH', message: 'Trash failed' }
+    })
+    vi.mocked(ipc.file.hardDelete).mockResolvedValue({
+      ok: false,
+      error: { code: 'E_UNKNOWN', message: 'Delete failed' }
+    })
+
+    useLibraryStore.setState({
+      items: [row('a.md', { title: 'A' })],
+      total: 1,
+      selectedPath: 'a.md'
+    })
+
+    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+
+    // Trigger Cmd+Backspace
+    const listbox = screen.getByRole('listbox')
+    fireEvent.keyDown(listbox, { key: 'Backspace', metaKey: true })
+
+    // Click "移到废纸篓" -- enters fallback
+    fireEvent.click(screen.getByRole('button', { name: '移到废纸篓' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '无法移到废纸篓' })).toBeTruthy()
+    })
+
+    // Check the checkbox and click "永久删除"
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: '永久删除' }))
+
+    // Let async operations settle (hardDelete fails, throws IpcError)
+    await act(() => Promise.resolve())
+
+    // Verify hardDelete was called
+    await waitFor(() => {
+      expect(rejectionCaught).toHaveBeenCalled()
+    })
+    process.removeListener('unhandledRejection', onRejection)
+
+    // Item still in store (removeItem was never called)
+    expect(useLibraryStore.getState().items).toHaveLength(1)
+    expect(useLibraryStore.getState().items[0].path).toBe('a.md')
+
+    // Dialog remains open (trashTarget was never cleared)
+    expect(screen.getByRole('heading', { name: '无法移到废纸篓' })).toBeTruthy()
   })
 })

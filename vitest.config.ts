@@ -14,11 +14,13 @@ export default defineConfig({
       'shared/**/*.test.ts',
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
-      'tests/**/*.test.ts'
+      'tests/**/*.test.ts',
+      'tests/**/*.test.tsx'
     ],
     environment: 'node',
     environmentMatchGlobs: [
-      ['src/**/*.test.tsx', 'jsdom']
+      ['src/**/*.test.tsx', 'jsdom'],
+      ['tests/**/*.test.tsx', 'jsdom']
     ],
     pool: 'threads',
     testTimeout: 5000,

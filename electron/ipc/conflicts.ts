@@ -4,12 +4,26 @@ import {
   deleteSnapshot,
   writeSnapshot as storeWriteSnapshot
 } from '../services/conflicts/store'
+import { computeDiff, parseSidesPair } from '../services/conflicts/diff'
+import * as opsLog from '../services/ops/log'
+import { shell } from 'electron'
+import { access } from 'node:fs/promises'
+import * as groveSvc from '../services/grove'
+import { safeResolve } from '../services/path-safety'
 import { IpcError } from '@shared/ipc-contract'
 import type { ConflictResolvedBy } from '@shared/conflict-types'
 import type {
   ConflictListResult,
-  ConflictReadResult
+  ConflictReadResult,
+  DiffResult,
+  DiffSidesPair
 } from '@shared/ipc-contract'
+
+function requireGroveRoot(): string {
+  const grove = groveSvc.getCurrent()
+  if (!grove) throw new IpcError('E_NOT_FOUND', 'no grove is currently open')
+  return grove.path
+}
 
 export const conflictHandlers = {
   async list(opts?: { limit?: number; offset?: number }): Promise<ConflictListResult> {
@@ -38,7 +52,17 @@ export const conflictHandlers = {
     if (!id || typeof id !== 'string') {
       throw new IpcError('E_INVALID_ARGS', 'id is required')
     }
+    let path: string | undefined
+    try {
+      const snapshot = await readSnapshot(id)
+      path = snapshot.meta.path
+    } catch {
+      // Missing or corrupt snapshot — still delete, skip audit
+    }
     await deleteSnapshot(id)
+    if (path) {
+      opsLog.record({ op: 'conflict_delete', path, meta: { id } })
+    }
     return { ok: true }
   },
 
@@ -55,5 +79,68 @@ export const conflictHandlers = {
       throw new IpcError('E_INVALID_ARGS', `invalid resolvedBy: ${input.resolvedBy}`)
     }
     return storeWriteSnapshot(input)
+  },
+
+  async diff(id: string, sides: DiffSidesPair): Promise<DiffResult> {
+    if (!id || typeof id !== 'string') {
+      throw new IpcError('E_INVALID_ARGS', 'id is required')
+    }
+    if (!['local-remote', 'local-base', 'remote-base'].includes(sides)) {
+      throw new IpcError('E_INVALID_ARGS', `invalid sides pair: ${sides}`)
+    }
+    const snapshot = await readSnapshot(id)
+    const { leftLabel, rightLabel, leftTextField, rightTextField } = parseSidesPair(sides)
+    return computeDiff({
+      a: snapshot[leftTextField],
+      b: snapshot[rightTextField],
+      leftLabel,
+      rightLabel
+    })
+  },
+
+  async deleteAll(): Promise<{ ok: true; deleted: number }> {
+    const { items } = await listSnapshots()
+    let deleted = 0
+    for (const item of items) {
+      let path: string | undefined
+      try {
+        const snapshot = await readSnapshot(item.id)
+        path = snapshot.meta.path
+      } catch {
+        // Missing or corrupt — skip audit for this entry
+      }
+      try {
+        await deleteSnapshot(item.id)
+        deleted++
+      } catch {
+        // Delete failed — skip audit and don't count
+        continue
+      }
+      if (path) {
+        opsLog.record({ op: 'conflict_delete', path, meta: { id: item.id } })
+      }
+    }
+    return { ok: true, deleted }
+  },
+
+  async openSnapshotFile(
+    id: string,
+    side: 'local' | 'remote' | 'base'
+  ): Promise<{ ok: true }> {
+    if (!id || typeof id !== 'string') {
+      throw new IpcError('E_INVALID_ARGS', 'id is required')
+    }
+    if (!['local', 'remote', 'base'].includes(side)) {
+      throw new IpcError('E_INVALID_ARGS', `invalid side: ${side}`)
+    }
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, `.acornvo/conflicts/${id}/${side}.md`)
+    try {
+      await access(abs)
+    } catch {
+      throw new IpcError('E_NOT_FOUND', `snapshot file ${id}/${side}.md not found`)
+    }
+    shell.showItemInFolder(abs)
+    return { ok: true }
   }
 }

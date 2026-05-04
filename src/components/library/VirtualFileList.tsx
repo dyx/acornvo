@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { IpcError } from '@shared/ipc-contract'
+import { ipc } from '@/ipc/client'
 import { useLibraryStore } from '@/stores/library'
 import { FileRow } from './FileRow'
 import { FileRowContextMenu } from './FileRowContextMenu'
+import { TrashConfirmDialog } from './TrashConfirmDialog'
 import { Search } from 'lucide-react'
 
 const ROW_HEIGHT = 60
@@ -19,9 +22,11 @@ export function VirtualFileList(): JSX.Element {
   const total = useLibraryStore((s) => s.total)
   const selectedPath = useLibraryStore((s) => s.selectedPath)
   const select = useLibraryStore((s) => s.select)
+  const removeItem = useLibraryStore((s) => s.removeItem)
   const setFilter = useLibraryStore((s) => s.setFilter)
   const [query, setQuery] = useState('')
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null)
+  const [trashTarget, setTrashTarget] = useState<string | null>(null)
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -52,12 +57,45 @@ export function VirtualFileList(): JSX.Element {
     virtualizer.scrollToIndex(next, { align: 'auto' })
   }
 
+  const handleTrashConfirm = useCallback(async () => {
+    if (!trashTarget) return
+    const result = await ipc.file.trash(trashTarget)
+    if (!result.ok) {
+      throw new IpcError(result.error)
+    }
+    removeItem(trashTarget)
+    setTrashTarget(null)
+  }, [trashTarget, removeItem])
+
+  const handleHardDelete = useCallback(async () => {
+    if (!trashTarget) return
+    const result = await ipc.file.hardDelete(trashTarget)
+    if (!result.ok) {
+      throw new IpcError(result.error)
+    }
+    removeItem(trashTarget)
+    setTrashTarget(null)
+  }, [trashTarget, removeItem])
+
+  const handleTrashCancel = useCallback(() => {
+    setTrashTarget(null)
+  }, [])
+
   function onKey(e: React.KeyboardEvent<HTMLDivElement>): void {
     if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1) }
     else if (e.key === 'Enter' && selectedPath) {
       e.preventDefault()
       navigate(`/editor/${encodeURIComponent(selectedPath)}`)
+    }
+    else if (
+      e.key === 'Delete' ||
+      (e.key === 'Backspace' && (e.metaKey || e.ctrlKey))
+    ) {
+      if (selectedPath) {
+        e.preventDefault()
+        setTrashTarget(selectedPath)
+      }
     }
   }
 
@@ -102,8 +140,25 @@ export function VirtualFileList(): JSX.Element {
       </div>
 
       {menu ? (
-        <FileRowContextMenu open x={menu.x} y={menu.y} path={menu.path} onClose={() => setMenu(null)} />
+        <FileRowContextMenu
+          open
+          x={menu.x}
+          y={menu.y}
+          path={menu.path}
+          onClose={() => setMenu(null)}
+          onTrash={(path) => { setTrashTarget(path); setMenu(null) }}
+        />
       ) : null}
+
+      {trashTarget && (
+        <TrashConfirmDialog
+          open
+          path={trashTarget}
+          onCancel={handleTrashCancel}
+          onConfirm={handleTrashConfirm}
+          onHardDelete={handleHardDelete}
+        />
+      )}
     </div>
   )
 }

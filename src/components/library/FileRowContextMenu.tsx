@@ -9,9 +9,10 @@ export interface FileRowContextMenuProps {
   y: number
   path: string
   onClose: () => void
+  onTrash?: (path: string) => void
 }
 
-export function FileRowContextMenu({ open, x, y, path, onClose }: FileRowContextMenuProps): JSX.Element | null {
+export function FileRowContextMenu({ open, x, y, path, onClose, onTrash }: FileRowContextMenuProps): JSX.Element | null {
   const { t } = useTranslation()
   const navigate = useNavigate()
   if (!open) return null
@@ -30,6 +31,16 @@ export function FileRowContextMenu({ open, x, y, path, onClose }: FileRowContext
         className="block w-full px-3 py-1.5 text-left text-[12.5px] text-[color:var(--ink)] hover:bg-[color:var(--paper-2)]">
         {t('library.reveal')}
       </button>
+      {onTrash && (
+        <>
+          <div className="mx-2 my-1 border-t border-[color:var(--line)]" />
+          <button type="button" role="menuitem"
+            onClick={() => { onTrash(path); onClose() }}
+            className="block w-full px-3 py-1.5 text-left text-[12.5px] text-[color:var(--ink)] hover:bg-[color:var(--paper-2)]">
+            {t('library.trash')}
+          </button>
+        </>
+      )}
     </div>
   )
 }

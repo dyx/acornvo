@@ -58,4 +58,35 @@ describe('FileRowContextMenu', () => {
     expect(ipc.files.revealInFinder).toHaveBeenCalledWith('a.md')
     expect(onClose).toHaveBeenCalled()
   })
+
+  it('renders trash item when onTrash is provided', () => {
+    render(
+      <MemoryRouter>
+        <FileRowContextMenu open={true} x={10} y={20} path="a.md" onClose={() => {}} onTrash={() => {}} />
+      </MemoryRouter>
+    )
+    expect(screen.getByText(/移到废纸篓/)).toBeTruthy()
+  })
+
+  it('does not render trash item when onTrash is omitted', () => {
+    render(
+      <MemoryRouter>
+        <FileRowContextMenu open={true} x={10} y={20} path="a.md" onClose={() => {}} />
+      </MemoryRouter>
+    )
+    expect(screen.queryByText(/移到废纸篓/)).toBeNull()
+  })
+
+  it('clicking trash item calls onTrash with path and closes', () => {
+    const onTrash = vi.fn()
+    const onClose = vi.fn()
+    render(
+      <MemoryRouter>
+        <FileRowContextMenu open={true} x={10} y={20} path="a.md" onClose={onClose} onTrash={onTrash} />
+      </MemoryRouter>
+    )
+    fireEvent.click(screen.getByText(/移到废纸篓/))
+    expect(onTrash).toHaveBeenCalledWith('a.md')
+    expect(onClose).toHaveBeenCalled()
+  })
 })

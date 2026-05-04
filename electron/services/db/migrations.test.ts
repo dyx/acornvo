@@ -121,6 +121,83 @@ describe('runMigrations error handling', () => {
   })
 })
 
+describe('migration 003 ops_log', () => {
+  let dir: string
+  let db: Database.Database
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mig-003-'))
+    db = new Database(':memory:')
+  })
+  afterEach(() => {
+    db.close()
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('create ops_log table with correct columns', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE t1(x INTEGER);')
+    writeFileSync(join(dir, '002_fts.sql'), 'CREATE TABLE t2(x INTEGER);')
+    writeFileSync(join(dir, '003_ops_log.sql'), `
+      CREATE TABLE ops_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        op TEXT NOT NULL,
+        path TEXT NOT NULL,
+        ts TEXT NOT NULL,
+        meta_json TEXT
+      );
+      CREATE INDEX idx_ops_log_ts ON ops_log(ts DESC);
+      CREATE INDEX idx_ops_log_op_ts ON ops_log(op, ts DESC);
+      PRAGMA user_version = 3;
+    `)
+    db.pragma('user_version = 0')
+    runMigrations(db, dir)
+    const status = db.pragma('user_version', { simple: true }) as number
+    expect(status).toBeGreaterThanOrEqual(3)
+    const tbl = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='ops_log'")
+      .get() as { name: string } | undefined
+    expect(tbl?.name).toBe('ops_log')
+    const cols = db.prepare(`PRAGMA table_info(ops_log)`).all() as Array<{
+      name: string
+      type: string
+      notnull: number
+    }>
+    const byName = new Map(cols.map((c) => [c.name, c]))
+    expect(byName.get('id')?.type).toBe('INTEGER')
+    expect(byName.get('op')?.type).toBe('TEXT')
+    expect(byName.get('op')?.notnull).toBe(1)
+    expect(byName.get('path')?.type).toBe('TEXT')
+    expect(byName.get('path')?.notnull).toBe(1)
+    expect(byName.get('ts')?.type).toBe('TEXT')
+    expect(byName.get('ts')?.notnull).toBe(1)
+    expect(byName.get('meta_json')?.type).toBe('TEXT')
+  })
+
+  it('creates idx_ops_log_ts and idx_ops_log_op_ts', () => {
+    writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE t1(x INTEGER);')
+    writeFileSync(join(dir, '002_fts.sql'), 'CREATE TABLE t2(x INTEGER);')
+    writeFileSync(join(dir, '003_ops_log.sql'), `
+      CREATE TABLE ops_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        op TEXT NOT NULL,
+        path TEXT NOT NULL,
+        ts TEXT NOT NULL,
+        meta_json TEXT
+      );
+      CREATE INDEX idx_ops_log_ts ON ops_log(ts DESC);
+      CREATE INDEX idx_ops_log_op_ts ON ops_log(op, ts DESC);
+      PRAGMA user_version = 3;
+    `)
+    db.pragma('user_version = 0')
+    runMigrations(db, dir)
+    const idx = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='ops_log'`)
+      .all() as Array<{ name: string }>
+    const names = new Set(idx.map((i) => i.name))
+    expect(names.has('idx_ops_log_ts')).toBe(true)
+    expect(names.has('idx_ops_log_op_ts')).toBe(true)
+  })
+})
+
 describe('listApplied', () => {
   let dir: string
   let db: Database.Database

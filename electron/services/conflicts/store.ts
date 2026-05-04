@@ -4,6 +4,7 @@ import * as groveSvc from '../grove'
 import { groveConflictsDir } from '../paths'
 import { safeResolve } from '../path-safety'
 import { writeFileAtomic } from '../fs-atomic'
+import * as opsLog from '../ops/log'
 import { IpcError } from '@shared/ipc-contract'
 import type {
   ConflictItem,
@@ -65,6 +66,17 @@ export async function writeSnapshot(input: WriteSnapshotInput): Promise<{ id: st
     writeFileAtomic(join(dir, 'base.md'), input.baseText),
     writeFileAtomic(join(dir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n')
   ])
+
+  // ops_log: record the resolution (id + resolved_by + winner_path?)
+  opsLog.record({
+    op: 'conflict_resolve',
+    path: input.path,
+    meta: {
+      id,
+      resolved_by: input.resolvedBy,
+      ...(input.winnerPath ? { winner_path: input.winnerPath } : {})
+    }
+  })
 
   // Best-effort prune; failures here MUST NOT break the write.
   try {
@@ -202,6 +214,19 @@ export async function readSnapshot(id: string): Promise<ReadSnapshotResult> {
     }
     throw err
   }
+}
+
+/**
+ * Record a banner-reload (no snapshot, no dialog) into ops_log.
+ * Renderer reaches this via Plan 2's `ops.record` IPC; this helper
+ * exists so the call shape matches `writeSnapshot`-paired writes.
+ */
+export function recordBannerReload(path: string): void {
+  opsLog.record({
+    op: 'conflict_resolve',
+    path,
+    meta: { resolved_by: 'load_remote_banner' }
+  })
 }
 
 export async function deleteSnapshot(id: string): Promise<void> {

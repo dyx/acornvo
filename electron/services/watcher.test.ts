@@ -1,5 +1,5 @@
 // electron/services/watcher.test.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -20,6 +20,8 @@ import {
 } from './watcher'
 import { upsertFile } from './index-queries'
 import { _setStateForTest as _indexerSetState, state as indexerState } from './indexer'
+import * as opsLog from './ops/log'
+import * as dbSvc from './db'
 
 function makeIndexedDb(): Database.Database {
   const db = new Database(':memory:')
@@ -271,5 +273,58 @@ describe('watcher restart logic', () => {
     await start(root, db)
     await _simulateWatcherErrorForTest({ failRestarts: 0, intervalMs: 1 })
     expect(indexerState().state).not.toBe('error')
+  })
+})
+
+describe('watcher rename -> ops_log (phase-10 2.6)', () => {
+  let root: string
+  let db: Database.Database
+
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    vi.spyOn(dbSvc, 'getCurrent').mockReturnValue(db)
+    root = mkdtempSync(join(tmpdir(), 'opslog-'))
+  })
+  afterEach(async () => {
+    await stop()
+    vi.restoreAllMocks()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
+
+  it('records op=rename with old path + meta.new_path when rename detected', async () => {
+    const recordSpy = vi.spyOn(opsLog, 'record')
+    const expectedHash = createHash('sha256').update('same body').digest('hex')
+
+    writeFileSync(join(root, 'a.md'), 'same body')
+    await start(root, db)
+    upsertFile(db, {
+      path: 'a.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: expectedHash,
+      mtime: 1,
+      size_bytes: 9,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
+    })
+
+    rmSync(join(root, 'a.md'))
+    writeFileSync(join(root, 'b.md'), 'same body')
+
+    await waitFor(() => {
+      const row = db.prepare('SELECT path FROM files').get() as { path: string } | undefined
+      return row?.path === 'b.md'
+    }, 3000)
+
+    expect(recordSpy).toHaveBeenCalledWith({
+      op: 'rename',
+      path: 'a.md',
+      meta: { new_path: 'b.md' }
+    })
   })
 })
