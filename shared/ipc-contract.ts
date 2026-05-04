@@ -75,6 +75,7 @@ export type IpcErrorCode =
   | 'E_TRANSFORM_FAILED'
   | 'E_WRITE_FAILED'
   | 'E_INDEX_FAILED'
+  | 'E_KEYCHAIN_UNAVAILABLE'
 
 export const IPC_ERROR_CODES = {
   E_INTERNAL: 'E_INTERNAL',
@@ -95,7 +96,8 @@ export const IPC_ERROR_CODES = {
   E_EXTRACT_EMPTY: 'E_EXTRACT_EMPTY',
   E_TRANSFORM_FAILED: 'E_TRANSFORM_FAILED',
   E_WRITE_FAILED: 'E_WRITE_FAILED',
-  E_INDEX_FAILED: 'E_INDEX_FAILED'
+  E_INDEX_FAILED: 'E_INDEX_FAILED',
+  E_KEYCHAIN_UNAVAILABLE: 'E_KEYCHAIN_UNAVAILABLE'
 } as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
