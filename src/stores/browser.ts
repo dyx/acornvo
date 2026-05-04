@@ -89,6 +89,9 @@ export interface BrowserState {
   reorderTab(id: TabId, targetIndex: number): void
   setReaderMode(id: TabId, on: boolean): Promise<void>
   navigate(id: TabId, url: string): Promise<void>
+  goBack(id: TabId): Promise<void>
+  goForward(id: TabId): Promise<void>
+  reload(id: TabId): Promise<void>
   setViewport(rect: SetViewportArgs): void
   setBookmarksOpen(open: boolean): void
   applyTabPatch(id: TabId, patch: TabPatch): void
@@ -191,6 +194,10 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       )
     }))
   },
+
+  goBack: (id) => port.goBack(id),
+  goForward: (id) => port.goForward(id),
+  reload: (id) => port.reload(id),
 
   setViewport(rect) {
     set({ viewport: rect })
