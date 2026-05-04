@@ -32,21 +32,21 @@
 
 ## 5. History 页面（src/pages/History.tsx）
 
-- [ ] 5.1 路由注册：`/history` → redirect `/history/trash`；`/history/:tab` 接受 trash|conflicts|ops
-- [ ] 5.2 `HistoryLayout.tsx`：Tabs + URL 同步（`useParams` + `useNavigate`）
-- [ ] 5.3 `TrashTab.tsx`：顶部提示 + `ops.list({ op: 'trash', limit: 100, offset: 0 })` 虚拟化列表；行"打开原目录"按钮
-- [ ] 5.4 `ConflictsTab.tsx`：左右 `ResizablePanel`（shadcn）；左 `conflict.list` 列表；右 `ConflictDetailPanel`；URL `?id=<cid>` 深链接；顶部"清空所有快照"按钮
-- [ ] 5.5 `OpsTab.tsx`：顶部 op 过滤 chips；`ops.list({ op })` 列表；click `conflict_resolve` 行跳 `/history/conflicts?id=<meta.id>`
-- [ ] 5.6 空态：三 tab 各自友好文案
-- [ ] 5.7 TitleBar："历史"
+- [x] 5.1 路由注册：`/history` → redirect `/history/trash`；`/history/:tab` 接受 trash|conflicts|ops
+- [x] 5.2 `HistoryLayout.tsx`：Tabs + URL 同步（`useParams` + `useNavigate`）
+- [x] 5.3 `TrashTab.tsx`：顶部提示 + `ops.list({ op: 'trash', limit: 100, offset: 0 })` 虚拟化列表；行"打开原目录"按钮
+- [x] 5.4 `ConflictsTab.tsx`：左右 `ResizablePanel`（shadcn）；左 `conflict.list` 列表；右 `ConflictDetailPanel`；URL `?id=<cid>` 深链接；顶部"清空所有快照"按钮
+- [x] 5.5 `OpsTab.tsx`：顶部 op 过滤 chips；`ops.list({ op })` 列表；click `conflict_resolve` 行跳 `/history/conflicts?id=<meta.id>`
+- [x] 5.6 空态：三 tab 各自友好文案
+- [x] 5.7 TitleBar："历史"
 
 ## 6. ConflictDetailPanel（conflict-diff-view）
 
-- [ ] 6.1 `src/components/history/ConflictDetailPanel.tsx`：header + 视图切换 toggle + diff 主体 + 底部操作
-- [ ] 6.2 `DiffView.tsx`：side-by-side 双列；行号 + 着色（等/删/增）
-- [ ] 6.3 切换 toggle 时重新调 `conflict.diff(id, sides)`
-- [ ] 6.4 "在系统文件管理器中打开 local/remote/base" → 调 `file.openExternal` 或 `shell.showItemInFolder`（三个按钮）
-- [ ] 6.5 "删除此快照"按钮 + 二次确认 → `conflict.delete(id)` → 关闭详情 / 列表刷新
+- [x] 6.1 `src/components/history/ConflictDetailPanel.tsx`：header + 视图切换 toggle + diff 主体 + 底部操作
+- [x] 6.2 `DiffView.tsx`：side-by-side 双列；行号 + 着色（等/删/增）
+- [x] 6.3 切换 toggle 时重新调 `conflict.diff(id, sides)`
+- [x] 6.4 "在系统文件管理器中打开 local/remote/base" → 调 `file.openExternal` 或 `shell.showItemInFolder`（三个按钮）
+- [x] 6.5 "删除此快照"按钮 + 二次确认 → `conflict.delete(id)` → 关闭详情 / 列表刷新
 
 ## 7. i18n / 文案
 
