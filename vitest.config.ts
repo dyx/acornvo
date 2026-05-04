@@ -11,6 +11,7 @@ export default defineConfig({
   test: {
     include: [
       'electron/**/*.test.ts',
+      'preload/**/*.test.ts',
       'shared/**/*.test.ts',
       'src/**/*.test.ts',
       'src/**/*.test.tsx',

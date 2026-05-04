@@ -99,6 +99,15 @@ const request: IpcClient<IpcContract> = {
     update: (id, patch) => invoke('bookmarks.update', id, patch),
     delete: (id) => invoke('bookmarks.delete', id),
     getByUrl: (url) => invoke('bookmarks.getByUrl', url)
+  },
+  settings: {
+    get: (ns) => invoke('settings.get', ns),
+    set: (ns, patch) => invoke('settings.set', ns, patch),
+    aiProfilesList: () => invoke('settings.aiProfilesList'),
+    aiProfilesCreate: (input) => invoke('settings.aiProfilesCreate', input),
+    aiProfilesUpdate: (id, patch) => invoke('settings.aiProfilesUpdate', id, patch),
+    aiProfilesDelete: (id) => invoke('settings.aiProfilesDelete', id),
+    browserClearCookies: () => invoke('settings.browserClearCookies')
   }
 }
 
@@ -127,6 +136,8 @@ if (!process.contextIsolated) {
 
 contextBridge.exposeInMainWorld('api', api)
 
-// Explicitly NOT exposed: ipcRenderer, process, require, Buffer, __dirname.
-// Exposing them would defeat the preload sandbox. Any future additions MUST
-// go through the `api` object defined above, not exposeInMainWorld directly.
+// Explicitly NOT exposed: ipcRenderer, process, require, Buffer, __dirname,
+// settings.secret.*, getProfileDecryptedKey, aiProfilesGetDecryptedKey.
+// Exposing them would defeat the preload sandbox or leak plaintext API keys
+// into the renderer. Any future additions MUST go through the `api` object
+// defined above, not exposeInMainWorld directly.
