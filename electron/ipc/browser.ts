@@ -1,7 +1,7 @@
 // electron/ipc/browser.ts — implemented in Plan 2 task 5.3
+import type { BrowserWindow } from 'electron'
 import type { IpcContract, TabId, SetViewportArgs } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
-import { mainWindow } from '../main'
 import {
   createTabView,
   attachTabEvents,
@@ -26,8 +26,13 @@ function adoptWebContents(webContents: Electron.WebContents): TabId {
   return id
 }
 
+let _mainWindow: BrowserWindow | null = null
+export function setMainWindowForBrowser(win: BrowserWindow): void {
+  _mainWindow = win
+}
+
 function registerNewTabFromUrl(id: TabId, url: string): void {
-  const win = mainWindow
+  const win = _mainWindow
   if (!win) throw new Error('mainWindow not ready')
   const { view, webContents } = createTabView({
     url,
