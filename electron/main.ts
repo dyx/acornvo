@@ -14,6 +14,7 @@ import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
+import { initSafeStorageAvailability } from './settings/safe-storage-state'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -68,6 +69,7 @@ async function bootstrap(): Promise<void> {
   await initLogger()
   await app.whenReady()
   installCsp()
+  initSafeStorageAvailability()
   registerHandlers(ipcHandlers)
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
