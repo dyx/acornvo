@@ -407,6 +407,8 @@ export type IpcContract = {
     setViewport: (rect: SetViewportArgs) => void
     suspendTab: (id: TabId) => void
     resumeTab: (id: TabId) => { id: TabId; url: string }
+    hideBrowserView: () => void
+    showBrowserView: () => void
   }
   bookmarks: {
     list: (opts: BookmarkListOpts) => BookmarkListResult

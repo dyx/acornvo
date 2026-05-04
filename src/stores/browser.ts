@@ -18,6 +18,8 @@ export interface BrowserPort {
   setViewport(rect: SetViewportArgs): Promise<void>
   suspendTab(id: TabId): Promise<void>
   resumeTab(id: TabId): Promise<{ id: TabId; url: string }>
+  hideBrowserView(): Promise<void>
+  showBrowserView(): Promise<void>
 }
 
 let port: BrowserPort = {
@@ -31,7 +33,9 @@ let port: BrowserPort = {
   setReaderMode: () => { throw new Error('BrowserPort not configured') },
   setViewport: () => { throw new Error('BrowserPort not configured') },
   suspendTab: () => { throw new Error('BrowserPort not configured') },
-  resumeTab: () => { throw new Error('BrowserPort not configured') }
+  resumeTab: () => { throw new Error('BrowserPort not configured') },
+  hideBrowserView: () => { throw new Error('BrowserPort not configured') },
+  showBrowserView: () => { throw new Error('BrowserPort not configured') }
 }
 
 export function setBrowserPort(p: BrowserPort): void {

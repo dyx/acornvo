@@ -91,7 +91,9 @@ const request: IpcClient<IpcContract> = {
     setReaderMode: (id, on) => invoke('browser.setReaderMode', id, on),
     setViewport: (rect) => invoke('browser.setViewport', rect),
     suspendTab: (id) => invoke('browser.suspendTab', id),
-    resumeTab: (id) => invoke('browser.resumeTab', id)
+    resumeTab: (id) => invoke('browser.resumeTab', id),
+    hideBrowserView: () => invoke('browser.hideBrowserView'),
+    showBrowserView: () => invoke('browser.showBrowserView')
   },
   bookmarks: {
     list: (opts) => invoke('bookmarks.list', opts),

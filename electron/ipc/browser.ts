@@ -27,6 +27,7 @@ function adoptWebContents(webContents: Electron.WebContents): TabId {
 }
 
 let _mainWindow: BrowserWindow | null = null
+let _hiddenTabId: TabId | null = null
 export function setMainWindowForBrowser(win: BrowserWindow): void {
   _mainWindow = win
 }
@@ -54,6 +55,7 @@ export const browserHandlers: H = {
     const resolved = resolveCreateUrl(url)
     registerNewTabFromUrl(id, resolved)
     getManager().attach(id)
+    _hiddenTabId = null
     logger.info('browser.createTab', { id, url: resolved })
     return { id, url: resolved }
   },
@@ -62,6 +64,7 @@ export const browserHandlers: H = {
   },
   activateTab(id) {
     getManager().attach(id)
+    _hiddenTabId = null
   },
   navigate(id, url) {
     const tab = getManager().get(id)
@@ -110,6 +113,20 @@ export const browserHandlers: H = {
   resumeTab(id) {
     registerNewTabFromUrl(id, 'about:blank')
     getManager().attach(id)
+    _hiddenTabId = null
     return { id, url: 'about:blank' }
+  },
+  hideBrowserView() {
+    const id = getManager().attachedTabId()
+    if (id) {
+      _hiddenTabId = id
+      getManager().detach(id)
+    }
+  },
+  showBrowserView() {
+    if (_hiddenTabId && getManager().has(_hiddenTabId)) {
+      getManager().attach(_hiddenTabId)
+    }
+    _hiddenTabId = null
   }
 }

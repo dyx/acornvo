@@ -1,6 +1,7 @@
 // src/pages/Browse.tsx
 import { useEffect, useRef, type JSX } from 'react'
 import { useBrowserStore } from '@/stores/browser'
+import { browserPort } from '@/ipc/browser-port'
 import { TabBar } from '@/components/browser/TabBar'
 import { AddressBar } from '@/components/browser/AddressBar'
 import { BookmarkSidebar } from '@/components/browser/BookmarkSidebar'
@@ -18,6 +19,16 @@ export function Browse(): JSX.Element {
   const setViewport = useBrowserStore((s) => s.setViewport)
 
   const viewportRef = useRef<HTMLDivElement>(null)
+
+  // Detach the native WebContentsView when leaving /browser, re-attach on return.
+  // The view is rendered by the OS compositor on top of all HTML — without this
+  // it would cover Settings, Library, and every other page.
+  useEffect(() => {
+    void browserPort.showBrowserView()
+    return () => {
+      void browserPort.hideBrowserView()
+    }
+  }, [])
 
   // Auto-create the first tab
   useEffect(() => {
