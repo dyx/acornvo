@@ -4,6 +4,8 @@ import {
   deleteSnapshot,
   writeSnapshot as storeWriteSnapshot
 } from '../services/conflicts/store'
+import { computeDiff, parseSidesPair } from '../services/conflicts/diff'
+import * as opsLog from '../services/ops/log'
 import { IpcError } from '@shared/ipc-contract'
 import type { ConflictResolvedBy } from '@shared/conflict-types'
 import type {
@@ -40,7 +42,17 @@ export const conflictHandlers = {
     if (!id || typeof id !== 'string') {
       throw new IpcError('E_INVALID_ARGS', 'id is required')
     }
+    let path: string | undefined
+    try {
+      const snapshot = await readSnapshot(id)
+      path = snapshot.meta.path
+    } catch {
+      // Missing or corrupt snapshot — still delete, skip audit
+    }
     await deleteSnapshot(id)
+    if (path) {
+      opsLog.record({ op: 'conflict_delete', path, meta: { id } })
+    }
     return { ok: true }
   },
 
@@ -60,10 +72,44 @@ export const conflictHandlers = {
   },
 
   async diff(id: string, sides: DiffSidesPair): Promise<DiffResult> {
-    throw new Error('not implemented')
+    if (!id || typeof id !== 'string') {
+      throw new IpcError('E_INVALID_ARGS', 'id is required')
+    }
+    if (!['local-remote', 'local-base', 'remote-base'].includes(sides)) {
+      throw new IpcError('E_INVALID_ARGS', `invalid sides pair: ${sides}`)
+    }
+    const snapshot = await readSnapshot(id)
+    const { leftLabel, rightLabel, leftTextField, rightTextField } = parseSidesPair(sides)
+    return computeDiff({
+      a: snapshot[leftTextField],
+      b: snapshot[rightTextField],
+      leftLabel,
+      rightLabel
+    })
   },
 
   async deleteAll(): Promise<{ ok: true; deleted: number }> {
-    throw new Error('not implemented')
+    const { items } = await listSnapshots()
+    let deleted = 0
+    for (const item of items) {
+      let path: string | undefined
+      try {
+        const snapshot = await readSnapshot(item.id)
+        path = snapshot.meta.path
+      } catch {
+        // Missing or corrupt — skip audit for this entry
+      }
+      try {
+        await deleteSnapshot(item.id)
+        deleted++
+      } catch {
+        // Delete failed — skip audit and don't count
+        continue
+      }
+      if (path) {
+        opsLog.record({ op: 'conflict_delete', path, meta: { id: item.id } })
+      }
+    }
+    return { ok: true, deleted }
   }
 }
