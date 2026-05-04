@@ -390,6 +390,13 @@ export type IpcContract = {
     cancelClip: (runId: ClipRunId) => void
     reextract: (runId: ClipRunId, tabId: TabId) => ClipPreview
   }
+  clips: {
+    create: (input: ClipCreateInput) => Clip
+    list: (opts: ClipsListOpts) => ClipsListResult
+    getByUrl: (url: string) => Clip | null
+    getById: (id: number) => Clip | null
+    delete: (id: number) => { ok: true }
+  }
 }
 
 /**
