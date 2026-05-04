@@ -14,6 +14,7 @@ export interface Tab {
   readerMode: boolean
   suspended: boolean // true when WebContents has been destroyed (LRU)
   savedUrl: string // last-known url; used to restore on resume
+  isClipped: boolean // phase-12: checked on did-navigate via clips.getByUrl
 }
 
 export type TabPatch = Partial<

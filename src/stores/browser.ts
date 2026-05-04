@@ -1,6 +1,7 @@
 // src/stores/browser.ts
 import { create } from 'zustand'
 import type { Tab, TabId, TabPatch, SetViewportArgs, TabStateChangedPayload } from '@shared/browser-types'
+import { getClipsPort } from '@/ipc/clips-port'
 
 const BLANK_URL = 'about:blank'
 const ALIVE_LIMIT = 20
@@ -66,13 +67,35 @@ function makeTab(id: TabId, url: string): Tab {
     canGoForward: false,
     readerMode: false,
     suspended: false,
-    savedUrl: url
+    savedUrl: url,
+    isClipped: false
   }
 }
 
 // --- Store ---
 
 let viewportTimer: ReturnType<typeof setTimeout> | null = null
+
+// --- isClipped sync (phase-12) ---
+const clipCheckTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function scheduleClipCheck(tabId: string, url: string): void {
+  const prev = clipCheckTimers.get(tabId)
+  if (prev) clearTimeout(prev)
+  const t = setTimeout(async () => {
+    try {
+      const r = await getClipsPort().getByUrl({ url })
+      if (!r.ok) return
+      const clipped = r.data !== null
+      useBrowserStore.setState((s) => ({
+        tabs: s.tabs.map((tab) => (tab.id === tabId ? { ...tab, isClipped: clipped } : tab))
+      }))
+    } catch {
+      // swallow — best-effort indicator
+    }
+  }, 200)
+  clipCheckTimers.set(tabId, t)
+}
 
 export interface BrowserState {
   tabs: Tab[]
@@ -215,5 +238,6 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
     set((s) => ({
       tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch, savedUrl: patch.url ?? t.savedUrl } : t))
     }))
+    if (patch.url) scheduleClipCheck(id, patch.url)
   }
 }))
