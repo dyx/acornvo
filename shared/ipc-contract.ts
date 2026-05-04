@@ -78,6 +78,24 @@ export type {
   BrowserSettings
 } from './settings-types'
 
+// --- jobs namespace types (phase-14) ---
+
+import type { Job, JobListFilter } from './job-types'
+
+export type { Job, JobStatus, EnqueueOpts, JobListFilter, JobKind } from './job-types'
+
+export interface JobsListResult {
+  items: Job[]
+  total: number
+}
+
+export type JobsRetryError = 'E_NOT_FOUND' | 'E_STATUS_NOT_ALLOWED'
+export type JobsCancelError = 'E_NOT_FOUND' | 'E_STATUS_NOT_ALLOWED'
+
+export type JobsRetryResult = { ok: true } | { error: JobsRetryError }
+export type JobsCancelResult = { ok: true } | { error: JobsCancelError }
+export type JobsClearDoneResult = { removed: number }
+
 export type IpcErrorCode =
   | 'E_INTERNAL'
   | 'E_INVALID_ARGS'
@@ -440,6 +458,12 @@ export type IpcContract = {
     browserClearCookies: () => { ok: true }
     keychainAvailable: () => boolean
   }
+  jobs: {
+    list: (filter: JobListFilter) => JobsListResult
+    retry: (id: string) => JobsRetryResult
+    cancel: (id: string) => JobsCancelResult
+    clearDone: () => JobsClearDoneResult
+  }
 }
 
 /**
@@ -467,6 +491,7 @@ export type IpcEventContract = {
   'index:rebuildDone': { total: number }
   'browser:tabStateChanged': TabStateChangedPayload
   'settings:changed': SettingsChangedPayload
+  'jobs:changed': Job
 }
 
 export type IpcEventChannel = keyof IpcEventContract
