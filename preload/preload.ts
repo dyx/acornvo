@@ -48,7 +48,8 @@ const request: IpcClient<IpcContract> = {
     exists: (rel) => invoke('file.exists', rel),
     list: (dirRel, opts) => invoke('file.list', dirRel, opts),
     rename: (oldRel, newRel) => invoke('file.rename', oldRel, newRel),
-    openExternal: (rel) => invoke('file.openExternal', rel)
+    openExternal: (rel) => invoke('file.openExternal', rel),
+    openContainingDir: (rel) => invoke('file.openContainingDir', rel)
   },
   files: {
     list: (filter, pagination) => invoke('files.list', filter, pagination),
@@ -66,7 +67,8 @@ const request: IpcClient<IpcContract> = {
     list: (opts) => invoke('conflict.list', opts),
     read: (id) => invoke('conflict.read', id),
     delete: (id) => invoke('conflict.delete', id),
-    writeSnapshot: (input) => invoke('conflict.writeSnapshot', input)
+    writeSnapshot: (input) => invoke('conflict.writeSnapshot', input),
+    openSnapshotFile: (id, side) => invoke('conflict.openSnapshotFile', id, side)
   },
   search: {
     rebuild: () => invoke('search.rebuild'),

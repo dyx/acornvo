@@ -99,6 +99,53 @@ describe('TrashConfirmDialog', () => {
     expect(screen.getByRole('button', { name: '取消' })).toBeTruthy()
   })
 
+  it('disables "永久删除" button while hard delete is in progress (double-click prevention)', async () => {
+    const onConfirm = vi.fn().mockRejectedValue(new IpcError('E_TRASH', 'Cannot move to trash'))
+
+    // Slow hard delete that we control
+    let resolveHardDelete!: () => void
+    const hardDeletePromise = new Promise<void>((resolve) => {
+      resolveHardDelete = resolve
+    })
+    const onHardDelete = vi.fn().mockImplementation(() => hardDeletePromise)
+    const onCancel = vi.fn()
+
+    render(
+      <TrashConfirmDialog
+        open={true}
+        path="notes/test.md"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        onHardDelete={onHardDelete}
+      />
+    )
+
+    // Trigger fallback mode
+    fireEvent.click(screen.getByRole('button', { name: '移到废纸篓' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '永久删除' })).toBeTruthy()
+    })
+
+    // Check the checkbox to enable the button
+    fireEvent.click(screen.getByRole('checkbox'))
+
+    // Click "永久删除"
+    fireEvent.click(screen.getByRole('button', { name: '永久删除' }))
+
+    // Button should be disabled while operation is in progress
+    await waitFor(() => {
+      const btn = screen.getByRole('button', { name: '永久删除' }) as HTMLButtonElement
+      expect(btn.disabled).toBe(true)
+    })
+
+    // Verify onHardDelete was called exactly once
+    expect(onHardDelete).toHaveBeenCalledTimes(1)
+
+    // Release the promise
+    resolveHardDelete()
+  })
+
   it('does NOT call onHardDelete while checkbox is unchecked', async () => {
     const onConfirm = vi.fn().mockRejectedValue(new IpcError('E_TRASH', 'Cannot move to trash'))
     const onCancel = vi.fn()

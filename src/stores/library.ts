@@ -44,6 +44,7 @@ export interface LibraryState {
   loadCategoryTree: () => Promise<void>
   loadTagCloud: () => Promise<void>
   select: (path: string | null) => Promise<void>
+  removeItem: (path: string) => void
   refresh: () => Promise<void>
 }
 
@@ -143,6 +144,18 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     next.set(path, detail)
     set({ selectedPath: path, detailsByPath: next })
   },
+  removeItem(path) {
+    const { items, selectedPath, detailsByPath } = get()
+    const nextDetails = new Map(detailsByPath)
+    nextDetails.delete(path)
+    set({
+      items: items.filter((i) => i.path !== path),
+      total: Math.max(0, items.length - 1),
+      selectedPath: selectedPath === path ? null : selectedPath,
+      detailsByPath: nextDetails
+    })
+  },
+
   async refresh() {
     await Promise.all([
       get().load(),

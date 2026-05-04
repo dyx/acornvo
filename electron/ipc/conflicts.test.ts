@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdtemp, rm, mkdir } from 'node:fs/promises'
+vi.mock('electron', () => ({
+  shell: { showItemInFolder: vi.fn() }
+}))
+import { shell } from 'electron'
+import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as groveSvc from '../services/grove'
@@ -9,6 +13,7 @@ import { conflictHandlers } from './conflicts'
 
 let tmp: string
 beforeEach(async () => {
+  vi.clearAllMocks()
   tmp = await mkdtemp(join(tmpdir(), 'cf-h-'))
   vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
     id: 'g', path: tmp, name: 'g', color: 'acorn',
@@ -239,5 +244,52 @@ describe('conflictHandlers.deleteAll', () => {
       path: 'ok.md',
       meta: { id: idOk }
     })
+  })
+})
+
+describe('conflictHandlers.openSnapshotFile', () => {
+  it('calls shell.showItemInFolder with the snapshot side file path — returns { ok: true }', async () => {
+    const { id } = await writeSnapshot({
+      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      resolvedBy: 'keep_local'
+    })
+    // Wait, the writeSnapshot already writes the side files.
+    // Ensure the file exists (store should create it)
+    const result = await conflictHandlers.openSnapshotFile(id, 'local')
+    expect(shell.showItemInFolder).toHaveBeenCalledWith(
+      join(tmp, '.acornvo/conflicts', id, 'local.md')
+    )
+    expect(result).toEqual({ ok: true })
+  })
+
+  it('throws E_NOT_FOUND when snapshot file does not exist', async () => {
+    const { id } = await writeSnapshot({
+      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      resolvedBy: 'keep_local'
+    })
+    // Remove the local.md file to trigger E_NOT_FOUND
+    await rm(join(tmp, '.acornvo/conflicts', id, 'local.md'))
+    await expect(
+      conflictHandlers.openSnapshotFile(id, 'local')
+    ).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+  })
+
+  it('throws E_INVALID_ARGS for empty id', async () => {
+    await expect(
+      conflictHandlers.openSnapshotFile('', 'local')
+    ).rejects.toMatchObject({ code: 'E_INVALID_ARGS' })
+  })
+
+  it('throws E_INVALID_ARGS for invalid side', async () => {
+    await expect(
+      conflictHandlers.openSnapshotFile('any-id', 'invalid' as any)
+    ).rejects.toMatchObject({ code: 'E_INVALID_ARGS' })
+  })
+
+  it('throws E_NOT_FOUND when no grove is open', async () => {
+    vi.spyOn(groveSvc, 'getCurrent').mockReturnValue(null)
+    await expect(
+      conflictHandlers.openSnapshotFile('any-id', 'local')
+    ).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
   })
 })

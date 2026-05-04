@@ -245,6 +245,7 @@ export type IpcContract = {
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]
     rename: (oldRel: string, newRel: string) => void
     openExternal: (rel: string) => { ok: true }
+    openContainingDir: (rel: string) => { ok: true } | { ok: false; reason: 'missing' }
     trash: (rel: string) => FileTrashResult
     hardDelete: (rel: string) => FileTrashResult
   }
@@ -287,6 +288,7 @@ export type IpcContract = {
     }) => { id: string }
     diff: (id: string, sides: DiffSidesPair) => DiffResult
     deleteAll: () => { ok: true; deleted: number }
+    openSnapshotFile: (id: string, side: 'local' | 'remote' | 'base') => { ok: true }
   }
   search: {
     quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]

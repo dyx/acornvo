@@ -6,6 +6,10 @@ import {
 } from '../services/conflicts/store'
 import { computeDiff, parseSidesPair } from '../services/conflicts/diff'
 import * as opsLog from '../services/ops/log'
+import { shell } from 'electron'
+import { access } from 'node:fs/promises'
+import * as groveSvc from '../services/grove'
+import { safeResolve } from '../services/path-safety'
 import { IpcError } from '@shared/ipc-contract'
 import type { ConflictResolvedBy } from '@shared/conflict-types'
 import type {
@@ -14,6 +18,12 @@ import type {
   DiffResult,
   DiffSidesPair
 } from '@shared/ipc-contract'
+
+function requireGroveRoot(): string {
+  const grove = groveSvc.getCurrent()
+  if (!grove) throw new IpcError('E_NOT_FOUND', 'no grove is currently open')
+  return grove.path
+}
 
 export const conflictHandlers = {
   async list(opts?: { limit?: number; offset?: number }): Promise<ConflictListResult> {
@@ -111,5 +121,26 @@ export const conflictHandlers = {
       }
     }
     return { ok: true, deleted }
+  },
+
+  async openSnapshotFile(
+    id: string,
+    side: 'local' | 'remote' | 'base'
+  ): Promise<{ ok: true }> {
+    if (!id || typeof id !== 'string') {
+      throw new IpcError('E_INVALID_ARGS', 'id is required')
+    }
+    if (!['local', 'remote', 'base'].includes(side)) {
+      throw new IpcError('E_INVALID_ARGS', `invalid side: ${side}`)
+    }
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, `.acornvo/conflicts/${id}/${side}.md`)
+    try {
+      await access(abs)
+    } catch {
+      throw new IpcError('E_NOT_FOUND', `snapshot file ${id}/${side}.md not found`)
+    }
+    shell.showItemInFolder(abs)
+    return { ok: true }
   }
 }

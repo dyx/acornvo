@@ -6,7 +6,7 @@ import { join } from 'node:path'
 // We mock the grove service so handlers see whichever grove root we pick per-test.
 vi.mock('../services/grove', () => ({ getCurrent: vi.fn() }))
 vi.mock('electron', () => ({
-  shell: { openPath: vi.fn() }
+  shell: { openPath: vi.fn(), showItemInFolder: vi.fn() }
 }))
 import * as groveSvc from '../services/grove'
 import { shell } from 'electron'
@@ -274,6 +274,43 @@ describe('fileHandlers.openExternal', () => {
   it('throws E_INTERNAL when shell.openPath returns a failure string', async () => {
     ;(shell.openPath as unknown as ReturnType<typeof vi.fn>).mockResolvedValue('some error')
     await expect(fileHandlers.openExternal('a.md')).rejects.toMatchObject({ code: 'E_INTERNAL' })
+  })
+})
+
+describe('fileHandlers.openContainingDir', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ipccd-'))
+    setGroveRoot(dir)
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    setGroveRoot(null)
+  })
+
+  it('resolves rel against grove and calls shell.showItemInFolder — returns { ok: true }', async () => {
+    writeFileSync(join(dir, 'a.md'), 'content')
+    const result = await fileHandlers.openContainingDir('a.md')
+    expect(shell.showItemInFolder).toHaveBeenCalledWith(join(dir, 'a.md'))
+    expect(result).toEqual({ ok: true })
+  })
+
+  it('returns { ok: false, reason: \'missing\' } when containing dir does not exist', async () => {
+    const result = await fileHandlers.openContainingDir('missing-dir/nope.md')
+    expect(result).toEqual({ ok: false, reason: 'missing' })
+    expect(shell.showItemInFolder).not.toHaveBeenCalled()
+  })
+
+  it('rejects path traversal with E_PERMISSION', async () => {
+    await expect(fileHandlers.openContainingDir('../escape.md')).rejects.toMatchObject({
+      code: 'E_PERMISSION'
+    })
+  })
+
+  it('throws E_NOT_FOUND when no grove is open', async () => {
+    setGroveRoot(null)
+    await expect(fileHandlers.openContainingDir('a.md')).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
   })
 })
 

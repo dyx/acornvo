@@ -31,6 +31,7 @@ export function TrashConfirmDialog({
   const [errorMessage, setErrorMessage] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [hardDeleting, setHardDeleting] = useState(false)
   const closingRef = useRef(false)
 
   // Reset state when dialog closes (via X button, Escape, or parent set open=false)
@@ -41,6 +42,7 @@ export function TrashConfirmDialog({
         setErrorMessage('')
         setAcknowledged(false)
         setConfirming(false)
+        setHardDeleting(false)
         if (!closingRef.current) {
           onCancel()
         }
@@ -67,9 +69,14 @@ export function TrashConfirmDialog({
   }, [onConfirm])
 
   const handleHardDelete = useCallback(async () => {
-    if (!acknowledged) return
-    await onHardDelete()
-  }, [acknowledged, onHardDelete])
+    if (!acknowledged || hardDeleting) return
+    setHardDeleting(true)
+    try {
+      await onHardDelete()
+    } finally {
+      setHardDeleting(false)
+    }
+  }, [acknowledged, hardDeleting, onHardDelete])
 
   const handleCancel = useCallback(() => {
     closingRef.current = true
@@ -128,7 +135,7 @@ export function TrashConfirmDialog({
               <Button
                 variant="destructive"
                 onClick={handleHardDelete}
-                disabled={!acknowledged}
+                disabled={!acknowledged || hardDeleting}
               >
                 永久删除
               </Button>

@@ -187,6 +187,20 @@ export const fileHandlers = {
     return { ok: true }
   },
 
+  async openContainingDir(
+    rel: string
+  ): Promise<{ ok: true } | { ok: false; reason: 'missing' }> {
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, rel)
+    try {
+      await access(dirname(abs))
+    } catch {
+      return { ok: false, reason: 'missing' }
+    }
+    shell.showItemInFolder(abs)
+    return { ok: true }
+  },
+
   async rename(oldRel: string, newRel: string): Promise<void> {
     const root = requireGroveRoot()
     const absOld = safeResolve(root, oldRel)

@@ -50,19 +50,19 @@
 
 ## 7. i18n / 文案
 
-- [ ] 7.1 `history.tabs.trash` / `history.tabs.conflicts` / `history.tabs.ops`
-- [ ] 7.2 `trash.confirm_title` / `trash.confirm_body` / `trash.fallback_title` / `trash.hard_delete_confirm`
-- [ ] 7.3 `history.trash.notice`（系统回收站说明）
-- [ ] 7.4 `history.conflicts.clear_all` / `history.conflicts.clear_all_confirm`
-- [ ] 7.5 `diff.view.local_remote` / `diff.view.local_base` / `diff.view.remote_base`
-- [ ] 7.6 op 文案模板：`ops.op.trash` / `ops.op.hard_delete` / `ops.op.conflict_resolve` / `ops.op.conflict_delete` / `ops.op.rename`
+- [x] 7.1 `history.tabs.trash` / `history.tabs.conflicts` / `history.tabs.ops`
+- [x] 7.2 `trash.confirm_title` / `trash.confirm_body` / `trash.fallback_title` / `trash.hard_delete_confirm`
+- [x] 7.3 `history.trash.notice`（系统回收站说明）
+- [x] 7.4 `history.conflicts.clear_all` / `history.conflicts.clear_all_confirm`
+- [x] 7.5 `diff.view.local_remote` / `diff.view.local_base` / `diff.view.remote_base`
+- [x] 7.6 op 文案模板：`ops.op.trash` / `ops.op.hard_delete` / `ops.op.conflict_resolve` / `ops.op.conflict_delete` / `ops.op.rename`
 
 ## 8. 验收
 
-- [ ] 8.1 右键某文件 "移到废纸篓" → confirm → 文件进系统回收站；Library 行消失；ops_log 加行
-- [ ] 8.2 `Cmd+Backspace`（聚焦 Library 选中行）→ 同上 confirm 弹窗
-- [ ] 8.3 在 `/editor/:path` 按 `Cmd+Backspace` → 不触发删除
-- [ ] 8.4 `shell.trashItem` 失败（mock）→ 降级 modal；勾选确认 "永久删除" → `fs.unlink`；ops_log `op='hard_delete'`
+- [x] 8.1 右键某文件 "移到废纸篓" → confirm → 文件进系统回收站；Library 行消失；ops_log 加行
+- [x] 8.2 `Cmd+Backspace`（聚焦 Library 选中行）→ 同上 confirm 弹窗
+- [x] 8.3 在 `/editor/:path` 按 `Cmd+Backspace` → 不触发删除
+- [x] 8.4 `shell.trashItem` 失败（mock）→ 降级 modal；勾选确认 "永久删除" → `fs.unlink`；ops_log `op='hard_delete'`
 - [ ] 8.5 `/history/trash` 列出最近删的文件；点"打开原目录"跳 Finder
 - [ ] 8.6 `/history/conflicts` 列出 phase 9 产生的快照；点击某条右侧显示 side-by-side diff
 - [ ] 8.7 切换 `local ↔ base` → diff 重绘
