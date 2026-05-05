@@ -272,3 +272,66 @@ describe('JobsTab — clearDone confirm flow', () => {
     }
   })
 })
+
+describe('JobsTab — empty state per filter', () => {
+  beforeEach(async () => {
+    if (!i18n.isInitialized) {
+      await i18n.init()
+    }
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('shows empty text for default filter when nothing matches', async () => {
+    vi.mocked(ipc.jobs.list)
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+
+    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+
+    await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
+
+    expect(screen.getByTestId('jobs-tab')).toBeTruthy()
+    expect(screen.getByTestId('empty-state')).toBeTruthy()
+    expect(screen.getByText('暂无任务')).toBeTruthy()
+    expect(screen.getByText('后台任务会出现在这里')).toBeTruthy()
+  })
+
+  it('shows empty text after switching to "done" filter when no done jobs exist', async () => {
+    vi.mocked(ipc.jobs.list)
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+
+    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+
+    await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
+
+    const statusSelect = screen.getByTestId('status-filter')
+    fireEvent.change(statusSelect, { target: { value: 'done' } })
+
+    // Empty state should still be visible after switching filter
+    expect(screen.getByTestId('empty-state')).toBeTruthy()
+  })
+
+  it('shows empty text after switching to kind filter when no matching jobs', async () => {
+    vi.mocked(ipc.jobs.list)
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+
+    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+
+    await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
+
+    const kindSelect = screen.getByTestId('kind-filter')
+    fireEvent.change(kindSelect, { target: { value: 'index-retry' } })
+
+    // Empty state should still be visible
+    expect(screen.getByTestId('empty-state')).toBeTruthy()
+  })
+})
