@@ -117,6 +117,11 @@ const request: IpcClient<IpcContract> = {
     aiProfilesDelete: (id) => invoke('settings.aiProfilesDelete', id),
     browserClearCookies: () => invoke('settings.browserClearCookies'),
     keychainAvailable: () => invoke('settings.keychainAvailable')
+  },
+  ai: {
+    reviewClip: (clipId, opts) => invoke('ai.reviewClip', clipId, opts),
+    'usage.summary': (opts) => invoke('ai.usage.summary', opts),
+    'usage.list': (opts) => invoke('ai.usage.list', opts)
   }
 }
 

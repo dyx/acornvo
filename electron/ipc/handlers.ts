@@ -14,6 +14,7 @@ import { browserHandlers } from './browser'
 import { bookmarkHandlers } from './bookmarks'
 import { settingsHandlers } from './settings'
 import { createJobsHandlers } from './jobs'
+import { aiHandlers } from './ai'
 import { getQueueBootstrap } from '../queue'
 
 const jobsHandlers = createJobsHandlers({
@@ -62,5 +63,6 @@ export const ipcHandlers: HandlerMap = {
   browser: browserHandlers,
   bookmarks: bookmarkHandlers,
   settings: settingsHandlers,
-  jobs: jobsHandlers
+  jobs: jobsHandlers,
+  ai: aiHandlers
 }

@@ -464,6 +464,31 @@ export type IpcContract = {
     cancel: (id: string) => JobsCancelResult
     clearDone: () => JobsClearDoneResult
   }
+  ai: {
+    reviewClip: (clipId: number, opts?: { force?: boolean }) => { jobId: string }
+    'usage.summary': (opts?: { sinceDays?: number }) => {
+      totalCalls: number
+      okCount: number
+      errorRate: number
+      totalTokens: number
+      byProvider: Record<string, { calls: number; tokens: number }>
+    }
+    'usage.list': (opts: { limit: number; offset: number; profileId?: string; okOnly?: boolean }) => {
+      items: Array<{
+        id?: number
+        jobId: string | null
+        profileId: string | null
+        model: string | null
+        promptTokens: number | null
+        completionTokens: number | null
+        latencyMs: number | null
+        ok: 0 | 1
+        error: string | null
+        createdAt: string
+      }>
+      total: number
+    }
+  }
 }
 
 /**
