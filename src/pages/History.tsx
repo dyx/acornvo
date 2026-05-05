@@ -2,7 +2,7 @@ import type { JSX } from 'react'
 import { useParams, useSearchParams, Navigate } from 'react-router-dom'
 import { HistoryLayout } from '@/components/history/HistoryLayout'
 
-const VALID_TABS = ['trash', 'conflicts', 'ops'] as const
+const VALID_TABS = ['trash', 'conflicts', 'ops', 'jobs'] as const
 
 export default function History(): JSX.Element {
   const { tab } = useParams<{ tab: string }>()
