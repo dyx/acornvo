@@ -1,15 +1,15 @@
 ## 1. Schema 与类型
 
-- [ ] 1.1 `migrations/007_jobs.sql`：建 jobs 表 + 2 个索引；`user_version = 7`
-- [ ] 1.2 `shared/job-types.ts`：`Job` / `JobKind` / `JobStatus` / `JobHandlerResult` / `EnqueueOpts`
-- [ ] 1.3 `shared/ipc-contract.ts`：`jobs` 命名空间签名
+- [x] 1.1 `migrations/007_jobs.sql`：建 jobs 表 + 2 个索引；`user_version = 7`（注：实际为 `008_jobs.sql`，因 007 已被 phase-13 settings 占用）
+- [x] 1.2 `shared/job-types.ts`：`Job` / `JobKind` / `JobStatus` / `JobHandlerResult` / `EnqueueOpts`
+- [x] 1.3 `shared/ipc-contract.ts`：`jobs` 命名空间签名
 
 ## 2. store 层
 
-- [ ] 2.1 `electron/queue/store.ts`：`enqueue / markRunning / markDone / markRetry / markFailed / markCanceled / list`
-- [ ] 2.2 `enqueue` 的 dedupe 实现（payload 注入 `__dedupe`；查询用 `json_extract(payload_json, '$.__dedupe')`）
-- [ ] 2.3 启动恢复：`UPDATE jobs SET status='pending' WHERE status='running'`
-- [ ] 2.4 内部 EventEmitter：`stateChanged`
+- [x] 2.1 `electron/queue/store.ts`：`enqueue / markRunning / markDone / markRetry / markFailed / markCanceled / list`
+- [x] 2.2 `enqueue` 的 dedupe 实现（payload 注入 `__dedupe`；查询用 `json_extract(payload_json, '$.__dedupe')`）
+- [x] 2.3 启动恢复：`UPDATE jobs SET status='pending' WHERE status='running'`
+- [x] 2.4 内部 EventEmitter：`stateChanged`
 
 ## 3. runner 与策略
 
