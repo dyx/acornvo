@@ -35,7 +35,7 @@ export function createApproval(): ApprovalGate {
       const callId = randomUUID();
       const p = new Promise<any>((resolve) => {
         const timer = setTimeout(() => {
-          if (pending.has(callId)) { pending.delete(callId); resolve({ ok: false, error: 'E_APPROVAL_TIMEOUT' }); }
+          if (pending.has(callId)) { pending.delete(callId); promises.delete(callId); resolve({ ok: false, error: 'E_APPROVAL_TIMEOUT' }); }
         }, TIMEOUT_MS);
         pending.set(callId, { callId, sessionId, toolCall, reason, resolve, timer, createdAt: Date.now() });
       });
@@ -52,6 +52,7 @@ export function createApproval(): ApprovalGate {
       const e = pending.get(callId);
       if (!e) throw new Error(`unknown callId: ${callId}`);
       pending.delete(callId);
+      promises.delete(callId);
       clearTimeout(e.timer);
       e.resolve({ ok: true, args: editedArgs ?? e.toolCall.args });
     },
@@ -59,6 +60,7 @@ export function createApproval(): ApprovalGate {
       const e = pending.get(callId);
       if (!e) throw new Error(`unknown callId: ${callId}`);
       pending.delete(callId);
+      promises.delete(callId);
       clearTimeout(e.timer);
       e.resolve({ ok: false, error: 'E_USER_REJECTED' });
     },
@@ -66,6 +68,7 @@ export function createApproval(): ApprovalGate {
       for (const e of [...pending.values()]) {
         if (e.sessionId !== sessionId) continue;
         pending.delete(e.callId);
+        promises.delete(e.callId);
         clearTimeout(e.timer);
         e.resolve({ ok: false, error: 'E_CANCELED' });
       }

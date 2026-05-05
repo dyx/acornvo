@@ -107,6 +107,21 @@ describe('runAgent', () => {
     expect(result?.result).toEqual({ ok: false, error: 'E_UNKNOWN_TOOL' });
   });
 
+  it('emits E_TOOL_FAILURE when a non-side-effect tool execute throws', async () => {
+    const r = createRegistry(); const a = createApproval();
+    r.register({
+      name: 'crashy', description: 'd', sideEffect: false,
+      parameters: { type: 'object' },
+      execute: async () => { throw new Error('boom'); },
+    });
+    llm.chatWithTools.mockResolvedValueOnce({ toolCalls: [{ id: 'tc1', name: 'crashy', args: {} }], finishReason: 'tool_calls' });
+    llm.chatWithTools.mockResolvedValueOnce({ text: 'oops', toolCalls: [], finishReason: 'stop' });
+    const stream = STREAM();
+    await runAgent({ sessionId: 's1', userText: 'go', profileId: 'p1', history: [], deps: baseDeps(r, a), streamWriter: stream });
+    const result = stream.events.find(e => e.type === 'tool.result');
+    expect(result?.result).toMatchObject({ ok: false, error: 'E_TOOL_FAILURE' });
+  });
+
   it('aborts mid-loop when AbortSignal fires; emits canceled', async () => {
     const r = createRegistry(); const a = createApproval();
     const ctl = new AbortController();

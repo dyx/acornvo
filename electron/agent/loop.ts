@@ -67,12 +67,13 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
     const tc: ToolCall = r.toolCalls[0];
     const assistantMsg = await deps.sessions.appendMessage(sessionId, { role: 'assistant', content: r.text ?? null, toolCalls: [tc] });
     emit({ type: 'message.appended', message: assistantMsg });
+    history = [...history, assistantMsg];
 
     const tool = deps.registry.get(tc.name);
     if (!tool) {
       const result: ToolResult = { ok: false, error: 'E_UNKNOWN_TOOL' };
-      await pushToolResult(deps, sessionId, tc, result, emit);
-      history = await reloadHistory(history, deps, sessionId);
+      const toolMsg = await pushToolResult(deps, sessionId, tc, result, emit);
+      history = [...history, toolMsg];
       continue;
     }
 
@@ -87,8 +88,8 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
       const decision = await deps.approval.await(callId);
       if (!decision.ok) {
         await deps.sessions.finishToolCall(rowId, { result: { ok: false, error: decision.error }, approved: false });
-        await pushToolResult(deps, sessionId, tc, { ok: false, error: decision.error }, emit);
-        history = await reloadHistory(history, deps, sessionId);
+        const toolMsg = await pushToolResult(deps, sessionId, tc, { ok: false, error: decision.error }, emit);
+        history = [...history, toolMsg];
         continue;
       }
       argsToRun = decision.args;
@@ -98,11 +99,13 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
         const data = await tool.execute(argsToRun, { sessionId, vaultRoot: deps.vaultRoot, signal: cancel, log: () => {} });
         const result: ToolResult = { ok: true, data };
         await deps.sessions.finishToolCall(rowId, { result, approved });
-        await pushToolResult(deps, sessionId, tc, result, emit);
+        const toolMsg = await pushToolResult(deps, sessionId, tc, result, emit);
+        history = [...history, toolMsg];
       } catch (err: any) {
         const result: ToolResult = { ok: false, error: err?.code ?? 'E_TOOL_FAILURE', detail: err?.message };
         await deps.sessions.finishToolCall(rowId, { result, approved, error: result.error });
-        await pushToolResult(deps, sessionId, tc, result, emit);
+        const toolMsg = await pushToolResult(deps, sessionId, tc, result, emit);
+        history = [...history, toolMsg];
       }
     } else {
       const rowId = await deps.sessions.recordToolCall(sessionId, tc, { sideEffect: false, messageId: assistantMsg.id });
@@ -111,29 +114,28 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
         const data = await tool.execute(argsToRun as any, { sessionId, vaultRoot: deps.vaultRoot, signal: cancel, log: () => {} });
         const result: ToolResult = { ok: true, data };
         await deps.sessions.finishToolCall(rowId, { result });
-        await pushToolResult(deps, sessionId, tc, result, emit);
+        const toolMsg = await pushToolResult(deps, sessionId, tc, result, emit);
+        history = [...history, toolMsg];
       } catch (err: any) {
         const result: ToolResult = { ok: false, error: err?.code ?? 'E_TOOL_FAILURE', detail: err?.message };
         await deps.sessions.finishToolCall(rowId, { result, error: result.error });
-        await pushToolResult(deps, sessionId, tc, result, emit);
+        const toolMsg = await pushToolResult(deps, sessionId, tc, result, emit);
+        history = [...history, toolMsg];
       }
     }
 
-    history = await reloadHistory(history, deps, sessionId);
+    // history updated inline above — no reload needed
   }
 
   emit({ type: 'error', error: 'E_STEP_LIMIT' });
 }
 
-async function pushToolResult(deps: RunAgentDeps, sessionId: string, tc: ToolCall, result: ToolResult, emit: (e: AgentEvent) => void) {
-  emit({ type: 'tool.result', tool: tc.name, result });
+async function pushToolResult(deps: RunAgentDeps, sessionId: string, tc: ToolCall, result: ToolResult, emit: (e: AgentEvent) => void): Promise<SessionMessage> {
   const sliced = JSON.stringify(result).slice(0, TOOL_RESULT_BUDGET);
   const msg = await deps.sessions.appendMessage(sessionId, { role: 'tool', content: sliced, toolCallId: tc.id });
+  emit({ type: 'tool.result', tool: tc.name, result });
   emit({ type: 'message.appended', message: msg });
-}
-
-async function reloadHistory(prev: SessionMessage[], _deps: RunAgentDeps, _sessionId: string) {
-  return prev;
+  return msg;
 }
 
 function messagesForLlm(history: SessionMessage[]) {
