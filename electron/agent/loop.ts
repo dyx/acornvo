@@ -1,6 +1,7 @@
 import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage } from '../../shared/agent-types';
 import type { Registry } from './registry';
 import type { ApprovalGate } from './approval';
+import { aiUsage } from '../ai/usage';
 
 const MAX_STEPS = 8;
 const TOOL_RESULT_BUDGET = 8000;
@@ -56,6 +57,20 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
       return;
     }
     if (cancel.aborted) { emit({ type: 'canceled' }); return; }
+
+    if (r.usage) {
+      try {
+        aiUsage.insert({
+          profileId,
+          model: r.model ?? 'unknown',
+          promptTokens: r.usage.promptTokens ?? 0,
+          completionTokens: r.usage.completionTokens ?? 0,
+          latencyMs: r.latencyMs ?? 0,
+          ok: r.finishReason !== 'error' ? 1 : 0,
+          sessionId,
+        });
+      } catch { /* logging best-effort */ }
+    }
 
     if (r.finishReason !== 'tool_calls') {
       const msg = await deps.sessions.appendMessage(sessionId, { role: 'assistant', content: r.text ?? '' });
