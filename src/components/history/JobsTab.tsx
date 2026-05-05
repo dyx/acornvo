@@ -1,8 +1,6 @@
 import { useEffect, useReducer, useRef, useCallback } from 'react'
 import type { JSX } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import { ipc } from '@/ipc/client'
 import { EmptyState } from './EmptyState'
 import {
@@ -20,10 +18,11 @@ import { Button } from '@/components/ui/button'
 import type { Job, JobStatus } from '@shared/job-types'
 import { JOB_STATUSES, JOB_KINDS } from '@shared/job-types'
 import { ListChecks, Trash2 } from 'lucide-react'
+import { JobRow, JOB_ROW_HEIGHT } from './JobRow'
 
 // --- constants ---
 
-const ROW_HEIGHT = 56
+const ROW_HEIGHT = JOB_ROW_HEIGHT
 const OVERSCAN = 10
 const LIMIT = 200
 const VIRTUALIZE_THRESHOLD = 50
@@ -47,17 +46,6 @@ function kindLabel(kind: string): string {
   }
 }
 
-function kindBadgeColor(kind: string): string {
-  switch (kind) {
-    case 'index-retry':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-    case 'ai-review-clip':
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-    default:
-      return 'bg-muted text-muted-foreground'
-  }
-}
-
 function statusLabel(status: JobStatus): string {
   switch (status) {
     case 'pending':
@@ -73,42 +61,6 @@ function statusLabel(status: JobStatus): string {
     default:
       return status
   }
-}
-
-function statusBadgeColor(status: JobStatus): string {
-  switch (status) {
-    case 'pending':
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-    case 'running':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-    case 'failed':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-    case 'done':
-      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-    case 'canceled':
-      return 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400'
-    default:
-      return 'bg-muted text-muted-foreground'
-  }
-}
-
-function formatTime(ts: string): string {
-  try {
-    return formatDistanceToNow(new Date(ts), { addSuffix: true, locale: zhCN })
-  } catch {
-    return ts
-  }
-}
-
-function payloadSummary(payload: Record<string, unknown>): string {
-  if (typeof payload.path === 'string') return payload.path
-  if (typeof payload.clipId === 'string') return `clip: ${payload.clipId}`
-  if (typeof payload.file === 'string') return payload.file
-  // Pick the first string value
-  for (const v of Object.values(payload)) {
-    if (typeof v === 'string') return v
-  }
-  return '-'
 }
 
 // --- state ---
@@ -167,45 +119,6 @@ const initialState: State = {
   confirmOpen: false,
   clearDoneLoading: false,
   clearDoneResult: null
-}
-
-// --- inline job row (Task 3 will extract to JobRow.tsx) ---
-
-function JobRow({ job }: { job: Job }): JSX.Element {
-  return (
-    <div
-      data-testid="job-row"
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)]"
-      style={{ height: ROW_HEIGHT }}
-    >
-      {/* kind badge */}
-      <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0 ${kindBadgeColor(job.kind)}`}
-      >
-        {kindLabel(job.kind)}
-      </span>
-
-      {/* payload summary + meta */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-[color:var(--ink)] truncate">
-          {payloadSummary(job.payload)}
-        </p>
-        <p className="text-xs text-muted-foreground flex items-center gap-2">
-          <span>{formatTime(job.nextRunAt)}</span>
-          {job.attempts > 0 && (
-            <span className="text-muted-foreground/60">第 {job.attempts} 次</span>
-          )}
-        </p>
-      </div>
-
-      {/* status badge */}
-      <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0 ${statusBadgeColor(job.status)}`}
-      >
-        {statusLabel(job.status)}
-      </span>
-    </div>
-  )
 }
 
 // --- main component ---
@@ -392,7 +305,7 @@ export function JobsTab(): JSX.Element {
                     height: vi.size
                   }}
                 >
-                  <JobRow job={job} />
+                  <JobRow job={job} onChanged={fetchJobs} />
                 </div>
               )
             })}
