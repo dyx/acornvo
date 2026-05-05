@@ -108,7 +108,10 @@ async function bootstrap(): Promise<void> {
             await watcherStart(payload.path, db)
             // phase-14: start the queue runner
             const { bootstrapQueueRunner } = await import('./queue')
-            queueRunner = bootstrapQueueRunner(dbService.requireCurrent())
+            const { record: opsLogRecord } = await import('./services/ops/log')
+            queueRunner = bootstrapQueueRunner(dbService.requireCurrent(), {
+              opsLog: (r) => opsLogRecord(r as Parameters<typeof opsLogRecord>[0])
+            })
             queueRunner.start()
           }
         }

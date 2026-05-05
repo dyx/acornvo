@@ -3,6 +3,13 @@ import type { JobStore } from './store'
 import type { Job } from '@shared/job-types'
 import { nextDelay } from './policy'
 
+function pickOpsPath(kind: string, payload: Record<string, unknown>): string {
+  const p = payload as { path?: unknown; clipId?: unknown }
+  if (typeof p.path === 'string') return p.path
+  if (kind === 'ai-review-clip' && typeof p.clipId === 'number') return `clip:${p.clipId}`
+  return ''
+}
+
 export interface HandlerCtx {
   job: Job
   payload: Record<string, unknown>
@@ -49,6 +56,35 @@ export function createQueueRunner(deps: QueueRunnerDeps): QueueRunner {
   const kinds = new Map<string, KindEntry>()
   let timer: ReturnType<typeof setInterval> | null = null
   let acceptingNew = true
+
+  const REASON_TO_OP: Record<string, string> = {
+    enqueued: 'job.enqueued',
+    running: 'job.started',
+    done: 'job.succeeded',
+    retry: 'job.retry',
+    failed: 'job.failed',
+    canceled: 'job.canceled',
+    manualRetry: 'job.retry'
+  }
+
+  if (deps.opsLog) {
+    deps.store.events.on('stateChanged', ({ reason, job }) => {
+      const op = REASON_TO_OP[reason]
+      if (!op) return
+      const path = pickOpsPath(job.kind, job.payload)
+      const meta: Record<string, unknown> = {
+        kind: job.kind,
+        id: job.id,
+        attempts: job.attempts
+      }
+      if (job.lastError) meta.reason = job.lastError
+      try {
+        deps.opsLog!({ op, path, meta })
+      } catch (e) {
+        log('warn', 'opsLog write failed', { error: String(e) })
+      }
+    })
+  }
 
   function register(opts: RegisterOpts): void {
     if (kinds.has(opts.kind)) {

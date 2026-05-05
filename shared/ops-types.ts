@@ -8,6 +8,12 @@ export type Op =
   | 'conflict_resolve'
   | 'conflict_delete'
   | 'rename'
+  | 'job.enqueued'
+  | 'job.started'
+  | 'job.succeeded'
+  | 'job.retry'
+  | 'job.failed'
+  | 'job.canceled'
 
 /**
  * One row of ops_log as exposed to the renderer.

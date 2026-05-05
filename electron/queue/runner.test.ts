@@ -431,3 +431,64 @@ describe('createQueueRunner — cancel + AbortSignal', () => {
     expect(runner.cancel('nope')).toEqual({ error: 'E_NOT_FOUND' })
   })
 })
+
+describe('createQueueRunner — ops_log integration', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+  afterEach(() => vi.useRealTimers())
+
+  it('writes job.enqueued / started / succeeded for the happy path', async () => {
+    const { store } = freshStore()
+    const events: { op: string; path: string; meta?: Record<string, unknown> }[] = []
+    const opsLog = (r: { op: string; path: string; meta?: Record<string, unknown> }) =>
+      events.push(r)
+    const runner = createQueueRunner({ store, tickMs: 100, opsLog })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'ok' })
+    })
+    store.enqueue('index-retry', { path: 'a.md' })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const ops = events.map((e) => e.op)
+    expect(ops).toEqual(['job.enqueued', 'job.started', 'job.succeeded'])
+    expect(events.every((e) => e.path === 'a.md')).toBe(true)
+    expect(events[0].meta).toMatchObject({ kind: 'index-retry' })
+  })
+
+  it('writes job.retry on retry / job.failed on fatal', async () => {
+    const { store } = freshStore()
+    const ops: string[] = []
+    const opsLog = (r: { op: string }) => ops.push(r.op)
+    const runner = createQueueRunner({ store, tickMs: 100, opsLog })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'fail', error: 'gave up' })
+    })
+    store.enqueue('index-retry', { path: 'a.md' })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    expect(ops).toEqual(['job.enqueued', 'job.started', 'job.failed'])
+  })
+
+  it('writes job.canceled on cancel', async () => {
+    const { store } = freshStore()
+    const ops: string[] = []
+    const opsLog = (r: { op: string }) => ops.push(r.op)
+    const runner = createQueueRunner({ store, tickMs: 100, opsLog })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'ok' })
+    })
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    runner.cancel(id)
+    expect(ops).toContain('job.canceled')
+  })
+})
