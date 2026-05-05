@@ -1,45 +1,56 @@
-import type { JobHandler } from '../runner'
+import type { JobHandler } from '../runner';
+import { reviewClip } from '../../ai/reviewer';
+import { aiUsage } from '../../ai/usage';
+import { settingsStore } from '../../settings/store';
 
-interface ClipRow {
-  id: number
-  title: string | null
-  path: string
+const FAIL_CODES = new Set([
+  'E_MISSING_PROFILE', 'E_CONFIG', 'E_AUTH',
+  'E_CLIP_NOT_FOUND', 'E_FILE_NOT_FOUND',
+]);
+
+const BACKOFF_MS = [1_000, 5_000, 30_000, 120_000, 900_000];
+function nextDelay(attempts: number): number {
+  return BACKOFF_MS[Math.min(attempts, BACKOFF_MS.length - 1)];
 }
 
-export interface AiReviewClipDeps {
-  readClipRow: (id: number) => ClipRow | null
-  readMdFile: (path: string) => Promise<{ frontmatter: Record<string, unknown>; body: string }>
-  reviewClip: (input: {
-    clipId: number
-    path: string
-    body: string
-    frontmatter: Record<string, unknown>
-  }) => Promise<void>
-}
+export const aiReviewClipHandler: JobHandler = async (ctx) => {
+  const { job, payload, log } = ctx;
+  const clipId = payload.clipId as number;
+  const force = payload.force as boolean | undefined;
+  const profileId = settingsStore.get('ai').defaultProfileId;
+  const t0 = Date.now();
 
-interface Payload {
-  clipId: number
-  path: string
-}
+  try {
+    const out = await reviewClip(clipId, { force });
+    aiUsage.insert({
+      jobId: job.id,
+      profileId: profileId ?? null,
+      model: out.llmCall?.model ?? null,
+      promptTokens: out.llmCall?.promptTokens ?? null,
+      completionTokens: out.llmCall?.completionTokens ?? null,
+      latencyMs: out.llmCall?.latencyMs ?? (Date.now() - t0),
+      ok: 1,
+      error: null,
+    });
+    log('info', `ai-review-clip ok clipId=${clipId} cacheHit=${out.cacheHit}`);
+    return { kind: 'ok' };
+  } catch (e) {
+    const code = (e as any)?.code ?? 'E_UNKNOWN';
+    aiUsage.insert({
+      jobId: job.id,
+      profileId: profileId ?? null,
+      model: null,
+      promptTokens: null,
+      completionTokens: null,
+      latencyMs: Date.now() - t0,
+      ok: 0,
+      error: code,
+    });
+    log('warn', `ai-review-clip ${code} clipId=${clipId}`);
 
-export function createAiReviewClipHandler(deps: AiReviewClipDeps): JobHandler {
-  return async ({ payload }) => {
-    const p = payload as Partial<Payload>
-    if (typeof p.clipId !== 'number' || typeof p.path !== 'string') {
-      return { kind: 'fail', error: 'E_INVALID_PAYLOAD' }
-    }
-    const clip = deps.readClipRow(p.clipId)
-    if (!clip) return { kind: 'fail', error: 'E_CLIP_NOT_FOUND' }
-    const { frontmatter, body } = await deps.readMdFile(p.path)
-    try {
-      await deps.reviewClip({ clipId: p.clipId, path: p.path, body, frontmatter })
-      return { kind: 'ok' }
-    } catch (e) {
-      const code = (e as { code?: string })?.code
-      if (code === 'E_NOT_IMPLEMENTED') {
-        return { kind: 'retry', delayMs: 60 * 60 * 1000, reason: 'E_NOT_IMPLEMENTED' }
-      }
-      throw e
-    }
+    if (FAIL_CODES.has(code)) return { kind: 'fail', error: code };
+    if (code === 'E_RATE') return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' };
+    if (code === 'E_MTIME_CONFLICT') return { kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' };
+    return { kind: 'retry', delayMs: nextDelay(job.attempts), reason: code };
   }
-}
+};

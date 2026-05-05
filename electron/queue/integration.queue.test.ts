@@ -6,7 +6,7 @@ import { runMigrations } from '../services/db/migrations'
 import { createJobStore } from './store'
 import { createQueueRunner, type QueueRunner } from './runner'
 import { createIndexRetryHandler } from './handlers/index-retry'
-import { createAiReviewClipHandler } from './handlers/ai-review-clip'
+import { aiReviewClipHandler } from './handlers/ai-review-clip'
 import { createJobsHandlers } from '../ipc/jobs'
 
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'services', 'db', 'migrations')
@@ -30,22 +30,25 @@ describe('Acceptance 10.2 — clip ai-review-clip enqueued', () => {
 })
 
 // === 10.3 ===
-describe('Acceptance 10.3 — ai-review-clip placeholder handler retries 1h', () => {
+describe('Acceptance 10.3 — ai-review-clip handler retry on E_RATE', () => {
   let runner: QueueRunner
-  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.mock('../../ai/reviewer', () => ({ reviewClip: vi.fn() }))
+    vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() } }))
+    vi.mock('../../settings/store', () => ({ settingsStore: { get: vi.fn(() => ({})) } }))
+  })
   afterEach(() => { runner?.stop(); vi.useRealTimers() })
 
-  it('handler catches E_NOT_IMPLEMENTED → retry 1h, attempts=1, status=pending', async () => {
+  it('handler catches E_RATE → retry 60s, attempts=1, status=pending', async () => {
     vi.setSystemTime(new Date('2026-05-03T10:00:00.000Z'))
     const { db, store } = freshFixture()
+    const { reviewClip } = await import('../../ai/reviewer');
+    (reviewClip as any).mockRejectedValue(Object.assign(new Error('rate'), { code: 'E_RATE' }))
     runner = createQueueRunner({ store, tickMs: 50 })
     runner.register({
       kind: 'ai-review-clip', concurrency: 2, minGapMs: 0,
-      handler: createAiReviewClipHandler({
-        readClipRow: () => ({ id: 1, title: 't', path: 'inbox/a.md' }),
-        readMdFile: async () => ({ frontmatter: {}, body: 'hello' }),
-        reviewClip: async () => { const e = Object.assign(new Error('not yet'), { code: 'E_NOT_IMPLEMENTED' }); throw e }
-      })
+      handler: aiReviewClipHandler
     })
     const { id } = store.enqueue('ai-review-clip', { clipId: 1, path: 'inbox/a.md' }, { dedupeKey: 'clip:1' })
     runner.start()
@@ -54,8 +57,8 @@ describe('Acceptance 10.3 — ai-review-clip placeholder handler retries 1h', ()
     expect(row.status).toBe('pending')
     expect(row.attempts).toBe(1)
     const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
-    expect(delta).toBeGreaterThanOrEqual(60 * 60 * 1000 - 1000)
-    expect(delta).toBeLessThanOrEqual(60 * 60 * 1000 + 1000)
+    expect(delta).toBeGreaterThanOrEqual(59_000)
+    expect(delta).toBeLessThanOrEqual(61_000)
     db.close()
   })
 })
