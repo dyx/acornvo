@@ -21,10 +21,9 @@ vi.mock('./client', () => ({
 vi.mock('../settings/store', () => ({
   settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'p1' })) },
 }));
-vi.mock('../ipc/file', async () => {
-  const actual = await vi.importActual<any>('../ipc/file');
-  return { ...actual, fileHandlers: { ...actual.fileHandlers, writeParsed: vi.fn() } };
-});
+vi.mock('../ipc/file', () => ({
+  fileHandlers: { writeParsed: vi.fn() },
+}));
 
 import { dbService } from '../services/db';
 import { getCurrentVaultRoot } from '../services/grove';
