@@ -13,22 +13,22 @@
 
 ## 3. runner 与策略
 
-- [ ] 3.1 `electron/queue/policy.ts`：`nextDelay(attempts)` 退避表
-- [ ] 3.2 `electron/queue/runner.ts`：setInterval 250ms loop；kind 注册 / concurrency / minGapMs
-- [ ] 3.3 handler 抛错 → retry；返回值处理三分支；AbortSignal 贯通
-- [ ] 3.4 `before-quit` 钩子：停 loop + 等待 5s running handler
-- [ ] 3.5 `electron/queue/handlers/index-retry.ts`：实装
-- [ ] 3.6 `electron/queue/handlers/ai-review-clip.ts`：占位 handler，捕获 `E_NOT_IMPLEMENTED` → retry 1h
+- [x] 3.1 `electron/queue/policy.ts`：`nextDelay(attempts)` 退避表
+- [x] 3.2 `electron/queue/runner.ts`：setInterval 250ms loop；kind 注册 / concurrency / minGapMs
+- [x] 3.3 handler 抛错 → retry；返回值处理三分支；AbortSignal 贯通
+- [x] 3.4 `before-quit` 钩子：停 loop + 等待 5s running handler
+- [x] 3.5 `electron/queue/handlers/index-retry.ts`：实装
+- [x] 3.6 `electron/queue/handlers/ai-review-clip.ts`：占位 handler，捕获 `E_NOT_IMPLEMENTED` → retry 1h
 
 ## 4. ops_log 集成
 
-- [ ] 4.1 每个状态变更写 `ops_log`：`job.enqueued / started / succeeded / retry / failed / canceled`（meta 含 kind / id / reason / delayMs）
+- [x] 4.1 每个状态变更写 `ops_log`：`job.enqueued / started / succeeded / retry / failed / canceled`（meta 含 kind / id / reason / delayMs）
 
 ## 5. IPC
 
-- [ ] 5.1 `electron/ipc/jobs.ts`：`list / retry / cancel / clearDone` handler
-- [ ] 5.2 preload：暴露 `window.api.jobs.*` + `onJobsChanged(cb)`
-- [ ] 5.3 main 广播：`stateChanged` → 所有 renderer 的 `jobs.changed`
+- [x] 5.1 `electron/ipc/jobs.ts`：`list / retry / cancel / clearDone` handler
+- [x] 5.2 preload：暴露 `window.api.jobs.*` + `onJobsChanged(cb)`
+- [x] 5.3 main 广播：`stateChanged` → 所有 renderer 的 `jobs.changed`
 
 ## 6. renderer UI
 
