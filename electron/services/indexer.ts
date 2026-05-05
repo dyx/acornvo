@@ -12,6 +12,7 @@ import {
   type FileRow,
 } from './index-queries'
 import { parseFile } from './frontmatter'
+import { getQueueBootstrap } from '../queue'
 
 export type IndexStateName = 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
 
@@ -238,42 +239,68 @@ export async function upsertFromFs(relPath: string): Promise<void> {
   if (!groveRoot) throw new Error('upsertFromFs: grove root not set')
   const db = getDb()
   const absPath = `${groveRoot}/${relPath}`
-  const raw = await readFile(absPath, 'utf8')
-  const { body, frontmatter } = parseFile(raw)
-  const st = await fsStat(absPath)
-  const content_hash = createHash('sha256').update(body).digest('hex')
 
-  const row: FileRow = {
-    path: relPath,
-    title: typeof frontmatter.title === 'string' ? frontmatter.title : null,
-    summary: typeof frontmatter.summary === 'string' ? frontmatter.summary : null,
-    category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
-    rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
-    content_hash,
-    mtime: st.mtimeMs,
-    size_bytes: st.size,
-    frontmatter_json: JSON.stringify(frontmatter),
-    created_at:
-      typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
-    updated_at: Date.now(),
-  }
+  try {
+    const raw = await readFile(absPath, 'utf8')
+    const { body, frontmatter } = parseFile(raw)
+    const st = await fsStat(absPath)
+    const content_hash = createHash('sha256').update(body).digest('hex')
 
-  const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
-  if (result !== 'unchanged') {
-    const tags = Array.isArray(frontmatter.tags)
-      ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
-      : []
-    syncTags(db, row.path, tags)
-    if (bodyChanged) {
-      const ftsRowid = (
-        db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
-      ).rowid
-      upsertFts(db, {
-        rowid: ftsRowid,
-        path: row.path,
-        title: row.title ?? '',
-        body
-      })
+    const row: FileRow = {
+      path: relPath,
+      title: typeof frontmatter.title === 'string' ? frontmatter.title : null,
+      summary: typeof frontmatter.summary === 'string' ? frontmatter.summary : null,
+      category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
+      rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
+      content_hash,
+      mtime: st.mtimeMs,
+      size_bytes: st.size,
+      frontmatter_json: JSON.stringify(frontmatter),
+      created_at:
+        typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
+      updated_at: Date.now(),
+    }
+
+    const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
+    if (result !== 'unchanged') {
+      const tags = Array.isArray(frontmatter.tags)
+        ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+        : []
+      syncTags(db, row.path, tags)
+      if (bodyChanged) {
+        const ftsRowid = (
+          db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+        ).rowid
+        upsertFts(db, {
+          rowid: ftsRowid,
+          path: row.path,
+          title: row.title ?? '',
+          body
+        })
+      }
+    }
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException)?.code
+    if (code === 'ENOENT') {
+      // File is gone — delete from index, don't retry
+      try {
+        deleteFile(db, relPath)
+      } catch (delErr) {
+        console.warn('index: failed to delete row on ENOENT', { path: relPath, error: String(delErr) })
+      }
+      return
+    }
+    // Transient error — enqueue for retry
+    const queue = getQueueBootstrap()
+    const reason = e instanceof Error ? e.message : String(e)
+    if (queue) {
+      try {
+        queue.store.enqueue('index-retry', { path: relPath, reason }, { dedupeKey: `idx:${relPath}` })
+      } catch (enqErr) {
+        console.error('index: enqueue index-retry failed', { path: relPath, error: String(enqErr) })
+      }
+    } else {
+      console.warn('index: queue not initialised; dropping retry', { path: relPath, reason })
     }
   }
 }
