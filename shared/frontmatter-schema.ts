@@ -31,6 +31,14 @@ export const FrontmatterSchema = z
     reviewed_version: z.number().int().nonnegative().optional(),
     reviewed_error: z.string().optional(),
 
+    // AI review (phase 15)
+    ai_summary: z.string().optional(),
+    ai_suggested_title: z.string().optional(),
+    ai_tags: z.array(z.string()).optional(),
+    ai_key_quotes: z.array(z.string()).optional(),
+    ai_reviewed_at: z.string().optional(),
+    ai_review_accepted_at: z.string().optional(),
+
     // misc / future
     sync_warning: z.string().optional()
   })
