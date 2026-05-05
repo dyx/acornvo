@@ -47,6 +47,7 @@ export function FrontmatterCard(): JSX.Element {
   const tags = (get('tags') as string[] | undefined) ?? []
   const publishedAt = get('published_at') as string | undefined
   const clippedAt = get('clipped_at') as string | undefined
+  const aiSummary = get('ai_summary') as string | undefined
 
   return (
     <div className="space-y-3 p-4 text-sm">
@@ -57,6 +58,16 @@ export function FrontmatterCard(): JSX.Element {
       {title && <h2 className="text-base font-semibold">{title}</h2>}
       {typeof rating === 'number' && <StarRow rating={rating} />}
       {summary && <p className="text-[color:var(--color-ink-2)]">{summary}</p>}
+      {aiSummary && (
+        <div className="rounded border border-[color:var(--color-line-1)] p-2" data-testid="frontmatter-ai-row">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-medium text-[color:var(--color-accent)]">{t('editor.ai.sidecard.label')}</span>
+          </div>
+          <p className="mt-1 text-xs text-[color:var(--color-ink-2)]">
+            {aiSummary.length > 80 ? `${aiSummary.slice(0, 80)}…` : aiSummary}
+          </p>
+        </div>
+      )}
       {highlights.length > 0 && (
         <ul className="list-disc pl-5 text-[color:var(--color-ink-2)]">
           {highlights.map((h, i) => (

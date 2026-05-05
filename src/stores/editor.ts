@@ -22,6 +22,7 @@ export type EditorReadyState = {
   persistentFailure: boolean
   conflictState: ConflictState
   pendingNavigateTo?: string
+  aiRerunInflight?: boolean
 }
 
 export type EditorState =
@@ -41,6 +42,11 @@ export type EditorActions = {
   keepLocal: () => Promise<void>
   saveAsCopy: () => Promise<void>
   dismissDialog: () => void
+  applyAiSuggestedTitle: () => void
+  mergeAiTags: () => void
+  acceptAiReview: () => void
+  rejectAiReview: () => void
+  setAiRerunInflight: (v: boolean) => void
 }
 
 type EditorStore = { state: EditorState } & EditorActions
@@ -128,6 +134,9 @@ export function installEditorSubscriber(): () => void {
 export function _resetEditorSubscriber(): void {
   _editorSubscriberInstalled = false
 }
+
+// ── phase-15: AI review job subscription ──
+let _jobsUnsubscribe: (() => void) | null = null
 
 function isBlockedByConflict(s: EditorState): boolean {
   if (s.kind !== 'ready') return false
@@ -315,6 +324,20 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   state: { kind: 'idle' },
 
   async open(path) {
+    // Subscribe to AI review job completion for this path
+    _jobsUnsubscribe?.()
+    _jobsUnsubscribe = ipc.on('jobs:changed', (job) => {
+      if (job.kind !== 'ai-review-clip') return
+      if (job.status !== 'done') return
+      const p = (job.payload as Record<string, unknown> | undefined)?.path as string | undefined
+      const cur = get().state
+      if (cur.kind !== 'ready') return
+      if (p && p === cur.path) {
+        void get().reloadFromDisk()
+        get().setAiRerunInflight(false)
+      }
+    })
+
     set({ state: { kind: 'loading', path } })
     try {
       const r = await ipc.file.readParsed(path)
@@ -454,6 +477,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   async close() {
     await get().flushSave()
     _cancelDebounce()
+    _jobsUnsubscribe?.()
+    _jobsUnsubscribe = null
     set({ state: { kind: 'idle' } })
   },
 
@@ -499,5 +524,80 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         }
       }
     })
-  }
+  },
+
+  // ── phase-15: AI review actions ──
+
+  applyAiSuggestedTitle: () => {
+    const s = get().state
+    if (s.kind !== 'ready') return
+    const next = String(s.frontmatter.ai_suggested_title ?? '')
+    if (!next || next === s.frontmatter.title) return
+    set({
+      state: {
+        ...s,
+        frontmatter: { ...s.frontmatter, title: next },
+        dirty: true,
+      }
+    })
+    _scheduleSave()
+  },
+
+  mergeAiTags: () => {
+    const s = get().state
+    if (s.kind !== 'ready') return
+    const ai = Array.isArray(s.frontmatter.ai_tags) ? s.frontmatter.ai_tags as string[] : []
+    const cur = Array.isArray(s.frontmatter.tags) ? s.frontmatter.tags as string[] : []
+    const merged = Array.from(new Set([...cur, ...ai]))
+    if (merged.length === cur.length) return
+    set({
+      state: {
+        ...s,
+        frontmatter: { ...s.frontmatter, tags: merged },
+        dirty: true,
+      }
+    })
+    _scheduleSave()
+  },
+
+  acceptAiReview: () => {
+    const s = get().state
+    if (s.kind !== 'ready') return
+    const titleNext = String(s.frontmatter.ai_suggested_title ?? s.frontmatter.title ?? '')
+    const aiTags = Array.isArray(s.frontmatter.ai_tags) ? s.frontmatter.ai_tags as string[] : []
+    const curTags = Array.isArray(s.frontmatter.tags) ? s.frontmatter.tags as string[] : []
+    const mergedTags = Array.from(new Set([...curTags, ...aiTags]))
+    set({
+      state: {
+        ...s,
+        frontmatter: {
+          ...s.frontmatter,
+          title: titleNext,
+          tags: mergedTags,
+          ai_review_accepted_at: new Date().toISOString(),
+        },
+        dirty: true,
+      }
+    })
+    _scheduleSave()
+  },
+
+  rejectAiReview: () => {
+    const s = get().state
+    if (s.kind !== 'ready') return
+    set({
+      state: {
+        ...s,
+        frontmatter: { ...s.frontmatter, ai_review_accepted_at: new Date().toISOString() },
+        dirty: true,
+      }
+    })
+    _scheduleSave()
+  },
+
+  setAiRerunInflight: (v: boolean) => {
+    const s = get().state
+    if (s.kind !== 'ready') return
+    set({ state: { ...s, aiRerunInflight: v } })
+  },
 }))
