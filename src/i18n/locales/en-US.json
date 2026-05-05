@@ -161,6 +161,24 @@
       "clearAllSuccess": "All conflict snapshots deleted",
       "emptyTitle": "No conflicts",
       "emptyDescription": "The system will automatically detect conflicting files"
+    },
+    "jobs": {
+      "tabLabel": "Jobs",
+      "empty": "No pending jobs",
+      "kindFilterLabel": "Kind",
+      "statusFilterLabel": "Status",
+      "statusDefault": "In progress (default)",
+      "statusAll": "All",
+      "kindAll": "All kinds",
+      "kind": {
+        "ai-review-clip": "AI Review",
+        "index-retry": "Index Retry"
+      },
+      "summary": {
+        "aiReview": "AI Review",
+        "indexRetry": "Index Retry"
+      },
+      "clearDoneConfirm": "Clear all completed jobs? Failed jobs will be kept."
     }
   },
   "trash": {
@@ -313,5 +331,19 @@
     "bookmark.delete": "Delete",
     "bookmark.delete_confirm": "Delete this bookmark?",
     "bookmark.empty": "No bookmarks yet"
-  }
+  },
+  "jobs": {
+  "status": {
+    "pending": "Pending",
+    "running": "Running",
+    "done": "Done",
+    "failed": "Failed",
+    "canceled": "Canceled"
+  },
+  "action": {
+    "retry": "Retry",
+    "cancel": "Cancel"
+  },
+  "clearDone": "Clear completed"
+}
 }

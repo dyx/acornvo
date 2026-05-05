@@ -161,6 +161,24 @@
       "clearAllSuccess": "所有冲突快照已删除",
       "emptyTitle": "没有冲突",
       "emptyDescription": "系统会自动检测冲突文件"
+    },
+    "jobs": {
+      "tabLabel": "任务",
+      "empty": "没有待办任务",
+      "kindFilterLabel": "类型",
+      "statusFilterLabel": "状态",
+      "statusDefault": "进行中（默认）",
+      "statusAll": "全部",
+      "kindAll": "全部类型",
+      "kind": {
+        "ai-review-clip": "AI 审读",
+        "index-retry": "索引重试"
+      },
+      "summary": {
+        "aiReview": "AI 审读",
+        "indexRetry": "索引重试"
+      },
+      "clearDoneConfirm": "确认清除所有已完成的任务？已失败的任务会保留。"
     }
   },
   "trash": {
@@ -313,5 +331,19 @@
     "bookmark.delete": "删除",
     "bookmark.delete_confirm": "确认删除这个书签？",
     "bookmark.empty": "还没有书签"
-  }
+  },
+  "jobs": {
+  "status": {
+    "pending": "等待中",
+    "running": "进行中",
+    "done": "已完成",
+    "failed": "失败",
+    "canceled": "已取消"
+  },
+  "action": {
+    "retry": "重试",
+    "cancel": "取消"
+  },
+  "clearDone": "清除已完成"
+}
 }
