@@ -2,7 +2,7 @@ import type { AiReviewResult, LlmError, LlmErrorCode } from '@shared/ai-types';
 import path from 'node:path';
 import fs from 'node:fs';
 import { dbService } from '../services/db';
-import { getCurrentVaultRoot } from '../services/grove';
+import { getCurrent } from '../services/grove';
 import { parseFile } from '../services/frontmatter';
 import { llmClient } from './client';
 import { reviewClip as reviewClipPrompt } from './prompts/review-clip';
@@ -52,7 +52,9 @@ function loadClip(clipId: number): ClipRow {
 }
 
 function loadMd(rel: string): { abs: string; raw: string; mtimeMs: number; frontmatter: Record<string, unknown>; body: string } {
-  const root = getCurrentVaultRoot();
+  const grove = getCurrent();
+  if (!grove) throw rerr('E_FILE_NOT_FOUND', 'no grove opened');
+  const root = grove.vaultRoot;
   const abs = path.join(root, rel);
   let stat: fs.Stats;
   try {

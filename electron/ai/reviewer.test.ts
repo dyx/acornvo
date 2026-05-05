@@ -13,7 +13,7 @@ vi.mock('../services/db', () => ({
   dbService: { requireCurrent: vi.fn() },
 }));
 vi.mock('../services/grove', () => ({
-  getCurrentVaultRoot: vi.fn(),
+  getCurrent: vi.fn(() => ({ vaultRoot: '/tmp' })),
 }));
 vi.mock('./client', () => ({
   llmClient: { chatJson: vi.fn() },
@@ -26,7 +26,7 @@ vi.mock('../ipc/file', () => ({
 }));
 
 import { dbService } from '../services/db';
-import { getCurrentVaultRoot } from '../services/grove';
+import { getCurrent } from '../services/grove';
 import { llmClient } from './client';
 import { fileHandlers } from '../ipc/file';
 import { reviewClip } from './reviewer';
@@ -53,13 +53,13 @@ beforeEach(() => {
 
 describe('reviewer.reviewClip — fixtures', () => {
   it('throws E_CLIP_NOT_FOUND when no row in clips', async () => {
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     await expect(reviewClip(999)).rejects.toMatchObject({ code: 'E_CLIP_NOT_FOUND' });
   });
 
   it('throws E_FILE_NOT_FOUND when md is missing on disk', async () => {
     setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     await expect(reviewClip(1)).rejects.toMatchObject({ code: 'E_FILE_NOT_FOUND' });
   });
 });
@@ -67,7 +67,7 @@ describe('reviewer.reviewClip — fixtures', () => {
 describe('reviewer.reviewClip — idempotency', () => {
   it('returns cached result and does not call LLM when ai_reviewed_at exists and force=false', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), `---
 title: Example
@@ -91,7 +91,7 @@ body
 
   it('bypasses cache when opts.force=true', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), `---
 ai_reviewed_at: '2026-05-04T00:00:00Z'
@@ -121,7 +121,7 @@ body
 describe('reviewer.reviewClip — writeback', () => {
   it('calls writeParsed with merged frontmatter and expectedMtime', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), `---
 title: Example
@@ -159,7 +159,7 @@ the body
 
   it('rethrows E_MTIME_CONFLICT when writeParsed fails with E_MTIME_MISMATCH', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), `---\n---\nbody\n`);
     (llmClient.chatJson as any).mockResolvedValue({
@@ -176,7 +176,7 @@ the body
 describe('reviewer.reviewClip — error bubble', () => {
   it('rethrows E_AUTH from llmClient as-is', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), '---\n---\nbody\n');
     const e: any = new Error('unauthorized'); e.code = 'E_AUTH';
@@ -187,7 +187,7 @@ describe('reviewer.reviewClip — error bubble', () => {
 
   it('rethrows E_RATE from llmClient', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), '---\n---\nbody\n');
     const e: any = new Error('rate'); e.code = 'E_RATE';
@@ -198,7 +198,7 @@ describe('reviewer.reviewClip — error bubble', () => {
 
   it('rethrows E_RESPONSE (schema validation failure)', async () => {
     const { clipPath } = setupDbWithClip(db);
-    (getCurrentVaultRoot as any).mockReturnValue(TMP);
+    (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
     fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
     fs.writeFileSync(path.join(TMP, clipPath), '---\n---\nbody\n');
     const e: any = new Error('bad json'); e.code = 'E_RESPONSE';

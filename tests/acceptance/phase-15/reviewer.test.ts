@@ -12,7 +12,6 @@ import { migrationsDir } from '../../../electron/services/db/migrations/index';
 vi.mock('../../../electron/services/db/connection', () => ({ getDb: vi.fn() }));
 vi.mock('../../../electron/services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
 vi.mock('../../../electron/services/grove', () => ({
-  getCurrentVaultRoot: vi.fn(),
   getCurrent: vi.fn(() => ({ vaultRoot: '/tmp' })),
 }));
 vi.mock('../../../electron/settings/store', () => ({
@@ -56,7 +55,7 @@ function installRealWriteback() {
 }
 
 import { dbService } from '../../../electron/services/db';
-import { getCurrentVaultRoot } from '../../../electron/services/grove';
+import { getCurrent } from '../../../electron/services/grove';
 import { settingsStore } from '../../../electron/settings/store';
 import { fileHandlers } from '../../../electron/ipc/file';
 import { aiReviewClipHandler } from '../../../electron/queue/handlers/ai-review-clip';
@@ -81,7 +80,7 @@ beforeEach(() => {
     VALUES ('p1', 'test', 'openai', 'gpt-4o-mini', 0.3, 1.0, '2026-05-04T00:00:00Z', '2026-05-04T00:00:00Z')
   `).run();
   (dbService.requireCurrent as any).mockReturnValue(db);
-  (getCurrentVaultRoot as any).mockReturnValue(TMP);
+  (getCurrent as any).mockReturnValue({ vaultRoot: TMP });
   (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
   // Clean TMP between tests
   try { fs.rmSync(TMP, { recursive: true }); } catch { /* */ }
