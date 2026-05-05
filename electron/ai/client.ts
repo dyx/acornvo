@@ -6,6 +6,7 @@ import type {
   LlmError,
   LlmErrorCode,
 } from '@shared/ai-types';
+import type { Tool, ChatWithToolsResult } from '../../shared/agent-types';
 import { settingsStore } from '../settings/store';
 import { getProfileDecryptedKey } from '../settings/profile-key';
 import { dbService } from '../services/db';
@@ -75,6 +76,30 @@ function withTimeout(signal: AbortSignal | undefined, timeoutMs: number): { sign
   return { signal: ac.signal, cleanup: () => clearTimeout(id) };
 }
 
+export interface ChatStreamOptions {
+  profileId?: string;
+  messages: Array<{ role: 'system' | 'user' | 'assistant' | 'tool'; content: string; toolCallId?: string }>;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  signal?: AbortSignal;
+  onToken: (text: string) => void;
+}
+
+export interface ChatStreamResult {
+  text: string;
+  usage?: { promptTokens: number; completionTokens: number };
+  latencyMs: number;
+  model: string;
+}
+
+export interface ChatWithToolsOptions extends Omit<ChatStreamOptions, 'onToken'> {
+  tools: Array<Pick<Tool, 'name' | 'description' | 'parameters'>>;
+  onToken?: (text: string) => void;
+  onEvent?: (e: { type: 'tool_call_started'; id: string; name: string } | { type: 'token'; text: string }) => void;
+  toolChoice?: 'auto' | 'none';
+}
+
 export const llmClient = {
   async chat(opts: ChatOptions): Promise<ChatTextResult> {
     const profile = resolveProfile(opts.profileId);
@@ -95,6 +120,34 @@ export const llmClient = {
       const { parseAndValidate } = await import('./parse-json');
       const data = parseAndValidate<T>(text, opts.schema);
       return { data, rawText: text, model, usage, latencyMs };
+    } finally {
+      cleanup();
+    }
+  },
+
+  async chatStream(opts: ChatStreamOptions): Promise<ChatStreamResult> {
+    const profile = resolveProfile(opts.profileId);
+    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS);
+    try {
+      const mod = await loadProvider(profile.provider);
+      if (typeof (mod as any).callProviderStream !== 'function') {
+        throw llmErr('E_CONFIG', `provider ${profile.provider} does not implement chatStream`);
+      }
+      return (mod as any).callProviderStream({ profile, ...opts, signal }, { onToken: opts.onToken });
+    } finally {
+      cleanup();
+    }
+  },
+
+  async chatWithTools(opts: ChatWithToolsOptions): Promise<ChatWithToolsResult & { latencyMs: number; model: string }> {
+    const profile = resolveProfile(opts.profileId);
+    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS);
+    try {
+      const mod = await loadProvider(profile.provider);
+      if (typeof (mod as any).callProviderTools !== 'function') {
+        throw llmErr('E_CONFIG', `provider ${profile.provider} does not implement chatWithTools`);
+      }
+      return (mod as any).callProviderTools({ profile, ...opts, signal });
     } finally {
       cleanup();
     }

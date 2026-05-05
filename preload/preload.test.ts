@@ -59,3 +59,33 @@ describe('security audit — preload contextBridge', () => {
     expect(api.settings.secret).toBeUndefined()
   })
 })
+
+describe('preload window.api.chat', () => {
+  it('exposes sessions/get/create/delete/rename/getMessages + sendUserMessage + cancelStream + approveTool + rejectTool + onStream', async () => {
+    await import('./preload')
+    const api = exposeInMainWorld.mock.calls[0][1]
+    expect(typeof api.chat.sessions.list).toBe('function')
+    expect(typeof api.chat.sessions.create).toBe('function')
+    expect(typeof api.chat.sessions.delete).toBe('function')
+    expect(typeof api.chat.sessions.rename).toBe('function')
+    expect(typeof api.chat.sessions.getMessages).toBe('function')
+    expect(typeof api.chat.sendUserMessage).toBe('function')
+    expect(typeof api.chat.cancelStream).toBe('function')
+    expect(typeof api.chat.approveTool).toBe('function')
+    expect(typeof api.chat.rejectTool).toBe('function')
+    expect(typeof api.chat.onStream).toBe('function')
+  })
+
+  it('onStream registers per-session listener on chat:stream:<id> and returns unsubscribe', async () => {
+    await import('./preload')
+    const api = exposeInMainWorld.mock.calls[0][1]
+    const { ipcRenderer } = await import('electron')
+    const cb = vi.fn()
+    const off = api.chat.onStream('sess-1', cb)
+    expect(ipcRenderer.on).toHaveBeenCalled()
+    const channel = (ipcRenderer.on as any).mock.calls[0][0]
+    expect(channel).toBe('chat:stream:sess-1')
+    off()
+    expect(ipcRenderer.removeListener).toHaveBeenCalledWith(channel, expect.any(Function))
+  })
+})

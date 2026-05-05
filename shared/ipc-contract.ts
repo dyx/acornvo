@@ -120,6 +120,10 @@ export type IpcErrorCode =
   | 'E_UNKNOWN_NAMESPACE'
   | 'E_DUPLICATE_NAME'
   | 'E_PROFILE_NOT_FOUND'
+  | 'E_BUSY'
+  | 'E_GLOBAL_BUSY'
+  | 'E_MISSING_PROFILE'
+  | 'E_AGENT_FAILURE'
 
 export const IPC_ERROR_CODES = {
   E_INTERNAL: 'E_INTERNAL',
@@ -144,7 +148,11 @@ export const IPC_ERROR_CODES = {
   E_KEYCHAIN_UNAVAILABLE: 'E_KEYCHAIN_UNAVAILABLE',
   E_UNKNOWN_NAMESPACE: 'E_UNKNOWN_NAMESPACE',
   E_DUPLICATE_NAME: 'E_DUPLICATE_NAME',
-  E_PROFILE_NOT_FOUND: 'E_PROFILE_NOT_FOUND'
+  E_PROFILE_NOT_FOUND: 'E_PROFILE_NOT_FOUND',
+  E_BUSY: 'E_BUSY',
+  E_GLOBAL_BUSY: 'E_GLOBAL_BUSY',
+  E_MISSING_PROFILE: 'E_MISSING_PROFILE',
+  E_AGENT_FAILURE: 'E_AGENT_FAILURE'
 } as const satisfies Record<IpcErrorCode, IpcErrorCode>
 
 export type SelectDirectoryPurpose = 'open' | 'createParent'
@@ -489,6 +497,18 @@ export type IpcContract = {
       total: number
     }
   }
+  chat: {
+    'sessions.list': () => Session[]
+    'sessions.create': (opts: { profileId: string | null; title?: string | null }) => Session
+    'sessions.delete': (id: string) => { ok: true }
+    'sessions.rename': (id: string, title: string) => { ok: true }
+    'sessions.getMessages': (id: string) => SessionMessage[]
+    sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string }) => { ok: true }
+    cancelStream: (sessionId: string) => { ok: true }
+    approveTool: (callId: string, opts?: { editedArgs?: unknown }) => { ok: true }
+    rejectTool: (callId: string) => { ok: true }
+    subscribeStream: (sessionId: string) => { ok: true; channel: string }
+  }
 }
 
 /**
@@ -518,6 +538,10 @@ export type IpcEventContract = {
   'settings:changed': SettingsChangedPayload
   'jobs:changed': Job
 }
+
+// --- chat namespace types (phase-16) ---
+
+import type { Session, SessionMessage } from './agent-types'
 
 export type IpcEventChannel = keyof IpcEventContract
 

@@ -15,7 +15,14 @@ import { bookmarkHandlers } from './bookmarks'
 import { settingsHandlers } from './settings'
 import { createJobsHandlers } from './jobs'
 import { aiHandlers } from './ai'
+import { createChatHandlers } from './chat'
 import { getQueueBootstrap } from '../queue'
+import { registry } from '../agent/registry'
+import { approvalGate } from '../agent/approval'
+import { concurrencyGate } from '../agent/concurrency'
+import { sessions } from '../agent/sessions'
+import { llmClient } from '../ai/client'
+import { dbService } from '../services/db'
 
 const jobsHandlers = createJobsHandlers({
   getStore: () => {
@@ -28,6 +35,26 @@ const jobsHandlers = createJobsHandlers({
     if (!b) return { error: 'E_NOT_FOUND' }
     return b.runner.cancel(id)
   }
+})
+
+function getChatTargets() {
+  try {
+    const { mainWindow } = require('../main') as { mainWindow: any }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      return [mainWindow.webContents]
+    }
+  } catch {}
+  return []
+}
+
+const chatHandlers = createChatHandlers({
+  registry,
+  approval: approvalGate,
+  concurrency: concurrencyGate,
+  sessions,
+  getTargets: getChatTargets,
+  vaultRoot: () => dbService.getCurrentGrovePath() ?? '/vault',
+  llmClient: llmClient as any,
 })
 
 type HandlerMap = {
@@ -64,5 +91,6 @@ export const ipcHandlers: HandlerMap = {
   bookmarks: bookmarkHandlers,
   settings: settingsHandlers,
   jobs: jobsHandlers,
-  ai: aiHandlers
+  ai: aiHandlers,
+  chat: chatHandlers
 }

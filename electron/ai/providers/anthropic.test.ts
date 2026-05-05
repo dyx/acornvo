@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './anthropic';
+import { callProvider, callProviderStream, callProviderTools } from './anthropic';
 
 const fetchMock = vi.fn();
 beforeEach(() => {
@@ -67,5 +67,54 @@ describe('anthropic provider', () => {
     await expect(
       callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] }),
     ).rejects.toMatchObject({ code: 'E_AUTH', httpStatus: 401 });
+  });
+});
+
+describe('anthropic.callProviderStream', () => {
+  it('parses SSE event stream (content_block_delta) into tokens', async () => {
+    const enc = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(c) {
+        const events = [
+          'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hel"}}\n\n',
+          'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"lo"}}\n\n',
+          'event: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}\n\n',
+          'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+        ];
+        for (const e of events) c.enqueue(enc.encode(e));
+        c.close();
+      },
+    });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200, body });
+    const tokens: string[] = [];
+    const r = await callProviderStream(
+      { profile: baseProfile, messages: [{ role: 'user', content: 'hi' }] },
+      { onToken: (t) => tokens.push(t) },
+    );
+    expect(tokens).toEqual(['hel', 'lo']);
+    expect(r.text).toBe('hello');
+  });
+});
+
+describe('anthropic.callProviderTools', () => {
+  it('extracts tool_use blocks from content[]', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true, status: 200, json: async () => ({
+        stop_reason: 'tool_use',
+        content: [
+          { type: 'text', text: 'searching now' },
+          { type: 'tool_use', id: 'toolu_1', name: 'search_files', input: { query: 'x' } },
+        ],
+        usage: { input_tokens: 4, output_tokens: 3 },
+      }),
+    });
+    const r = await callProviderTools({
+      profile: baseProfile,
+      messages: [{ role: 'user', content: 'find x' }],
+      tools: [{ name: 'search_files', description: 'd', parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } }],
+    });
+    expect(r.finishReason).toBe('tool_calls');
+    expect(r.text).toBe('searching now');
+    expect(r.toolCalls).toEqual([{ id: 'toolu_1', name: 'search_files', args: { query: 'x' } }]);
   });
 });

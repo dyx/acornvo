@@ -122,6 +122,25 @@ const request: IpcClient<IpcContract> = {
     reviewClip: (clipId, opts) => invoke('ai.reviewClip', clipId, opts),
     'usage.summary': (opts) => invoke('ai.usage.summary', opts),
     'usage.list': (opts) => invoke('ai.usage.list', opts)
+  },
+  chat: {
+    sessions: {
+      list: () => invoke('chat.sessions.list'),
+      create: (opts: { profileId: string | null; title?: string | null }) => invoke('chat.sessions.create', opts),
+      delete: (id: string) => invoke('chat.sessions.delete', id),
+      rename: (id: string, title: string) => invoke('chat.sessions.rename', id, title),
+      getMessages: (id: string) => invoke('chat.sessions.getMessages', id),
+    },
+    sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string }) => invoke('chat.sendUserMessage', opts),
+    cancelStream: (sessionId: string) => invoke('chat.cancelStream', sessionId),
+    approveTool: (callId: string, opts?: { editedArgs?: unknown }) => invoke('chat.approveTool', callId, opts),
+    rejectTool: (callId: string) => invoke('chat.rejectTool', callId),
+    onStream: (sessionId: string, cb: (e: any) => void) => {
+      const channel = `chat:stream:${sessionId}`;
+      const listener = (_evt: any, payload: any) => cb(payload);
+      ipcRenderer.on(channel, listener);
+      return () => ipcRenderer.removeListener(channel, listener);
+    },
   }
 }
 

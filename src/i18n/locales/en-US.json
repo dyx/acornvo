@@ -345,5 +345,32 @@
     "cancel": "Cancel"
   },
   "clearDone": "Clear completed"
-}
+  },
+  "chat": {
+    "approval": {
+      "title": "Approve tool call",
+      "reason": "Reason",
+      "args": "Arguments",
+      "approve": "Approve",
+      "cancel": "Cancel",
+      "edit": "Edit arguments"
+    },
+    "tool": {
+      "search_files": "Search files",
+      "read_file": "Read file",
+      "list_tags": "List tags",
+      "update_frontmatter": "Update frontmatter",
+      "clip_summary": "Summarize clip"
+    },
+    "error": {
+      "step_limit": "Reached the 8-step thinking limit.",
+      "missing_profile": "No AI profile is bound to this session.",
+      "busy": "This conversation is already running.",
+      "global_busy": "Too many chats are running. Please cancel one and try again.",
+      "user_rejected": "You cancelled this tool call.",
+      "approval_timeout": "Approval timed out after 30 minutes.",
+      "path_escape": "The path leaves the grove and cannot be accessed.",
+      "missing_reason": "A reason is required for this change."
+    }
+  }
 }

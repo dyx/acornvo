@@ -27,6 +27,15 @@ function stubDbPrepare(result: unknown) {
   });
 }
 
+function setupProfile() {
+  (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
+  stubDbPrepare({
+    id: 'p1', provider: 'openai', model: 'gpt-x', base_url: null,
+    temperature: 0.3, max_tokens: null,
+  });
+  (getProfileDecryptedKey as any).mockReturnValue('sk-test');
+}
+
 describe('llmClient.chat — profile resolution', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -97,5 +106,58 @@ describe('llmClient.chat — default timeout', () => {
     const { llmClient: freshClient } = await import('./client');
     await freshClient.chat({ messages: [{ role: 'user', content: 'x' }], signal: ac.signal });
     expect(receivedSignal).toBe(ac.signal);
+  });
+});
+
+describe('llmClient.chatStream', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (dbService.requireCurrent as any).mockReturnValue(mockDb);
+    setupProfile();
+    vi.doMock('./providers/openai', () => ({
+      callProviderStream: vi.fn(async (_req: any, { onToken }: { onToken: (t: string) => void }) => {
+        onToken('he'); onToken('llo');
+        return { text: 'hello', usage: { promptTokens: 1, completionTokens: 2 }, latencyMs: 10, model: 'gpt-x' };
+      }),
+    }));
+  });
+
+  it('dispatches to the provider stream and forwards onToken chunks', async () => {
+    const { llmClient: freshClient } = await import('./client');
+    const tokens: string[] = [];
+    const r = await freshClient.chatStream({
+      profileId: 'p1',
+      messages: [{ role: 'user', content: 'hi' }],
+      onToken: (t) => tokens.push(t),
+    });
+    expect(tokens).toEqual(['he', 'llo']);
+    expect(r.text).toBe('hello');
+  });
+});
+
+describe('llmClient.chatWithTools', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (dbService.requireCurrent as any).mockReturnValue(mockDb);
+    setupProfile();
+    vi.doMock('./providers/openai', () => ({
+      callProviderTools: vi.fn(async () => ({
+        text: 'I will search.',
+        toolCalls: [{ id: 'tc1', name: 'search_files', args: { query: 'x' } }],
+        finishReason: 'tool_calls' as const,
+        usage: { promptTokens: 5, completionTokens: 3 },
+      })),
+    }));
+  });
+
+  it('returns unified tool call shape with finishReason', async () => {
+    const { llmClient: freshClient } = await import('./client');
+    const r = await freshClient.chatWithTools({
+      profileId: 'p1',
+      messages: [{ role: 'user', content: 'find x' }],
+      tools: [{ name: 'search_files', description: 'd', parameters: { type: 'object' } }],
+    });
+    expect(r.finishReason).toBe('tool_calls');
+    expect(r.toolCalls[0]).toMatchObject({ name: 'search_files', args: { query: 'x' } });
   });
 });

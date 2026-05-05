@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './openai-compatible';
+import { callProvider, callProviderStream, callProviderTools } from './openai-compatible';
+import * as openai from './openai';
 
 const fetchMock = vi.fn();
 beforeEach(() => {
@@ -27,5 +28,14 @@ describe('openai-compatible provider', () => {
         messages: [{ role: 'user', content: 'x' }],
       }),
     ).rejects.toMatchObject({ code: 'E_CONFIG' });
+  });
+});
+
+describe('openai-compatible re-exports', () => {
+  it('exposes callProviderStream from openai', () => {
+    expect(callProviderStream).toBe(openai.callProviderStream);
+  });
+  it('exposes callProviderTools from openai', () => {
+    expect(callProviderTools).toBe(openai.callProviderTools);
   });
 });
