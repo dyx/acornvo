@@ -32,7 +32,9 @@ CREATE TABLE tool_calls (
   approved INTEGER,
   started_at TEXT,
   finished_at TEXT,
-  error TEXT
+  error TEXT,
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (message_id) REFERENCES session_messages(id)
 );
 CREATE INDEX idx_tool_calls_session ON tool_calls(session_id);
 

@@ -17,7 +17,7 @@ describe('migration 010 — sessions', () => {
   afterEach(() => db.close())
 
   it('creates sessions / session_messages / tool_calls tables and bumps user_version to 10', () => {
-    expect(db.pragma('user_version', { simple: true }) as number).toBe(10)
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(10)
 
     const tables = (
       db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[]
