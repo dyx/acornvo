@@ -3,6 +3,7 @@ import type Database from 'better-sqlite3'
 import { createJobStore, type JobStore } from './store'
 import { createQueueRunner, type QueueRunner } from './runner'
 import { createIndexRetryHandler } from './handlers/index-retry'
+import { createAiReviewClipHandler } from './handlers/ai-review-clip'
 
 export interface QueueBootstrap {
   store: JobStore
@@ -31,7 +32,28 @@ export function bootstrapQueueRunner(
       }
     })
   })
-  // ai-review-clip registered in Task 6
+
+  // Register ai-review-clip handler (placeholder — defers to phase-15)
+  runner.register({
+    kind: 'ai-review-clip',
+    concurrency: 2,
+    minGapMs: 500,
+    handler: createAiReviewClipHandler({
+      readClipRow: (_id: number) => {
+        // Phase-12 may not have a clip reader exposed yet; return null as placeholder.
+        return null
+      },
+      readMdFile: async (_path: string) => {
+        // Stub until phase-15 wires real markdown parsing.
+        return { frontmatter: {}, body: '' }
+      },
+      reviewClip: async () => {
+        const err = new Error('phase-15 ai reviewer not yet implemented') as Error & { code: string }
+        err.code = 'E_NOT_IMPLEMENTED'
+        throw err
+      }
+    })
+  })
 
   bootstrap = { store, runner }
   return runner
