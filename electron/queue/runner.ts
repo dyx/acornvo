@@ -1,6 +1,7 @@
 import type { JobHandlerResult } from '@shared/job-types'
 import type { JobStore } from './store'
 import type { Job } from '@shared/job-types'
+import { nextDelay } from './policy'
 
 export interface HandlerCtx {
   job: Job
@@ -119,15 +120,29 @@ export function createQueueRunner(deps: QueueRunnerDeps): QueueRunner {
   ): void {
     entry.running.delete(job.id)
     if (controller.signal.aborted) return
+
     if (threw) {
       const msg = threw instanceof Error ? threw.message : String(threw)
-      deps.store.markRetry(job.id, 1000, msg)
+      const delay = nextDelay(job.attempts)
+      if (delay === null) deps.store.markFailed(job.id, msg)
+      else deps.store.markRetry(job.id, delay, msg)
       return
     }
     if (!result) return
-    if (result.kind === 'ok') deps.store.markDone(job.id)
-    else if (result.kind === 'fail') deps.store.markFailed(job.id, result.error)
-    else if (result.kind === 'retry') deps.store.markRetry(job.id, result.delayMs, result.reason)
+    if (result.kind === 'ok') {
+      deps.store.markDone(job.id)
+      return
+    }
+    if (result.kind === 'fail') {
+      deps.store.markFailed(job.id, result.error)
+      return
+    }
+    // retry
+    const supplied =
+      Number.isFinite(result.delayMs) && result.delayMs > 0 ? result.delayMs : null
+    const delay = supplied ?? nextDelay(job.attempts)
+    if (delay === null) deps.store.markFailed(job.id, result.reason)
+    else deps.store.markRetry(job.id, delay, result.reason)
   }
 
   function cancel(id: string): { ok: true } | { error: 'E_NOT_FOUND' | 'E_STATUS_NOT_ALLOWED' } {

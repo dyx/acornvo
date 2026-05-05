@@ -147,3 +147,221 @@ describe('createQueueRunner — tick picks due jobs', () => {
     runner.stop()
   })
 })
+
+describe('createQueueRunner — handler result branches', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+  afterEach(() => vi.useRealTimers())
+
+  it('throws → markRetry with policy.nextDelay(attempts) and the error message', async () => {
+    vi.setSystemTime(new Date('2026-05-03T10:00:00.000Z'))
+    const { db, store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => {
+        throw new Error('boom')
+      }
+    })
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const row = db.prepare('SELECT * FROM jobs WHERE id=?').get(id) as {
+      status: string
+      attempts: number
+      next_run_at: string
+      last_error: string
+    }
+    expect(row.status).toBe('pending')
+    expect(row.attempts).toBe(1)
+    expect(row.last_error).toBe('boom')
+    const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
+    expect(delta).toBeGreaterThanOrEqual(900)
+    expect(delta).toBeLessThanOrEqual(1500)
+  })
+
+  it('throws on attempts=5 → markFailed (policy returns null)', async () => {
+    vi.setSystemTime(new Date('2026-05-03T10:00:00.000Z'))
+    const { db, store } = freshStore()
+    const id = 'doomed'
+    db.prepare(
+      `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?)`
+    ).run(
+      id,
+      'index-retry',
+      JSON.stringify({ path: 'x.md' }),
+      'pending',
+      5,
+      '2026-05-03T10:00:00.000Z',
+      '2026-05-03T10:00:00.000Z',
+      '2026-05-03T10:00:00.000Z'
+    )
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => {
+        throw new Error('still broken')
+      }
+    })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const row = db.prepare('SELECT status, last_error FROM jobs WHERE id=?').get(id) as {
+      status: string
+      last_error: string
+    }
+    expect(row.status).toBe('failed')
+    expect(row.last_error).toBe('still broken')
+  })
+
+  it('returns { kind: "fail", error } → markFailed (no retry policy)', async () => {
+    const { db, store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'fail', error: 'E_MISSING_PROFILE' })
+    })
+    const { id } = store.enqueue('ai-review-clip', { clipId: 1 })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const row = db.prepare('SELECT status, attempts, last_error FROM jobs WHERE id=?').get(id) as {
+      status: string
+      attempts: number
+      last_error: string
+    }
+    expect(row.status).toBe('failed')
+    expect(row.attempts).toBe(0)
+    expect(row.last_error).toBe('E_MISSING_PROFILE')
+  })
+
+  it('returns { kind: "retry", delayMs, reason } → markRetry with that delayMs', async () => {
+    vi.setSystemTime(new Date('2026-05-03T10:00:00.000Z'))
+    const { db, store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'retry', delayMs: 3_600_000, reason: 'E_RATE_LIMITED' })
+    })
+    const { id } = store.enqueue('ai-review-clip', { clipId: 1 })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const row = db.prepare('SELECT * FROM jobs WHERE id=?').get(id) as {
+      status: string
+      attempts: number
+      next_run_at: string
+      last_error: string
+    }
+    expect(row.status).toBe('pending')
+    expect(row.attempts).toBe(1)
+    expect(row.last_error).toBe('E_RATE_LIMITED')
+    const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
+    expect(delta).toBeGreaterThanOrEqual(3_600_000 - 200)
+    expect(delta).toBeLessThanOrEqual(3_600_000 + 1_500)
+  })
+
+  it('handler-supplied delayMs ≤ 0 falls back to nextDelay(attempts)', async () => {
+    vi.setSystemTime(new Date('2026-05-03T10:00:00.000Z'))
+    const { db, store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'retry', delayMs: 0, reason: 'oops' })
+    })
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(300)
+    runner.stop()
+    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as { next_run_at: string }
+    const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
+    expect(delta).toBeGreaterThanOrEqual(900)
+    expect(delta).toBeLessThanOrEqual(1500)
+  })
+})
+
+describe('createQueueRunner — cancel + AbortSignal', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+  afterEach(() => vi.useRealTimers())
+
+  it('cancel pending → status=canceled immediately; runner does not pick it', async () => {
+    const { db, store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'ok' })
+    })
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    const r = runner.cancel(id)
+    expect(r).toEqual({ ok: true })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(500)
+    runner.stop()
+    const row = db.prepare('SELECT status FROM jobs WHERE id=?').get(id) as { status: string }
+    expect(row.status).toBe('canceled')
+  })
+
+  it('cancel running → AbortSignal fires, handler co-op exits, status=canceled regardless of return', async () => {
+    const { db, store } = freshStore()
+    let signaled = false
+    let handlerResolve!: (r: { kind: 'ok' }) => void
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: ({ cancel }) => {
+        cancel.addEventListener('abort', () => {
+          signaled = true
+        })
+        return new Promise<{ kind: 'ok' }>((resolve) => {
+          handlerResolve = resolve
+        })
+      }
+    })
+    const { id } = store.enqueue('ai-review-clip', { clipId: 1 })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(200)
+    const r = runner.cancel(id)
+    expect(r).toEqual({ ok: true })
+    expect(signaled).toBe(true)
+    handlerResolve({ kind: 'ok' })
+    await vi.advanceTimersByTimeAsync(50)
+    runner.stop()
+    const row = db.prepare('SELECT status FROM jobs WHERE id=?').get(id) as { status: string }
+    expect(row.status).toBe('canceled')
+  })
+
+  it('cancel done → E_STATUS_NOT_ALLOWED', async () => {
+    const { store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 100 })
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => ({ kind: 'ok' })
+    })
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    store.markDone(id)
+    expect(runner.cancel(id)).toEqual({ error: 'E_STATUS_NOT_ALLOWED' })
+  })
+
+  it('cancel non-existent id → E_NOT_FOUND', () => {
+    const { store } = freshStore()
+    const runner = createQueueRunner({ store })
+    expect(runner.cancel('nope')).toEqual({ error: 'E_NOT_FOUND' })
+  })
+})
