@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import { EventEmitter } from 'node:events'
 import { v4 as uuidv4 } from 'uuid'
 import {
   isJobStatus,
@@ -27,6 +28,32 @@ export interface JobStoreDeps {
   uuid?: () => string
 }
 
+export type StateChangedReason =
+  | 'enqueued'
+  | 'running'
+  | 'done'
+  | 'retry'
+  | 'failed'
+  | 'canceled'
+  | 'manualRetry'
+
+export interface StateChangedEvent {
+  reason: StateChangedReason
+  job: Job
+}
+
+export interface ClearedEvent {
+  reason: 'clearedDone'
+  removed: number
+}
+
+export interface JobStoreEvents {
+  on(event: 'stateChanged', listener: (e: StateChangedEvent) => void): this
+  on(event: 'cleared', listener: (e: ClearedEvent) => void): this
+  off(event: 'stateChanged', listener: (e: StateChangedEvent) => void): this
+  off(event: 'cleared', listener: (e: ClearedEvent) => void): this
+}
+
 export interface JobStore {
   enqueue(
     kind: string,
@@ -46,11 +73,19 @@ export interface JobStore {
   clearDone(): { removed: number }
   /** Crash-recovery sweep — see Task 6. */
   recoverRunning(): { restored: number }
+  events: JobStoreEvents
 }
 
 export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): JobStore {
   const now = deps.now ?? (() => new Date())
   const uuid = deps.uuid ?? uuidv4
+
+  const emitter = new EventEmitter() as EventEmitter & JobStoreEvents
+
+  function emitState(reason: StateChangedReason, id: string): void {
+    const job = getById(id)
+    if (job) emitter.emit('stateChanged', { reason, job })
+  }
 
   function rowToJob(row: JobsRow): Job {
     const payload = JSON.parse(row.payload_json) as Record<string, unknown>
@@ -97,17 +132,20 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
       `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, last_error, created_at, updated_at)
        VALUES (?,?,?,?,?,?,NULL,?,?)`
     ).run(id, kind, JSON.stringify(stored), 'pending', 0, nextRunAt, ts, ts)
+    emitState('enqueued', id)
     return { id }
   }
 
   function markRunning(id: string): void {
     const ts = now().toISOString()
     db.prepare('UPDATE jobs SET status=?, updated_at=? WHERE id=?').run('running', ts, id)
+    emitState('running', id)
   }
 
   function markDone(id: string): void {
     const ts = now().toISOString()
     db.prepare('UPDATE jobs SET status=?, updated_at=? WHERE id=?').run('done', ts, id)
+    emitState('done', id)
   }
 
   function markRetry(id: string, delayMs: number, reason: string): void {
@@ -118,6 +156,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
        SET status='pending', attempts = attempts + 1, next_run_at = ?, last_error = ?, updated_at = ?
        WHERE id = ?`
     ).run(nextRunAt, reason, ts, id)
+    emitState('retry', id)
   }
 
   function markFailed(id: string, reason: string): void {
@@ -128,11 +167,13 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
       ts,
       id
     )
+    emitState('failed', id)
   }
 
   function markCanceled(id: string): void {
     const ts = now().toISOString()
     db.prepare('UPDATE jobs SET status=?, updated_at=? WHERE id=?').run('canceled', ts, id)
+    emitState('canceled', id)
   }
 
   function resetForManualRetry(id: string): void {
@@ -142,6 +183,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
        SET status='pending', attempts = 0, next_run_at = ?, updated_at = ?
        WHERE id = ?`
     ).run(ts, ts, id)
+    emitState('manualRetry', id)
   }
 
   function list(filter: JobListFilter): { items: Job[]; total: number } {
@@ -175,6 +217,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
 
   function clearDone(): { removed: number } {
     const info = db.prepare("DELETE FROM jobs WHERE status='done'").run()
+    emitter.emit('cleared', { reason: 'clearedDone', removed: info.changes })
     return { removed: info.changes }
   }
 
@@ -197,6 +240,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
     list,
     getById,
     clearDone,
-    recoverRunning
+    recoverRunning,
+    events: emitter as unknown as JobStoreEvents
   }
 }

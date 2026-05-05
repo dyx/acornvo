@@ -287,3 +287,62 @@ describe('createJobStore — recoverRunning', () => {
     expect(p.id && d.id && f.id && c.id).toBeTruthy()
   })
 })
+
+describe('createJobStore — stateChanged emitter', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = freshDb()
+  })
+  afterEach(() => db.close())
+
+  it('emits stateChanged on enqueue with the inserted Job', () => {
+    const store = createJobStore(db)
+    const events: { reason: string; jobId: string }[] = []
+    store.events.on('stateChanged', (e) => events.push({ reason: e.reason, jobId: e.job.id }))
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    expect(events).toHaveLength(1)
+    expect(events[0]).toEqual({ reason: 'enqueued', jobId: id })
+  })
+
+  it('emits stateChanged on each status mutation', () => {
+    const store = createJobStore(db)
+    const events: string[] = []
+    store.events.on('stateChanged', (e) => events.push(e.reason))
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    store.markRunning(id)
+    store.markDone(id)
+    expect(events).toEqual(['enqueued', 'running', 'done'])
+  })
+
+  it('payload contains the up-to-date Job (status reflects the just-applied write)', () => {
+    const store = createJobStore(db)
+    const seen: string[] = []
+    store.events.on('stateChanged', (e) => seen.push(`${e.reason}:${e.job.status}`))
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    store.markRunning(id)
+    store.markRetry(id, 1000, 'EIO')
+    expect(seen).toEqual(['enqueued:pending', 'running:running', 'retry:pending'])
+  })
+
+  it('does NOT emit stateChanged when enqueue dedupe hits the existing row', () => {
+    const store = createJobStore(db)
+    store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    const events: string[] = []
+    store.events.on('stateChanged', (e) => events.push(e.reason))
+    store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    expect(events).toEqual([]) // dedupe path returns silently
+  })
+
+  it('clearDone emits a `cleared` event with the count', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('index-retry', { path: 'a.md' })
+    const b = store.enqueue('index-retry', { path: 'b.md' })
+    store.markDone(a.id)
+    store.markDone(b.id)
+    const events: { reason: string; removed?: number }[] = []
+    store.events.on('cleared', (e) => events.push(e))
+    const result = store.clearDone()
+    expect(result.removed).toBe(2)
+    expect(events).toEqual([{ reason: 'clearedDone', removed: 2 }])
+  })
+})
