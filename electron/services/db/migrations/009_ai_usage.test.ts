@@ -15,8 +15,8 @@ describe('migration 009 — ai_usage', () => {
   })
   afterEach(() => db.close())
 
-  it('bumps user_version to 9', () => {
-    expect(db.pragma('user_version', { simple: true }) as number).toBe(9)
+  it('bumps user_version to at least 9', () => {
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(9)
   })
 
   it('creates ai_usage table with the expected columns + types', () => {

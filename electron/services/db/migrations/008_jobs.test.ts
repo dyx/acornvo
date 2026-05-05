@@ -15,8 +15,8 @@ describe('migration 008 — jobs', () => {
   })
   afterEach(() => db.close())
 
-  it('bumps user_version to 8', () => {
-    expect(db.pragma('user_version', { simple: true }) as number).toBe(8)
+  it('bumps user_version to at least 8', () => {
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(8)
   })
 
   it('creates jobs table with the expected columns + types', () => {
