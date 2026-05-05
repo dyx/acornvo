@@ -1,4 +1,5 @@
 import type { IpcContract } from '@shared/ipc-contract'
+import { IpcError } from '@shared/ipc-contract'
 import { logger } from '../services/logger'
 import { dbHandlers } from './db'
 import { fileHandlers } from './file'
@@ -12,6 +13,21 @@ import { opsHandlers } from './ops'
 import { browserHandlers } from './browser'
 import { bookmarkHandlers } from './bookmarks'
 import { settingsHandlers } from './settings'
+import { createJobsHandlers } from './jobs'
+import { getQueueBootstrap } from '../queue'
+
+const jobsHandlers = createJobsHandlers({
+  getStore: () => {
+    const b = getQueueBootstrap()
+    if (!b) throw new IpcError('E_NOT_FOUND', 'no grove opened (queue not initialized)')
+    return b.store
+  },
+  cancelInRunner: (id) => {
+    const b = getQueueBootstrap()
+    if (!b) return { error: 'E_NOT_FOUND' }
+    return b.runner.cancel(id)
+  }
+})
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -45,5 +61,6 @@ export const ipcHandlers: HandlerMap = {
   ops: opsHandlers,
   browser: browserHandlers,
   bookmarks: bookmarkHandlers,
-  settings: settingsHandlers
+  settings: settingsHandlers,
+  jobs: jobsHandlers
 }
