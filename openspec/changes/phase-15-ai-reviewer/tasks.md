@@ -43,13 +43,13 @@
 
 - [x] 7.1 `src/components/editor/AiReviewBadge.tsx`：根据 frontmatter 判断 3 态（隐藏 / 紫 / 灰）
 - [x] 7.2 `src/components/editor/AiReviewDrawer.tsx`：四区块 + 底部三按钮
-- [ ] 7.3 抽屉联动编辑器 store：接受 → 修改 frontmatter → dirty → autosave
-- [ ] 7.4 Frontmatter 只读侧卡：新增"AI 审读"行 + 展开按钮
-- [ ] 7.5 重新审读按钮 → `ai.reviewClip(clipId, { force: true })` IPC；徽章切 spinner 状态
+- [x] 7.3 抽屉联动编辑器 store：接受 → 修改 frontmatter → dirty → autosave
+- [x] 7.4 Frontmatter 只读侧卡：新增"AI 审读"行 + 展开按钮
+- [x] 7.5 重新审读按钮 → `ai.reviewClip(clipId, { force: true })` IPC；徽章切 spinner 状态
 
 ## 8. 路由与 store
 
-- [ ] 8.1 编辑器 store 订阅 `jobs.changed`：当 `ai-review-clip` job 完成且对应 clip 的 path 即当前编辑路径 → 重新读取 frontmatter（或 watcher 自动触发）
+- [x] 8.1 编辑器 store 订阅 `jobs.changed`：当 `ai-review-clip` job 完成且对应 clip 的 path 即当前编辑路径 → 重新读取 frontmatter（或 watcher 自动触发）
 - [x] 8.2 preload 暴露 `window.api.ai.reviewClip / ai.usage.*`
 
 ## 9. i18n
