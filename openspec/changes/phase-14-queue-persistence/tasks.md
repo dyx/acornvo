@@ -32,25 +32,25 @@
 
 ## 6. renderer UI
 
-- [ ] 6.1 `src/pages/History.tsx`：tab 列表扩为 4 项；URL 与 tab 同步
-- [ ] 6.2 `src/components/history/JobsTab.tsx`：filter + 全局按钮 + 虚拟列表
-- [ ] 6.3 行渲染器（payload 摘要按 kind 分发）
-- [ ] 6.4 行按钮：重试 / 取消；调用 IPC；订阅 `jobs.changed` 刷新
-- [ ] 6.5 空状态文案
+- [x] 6.1 `src/pages/History.tsx`：tab 列表扩为 4 项；URL 与 tab 同步
+- [x] 6.2 `src/components/history/JobsTab.tsx`：filter + 全局按钮 + 虚拟列表
+- [x] 6.3 行渲染器（payload 摘要按 kind 分发）
+- [x] 6.4 行按钮：重试 / 取消；调用 IPC；订阅 `jobs.changed` 刷新
+- [x] 6.5 空状态文案
 
 ## 7. phase 12 pipeline 改造
 
-- [ ] 7.1 `electron/clipper/pipeline.ts`：`clipQueue.enqueue(...)` 替换为 `jobs.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: 'clip:' + clipId })`
-- [ ] 7.2 删除 phase 12 的 no-op `clipQueue` 模块
+- [x] 7.1 `electron/clipper/pipeline.ts`：`clipQueue.enqueue(...)` 替换为 `jobs.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: 'clip:' + clipId })`
+- [x] 7.2 删除 phase 12 的 no-op `clipQueue` 模块
 
 ## 8. phase 5 index-retry 改造
 
-- [ ] 8.1 `electron/indexer/*`：upsertFromFs 失败分支改为 `jobs.enqueue('index-retry', ...)`；ENOENT 视为永久错误直接清 row
-- [ ] 8.2 移除散落的 setTimeout 自重试
+- [x] 8.1 `electron/indexer/*`：upsertFromFs 失败分支改为 `jobs.enqueue('index-retry', ...)`；ENOENT 视为永久错误直接清 row
+- [x] 8.2 移除散落的 setTimeout 自重试
 
 ## 9. i18n
 
-- [ ] 9.1 添加 `history.jobs.*` / `jobs.status.*` / `jobs.action.retry` / `jobs.action.cancel` / `jobs.clearDone` 等
+- [x] 9.1 添加 `history.jobs.*` / `jobs.status.*` / `jobs.action.retry` / `jobs.action.cancel` / `jobs.clearDone` 等
 
 ## 10. 验收
 
