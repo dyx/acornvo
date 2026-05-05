@@ -30,6 +30,7 @@ let _currentPath: string | undefined
 let _error: string | undefined
 let _abort = false
 let _db: Database.Database | null = null
+let _groveRoot: string | null = null
 
 const emitter = new EventEmitter()
 const progressEmitter = new EventEmitter()
@@ -96,6 +97,7 @@ export function _resetForTest(): void {
   _error = undefined
   _abort = false
   _db = null
+  _groveRoot = null
   emitter.removeAllListeners()
   progressEmitter.removeAllListeners()
   doneEmitter.removeAllListeners()
@@ -136,6 +138,7 @@ export function reset(): void {
   _currentPath = undefined
   _error = undefined
   _db = null
+  _groveRoot = null
   setState('idle')
 }
 
@@ -149,6 +152,7 @@ export async function startScan(groveRoot: string): Promise<void> {
   _scanned = 0
   _currentPath = undefined
   _total = await preCount(groveRoot)
+  _groveRoot = groveRoot
   setState('scanning')
 
   const db = getDb()
@@ -226,4 +230,50 @@ export async function startScan(groveRoot: string): Promise<void> {
   progressEmitter.emit('progress', state())
   setState('ready')
   doneEmitter.emit('done')
+}
+
+/** Re-index a single file from the filesystem. Used by the index-retry queue handler. */
+export async function upsertFromFs(relPath: string): Promise<void> {
+  const groveRoot = _groveRoot
+  if (!groveRoot) throw new Error('upsertFromFs: grove root not set')
+  const db = getDb()
+  const absPath = `${groveRoot}/${relPath}`
+  const raw = await readFile(absPath, 'utf8')
+  const { body, frontmatter } = parseFile(raw)
+  const st = await fsStat(absPath)
+  const content_hash = createHash('sha256').update(body).digest('hex')
+
+  const row: FileRow = {
+    path: relPath,
+    title: typeof frontmatter.title === 'string' ? frontmatter.title : null,
+    summary: typeof frontmatter.summary === 'string' ? frontmatter.summary : null,
+    category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
+    rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
+    content_hash,
+    mtime: st.mtimeMs,
+    size_bytes: st.size,
+    frontmatter_json: JSON.stringify(frontmatter),
+    created_at:
+      typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
+    updated_at: Date.now(),
+  }
+
+  const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
+  if (result !== 'unchanged') {
+    const tags = Array.isArray(frontmatter.tags)
+      ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+      : []
+    syncTags(db, row.path, tags)
+    if (bodyChanged) {
+      const ftsRowid = (
+        db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+      ).rowid
+      upsertFts(db, {
+        rowid: ftsRowid,
+        path: row.path,
+        title: row.title ?? '',
+        body
+      })
+    }
+  }
 }
