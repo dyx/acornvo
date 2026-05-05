@@ -238,3 +238,52 @@ describe('createJobStore — enqueue dedupe', () => {
     expect(total).toBe(2)
   })
 })
+
+describe('createJobStore — recoverRunning', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = freshDb()
+  })
+  afterEach(() => db.close())
+
+  it('resets stuck running jobs to pending without changing attempts', () => {
+    const store = createJobStore(db, { now: () => new Date('2026-05-03T10:00:00.000Z') })
+    const a = store.enqueue('index-retry', { path: 'a.md' })
+    const b = store.enqueue('index-retry', { path: 'b.md' })
+    store.markRunning(a.id)
+    store.markRunning(b.id)
+    store.markRetry(a.id, 0, 'transient') // a now pending, attempts=1
+    store.markRunning(a.id) // back to running
+    // Simulate crash: just call recoverRunning
+    const result = store.recoverRunning()
+    expect(result.restored).toBe(2) // a and b
+    const after = db.prepare("SELECT id, status, attempts FROM jobs ORDER BY id").all() as {
+      id: string
+      status: string
+      attempts: number
+    }[]
+    for (const r of after) expect(r.status).toBe('pending')
+    const aRow = after.find((r) => r.id === a.id)!
+    expect(aRow.attempts).toBe(1) // attempts preserved
+  })
+
+  it('does not touch pending/done/failed/canceled rows', () => {
+    const store = createJobStore(db)
+    const p = store.enqueue('index-retry', { path: 'p.md' })
+    const d = store.enqueue('index-retry', { path: 'd.md' })
+    const f = store.enqueue('index-retry', { path: 'f.md' })
+    const c = store.enqueue('index-retry', { path: 'c.md' })
+    store.markDone(d.id)
+    store.markFailed(f.id, 'oops')
+    store.markCanceled(c.id)
+    const before = db
+      .prepare('SELECT id, status FROM jobs ORDER BY id')
+      .all() as { id: string; status: string }[]
+    store.recoverRunning()
+    const after = db
+      .prepare('SELECT id, status FROM jobs ORDER BY id')
+      .all() as { id: string; status: string }[]
+    expect(after).toEqual(before)
+    expect(p.id && d.id && f.id && c.id).toBeTruthy()
+  })
+})
