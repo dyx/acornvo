@@ -291,6 +291,72 @@ describe('createQueueRunner — handler result branches', () => {
   })
 })
 
+describe('createQueueRunner — drainOnQuit', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+  afterEach(() => vi.useRealTimers())
+
+  it('stops accepting new picks once drain starts', async () => {
+    const { store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 50 })
+    let started = 0
+    runner.register({
+      kind: 'index-retry',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: async () => {
+        started++
+        return { kind: 'ok' }
+      }
+    })
+    store.enqueue('index-retry', { path: 'a.md' })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(150) // a.md runs
+    expect(started).toBe(1)
+    store.enqueue('index-retry', { path: 'b.md' })
+    const drain = runner.drainOnQuit(2_000)
+    await vi.advanceTimersByTimeAsync(2_500)
+    await drain
+    expect(started).toBe(1)
+  })
+
+  it('waits up to timeoutMs for in-flight handlers to settle', async () => {
+    const { store } = freshStore()
+    let resolveHandler!: (r: { kind: 'ok' }) => void
+    const runner = createQueueRunner({ store, tickMs: 50 })
+    runner.register({
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: () => new Promise<{ kind: 'ok' }>((r) => { resolveHandler = r })
+    })
+    store.enqueue('ai-review-clip', { clipId: 1 })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(100)
+    const drain = runner.drainOnQuit(5_000)
+    await vi.advanceTimersByTimeAsync(200)
+    resolveHandler({ kind: 'ok' })
+    await vi.advanceTimersByTimeAsync(200)
+    await drain
+  })
+
+  it('returns even if handlers exceed timeoutMs (best-effort)', async () => {
+    const { store } = freshStore()
+    const runner = createQueueRunner({ store, tickMs: 50 })
+    runner.register({
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: () => new Promise<{ kind: 'ok' }>(() => {}) // never settles
+    })
+    store.enqueue('ai-review-clip', { clipId: 1 })
+    runner.start()
+    await vi.advanceTimersByTimeAsync(100)
+    const drain = runner.drainOnQuit(500)
+    await vi.advanceTimersByTimeAsync(700)
+    await drain
+  })
+})
+
 describe('createQueueRunner — cancel + AbortSignal', () => {
   beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
   afterEach(() => vi.useRealTimers())

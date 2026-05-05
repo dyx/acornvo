@@ -18,9 +18,11 @@ import { initAdBlock, __resetForTest as resetAdBlock } from './browser/adblock'
 import { settingsStore } from './settings/store'
 import { initSafeStorageAvailability } from './settings/safe-storage-state'
 import { installSettingsBroadcaster } from './settings/broadcast'
+import type { QueueRunner } from './queue/runner'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
+let queueRunner: QueueRunner | null = null
 let adBlockInstalled = false
 
 function createMainWindow(): BrowserWindow {
@@ -104,6 +106,10 @@ async function bootstrap(): Promise<void> {
             setIndexerDb(db)
             await startScan(payload.path)
             await watcherStart(payload.path, db)
+            // phase-14: start the queue runner
+            const { bootstrapQueueRunner } = await import('./queue')
+            queueRunner = bootstrapQueueRunner(dbService.requireCurrent())
+            queueRunner.start()
           }
         }
       } catch (err) {
@@ -117,6 +123,15 @@ async function bootstrap(): Promise<void> {
   appLifecycle.onBeforeQuit(async () => {
     await watcherStop()
     resetIndexer()
+  })
+  appLifecycle.onBeforeQuit(async () => {
+    if (queueRunner) {
+      try {
+        await queueRunner.drainOnQuit(5_000)
+      } finally {
+        queueRunner = null
+      }
+    }
   })
   app.on('will-quit', () => {
     void groveService.closeGrove().catch((err) => {
