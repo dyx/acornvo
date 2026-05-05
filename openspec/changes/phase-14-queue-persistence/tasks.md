@@ -54,17 +54,17 @@
 
 ## 10. 验收
 
-- [ ] 10.1 `/history/jobs` 路由存在；默认过滤 running+pending+failed
-- [ ] 10.2 phase 12 剪藏一个 URL → jobs 表新增一行 `kind='ai-review-clip'`，status='pending'
-- [ ] 10.3 runner 启动 → 上述 job 转 running → handler 捕获 `E_NOT_IMPLEMENTED` → status 回 pending，next_run_at ≈ now+1h，attempts=1
-- [ ] 10.4 再次剪藏同 clip → dedupeKey 命中；jobs 表行数不变
-- [ ] 10.5 模拟 phase 5 upsert 失败（如 mock fs 读错）→ 新增 index-retry job；runner 按退避重试 3 次后成功
-- [ ] 10.6 手动 `jobs.cancel` 一个 pending job → status=canceled；UI 不再默认显示
-- [ ] 10.7 `jobs.retry` 一个 failed job → status=pending，attempts 重置 0，next_run_at=now
-- [ ] 10.8 `jobs.clearDone` → 所有 done job 删除；failed 保留；返回删除数
-- [ ] 10.9 崩溃恢复：kill 应用时一个 job 处于 running → 重启后该 job 变 pending
-- [ ] 10.10 before-quit：触发 quit 时 runner 停 loop；pending 仍保留；无数据丢失
-- [ ] 10.11 `ops_log` 可查询 `op='job.succeeded' / 'job.failed'` 等
-- [ ] 10.12 并发/限速：mock 5 个 ai-review-clip 入队；同时 running 数 ≤ 2（配置的 concurrency）
-- [ ] 10.13 UI 订阅 `jobs.changed` → 后台 runner 变更立即反映前端列表
-- [ ] 10.14 `openspec validate phase-14-queue-persistence --strict` 通过
+- [x] 10.1 `/history/jobs` 路由存在；默认过滤 running+pending+failed
+- [x] 10.2 phase 12 剪藏一个 URL → jobs 表新增一行 `kind='ai-review-clip'`，status='pending'
+- [x] 10.3 runner 启动 → 上述 job 转 running → handler 捕获 `E_NOT_IMPLEMENTED` → status 回 pending，next_run_at ≈ now+1h，attempts=1
+- [x] 10.4 再次剪藏同 clip → dedupeKey 命中；jobs 表行数不变
+- [x] 10.5 模拟 phase 5 upsert 失败（如 mock fs 读错）→ 新增 index-retry job；runner 按退避重试 3 次后成功
+- [x] 10.6 手动 `jobs.cancel` 一个 pending job → status=canceled；UI 不再默认显示
+- [x] 10.7 `jobs.retry` 一个 failed job → status=pending，attempts 重置 0，next_run_at=now
+- [x] 10.8 `jobs.clearDone` → 所有 done job 删除；failed 保留；返回删除数
+- [x] 10.9 崩溃恢复：kill 应用时一个 job 处于 running → 重启后该 job 变 pending
+- [x] 10.10 before-quit：触发 quit 时 runner 停 loop；pending 仍保留；无数据丢失
+- [x] 10.11 `ops_log` 可查询 `op='job.succeeded' / 'job.failed'` 等
+- [x] 10.12 并发/限速：mock 5 个 ai-review-clip 入队；同时 running 数 ≤ 2（配置的 concurrency）
+- [x] 10.13 UI 订阅 `jobs.changed` → 后台 runner 变更立即反映前端列表
+- [x] 10.14 `openspec validate phase-14-queue-persistence --strict` 通过
