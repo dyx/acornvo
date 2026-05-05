@@ -76,6 +76,18 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
     payload: Record<string, unknown>,
     opts: EnqueueOpts = {}
   ): { id: string } {
+    if (opts.dedupeKey) {
+      const existing = db
+        .prepare(
+          `SELECT id FROM jobs
+           WHERE kind = ?
+             AND status IN ('pending','running')
+             AND json_extract(payload_json, '$.__dedupe') = ?
+           LIMIT 1`
+        )
+        .get(kind, opts.dedupeKey) as { id: string } | undefined
+      if (existing) return { id: existing.id }
+    }
     const id = uuid()
     const ts = now().toISOString()
     const nextRunAt = new Date(now().getTime() + (opts.delayMs ?? 0)).toISOString()

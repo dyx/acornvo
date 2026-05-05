@@ -185,3 +185,56 @@ describe('createJobStore — list & getById', () => {
     expect(out.items.map((j) => j.id)).toEqual([first, second])
   })
 })
+
+describe('createJobStore — enqueue dedupe', () => {
+  let db: Database.Database
+  beforeEach(() => {
+    db = freshDb()
+  })
+  afterEach(() => db.close())
+
+  it('returns the existing id when a pending row matches kind + dedupeKey', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    const b = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    expect(b.id).toBe(a.id)
+    const total = (db.prepare('SELECT COUNT(*) AS n FROM jobs').get() as { n: number }).n
+    expect(total).toBe(1)
+  })
+
+  it('also dedupes when the existing row is running', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    store.markRunning(a.id)
+    const b = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    expect(b.id).toBe(a.id)
+    const total = (db.prepare('SELECT COUNT(*) AS n FROM jobs').get() as { n: number }).n
+    expect(total).toBe(1)
+  })
+
+  it('does NOT dedupe when the existing row is done/failed/canceled', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    store.markDone(a.id)
+    const b = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'clip:1' })
+    expect(b.id).not.toBe(a.id)
+    const total = (db.prepare('SELECT COUNT(*) AS n FROM jobs').get() as { n: number }).n
+    expect(total).toBe(2)
+  })
+
+  it('does NOT dedupe across different kinds', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('ai-review-clip', { clipId: 1 }, { dedupeKey: 'shared' })
+    const b = store.enqueue('index-retry', { path: 'a.md' }, { dedupeKey: 'shared' })
+    expect(b.id).not.toBe(a.id)
+  })
+
+  it('does NOT dedupe when no dedupeKey is supplied', () => {
+    const store = createJobStore(db)
+    const a = store.enqueue('index-retry', { path: 'a.md' })
+    const b = store.enqueue('index-retry', { path: 'a.md' })
+    expect(b.id).not.toBe(a.id)
+    const total = (db.prepare('SELECT COUNT(*) AS n FROM jobs').get() as { n: number }).n
+    expect(total).toBe(2)
+  })
+})
