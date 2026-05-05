@@ -1,6 +1,15 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildSlug, sha6 } from './slug'
 import { transformHtmlToMarkdown } from './transform'
+
+const { mockStoreEnqueue } = vi.hoisted(() => ({
+  mockStoreEnqueue: vi.fn().mockReturnValue({ id: 'job-1' })
+}))
+
+vi.mock('../queue', () => ({
+  getQueueBootstrap: () => ({ store: { enqueue: mockStoreEnqueue }, runner: {} })
+}))
+
 import { createPipeline } from './pipeline'
 
 // --- OpenSpec 9.6 — slug rules ---
@@ -27,7 +36,6 @@ describe('OpenSpec 9.7 — extract timeout', () => {
       indexUpsert: vi.fn(),
       clipsDao: { create: vi.fn(), getByUrl: vi.fn(async () => null) },
       opsLog: vi.fn(),
-      clipQueue: { enqueue: vi.fn(), getPendingForTest: vi.fn(() => []) },
       nowIso: () => '2026-05-02T10:00:00+08:00',
       nowDate: () => '2026-05-02',
       extractTimeoutMs: 5000
@@ -51,7 +59,6 @@ describe('OpenSpec 9.8 — degraded', () => {
       indexUpsert: vi.fn(),
       clipsDao: { create: vi.fn(), getByUrl: vi.fn(async () => null) },
       opsLog: vi.fn(),
-      clipQueue: { enqueue: vi.fn(), getPendingForTest: vi.fn(() => []) },
       nowIso: () => '2026-05-02T10:00:00+08:00',
       nowDate: () => '2026-05-02',
       extractTimeoutMs: 5000
@@ -108,9 +115,9 @@ describe('OpenSpec 9.12 — GFM table', () => {
 
 // --- OpenSpec 9.18 — ops_log + enqueue ---
 describe('OpenSpec 9.18 — ops_log + enqueue', () => {
-  it('saveClip success calls opsLog and enqueue', async () => {
+  it('saveClip success calls opsLog and enqueues ai-review-clip job', async () => {
+    mockStoreEnqueue.mockClear()
     const opsLog = vi.fn()
-    const enqueue = vi.fn()
     const p = createPipeline({
       extract: { extract: vi.fn(async () => ({
         ok: true, title: 'X', content: '<p>x</p>', url: 'https://x/'
@@ -124,7 +131,6 @@ describe('OpenSpec 9.18 — ops_log + enqueue', () => {
         getByUrl: vi.fn(async () => null)
       },
       opsLog,
-      clipQueue: { enqueue, getPendingForTest: vi.fn(() => []) },
       nowIso: () => '2026-05-02T10:00:00+08:00',
       nowDate: () => '2026-05-02',
       extractTimeoutMs: 5000
@@ -133,6 +139,10 @@ describe('OpenSpec 9.18 — ops_log + enqueue', () => {
     const r = await p.saveClip({ runId: start.runId, title: 'X', tags: [] })
     expect(r.id).toBe(7)
     expect(opsLog).toHaveBeenCalled()
-    expect(enqueue).toHaveBeenCalled()
+    expect(mockStoreEnqueue).toHaveBeenCalledWith(
+      'ai-review-clip',
+      { clipId: 7, path: expect.stringContaining('.md') as string },
+      { dedupeKey: 'clip:7' }
+    )
   })
 })

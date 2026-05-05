@@ -63,6 +63,12 @@ const request: IpcClient<IpcContract> = {
     startScan: () => invoke('index.startScan'),
     cancelScan: () => invoke('index.cancelScan')
   },
+  jobs: {
+    list: (filter) => invoke('jobs.list', filter),
+    retry: (id) => invoke('jobs.retry', id),
+    cancel: (id) => invoke('jobs.cancel', id),
+    clearDone: () => invoke('jobs.clearDone')
+  },
   conflict: {
     list: (opts) => invoke('conflict.list', opts),
     read: (id) => invoke('conflict.read', id),

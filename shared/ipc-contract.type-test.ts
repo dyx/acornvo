@@ -81,7 +81,7 @@ export type _IndexExports =
   | _IndexStartScanVoid
   | _IndexCancelScanVoid
 
-import type { IpcEventApi, IpcEventChannel } from './ipc-contract'
+import type { IpcEventApi, IpcEventChannel, IpcEventContract } from './ipc-contract'
 
 type _EventChannelUnion = Assert<
   IpcEventChannel extends
@@ -100,6 +100,7 @@ type _EventChannelUnion = Assert<
     | 'index:rebuildDone'
     | 'browser:tabStateChanged'
     | 'settings:changed'
+    | 'jobs:changed'
     ? true
     : false
 >
@@ -211,3 +212,16 @@ void _filter; void _pagination; void _node; void _tag
 type _OpenExternalReturn = ReturnType<IpcContract['file']['openExternal']>
 const _openExternalOk: _OpenExternalReturn = { ok: true }
 void _openExternalOk
+
+import type { Job } from './job-types'
+
+// jobs namespace round-trip (phase-14)
+type _JobsListReturn = ReturnType<IpcContract['jobs']['list']>
+type _JobsItems = _JobsListReturn extends { items: infer I } ? I : never
+const _jobsItemsCheck: _JobsItems = [] as Job[]
+void _jobsItemsCheck
+
+// jobs:changed event channel
+type _JobsChangedEvt = IpcEventContract['jobs:changed']
+const _jobsEvtCheck: _JobsChangedEvt = {} as Job
+void _jobsEvtCheck

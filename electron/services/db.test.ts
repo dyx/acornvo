@@ -210,3 +210,48 @@ describe('dbService surface', () => {
     expect(typeof dbService.getCurrentGrovePath).toBe('function')
   })
 })
+
+describe('openForGrove — phase-14 crash recovery', () => {
+  let dir: string
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'db-recover-'))
+    __resetForTest()
+  })
+  afterEach(() => {
+    closeCurrent()
+    rmSync(dir, { recursive: true, force: true })
+    __resetForTest()
+  })
+
+  it('resets stuck running jobs on grove open', () => {
+    // First open: insert a running job
+    openForGrove(dir)
+    const db1 = requireCurrent()
+    db1
+      .prepare(
+        `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, created_at, updated_at)
+         VALUES (?,?,?,?,?,?,?,?)`
+      )
+      .run(
+        'crashed',
+        'index-retry',
+        JSON.stringify({ path: 'a.md' }),
+        'running',
+        2,
+        '2026-05-03T00:00:00.000Z',
+        '2026-05-03T00:00:00.000Z',
+        '2026-05-03T00:00:00.000Z'
+      )
+    closeCurrent()
+
+    // Second open: recoverRunning should fire
+    openForGrove(dir)
+    const db2 = requireCurrent()
+    const row = db2.prepare('SELECT status, attempts FROM jobs WHERE id=?').get('crashed') as {
+      status: string
+      attempts: number
+    }
+    expect(row.status).toBe('pending')
+    expect(row.attempts).toBe(2) // preserved
+  })
+})

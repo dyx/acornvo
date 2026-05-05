@@ -15,8 +15,8 @@ describe('migration 007 — settings + secrets + ai profiles', () => {
   })
   afterEach(() => db.close())
 
-  it('bumps user_version to 7', () => {
-    expect(db.pragma('user_version', { simple: true }) as number).toBe(7)
+  it('bumps user_version to at least 7', () => {
+    expect(db.pragma('user_version', { simple: true }) as number).toBeGreaterThanOrEqual(7)
   })
 
   it('creates settings table with composite primary key (ns, key)', () => {

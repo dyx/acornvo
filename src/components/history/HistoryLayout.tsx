@@ -6,14 +6,16 @@ import { TrashTab } from './TrashTab'
 import { ConflictsTab } from './ConflictsTab'
 import { ConflictDetailPanel } from './ConflictDetailPanel'
 import { OpsTab } from './OpsTab'
+import { JobsTab } from './JobsTab'
 import { useTitleStore } from '@/stores/title'
 
-type TabId = 'trash' | 'conflicts' | 'ops'
+type TabId = 'trash' | 'conflicts' | 'ops' | 'jobs'
 
 const TAB_TITLES: Record<TabId, string> = {
   trash: '废纸篓',
   conflicts: '冲突',
-  ops: '操作记录'
+  ops: '操作记录',
+  jobs: '任务'
 }
 
 interface HistoryLayoutProps {
@@ -43,6 +45,7 @@ export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutP
         <TabsTrigger value="trash">废纸篓</TabsTrigger>
         <TabsTrigger value="conflicts">冲突</TabsTrigger>
         <TabsTrigger value="ops">操作记录</TabsTrigger>
+        <TabsTrigger value="jobs">任务</TabsTrigger>
       </TabsList>
       <TabsContent value="trash" forceMount className="flex-1 overflow-auto">
         <TrashTab />
@@ -52,6 +55,9 @@ export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutP
       </TabsContent>
       <TabsContent value="ops" forceMount className="flex-1 overflow-auto">
         <OpsTab />
+      </TabsContent>
+      <TabsContent value="jobs" forceMount className="flex-1 overflow-auto">
+        <JobsTab />
       </TabsContent>
     </Tabs>
   )

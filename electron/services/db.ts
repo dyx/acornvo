@@ -6,6 +6,7 @@ import { IpcError } from '@shared/ipc-contract'
 import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
 import { maybeRebuildFts } from './search/index'
+import { createJobStore } from '../queue/store'
 
 let current: Database.Database | null = null
 let currentGrovePath: string | null = null
@@ -142,6 +143,14 @@ export function openForGrove(grovePath: string): void {
     db = new Database(file)
     applyPragmas(db)
     runMigrations(db, migrationsDir())
+    // phase-14: reset jobs left in 'running' status from a previous crash
+    try {
+      createJobStore(db).recoverRunning()
+    } catch {
+      /* table may not exist on a fresh corrupt rebuild before its migration runs;
+         the runMigrations call above guarantees it does, so this catch is purely
+         defensive against future ordering changes. */
+    }
     current = db
     currentGrovePath = grovePath
     emitRebuilt()
@@ -153,6 +162,14 @@ export function openForGrove(grovePath: string): void {
     return
   }
   runMigrations(db, migrationsDir())
+  // phase-14: reset jobs left in 'running' status from a previous crash
+  try {
+    createJobStore(db).recoverRunning()
+  } catch {
+    /* table may not exist on a fresh corrupt rebuild before its migration runs;
+       the runMigrations call above guarantees it does, so this catch is purely
+       defensive against future ordering changes. */
+  }
   current = db
   currentGrovePath = grovePath
   void maybeRebuildFts(db, grovePath).catch((err) => {

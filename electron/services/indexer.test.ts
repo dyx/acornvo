@@ -2,14 +2,27 @@
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 
 import {
   state, status, _resetForTest, _setStateForTest, onStateChange,
   startScan, cancelScan, onProgress, onDone, _injectDbForTest, reset,
+  upsertFromFs,
 } from './indexer'
 import { listAllPaths } from './index-queries'
+import { bootstrapQueueRunner, disposeQueueBootstrap, getQueueBootstrap } from '../queue'
+
+// Mock readFile to allow controlled error injection in transient-error tests
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return {
+    ...actual,
+    readFile: vi.fn((...args: any[]) => (actual as any).readFile(...args)),
+  }
+})
+
+import { readFile } from 'node:fs/promises'
 
 function makeIndexedDb(): Database.Database {
   const db = new Database(':memory:')
@@ -22,6 +35,19 @@ function makeIndexedDb(): Database.Database {
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER NOT NULL DEFAULT 0);
     CREATE TABLE file_tags (path TEXT NOT NULL, tag TEXT NOT NULL, PRIMARY KEY (path, tag));
     CREATE VIRTUAL TABLE files_fts USING fts5(path UNINDEXED, title, body, tokenize='trigram');
+  `)
+  return db
+}
+
+function makeQueueDb(): Database.Database {
+  const db = new Database(':memory:')
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS jobs (
+      id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload_json TEXT NOT NULL,
+      status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+      next_run_at TEXT NOT NULL, last_error TEXT,
+      created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
   `)
   return db
 }
@@ -201,5 +227,94 @@ describe('indexer.reset()', () => {
     _setStateForTest('watching')
     reset()
     expect(state()).toEqual({ state: 'idle', total: 0, scanned: 0 })
+  })
+})
+
+describe('upsertFromFs', () => {
+  let root: string
+  let db: Database.Database
+
+  beforeEach(() => {
+    _resetForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
+    root = mkdtempSync(join(tmpdir(), 'upsert-'))
+    vi.mocked(readFile).mockClear()
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+    disposeQueueBootstrap()
+  })
+
+  it('throws if grove root is not set', async () => {
+    await expect(upsertFromFs('any.md')).rejects.toThrow('grove root not set')
+  })
+
+  it('deletes row from index when file is gone (ENOENT)', async () => {
+    writeFileSync(join(root, 'gone.md'), '# will be removed')
+    await startScan(root)
+    expect(listAllPaths(db).has('gone.md')).toBe(true)
+
+    // Remove file from disk to trigger ENOENT
+    rmSync(join(root, 'gone.md'))
+
+    await upsertFromFs('gone.md')
+
+    // Row should be deleted from the index
+    expect(listAllPaths(db).has('gone.md')).toBe(false)
+  })
+
+  it('enqueues index-retry job on transient (non-ENOENT) error', async () => {
+    // Initialize the queue so getQueueBootstrap() returns a valid store
+    const queueDb = makeQueueDb()
+    bootstrapQueueRunner(queueDb, { getRenderers: () => [] })
+
+    writeFileSync(join(root, 'keep.md'), '# exists')
+    await startScan(root)
+
+    // Verify the file is indexed
+    expect(listAllPaths(db).has('keep.md')).toBe(true)
+
+    // Make readFile throw a transient error for the next call
+    vi.mocked(readFile).mockRejectedValueOnce(
+      Object.assign(new Error('EIO read error'), { code: 'EIO' })
+    )
+
+    // upsertFromFs should catch the error, enqueue retry, and not throw
+    await expect(upsertFromFs('keep.md')).resolves.toBeUndefined()
+
+    // Verify the retry job was enqueued in the queue
+    const bootstrap = getQueueBootstrap()
+    expect(bootstrap).not.toBeNull()
+    const { items: pending } = bootstrap!.store.list({ status: 'pending', limit: 10, offset: 0 })
+    expect(pending.length).toBe(1)
+    expect(pending[0].kind).toBe('index-retry')
+    expect(pending[0].payload).toMatchObject({ path: 'keep.md', reason: 'EIO read error' })
+
+    // Cleanup
+    disposeQueueBootstrap()
+    queueDb.close()
+  })
+
+  it('logs warning when queue is not initialised on transient error', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    writeFileSync(join(root, 'a.md'), '# A')
+    await startScan(root)
+
+    // Make readFile throw a transient error
+    vi.mocked(readFile).mockRejectedValueOnce(
+      Object.assign(new Error('disk error'), { code: 'EIO' })
+    )
+
+    await expect(upsertFromFs('a.md')).resolves.toBeUndefined()
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      'index: queue not initialised; dropping retry',
+      { path: 'a.md', reason: 'disk error' }
+    )
+
+    warnSpy.mockRestore()
   })
 })
