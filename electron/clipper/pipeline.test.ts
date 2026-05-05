@@ -5,7 +5,7 @@ import type {
   ExtractorDeps
 } from './extract'
 import type { Dedupe } from './dedupe'
-import type { ClipQueue } from './clip-queue'
+
 import type { ExtractResult, EnrichedResult } from '@shared/clipper-types'
 import type { ClipInput, ClipErrorCode } from '@shared/clipper-types'
 import type { Clip } from '@shared/clip-types'
@@ -59,14 +59,6 @@ function makeClip(over: Partial<Clip> = {}): Clip {
   }
 }
 
-function makeQueue(): ClipQueue {
-  const msgs: Array<{ clipId: number; url: string; path: string }> = []
-  return {
-    enqueue: vi.fn().mockImplementation((msg) => { msgs.push(msg) }),
-    getPendingForTest: () => [...msgs]
-  }
-}
-
 function makeDefaultDeps(over: Partial<PipelineDeps> = {}): PipelineDeps {
   return {
     extract: makeExtractor(makeExtractOk()),
@@ -79,7 +71,6 @@ function makeDefaultDeps(over: Partial<PipelineDeps> = {}): PipelineDeps {
       getByUrl: vi.fn().mockResolvedValue(null)
     },
     opsLog: vi.fn(),
-    clipQueue: makeQueue(),
     nowIso: vi.fn().mockReturnValue('2026-05-03T10:00:00Z'),
     nowDate: vi.fn().mockReturnValue('2026-05-03'),
     extractTimeoutMs: 5000,

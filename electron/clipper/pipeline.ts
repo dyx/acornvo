@@ -11,7 +11,7 @@ import type {
 import type { Clip, ClipCreateInput } from '@shared/clip-types'
 import type { Extractor } from './extract'
 import type { Dedupe } from './dedupe'
-import type { ClipQueue } from './clip-queue'
+import { getQueueBootstrap } from '../queue'
 import { enrich } from './enrich'
 import { buildSlug } from './slug'
 import type { WebContents } from 'electron'
@@ -29,7 +29,6 @@ export interface PipelineDeps {
     getByUrl: (url: string) => Promise<Clip | null>
   }
   opsLog: (opts: { op: string; path: string; meta?: Record<string, unknown> }) => void
-  clipQueue: ClipQueue
   nowIso: () => string
   nowDate: () => string
   extractTimeoutMs: number
@@ -246,15 +245,21 @@ export function createPipeline(deps: PipelineDeps) {
       // non-blocking
     }
 
-    // Enqueue to clip queue (phase-14 placeholder)
-    try {
-      deps.clipQueue.enqueue({
-        clipId: clipResult.id,
-        url: state.url,
-        path
-      })
-    } catch {
-      // non-blocking
+    // Enqueue ai-review-clip job (phase-14)
+    const queue = getQueueBootstrap()
+    if (queue) {
+      try {
+        queue.store.enqueue(
+          'ai-review-clip',
+          { clipId: clipResult.id, path },
+          { dedupeKey: `clip:${clipResult.id}` }
+        )
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error('ai-review-clip enqueue failed; clip already saved', { clipId: clipResult.id, error: msg })
+      }
+    } else {
+      console.warn('queue bootstrap unavailable; ai-review-clip not enqueued', { clipId: clipResult.id })
     }
 
     flights.delete(input.runId)
