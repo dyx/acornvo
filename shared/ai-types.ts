@@ -57,6 +57,7 @@ export interface AiUsageRow {
   latencyMs: number | null;
   ok: 0 | 1;
   error: string | null;
+  sessionId?: string | null;
   createdAt: string;
 }
 

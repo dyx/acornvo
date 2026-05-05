@@ -32,6 +32,7 @@ function rowFromDb(r: any): AiUsageRow {
     latencyMs: r.latency_ms,
     ok: r.ok,
     error: r.error,
+    sessionId: r.session_id ?? undefined,
     createdAt: r.created_at,
   };
 }
@@ -40,12 +41,13 @@ export const aiUsage = {
   insert(row: Omit<AiUsageRow, 'id' | 'createdAt'> & { createdAt?: string }): void {
     const db = dbService.requireCurrent();
     db.prepare(`
-      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       row.jobId, row.profileId, row.model,
       row.promptTokens, row.completionTokens, row.latencyMs,
       row.ok, row.error,
+      row.sessionId ?? null,
       row.createdAt ?? new Date().toISOString(),
     );
   },

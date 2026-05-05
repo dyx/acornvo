@@ -44,6 +44,26 @@ describe('aiUsage.insert', () => {
     expect(row.error).toBe('E_AUTH');
     expect(row.prompt_tokens).toBeNull();
   });
+
+  it('persists sessionId when provided', () => {
+    aiUsage.insert({
+      jobId: 'job-1', profileId: 'p1', model: 'gpt-x',
+      promptTokens: 1, completionTokens: 1, latencyMs: 10,
+      ok: 1, error: null, sessionId: 'sess1',
+    });
+    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
+    expect(row.session_id).toBe('sess1');
+  });
+
+  it('persists null when omitted (back-compat with phase-15 callers)', () => {
+    aiUsage.insert({
+      jobId: 'job-1', profileId: 'p1', model: 'gpt-x',
+      promptTokens: 1, completionTokens: 1, latencyMs: 10,
+      ok: 1, error: null,
+    });
+    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
+    expect(row.session_id).toBeNull();
+  });
 });
 
 describe('aiUsage.summary', () => {
