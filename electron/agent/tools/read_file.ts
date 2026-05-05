@@ -18,7 +18,7 @@ const tool: Tool<{ path: string }, unknown> = {
   async execute(args, ctx) {
     let abs: string;
     try {
-      abs = safeResolve(ctx.vaultRoot, args.path);
+      abs = safeResolve(ctx.vaultRoot, args.path, { realpath: true });
     } catch (e: any) {
       const code = e instanceof IpcError && e.code === 'E_PERMISSION' ? 'E_PATH_ESCAPE' : (e?.code ?? 'E_PATH_ESCAPE');
       return { ok: false as const, error: code };

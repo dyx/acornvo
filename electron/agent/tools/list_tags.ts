@@ -17,7 +17,7 @@ const tool: Tool<{ prefix?: string; limit?: number }, { items: Array<{ name: str
     const limit = Math.max(1, Math.min(200, args.limit ?? 50));
     const prefix = args.prefix ?? '';
     const rows = prefix
-      ? db.prepare("SELECT name, usage_count FROM tags WHERE name LIKE ? ORDER BY usage_count DESC LIMIT ?").all(prefix.replace(/[%_]/g, '\\$&') + '%', limit)
+      ? db.prepare("SELECT name, usage_count FROM tags WHERE name LIKE ? ESCAPE '\\' ORDER BY usage_count DESC LIMIT ?").all(prefix.replace(/[%_]/g, '\\$&') + '%', limit)
       : db.prepare("SELECT name, usage_count FROM tags ORDER BY usage_count DESC LIMIT ?").all(limit);
     return { items: rows as Array<{ name: string; usage_count: number }> };
   },
