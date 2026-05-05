@@ -14,7 +14,7 @@ export interface ToolCtx {
   sessionId: string;
   vaultRoot: string;
   log: (level: 'debug' | 'info' | 'warn' | 'error', msg: string, ctx?: Record<string, unknown>) => void;
-  cancel: AbortSignal;
+  signal: AbortSignal;
 }
 
 export interface Tool<TArgs = unknown, TResult = unknown> {
