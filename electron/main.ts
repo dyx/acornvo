@@ -110,7 +110,8 @@ async function bootstrap(): Promise<void> {
             const { bootstrapQueueRunner } = await import('./queue')
             const { record: opsLogRecord } = await import('./services/ops/log')
             queueRunner = bootstrapQueueRunner(dbService.requireCurrent(), {
-              opsLog: (r) => opsLogRecord(r as Parameters<typeof opsLogRecord>[0])
+              opsLog: (r) => opsLogRecord(r as Parameters<typeof opsLogRecord>[0]),
+              getRenderers: () => BrowserWindow.getAllWindows().map((w) => w.webContents)
             })
             queueRunner.start()
           }

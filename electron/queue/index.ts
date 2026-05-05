@@ -14,10 +14,26 @@ let bootstrap: QueueBootstrap | null = null
 
 export function bootstrapQueueRunner(
   db: Database.Database,
-  opts: { opsLog?: (r: { op: string; path: string; meta?: Record<string, unknown> }) => void } = {}
+  opts: {
+    opsLog?: (r: { op: string; path: string; meta?: Record<string, unknown> }) => void
+    /** Returns WebContents to broadcast state changes to. Required because importing
+     *  BrowserWindow from 'electron' breaks vitest (node environment). */
+    getRenderers: () => Electron.WebContents[]
+  }
 ): QueueRunner {
   const store = createJobStore(db)
   const runner = createQueueRunner({ store, opsLog: opts.opsLog })
+
+  // Broadcast state changes to all renderer windows
+  store.events.on('stateChanged', ({ job }) => {
+    for (const wc of opts.getRenderers()) {
+      try {
+        wc.send('jobs:changed', job)
+      } catch {
+        /* renderer may have been destroyed; safe to ignore */
+      }
+    }
+  })
 
   // Register index-retry handler
   runner.register({

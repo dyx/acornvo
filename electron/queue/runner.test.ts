@@ -492,3 +492,24 @@ describe('createQueueRunner — ops_log integration', () => {
     expect(ops).toContain('job.canceled')
   })
 })
+
+describe('bootstrapQueueRunner — renderer fan-out', () => {
+  it('forwards each stateChanged to the supplied renderers', async () => {
+    const db = new Database(':memory:')
+    runMigrations(db, MIGRATIONS_DIR)
+    const sent: Array<[string, unknown]> = []
+    const wc = {
+      send: (ch: string, p: unknown) => sent.push([ch, p])
+    } as unknown as Electron.WebContents
+    const { bootstrapQueueRunner } = await import('./index')
+    const runner = bootstrapQueueRunner(db, { getRenderers: () => [wc] })
+    runner.stop()
+    const { getQueueBootstrap } = await import('./index')
+    const { store } = getQueueBootstrap()!
+    const { id } = store.enqueue('index-retry', { path: 'a.md' })
+    expect(sent.length).toBeGreaterThanOrEqual(1)
+    expect(sent[0][0]).toBe('jobs:changed')
+    expect((sent[0][1] as { id: string }).id).toBe(id)
+    db.close()
+  })
+})
