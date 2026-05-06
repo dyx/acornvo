@@ -347,6 +347,11 @@
   "clearDone": "Clear completed"
   },
   "chat": {
+    "untitled": "Untitled chat",
+    "newSession": "New chat",
+    "topbar": {
+      "helpAria": "Keyboard shortcuts help"
+    },
     "approval": {
       "title": "Approve tool call",
       "reason": "Reason",
