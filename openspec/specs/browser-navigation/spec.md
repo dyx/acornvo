@@ -1,61 +1,35 @@
-# browser-navigation Specification
+## ADDED Requirements
 
-## Purpose
-Defines navigation policies for the built-in browser's WebContentsView tabs: external link handling, ad/tracker blocking, reader mode, and forward/back/refresh controls.
+### Requirement: 剪藏触发入口
+`/browser` 路由 SHALL 提供剪藏触发的两条路径：
+1. AddressBar 右侧的剪刀按钮（原 phase 11 "即将在拾果阶段实装" toast 占位）
+2. `Cmd/Ctrl+Shift+S` 快捷键
 
-## Requirements
-### Requirement: 外链策略
-系统 SHALL 在每个 WebContentsView 注册 `setWindowOpenHandler`：
-- 协议为 `http` / `https` 的目标 URL → `{ action: 'allow', overrideBrowserWindowOptions: { ... } }`；main 侧监听新建的 WebContents → 把它包成新 tab 并 attach
-- 其他协议（`mailto:`/`tel:`/自定义）→ `{ action: 'deny' }`；同时 main 调 `shell.openExternal(url)`
+两者 MUST 调用同一 `clipper.clip(activeTabId)` IPC 入口，进入 clipper-pipeline。按钮的 disabled / 已剪藏 / spinner 状态由 clipper-ui 规格定义。
 
-同 tab 的 `will-navigate`（点击 `<a href>` 无 target）不拦截；浏览器默认同 tab 跳转。
+#### Scenario: 按钮触发
+- **WHEN** 用户在 `/browser` 点击剪刀按钮
+- **THEN** 调用 `clipper.clip(activeTabId)`；pipeline 进入 extracting 状态
 
-#### Scenario: target=_blank 新 tab
-- **WHEN** 当前页用户点 `<a href="https://x.com" target="_blank">`
-- **THEN** 新 tab 被创建并 loadURL x.com；新 tab 激活
+#### Scenario: 快捷键触发
+- **WHEN** `/browser` 路由聚焦时按 `Cmd/Ctrl+Shift+S`
+- **THEN** 效果等同按钮触发，进入 pipeline
 
-#### Scenario: mailto 跳外部
-- **WHEN** 页面链接 `mailto:someone@ex.com` 被点
-- **THEN** 浏览器内无新 tab；`shell.openExternal` 把 URL 交给系统邮件客户端
+#### Scenario: 替代 phase 11 toast
+- **WHEN** 用户点击剪藏按钮（phase 12 已交付）
+- **THEN** 不再出现 phase 11 占位 toast "即将在拾果阶段实装"；弹出 ClipPreviewDialog 或对应错误态
 
-#### Scenario: 同 tab 链接
-- **WHEN** 普通 `<a href="https://x.com">` 被点
-- **THEN** 当前 tab loadURL x.com；不开新 tab
+### Requirement: 已剪藏指示
+AddressBar 的剪刀按钮 SHALL 根据当前激活 tab 的 URL 是否已存在于 `clips` 表显示不同样式：
+- 未剪藏 → 空心图标
+- 已剪藏 → 实心图标 + 右下角小对勾
 
-### Requirement: 广告 / 追踪域名拦截
-系统 SHALL 加载 `public/hosts/block-domains.txt` 到内存 Set；`session.webRequest.onBeforeRequest` 回调中若 `new URL(details.url).hostname` 命中 MUST `callback({ cancel: true })`。拦截生效时 MUST 记录日志的计数（仅 aggregate count，不记 URL）。
+状态 MUST 随 tab 切换与当前 tab 导航事件实时更新（`did-navigate` / `did-navigate-in-page` 触发重查 `clips.getByUrl`）。
 
-#### Scenario: 拦截
-- **WHEN** 页面请求 `https://googletagmanager.com/gtm.js`（命中列表）
-- **THEN** 请求被 cancel；页面仍正常渲染（只是少了 tracking）
+#### Scenario: 跳到已剪藏页面
+- **WHEN** 用户在 tab 中从 `example.com/a` 导航到已剪藏的 `example.com/b`
+- **THEN** 按钮在 `did-navigate` 后 200ms 内变为实心 + 对勾
 
-#### Scenario: 非命中放行
-- **WHEN** 页面请求 `https://example.com/normal.js`
-- **THEN** 请求正常发出
-
-### Requirement: Reader Mode 最小实现
-每个 tab SHALL 有 `readerMode: boolean` 状态；切换时：
-- 开启：`webContents.insertCSS(READER_CSS)` 得到 key，保存到 `tab.readerCssKey`
-- 关闭：`webContents.removeInsertedCSS(readerCssKey)`
-
-`READER_CSS` MUST 限制正文宽度 720px、增大行高、隐藏常见 `header/nav/footer/aside/[class*="sidebar"]` 等元素。导航到新 URL 时 tab.readerMode MUST 重置为 false（避免跨页脏状态）。
-
-#### Scenario: 开启阅读模式
-- **WHEN** 用户点 AddressBar 的 reader toggle（当前 readerMode=false）
-- **THEN** insertCSS 执行；页面排版变简洁；tab.readerMode=true
-
-#### Scenario: 跳新页重置
-- **WHEN** tab 从 `A` 导航到 `B`
-- **THEN** tab.readerMode 自动回 false；若此前 insertCSS 已加入，removeInsertedCSS 被调
-
-### Requirement: 前进/后退/刷新
-AddressBar SHALL 提供前进/后退/刷新按钮；前进/后退 disabled 跟随 `webContents.canGoBack/canGoForward`。`Cmd/Ctrl+[` 后退，`Cmd/Ctrl+]` 前进，`Cmd/Ctrl+R` 刷新。
-
-#### Scenario: 后退
-- **WHEN** tab 已有导航历史，用户点"后退"
-- **THEN** `webContents.goBack()`；tab.url 更新为历史上一项
-
-#### Scenario: 无历史时 disabled
-- **WHEN** tab 首次加载完仅一页
-- **THEN** 后退按钮 disabled；前进亦 disabled
+#### Scenario: 切换到未剪藏 tab
+- **WHEN** 激活另一个未剪藏 URL 的 tab
+- **THEN** 按钮变为空心
