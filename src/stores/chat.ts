@@ -38,6 +38,7 @@ export interface SessionState {
   flushedLength: number
   pendingApprovals: PendingApproval[]
   pendingAttachments: Attachment[]
+  pendingPromptText: string
   status: SessionStatus
   error: string | null
 }
@@ -84,6 +85,7 @@ interface ChatStore {
   approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>
   rejectTool: (sessionId: string, callId: string) => Promise<void>
   updateSessionProfile: (id: string, profileId: string | null) => Promise<void>
+  setPendingPromptText: (text: string) => void
   pushAttachment: (att: Attachment) => void
   removeAttachment: (index: number) => void
 }
@@ -95,6 +97,7 @@ const emptySession = (): SessionState => ({
   flushedLength: 0,
   pendingApprovals: [],
   pendingAttachments: [],
+  pendingPromptText: '',
   status: 'idle',
   error: null
 })
@@ -309,6 +312,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       sessions: s.sessions.map((ses) =>
         ses.id === id ? { ...ses, profileId } : ses
       )
+    }))
+  },
+
+  setPendingPromptText(text) {
+    const sid = get().activeSessionId
+    if (!sid) return
+    set((s) => ({
+      bySession: {
+        ...s.bySession,
+        [sid]: {
+          ...emptySession(),
+          ...s.bySession[sid],
+          pendingPromptText: text
+        }
+      }
     }))
   },
 

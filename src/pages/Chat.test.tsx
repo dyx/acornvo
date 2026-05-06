@@ -122,3 +122,65 @@ describe('Chat top bar — profile chip', () => {
     spy.mockRestore()
   })
 })
+
+describe('Chat empty-state', () => {
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+
+  beforeEach(() => {
+    vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([
+      { id: 's1', title: 'Test Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+    ] as any)
+    vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValue([])
+    useChatStore.setState({
+      sessions: [],
+      activeSessionId: null,
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => cleanup())
+
+  it('renders 4 onboarding prompt cards when active session has no messages', async () => {
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    const cards = await screen.findAllByTestId('chat-empty-card')
+    expect(cards).toHaveLength(4)
+  })
+
+  it('clicking a card sets pendingPromptText (does not auto-send)', async () => {
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    const cards = await screen.findAllByTestId('chat-empty-card')
+    await userEvent.click(cards[0])
+    const text = useChatStore.getState().bySession.s1?.pendingPromptText ?? ''
+    expect(text.length).toBeGreaterThan(0)
+  })
+
+  it('hides empty-state once session has messages', async () => {
+    useChatStore.setState({
+      sessions: [
+        { id: 's1', title: 'Test Session', createdAt: Date.now(), updatedAt: Date.now(), profileId: null }
+      ],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'user', text: 'hello', createdAt: Date.now() }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null
+        }
+      }
+    })
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    await screen.findByTestId('chat-main')
+    expect(screen.queryAllByTestId('chat-empty-card')).toHaveLength(0)
+  })
+})

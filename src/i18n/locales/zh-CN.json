@@ -401,6 +401,14 @@
       "update_frontmatter": "更新 frontmatter",
       "clip_summary": "总结剪藏"
     },
+    "empty": {
+      "heading": "今天想聊点什么？",
+      "subheading": "试试这些常用想法",
+      "card1": "帮我在笔记里找关于注意力机制的内容",
+      "card2": "总结最近 10 篇剪藏",
+      "card3": "把 a.md 的 tags 改成 [\"读书\", \"散文\"]",
+      "card4": "列出 tags 出现频率前 10"
+    },
     "error": {
       "step_limit": "已达 8 步思考上限。",
       "missing_profile": "本会话尚未绑定 AI Profile。",

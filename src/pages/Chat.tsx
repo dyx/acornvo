@@ -56,6 +56,38 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
   )
 }
 
+function EmptyState(): JSX.Element {
+  const { t } = useTranslation()
+  const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
+  const cards = [
+    t('chat.empty.card1'),
+    t('chat.empty.card2'),
+    t('chat.empty.card3'),
+    t('chat.empty.card4')
+  ]
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+      <div className="text-center">
+        <h2 className="serif text-xl font-semibold">{t('chat.empty.heading')}</h2>
+        <p className="text-sm text-muted-foreground">{t('chat.empty.subheading')}</p>
+      </div>
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
+        {cards.map((label) => (
+          <button
+            key={label}
+            type="button"
+            data-testid="chat-empty-card"
+            onClick={() => setPendingPromptText(label)}
+            className="rounded-md border border-border bg-background p-3 text-left text-sm transition-colors hover:bg-muted"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function Chat() {
   const { t } = useTranslation()
 
@@ -116,7 +148,13 @@ export function Chat() {
             ?
           </button>
         </header>
-        <div className="flex-1 overflow-auto" />
+        <section className="flex flex-1 min-h-0 flex-col">
+          {(() => {
+            const slot = activeSession ? useChatStore.getState().bySession[activeSession.id] : null
+            const isEmpty = !slot || slot.messages.length === 0
+            return isEmpty ? <EmptyState /> : null
+          })()}
+        </section>
       </main>
 
       {/* Right sidebar: approval panel (reserved, width 0) */}
