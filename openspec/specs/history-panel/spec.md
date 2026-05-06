@@ -1,7 +1,12 @@
-## ADDED Requirements
+# history-panel Specification
+
+## Purpose
+The History page providing tabs for Trash, Conflicts, Ops, and Jobs views. Accessible via `/history` route.
+
+## Requirements
 
 ### Requirement: /history 路由
-系统 SHALL 注册 `/history` 路由；默认 redirect 到 `/history/trash`。页面 SHALL 用 Tabs 组件展示三个子 tab：Trash（回收站记录）、Conflicts（冲突快照）、Ops（所有操作）。URL 与 tab 双向同步。
+系统 SHALL 注册 `/history` 路由；默认 redirect 到 `/history/trash`。页面 SHALL 用 Tabs 组件展示四个子 tab：Trash（回收站记录）、Conflicts（冲突快照）、Ops（所有操作）、Jobs（任务队列）。URL 与 tab 双向同步。
 
 #### Scenario: 进入默认 tab
 - **WHEN** navigate 到 `/history`
@@ -10,6 +15,10 @@
 #### Scenario: 切换 tab
 - **WHEN** 点击 Conflicts tab
 - **THEN** URL 变为 `/history/conflicts`；Conflicts 内容显示
+
+#### Scenario: 任务 tab URL
+- **WHEN** 点击 Jobs tab
+- **THEN** URL 变为 `/history/jobs`；Jobs 面板显示
 
 ### Requirement: Trash tab
 Trash tab SHALL 列出 `ops.list({ op: 'trash' })` 近 90 天的行（虚拟化列表）。每行显示：path / ts（distance）/ "已在系统回收站中"。顶部提供"打开原目录"入口（若目录仍存在 → `shell.openPath(dirname)`；否则 disable）。页面 MUST 显示提示"Acornvo 不管理系统回收站；请到系统的废纸篓恢复"。
@@ -53,7 +62,8 @@ Ops tab SHALL 以虚拟化列表展示 `ops.list()` 所有行（按 ts 降序）
 - Trash 空："没有已删除的文件"
 - Conflicts 空："没有冲突历史。你的文件在 Acornvo 与外部工具之间同步良好。"
 - Ops 空："还没有任何操作记录"
+- Jobs 空："没有待办任务"
 
 #### Scenario: 全新树林
 - **WHEN** 刚创建的树林打开 `/history`
-- **THEN** 三个 tab 均显示对应空态文案
+- **THEN** 四个 tab 均显示对应空态文案

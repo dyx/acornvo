@@ -1,4 +1,9 @@
-## ADDED Requirements
+# clipper-pipeline Specification
+
+## Purpose
+End-to-end pipeline for web clipping: precheck → extract → enrich → transform → preview → save → index → record. Handles slug generation, atomic writes, and job queue integration.
+
+## Requirements
 
 ### Requirement: 端到端 Pipeline
 `electron/clipper/pipeline.ts` SHALL 暴露 `clip(webContents, userOverrides?) → Promise<ClipResult>`。流水线步骤 MUST 依次为：
@@ -9,7 +14,7 @@
 5. **preview**（renderer 驱动；main 侧此步是"返回 extractResult + 转换后 body" 给 renderer）
 6. **save**：用户确认后写入文件
 7. **index**：调 phase 5 `file.upsert`
-8. **record**：插入 `clips` 表 + `ops_log`（op='clip'）+ `clipQueue.enqueue`
+8. **record**：插入 `clips` 表 + `ops_log`（op='clip'）+ `jobs.enqueue`
 
 任一步骤失败 MUST 返回 `{ ok: false, error: { code, message, stage } }`，renderer 根据 stage 恢复到对应状态。
 
@@ -55,9 +60,15 @@ save 阶段 MUST 调用 phase 4 的 `file.write(path, { body, frontmatter })` �
 - **WHEN** 写入返回 `E_DISK_FULL`
 - **THEN** pipeline 回滚：不插入 clips 表；返回错误至 UI
 
-### Requirement: 入队（phase 14 预留）
-save 成功后 pipeline MUST 调 `clipQueue.enqueue({ clipId, url, path })`。phase 12 该函数为 no-op 占位；phase 14 替换为持久化队列，pipeline 代码 MUST 不因占位改动。
+### Requirement: 入队
+save 成功后 pipeline MUST 调 `jobs.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: 'clip:' + clipId })`。入队将 clip 交给持久化任务队列，由 runner 异步调度 AI 审读。
 
-#### Scenario: 占位入队
-- **WHEN** pipeline 在 phase 12 走完 save
-- **THEN** 调用 `clipQueue.enqueue(...)` 不抛错；pipeline 正常返回 success
+入队失败（极罕见，SQLite 故障）MUST NOT 回滚已写入的 clip 文件与 clips 表；错误仅记 `ops_log` `op='enqueue.failed'`；用户可在 /history/jobs 中手动补加（phase 18 提供手动补队入口）。
+
+#### Scenario: 真实入队
+- **WHEN** pipeline 走完 save
+- **THEN** `jobs` 表新增一行 `kind='ai-review-clip'`，status='pending'，payload 含 clipId 与 path
+
+#### Scenario: 去重命中不重复入队
+- **WHEN** 同一 clipId 在 pending/running 状态已有 ai-review-clip job，用户以某种方式触发再次入队
+- **THEN** 不新增 job 行；返回已有 id
