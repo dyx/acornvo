@@ -58,23 +58,23 @@
 
 ## 10. 验收
 
-- [ ] 10.1 phase 13 配好 openai profile + key；phase 12 剪藏一个 example.com 文章
+- [x] 10.1 phase 13 配好 openai profile + key；phase 12 剪藏一个 example.com 文章
 - [x] 10.2 1-2 分钟内：jobs 表的该 job 走 pending → running → done；md 的 frontmatter 新增 ai_summary / ai_suggested_title / ai_tags / ai_key_quotes / ai_reviewed_at
 - [x] 10.3 ai_usage 表有成功行：ok=1, prompt_tokens/completion_tokens 非空, latency_ms > 0
-- [ ] 10.4 打开该 md → 编辑器 TitleBar 紫色 AI 徽章 → 点开抽屉显示 4 区块
-- [ ] 10.5 "用作标题" → title 被替换为 suggestedTitle；autosave 完成
-- [ ] 10.6 "合并到标签" → tags 并集；content_hash 不变
-- [ ] 10.7 "一键接受" → title / tags / ai_review_accepted_at 都正确；徽章变灰
-- [ ] 10.8 "拒绝" → 仅写 ai_review_accepted_at；徽章变灰
-- [ ] 10.9 "重新审读" → 新 job 入队；frontmatter 最终被新结果覆写；ai_usage 多一行
+- [x] 10.4 打开该 md → 编辑器 TitleBar 紫色 AI 徽章 → 点开抽屉显示 4 区块
+- [x] 10.5 "用作标题" → title 被替换为 suggestedTitle；autosave 完成
+- [x] 10.6 "合并到标签" → tags 并集；content_hash 不变
+- [x] 10.7 "一键接受" → title / tags / ai_review_accepted_at 都正确；徽章变灰
+- [x] 10.8 "拒绝" → 仅写 ai_review_accepted_at；徽章变灰
+- [x] 10.9 "重新审读" → 新 job 入队；frontmatter 最终被新结果覆写；ai_usage 多一行
 - [x] 10.10 删默认 profile → 入队的 job handler 返回 fail E_MISSING_PROFILE；UI 在 /history/jobs 显示失败
 - [x] 10.11 模拟 401（错 key）→ handler 返回 fail E_AUTH；不再自动重试
 - [x] 10.12 模拟 429 → 退避 60s；attempts+=1
 - [x] 10.13 LLM 返回 ` ```json {"a":1} ``` ` 样式 → 解析成功
 - [x] 10.14 LLM 返回 schema 不匹配 → E_RESPONSE；retry 按 nextDelay
 - [x] 10.15 body > 16000 字 → prompt 截断且加 "...(内容过长已截断)"
-- [ ] 10.16 Ollama profile（localhost:11434, llama3）→ 调用返回 JSON；frontmatter 正常更新
-- [ ] 10.17 Anthropic profile → claude-haiku 返回 JSON；frontmatter 正常更新
+- [x] 10.16 Ollama profile（localhost:11434, llama3）→ 调用返回 JSON；frontmatter 正常更新
+- [x] 10.17 Anthropic profile → claude-haiku 返回 JSON；frontmatter 正常更新
 - [x] 10.18 `ai.usage.summary({ sinceDays: 30 })` → 返回正确聚合
 - [x] 10.19 main 内部验证：renderer 任何 IPC payload 均不含 apiKey 明文
 - [x] 10.20 `openspec validate phase-15-ai-reviewer --strict` 通过
