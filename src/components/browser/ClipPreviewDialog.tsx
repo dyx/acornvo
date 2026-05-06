@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
 import { useBrowserStore } from '@/stores/browser'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 export function ClipPreviewDialog(): JSX.Element | null {
   const { t } = useTranslation()
@@ -14,6 +15,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
   const activeTabId = useBrowserStore((s) => s.activeTabId)
 
   const open = stage === 'previewing' || stage === 'saving'
+  useNativeBrowserViewOcclusion(open)
 
   const [title, setTitle] = useState('')
   const [tagsRaw, setTagsRaw] = useState('')

@@ -9,6 +9,7 @@ import { useClipperStore } from '@/stores/clipper'
 import { getClipsPort } from '@/ipc/clips-port'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 import { dispatchAddress } from './dispatchAddress'
 import { BookmarkDialog } from './BookmarkDialog'
 
@@ -30,6 +31,7 @@ export function AddressBar(): JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [openClippedConfirm, setOpenClippedConfirm] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  useNativeBrowserViewOcclusion(openClippedConfirm)
 
   // --- Clip button state ---
   const url = tab?.url ?? ''

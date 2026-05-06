@@ -89,3 +89,20 @@ describe('preload window.api.chat', () => {
     expect(ipcRenderer.removeListener).toHaveBeenCalledWith(channel, expect.any(Function))
   })
 })
+
+describe('preload window.api.clipper', () => {
+  it('exposes clipper and clips namespaces used by the browser clipping UI', async () => {
+    await import('./preload')
+    const api = exposeInMainWorld.mock.calls[0][1]
+
+    expect(typeof api.clipper.clip).toBe('function')
+    expect(typeof api.clipper.saveClip).toBe('function')
+    expect(typeof api.clipper.cancelClip).toBe('function')
+    expect(typeof api.clipper.reextract).toBe('function')
+
+    expect(typeof api.clips.list).toBe('function')
+    expect(typeof api.clips.getByUrl).toBe('function')
+    expect(typeof api.clips.getById).toBe('function')
+    expect(typeof api.clips.delete).toBe('function')
+  })
+})

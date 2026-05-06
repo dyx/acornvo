@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 interface BaseProps {
   open: boolean
@@ -35,6 +36,7 @@ export type BookmarkDialogProps = NewProps | EditProps
 
 export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
   const { t } = useTranslation()
+  useNativeBrowserViewOcclusion(props.open)
   const [url, setUrl] = useState(props.initial.url)
   const [title, setTitle] = useState(props.initial.title ?? '')
   const [tags, setTags] = useState(props.initial.tags?.join(', ') ?? '')

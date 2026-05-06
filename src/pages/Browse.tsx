@@ -1,5 +1,5 @@
 // src/pages/Browse.tsx
-import { useEffect, useRef, type JSX } from 'react'
+import { useEffect, useLayoutEffect, useRef, type JSX } from 'react'
 import { useBrowserStore } from '@/stores/browser'
 import { browserPort } from '@/ipc/browser-port'
 import { TabBar } from '@/components/browser/TabBar'
@@ -61,6 +61,18 @@ export function Browse(): JSX.Element {
     })
     return () => ro.disconnect()
   }, [setViewport])
+
+  useLayoutEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setViewport({
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height
+    })
+  }, [bookmarksOpen, setViewport])
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined
   const isBlank = activeTab?.savedUrl === 'about:blank' && activeTab?.title === ''
