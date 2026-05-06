@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import type { Attachment, Session, SessionMessage } from '@shared/agent-types'
+import type { AgentEvent, Attachment, Session, SessionMessage } from '@shared/agent-types'
 
 export interface ChatSession {
   id: string
@@ -344,3 +344,179 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }))
   }
 }))
+
+// ── stream subscriber ────────────────────────────────────────────────
+
+function nextMsgId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+const streamUnsubs = new Map<string, () => void>()
+
+function subscribeSessionStream(sid: string): void {
+  if (streamUnsubs.has(sid)) return
+  const unsub = (ipc.chat as any).onStream(sid, (event: AgentEvent) => {
+    useChatStore.setState((s) => {
+      const cur = s.bySession[sid] ?? emptySession()
+      switch (event.type) {
+        case 'token':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                streamingBuffer: cur.streamingBuffer + event.text,
+                status: 'streaming'
+              }
+            }
+          }
+        case 'done': {
+          const msg: ChatMessage = {
+            id: nextMsgId(),
+            role: 'assistant',
+            text: cur.streamingBuffer,
+            createdAt: Date.now()
+          }
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                streamingBuffer: '',
+                flushedLength: 0,
+                status:
+                  cur.pendingApprovals.length > 0 ? 'awaiting-approval' : 'idle',
+                messages: [...cur.messages, msg]
+              }
+            }
+          }
+        }
+        case 'tool.start':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                messages: [
+                  ...cur.messages,
+                  {
+                    id: nextMsgId(),
+                    role: 'tool' as const,
+                    text: event.tool,
+                    toolCalls: [
+                      { id: nextMsgId(), name: event.tool, args: event.args }
+                    ],
+                    createdAt: Date.now()
+                  }
+                ]
+              }
+            }
+          }
+        case 'tool.result':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                messages: [
+                  ...cur.messages,
+                  {
+                    id: nextMsgId(),
+                    role: 'tool' as const,
+                    text:
+                      event.result.ok === true
+                        ? JSON.stringify(event.result.data)
+                        : `error: ${event.result.error}`,
+                    createdAt: Date.now()
+                  }
+                ]
+              }
+            }
+          }
+        case 'message.appended':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                messages: [...cur.messages, toChatMessage(event.message)]
+              }
+            }
+          }
+        case 'tool.approval-needed':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                status: 'awaiting-approval',
+                pendingApprovals: [
+                  ...cur.pendingApprovals,
+                  {
+                    callId: event.callId,
+                    toolName: event.tool,
+                    args: event.args,
+                    reason: event.reason ?? '',
+                    receivedAt: Date.now()
+                  }
+                ]
+              }
+            }
+          }
+        case 'error':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: {
+                ...cur,
+                status: 'error',
+                error: event.error
+              }
+            }
+          }
+        case 'canceled':
+          return {
+            bySession: {
+              ...s.bySession,
+              [sid]: { ...cur, status: 'idle' }
+            }
+          }
+        case 'step.start':
+          // no-op: informational only
+          return s
+        default:
+          return s
+      }
+    })
+  })
+  streamUnsubs.set(sid, unsub)
+}
+
+export function installChatStreamSubscriber(): void {
+  // Subscribe existing sessions
+  for (const s of useChatStore.getState().sessions) {
+    subscribeSessionStream(s.id)
+  }
+
+  // Subscribe to store for dynamic session lifecycle
+  useChatStore.subscribe((state, prevState) => {
+    for (const s of state.sessions) {
+      if (!prevState.sessions.find((ps) => ps.id === s.id)) {
+        subscribeSessionStream(s.id)
+      }
+    }
+    for (const ps of prevState.sessions) {
+      if (!state.sessions.find((s) => s.id === ps.id)) {
+        streamUnsubs.get(ps.id)?.()
+        streamUnsubs.delete(ps.id)
+      }
+    }
+  })
+}
+
+export function uninstallChatStreamSubscriber(): void {
+  for (const unsub of streamUnsubs.values()) {
+    unsub()
+  }
+  streamUnsubs.clear()
+}

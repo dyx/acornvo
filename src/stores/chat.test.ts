@@ -15,14 +15,15 @@ vi.mock('@/ipc/client', () => ({
       sendUserMessage: vi.fn().mockResolvedValue({ ok: true }),
       cancelStream: vi.fn().mockResolvedValue({ ok: true }),
       approveTool: vi.fn().mockResolvedValue({ ok: true }),
-      rejectTool: vi.fn().mockResolvedValue({ ok: true })
+      rejectTool: vi.fn().mockResolvedValue({ ok: true }),
+      onStream: vi.fn(() => () => {})
     },
     on: vi.fn(() => () => {})
   }
 }))
 
 import { ipc } from '@/ipc/client'
-import { useChatStore } from './chat'
+import { installChatStreamSubscriber, useChatStore } from './chat'
 
 beforeEach(() => {
   useChatStore.setState(useChatStore.getInitialState(), true)
@@ -219,5 +220,63 @@ describe('chat store — actions', () => {
     const entry = useChatStore.getState().bySession.s1?.pendingAttachments
     expect(entry).toHaveLength(1)
     expect(entry?.[0].title).toBe('b.png')
+  })
+})
+
+describe('chat stream subscriber', () => {
+  const handlers: Record<string, (evt: any) => void> = {}
+
+  beforeEach(async () => {
+    Object.keys(handlers).forEach((k) => delete handlers[k])
+    // Override onStream mock to capture per-session handlers
+    vi.mocked(ipc.chat as any).onStream = vi.fn((sessionId: string, cb: (evt: any) => void) => {
+      handlers[sessionId] = cb
+      return () => { delete handlers[sessionId] }
+    })
+    await useChatStore.getState().loadSessions()
+    installChatStreamSubscriber()
+  })
+
+  it('appends streaming token to buffer for the matching session', () => {
+    handlers['s1']({ type: 'token', text: '你' })
+    handlers['s1']({ type: 'token', text: '好' })
+    expect(useChatStore.getState().bySession.s1?.streamingBuffer).toBe('你好')
+  })
+
+  it('does not leak token into other session buffer', () => {
+    handlers['s2']({ type: 'token', text: 'X' })
+    expect(useChatStore.getState().bySession.s1?.streamingBuffer ?? '').toBe('')
+  })
+
+  it('on done event commits message and resets buffer + status', () => {
+    handlers['s1']({ type: 'token', text: 'hello' })
+    handlers['s1']({ type: 'done' })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.streamingBuffer).toBe('')
+    expect(slot?.flushedLength).toBe(0)
+    expect(slot?.status).toBe('idle')
+    const msg = slot?.messages.find((m) => m.role === 'assistant' && m.text === 'hello')
+    expect(msg).toBeTruthy()
+  })
+
+  it('approval-needed pushes onto queue and sets status', () => {
+    handlers['s1']({
+      type: 'tool.approval-needed',
+      callId: 'c1',
+      tool: 'update_frontmatter',
+      args: { file: 'a.md' },
+      reason: '需要批准'
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.pendingApprovals).toHaveLength(1)
+    expect(slot?.pendingApprovals[0].callId).toBe('c1')
+    expect(slot?.status).toBe('awaiting-approval')
+  })
+
+  it('error event sets status to error and stores message', () => {
+    handlers['s1']({ type: 'error', error: 'E_NETWORK', detail: '网络错误' })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.status).toBe('error')
+    expect(slot?.error).toBe('E_NETWORK')
   })
 })

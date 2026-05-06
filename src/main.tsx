@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { installSettingsEffects } from '@/stores/settings-effects'
 import { installGroveSubscriber } from '@/stores/grove'
 import { installSettingsSubscriber } from '@/stores/settings'
+import { installChatStreamSubscriber } from '@/stores/chat'
 import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
 import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { Placeholder } from './pages/Placeholder'
@@ -54,6 +55,7 @@ if (!container) {
 installSettingsEffects()
 installGroveSubscriber()
 installSettingsSubscriber()
+installChatStreamSubscriber()
 setBrowserPort(browserPort)
 setBrowserEventPort(browserEventPort)
 
