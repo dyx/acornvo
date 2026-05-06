@@ -350,7 +350,10 @@
     "untitled": "Untitled chat",
     "newSession": "New chat",
     "topbar": {
-      "helpAria": "Keyboard shortcuts help"
+      "helpAria": "Keyboard shortcuts help",
+      "noProfile": "No AI configured",
+      "switchProfile": "Switch AI",
+      "modelSeparator": "·"
     },
     "approval": {
       "title": "Approve tool call",

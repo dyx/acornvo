@@ -381,7 +381,10 @@
     "untitled": "未命名对话",
     "newSession": "新对话",
     "topbar": {
-      "helpAria": "快捷键帮助"
+      "helpAria": "快捷键帮助",
+      "noProfile": "未配置 AI",
+      "switchProfile": "切换 AI",
+      "modelSeparator": "·"
     },
     "approval": {
       "title": "批准工具调用",
