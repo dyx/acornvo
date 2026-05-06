@@ -1,4 +1,4 @@
-import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage } from '../../shared/agent-types';
+import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage, RunAgentArgs } from '../../shared/agent-types';
 import type { Registry } from './registry';
 import type { ApprovalGate } from './approval';
 import { aiUsage } from '../ai/usage';
@@ -20,16 +20,9 @@ export interface RunAgentDeps {
   cancel: AbortSignal;
 }
 
-export interface RunAgentArgs {
-  sessionId: string;
-  userText: string;
-  profileId: string;
-  history: SessionMessage[];
-  deps: RunAgentDeps;
-  streamWriter: { write: (e: AgentEvent) => void };
-}
+type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps'> & { deps: RunAgentDeps };
 
-export async function runAgent({ sessionId, userText, profileId, history, deps, streamWriter }: RunAgentArgs): Promise<void> {
+export async function runAgent({ sessionId, userText, profileId, history, deps, streamWriter }: RunAgentArgsInternal): Promise<void> {
   const emit = (e: AgentEvent) => streamWriter.write(e);
   const cancel = deps.cancel;
 

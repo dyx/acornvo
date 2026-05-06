@@ -64,6 +64,20 @@ export type AgentEvent =
   | { type: 'error'; error: string; detail?: unknown }
   | { type: 'canceled' };
 
+export type Attachment =
+  | { type: 'file'; path: string; title: string }
+  | { type: 'clip'; clipId: number; url: string; title: string };
+
+export interface RunAgentArgs {
+  sessionId: string;
+  userText: string;
+  profileId: string;
+  history: SessionMessage[];
+  deps: Record<string, unknown>;
+  streamWriter: { write: (e: AgentEvent) => void };
+  attachments?: Attachment[];
+}
+
 export interface ChatWithToolsResult {
   text?: string;
   toolCalls: ToolCall[];

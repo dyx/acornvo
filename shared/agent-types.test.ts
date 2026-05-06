@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from 'vitest';
 import type {
-  Tool, ToolCall, SessionMessage, AgentEvent,
+  Tool, ToolCall, SessionMessage, AgentEvent, Attachment, RunAgentArgs,
 } from './agent-types';
 
 describe('agent-types', () => {
@@ -33,5 +33,48 @@ describe('agent-types', () => {
   it('ToolCall has id / name / args', () => {
     const tc: ToolCall = { id: 'tc1', name: 'search_files', args: { query: 'x' } };
     expectTypeOf(tc.args).toEqualTypeOf<unknown>();
+  });
+});
+
+describe('Attachment', () => {
+  it('accepts file shape', () => {
+    const a: Attachment = { type: 'file', path: 'notes/a.md', title: 'A' };
+    expectTypeOf(a).toMatchTypeOf<Attachment>();
+  });
+
+  it('accepts clip shape', () => {
+    const a: Attachment = { type: 'clip', clipId: 12, url: 'https://x.com', title: 'X' };
+    expectTypeOf(a).toMatchTypeOf<Attachment>();
+  });
+
+  it('rejects unknown type at compile time', () => {
+    // @ts-expect-error unknown discriminator
+    const a: Attachment = { type: 'web', url: 'https://x.com' };
+    void a;
+  });
+
+  it('RunAgentArgs accepts optional attachments', () => {
+    const a: RunAgentArgs = {
+      sessionId: 's1',
+      userText: 'hi',
+      profileId: 'p1',
+      history: [],
+      deps: {},
+      streamWriter: { write: () => {} },
+      attachments: [{ type: 'file', path: 'a.md', title: 'A' }],
+    };
+    expectTypeOf(a.attachments).toEqualTypeOf<Attachment[] | undefined>();
+  });
+
+  it('RunAgentArgs without attachments still typechecks', () => {
+    const a: RunAgentArgs = {
+      sessionId: 's1',
+      userText: 'hi',
+      profileId: 'p1',
+      history: [],
+      deps: {},
+      streamWriter: { write: () => {} },
+    };
+    expectTypeOf(a).toHaveProperty('sessionId');
   });
 });
