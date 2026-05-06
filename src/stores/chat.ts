@@ -63,6 +63,11 @@ function toChatMessage(m: SessionMessage): ChatMessage {
   }
 }
 
+export class BusyError extends Error {
+  code = 'E_BUSY' as const
+  constructor() { super('session is streaming') }
+}
+
 interface ChatStore {
   sessions: ChatSession[]
   activeSessionId: string | null
@@ -71,6 +76,16 @@ interface ChatStore {
   sessionsError: string | null
   loadSessions: () => Promise<void>
   selectSession: (id: string) => Promise<void>
+  createSession: () => Promise<string>
+  renameSession: (id: string, title: string) => Promise<void>
+  deleteSession: (id: string) => Promise<void>
+  sendUserMessage: (args: { text: string; attachments?: Attachment[] }) => Promise<void>
+  cancelStream: () => Promise<void>
+  approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>
+  rejectTool: (sessionId: string, callId: string) => Promise<void>
+  updateSessionProfile: (id: string, profileId: string | null) => Promise<void>
+  pushAttachment: (att: Attachment) => void
+  removeAttachment: (index: number) => void
 }
 
 const emptySession = (): SessionState => ({
@@ -141,5 +156,191 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }))
       }
     }
+  },
+
+  async createSession() {
+    let createdId = ''
+    try {
+      const raw = await ipc.chat['sessions.create']({ profileId: null })
+      const session = toChatSession(raw)
+      createdId = session.id
+      set((s) => ({
+        sessions: [session, ...s.sessions],
+        activeSessionId: session.id,
+        bySession: {
+          ...s.bySession,
+          [session.id]: { ...emptySession(), loaded: true }
+        }
+      }))
+    } catch (err) {
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
+    }
+    return createdId
+  },
+
+  async renameSession(id, title) {
+    try {
+      await ipc.chat['sessions.rename'](id, title)
+      set((s) => ({
+        sessions: s.sessions.map((ses) =>
+          ses.id === id ? { ...ses, title } : ses
+        )
+      }))
+    } catch (err) {
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
+    }
+  },
+
+  async deleteSession(id) {
+    try {
+      await ipc.chat['sessions.delete'](id)
+      set((s) => {
+        const remaining = s.sessions.filter((ses) => ses.id !== id)
+        let nextActive = s.activeSessionId
+        if (s.activeSessionId === id) {
+          nextActive = remaining[0]?.id ?? null
+        }
+        const nextBy = { ...s.bySession }
+        delete nextBy[id]
+        return {
+          sessions: remaining,
+          activeSessionId: nextActive,
+          bySession: nextBy
+        }
+      })
+    } catch (err) {
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
+    }
+  },
+
+  async sendUserMessage({ text }) {
+    const cur = get()
+    const sid = cur.activeSessionId
+    if (!sid) return
+    const state = cur.bySession[sid]
+    if (state?.status === 'streaming') {
+      throw new BusyError()
+    }
+    set((s) => ({
+      bySession: {
+        ...s.bySession,
+        [sid]: {
+          ...emptySession(),
+          ...s.bySession[sid],
+          status: 'streaming',
+          error: null,
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingAttachments: []
+        }
+      }
+    }))
+    try {
+      await ipc.chat.sendUserMessage({ sessionId: sid, text })
+    } catch (err) {
+      set((s) => ({
+        bySession: {
+          ...s.bySession,
+          [sid]: {
+            ...emptySession(),
+            ...s.bySession[sid],
+            status: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          }
+        }
+      }))
+    }
+  },
+
+  async cancelStream() {
+    const sid = get().activeSessionId
+    if (!sid) return
+    try {
+      await ipc.chat.cancelStream(sid)
+    } catch (err) {
+      // silently ignore cancel errors
+    }
+  },
+
+  async approveTool(sessionId, callId, editedArgs) {
+    try {
+      await ipc.chat.approveTool(callId, editedArgs !== undefined ? { editedArgs } : undefined)
+      set((s) => ({
+        bySession: {
+          ...s.bySession,
+          [sessionId]: {
+            ...emptySession(),
+            ...s.bySession[sessionId],
+            pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter(
+              (a) => a.callId !== callId
+            )
+          }
+        }
+      }))
+    } catch (err) {
+      // silently ignore
+    }
+  },
+
+  async rejectTool(sessionId, callId) {
+    try {
+      await ipc.chat.rejectTool(callId)
+      set((s) => ({
+        bySession: {
+          ...s.bySession,
+          [sessionId]: {
+            ...emptySession(),
+            ...s.bySession[sessionId],
+            pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter(
+              (a) => a.callId !== callId
+            )
+          }
+        }
+      }))
+    } catch (err) {
+      // silently ignore
+    }
+  },
+
+  async updateSessionProfile(id, profileId) {
+    // TODO: Backend handler for sessions.updateProfile not yet implemented.
+    // For now, update profileId locally only; a future IPC call should persist it.
+    set((s) => ({
+      sessions: s.sessions.map((ses) =>
+        ses.id === id ? { ...ses, profileId } : ses
+      )
+    }))
+  },
+
+  pushAttachment(att) {
+    const sid = get().activeSessionId
+    if (!sid) return
+    set((s) => ({
+      bySession: {
+        ...s.bySession,
+        [sid]: {
+          ...emptySession(),
+          ...s.bySession[sid],
+          pendingAttachments: [...(s.bySession[sid]?.pendingAttachments ?? []), att]
+        }
+      }
+    }))
+  },
+
+  removeAttachment(index) {
+    const sid = get().activeSessionId
+    if (!sid) return
+    set((s) => ({
+      bySession: {
+        ...s.bySession,
+        [sid]: {
+          ...emptySession(),
+          ...s.bySession[sid],
+          pendingAttachments: (s.bySession[sid]?.pendingAttachments ?? []).filter(
+            (_, i) => i !== index
+          )
+        }
+      }
+    }))
   }
 }))
