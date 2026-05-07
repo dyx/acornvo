@@ -5,6 +5,7 @@ import { Plus, Search } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { SessionListRow } from './SessionListRow'
 import { SessionContextMenu } from './SessionContextMenu'
+import { DeleteSessionDialog } from './DeleteSessionDialog'
 
 export function SessionList(): JSX.Element {
   const { t } = useTranslation()
@@ -17,11 +18,12 @@ export function SessionList(): JSX.Element {
   const [q, setQ] = useState<string>('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
 
-  function confirmDelete(id: string): void {
-    if (window.confirm(t('chat.session.confirmDeleteBody'))) {
-      void deleteSession(id)
-    }
+  function confirmDelete(id: string): void { setPendingDelete(id) }
+  function actuallyDelete(): void {
+    if (pendingDelete) void deleteSession(pendingDelete)
+    setPendingDelete(null)
   }
 
   const filtered = useMemo(() => {
@@ -84,6 +86,7 @@ export function SessionList(): JSX.Element {
           onCopyId={() => { void navigator.clipboard.writeText(menu.id) }}
         />
       )}
+      <DeleteSessionDialog open={pendingDelete !== null} onConfirm={actuallyDelete} onCancel={() => setPendingDelete(null)} />
     </div>
   )
 }

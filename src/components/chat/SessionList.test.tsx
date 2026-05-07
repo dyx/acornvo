@@ -171,3 +171,42 @@ describe('SessionList — rename + context menu', () => {
     expect(writeText).toHaveBeenCalledWith('s1')
   })
 })
+
+describe('SessionList — delete dialog', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('clicking delete opens a Radix dialog, not native confirm', async () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    await userEvent.hover(row)
+    await userEvent.click(screen.getByTestId('row-delete'))
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText(/删除会话|delete chat/i)).toBeTruthy()
+  })
+
+  it('confirm button triggers delete IPC', async () => {
+    render(<SessionList />)
+    await userEvent.click(screen.getByTestId('row-delete'))
+    await userEvent.click(screen.getByRole('button', { name: /删除$|^delete$/i }))
+    expect(ipc.chat['sessions.delete']).toHaveBeenCalledWith('s1')
+  })
+
+  it('cancel button closes dialog without deleting', async () => {
+    render(<SessionList />)
+    await userEvent.click(screen.getByTestId('row-delete'))
+    await userEvent.click(screen.getByRole('button', { name: /取消|cancel/i }))
+    expect(ipc.chat['sessions.delete']).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeFalsy()
+  })
+})
