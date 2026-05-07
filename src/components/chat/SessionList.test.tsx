@@ -113,3 +113,61 @@ describe('SessionList — row visuals', () => {
     expect(title?.className).toContain('truncate')
   })
 })
+
+describe('SessionList — rename + context menu', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: '原标题', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('double-click title turns it into an editable input', async () => {
+    render(<SessionList />)
+    const title = screen.getByTestId('row-title')
+    await userEvent.dblClick(title)
+    const input = screen.getByDisplayValue('原标题')
+    expect(input.tagName).toBe('INPUT')
+  })
+
+  it('Enter commits rename via store action', async () => {
+    render(<SessionList />)
+    await userEvent.dblClick(screen.getByTestId('row-title'))
+    const input = screen.getByDisplayValue('原标题')
+    await userEvent.clear(input)
+    await userEvent.type(input, '新标题{Enter}')
+    expect(ipc.chat['sessions.rename']).toHaveBeenCalledWith('s1', '新标题')
+  })
+
+  it('Esc cancels rename without IPC call', async () => {
+    render(<SessionList />)
+    await userEvent.dblClick(screen.getByTestId('row-title'))
+    const input = screen.getByDisplayValue('原标题')
+    await userEvent.type(input, 'X{Escape}')
+    expect(ipc.chat['sessions.rename']).not.toHaveBeenCalled()
+  })
+
+  it('right-click opens context menu with rename / delete / copy id', async () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    await userEvent.pointer({ keys: '[MouseRight>]', target: row })
+    expect(screen.getByRole('menuitem', { name: /重命名|rename/i })).toBeTruthy()
+    expect(screen.getByRole('menuitem', { name: /删除|delete/i })).toBeTruthy()
+    expect(screen.getByRole('menuitem', { name: /session id/i })).toBeTruthy()
+  })
+
+  it('clicking "复制 session id" writes id to clipboard', async () => {
+    const writeText = vi.fn()
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    render(<SessionList />)
+    await userEvent.pointer({ keys: '[MouseRight>]', target: screen.getByTestId('session-row') })
+    await userEvent.click(screen.getByRole('menuitem', { name: /session id/i }))
+    expect(writeText).toHaveBeenCalledWith('s1')
+  })
+})
