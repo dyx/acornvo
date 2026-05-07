@@ -21,6 +21,7 @@ export function MessageList(): JSX.Element | null {
     const el = containerRef.current
     if (!el) return
     function onScroll(): void {
+      if (!el) return
       const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
       setStuckUp(distanceFromBottom > 80)
     }

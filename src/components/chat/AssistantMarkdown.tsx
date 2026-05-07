@@ -28,7 +28,7 @@ export function AssistantMarkdown({ m }: { m: ChatMessage }): JSX.Element {
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.preventDefault()
-                  if (href) void ipc.shell.openExternal(href)
+                  if (href) void ipc.file.openExternal(href)
                 }}
                 className="text-primary underline"
               >

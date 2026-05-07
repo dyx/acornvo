@@ -18,7 +18,7 @@ vi.mock('@/ipc/client', () => ({
       rejectTool: vi.fn().mockResolvedValue({ ok: true }),
       onStream: vi.fn(() => () => {})
     },
-    shell: {
+    file: {
       openExternal: vi.fn().mockReturnValue({ ok: true })
     },
     on: vi.fn(() => () => {})
@@ -162,13 +162,14 @@ describe('MessageList — auto-scroll', () => {
     expect(screen.getByTestId('jump-to-latest')).toBeTruthy()
 
     // Restore original descriptor
+    const proto = Element.prototype as unknown as Record<string, unknown>
     if (origDescriptor) {
       Object.defineProperty(Element.prototype, 'scrollTop', origDescriptor)
     } else {
-      delete (Element.prototype as Record<string, unknown>).scrollTop
+      delete proto.scrollTop
     }
-    delete (Element.prototype as Record<string, unknown>).scrollHeight
-    delete (Element.prototype as Record<string, unknown>).clientHeight
+    delete proto.scrollHeight
+    delete proto.clientHeight
   })
 })
 
@@ -208,5 +209,39 @@ describe('MessageList — hover ops', () => {
     render(<MessageList />)
     await userEvent.click(screen.getByTestId('msg-op-copy-m1'))
     expect(writeText).toHaveBeenCalledWith('hello')
+  })
+})
+
+describe('AssistantMarkdown — external links', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  afterEach(() => cleanup())
+
+  it('clicking an https link calls ipc.shell.openExternal and prevents default', async () => {
+    const { ipc: mockIpc } = await import('@/ipc/client')
+    const openExternal = mockIpc.file.openExternal as ReturnType<typeof vi.fn>
+
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'see [link](https://example.com)', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    const link = screen.getByRole('link', { name: 'link' })
+    await userEvent.click(link)
+    expect(openExternal).toHaveBeenCalledWith('https://example.com')
   })
 })
