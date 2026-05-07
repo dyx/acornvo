@@ -31,9 +31,13 @@ export function Browse(): JSX.Element {
   }, [])
 
   // Auto-create the first tab
+  const creatingRef = useRef(false)
   useEffect(() => {
-    if (tabs.length === 0) {
-      void createTab()
+    if (tabs.length === 0 && !creatingRef.current) {
+      creatingRef.current = true
+      createTab().finally(() => {
+        creatingRef.current = false
+      })
     }
   }, [tabs.length, createTab])
 

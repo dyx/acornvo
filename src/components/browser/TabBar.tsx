@@ -79,6 +79,7 @@ export function TabBar(): JSX.Element {
                 e.stopPropagation()
                 void closeTab(t.id)
               }}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               ×
             </span>

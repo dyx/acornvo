@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { browserPort } from '@/ipc/browser-port'
 
 let occlusionCount = 0
 
 export function useNativeBrowserViewOcclusion(active: boolean): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!active) return
 
     occlusionCount += 1
