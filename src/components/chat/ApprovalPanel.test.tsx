@@ -111,12 +111,28 @@ describe('ApprovalPanel — header / reason / args / buttons', () => {
     expect(header.textContent).toContain('更新 frontmatter')
   })
 
-  it('shows args JSON in pre', () => {
-    setPendingStore()
+  it('shows args JSON in pre for non-frontmatter tools', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [{ callId: 'c1', toolName: 'list_tags', args: { path: 'a.md' }, reason: '', receivedAt: 1 }], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
     render(<ApprovalPanel />)
     const pre = screen.getByTestId('approval-args-pre')
-    expect(pre.textContent).toContain('"before"')
-    expect(pre.textContent).toContain('"after"')
+    expect(pre.textContent).toContain('"path"')
+  })
+
+  it('shows FrontmatterDiff for update_frontmatter with before/after', () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    // Should show diff columns, not the pre block
+    expect(screen.queryByTestId('approval-args-pre')).toBeFalsy()
+    expect(screen.getByText('Before')).toBeTruthy()
+    expect(screen.getByText('After')).toBeTruthy()
   })
 
   it('shows reason text', () => {

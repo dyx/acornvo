@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, X, Edit2 } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
+import { FrontmatterDiff } from './FrontmatterDiff'
 
 function translateToolName(t: (key: string) => string, toolName: string): string {
   const specificKey = `chat.approval.tools.${toolName}`
@@ -60,12 +61,25 @@ export function ApprovalPanel() {
             {/* Args */}
             <div className="flex-1 min-h-0">
               <label className="text-xs text-muted-foreground">{t('chat.approval.args')}</label>
-              <pre
-                data-testid="approval-args-pre"
-                className="mt-1 text-xs bg-muted rounded-md p-3 overflow-auto max-h-48"
-              >
-                {JSON.stringify(head.args, null, 2)}
-              </pre>
+              {head.toolName === 'update_frontmatter' &&
+              head.args &&
+              typeof head.args === 'object' &&
+              'before' in head.args &&
+              'after' in head.args ? (
+                <div className="mt-1">
+                  <FrontmatterDiff
+                    before={(head.args as Record<string, unknown>).before}
+                    after={(head.args as Record<string, unknown>).after}
+                  />
+                </div>
+              ) : (
+                <pre
+                  data-testid="approval-args-pre"
+                  className="mt-1 text-xs bg-muted rounded-md p-3 overflow-auto max-h-48"
+                >
+                  {JSON.stringify(head.args, null, 2)}
+                </pre>
+              )}
             </div>
 
             {/* Actions */}
