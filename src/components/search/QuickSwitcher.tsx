@@ -13,6 +13,7 @@ export function QuickSwitcher(): JSX.Element {
   const items = useSearchStore((s) => s.quickSwitcher.items)
   const selectedIndex = useSearchStore((s) => s.quickSwitcher.selectedIndex)
   const close = useSearchStore((s) => s.quickSwitcher.close)
+  const onPick = useSearchStore((s) => s.quickSwitcher.onPick)
   const scheduleQuery = useSearchStore((s) => s.quickSwitcher.scheduleQuery)
   const moveSelection = useSearchStore((s) => s.quickSwitcher.moveSelection)
   const setSelectedIndex = useSearchStore((s) => s.quickSwitcher.setSelectedIndex)
@@ -27,6 +28,18 @@ export function QuickSwitcher(): JSX.Element {
     return undefined
   }, [open])
 
+  function pickItem(item: { path: string; title?: string | null }): void {
+    const curOnPick = useSearchStore.getState().quickSwitcher.onPick
+    pushRecent(item.path)
+    if (curOnPick) {
+      const fs = items.find((i) => i.path === item.path) ?? { path: item.path, title: item.title ?? null, clipped_at: null }
+      curOnPick(fs)
+    } else {
+      navigate('/editor/' + encodeURIComponent(item.path))
+    }
+    close()
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     const mod = e.metaKey || e.ctrlKey
     if (e.key === 'ArrowDown') {
@@ -39,13 +52,13 @@ export function QuickSwitcher(): JSX.Element {
       e.preventDefault()
       const target = items[selectedIndex]
       if (!target) return
-      pushRecent(target.path)
       if (mod) {
+        pushRecent(target.path)
         navigate('/library?focus=' + encodeURIComponent(target.path))
+        close()
       } else {
-        navigate('/editor/' + encodeURIComponent(target.path))
+        pickItem(target)
       }
-      close()
     }
   }
 
@@ -95,11 +108,7 @@ export function QuickSwitcher(): JSX.Element {
                         (i === selectedIndex ? 'bg-accent text-accent-foreground border-l-2 border-primary' : '')
                       }
                       onMouseEnter={() => setSelectedIndex(i)}
-                      onClick={() => {
-                        pushRecent(p)
-                        navigate('/editor/' + encodeURIComponent(p))
-                        close()
-                      }}
+                      onClick={() => pickItem({ path: p })}
                     >
                       <span className="truncate">{p}</span>
                     </li>
@@ -119,11 +128,7 @@ export function QuickSwitcher(): JSX.Element {
                     (i === selectedIndex ? 'bg-accent text-accent-foreground border-l-2 border-primary' : '')
                   }
                   onMouseEnter={() => setSelectedIndex(i)}
-                  onClick={() => {
-                    pushRecent(it.path)
-                    navigate('/editor/' + encodeURIComponent(it.path))
-                    close()
-                  }}
+                  onClick={() => pickItem(it)}
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="font-medium truncate">{it.title ?? it.path}</span>

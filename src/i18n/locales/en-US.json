@@ -347,13 +347,30 @@
   "clearDone": "Clear completed"
   },
   "chat": {
+    "untitled": "Untitled chat",
+    "newSession": "New chat",
+    "topbar": {
+      "helpAria": "Keyboard shortcuts help",
+      "noProfile": "No AI configured",
+      "switchProfile": "Switch AI",
+      "modelSeparator": "·"
+    },
     "approval": {
-      "title": "Approve tool call",
+      "header": "Approve tool call",
       "reason": "Reason",
       "args": "Arguments",
       "approve": "Approve",
-      "cancel": "Cancel",
-      "edit": "Edit arguments"
+      "reject": "Reject",
+      "edit": "Edit arguments",
+      "queued": "{{count}} more pending",
+      "timeout": "Approval timed out — auto-rejecting",
+      "invalidJson": "Invalid JSON",
+      "tools": {
+        "update_frontmatter": "Update frontmatter",
+        "write_file": "Write file",
+        "delete_file": "Delete file",
+        "default": "Tool call"
+      }
     },
     "tool": {
       "search_files": "Search files",
@@ -362,15 +379,62 @@
       "update_frontmatter": "Update frontmatter",
       "clip_summary": "Summarize clip"
     },
+    "empty": {
+      "heading": "What's on your mind?",
+      "subheading": "Try one of these",
+      "card1": "Find notes about attention mechanism",
+      "card2": "Summarize the last 10 clips",
+      "card3": "Set a.md tags to [\"reading\", \"essay\"]",
+      "card4": "Top 10 most frequent tags"
+    },
+    "session": {
+      "newAria": "New chat",
+      "searchPlaceholder": "Search chats…",
+      "noResults": "No matching chats",
+      "rename": "Rename",
+      "delete": "Delete",
+      "copyId": "Copy session id",
+      "confirmDeleteTitle": "Delete chat?",
+      "confirmDeleteBody": "This cannot be undone. All messages in this chat will be deleted.",
+      "confirmDeleteOk": "Delete",
+      "confirmDeleteCancel": "Cancel"
+    },
     "error": {
       "step_limit": "Reached the 8-step thinking limit.",
       "missing_profile": "No AI profile is bound to this session.",
+      "missingProfile": "Please configure an AI profile in Settings first",
+      "goToSettings": "Go to Settings",
       "busy": "This conversation is already running.",
       "global_busy": "Too many chats are running. Please cancel one and try again.",
       "user_rejected": "You cancelled this tool call.",
       "approval_timeout": "Approval timed out after 30 minutes.",
       "path_escape": "The path leaves the grove and cannot be accessed.",
-      "missing_reason": "A reason is required for this change."
+      "missing_reason": "A reason is required for this change.",
+      "stepLimit": "Reached the 8-step thinking limit.",
+      "network": "Network error. Please try again later.",
+      "server": "Server error.",
+      "retry": "Retry"
+    },
+    "input": {
+      "placeholder": "Type a message… (Cmd+Enter to send, Esc to cancel)",
+      "send": "Send",
+      "stop": "Stop",
+      "noProfile": "No AI profile",
+      "goToSettings": "Go to settings"
+    },
+    "messages": {
+      "jumpToLatest": "New messages ↓",
+      "copy": "Copy",
+      "retry": "Retry",
+      "quote": "Quote"
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "send": "Send message",
+      "newSession": "New session",
+      "focusInput": "Focus input",
+      "showHelp": "Show shortcuts",
+      "stopStream": "Stop streaming"
     }
   }
 }

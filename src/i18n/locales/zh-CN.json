@@ -378,13 +378,30 @@
   "clearDone": "清除已完成"
   },
   "chat": {
+    "untitled": "未命名对话",
+    "newSession": "新对话",
+    "topbar": {
+      "helpAria": "快捷键帮助",
+      "noProfile": "未配置 AI",
+      "switchProfile": "切换 AI",
+      "modelSeparator": "·"
+    },
     "approval": {
-      "title": "批准工具调用",
+      "header": "批准工具调用",
       "reason": "原因",
       "args": "参数",
       "approve": "同意",
-      "cancel": "取消",
-      "edit": "编辑参数"
+      "reject": "拒绝",
+      "edit": "编辑参数",
+      "queued": "还有 {{count}} 条待审",
+      "timeout": "审批超时，将自动拒绝",
+      "invalidJson": "JSON 格式错误",
+      "tools": {
+        "update_frontmatter": "更新 frontmatter",
+        "write_file": "写入文件",
+        "delete_file": "删除文件",
+        "default": "工具调用"
+      }
     },
     "tool": {
       "search_files": "搜索文件",
@@ -393,15 +410,62 @@
       "update_frontmatter": "更新 frontmatter",
       "clip_summary": "总结剪藏"
     },
+    "empty": {
+      "heading": "今天想聊点什么？",
+      "subheading": "试试这些常用想法",
+      "card1": "帮我在笔记里找关于注意力机制的内容",
+      "card2": "总结最近 10 篇剪藏",
+      "card3": "把 a.md 的 tags 改成 [\"读书\", \"散文\"]",
+      "card4": "列出 tags 出现频率前 10"
+    },
+    "session": {
+      "newAria": "新对话",
+      "searchPlaceholder": "搜索会话…",
+      "noResults": "无匹配会话",
+      "rename": "重命名",
+      "delete": "删除",
+      "copyId": "复制 session id",
+      "confirmDeleteTitle": "删除会话？",
+      "confirmDeleteBody": "此操作不可撤销，会话内所有消息将被删除。",
+      "confirmDeleteOk": "删除",
+      "confirmDeleteCancel": "取消"
+    },
     "error": {
       "step_limit": "已达 8 步思考上限。",
       "missing_profile": "本会话尚未绑定 AI Profile。",
+      "missingProfile": "请先在设置中配置 AI profile",
+      "goToSettings": "前往设置",
       "busy": "本会话已在运行。",
       "global_busy": "并发会话已满,请先取消其它会话。",
       "user_rejected": "你取消了这次工具调用。",
       "approval_timeout": "审批超时(30 分钟)。",
       "path_escape": "路径越出树林范围,无法访问。",
-      "missing_reason": "本次修改必须提供原因。"
+      "missing_reason": "本次修改必须提供原因。",
+      "stepLimit": "已达 8 步思考上限。",
+      "network": "网络不畅,请稍后重试。",
+      "server": "服务端异常。",
+      "retry": "重试"
+    },
+    "input": {
+      "placeholder": "输入消息…（Cmd+Enter 发送，Esc 取消）",
+      "send": "发送",
+      "stop": "停止",
+      "noProfile": "未配置 AI profile",
+      "goToSettings": "前往设置"
+    },
+    "messages": {
+      "jumpToLatest": "新消息 ↓",
+      "copy": "复制",
+      "retry": "重试",
+      "quote": "引用"
+    },
+    "shortcuts": {
+      "title": "快捷键",
+      "send": "发送消息",
+      "newSession": "新建会话",
+      "focusInput": "聚焦输入框",
+      "showHelp": "显示快捷键",
+      "stopStream": "停止生成"
     }
   }
 }

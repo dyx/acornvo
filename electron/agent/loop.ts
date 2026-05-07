@@ -1,7 +1,8 @@
-import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage } from '../../shared/agent-types';
+import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage, RunAgentArgs, Attachment } from '../../shared/agent-types';
 import type { Registry } from './registry';
 import type { ApprovalGate } from './approval';
 import { aiUsage } from '../ai/usage';
+import { collectAttachmentContext } from './attachments';
 
 const MAX_STEPS = 8;
 const TOOL_RESULT_BUDGET = 8000;
@@ -18,18 +19,12 @@ export interface RunAgentDeps {
   systemPrompt: () => { role: 'system'; content: string };
   vaultRoot: string;
   cancel: AbortSignal;
+  clipsGet?: (id: number) => Promise<{ body: string } | null>;
 }
 
-export interface RunAgentArgs {
-  sessionId: string;
-  userText: string;
-  profileId: string;
-  history: SessionMessage[];
-  deps: RunAgentDeps;
-  streamWriter: { write: (e: AgentEvent) => void };
-}
+type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps'> & { deps: RunAgentDeps };
 
-export async function runAgent({ sessionId, userText, profileId, history, deps, streamWriter }: RunAgentArgs): Promise<void> {
+export async function runAgent({ sessionId, userText, profileId, history, deps, streamWriter, attachments }: RunAgentArgsInternal): Promise<void> {
   const emit = (e: AgentEvent) => streamWriter.write(e);
   const cancel = deps.cancel;
 
@@ -38,15 +33,35 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
   emit({ type: 'message.appended', message: userMsg });
   history = [...history, userMsg];
 
+  // Collect attachment context (synthesized pre-user message, NOT persisted to session_messages)
+  let preUserBlock: string | null = null;
+  if (attachments && attachments.length > 0 && deps.clipsGet) {
+    const result = await collectAttachmentContext(attachments, {
+      groveRoot: deps.vaultRoot,
+      clipsGet: deps.clipsGet,
+    });
+    if (result.blocks.length > 0) {
+      preUserBlock = '以下是我附加的内容供你参考：\n' + result.blocks.join('');
+    }
+  }
+
   for (let step = 0; step < MAX_STEPS; step++) {
     if (cancel.aborted) { emit({ type: 'canceled' }); return; }
     emit({ type: 'step.start', step });
 
     let r: any;
     try {
+      const llmMessages: { role: string; content: string; toolCalls?: any; toolCallId?: string }[] = [
+        deps.systemPrompt(),
+      ];
+      if (preUserBlock) {
+        llmMessages.push({ role: 'user', content: preUserBlock });
+      }
+      llmMessages.push(...messagesForLlm(history));
+
       r = await deps.llmClient.chatWithTools({
         profileId,
-        messages: [deps.systemPrompt(), ...messagesForLlm(history)],
+        messages: llmMessages,
         tools: deps.registry.list().map(t => ({ name: t.name, description: t.description, parameters: t.parameters })),
         signal: cancel,
         onToken: (t: string) => emit({ type: 'token', text: t }),

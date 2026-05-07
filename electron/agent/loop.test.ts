@@ -131,4 +131,108 @@ describe('runAgent', () => {
     await runAgent({ sessionId: 's1', userText: 'go', profileId: 'p1', history: [], deps, streamWriter: stream });
     expect(stream.events.some(e => e.type === 'canceled')).toBe(true);
   });
+
+  describe('attachments', () => {
+    it('accepts attachments param without throwing', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => ({ body: 'clip content' }) };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'clip', clipId: 1, url: 'https://x.com', title: 'Test Clip' }],
+      });
+      expect(stream.events.find(e => e.type === 'done')).toBeDefined();
+    });
+
+    it('injects synthesized pre-user message into LLM call', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => ({ body: 'clip content' }) };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'clip', clipId: 1, url: 'https://x.com', title: 'Test Clip' }],
+      });
+      const llmCall = llm.chatWithTools.mock.calls[0][0];
+      const messages = llmCall.messages as { role: string; content: string }[];
+      // Should have system prompt + pre-user block + user message
+      const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
+      expect(preUserMsg).toBeDefined();
+      expect(preUserMsg!.content).toContain('--- Clip: Test Clip');
+      expect(preUserMsg!.content).toContain('clip content');
+    });
+
+    it('does not persist synthesized pre-user message', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => ({ body: 'clip content' }) };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'clip', clipId: 1, url: 'https://x.com', title: 'Test Clip' }],
+      });
+      // session.appendMessage should only be called once (for the real user message)
+      const userAppendCalls = session.appendMessage.mock.calls.filter(
+        (c: any[]) => c[1]?.role === 'user'
+      );
+      expect(userAppendCalls).toHaveLength(1);
+      expect(userAppendCalls[0][1].content).toBe('hi');
+    });
+
+    it('skips attachment injection when attachments array is empty', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => ({ body: 'unused' }) };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [],
+      });
+      const llmCall = llm.chatWithTools.mock.calls[0][0];
+      const messages = llmCall.messages as { role: string; content: string }[];
+      const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
+      expect(preUserMsg).toBeUndefined();
+    });
+
+    it('skips attachment injection when clipsGet is not provided', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = baseDeps(r, a); // no clipsGet
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'clip', clipId: 1, url: 'https://x.com', title: 'Test Clip' }],
+      });
+      const llmCall = llm.chatWithTools.mock.calls[0][0];
+      const messages = llmCall.messages as { role: string; content: string }[];
+      const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
+      expect(preUserMsg).toBeUndefined();
+    });
+
+    it('produces error block for non-existent file but loop completes', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => null };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'file', path: 'nonexistent.md', title: 'Missing File' }],
+      });
+      // Loop should still complete (done event)
+      expect(stream.events.find(e => e.type === 'done')).toBeDefined();
+      // The LLM call should include the error block
+      const llmCall = llm.chatWithTools.mock.calls[0][0];
+      const messages = llmCall.messages as { role: string; content: string }[];
+      const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
+      expect(preUserMsg).toBeDefined();
+      expect(preUserMsg!.content).toContain('[读取失败:');
+    });
+  });
 });

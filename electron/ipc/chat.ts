@@ -16,6 +16,7 @@ export interface ChatDeps {
   getTargets: () => RendererTarget[];
   vaultRoot: () => string;
   llmClient: { chatWithTools: (opts: any) => Promise<any> };
+  clipsGet?: (id: number) => Promise<{ body: string } | null>;
 }
 
 export function createChatHandlers(deps: ChatDeps) {
@@ -36,7 +37,7 @@ export function createChatHandlers(deps: ChatDeps) {
     },
     'sessions.getMessages': (id: string) => deps.sessions.getMessages(id),
 
-    sendUserMessage: async (opts: { sessionId: string; text: string; profileId?: string }) => {
+    sendUserMessage: async (opts: { sessionId: string; text: string; profileId?: string; attachments?: import('../../shared/agent-types').Attachment[] }) => {
       const list = await deps.sessions.list();
       const sess = list.find(s => s.id === opts.sessionId);
       if (!sess) throw new IpcError('E_NOT_FOUND', 'session not found');
@@ -67,8 +68,10 @@ export function createChatHandlers(deps: ChatDeps) {
             chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot()), locale: 'zh' }),
           vaultRoot: deps.vaultRoot(),
           cancel: ctl.signal,
+          clipsGet: deps.clipsGet,
         },
         streamWriter: writer,
+        attachments: opts.attachments,
       })
         .catch((err: any) => {
           writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message });

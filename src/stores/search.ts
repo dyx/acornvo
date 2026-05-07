@@ -16,8 +16,10 @@ interface QuickSwitcherSlice {
   selectedIndex: number
   recent: string[]
   requestId: number
+  onPick: ((item: FileSummary) => void) | null
 
   open: () => void
+  openWithPick: (onPick: (item: FileSummary) => void) => void
   close: () => void
   setQuery: (q: string) => void
   runQuery: (q: string) => Promise<void>
@@ -54,6 +56,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     selectedIndex: 0,
     recent: [],
     requestId: 0,
+    onPick: null,
 
     open: () => set((prev) => ({
       quickSwitcher: {
@@ -61,7 +64,19 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
         openState: true,
         q: '',
         items: [],
-        selectedIndex: 0
+        selectedIndex: 0,
+        onPick: null
+      }
+    })),
+
+    openWithPick: (onPick) => set((prev) => ({
+      quickSwitcher: {
+        ...prev.quickSwitcher,
+        openState: true,
+        q: '',
+        items: [],
+        selectedIndex: 0,
+        onPick
       }
     })),
 
@@ -71,7 +86,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
         openState: false,
         q: '',
         items: [],
-        selectedIndex: 0
+        selectedIndex: 0,
+        onPick: null
       }
     })),
 

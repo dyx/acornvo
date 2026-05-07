@@ -24,13 +24,14 @@ describe('AppRail', () => {
     expect(screen.getByRole('link', { name: /settings|设置/i })).toBeTruthy()
   })
 
-  it('chat entry is rendered with aria-disabled', () => {
+  it('chat entry is a clickable NavLink, not disabled', () => {
     render(
       <MemoryRouter initialEntries={['/library']}>
         <AppRail />
       </MemoryRouter>
     )
     const chat = screen.getByRole('link', { name: /chat|松语/i })
-    expect(chat.getAttribute('aria-disabled')).toBe('true')
+    expect(chat.getAttribute('aria-disabled')).toBeNull()
+    expect(chat.getAttribute('href')).toBe('/chat')
   })
 })
