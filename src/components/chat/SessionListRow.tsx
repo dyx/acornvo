@@ -8,6 +8,7 @@ interface Props {
   session: ChatSession
   active: boolean
   editing: boolean
+  keyboardSelected?: boolean
   onSelect: () => void
   onDelete: () => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -17,7 +18,7 @@ interface Props {
   rightBadge?: React.ReactNode
 }
 
-export function SessionListRow({ session, active, editing, onSelect, onDelete, onContextMenu, onStartRename, onCommitRename, onCancelRename, rightBadge }: Props): JSX.Element {
+export function SessionListRow({ session, active, editing, keyboardSelected = false, onSelect, onDelete, onContextMenu, onStartRename, onCommitRename, onCancelRename, rightBadge }: Props): JSX.Element {
   const rel = formatDistanceToNowStrict(session.updatedAt, { addSuffix: false })
   const [draft, setDraft] = useState<string>(session.title)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -36,6 +37,8 @@ export function SessionListRow({ session, active, editing, onSelect, onDelete, o
       onContextMenu={onContextMenu}
       className={`group relative flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted ${
         active ? 'border-l-[3px] border-primary bg-accent' : ''
+      } ${
+        keyboardSelected && !active ? 'ring-1 ring-inset ring-primary/50 bg-accent/50' : ''
       }`}
     >
       <div className="min-w-0 flex-1">

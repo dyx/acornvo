@@ -1,5 +1,5 @@
-import type { JSX } from 'react'
-import { useMemo, useState } from 'react'
+import type { JSX, KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
@@ -23,6 +23,8 @@ export function SessionList({ compact = false }: Props): JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+  const ulRef = useRef<HTMLUListElement>(null)
 
   function confirmDelete(id: string): void { setPendingDelete(id) }
   function actuallyDelete(): void {
@@ -36,6 +38,29 @@ export function SessionList({ compact = false }: Props): JSX.Element {
     const needle = q.toLowerCase()
     return sorted.filter((s) => s.title.toLowerCase().includes(needle))
   }, [sessions, q])
+
+  const handleListKeyDown = useCallback((e: ReactKeyboardEvent<HTMLUListElement>) => {
+    const len = filtered.length
+    if (len === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex((prev) => Math.min(prev + 1, len - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex((prev) => Math.max(prev - 1, 0))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (selectedIndex >= 0 && selectedIndex < len) {
+        void selectSession(filtered[selectedIndex].id)
+      }
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault()
+      if (selectedIndex >= 0 && selectedIndex < len) {
+        confirmDelete(filtered[selectedIndex].id)
+      }
+    }
+  }, [filtered, selectedIndex, selectSession])
 
   return (
     <div className="flex h-full flex-col">
@@ -79,17 +104,25 @@ export function SessionList({ compact = false }: Props): JSX.Element {
               />
             </div>
           </div>
-          <ul className="flex-1 overflow-y-auto" role="list" aria-label="sessions">
+          <ul
+            ref={ulRef}
+            className="flex-1 overflow-y-auto outline-none"
+            role="list"
+            aria-label="sessions"
+            tabIndex={0}
+            onKeyDown={handleListKeyDown}
+          >
             {filtered.length === 0 ? (
               <li className="px-3 py-2 text-xs text-muted-foreground">{t('chat.session.noResults')}</li>
             ) : (
-              filtered.map((s) => (
+              filtered.map((s, i) => (
                 <SessionListRow
                   key={s.id}
                   session={s}
                   active={s.id === activeId}
                   editing={editingId === s.id}
-                  onSelect={() => void selectSession(s.id)}
+                  keyboardSelected={i === selectedIndex}
+                  onSelect={() => { void selectSession(s.id); setSelectedIndex(i) }}
                   onDelete={() => confirmDelete(s.id)}
                   onContextMenu={(e) => { e.preventDefault(); setMenu({ id: s.id, x: e.clientX, y: e.clientY }) }}
                   onStartRename={() => setEditingId(s.id)}

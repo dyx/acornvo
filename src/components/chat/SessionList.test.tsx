@@ -260,3 +260,84 @@ describe('SessionList — status badges', () => {
     expect(screen.getByTestId('badge-error')).toBeTruthy()
   })
 })
+
+describe('SessionList — keyboard navigation (9.4)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [
+        { id: 's1', title: '旅行计划', createdAt: 1, updatedAt: 100, profileId: null },
+        { id: 's2', title: '阅读笔记', createdAt: 2, updatedAt: 50, profileId: null },
+        { id: 's3', title: '项目讨论', createdAt: 3, updatedAt: 30, profileId: null }
+      ],
+      activeSessionId: 's1',
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('ArrowDown moves keyboard selection to next session', async () => {
+    render(<SessionList />)
+    const list = screen.getByRole('list', { name: /sessions/i })
+    list.focus()
+    // ArrowDown twice: -1 → 0 (active, no ring since it already has primary border), 0 → 1 (non-active, gets ring)
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard('{ArrowDown}')
+    const rows = screen.getAllByTestId('session-row')
+    // Second row (s2) is non-active, so it should get the keyboard ring
+    expect(rows[1].className).toContain('ring')
+  })
+
+  it('ArrowUp at top stays at 0 (clamped)', async () => {
+    render(<SessionList />)
+    const list = screen.getByRole('list', { name: /sessions/i })
+    list.focus()
+    // ArrowUp from -1: clamped to 0 (s1, active)
+    await userEvent.keyboard('{ArrowUp}')
+    // ArrowDown to index 1 (s2, non-active, gets ring)
+    await userEvent.keyboard('{ArrowDown}')
+    const rows = screen.getAllByTestId('session-row')
+    expect(rows[1].className).toContain('ring')
+    // ArrowUp back to index 0 (s1, active, no ring since active)
+    await userEvent.keyboard('{ArrowUp}')
+    expect(rows[1].className).not.toContain('ring')
+    // ArrowUp again — stays at 0 (index is still 0, still no ring on s2)
+    await userEvent.keyboard('{ArrowUp}')
+    expect(rows[1].className).not.toContain('ring')
+  })
+
+  it('Enter activates the keyboard-selected session', async () => {
+    render(<SessionList />)
+    const list = screen.getByRole('list', { name: /sessions/i })
+    list.focus()
+    // ArrowDown twice → select index 1 (s2)
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard('{ArrowDown}')
+    // Enter activates s2
+    await userEvent.keyboard('{Enter}')
+    expect(ipc.chat['sessions.getMessages']).toHaveBeenCalledWith('s2')
+  })
+
+  it('Delete key opens the delete confirmation dialog', async () => {
+    render(<SessionList />)
+    const list = screen.getByRole('list', { name: /sessions/i })
+    list.focus()
+    // ArrowDown to select s1 (index 0)
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard('{Delete}')
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText(/删除会话|delete chat/i)).toBeTruthy()
+  })
+
+  it('Backspace key also opens delete confirmation dialog', async () => {
+    render(<SessionList />)
+    const list = screen.getByRole('list', { name: /sessions/i })
+    list.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard('{Backspace}')
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+})
