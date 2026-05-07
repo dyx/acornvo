@@ -4,6 +4,7 @@ import { Send, Square } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { useSearchStore } from '@/stores/search'
 import { ProfileFooter } from '@/components/chat/ProfileFooter'
+import { AttachmentChips } from '@/components/chat/AttachmentChips'
 import type { FileSummary } from '@shared/file-types'
 
 export function ChatInput(): JSX.Element {
@@ -93,6 +94,7 @@ export function ChatInput(): JSX.Element {
 
   return (
     <div className="border-t border-border shrink-0" data-testid="chat-input">
+      <AttachmentChips />
       <textarea
         ref={textareaRef}
         data-testid="chat-input-textarea"
