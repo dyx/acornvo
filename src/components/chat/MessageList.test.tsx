@@ -245,3 +245,154 @@ describe('AssistantMarkdown — external links', () => {
     expect(openExternal).toHaveBeenCalledWith('https://example.com')
   })
 })
+
+describe('MessageList — error tail (8.3)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  afterEach(() => cleanup())
+
+  it('renders step-limit gray error tail when status=error and error=E_STEP_LIMIT', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_STEP_LIMIT',
+          lastUserText: 'hello',
+          lastUserAttachments: []
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    expect(screen.getByTestId('chat-error-tail')).toBeTruthy()
+    // Should contain step limit message (not retryable, so no retry button)
+    expect(screen.queryByTestId('chat-error-retry')).toBeFalsy()
+  })
+
+  it('does not render error tail when status is idle', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null,
+          lastUserText: '',
+          lastUserAttachments: []
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    expect(screen.queryByTestId('chat-error-tail')).toBeFalsy()
+  })
+})
+
+describe('MessageList — retry button (8.4)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('shows retry button for E_NETWORK error', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_NETWORK',
+          lastUserText: 'hello',
+          lastUserAttachments: []
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    expect(screen.getByTestId('chat-error-retry')).toBeTruthy()
+  })
+
+  it('shows retry button for E_SERVER error', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_SERVER',
+          lastUserText: 'hello',
+          lastUserAttachments: []
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    expect(screen.getByTestId('chat-error-retry')).toBeTruthy()
+  })
+
+  it('clicking retry button re-sends last user message', async () => {
+    const spy = vi.spyOn(useChatStore.getState(), 'sendUserMessage')
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_NETWORK',
+          lastUserText: 'hello world',
+          lastUserAttachments: []
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MessageList />)
+    await userEvent.click(screen.getByTestId('chat-error-retry'))
+    expect(spy).toHaveBeenCalledWith({
+      text: 'hello world',
+      attachments: []
+    })
+    spy.mockRestore()
+  })
+})
