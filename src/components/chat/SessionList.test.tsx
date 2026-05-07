@@ -210,3 +210,53 @@ describe('SessionList — delete dialog', () => {
     expect(screen.queryByRole('dialog')).toBeFalsy()
   })
 })
+
+describe('SessionList — status badges', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('streaming session shows pulsing primary dot', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: { s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'streaming', error: null } },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<SessionList />)
+    expect(screen.getByTestId('badge-streaming')).toBeTruthy()
+  })
+
+  it('non-active session with pending approval shows red dot', () => {
+    useChatStore.setState({
+      sessions: [
+        { id: 's1', title: 'A', createdAt: 1, updatedAt: 2, profileId: null },
+        { id: 's2', title: 'B', createdAt: 1, updatedAt: 1, profileId: null }
+      ],
+      activeSessionId: 's1',
+      bySession: {
+        s2: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [{ callId: 'c', toolName: 'x', args: {}, reason: '', receivedAt: 1 }], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<SessionList />)
+    const rows = screen.getAllByTestId('session-row')
+    expect(rows[1].querySelector('[data-testid="badge-approval"]')).toBeTruthy()
+  })
+
+  it('error session shows yellow exclamation icon', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: { s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'error', error: 'E_NETWORK' } },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<SessionList />)
+    expect(screen.getByTestId('badge-error')).toBeTruthy()
+  })
+})

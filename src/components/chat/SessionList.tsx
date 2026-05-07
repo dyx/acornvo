@@ -6,11 +6,13 @@ import { useChatStore } from '@/stores/chat'
 import { SessionListRow } from './SessionListRow'
 import { SessionContextMenu } from './SessionContextMenu'
 import { DeleteSessionDialog } from './DeleteSessionDialog'
+import { SessionStatusBadge } from './SessionStatusBadge'
 
 export function SessionList(): JSX.Element {
   const { t } = useTranslation()
   const sessions = useChatStore((s) => s.sessions)
   const activeId = useChatStore((s) => s.activeSessionId)
+  const bySession = useChatStore((s) => s.bySession)
   const createSession = useChatStore((s) => s.createSession)
   const selectSession = useChatStore((s) => s.selectSession)
   const deleteSession = useChatStore((s) => s.deleteSession)
@@ -72,6 +74,7 @@ export function SessionList(): JSX.Element {
               onStartRename={() => setEditingId(s.id)}
               onCommitRename={(title) => { void renameSession(s.id, title); setEditingId(null) }}
               onCancelRename={() => setEditingId(null)}
+              rightBadge={<SessionStatusBadge slot={bySession[s.id]} />}
             />
           ))
         )}
