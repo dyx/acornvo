@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, X, Edit2 } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { FrontmatterDiff } from './FrontmatterDiff'
+import { JsonArgsEditor } from './JsonArgsEditor'
 
 function translateToolName(t: (key: string) => string, toolName: string): string {
   const specificKey = `chat.approval.tools.${toolName}`
@@ -19,20 +20,48 @@ export function ApprovalPanel() {
     return s.bySession[s.activeSessionId]?.pendingApprovals
   })
 
-  const handleApprove = useCallback(() => {
-    if (!activeSessionId || !pendingApprovals?.length) return
-    const head = pendingApprovals[0]
-    useChatStore.getState().approveTool(activeSessionId, head.callId)
-  }, [activeSessionId, pendingApprovals])
-
-  const handleReject = useCallback(() => {
-    if (!activeSessionId || !pendingApprovals?.length) return
-    const head = pendingApprovals[0]
-    useChatStore.getState().rejectTool(activeSessionId, head.callId)
-  }, [activeSessionId, pendingApprovals])
+  const [editing, setEditing] = useState(false)
+  const [editedArgsParsed, setEditedArgsParsed] = useState<unknown | null>(null)
+  const [jsonError, setJsonError] = useState<string | null>(null)
 
   const visible = (pendingApprovals?.length ?? 0) > 0
   const head = pendingApprovals?.[0]
+
+  // Reset edit state when head changes
+  useEffect(() => {
+    setEditing(false)
+    setEditedArgsParsed(null)
+    setJsonError(null)
+  }, [head?.callId])
+
+  const handleJsonChange = useCallback(
+    (_text: string, valid: boolean, parsed?: unknown) => {
+      if (valid) {
+        setJsonError(null)
+        setEditedArgsParsed(parsed ?? null)
+      } else {
+        setJsonError('invalid')
+      }
+    },
+    []
+  )
+
+  const handleApprove = useCallback(() => {
+    if (!activeSessionId || !pendingApprovals?.length) return
+    const h = pendingApprovals[0]
+    if (editing) {
+      if (jsonError) return // invalid JSON, do not approve
+      useChatStore.getState().approveTool(activeSessionId, h.callId, editedArgsParsed ?? undefined)
+    } else {
+      useChatStore.getState().approveTool(activeSessionId, h.callId)
+    }
+  }, [activeSessionId, pendingApprovals, editing, jsonError, editedArgsParsed])
+
+  const handleReject = useCallback(() => {
+    if (!activeSessionId || !pendingApprovals?.length) return
+    const h = pendingApprovals[0]
+    useChatStore.getState().rejectTool(activeSessionId, h.callId)
+  }, [activeSessionId, pendingApprovals])
 
   return (
     <aside
@@ -61,11 +90,19 @@ export function ApprovalPanel() {
             {/* Args */}
             <div className="flex-1 min-h-0">
               <label className="text-xs text-muted-foreground">{t('chat.approval.args')}</label>
-              {head.toolName === 'update_frontmatter' &&
-              head.args &&
-              typeof head.args === 'object' &&
-              'before' in head.args &&
-              'after' in head.args ? (
+              {editing ? (
+                <div className="mt-1 flex flex-col flex-1 min-h-0" style={{ height: 'calc(100% - 1.25rem)' }}>
+                  <JsonArgsEditor
+                    key={head.callId}
+                    initialArgs={head.args}
+                    onChange={handleJsonChange}
+                  />
+                </div>
+              ) : head.toolName === 'update_frontmatter' &&
+                head.args &&
+                typeof head.args === 'object' &&
+                'before' in head.args &&
+                'after' in head.args ? (
                 <div className="mt-1">
                   <FrontmatterDiff
                     before={(head.args as Record<string, unknown>).before}
@@ -107,6 +144,7 @@ export function ApprovalPanel() {
             <button
               type="button"
               data-testid="approval-edit-btn"
+              onClick={() => setEditing(!editing)}
               className="inline-flex items-center justify-center gap-1.5 h-8 rounded-md border border-border text-xs hover:bg-muted transition-colors"
             >
               <Edit2 className="size-3.5" />

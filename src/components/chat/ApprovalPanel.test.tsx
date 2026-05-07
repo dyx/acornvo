@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { i18n } from '@/i18n'
 
@@ -154,5 +154,64 @@ describe('ApprovalPanel — header / reason / args / buttons', () => {
     render(<ApprovalPanel />)
     await userEvent.click(screen.getByTestId('approval-reject-btn'))
     expect(ipc.chat.rejectTool).toHaveBeenCalledWith('c1')
+  })
+})
+
+describe('ApprovalPanel — JsonArgsEditor', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  function setNonFrontmatterPending() {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [{ callId: 'c2', toolName: 'list_tags', args: { path: 'a.md' }, reason: '', receivedAt: 1 }], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+  }
+
+  it('clicking edit shows textarea', async () => {
+    setNonFrontmatterPending()
+    render(<ApprovalPanel />)
+    // Initially shows pre, not textarea
+    expect(screen.getByTestId('approval-args-pre')).toBeTruthy()
+    expect(screen.queryByTestId('json-args-textarea')).toBeFalsy()
+    // Click edit
+    await userEvent.click(screen.getByTestId('approval-edit-btn'))
+    // Now shows textarea, not pre
+    expect(screen.queryByTestId('approval-args-pre')).toBeFalsy()
+    expect(screen.getByTestId('json-args-textarea')).toBeTruthy()
+  })
+
+  it('approving in edit mode with valid JSON passes editedArgs', async () => {
+    setNonFrontmatterPending()
+    render(<ApprovalPanel />)
+    await userEvent.click(screen.getByTestId('approval-edit-btn'))
+    // JSON is initially valid (original args), approve should pass editedArgs
+    await userEvent.click(screen.getByTestId('approval-approve-btn'))
+    expect(ipc.chat.approveTool).toHaveBeenCalledWith('c2', { editedArgs: { path: 'a.md' } })
+  })
+
+  it('approving in edit mode with invalid JSON shows error and does not call approveTool', async () => {
+    setNonFrontmatterPending()
+    render(<ApprovalPanel />)
+    await userEvent.click(screen.getByTestId('approval-edit-btn'))
+    // Directly set textarea to invalid JSON via act to flush state
+    const textarea = screen.getByTestId('json-args-textarea') as HTMLTextAreaElement
+    await act(async () => {
+      fireEvent.change(textarea, { target: { value: 'not valid json' } })
+    })
+    // Try to approve
+    await userEvent.click(screen.getByTestId('approval-approve-btn'))
+    // Should not call approveTool
+    expect(ipc.chat.approveTool).not.toHaveBeenCalled()
+    // Should show error
+    expect(screen.getByTestId('json-args-error')).toBeTruthy()
   })
 })
