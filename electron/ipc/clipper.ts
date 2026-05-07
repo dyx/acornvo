@@ -16,6 +16,11 @@ export interface ClipperHandlerDeps {
 }
 
 type ClipperHandlers = IpcContract['clipper']
+type AsyncClipperHandlers = {
+  [M in keyof ClipperHandlers]: ClipperHandlers[M] extends (...args: infer A) => infer R
+    ? (...args: A) => R | Promise<Awaited<R>>
+    : never
+}
 
 function getWebContents(deps: ClipperHandlerDeps, tabId: TabId): WebContents {
   const wc = deps.getWebContentsForTab(tabId)
@@ -25,7 +30,7 @@ function getWebContents(deps: ClipperHandlerDeps, tabId: TabId): WebContents {
   return wc
 }
 
-export function createClipperHandlers(deps: ClipperHandlerDeps): ClipperHandlers {
+export function createClipperHandlers(deps: ClipperHandlerDeps): AsyncClipperHandlers {
   return {
     async clip(tabId: TabId): Promise<ClipPreview> {
       const wc = getWebContents(deps, tabId)

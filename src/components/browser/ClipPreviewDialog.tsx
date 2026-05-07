@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
 import { useBrowserStore } from '@/stores/browser'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 export function ClipPreviewDialog(): JSX.Element | null {
   const { t } = useTranslation()
@@ -14,6 +15,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
   const activeTabId = useBrowserStore((s) => s.activeTabId)
 
   const open = stage === 'previewing' || stage === 'saving'
+  useNativeBrowserViewOcclusion(open)
 
   const [title, setTitle] = useState('')
   const [tagsRaw, setTagsRaw] = useState('')
@@ -38,15 +40,15 @@ export function ClipPreviewDialog(): JSX.Element | null {
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-[80vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-[color:var(--color-bg)] p-4 shadow-xl">
-          <Dialog.Title className="text-base font-semibold">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[80vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 flex-col rounded-md bg-[color:var(--color-paper)] p-4 shadow-xl">
+          <Dialog.Title className="shrink-0 text-base font-semibold">
             {t('browser.clip.preview.title', '剪藏预览')}
           </Dialog.Title>
 
-          <div className="mt-3 grid grid-cols-[1fr,2fr] gap-3">
+          <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr,2fr] gap-3 overflow-hidden">
             {/* Left: meta */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 overflow-y-auto pr-1">
               <label className="text-xs">
                 {t('browser.clip.preview.title_field', '标题')}
                 <input
@@ -99,13 +101,13 @@ export function ClipPreviewDialog(): JSX.Element | null {
             {/* Right: body preview */}
             <div
               data-testid="clip-body-preview"
-              className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded border p-3 text-xs"
+              className="overflow-y-auto whitespace-pre-wrap rounded border p-3 text-xs"
             >
               {bodyPreview}
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-end gap-2">
+          <div className="mt-4 flex shrink-0 items-center justify-end gap-2">
             <button
               type="button"
               className="rounded border px-3 py-1 text-sm"
@@ -123,7 +125,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
             <button
               type="button"
               disabled={stage === 'saving'}
-              className="rounded bg-[color:var(--color-accent)] px-3 py-1 text-sm text-white disabled:opacity-50"
+              className="rounded bg-[color:var(--color-acorn)] px-3 py-1 text-sm text-white disabled:opacity-50"
               onClick={() =>
                 void save({ runId: preview.runId, title, tags: parseTags(tagsRaw), excerpt })
               }

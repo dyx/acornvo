@@ -9,6 +9,7 @@ import { useClipperStore } from '@/stores/clipper'
 import { getClipsPort } from '@/ipc/clips-port'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 import { dispatchAddress } from './dispatchAddress'
 import { BookmarkDialog } from './BookmarkDialog'
 
@@ -30,6 +31,7 @@ export function AddressBar(): JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [openClippedConfirm, setOpenClippedConfirm] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  useNativeBrowserViewOcclusion(openClippedConfirm)
 
   // --- Clip button state ---
   const url = tab?.url ?? ''
@@ -222,8 +224,8 @@ export function AddressBar(): JSX.Element {
       )}
       <Dialog.Root open={openClippedConfirm} onOpenChange={setOpenClippedConfirm}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded bg-[color:var(--color-bg)] p-4">
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded bg-[color:var(--color-paper)] p-4">
             <Dialog.Title className="text-sm font-semibold">
               {t('browser.clip.exists.title', '已剪藏')}
             </Dialog.Title>

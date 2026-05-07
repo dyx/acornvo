@@ -23,6 +23,20 @@ const PARSE_SNIPPET = `
       return { ok: false, error: 'no_readability' };
     }
     const docClone = document.cloneNode(true);
+    
+    // Pre-process lazy-loaded images (WeChat, Zhihu, etc.)
+    const images = docClone.getElementsByTagName('img');
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      const realSrc = img.getAttribute('data-src') || 
+                      img.getAttribute('data-original') || 
+                      img.getAttribute('data-actualsrc') ||
+                      img.getAttribute('data-lazy-src');
+      if (realSrc) {
+        img.setAttribute('src', realSrc);
+      }
+    }
+
     const reader = new Readability(docClone);
     const article = reader.parse();
     if (article) {

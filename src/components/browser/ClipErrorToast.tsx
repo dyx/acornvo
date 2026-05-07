@@ -1,11 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 export function ClipErrorToast(): JSX.Element | null {
   const { t } = useTranslation()
   const stage = useClipperStore((s) => s.stage)
   const error = useClipperStore((s) => s.error)
   const clear = useClipperStore((s) => s.clearError)
+  useNativeBrowserViewOcclusion(stage === 'error' && !!error)
 
   if (stage !== 'error' || !error) return null
 

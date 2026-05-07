@@ -108,6 +108,19 @@ const request: IpcClient<IpcContract> = {
     delete: (id) => invoke('bookmarks.delete', id),
     getByUrl: (url) => invoke('bookmarks.getByUrl', url)
   },
+  clipper: {
+    clip: (tabId) => invoke('clipper.clip', tabId),
+    saveClip: (input) => invoke('clipper.saveClip', input),
+    cancelClip: (runId) => invoke('clipper.cancelClip', runId),
+    reextract: (runId, tabId) => invoke('clipper.reextract', runId, tabId)
+  },
+  clips: {
+    create: (input) => invoke('clips.create', input),
+    list: (opts) => invoke('clips.list', opts),
+    getByUrl: (url) => invoke('clips.getByUrl', url),
+    getById: (id) => invoke('clips.getById', id),
+    delete: (id) => invoke('clips.delete', id)
+  },
   settings: {
     get: (ns) => invoke('settings.get', ns),
     set: (ns, patch) => invoke('settings.set', ns, patch),

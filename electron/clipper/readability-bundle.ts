@@ -29,8 +29,12 @@ function loadSource(): string {
   const path = locateBundlePath()
   const raw = readFileSync(path, 'utf8')
   cached = `;(function(){
-  if (window['${READABILITY_INJECT_MARKER}']) return;
+  if (window['${READABILITY_INJECT_MARKER}'] && typeof window.Readability === 'function') return;
   ${raw}
+  if (typeof Readability !== 'function') {
+    throw new Error('Readability constructor not found after bundle evaluation');
+  }
+  window.Readability = Readability;
   window['${READABILITY_INJECT_MARKER}'] = true;
 })();`
   return cached
