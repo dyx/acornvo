@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { i18n } from '@/i18n'
 
 vi.mock('@/ipc/client', () => ({
@@ -115,5 +116,58 @@ describe('MessageList — streaming → done transition', () => {
     expect(screen.queryByTestId('streaming-pre')).toBeFalsy()
     expect(screen.getByTestId('msg-assistant-m-final')).toBeTruthy()
     expect(screen.getByText('final').tagName).toBe('STRONG')
+  })
+})
+
+describe('MessageList — auto-scroll', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  afterEach(() => cleanup())
+
+  it('shows "↓ jump" button when scrolled up beyond threshold', () => {
+    // Set up scroll properties on the Element prototype before render
+    const origDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop')
+    Object.defineProperty(Element.prototype, 'scrollTop', { get: () => 0, configurable: true })
+    Object.defineProperty(Element.prototype, 'scrollHeight', { get: () => 1000, configurable: true })
+    Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 400, configurable: true })
+
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: Array.from({ length: 30 }, (_, i) => ({
+            id: `m${i}`,
+            role: 'assistant' as const,
+            text: `m${i}`,
+            createdAt: i
+          })),
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    act(() => {
+      render(<MessageList />)
+    })
+    const list = screen.getByTestId('message-list')
+    fireEvent.scroll(list)
+    expect(screen.getByTestId('jump-to-latest')).toBeTruthy()
+
+    // Restore original descriptor
+    if (origDescriptor) {
+      Object.defineProperty(Element.prototype, 'scrollTop', origDescriptor)
+    } else {
+      delete (Element.prototype as Record<string, unknown>).scrollTop
+    }
+    delete (Element.prototype as Record<string, unknown>).scrollHeight
+    delete (Element.prototype as Record<string, unknown>).clientHeight
   })
 })

@@ -430,6 +430,9 @@
       "approval_timeout": "审批超时(30 分钟)。",
       "path_escape": "路径越出树林范围,无法访问。",
       "missing_reason": "本次修改必须提供原因。"
+    },
+    "messages": {
+      "jumpToLatest": "新消息 ↓"
     }
   }
 }

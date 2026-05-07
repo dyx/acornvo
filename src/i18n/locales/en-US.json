@@ -399,6 +399,9 @@
       "approval_timeout": "Approval timed out after 30 minutes.",
       "path_escape": "The path leaves the grove and cannot be accessed.",
       "missing_reason": "A reason is required for this change."
+    },
+    "messages": {
+      "jumpToLatest": "New messages ↓"
     }
   }
 }
