@@ -356,7 +356,7 @@
       "modelSeparator": "·"
     },
     "approval": {
-      "title": "Approve tool call",
+      "header": "Approve tool call",
       "reason": "Reason",
       "args": "Arguments",
       "approve": "Approve",
