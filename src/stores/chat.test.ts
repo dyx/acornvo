@@ -197,6 +197,62 @@ describe('chat store — actions', () => {
     expect(ipc.chat.rejectTool).toHaveBeenCalledWith('call_1')
   })
 
+  it('approveTool removes the head from pendingApprovals queue', async () => {
+    useChatStore.setState((cur) => ({
+      bySession: {
+        ...cur.bySession,
+        s1: {
+          ...(cur.bySession.s1 ?? {} as any),
+          loaded: true,
+          messages: [],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [
+            { callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1 },
+            { callId: 'c2', toolName: 'delete_file', args: {}, reason: '', receivedAt: 2 }
+          ],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'awaiting-approval',
+          error: null
+        }
+      }
+    }))
+    expect(useChatStore.getState().bySession.s1?.pendingApprovals).toHaveLength(2)
+    await useChatStore.getState().approveTool('s1', 'c1')
+    const approvals = useChatStore.getState().bySession.s1?.pendingApprovals ?? []
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0].callId).toBe('c2')
+  })
+
+  it('rejectTool removes the head from pendingApprovals queue', async () => {
+    useChatStore.setState((cur) => ({
+      bySession: {
+        ...cur.bySession,
+        s1: {
+          ...(cur.bySession.s1 ?? {} as any),
+          loaded: true,
+          messages: [],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [
+            { callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1 },
+            { callId: 'c2', toolName: 'delete_file', args: {}, reason: '', receivedAt: 2 }
+          ],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'awaiting-approval',
+          error: null
+        }
+      }
+    }))
+    expect(useChatStore.getState().bySession.s1?.pendingApprovals).toHaveLength(2)
+    await useChatStore.getState().rejectTool('s1', 'c1')
+    const approvals = useChatStore.getState().bySession.s1?.pendingApprovals ?? []
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0].callId).toBe('c2')
+  })
+
   it('updateSessionProfile patches sessions locally (no IPC call yet)', async () => {
     await useChatStore.getState().updateSessionProfile('s1', 'p2')
     // IPC handler not yet implemented; verify local state update only
