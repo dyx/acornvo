@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { i18n } from '@/i18n'
 
 vi.mock('@/ipc/client', () => ({
@@ -21,8 +22,32 @@ vi.mock('@/ipc/client', () => ({
   }
 }))
 
+import { ipc } from '@/ipc/client'
 import { ApprovalPanel } from './ApprovalPanel'
 import { useChatStore } from '@/stores/chat'
+
+function setPendingStore(overrides?: Record<string, unknown>) {
+  useChatStore.setState({
+    sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+    activeSessionId: 's1',
+    bySession: {
+      s1: {
+        loaded: true, messages: [], streamingBuffer: '', flushedLength: 0,
+        pendingApprovals: [{
+          callId: 'c1',
+          toolName: 'update_frontmatter',
+          args: { before: { tags: ['a'] }, after: { tags: ['a', 'b'] } },
+          reason: 'Test reason',
+          receivedAt: 1
+        }],
+        pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null,
+        ...overrides
+      }
+    },
+    sessionsLoading: false,
+    sessionsError: null
+  })
+}
 
 describe('ApprovalPanel — shell', () => {
   beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
@@ -47,15 +72,7 @@ describe('ApprovalPanel — shell', () => {
   })
 
   it('width=320 when pending', () => {
-    useChatStore.setState({
-      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
-      activeSessionId: 's1',
-      bySession: {
-        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [{ callId: 'c1', toolName: 'update_frontmatter', args: {}, reason: '', receivedAt: 1 }], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
-      },
-      sessionsLoading: false,
-      sessionsError: null
-    })
+    setPendingStore()
     render(<ApprovalPanel />)
     const aside = screen.getByTestId('chat-approval')
     expect(aside.style.width).toBe('320px')
@@ -77,5 +94,49 @@ describe('ApprovalPanel — shell', () => {
     render(<ApprovalPanel />)
     const aside = screen.getByTestId('chat-approval')
     expect(aside.style.width).toBe('0px')
+  })
+})
+
+describe('ApprovalPanel — header / reason / args / buttons', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('renders translated tool name in header', () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    const header = screen.getByTestId('approval-header')
+    expect(header.textContent).toContain('更新 frontmatter')
+  })
+
+  it('shows args JSON in pre', () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    const pre = screen.getByTestId('approval-args-pre')
+    expect(pre.textContent).toContain('"before"')
+    expect(pre.textContent).toContain('"after"')
+  })
+
+  it('shows reason text', () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    expect(screen.getByText('Test reason')).toBeTruthy()
+  })
+
+  it('clicking approve calls approveTool via store', async () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    await userEvent.click(screen.getByTestId('approval-approve-btn'))
+    // Store calls ipc.chat.approveTool(callId) with no editedArgs
+    expect(ipc.chat.approveTool).toHaveBeenCalledWith('c1', undefined)
+  })
+
+  it('clicking reject calls rejectTool via store', async () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    await userEvent.click(screen.getByTestId('approval-reject-btn'))
+    expect(ipc.chat.rejectTool).toHaveBeenCalledWith('c1')
   })
 })
