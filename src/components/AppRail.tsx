@@ -15,7 +15,7 @@ interface RailEntry {
 const ENTRIES: RailEntry[] = [
   { to: '/library', labelKey: 'nav.library', Icon: BookMarked },
   { to: '/browser', labelKey: 'nav.browser', Icon: Compass },
-  { to: '/chat', labelKey: 'nav.chat', Icon: MessagesSquare, disabled: true },
+  { to: '/chat', labelKey: 'nav.chat', Icon: MessagesSquare },
   { to: '/settings', labelKey: 'nav.settings', Icon: SettingsIcon, bottom: true }
 ]
 
