@@ -133,3 +133,64 @@ describe('ChatInput — keybindings (5.2)', () => {
     expect(ipc.chat.cancelStream).not.toHaveBeenCalled()
   })
 })
+
+describe('ChatInput — send/stop button (5.3)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('send button is disabled when textarea empty and no attachments', () => {
+    renderWithRouter(<ChatInput />)
+    const btn = screen.getByTestId('chat-input-send')
+    expect((btn as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('send button is enabled when textarea has text', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.type(ta, 'hello')
+    const btn = screen.getByTestId('chat-input-send')
+    expect((btn as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('shows stop button (Square icon) when streaming instead of send', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'streaming', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    renderWithRouter(<ChatInput />)
+    expect(screen.getByTestId('chat-input-stop')).toBeTruthy()
+    expect(screen.queryByTestId('chat-input-send')).toBeFalsy()
+  })
+
+  it('clicking stop button calls cancelStream', async () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'streaming', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    renderWithRouter(<ChatInput />)
+    await userEvent.click(screen.getByTestId('chat-input-stop'))
+    expect(ipc.chat.cancelStream).toHaveBeenCalled()
+  })
+})
