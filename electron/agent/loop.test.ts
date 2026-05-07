@@ -214,5 +214,25 @@ describe('runAgent', () => {
       const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
       expect(preUserMsg).toBeUndefined();
     });
+
+    it('produces error block for non-existent file but loop completes', async () => {
+      const r = createRegistry(); const a = createApproval();
+      llm.chatWithTools.mockResolvedValueOnce({ text: 'ok', toolCalls: [], finishReason: 'stop' });
+      const stream = STREAM();
+      const deps = { ...baseDeps(r, a), clipsGet: async () => null };
+      await runAgent({
+        sessionId: 's1', userText: 'hi', profileId: 'p1', history: [],
+        deps, streamWriter: stream,
+        attachments: [{ type: 'file', path: 'nonexistent.md', title: 'Missing File' }],
+      });
+      // Loop should still complete (done event)
+      expect(stream.events.find(e => e.type === 'done')).toBeDefined();
+      // The LLM call should include the error block
+      const llmCall = llm.chatWithTools.mock.calls[0][0];
+      const messages = llmCall.messages as { role: string; content: string }[];
+      const preUserMsg = messages.find(m => m.role === 'user' && m.content.includes('以下是我附加的内容供你参考'));
+      expect(preUserMsg).toBeDefined();
+      expect(preUserMsg!.content).toContain('[读取失败:');
+    });
   });
 });
