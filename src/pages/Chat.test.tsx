@@ -213,3 +213,81 @@ describe('SessionList collapsed mode', () => {
     expect(screen.getByTestId('session-icon')).toBeTruthy()
   })
 })
+
+describe('ChatBanner — missing profile warning', () => {
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+
+  beforeEach(() => {
+    useProfilesStore.setState({ profiles: [] } as any)
+    useChatStore.setState({
+      sessions: [],
+      activeSessionId: null,
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => cleanup())
+
+  it('shows yellow banner when no default profile exists and session has no profileId', async () => {
+    // No profiles at all → hasDefaultProfile is false
+    useProfilesStore.setState({ profiles: [] } as any)
+    vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([
+      { id: 's1', title: 'Test Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+    ] as any)
+    vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValue([])
+
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    const banner = await screen.findByTestId('chat-missing-profile-banner')
+    expect(banner).toBeTruthy()
+    expect(screen.getByText(/请先在设置中配置 AI profile/)).toBeTruthy()
+  })
+
+  it('shows settings link in banner', async () => {
+    useProfilesStore.setState({ profiles: [] } as any)
+    vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([
+      { id: 's1', title: 'Test Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+    ] as any)
+    vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValue([])
+
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    const link = await screen.findByTestId('chat-banner-settings-link')
+    expect(link).toBeTruthy()
+    expect(link.getAttribute('href')).toBe('/settings/ai')
+  })
+
+  it('hides banner when a default profile exists', async () => {
+    useProfilesStore.setState({
+      profiles: [
+        { id: 'p1', name: 'OpenAI', provider: 'openai', baseUrl: null, model: 'gpt-4o', temperature: 0.7, topP: 1, maxTokens: null, apiKeyRef: null, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' }
+      ]
+    } as any)
+    vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([
+      { id: 's1', title: 'Test Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+    ] as any)
+    vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValue([])
+
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    await screen.findByTestId('chat-main')
+    // Wait a tick for the banner logic to settle
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByTestId('chat-missing-profile-banner')).toBeFalsy()
+  })
+
+  it('hides banner when session already has a profileId', async () => {
+    useProfilesStore.setState({ profiles: [] } as any)
+    vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([
+      { id: 's1', title: 'Test Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: 'p1' }
+    ] as any)
+    vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValue([])
+
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    await screen.findByTestId('chat-main')
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByTestId('chat-missing-profile-banner')).toBeFalsy()
+  })
+})

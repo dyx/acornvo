@@ -8,6 +8,7 @@ import { SessionList } from '@/components/chat/SessionList'
 import { MessageList } from '@/components/chat/MessageList'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { ApprovalPanel } from '@/components/chat/ApprovalPanel'
+import { ChatBanner } from '@/components/chat/ChatBanner'
 
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
@@ -141,6 +142,7 @@ export function Chat() {
 
       {/* Center: main chat area */}
       <main data-testid="chat-main" className="flex flex-1 flex-col min-w-0">
+        <ChatBanner />
         <header className="shrink-0 h-12 flex items-center px-4 gap-2 border-b border-border">
           <h1 className="text-sm font-medium truncate flex-1">{title}</h1>
           {activeSession && (

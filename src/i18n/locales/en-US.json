@@ -402,12 +402,18 @@
     "error": {
       "step_limit": "Reached the 8-step thinking limit.",
       "missing_profile": "No AI profile is bound to this session.",
+      "missingProfile": "Please configure an AI profile in Settings first",
+      "goToSettings": "Go to Settings",
       "busy": "This conversation is already running.",
       "global_busy": "Too many chats are running. Please cancel one and try again.",
       "user_rejected": "You cancelled this tool call.",
       "approval_timeout": "Approval timed out after 30 minutes.",
       "path_escape": "The path leaves the grove and cannot be accessed.",
-      "missing_reason": "A reason is required for this change."
+      "missing_reason": "A reason is required for this change.",
+      "stepLimit": "Reached the 8-step thinking limit.",
+      "network": "Network error. Please try again later.",
+      "server": "Server error.",
+      "retry": "Retry"
     },
     "input": {
       "placeholder": "Type a message… (Cmd+Enter to send, Esc to cancel)",

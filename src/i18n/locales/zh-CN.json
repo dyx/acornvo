@@ -433,12 +433,18 @@
     "error": {
       "step_limit": "已达 8 步思考上限。",
       "missing_profile": "本会话尚未绑定 AI Profile。",
+      "missingProfile": "请先在设置中配置 AI profile",
+      "goToSettings": "前往设置",
       "busy": "本会话已在运行。",
       "global_busy": "并发会话已满,请先取消其它会话。",
       "user_rejected": "你取消了这次工具调用。",
       "approval_timeout": "审批超时(30 分钟)。",
       "path_escape": "路径越出树林范围,无法访问。",
-      "missing_reason": "本次修改必须提供原因。"
+      "missing_reason": "本次修改必须提供原因。",
+      "stepLimit": "已达 8 步思考上限。",
+      "network": "网络不畅,请稍后重试。",
+      "server": "服务端异常。",
+      "retry": "重试"
     },
     "input": {
       "placeholder": "输入消息…（Cmd+Enter 发送，Esc 取消）",
