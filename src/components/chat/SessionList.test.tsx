@@ -69,3 +69,47 @@ describe('SessionList — shell', () => {
     expect(rows[0].textContent).toContain('阅读笔记')
   })
 })
+
+describe('SessionList — row visuals', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [
+        { id: 's1', title: '一段非常非常非常非常长的会话标题不能换行只能截断', createdAt: 1, updatedAt: Date.now() - 60_000, profileId: null }
+      ],
+      activeSessionId: 's1',
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('shows relative time', () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    expect(row.textContent).toMatch(/分钟|min|秒|sec/)
+  })
+
+  it('hovering row reveals a delete button', () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    expect(row.querySelector('[data-testid="row-delete"]')).toBeTruthy()
+    expect(row.querySelector('[data-testid="row-delete"]')?.className).toContain('opacity-0')
+  })
+
+  it('active row gets the 3px primary left bar', () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    expect(row.className).toContain('border-l-[3px]')
+    expect(row.className).toContain('border-primary')
+  })
+
+  it('title truncates with single line', () => {
+    render(<SessionList />)
+    const row = screen.getByTestId('session-row')
+    const title = row.querySelector('[data-testid="row-title"]')
+    expect(title?.className).toContain('truncate')
+  })
+})
