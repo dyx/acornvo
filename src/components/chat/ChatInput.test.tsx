@@ -25,6 +25,7 @@ vi.mock('@/ipc/client', () => ({
 
 import { ChatInput } from './ChatInput'
 import { useChatStore } from '@/stores/chat'
+import { ipc } from '@/ipc/client'
 
 function renderWithRouter(ui: JSX.Element) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
@@ -64,5 +65,71 @@ describe('ChatInput — shell (5.1)', () => {
     await userEvent.type(ta, 'a')
     // After autoGrow: height = min(scrollHeight, 240) = 240
     expect(Number.parseFloat(ta.style.height)).toBeLessThanOrEqual(240)
+  })
+})
+
+describe('ChatInput — keybindings (5.2)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('Enter alone inserts newline without sending', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.type(ta, 'hello{Enter}')
+    // The text should contain the newline from Enter
+    expect((ta as HTMLTextAreaElement).value).toContain('hello')
+    // sendUserMessage should not have been called (via IPC mock)
+    expect(ipc.chat.sendUserMessage).not.toHaveBeenCalled()
+  })
+
+  it('Cmd+Enter sends and clears input', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.type(ta, 'hello')
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}')
+    expect(ipc.chat.sendUserMessage).toHaveBeenCalled()
+    expect((ta as HTMLTextAreaElement).value).toBe('')
+  })
+
+  it('Cmd+Enter is no-op when textarea is empty and no attachments', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}')
+    expect(ipc.chat.sendUserMessage).not.toHaveBeenCalled()
+  })
+
+  it('Esc during streaming calls cancelStream', async () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'streaming', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.type(ta, '{Escape}')
+    expect(ipc.chat.cancelStream).toHaveBeenCalled()
+  })
+
+  it('Esc during idle does NOT call cancelStream', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    await userEvent.type(ta, '{Escape}')
+    expect(ipc.chat.cancelStream).not.toHaveBeenCalled()
   })
 })
