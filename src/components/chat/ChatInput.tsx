@@ -2,6 +2,7 @@ import { useRef, useCallback, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Send, Square } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
+import { ProfileFooter } from '@/components/chat/ProfileFooter'
 
 export function ChatInput(): JSX.Element {
   const { t } = useTranslation()
@@ -83,7 +84,8 @@ export function ChatInput(): JSX.Element {
       />
 
       {/* Button row */}
-      <div className="flex items-center justify-end px-3 pb-2">
+      <div className="flex items-center justify-between px-3 pb-2">
+        <ProfileFooter />
         {isStreaming ? (
           <button
             type="button"
