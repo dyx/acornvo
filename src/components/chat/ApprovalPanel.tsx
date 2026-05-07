@@ -93,7 +93,7 @@ export function ApprovalPanel() {
         {/* Header */}
         <div className="h-12 shrink-0 flex items-center px-4 border-b border-border">
           <h2 className="text-sm font-medium" data-testid="approval-header">
-            {head ? translateToolName(t, head.toolName) : t('chat.approval.title')}
+            {head ? translateToolName(t, head.toolName) : t('chat.approval.header')}
           </h2>
         </div>
 

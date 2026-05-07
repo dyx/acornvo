@@ -387,7 +387,7 @@
       "modelSeparator": "·"
     },
     "approval": {
-      "title": "批准工具调用",
+      "header": "批准工具调用",
       "reason": "原因",
       "args": "参数",
       "approve": "同意",
