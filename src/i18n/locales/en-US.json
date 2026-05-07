@@ -400,6 +400,13 @@
       "path_escape": "The path leaves the grove and cannot be accessed.",
       "missing_reason": "A reason is required for this change."
     },
+    "input": {
+      "placeholder": "Type a message… (Cmd+Enter to send, Esc to cancel)",
+      "send": "Send",
+      "stop": "Stop",
+      "noProfile": "No AI profile",
+      "goToSettings": "Go to settings"
+    },
     "messages": {
       "jumpToLatest": "New messages ↓",
       "copy": "Copy",

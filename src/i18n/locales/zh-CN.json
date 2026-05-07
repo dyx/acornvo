@@ -431,6 +431,13 @@
       "path_escape": "路径越出树林范围,无法访问。",
       "missing_reason": "本次修改必须提供原因。"
     },
+    "input": {
+      "placeholder": "输入消息…（Cmd+Enter 发送，Esc 取消）",
+      "send": "发送",
+      "stop": "停止",
+      "noProfile": "未配置 AI profile",
+      "goToSettings": "前往设置"
+    },
     "messages": {
       "jumpToLatest": "新消息 ↓",
       "copy": "复制",

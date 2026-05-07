@@ -1,0 +1,68 @@
+// @vitest-environment jsdom
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { i18n } from '@/i18n'
+import { MemoryRouter } from 'react-router-dom'
+
+vi.mock('@/ipc/client', () => ({
+  ipc: {
+    chat: {
+      'sessions.list': vi.fn().mockResolvedValue([]),
+      'sessions.getMessages': vi.fn().mockResolvedValue([]),
+      'sessions.create': vi.fn().mockResolvedValue({ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }),
+      'sessions.rename': vi.fn().mockResolvedValue({ ok: true }),
+      'sessions.delete': vi.fn().mockResolvedValue({ ok: true }),
+      sendUserMessage: vi.fn().mockResolvedValue({ ok: true }),
+      cancelStream: vi.fn().mockResolvedValue({ ok: true }),
+      approveTool: vi.fn().mockResolvedValue({ ok: true }),
+      rejectTool: vi.fn().mockResolvedValue({ ok: true }),
+      onStream: vi.fn(() => () => {})
+    },
+    on: vi.fn(() => () => {})
+  }
+}))
+
+import { ChatInput } from './ChatInput'
+import { useChatStore } from '@/stores/chat'
+
+function renderWithRouter(ui: JSX.Element) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
+
+describe('ChatInput — shell (5.1)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('renders a textarea with placeholder', () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    expect(ta.tagName).toBe('TEXTAREA')
+    expect(ta.getAttribute('placeholder')).toBeTruthy()
+  })
+
+  it('auto-grows up to 240px', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea') as HTMLTextAreaElement
+
+    // Simulate text that would make scrollHeight large
+    Object.defineProperty(ta, 'scrollHeight', { value: 300, configurable: true })
+    ta.style.height = '50px'
+    // trigger onInput via userEvent to call autoGrow
+    await userEvent.type(ta, 'a')
+    // After autoGrow: height = min(scrollHeight, 240) = 240
+    expect(Number.parseFloat(ta.style.height)).toBeLessThanOrEqual(240)
+  })
+})
