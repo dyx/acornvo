@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, X, Edit2 } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
@@ -34,6 +34,25 @@ export function ApprovalPanel() {
     setEditedArgsParsed(null)
     setJsonError(null)
   }, [head?.callId])
+
+  // Auto-reject after 2s when the head approval times out
+  const autoRejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (head?.timedOut && activeSessionId) {
+      autoRejectTimerRef.current = setTimeout(() => {
+        const currentHead = useChatStore.getState().bySession[activeSessionId]?.pendingApprovals?.[0]
+        if (currentHead && currentHead.callId === head.callId && currentHead.timedOut) {
+          useChatStore.getState().rejectTool(activeSessionId, head.callId)
+        }
+      }, 2000)
+    }
+    return () => {
+      if (autoRejectTimerRef.current) {
+        clearTimeout(autoRejectTimerRef.current)
+        autoRejectTimerRef.current = null
+      }
+    }
+  }, [head?.timedOut, head?.callId, activeSessionId])
 
   const handleJsonChange = useCallback(
     (_text: string, valid: boolean, parsed?: unknown) => {
@@ -80,6 +99,16 @@ export function ApprovalPanel() {
 
         {head && (
           <div className="flex-1 flex flex-col min-h-0 p-4 gap-3">
+            {/* Timeout banner */}
+            {head.timedOut && (
+              <p
+                data-testid="approval-timed-out"
+                className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2"
+              >
+                {t('chat.approval.timeout')}
+              </p>
+            )}
+
             {/* Queue indicator */}
             {queueCount > 0 && (
               <p data-testid="approval-queue-indicator" className="text-xs text-muted-foreground">

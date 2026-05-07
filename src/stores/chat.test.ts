@@ -335,4 +335,42 @@ describe('chat stream subscriber', () => {
     expect(slot?.status).toBe('error')
     expect(slot?.error).toBe('E_NETWORK')
   })
+
+  it('E_APPROVAL_TIMEOUT tool.result marks approval as timedOut', () => {
+    // First, push an approval
+    handlers['s1']({
+      type: 'tool.approval-needed',
+      callId: 'c1',
+      tool: 'write_file',
+      args: {},
+      reason: 'need approval'
+    })
+    // Then send timeout result
+    handlers['s1']({
+      type: 'tool.result',
+      tool: 'write_file',
+      result: { ok: false, error: 'E_APPROVAL_TIMEOUT' }
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.pendingApprovals).toHaveLength(1)
+    expect(slot?.pendingApprovals[0].timedOut).toBe(true)
+  })
+
+  it('non-timeout tool.result does not mark approval as timedOut', () => {
+    handlers['s1']({
+      type: 'tool.approval-needed',
+      callId: 'c1',
+      tool: 'write_file',
+      args: {},
+      reason: 'need approval'
+    })
+    handlers['s1']({
+      type: 'tool.result',
+      tool: 'write_file',
+      result: { ok: true, data: 'done' }
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.pendingApprovals).toHaveLength(1)
+    expect(slot?.pendingApprovals[0].timedOut).toBeUndefined()
+  })
 })

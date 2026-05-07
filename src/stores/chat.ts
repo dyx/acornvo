@@ -27,6 +27,7 @@ export interface PendingApproval {
   args: unknown
   reason: string
   receivedAt: number
+  timedOut?: boolean
 }
 
 export type SessionStatus = 'idle' | 'streaming' | 'awaiting-approval' | 'error'
@@ -430,12 +431,21 @@ function subscribeSessionStream(sid: string): void {
               }
             }
           }
-        case 'tool.result':
+        case 'tool.result': {
+          const isApprovalTimeout =
+            event.result.ok === false && event.result.error === 'E_APPROVAL_TIMEOUT'
           return {
             bySession: {
               ...s.bySession,
               [sid]: {
                 ...cur,
+                pendingApprovals: isApprovalTimeout
+                  ? cur.pendingApprovals.map((a) =>
+                      a.toolName === event.tool && !a.timedOut
+                        ? { ...a, timedOut: true }
+                        : a
+                    )
+                  : cur.pendingApprovals,
                 messages: [
                   ...cur.messages,
                   {
@@ -451,6 +461,7 @@ function subscribeSessionStream(sid: string): void {
               }
             }
           }
+        }
         case 'message.appended':
           return {
             bySession: {

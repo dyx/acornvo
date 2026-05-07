@@ -248,3 +248,40 @@ describe('ApprovalPanel — queue indicator', () => {
     expect(screen.queryByTestId('approval-queue-indicator')).toBeFalsy()
   })
 })
+
+describe('ApprovalPanel — timeout', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  function setTimedOutStore() {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [{ callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1, timedOut: true }], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+  }
+
+  it('shows timeout banner when head.timedOut', () => {
+    setTimedOutStore()
+    render(<ApprovalPanel />)
+    expect(screen.getByTestId('approval-timed-out')).toBeTruthy()
+  })
+
+  it('auto-rejects after 2s when timedOut', async () => {
+    vi.useFakeTimers()
+    setTimedOutStore()
+    render(<ApprovalPanel />)
+    expect(ipc.chat.rejectTool).not.toHaveBeenCalled()
+    // Advance by 2 seconds
+    vi.advanceTimersByTime(2000)
+    expect(ipc.chat.rejectTool).toHaveBeenCalledWith('c1')
+    vi.useRealTimers()
+  })
+})
