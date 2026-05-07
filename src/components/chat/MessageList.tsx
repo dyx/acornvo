@@ -1,6 +1,7 @@
 // src/components/chat/MessageList.tsx
-import type { JSX } from 'react'
+import { useRef, type JSX } from 'react'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
+import { useStreamingText } from '@/hooks/useStreamingText'
 import { UserBubble } from './UserBubble'
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { ToolCallCard } from './ToolCallCard'
@@ -15,6 +16,21 @@ export function MessageList(): JSX.Element | null {
       {slot.messages.map((m) => (
         <MessageRow key={m.id} m={m} />
       ))}
+      {slot.status === 'streaming' && activeId && <StreamingTail sessionId={activeId} />}
+    </div>
+  )
+}
+
+function StreamingTail({ sessionId }: { sessionId: string }): JSX.Element {
+  const ref = useRef<HTMLPreElement>(null)
+  useStreamingText(sessionId, ref)
+  return (
+    <div className="my-2 text-sm">
+      <pre
+        ref={ref}
+        data-testid="streaming-pre"
+        style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}
+      />
     </div>
   )
 }
