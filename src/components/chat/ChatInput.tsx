@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, type KeyboardEvent } from 'react'
+import { useRef, useCallback, useState, useEffect, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Send, Square } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
@@ -29,8 +29,22 @@ export function ChatInput(): JSX.Element {
   const pendingAttachments = _pendingAttachments ?? []
   const openQuickSwitcherWithPick = useSearchStore((s) => s.quickSwitcher.openWithPick)
 
+  const focusInputBump = useChatStore((s) => s.focusInputBump)
+
   const isStreaming = status === 'streaming'
   const canSend = value.trim().length > 0 || pendingAttachments.length > 0
+
+  // Cmd/Ctrl+K: clear textarea and focus it
+  useEffect(() => {
+    if (focusInputBump > 0) {
+      setValue('')
+      if (textareaRef.current) {
+        textareaRef.current.value = ''
+        textareaRef.current.style.height = 'auto'
+        textareaRef.current.focus()
+      }
+    }
+  }, [focusInputBump])
 
   const autoGrow = useCallback(() => {
     const el = textareaRef.current

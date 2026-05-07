@@ -3,10 +3,11 @@ import { useChatStore } from '@/stores/chat'
 
 export function AttachmentChips(): JSX.Element | null {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const attachments = useChatStore((s) => {
-    if (!s.activeSessionId) return []
-    return s.bySession[s.activeSessionId]?.pendingAttachments ?? []
+  const _attachments = useChatStore((s) => {
+    if (!s.activeSessionId) return undefined
+    return s.bySession[s.activeSessionId]?.pendingAttachments
   })
+  const attachments = _attachments ?? []
   const removeAttachment = useChatStore((s) => s.removeAttachment)
 
   if (attachments.length === 0) return null

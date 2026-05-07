@@ -78,6 +78,8 @@ interface ChatStore {
   bySession: Record<string, SessionState>
   sessionsLoading: boolean
   sessionsError: string | null
+  focusInputBump: number
+  showShortcutsBump: number
   loadSessions: () => Promise<void>
   selectSession: (id: string) => Promise<void>
   createSession: () => Promise<string>
@@ -91,6 +93,8 @@ interface ChatStore {
   setPendingPromptText: (text: string) => void
   pushAttachment: (att: Attachment) => void
   removeAttachment: (index: number) => void
+  bumpFocusInput: () => void
+  bumpShowShortcuts: () => void
 }
 
 const emptySession = (): SessionState => ({
@@ -113,6 +117,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   bySession: {},
   sessionsLoading: false,
   sessionsError: null,
+  focusInputBump: 0,
+  showShortcutsBump: 0,
 
   async loadSessions() {
     set({ sessionsLoading: true, sessionsError: null })
@@ -367,6 +373,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
       }
     }))
+  },
+
+  bumpFocusInput() {
+    set((s) => ({ focusInputBump: s.focusInputBump + 1 }))
+  },
+
+  bumpShowShortcuts() {
+    set((s) => ({ showShortcutsBump: s.showShortcutsBump + 1 }))
   }
 }))
 
