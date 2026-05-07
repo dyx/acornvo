@@ -42,6 +42,8 @@ export interface SessionState {
   pendingPromptText: string
   status: SessionStatus
   error: string | null
+  lastUserText: string
+  lastUserAttachments: Attachment[]
 }
 
 function toChatSession(s: Session): ChatSession {
@@ -100,7 +102,9 @@ const emptySession = (): SessionState => ({
   pendingAttachments: [],
   pendingPromptText: '',
   status: 'idle',
-  error: null
+  error: null,
+  lastUserText: '',
+  lastUserAttachments: []
 })
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -217,7 +221,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  async sendUserMessage({ text }) {
+  async sendUserMessage({ text, attachments }) {
     const cur = get()
     const sid = cur.activeSessionId
     if (!sid) return
@@ -235,12 +239,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           error: null,
           streamingBuffer: '',
           flushedLength: 0,
-          pendingAttachments: []
+          pendingAttachments: [],
+          lastUserText: text,
+          lastUserAttachments: attachments ?? []
         }
       }
     }))
     try {
-      await ipc.chat.sendUserMessage({ sessionId: sid, text })
+      await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
     } catch (err) {
       set((s) => ({
         bySession: {
