@@ -215,3 +215,36 @@ describe('ApprovalPanel — JsonArgsEditor', () => {
     expect(screen.getByTestId('json-args-error')).toBeTruthy()
   })
 })
+
+describe('ApprovalPanel — queue indicator', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('shows "还有 N 条待审" when >1 pending', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [
+          { callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1 },
+          { callId: 'c2', toolName: 'delete_file', args: {}, reason: '', receivedAt: 2 },
+          { callId: 'c3', toolName: 'read_file', args: {}, reason: '', receivedAt: 3 }
+        ], pendingAttachments: [], pendingPromptText: '', status: 'awaiting-approval', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<ApprovalPanel />)
+    const indicator = screen.getByTestId('approval-queue-indicator')
+    expect(indicator.textContent).toMatch(/2/)
+  })
+
+  it('hides queue indicator when only 1 pending', () => {
+    setPendingStore()
+    render(<ApprovalPanel />)
+    expect(screen.queryByTestId('approval-queue-indicator')).toBeFalsy()
+  })
+})

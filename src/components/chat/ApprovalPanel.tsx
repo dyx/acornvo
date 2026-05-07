@@ -26,6 +26,7 @@ export function ApprovalPanel() {
 
   const visible = (pendingApprovals?.length ?? 0) > 0
   const head = pendingApprovals?.[0]
+  const queueCount = (pendingApprovals?.length ?? 0) - 1
 
   // Reset edit state when head changes
   useEffect(() => {
@@ -79,6 +80,13 @@ export function ApprovalPanel() {
 
         {head && (
           <div className="flex-1 flex flex-col min-h-0 p-4 gap-3">
+            {/* Queue indicator */}
+            {queueCount > 0 && (
+              <p data-testid="approval-queue-indicator" className="text-xs text-muted-foreground">
+                {t('chat.approval.queued', { count: queueCount })}
+              </p>
+            )}
+
             {/* Reason */}
             {head.reason && (
               <div>
