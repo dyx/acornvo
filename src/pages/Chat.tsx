@@ -5,6 +5,7 @@ import { useProfilesStore } from '@/stores/profiles'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 
 import { SessionList } from '@/components/chat/SessionList'
+import { MessageList } from '@/components/chat/MessageList'
 
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
@@ -156,7 +157,7 @@ export function Chat() {
           {(() => {
             const slot = activeSession ? useChatStore.getState().bySession[activeSession.id] : null
             const isEmpty = !slot || slot.messages.length === 0
-            return isEmpty ? <EmptyState /> : null
+            return isEmpty ? <EmptyState /> : <MessageList />
           })()}
         </section>
       </main>
