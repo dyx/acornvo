@@ -391,8 +391,17 @@
       "reason": "原因",
       "args": "参数",
       "approve": "同意",
-      "cancel": "取消",
-      "edit": "编辑参数"
+      "reject": "拒绝",
+      "edit": "编辑参数",
+      "queued": "还有 {{count}} 条待审",
+      "timeout": "审批超时，将自动拒绝",
+      "invalidJson": "JSON 格式错误",
+      "tools": {
+        "update_frontmatter": "更新 frontmatter",
+        "write_file": "写入文件",
+        "delete_file": "删除文件",
+        "default": "工具调用"
+      }
     },
     "tool": {
       "search_files": "搜索文件",

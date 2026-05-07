@@ -360,8 +360,17 @@
       "reason": "Reason",
       "args": "Arguments",
       "approve": "Approve",
-      "cancel": "Cancel",
-      "edit": "Edit arguments"
+      "reject": "Reject",
+      "edit": "Edit arguments",
+      "queued": "{{count}} more pending",
+      "timeout": "Approval timed out — auto-rejecting",
+      "invalidJson": "Invalid JSON",
+      "tools": {
+        "update_frontmatter": "Update frontmatter",
+        "write_file": "Write file",
+        "delete_file": "Delete file",
+        "default": "Tool call"
+      }
     },
     "tool": {
       "search_files": "Search files",

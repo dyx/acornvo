@@ -7,6 +7,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { SessionList } from '@/components/chat/SessionList'
 import { MessageList } from '@/components/chat/MessageList'
 import { ChatInput } from '@/components/chat/ChatInput'
+import { ApprovalPanel } from '@/components/chat/ApprovalPanel'
 
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
@@ -164,12 +165,8 @@ export function Chat() {
         <ChatInput />
       </main>
 
-      {/* Right sidebar: approval panel (reserved, width 0) */}
-      <aside
-        data-testid="chat-approval"
-        className="shrink-0 overflow-hidden border-l border-border"
-        style={{ width: 0 }}
-      />
+      {/* Right sidebar: approval panel */}
+      <ApprovalPanel />
     </div>
   )
 }
