@@ -35,6 +35,12 @@ vi.mock('@/ipc/client', () => ({
   }
 }))
 
+const { mockToast } = vi.hoisted(() => ({ mockToast: vi.fn() }))
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: mockToast }),
+  useToasts: () => []
+}))
+
 import { ChatInput } from './ChatInput'
 import { useChatStore } from '@/stores/chat'
 import { useSearchStore, _resetSearchStoreForTest } from '@/stores/search'
@@ -274,5 +280,36 @@ describe('ChatInput — @ QuickSwitcher (5.5)', () => {
     // The key test: @ followed by text - QuickSwitcher was opened by the @ trigger
     const qs = useSearchStore.getState().quickSwitcher
     expect(qs.openState).toBe(true)
+  })
+})
+
+describe('ChatInput — E_BUSY toast (8.2)', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    mockToast.mockClear()
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'streaming', error: null }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    vi.clearAllMocks()
+  })
+  afterEach(() => cleanup())
+
+  it('shows toast when sendUserMessage throws E_BUSY', async () => {
+    renderWithRouter(<ChatInput />)
+    const ta = screen.getByTestId('chat-input-textarea')
+    // Need text to send
+    await userEvent.type(ta, 'hello')
+    // Cmd+Enter triggers send() even when streaming (stop button is shown, not send)
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}')
+    // Toast should have been called with the E_BUSY message
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: expect.any(String) })
+    )
   })
 })

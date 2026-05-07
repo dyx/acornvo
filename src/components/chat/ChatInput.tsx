@@ -5,10 +5,12 @@ import { useChatStore } from '@/stores/chat'
 import { useSearchStore } from '@/stores/search'
 import { ProfileFooter } from '@/components/chat/ProfileFooter'
 import { AttachmentChips } from '@/components/chat/AttachmentChips'
+import { useToast } from '@/hooks/use-toast'
 import type { FileSummary } from '@shared/file-types'
 
 export function ChatInput(): JSX.Element {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [value, setValue] = useState('')
 
@@ -20,10 +22,11 @@ export function ChatInput(): JSX.Element {
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const cancelStream = useChatStore((s) => s.cancelStream)
   const pushAttachment = useChatStore((s) => s.pushAttachment)
-  const pendingAttachments = useChatStore((s) => {
-    if (!s.activeSessionId) return []
-    return s.bySession[s.activeSessionId]?.pendingAttachments ?? []
+  const _pendingAttachments = useChatStore((s) => {
+    if (!s.activeSessionId) return undefined
+    return s.bySession[s.activeSessionId]?.pendingAttachments
   })
+  const pendingAttachments = _pendingAttachments ?? []
   const openQuickSwitcherWithPick = useSearchStore((s) => s.quickSwitcher.openWithPick)
 
   const isStreaming = status === 'streaming'
@@ -43,13 +46,18 @@ export function ChatInput(): JSX.Element {
     const text = value.trim()
     const attachments = state?.pendingAttachments ?? []
     if (!text && attachments.length === 0) return
-    void sendUserMessage({ text: text || '', attachments: attachments.length > 0 ? [...attachments] : undefined })
+    sendUserMessage({ text: text || '', attachments: attachments.length > 0 ? [...attachments] : undefined })
+      .catch((err: unknown) => {
+        if ((err as { code?: string }).code === 'E_BUSY') {
+          toast({ title: t('chat.error.busy') })
+        }
+      })
     setValue('')
     if (textareaRef.current) {
       textareaRef.current.value = ''
       autoGrow()
     }
-  }, [sendUserMessage, autoGrow, value])
+  }, [sendUserMessage, autoGrow, value, toast, t])
 
   const handleInput = useCallback(() => {
     const el = textareaRef.current
