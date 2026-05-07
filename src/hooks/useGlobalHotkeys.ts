@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useSearchStore } from '@/stores/search'
+import { useChatStore } from '@/stores/chat'
 
 /**
  * Global hotkey listener. Registers once per app lifetime — call this from <App />.
@@ -8,6 +9,9 @@ import { useSearchStore } from '@/stores/search'
  * - Cmd/Ctrl+P → open QuickSwitcher (preventDefault to override browser/system print)
  * - Cmd/Ctrl+Shift+F → open /search or select all if already there
  * - Cmd/Ctrl+, → navigate to /settings
+ * - Cmd/Ctrl+N → create new chat session (when on /chat)
+ * - Cmd/Ctrl+K → focus + clear chat input (when on /chat)
+ * - Cmd/Ctrl+/ → open shortcuts dialog (when on /chat)
  */
 export function useGlobalHotkeys(): void {
   const openQuickSwitcher = useSearchStore((s) => s.quickSwitcher.open)
@@ -19,6 +23,7 @@ export function useGlobalHotkeys(): void {
       const mod = ev.metaKey || ev.ctrlKey
       if (!mod) return
       const key = ev.key.toLowerCase()
+
       if (key === 'p' && !ev.shiftKey) {
         ev.preventDefault()
         openQuickSwitcher()
@@ -37,6 +42,25 @@ export function useGlobalHotkeys(): void {
       if (key === ',' && !ev.shiftKey) {
         ev.preventDefault()
         navigate('/settings')
+        return
+      }
+
+      // Chat-specific hotkeys (only active on /chat)
+      if (location.pathname !== '/chat') return
+
+      if (key === 'n' && !ev.shiftKey) {
+        ev.preventDefault()
+        void useChatStore.getState().createSession()
+        return
+      }
+      if (key === 'k' && !ev.shiftKey) {
+        ev.preventDefault()
+        useChatStore.getState().bumpFocusInput()
+        return
+      }
+      if (key === '/' && !ev.shiftKey) {
+        ev.preventDefault()
+        useChatStore.getState().bumpShowShortcuts()
         return
       }
     }
