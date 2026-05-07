@@ -133,7 +133,7 @@ export function Chat() {
         className="shrink-0 border-r border-border bg-muted/20 overflow-hidden transition-[width] duration-200"
         style={{ width: collapsed ? 48 : 300 }}
       >
-        {!collapsed && <SessionList />}
+        <SessionList compact={collapsed} />
       </aside>
 
       {/* Center: main chat area */}

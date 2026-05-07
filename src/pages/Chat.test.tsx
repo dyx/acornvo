@@ -184,3 +184,32 @@ describe('Chat empty-state', () => {
     expect(screen.queryAllByTestId('chat-empty-card')).toHaveLength(0)
   })
 })
+
+describe('SessionList collapsed mode', () => {
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => cleanup())
+
+  it('renders icon-only rows below 960px', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 })
+    window.dispatchEvent(new Event('resize'))
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'foo', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {},
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    render(<MemoryRouter><Chat /></MemoryRouter>)
+    const collapsed = await screen.findByTestId('chat-session-list')
+    expect(collapsed.getAttribute('data-collapsed')).toBe('true')
+    expect(screen.queryByTestId('row-title')).toBeFalsy()
+    expect(screen.getByTestId('session-icon')).toBeTruthy()
+  })
+})
