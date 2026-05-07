@@ -401,7 +401,10 @@
       "missing_reason": "A reason is required for this change."
     },
     "messages": {
-      "jumpToLatest": "New messages ↓"
+      "jumpToLatest": "New messages ↓",
+      "copy": "Copy",
+      "retry": "Retry",
+      "quote": "Quote"
     }
   }
 }

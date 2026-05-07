@@ -3,11 +3,20 @@ import type { JSX } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ChatMessage } from '@/stores/chat'
+import { useChatStore } from '@/stores/chat'
 import { ipc } from '@/ipc/client'
+import { MessageOps } from './MessageOps'
 
 export function AssistantMarkdown({ m }: { m: ChatMessage }): JSX.Element {
+  const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   return (
-    <div data-testid={`msg-assistant-${m.id}`} className="my-2 max-w-full text-sm">
+    <div data-testid={`msg-assistant-${m.id}`} className="group relative my-2 max-w-full text-sm">
+      <MessageOps
+        messageId={m.id}
+        text={m.text}
+        showQuote
+        onQuote={() => setPendingPromptText(`> ${m.text.split('\n').join('\n> ')}\n\n`)}
+      />
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

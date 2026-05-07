@@ -171,3 +171,42 @@ describe('MessageList — auto-scroll', () => {
     delete (Element.prototype as Record<string, unknown>).clientHeight
   })
 })
+
+describe('MessageList — hover ops', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeEach(() => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [{ id: 'm1', role: 'assistant', text: 'hello', createdAt: 1 }],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+  })
+  afterEach(() => cleanup())
+
+  it('renders copy button on assistant message', () => {
+    render(<MessageList />)
+    expect(screen.getByTestId('msg-op-copy-m1')).toBeTruthy()
+  })
+
+  it('clicking copy writes to clipboard', async () => {
+    const writeText = vi.fn()
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    render(<MessageList />)
+    await userEvent.click(screen.getByTestId('msg-op-copy-m1'))
+    expect(writeText).toHaveBeenCalledWith('hello')
+  })
+})

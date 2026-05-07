@@ -432,7 +432,10 @@
       "missing_reason": "本次修改必须提供原因。"
     },
     "messages": {
-      "jumpToLatest": "新消息 ↓"
+      "jumpToLatest": "新消息 ↓",
+      "copy": "复制",
+      "retry": "重试",
+      "quote": "引用"
     }
   }
 }
