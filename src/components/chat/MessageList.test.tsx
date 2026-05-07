@@ -71,3 +71,49 @@ describe('MessageList — role dispatch', () => {
     expect(container.querySelectorAll('[data-testid^="msg-"]').length).toBe(0)
   })
 })
+
+describe('MessageList — streaming → done transition', () => {
+  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  afterEach(() => cleanup())
+
+  it('shows streaming-pre while status=streaming, hides it after done commits message', () => {
+    useChatStore.setState({
+      sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
+      activeSessionId: 's1',
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [],
+          streamingBuffer: '正在',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'streaming',
+          error: null
+        }
+      },
+      sessionsLoading: false,
+      sessionsError: null
+    })
+    const { rerender } = render(<MessageList />)
+    expect(screen.queryByTestId('streaming-pre')).toBeTruthy()
+
+    useChatStore.setState((s) => ({
+      bySession: {
+        ...s.bySession,
+        s1: {
+          ...s.bySession.s1,
+          streamingBuffer: '',
+          flushedLength: 0,
+          status: 'idle',
+          messages: [{ id: 'm-final', role: 'assistant', text: '**final**', createdAt: 9 }]
+        }
+      }
+    }))
+    rerender(<MessageList />)
+    expect(screen.queryByTestId('streaming-pre')).toBeFalsy()
+    expect(screen.getByTestId('msg-assistant-m-final')).toBeTruthy()
+    expect(screen.getByText('final').tagName).toBe('STRONG')
+  })
+})
