@@ -378,6 +378,18 @@
       "card3": "Set a.md tags to [\"reading\", \"essay\"]",
       "card4": "Top 10 most frequent tags"
     },
+    "session": {
+      "newAria": "New chat",
+      "searchPlaceholder": "Search chats…",
+      "noResults": "No matching chats",
+      "rename": "Rename",
+      "delete": "Delete",
+      "copyId": "Copy session id",
+      "confirmDeleteTitle": "Delete chat?",
+      "confirmDeleteBody": "This cannot be undone. All messages in this chat will be deleted.",
+      "confirmDeleteOk": "Delete",
+      "confirmDeleteCancel": "Cancel"
+    },
     "error": {
       "step_limit": "Reached the 8-step thinking limit.",
       "missing_profile": "No AI profile is bound to this session.",

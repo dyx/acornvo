@@ -409,6 +409,18 @@
       "card3": "把 a.md 的 tags 改成 [\"读书\", \"散文\"]",
       "card4": "列出 tags 出现频率前 10"
     },
+    "session": {
+      "newAria": "新对话",
+      "searchPlaceholder": "搜索会话…",
+      "noResults": "无匹配会话",
+      "rename": "重命名",
+      "delete": "删除",
+      "copyId": "复制 session id",
+      "confirmDeleteTitle": "删除会话？",
+      "confirmDeleteBody": "此操作不可撤销，会话内所有消息将被删除。",
+      "confirmDeleteOk": "删除",
+      "confirmDeleteCancel": "取消"
+    },
     "error": {
       "step_limit": "已达 8 步思考上限。",
       "missing_profile": "本会话尚未绑定 AI Profile。",

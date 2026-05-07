@@ -4,6 +4,8 @@ import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 
+import { SessionList } from '@/components/chat/SessionList'
+
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
   const profiles = useProfilesStore((s) => s.profiles)
@@ -130,7 +132,9 @@ export function Chat() {
         data-collapsed={collapsed ? 'true' : 'false'}
         className="shrink-0 border-r border-border bg-muted/20 overflow-hidden transition-[width] duration-200"
         style={{ width: collapsed ? 48 : 300 }}
-      />
+      >
+        {!collapsed && <SessionList />}
+      </aside>
 
       {/* Center: main chat area */}
       <main data-testid="chat-main" className="flex flex-1 flex-col min-w-0">
