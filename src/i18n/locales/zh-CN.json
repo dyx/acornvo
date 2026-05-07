@@ -458,6 +458,14 @@
       "copy": "复制",
       "retry": "重试",
       "quote": "引用"
+    },
+    "shortcuts": {
+      "title": "快捷键",
+      "send": "发送消息",
+      "newSession": "新建会话",
+      "focusInput": "聚焦输入框",
+      "showHelp": "显示快捷键",
+      "stopStream": "停止生成"
     }
   }
 }

@@ -427,6 +427,14 @@
       "copy": "Copy",
       "retry": "Retry",
       "quote": "Quote"
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "send": "Send message",
+      "newSession": "New session",
+      "focusInput": "Focus input",
+      "showHelp": "Show shortcuts",
+      "stopStream": "Stop streaming"
     }
   }
 }

@@ -9,6 +9,7 @@ import { MessageList } from '@/components/chat/MessageList'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { ApprovalPanel } from '@/components/chat/ApprovalPanel'
 import { ChatBanner } from '@/components/chat/ChatBanner'
+import { ShortcutsDialog } from '@/components/chat/ShortcutsDialog'
 
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
@@ -150,9 +151,11 @@ export function Chat() {
           )}
           <button
             type="button"
+            data-testid="chat-shortcuts-btn"
             className="size-8 rounded-md hover:bg-muted inline-flex items-center justify-center text-muted-foreground"
             aria-label={t('chat.topbar.helpAria')}
             title={t('chat.topbar.helpAria')}
+            onClick={() => useChatStore.getState().bumpShowShortcuts()}
           >
             ?
           </button>
@@ -169,6 +172,7 @@ export function Chat() {
 
       {/* Right sidebar: approval panel */}
       <ApprovalPanel />
+      <ShortcutsDialog />
     </div>
   )
 }
