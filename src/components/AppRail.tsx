@@ -1,67 +1,83 @@
 // src/components/AppRail.tsx
 import type { JSX } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { BookMarked, Compass, MessagesSquare, Settings as SettingsIcon } from 'lucide-react'
+import { Globe, Library, MessageSquare, Settings as SettingsIcon } from 'lucide-react'
+import { useGroveStore } from '@/stores/grove'
 
 interface RailEntry {
   to: string
   labelKey: string
-  Icon: typeof BookMarked
+  Icon: typeof Library
   disabled?: boolean
   bottom?: boolean
 }
 
 const ENTRIES: RailEntry[] = [
-  { to: '/library', labelKey: 'nav.library', Icon: BookMarked },
-  { to: '/browser', labelKey: 'nav.browser', Icon: Compass },
-  { to: '/chat', labelKey: 'nav.chat', Icon: MessagesSquare },
+  { to: '/browser', labelKey: 'nav.browser', Icon: Globe },
+  { to: '/library', labelKey: 'nav.library', Icon: Library },
+  { to: '/chat', labelKey: 'nav.chat', Icon: MessageSquare },
   { to: '/settings', labelKey: 'nav.settings', Icon: SettingsIcon, bottom: true }
 ]
 
 export function AppRail(): JSX.Element {
   const { t } = useTranslation()
+  const current = useGroveStore((s) => s.current)
+  const navigate = useNavigate()
+
   return (
     <nav
       aria-label="app navigation"
-      className="flex w-[60px] shrink-0 flex-col items-stretch border-r bg-muted/40 py-2"
+      className="flex w-[72px] shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3"
     >
-      {ENTRIES.map((entry) => {
-        const label = t(entry.labelKey)
-        const baseCls = 'flex flex-col items-center gap-1 px-1 py-3 text-[11px] transition-colors'
-        if (entry.disabled) {
-          return (
-            <a
-              key={entry.to}
-              href="#"
-              role="link"
-              aria-disabled="true"
-              title={t('settings.common.comingSoon')}
-              onClick={(e) => e.preventDefault()}
-              className={`${baseCls} cursor-not-allowed text-muted-foreground/50 ${entry.bottom ? 'mt-auto' : ''}`}
-            >
-              <entry.Icon size={20} />
-              <span>{label}</span>
-            </a>
-          )
-        }
-        return (
-          <NavLink
-            key={entry.to}
-            to={entry.to}
-            className={({ isActive }) =>
-              `${baseCls} ${entry.bottom ? 'mt-auto' : ''} ${
-                isActive
-                  ? 'bg-accent text-accent-foreground border-l-2 border-primary'
-                  : 'text-foreground hover:bg-muted'
-              }`
-            }
-          >
-            <entry.Icon size={20} />
-            <span>{label}</span>
-          </NavLink>
-        )
-      })}
+      <button
+        onClick={() => {
+          navigate('/picker')
+        }}
+        title={current ? `${current.name} — 切换树林` : '切换树林'}
+        className="mb-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity"
+      >
+        {/* Placeholder Acorn Logo */}
+        <span className="text-[24px]">🌰</span>
+      </button>
+      <div className="mb-2.5 h-[1px] w-7 bg-[color:var(--color-line)]" />
+      
+      <div className="flex flex-1 flex-col gap-1 w-full items-center">
+        {ENTRIES.filter(e => !e.bottom).map(entry => <RailBtn key={entry.to} entry={entry} t={t} />)}
+      </div>
+      <div className="flex flex-col gap-1 w-full items-center">
+        {ENTRIES.filter(e => e.bottom).map(entry => <RailBtn key={entry.to} entry={entry} t={t} />)}
+      </div>
     </nav>
+  )
+}
+
+function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
+  const label = t(entry.labelKey)
+  const baseCls = 'flex w-14 flex-col items-center gap-[3px] rounded-[10px] border py-2 transition-colors cursor-pointer font-inherit'
+  
+  if (entry.disabled) {
+    return (
+      <div className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`} title={t('settings.common.comingSoon')}>
+        <entry.Icon size={18} />
+        <span className="font-serif text-[11px] font-medium">{label}</span>
+      </div>
+    )
+  }
+
+  return (
+    <NavLink
+      to={entry.to}
+      className={({ isActive }) =>
+        `${baseCls} ${
+          isActive
+            ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]'
+            : 'border-transparent text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'
+        }`
+      }
+    >
+      <entry.Icon size={18} />
+      <span className="font-serif text-[11px] font-medium">{label}</span>
+    </NavLink>
   )
 }

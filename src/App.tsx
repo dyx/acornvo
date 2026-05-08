@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { TitleBar } from '@/components/TitleBar'
 import { AppRail } from '@/components/AppRail'
+import { StatusBar } from '@/components/StatusBar'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
 import { QuickSwitcher } from '@/components/search/QuickSwitcher'
@@ -62,7 +63,7 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
       <TitleBar />
       <div className="flex flex-1 overflow-hidden">
         <AppRail />
@@ -70,6 +71,11 @@ export function App(): JSX.Element {
           <Outlet />
         </main>
       </div>
+      <StatusBar 
+        indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null} 
+        totalDocs={progress.total}
+      />
+      
       <IndexBanner />
       <DbRebuildOverlay visible={isRebuilding} />
       <QuickSwitcher />

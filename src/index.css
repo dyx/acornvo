@@ -9,33 +9,35 @@ html {
 }
 
 @theme {
-  /* oklch palette lifted from docs/ui/src/project-picker.jsx */
-  --color-paper: oklch(0.99 0.005 80);
-  --color-paper-2: oklch(0.97 0.008 75);
-  --color-paper-3: oklch(0.95 0.012 70);
-  --color-ink: oklch(0.26 0.015 45);
-  --color-ink-2: oklch(0.42 0.018 45);
-  --color-ink-3: oklch(0.58 0.015 50);
-  --color-ink-4: oklch(0.72 0.01 55);
-  --color-line: oklch(0.9 0.01 60);
-  --color-line-2: oklch(0.85 0.015 60);
-  --color-acorn: oklch(0.58 0.12 55);
-  --color-acorn-2: oklch(0.5 0.13 50);
-  --color-acorn-bg: oklch(0.95 0.035 65);
-  --color-leaf: oklch(0.55 0.12 145);
-  --color-leaf-bg: oklch(0.95 0.04 140);
-  --color-berry: oklch(0.55 0.16 25);
-  --color-berry-bg: oklch(0.94 0.03 25);
-  --color-sky: oklch(0.6 0.1 220);
-  --color-sky-bg: oklch(0.95 0.03 220);
-  --font-serif: "Noto Serif SC", "Source Han Serif", ui-serif, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-paper: oklch(0.972 0.012 85);
+  --color-paper-2: oklch(0.955 0.015 82);
+  --color-paper-3: oklch(0.935 0.018 80);
+  --color-paper-4: oklch(0.91 0.02 78);
+  --color-ink: oklch(0.22 0.012 60);
+  --color-ink-2: oklch(0.4 0.015 62);
+  --color-ink-3: oklch(0.55 0.018 65);
+  --color-ink-4: oklch(0.68 0.02 70);
+  --color-line: oklch(0.86 0.022 75);
+  --color-line-2: oklch(0.8 0.025 72);
+  --color-acorn: oklch(0.5 0.09 48);
+  --color-acorn-2: oklch(0.42 0.1 44);
+  --color-acorn-bg: oklch(0.94 0.03 55);
+  --color-leaf: oklch(0.52 0.08 135);
+  --color-leaf-bg: oklch(0.94 0.025 130);
+  --color-berry: oklch(0.5 0.14 25);
+  --color-sky: oklch(0.55 0.06 230);
+  --color-sky-bg: oklch(0.93 0.02 230);
+
+  --font-serif: "Noto Serif SC", "Source Han Serif", "Songti SC", Georgia, serif;
+  --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
 }
 
 [data-theme="dark"] {
   --color-paper: oklch(0.2 0.015 60);
   --color-paper-2: oklch(0.22 0.018 60);
   --color-paper-3: oklch(0.25 0.02 60);
+  --color-paper-4: oklch(0.28 0.02 60);
   --color-ink: oklch(0.92 0.005 70);
   --color-ink-2: oklch(0.78 0.008 70);
   --color-ink-3: oklch(0.6 0.01 70);
@@ -53,12 +55,16 @@ body,
 body {
   background-color: var(--color-paper);
   color: var(--color-ink);
-  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 .serif {
   font-family: var(--font-serif);
+}
+
+.mono {
+  font-family: var(--font-mono);
 }
 
 @keyframes fade-up {
