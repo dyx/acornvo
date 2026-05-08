@@ -19,22 +19,22 @@ const TABS: TabDef[] = [
 export function SettingsLayout({ children }: { children: ReactNode }): JSX.Element {
   const { t } = useTranslation()
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full bg-[color:var(--color-paper)]">
       <nav
         aria-label="settings"
-        className="flex w-[160px] shrink-0 flex-col border-r bg-muted/30 py-4"
+        className="flex w-[200px] shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-[14px]"
       >
-        <h2 className="px-4 pb-3 text-sm font-medium text-muted-foreground">{t('settings.title')}</h2>
+        <h2 className="px-[12px] pb-[10px] text-[10px] font-mono font-semibold uppercase tracking-[0.1em] text-[color:var(--color-ink-4)]">{t('settings.title')}</h2>
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             data-testid={tab.testId}
             className={({ isActive }) =>
-              `block px-4 py-2 text-sm transition-colors ${
+              `mx-2 my-[1px] block rounded-[7px] py-2 pr-3 transition-colors text-[13px] font-serif ${
                 isActive
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground hover:bg-muted'
+                  ? 'border-l-2 border-[color:var(--color-acorn)] bg-[color:var(--color-paper)] pl-[10px] text-[color:var(--color-ink)]'
+                  : 'border-l-2 border-transparent pl-[12px] text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'
               }`
             }
           >
@@ -42,7 +42,9 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
           </NavLink>
         ))}
       </nav>
-      <section className="flex-1 overflow-y-auto p-6">{children}</section>
+      <section className="flex-1 overflow-y-auto px-[40px] py-[32px] pb-[60px]">
+        <div className="max-w-[640px]">{children}</div>
+      </section>
     </div>
   )
 }

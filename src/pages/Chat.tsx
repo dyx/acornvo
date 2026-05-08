@@ -130,29 +130,31 @@ export function Chat() {
   const title = activeSession?.title || t('chat.untitled')
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full bg-[color:var(--color-paper)]">
       {/* Left sidebar: session list */}
       <aside
         data-testid="chat-session-list"
         data-collapsed={collapsed ? 'true' : 'false'}
-        className="shrink-0 border-r border-border bg-muted/20 overflow-hidden transition-[width] duration-200"
-        style={{ width: collapsed ? 48 : 300 }}
+        className="flex shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] transition-[width] duration-200 overflow-hidden"
+        style={{ width: collapsed ? 48 : 240 }}
       >
         <SessionList compact={collapsed} />
       </aside>
 
       {/* Center: main chat area */}
-      <main data-testid="chat-main" className="flex flex-1 flex-col min-w-0">
+      <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatBanner />
-        <header className="shrink-0 h-12 flex items-center px-4 gap-2 border-b border-border">
-          <h1 className="text-sm font-medium truncate flex-1">{title}</h1>
+        <header className="flex h-[42px] shrink-0 items-center gap-2.5 border-b border-[color:var(--color-line)] px-[18px]">
+          <h2 className="font-serif text-[14px] font-medium m-0 flex-1 truncate text-[color:var(--color-ink)]">
+            {title}
+          </h2>
           {activeSession && (
             <ProfileChip sessionId={activeSession.id} profileId={activeSession.profileId} />
           )}
           <button
             type="button"
             data-testid="chat-shortcuts-btn"
-            className="size-8 rounded-md hover:bg-muted inline-flex items-center justify-center text-muted-foreground"
+            className="flex size-7 items-center justify-center rounded-md text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-2)]"
             aria-label={t('chat.topbar.helpAria')}
             title={t('chat.topbar.helpAria')}
             onClick={() => useChatStore.getState().bumpShowShortcuts()}
@@ -160,7 +162,7 @@ export function Chat() {
             ?
           </button>
         </header>
-        <section className="flex flex-1 min-h-0 flex-col">
+        <section className="flex min-h-0 flex-1 flex-col">
           {(() => {
             const slot = activeSession ? useChatStore.getState().bySession[activeSession.id] : null
             const isEmpty = !slot || slot.messages.length === 0

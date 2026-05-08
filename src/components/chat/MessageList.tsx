@@ -52,12 +52,13 @@ export function MessageList(): JSX.Element | null {
   if (!activeId || !slot) return null
   return (
     <div className="relative flex flex-1 min-h-0 flex-col">
-      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-3" data-testid="message-list">
-        {slot.messages.map((m) => (
-          <MessageRow key={m.id} m={m} />
-        ))}
-        {slot.status === 'streaming' && activeId && <StreamingTail sessionId={activeId} />}
-        {slot.status === 'error' && slot.error && normalizeErrorKey(slot.error) && (
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-[28px] pt-[24px]" data-testid="message-list">
+        <div className="mx-auto max-w-[740px]">
+          {slot.messages.map((m) => (
+            <MessageRow key={m.id} m={m} />
+          ))}
+          {slot.status === 'streaming' && activeId && <StreamingTail sessionId={activeId} />}
+          {slot.status === 'error' && slot.error && normalizeErrorKey(slot.error) && (
           <div
             data-testid="chat-error-tail"
             className="my-2 text-xs text-muted-foreground"
@@ -82,6 +83,7 @@ export function MessageList(): JSX.Element | null {
           </div>
         )}
         <div ref={sentinelRef} />
+        </div>
       </div>
       {stuckUp && (
         <button

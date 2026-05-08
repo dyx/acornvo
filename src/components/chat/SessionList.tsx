@@ -83,37 +83,26 @@ export function SessionList({ compact = false }: Props): JSX.Element {
         </ul>
       ) : (
         <>
-          <div className="flex items-center gap-1 border-b border-border px-2 py-2">
+          <div className="border-b-[0.5px] border-[color:var(--line)] px-[14px] py-[12px]">
             <button
               type="button"
               aria-label={t('chat.session.newAria')}
               onClick={() => void createSession()}
-              className="rounded p-1 hover:bg-muted"
+              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[7px] border-[0.5px] border-[color:var(--line-2)] bg-[color:var(--paper)] px-2.5 py-2 font-serif text-[12.5px] text-[color:var(--ink)] hover:bg-[color:var(--paper-2)]"
             >
-              <Plus size={16} />
+              <Plus size={12} /> {t('chat.session.new')}
             </button>
-            <div className="relative flex-1">
-              <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                role="searchbox"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t('chat.session.searchPlaceholder')}
-                className="w-full rounded border border-border bg-background py-1 pl-7 pr-2 text-xs outline-none focus:border-primary"
-              />
-            </div>
           </div>
           <ul
             ref={ulRef}
-            className="flex-1 overflow-y-auto outline-none"
+            className="flex-1 overflow-y-auto py-1.5 outline-none"
             role="list"
             aria-label="sessions"
             tabIndex={0}
             onKeyDown={handleListKeyDown}
           >
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-xs text-muted-foreground">{t('chat.session.noResults')}</li>
+              <li className="px-[14px] py-2 text-xs text-muted-foreground">{t('chat.session.noResults')}</li>
             ) : (
               filtered.map((s, i) => (
                 <SessionListRow

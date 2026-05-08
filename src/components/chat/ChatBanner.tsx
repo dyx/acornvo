@@ -25,14 +25,14 @@ export function ChatBanner(): JSX.Element | null {
   return (
     <div
       data-testid="chat-missing-profile-banner"
-      className="flex items-center gap-2 px-4 py-2 text-sm bg-yellow-50 dark:bg-yellow-950 border-b border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200"
+      className="flex items-center gap-2 px-[18px] py-2 text-[12.5px] bg-[color:var(--color-berry-bg)] border-b border-[color:var(--color-berry)] text-[color:var(--color-berry)] font-mono"
     >
-      <AlertCircle className="size-4 shrink-0" />
+      <AlertCircle className="size-[14px] shrink-0" />
       <span className="flex-1">{t('chat.error.missingProfile')}</span>
       <Link
         to="/settings/ai"
         data-testid="chat-banner-settings-link"
-        className="text-sm underline underline-offset-2 hover:opacity-80"
+        className="text-[12.5px] underline underline-offset-2 hover:opacity-80"
       >
         {t('chat.error.goToSettings')}
       </Link>

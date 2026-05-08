@@ -35,13 +35,15 @@ export function SessionListRow({ session, active, editing, keyboardSelected = fa
       data-testid="session-row"
       onClick={editing ? undefined : onSelect}
       onContextMenu={onContextMenu}
-      className={`group relative flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted ${
-        active ? 'border-l-[3px] border-primary bg-accent' : ''
+      className={`group relative mx-2 my-[1px] flex w-[calc(100%-16px)] cursor-pointer items-center justify-between rounded-[7px] py-[9px] pr-2.5 transition-colors ${
+        active 
+          ? 'bg-[color:var(--color-paper)] border-l-2 border-l-[color:var(--color-acorn)] pl-2' 
+          : 'bg-transparent border-l-2 border-l-transparent pl-2.5 hover:bg-[color:var(--color-paper-3)]'
       } ${
-        keyboardSelected && !active ? 'ring-1 ring-inset ring-primary/50 bg-accent/50' : ''
+        keyboardSelected && !active ? 'ring-1 ring-inset ring-[color:var(--color-line)] bg-[color:var(--color-paper-3)]' : ''
       }`}
     >
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         {editing ? (
           <input
             ref={inputRef}
@@ -53,25 +55,29 @@ export function SessionListRow({ session, active, editing, keyboardSelected = fa
             }}
             onBlur={() => onCancelRename()}
             onClick={(e) => e.stopPropagation()}
-            className="w-full bg-background px-1 outline-none ring-1 ring-primary"
+            className="w-full bg-[color:var(--color-paper)] px-1 outline-none ring-1 ring-[color:var(--color-acorn)] text-[12.5px] font-serif"
           />
         ) : (
-          <div data-testid="row-title" onDoubleClick={(e) => { e.stopPropagation(); onStartRename() }} className="truncate">
+          <div data-testid="row-title" onDoubleClick={(e) => { e.stopPropagation(); onStartRename() }} className="truncate font-serif text-[12.5px] font-medium text-[color:var(--color-ink)]">
             {session.title}
           </div>
         )}
-        <div className="text-[10px] text-muted-foreground">{rel}</div>
+        <div className="mt-0.5 flex gap-1.5 font-mono text-[10px] text-[color:var(--color-ink-4)]">
+          <span>{rel}</span>
+        </div>
       </div>
-      {rightBadge}
-      <button
-        type="button"
-        data-testid="row-delete"
-        onClick={(e) => { e.stopPropagation(); onDelete() }}
-        aria-label="delete"
-        className="rounded p-1 opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100"
-      >
-        <Trash2 size={12} />
-      </button>
+      <div className="flex items-center gap-2 shrink-0">
+        {rightBadge}
+        <button
+          type="button"
+          data-testid="row-delete"
+          onClick={(e) => { e.stopPropagation(); onDelete() }}
+          aria-label="delete"
+          className="rounded p-1 opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100"
+        >
+          <Trash2 size={12} className="text-[color:var(--color-ink-3)]" />
+        </button>
+      </div>
     </li>
   )
 }
