@@ -39,6 +39,7 @@ describe('migration 004 — file columns alignment', () => {
       CREATE TABLE chats (id TEXT PRIMARY KEY);
       CREATE TABLE queue (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', due_at TEXT);
       CREATE TABLE usage (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, model_id TEXT NOT NULL, purpose TEXT NOT NULL);
+      CREATE TABLE ops_log (id INTEGER PRIMARY KEY AUTOINCREMENT, op TEXT NOT NULL, path TEXT NOT NULL, ts TEXT NOT NULL, meta_json TEXT);
     `)
     db.pragma('user_version = 3')
 
