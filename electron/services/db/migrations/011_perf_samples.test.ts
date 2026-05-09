@@ -26,7 +26,7 @@ describe('migration 011 — perf_samples + telemetry_local + ops_log index', () 
       expect.arrayContaining(['id', 'ts', 'area', 'ok', 'ms', 'meta'])
     )
     expect(cols('telemetry_local')).toEqual(
-      expect.arrayContaining(['id', 'day', 'metric', 'value'])
+      expect.arrayContaining(['id', 'day', 'metric', 'value', 'meta'])
     )
 
     const idx = (db.prepare(`PRAGMA index_list(ops_log)`).all() as { name: string }[]).map(
