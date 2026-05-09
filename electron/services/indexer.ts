@@ -13,6 +13,7 @@ import {
 } from './index-queries'
 import { parseFile } from './frontmatter'
 import { getQueueBootstrap } from '../queue'
+import { logger } from '../obs/logger'
 
 export type IndexStateName = 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
 
@@ -286,7 +287,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       try {
         deleteFile(db, relPath)
       } catch (delErr) {
-        console.warn('index: failed to delete row on ENOENT', { path: relPath, error: String(delErr) })
+        logger().warn('indexer', { op: 'delete-row', ok: false, msg: 'failed to delete row on ENOENT', meta: { path: relPath, error: String(delErr) } })
       }
       return
     }
@@ -297,10 +298,10 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       try {
         queue.store.enqueue('index-retry', { path: relPath, reason }, { dedupeKey: `idx:${relPath}` })
       } catch (enqErr) {
-        console.error('index: enqueue index-retry failed', { path: relPath, error: String(enqErr) })
+        logger().error('indexer', { op: 'enqueue-retry', ok: false, msg: 'enqueue index-retry failed', meta: { path: relPath, error: String(enqErr) } })
       }
     } else {
-      console.warn('index: queue not initialised; dropping retry', { path: relPath, reason })
+      logger().warn('indexer', { op: 'enqueue-retry', ok: false, msg: 'queue not initialised; dropping retry', meta: { path: relPath, reason } })
     }
   }
 }

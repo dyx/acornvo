@@ -12,6 +12,7 @@ import type { Clip, ClipCreateInput } from '@shared/clip-types'
 import type { Extractor } from './extract'
 import type { Dedupe } from './dedupe'
 import { getQueueBootstrap } from '../queue'
+import { logger } from '../obs/logger'
 import { enrich } from './enrich'
 import { buildSlug } from './slug'
 import type { WebContents } from 'electron'
@@ -256,10 +257,10 @@ export function createPipeline(deps: PipelineDeps) {
         )
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        console.error('ai-review-clip enqueue failed; clip already saved', { clipId: clipResult.id, error: msg })
+        logger().error('clipper', { op: 'enqueue-review', ok: false, msg: 'ai-review-clip enqueue failed; clip already saved', meta: { clipId: clipResult.id, error: msg } })
       }
     } else {
-      console.warn('queue bootstrap unavailable; ai-review-clip not enqueued', { clipId: clipResult.id })
+      logger().warn('clipper', { op: 'enqueue-review', ok: false, msg: 'queue bootstrap unavailable; ai-review-clip not enqueued', meta: { clipId: clipResult.id } })
     }
 
     flights.delete(input.runId)

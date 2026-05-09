@@ -1,6 +1,7 @@
 import { app, BrowserWindow, powerMonitor } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
+import { logger as obsLogger } from './obs/logger'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
@@ -167,7 +168,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  console.error('bootstrap failed', err)
+  obsLogger().error('app', { op: 'boot', ok: false, msg: err instanceof Error ? err.message : String(err) })
   process.exit(1)
 })
 

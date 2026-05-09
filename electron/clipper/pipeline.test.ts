@@ -6,6 +6,15 @@ import type {
 } from './extract'
 import type { Dedupe } from './dedupe'
 
+vi.mock('../obs/logger', () => ({
+  logger: () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  })
+}))
+
 import type { ExtractResult, EnrichedResult } from '@shared/clipper-types'
 import type { ClipInput, ClipErrorCode } from '@shared/clipper-types'
 import type { Clip } from '@shared/clip-types'

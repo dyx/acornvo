@@ -22,6 +22,19 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   }
 })
 
+const { obsWarnMock } = vi.hoisted(() => ({
+  obsWarnMock: vi.fn()
+}))
+
+vi.mock('../obs/logger', () => ({
+  logger: () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: obsWarnMock,
+    error: vi.fn()
+  })
+}))
+
 import { readFile } from 'node:fs/promises'
 
 function makeIndexedDb(): Database.Database {
@@ -298,7 +311,7 @@ describe('upsertFromFs', () => {
   })
 
   it('logs warning when queue is not initialised on transient error', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    obsWarnMock.mockClear()
 
     writeFileSync(join(root, 'a.md'), '# A')
     await startScan(root)
@@ -310,11 +323,14 @@ describe('upsertFromFs', () => {
 
     await expect(upsertFromFs('a.md')).resolves.toBeUndefined()
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      'index: queue not initialised; dropping retry',
-      { path: 'a.md', reason: 'disk error' }
+    expect(obsWarnMock).toHaveBeenCalledWith(
+      'indexer',
+      expect.objectContaining({
+        op: 'enqueue-retry',
+        ok: false,
+        msg: 'queue not initialised; dropping retry',
+        meta: { path: 'a.md', reason: 'disk error' }
+      })
     )
-
-    warnSpy.mockRestore()
   })
 })
