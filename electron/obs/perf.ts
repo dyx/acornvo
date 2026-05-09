@@ -52,3 +52,18 @@ export function perf(): Perf {
 export function getPerf(): Perf | null {
   return cached
 }
+
+const PERF_HARD_CAP = 100_000
+const PERF_SOFT_CAP = 80_000
+
+export function trimPerfSamples(deps: { db: Database.Database }): void {
+  const { db } = deps
+  const row = db.prepare(`SELECT COUNT(*) AS n FROM perf_samples`).get() as { n: number }
+  if (row.n <= PERF_HARD_CAP) return
+  // Keep newest PERF_SOFT_CAP rows.
+  db.prepare(
+    `DELETE FROM perf_samples WHERE id IN (
+       SELECT id FROM perf_samples ORDER BY id ASC LIMIT ?
+     )`
+  ).run(row.n - PERF_SOFT_CAP)
+}
