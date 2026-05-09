@@ -14,6 +14,7 @@ import { dbService } from './services/db'
 import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
+import { createPerf, setPerfInstance } from './obs/perf'
 import { initBrowserSubsystem } from './browser/init'
 import { initAdBlock, __resetForTest as resetAdBlock } from './browser/adblock'
 import { settingsStore } from './settings/store'
@@ -107,6 +108,7 @@ async function bootstrap(): Promise<void> {
           const db = dbService.getCurrent()
           if (db) {
             setIndexerDb(db)
+            setPerfInstance(createPerf({ db }))
             await startScan(payload.path)
             await watcherStart(payload.path, db)
             // phase-14: start the queue runner
