@@ -56,3 +56,13 @@ export function installCrashHooks(): void {
     logger().error('crash', { op: 'unhandled-rejection', meta: { file } })
   })
 }
+
+export function startElectronCrashReporter(): void {
+  electronCrashReporter.start({
+    uploadToServer: false,
+    submitURL: '',
+    productName: 'Acornvo'
+  })
+  // Hint Electron to land minidumps inside crashes/minidumps/
+  app.setPath('crashDumps', join(getCrashesDir(), 'minidumps'))
+}
