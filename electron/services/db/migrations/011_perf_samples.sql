@@ -25,6 +25,6 @@ CREATE TABLE IF NOT EXISTS telemetry_local (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(day, metric);
 
-CREATE INDEX IF NOT EXISTS idx_ops_log_ts ON ops_log(ts);
+CREATE INDEX IF NOT EXISTS idx_ops_log_ts ON ops_log(ts DESC);
 
 PRAGMA user_version = 11;
