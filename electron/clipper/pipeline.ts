@@ -13,6 +13,7 @@ import type { Extractor } from './extract'
 import type { Dedupe } from './dedupe'
 import { getQueueBootstrap } from '../queue'
 import { logger } from '../obs/logger'
+import { getPerf } from '../obs/perf'
 import { enrich } from './enrich'
 import { buildSlug } from './slug'
 import type { WebContents } from 'electron'
@@ -185,6 +186,9 @@ export function createPipeline(deps: PipelineDeps) {
     const frontmatter = buildFrontmatter(finalPreview, input.tags, isoDate)
     const fileContent = frontmatter + state.markdown
 
+    const p = getPerf()
+    const end = p?.start('clipper.save', { url: state.url })
+
     // Build path with EEXIST retry logic
     let path = finalPreview.suggestedPath
     let writeErr: unknown
@@ -199,11 +203,15 @@ export function createPipeline(deps: PipelineDeps) {
         break
       } catch (err) {
         writeErr = err
-        if (!isEexist(err)) throw err
+        if (!isEexist(err)) {
+          end?.({ ok: false, meta: { error: (err as Error).message } })
+          throw err
+        }
       }
     }
     if (writeErr) {
       // All retries exhausted
+      end?.({ ok: false, meta: { error: 'write retries exhausted', path } })
       throw clipError('E_WRITE_FAILED', `atomic write failed after retries: ${path}`)
     }
 
@@ -227,8 +235,10 @@ export function createPipeline(deps: PipelineDeps) {
       clipResult = await deps.clipsDao.create(clipRow)
     } catch (err) {
       if (err instanceof IpcError && err.code === 'E_DUPLICATE') {
+        end?.({ ok: false, meta: { error: 'E_DUPLICATE', path } })
         throw clipError('E_DUPLICATE', err.message, err.context)
       }
+      end?.({ ok: false, meta: { error: (err as Error).message } })
       throw err
     }
 
@@ -263,6 +273,7 @@ export function createPipeline(deps: PipelineDeps) {
       logger().warn('clipper', { op: 'enqueue-review', ok: false, msg: 'queue bootstrap unavailable; ai-review-clip not enqueued', meta: { clipId: clipResult.id } })
     }
 
+    end?.({ ok: true, meta: { clipId: clipResult.id, path } })
     flights.delete(input.runId)
 
     return {

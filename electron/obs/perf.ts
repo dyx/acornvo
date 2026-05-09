@@ -47,3 +47,8 @@ export function perf(): Perf {
   if (!cached) throw new Error('perf not initialized — call setPerfInstance during boot')
   return cached
 }
+
+/** Safe getter that returns null when perf has not been initialised (e.g. in tests). */
+export function getPerf(): Perf | null {
+  return cached
+}

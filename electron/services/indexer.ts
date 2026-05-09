@@ -14,6 +14,7 @@ import {
 import { parseFile } from './frontmatter'
 import { getQueueBootstrap } from '../queue'
 import { logger } from '../obs/logger'
+import { getPerf } from '../obs/perf'
 
 export type IndexStateName = 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
 
@@ -161,8 +162,12 @@ export async function startScan(groveRoot: string): Promise<void> {
   const seen = new Set<string>()
   let lastEmit = Date.now()
 
+  const p = getPerf()
+  const end = p?.start('indexer.scan', { groveRoot, total: _total })
+
   for await (const entry of walk(groveRoot)) {
     if (_abort) {
+      end?.({ ok: true, meta: { aborted: true, scanned: _scanned } })
       setState('idle')
       return
     }
@@ -231,6 +236,7 @@ export async function startScan(groveRoot: string): Promise<void> {
 
   progressEmitter.emit('progress', state())
   setState('ready')
+  end?.({ ok: true, meta: { total: _total, scanned: _scanned } })
   doneEmitter.emit('done')
 }
 
@@ -240,6 +246,9 @@ export async function upsertFromFs(relPath: string): Promise<void> {
   if (!groveRoot) throw new Error('upsertFromFs: grove root not set')
   const db = getDb()
   const absPath = `${groveRoot}/${relPath}`
+
+  const p = getPerf()
+  const end = p?.start('indexer.update', { relPath })
 
   try {
     const raw = await readFile(absPath, 'utf8')
@@ -280,10 +289,12 @@ export async function upsertFromFs(relPath: string): Promise<void> {
         })
       }
     }
+    end?.({ ok: true, meta: { result } })
   } catch (e) {
     const code = (e as NodeJS.ErrnoException)?.code
     if (code === 'ENOENT') {
       // File is gone — delete from index, don't retry
+      end?.({ ok: true, meta: { code: 'ENOENT' } })
       try {
         deleteFile(db, relPath)
       } catch (delErr) {
@@ -292,6 +303,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       return
     }
     // Transient error — enqueue for retry
+    end?.({ ok: false, meta: { error: (e as Error)?.message ?? String(e), code } })
     const queue = getQueueBootstrap()
     const reason = e instanceof Error ? e.message : String(e)
     if (queue) {

@@ -3,6 +3,7 @@ import type { Registry } from './registry';
 import type { ApprovalGate } from './approval';
 import { aiUsage } from '../ai/usage';
 import { collectAttachmentContext } from './attachments';
+import { getPerf } from '../obs/perf';
 
 const MAX_STEPS = 8;
 const TOOL_RESULT_BUDGET = 8000;
@@ -50,6 +51,8 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
     emit({ type: 'step.start', step });
 
     let r: any;
+    const p = getPerf()
+    const end = p?.start('agent.step', { step, sessionId })
     try {
       const llmMessages: { role: string; content: string; toolCalls?: any; toolCallId?: string }[] = [
         deps.systemPrompt(),
@@ -66,8 +69,13 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
         signal: cancel,
         onToken: (t: string) => emit({ type: 'token', text: t }),
       });
+      end?.({ ok: true, meta: { finishReason: r.finishReason, model: r.model } })
     } catch (err: any) {
-      if (cancel.aborted || err?.name === 'AbortError') { emit({ type: 'canceled' }); return; }
+      if (cancel.aborted || err?.name === 'AbortError') {
+        end?.({ ok: true, meta: { canceled: true } })
+        emit({ type: 'canceled' }); return;
+      }
+      end?.({ ok: false, meta: { error: err?.code ?? 'E_LLM_ERROR' } })
       emit({ type: 'error', error: err?.code ?? 'E_LLM_ERROR', detail: err?.message });
       return;
     }

@@ -6,6 +6,7 @@ import * as recent from '../services/recent'
 import * as grove from '../services/grove'
 import type { GroveSummary, OpenGroveOutcome } from '@shared/grove'
 import { mainWindow } from '../main'
+import { getPerf } from '../obs/perf'
 
 type ProjectHandlers = {
   [M in keyof IpcContract['project']]: IpcContract['project'][M] extends (
@@ -38,7 +39,16 @@ async function openGrove(
   path: string,
   opts?: { force?: boolean }
 ): Promise<OpenGroveOutcome> {
-  return grove.openGrove(path, opts ?? {})
+  const p = getPerf()
+  const end = p?.start('project.open', { path })
+  try {
+    const result = await grove.openGrove(path, opts ?? {})
+    end?.({ ok: true, meta: { status: result.status } })
+    return result
+  } catch (err) {
+    end?.({ ok: false, meta: { error: (err as Error).message } })
+    throw err
+  }
 }
 
 async function closeGrove(): Promise<void> {

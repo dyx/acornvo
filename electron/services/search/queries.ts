@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3'
 import type { FileSummary } from '@shared/file-types'
 import log from 'electron-log'
 import { buildFtsQuery } from './queryBuilder'
+import { getPerf } from '../../obs/perf'
 
 interface QuickSwitchRow {
   path: string
@@ -115,6 +116,9 @@ export function fullText(
   const limit = opts.limit ?? 50
   const offset = opts.offset ?? 0
 
+  const p = getPerf()
+  const end = p?.start('search.query', { q, limit: opts.limit })
+
   let totalRow: { c: number } | undefined
   let hits: FtsHitRow[] = []
   try {
@@ -133,11 +137,13 @@ export function fullText(
     ).all(expr, limit, offset) as FtsHitRow[]
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
+    end?.({ ok: false, meta: { error: msg } })
     log.warn('[search.fullText] FTS5 syntax error', { q, expr, msg })
     return { items: [], total: 0, pending: false }
   }
 
   if (hits.length === 0) {
+    end?.({ ok: true, meta: { total: totalRow?.c ?? 0, returned: 0 } })
     return { items: [], total: totalRow?.c ?? 0, pending: false }
   }
 
@@ -162,6 +168,7 @@ export function fullText(
     })
     .filter((x): x is { summary: FileSummary; snippet: string } => x !== null)
 
+  end?.({ ok: true, meta: { total: totalRow?.c ?? items.length, returned: items.length } })
   return { items, total: totalRow?.c ?? items.length, pending: false }
 }
 

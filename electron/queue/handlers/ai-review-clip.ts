@@ -2,6 +2,7 @@ import type { JobHandler } from '../runner';
 import { reviewClip } from '../../ai/reviewer';
 import { aiUsage } from '../../ai/usage';
 import { settingsStore } from '../../settings/store';
+import { getPerf } from '../../obs/perf';
 
 const FAIL_CODES = new Set([
   'E_MISSING_PROFILE', 'E_CONFIG', 'E_AUTH',
@@ -20,6 +21,9 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
   const profileId = settingsStore.get('ai').defaultProfileId;
   const t0 = Date.now();
 
+  const p = getPerf()
+  const end = p?.start('clipper.ai-review', { clipId, force })
+
   try {
     const out = await reviewClip(clipId, { force });
     aiUsage.insert({
@@ -32,6 +36,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       ok: 1,
       error: null,
     });
+    end?.({ ok: true, meta: { model: out.llmCall?.model ?? null, cacheHit: out.cacheHit } })
     log('info', `ai-review-clip ok clipId=${clipId} cacheHit=${out.cacheHit}`);
     return { kind: 'ok' };
   } catch (e) {
@@ -46,6 +51,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       ok: 0,
       error: code,
     });
+    end?.({ ok: false, meta: { error: code } })
     log('warn', `ai-review-clip ${code} clipId=${clipId}`);
 
     if (FAIL_CODES.has(code)) return { kind: 'fail', error: code };
