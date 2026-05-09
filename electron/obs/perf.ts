@@ -67,3 +67,42 @@ export function trimPerfSamples(deps: { db: Database.Database }): void {
      )`
   ).run(row.n - PERF_SOFT_CAP)
 }
+
+export interface AggDeps {
+  db: Database.Database
+  area: string
+  windowMs: number
+  now?: () => Date
+}
+
+export interface Aggregates {
+  count: number
+  p50: number
+  p95: number
+  successRate: number
+}
+
+export function getAggregates(deps: AggDeps): Aggregates {
+  const now = (deps.now ?? (() => new Date()))()
+  const since = new Date(now.getTime() - deps.windowMs).toISOString()
+  const rows = deps.db
+    .prepare(`SELECT ms, ok FROM perf_samples WHERE area = ? AND ts >= ? ORDER BY ms ASC`)
+    .all(deps.area, since) as { ms: number; ok: number }[]
+
+  if (rows.length === 0) return { count: 0, p50: 0, p95: 0, successRate: 0 }
+
+  const ms = rows.map((r) => r.ms)
+  const okCount = rows.reduce((s, r) => s + (r.ok ? 1 : 0), 0)
+  return {
+    count: rows.length,
+    p50: percentile(ms, 0.5),
+    p95: percentile(ms, 0.95),
+    successRate: okCount / rows.length
+  }
+}
+
+function percentile(sortedAsc: number[], q: number): number {
+  if (sortedAsc.length === 0) return 0
+  const idx = Math.min(sortedAsc.length - 1, Math.floor(q * sortedAsc.length))
+  return sortedAsc[idx]
+}
