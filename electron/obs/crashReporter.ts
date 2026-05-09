@@ -57,6 +57,47 @@ export function installCrashHooks(): void {
   })
 }
 
+function getAckedDir(): string {
+  const dir = join(getCrashesDir(), 'acked')
+  mkdirSync(dir, { recursive: true })
+  return dir
+}
+
+export function checkLastRun(): string[] {
+  const dir = getCrashesDir()
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.log'))
+    .map((f) => join(dir, f))
+}
+
+export function ack(file: string): void {
+  const acked = getAckedDir()
+  const dest = join(acked, file.split('/').pop() ?? 'unknown.log')
+  renameSync(file, dest)
+}
+
+const THIRTY_DAYS_MS = 30 * 86400 * 1000
+
+export function purgeOldAcked(opts: { now?: () => Date } = {}): void {
+  const now = (opts.now ?? (() => new Date()))().getTime()
+  const dir = join(getCrashesDir(), 'acked')
+  let entries: string[]
+  try {
+    entries = readdirSync(dir)
+  } catch {
+    return
+  }
+  for (const name of entries) {
+    const full = join(dir, name)
+    try {
+      const st = statSync(full)
+      if (now - st.mtimeMs > THIRTY_DAYS_MS) unlinkSync(full)
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 export function startElectronCrashReporter(): void {
   electronCrashReporter.start({
     uploadToServer: false,
