@@ -1,7 +1,7 @@
 import { app, BrowserWindow, powerMonitor } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
-import { logger as obsLogger } from './obs/logger'
+import { logger as obsLogger, rotateOnBoot } from './obs/logger'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
@@ -75,6 +75,8 @@ function createMainWindow(): BrowserWindow {
 async function bootstrap(): Promise<void> {
   await initLogger()
   await app.whenReady()
+  rotateOnBoot()
+  obsLogger().info('app', { op: 'boot', meta: { ts: new Date().toISOString() } })
   installCsp()
   initSafeStorageAvailability()
   registerHandlers(ipcHandlers)
