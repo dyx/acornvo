@@ -9,6 +9,7 @@ import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
 import { QuickSwitcher } from '@/components/search/QuickSwitcher'
 import { UpdateBanner } from '@/components/UpdateBanner'
+import { CrashBanner } from '@/components/CrashBanner'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
@@ -65,6 +66,7 @@ export function App(): JSX.Element {
   return (
     <div className="flex h-full flex-col">
       <TitleBar />
+      <CrashBanner />
       <UpdateBanner />
       <div className="flex flex-1 overflow-hidden">
         <AppRail />

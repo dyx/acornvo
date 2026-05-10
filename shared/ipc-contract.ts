@@ -536,6 +536,10 @@ export type IpcContract = {
 	  shell: {
 	    openExternal: (url: string) => void
 	  }
+	  crash: {
+	    ack: (file: string) => Promise<void>
+	    openLogsFolder: () => Promise<void>
+	  }
 }
 
 /**
@@ -568,6 +572,7 @@ export type IpcEventContract = {
   'update:download-progress': { percent: number; bytesPerSecond: number; total: number; transferred: number }
   'update:downloaded': { version: string }
   'update:error': { message: string }
+  'crash:detected': { files: string[] }
 }
 
 // --- chat namespace types (phase-16) ---

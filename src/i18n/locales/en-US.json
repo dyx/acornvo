@@ -493,6 +493,13 @@
       "stopStream": "Stop streaming"
     }
   },
+  "crash": {
+    "detectedLastRun": "Crash detected from last run ({{count}} log file)",
+    "detectedLastRun_plural": "Crashes detected from last run ({{count}} log files)",
+    "viewLogs": "View Logs",
+    "exportDiag": "Export Diagnostic",
+    "ignore": "Ignore"
+  },
   "telemetry": {
     "enable": "Enable telemetry",
     "description": "Aggregate anonymous usage stats (AI requests, tokens, clips, performance) daily. Data never leaves your device."
@@ -501,6 +508,9 @@
     "newVersion": "New version {{version}} is ready",
     "installNow": "Install now",
     "later": "Later",
-    "autoCheck": "Check for updates automatically"
+    "autoCheck": "Check for updates automatically",
+    "upToDate": "Acornvo is up to date",
+    "checkFailed": "Update check failed",
+    "available": "New version available"
   }
 }

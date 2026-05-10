@@ -177,6 +177,10 @@ const request: IpcClient<IpcContract> = {
   },
   shell: {
     openExternal: (url) => invoke('shell.openExternal', url)
+  },
+  crash: {
+    ack: (file: string) => invoke('crash.ack', file),
+    openLogsFolder: () => invoke('crash.openLogsFolder')
   }
 }
 

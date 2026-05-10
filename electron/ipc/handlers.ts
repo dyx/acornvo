@@ -27,6 +27,7 @@ import { perfHandlers as perfIpcHandlers } from './perf'
 import { appHandlers, licensesHandlers } from './app'
 import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
+import { crashHandlers } from './crash'
 import { getQueueBootstrap } from '../queue'
 import { registry } from '../agent/registry'
 import { approvalGate } from '../agent/approval'
@@ -181,5 +182,6 @@ export const ipcHandlers: HandlerMap = {
   app: appHandlers,
   licenses: licensesHandlers,
   update: updateHandlers,
-  shell: shellHandlers
+  shell: shellHandlers,
+  crash: crashHandlers
 }

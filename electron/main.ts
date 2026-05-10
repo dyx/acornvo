@@ -2,7 +2,7 @@ import { app, BrowserWindow, powerMonitor } from 'electron'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { logger as obsLogger, rotateOnBoot } from './obs/logger'
-import { installCrashHooks, purgeOldAcked, startElectronCrashReporter } from './obs/crashReporter'
+import { checkLastRun, installCrashHooks, purgeOldAcked, startElectronCrashReporter } from './obs/crashReporter'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
@@ -51,6 +51,10 @@ function createMainWindow(): BrowserWindow {
   })
 
   win.once('ready-to-show', () => {
+    const files = checkLastRun()
+    if (files.length > 0) {
+      win.webContents.send('crash:detected', { files })
+    }
     win.show()
     logger.info('app started', {
       version: app.getVersion(),
@@ -199,6 +203,14 @@ async function bootstrap(): Promise<void> {
   initBrowserSubsystem(mainWindow)
   const disposeIndexForwarders = attachIndexEventForwarders(mainWindow)
   app.on('will-quit', disposeIndexForwarders)
+
+  if (process.env.NODE_ENV === 'production') {
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow!.webContents.closeDevTools()
+      logger.warn('app', { op: 'devtools-blocked' })
+    })
+  }
+
   mainWindow.webContents.once('did-finish-load', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('bootstrap:ready', bootstrapResult)
