@@ -1,5 +1,6 @@
--- Acornvo consolidated schema (fresh install)
--- All tables in their final form. user_version = 11.
+-- Acornvo consolidated schema
+-- All tables in their final form. The migration runner sets user_version
+-- from the filename prefix (001).
 
 -- ============================================================
 -- files — document index (from md sync)
@@ -284,16 +285,3 @@ CREATE TABLE IF NOT EXISTS telemetry_local (
   meta TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(day, metric);
-
--- ============================================================
--- Upgrade: add columns that were introduced after the initial schema.
--- For fresh installs these fail with "duplicate column name" — the
--- migration runner silently skips them via isIdempotentError().
--- ============================================================
-ALTER TABLE files ADD COLUMN size_bytes INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE files ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE files ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE ai_usage ADD COLUMN session_id TEXT;
-
--- ============================================================
-PRAGMA user_version = 11;
