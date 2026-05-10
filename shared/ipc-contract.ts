@@ -522,6 +522,18 @@ export type IpcContract = {
 	  perf: {
 	    aggregates: (area: string, windowMs: number) => { count: number; p50: number; p95: number; successRate: number }
 	  }
+	  app: {
+	    runtimeInfo: () => { appVersion: string; gitHash: string; electron: string; chrome: string; node: string; platform: string; arch: string }
+	  }
+	  licenses: {
+	    read: () => { id: string; license: string; repository: string | null; publisher: string | null }[]
+	  }
+	  update: {
+	    checkManual: () => { status: 'up-to-date' | 'available' | 'failed'; version?: string; message?: string }
+	  }
+	  shell: {
+	    openExternal: (url: string) => void
+	  }
 }
 
 /**

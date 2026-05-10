@@ -14,7 +14,8 @@ const TABS: TabDef[] = [
   { to: '/settings/appearance', labelKey: 'settings.tab.appearance', testId: 'settings-rail-appearance' },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' },
-  { to: '/settings/observability', labelKey: 'settings.tab.observability', testId: 'settings-rail-observability' }
+  { to: '/settings/observability', labelKey: 'settings.tab.observability', testId: 'settings-rail-observability' },
+  { to: '/settings/about', labelKey: 'settings.tab.about', testId: 'settings-rail-about' }
 ]
 
 export function SettingsLayout({ children }: { children: ReactNode }): JSX.Element {

@@ -277,7 +277,8 @@
       "appearance": "Appearance",
       "ai": "AI",
       "browser": "Browser",
-      "observability": "Observability"
+      "observability": "Observability",
+      "about": "About"
     },
     "ai": {
       "profiles": "AI Profiles",
@@ -311,6 +312,22 @@
       "clearCookies": "Clear browser cookies",
       "clearCookiesConfirm": "Clear all browser cookies?"
     }
+  },
+  "about": {
+    "title": "About Acornvo",
+    "version": "Version",
+    "hash": "Build",
+    "runtime": "Runtime",
+    "platform": "Platform",
+    "licenses": "Open Source Licenses",
+    "licenses.expand": "Show all {{total}} licenses",
+    "licenses.collapse": "Show fewer",
+    "checkUpdate": "Check for Updates",
+    "checkUpdateBusy": "Checking...",
+    "upToDate": "Acornvo is up to date",
+    "updateAvailable": "Version {{version}} available",
+    "updateFailed": "Update check failed",
+    "website": "Website"
   },
   "browser": {
     "new_tab": {

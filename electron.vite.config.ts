@@ -1,8 +1,16 @@
 import { resolve, join } from 'path'
 import { cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
+
+function gitHash(): string {
+  if (process.env.NODE_ENV !== 'production') return 'dev'
+  try { return execSync('git rev-parse --short HEAD').toString('utf8').trim() }
+  catch { return 'dev' }
+}
+const HASH = JSON.stringify(gitHash())
 
 function copyPublicHosts(): Plugin {
   return {
@@ -39,6 +47,7 @@ function copyMigrationFiles(): Plugin {
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin(), copyMigrationFiles(), copyPublicHosts()],
+    define: { __GIT_HASH__: HASH },
     resolve: {
       alias: {
         '@shared': resolve(__dirname, 'shared')
@@ -55,6 +64,7 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    define: { __GIT_HASH__: HASH },
     resolve: {
       alias: {
         '@shared': resolve(__dirname, 'shared')
@@ -68,6 +78,7 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, 'src'),
+    define: { __GIT_HASH__: HASH },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),

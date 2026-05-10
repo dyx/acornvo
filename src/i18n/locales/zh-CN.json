@@ -308,7 +308,8 @@
       "appearance": "外观",
       "ai": "AI 提供商",
       "browser": "浏览器",
-      "observability": "可观测"
+      "observability": "可观测",
+      "about": "关于"
     },
     "ai": {
       "profiles": "AI 提供商",
@@ -342,6 +343,22 @@
       "clearCookies": "清除浏览器 Cookie",
       "clearCookiesConfirm": "确认清除所有浏览器 Cookie？"
     }
+  },
+  "about": {
+    "title": "关于 Acornvo",
+    "version": "版本",
+    "hash": "构建",
+    "runtime": "运行时",
+    "platform": "平台",
+    "licenses": "开源许可证",
+    "licenses.expand": "显示全部 {{total}} 个许可证",
+    "licenses.collapse": "收起",
+    "checkUpdate": "检查更新",
+    "checkUpdateBusy": "检查中…",
+    "upToDate": "Acornvo 已是最新版本",
+    "updateAvailable": "有新版本 {{version}} 可用",
+    "updateFailed": "检查更新失败",
+    "website": "官网"
   },
   "browser": {
     "new_tab": {

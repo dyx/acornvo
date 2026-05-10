@@ -24,6 +24,9 @@ import { aiHandlers } from './ai'
 import { createChatHandlers } from './chat'
 import { createQueueHandlers } from './queue'
 import { perfHandlers as perfIpcHandlers } from './perf'
+import { appHandlers, licensesHandlers } from './app'
+import { updateHandlers } from './update'
+import { shellHandlers } from './shell'
 import { getQueueBootstrap } from '../queue'
 import { registry } from '../agent/registry'
 import { approvalGate } from '../agent/approval'
@@ -174,5 +177,9 @@ export const ipcHandlers: HandlerMap = {
   ai: aiHandlers,
   chat: chatHandlers,
   queue: queueHandlers,
-  perf: perfIpcHandlers
+  perf: perfIpcHandlers,
+  app: appHandlers,
+  licenses: licensesHandlers,
+  update: updateHandlers,
+  shell: shellHandlers
 }

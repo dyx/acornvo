@@ -8,6 +8,7 @@ import { AppearanceTab } from '@/components/settings/AppearanceTab'
 import { AiTab } from '@/components/settings/AiTab'
 import { BrowserTab } from '@/components/settings/BrowserTab'
 import { ObservabilityTab } from '@/components/settings/ObservabilityTab'
+import { AboutTab } from '@/components/settings/AboutTab'
 import { ipc } from '@/ipc/client'
 
 function AiTabRoute(): JSX.Element {
@@ -28,6 +29,7 @@ export function Settings(): JSX.Element {
         <Route path="ai" element={<AiTabRoute />} />
         <Route path="browser" element={<BrowserTab />} />
         <Route path="observability" element={<ObservabilityTab />} />
+        <Route path="about" element={<AboutTab />} />
       </Routes>
     </SettingsLayout>
   )

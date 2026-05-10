@@ -17,6 +17,8 @@
     "pretest": "npm rebuild better-sqlite3",
     "predev": "node scripts/copy-sql-migrations.mjs",
     "dev": "electron-vite dev",
+    "generate:licenses": "node scripts/generate-licenses.mjs",
+    "prebuild": "npm run generate:licenses",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3 && node scripts/copy-vditor-assets.mjs",
     "build:unpack": "npm run build && electron-builder --dir",
