@@ -115,44 +115,52 @@ export function ChatInput(): JSX.Element {
   }, [send, cancelStream, isStreaming])
 
   return (
-    <div className="border-t border-border shrink-0" data-testid="chat-input">
-      <AttachmentChips />
-      <textarea
-        ref={textareaRef}
-        data-testid="chat-input-textarea"
-        rows={2}
-        placeholder={t('chat.input.placeholder')}
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        className="w-full resize-none bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
-        style={{ minHeight: 56, maxHeight: 240 }}
-      />
+    <div className="shrink-0 border-t border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-[28px] pb-[18px] pt-[12px]" data-testid="chat-input">
+      <div className="mx-auto max-w-[740px]">
+        <AttachmentChips />
+        <div className="relative rounded-xl border-[0.5px] border-[color:var(--color-line-2)] bg-[color:var(--color-paper)] p-[10px_12px]">
+          <textarea
+            ref={textareaRef}
+            data-testid="chat-input-textarea"
+            rows={2}
+            placeholder={t('chat.input.placeholder')}
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            className="w-full resize-none bg-transparent font-serif text-[13.5px] leading-[1.6] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-3)]"
+            style={{ minHeight: 56, maxHeight: 240 }}
+          />
 
-      {/* Button row */}
-      <div className="flex items-center justify-between px-3 pb-2">
-        <ProfileFooter />
-        {isStreaming ? (
-          <button
-            type="button"
-            data-testid="chat-input-stop"
-            onClick={() => { void cancelStream() }}
-            className="size-8 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex items-center justify-center"
-            aria-label={t('chat.input.stop')}
-          >
-            <Square className="size-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            data-testid="chat-input-send"
-            onClick={send}
-            disabled={!canSend}
-            className="size-8 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label={t('chat.input.send')}
-          >
-            <Send className="size-4" />
-          </button>
-        )}
+          {/* Button row */}
+          <div className="mt-1 flex items-center gap-[6px]">
+            <ProfileFooter />
+            <span className="flex-1" />
+            <span className="font-mono text-[10.5px] text-[color:var(--color-ink-4)]">
+              ⌘↵ {t('chat.input.send')}
+            </span>
+            {isStreaming ? (
+              <button
+                type="button"
+                data-testid="chat-input-stop"
+                onClick={() => { void cancelStream() }}
+                className="flex cursor-pointer items-center gap-[5px] rounded-[7px] border-none bg-destructive px-3 py-1.5 font-serif text-[12px] text-destructive-foreground hover:bg-destructive/90"
+                aria-label={t('chat.input.stop')}
+              >
+                <Square className="size-[11px]" /> {t('chat.input.stop')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="chat-input-send"
+                onClick={send}
+                disabled={!canSend}
+                className="flex cursor-pointer items-center gap-[5px] rounded-[7px] border-none bg-[color:var(--color-acorn)] px-3 py-1.5 font-serif text-[12px] text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={t('chat.input.send')}
+              >
+                <Send className="size-[11px] text-white" /> {t('chat.input.send')}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
