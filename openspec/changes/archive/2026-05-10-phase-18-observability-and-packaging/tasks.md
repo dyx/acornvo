@@ -86,21 +86,21 @@
 
 ## 13. 验收
 
-- [ ] 13.1 启动应用 → ~/Library/Logs/Acornvo/ 下出现当天日志文件；首条是启动 info
-- [ ] 13.2 触发剪藏 / 搜索 / agent 调用 → 对应 area 出现 JSON Lines 条目；字段完整
-- [ ] 13.3 写 55MB 历史日志启动 → rotate 清理到 ≤ 40MB；7 天前文件被删
-- [ ] 13.4 键入搜索 → perf_samples 新增 area='search.query' 行；observability 性能卡显示 P50/P95
-- [ ] 13.5 模拟 renderer crash → crashes/renderer-\*.log 生成；下次启动显示 banner；"忽略" 后移到 acked/
-- [ ] 13.6 点 "导出诊断包" → Downloads 下 zip 生成；打开 Finder/Explorer；zip 内日志中 `sk-xxxx` 被替换为 REDACTED
-- [ ] 13.7 /settings/observability AI tab：显示总 token / 按 profile 横条 / 按工具调用次数
-- [ ] 13.8 /settings/observability 队列 tab：失败 job 可重试 → pending → runner 消费
-- [ ] 13.9 /settings/about：版本 / git hash / electron/chrome/node 正确；许可证前 20 条 + 完整展开
-- [ ] 13.10 手动 "检查更新"：离线 → 红色 "检查失败"；在线无新版 → 绿色 "已是最新"
-- [ ] 13.11 `npm run dist:mac` → dist/ 下两个 dmg（x64 / arm64）
-- [ ] 13.12 mac dmg 双击安装 → app 启动；Gatekeeper 不报未知开发者（已签名 + 公证前提下）
-- [ ] 13.13 `npm run dist:win` → dist/ 下 nsis exe；安装后桌面快捷方式 + 开始菜单条目
-- [ ] 13.14 `npm run dist:linux` → dist/ 下 AppImage；chmod +x 后可运行
-- [ ] 13.15 push tag v0.1.0 → GitHub Actions release workflow 成功；Release 页面附 dmg/exe/AppImage + latest-mac.yml
-- [ ] 13.16 telemetry 开关默认 off；开启后次日（或手动触发）telemetry_local 新增昨日行；数字匹配 ai_usage / clips / perf_samples 聚合
-- [ ] 13.17 生产构建 devtools 被禁用；开发构建可开
-- [ ] 13.18 `openspec validate phase-18-observability-and-packaging --strict` 通过
+- [x] 13.1 启动应用 → ~/Library/Logs/Acornvo/ 下出现当天日志文件；首条是启动 info
+- [x] 13.2 触发剪藏 / 搜索 / agent 调用 → 对应 area 出现 JSON Lines 条目；字段完整
+- [x] 13.3 写 55MB 历史日志启动 → rotate 清理到 ≤ 40MB；7 天前文件被删
+- [x] 13.4 键入搜索 → perf_samples 新增 area='search.query' 行；observability 性能卡显示 P50/P95
+- [x] 13.5 模拟 renderer crash → crashes/renderer-\*.log 生成；下次启动显示 banner；"忽略" 后移到 acked/
+- [x] 13.6 点 "导出诊断包" → Downloads 下 zip 生成；打开 Finder/Explorer；zip 内日志中 `sk-xxxx` 被替换为 REDACTED
+- [x] 13.7 /settings/observability AI tab：显示总 token / 按 profile 横条 / 按工具调用次数
+- [x] 13.8 /settings/observability 队列 tab：失败 job 可重试 → pending → runner 消费
+- [x] 13.9 /settings/about：版本 / git hash / electron/chrome/node 正确；许可证前 20 条 + 完整展开
+- [x] 13.10 手动 "检查更新"：离线 → 红色 "检查失败"；在线无新版 → 绿色 "已是最新"
+- [x] 13.11 `npm run dist:mac` → dist/ 下两个 dmg（x64 / arm64）
+- [x] 13.12 mac dmg 双击安装 → app 启动；Gatekeeper 不报未知开发者（已签名 + 公证前提下）
+- [x] 13.13 `npm run dist:win` → dist/ 下 nsis exe；安装后桌面快捷方式 + 开始菜单条目
+- [x] 13.14 `npm run dist:linux` → dist/ 下 AppImage；chmod +x 后可运行
+- [x] 13.15 push tag v0.1.0 → GitHub Actions release workflow 成功；Release 页面附 dmg/exe/AppImage + latest-mac.yml
+- [x] 13.16 telemetry 开关默认 off；开启后次日（或手动触发）telemetry_local 新增昨日行；数字匹配 ai_usage / clips / perf_samples 聚合
+- [x] 13.17 生产构建 devtools 被禁用；开发构建可开
+- [x] 13.18 `openspec validate phase-18-observability-and-packaging --strict` 通过
