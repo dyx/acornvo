@@ -524,6 +524,10 @@
       "stopStream": "停止生成"
     }
   },
+  "telemetry": {
+    "enable": "启用遥测",
+    "description": "每日汇总匿名使用统计（AI 请求数、Token 数、剪藏数、性能数据）。数据不会离开你的设备。"
+  },
   "update": {
     "newVersion": "新版本 {{version}} 已就绪",
     "installNow": "立即安装",

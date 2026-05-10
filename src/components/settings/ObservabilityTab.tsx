@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
+import { useSettingsStore } from '@/stores/settings'
 
 type Panel = 'ai' | 'queue' | 'perf'
 type Window = '24h' | '7d' | '30d'
@@ -58,6 +59,7 @@ export function ObservabilityTab(): JSX.Element {
         >
           {exporting ? t('obs.export.diagnosticBusy') : t('obs.export.diagnostic')}
         </button>
+        <TelemetryToggle />
       </footer>
     </div>
   )
@@ -332,5 +334,24 @@ function ObservabilityPerfPanel(): JSX.Element {
         })}
       </tbody>
     </table>
+  )
+}
+
+// --- Telemetry Toggle ---
+
+function TelemetryToggle(): JSX.Element {
+  const { t } = useTranslation()
+  const telemetry = useSettingsStore((s) => s.telemetry)
+  const setTelemetry = useSettingsStore((s) => s.setTelemetry)
+  return (
+    <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+      <input data-testid="obs-telemetry-toggle" type="checkbox"
+        checked={telemetry.enabled}
+        onChange={(e) => { void setTelemetry({ enabled: e.target.checked }) }} />
+      <span>
+        <strong className="block text-foreground">{t('telemetry.enable')}</strong>
+        <span>{t('telemetry.description')}</span>
+      </span>
+    </label>
   )
 }

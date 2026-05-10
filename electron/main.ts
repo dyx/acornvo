@@ -23,11 +23,14 @@ import { initSafeStorageAvailability } from './settings/safe-storage-state'
 import { installSettingsBroadcaster } from './settings/broadcast'
 import { initAutoUpdate } from './update/updater'
 import type { QueueRunner } from './queue/runner'
+import { scheduleDailyTelemetry } from './services/telemetry/scheduler'
+import { getQueueBootstrap } from './queue'
 
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
 let queueRunner: QueueRunner | null = null
 let adBlockInstalled = false
+let telemetryHandle: { stop: () => void } | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -75,6 +78,22 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
+function applyTelemetrySetting(): void {
+  let enabled = false
+  try {
+    enabled = settingsStore.get('telemetry').enabled
+  } catch {
+    // DB may not be ready yet — use default (false)
+  }
+  const store = getQueueBootstrap()?.store
+  if (enabled && store && !telemetryHandle) {
+    telemetryHandle = scheduleDailyTelemetry({ store })
+  } else if ((!enabled || !store) && telemetryHandle) {
+    telemetryHandle.stop()
+    telemetryHandle = null
+  }
+}
+
 async function bootstrap(): Promise<void> {
   await initLogger()
   startElectronCrashReporter()
@@ -90,6 +109,10 @@ async function bootstrap(): Promise<void> {
   app.on('will-quit', disposeBroadcaster)
   const disposeSettingsBroadcaster = installSettingsBroadcaster()
   app.on('will-quit', disposeSettingsBroadcaster)
+  const disposeTelemetryListener = settingsStore.onChange((e) => {
+    if (e.ns === 'telemetry') applyTelemetrySetting()
+  })
+  app.on('will-quit', disposeTelemetryListener)
   const disposeDbSubscriber = groveService.onChange((payload) => {
     void (async () => {
       try {
@@ -125,6 +148,7 @@ async function bootstrap(): Promise<void> {
               getRenderers: () => BrowserWindow.getAllWindows().map((w) => w.webContents)
             })
             queueRunner.start()
+            applyTelemetrySetting()
           }
         }
       } catch (err) {
@@ -140,6 +164,10 @@ async function bootstrap(): Promise<void> {
     resetIndexer()
   })
   appLifecycle.onBeforeQuit(async () => {
+    if (telemetryHandle) {
+      telemetryHandle.stop()
+      telemetryHandle = null
+    }
     if (queueRunner) {
       try {
         await queueRunner.drainOnQuit(5_000)

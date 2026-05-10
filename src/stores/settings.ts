@@ -7,6 +7,7 @@ import type {
   AiSettings,
   BrowserSettings,
   UpdateSettings,
+  TelemetrySettings,
   SettingsChangedPayload
 } from '@shared/settings-types'
 
@@ -15,7 +16,8 @@ const DEFAULTS = {
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' } as AppearanceSettings,
   ai: { defaultProfileId: null } as AiSettings,
   browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
-  update: { autoCheck: true } as UpdateSettings
+  update: { autoCheck: true } as UpdateSettings,
+  telemetry: { enabled: false } as TelemetrySettings
 }
 
 interface SettingsState {
@@ -25,12 +27,14 @@ interface SettingsState {
   ai: AiSettings
   browser: BrowserSettings
   update: UpdateSettings
+  telemetry: TelemetrySettings
   loadAll: () => Promise<void>
   setGeneral: (patch: Partial<GeneralSettings>) => Promise<void>
   setAppearance: (patch: Partial<AppearanceSettings>) => Promise<void>
   setAi: (patch: Partial<AiSettings>) => Promise<void>
   setBrowser: (patch: Partial<BrowserSettings>) => Promise<void>
   setUpdate: (patch: Partial<UpdateSettings>) => Promise<void>
+  setTelemetry: (patch: Partial<TelemetrySettings>) => Promise<void>
   _applyChange: (payload: SettingsChangedPayload) => void
 }
 
@@ -39,14 +43,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...DEFAULTS,
 
   async loadAll() {
-    const [general, appearance, ai, browser, update] = await Promise.all([
+    const [general, appearance, ai, browser, update, telemetry] = await Promise.all([
       ipc.settings.get('general'),
       ipc.settings.get('appearance'),
       ipc.settings.get('ai'),
       ipc.settings.get('browser'),
-      ipc.settings.get('update')
+      ipc.settings.get('update'),
+      ipc.settings.get('telemetry')
     ])
-    set({ general, appearance, ai, browser, update, ready: true })
+    set({ general, appearance, ai, browser, update, telemetry, ready: true })
   },
 
   async setGeneral(patch) {
@@ -74,6 +79,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ update: next })
     await ipc.settings.set('update', patch)
   },
+  async setTelemetry(patch) {
+    const next = { ...get().telemetry, ...patch }
+    set({ telemetry: next })
+    await ipc.settings.set('telemetry', patch)
+  },
 
   _applyChange({ ns, key, newValue }) {
     const current = get()
@@ -83,6 +93,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     else if (ns === 'ai') set({ ai: { ...current.ai, [key]: newValue } as AiSettings })
     else if (ns === 'browser') set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
     else if (ns === 'update') set({ update: { ...current.update, [key]: newValue } as UpdateSettings })
+    else if (ns === 'telemetry') set({ telemetry: { ...current.telemetry, [key]: newValue } as TelemetrySettings })
   }
 }))
 

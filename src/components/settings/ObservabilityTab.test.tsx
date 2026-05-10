@@ -29,10 +29,16 @@ vi.mock('@/ipc/client', () => ({
     },
     ops: {
       exportDiagnostic: vi.fn()
-    }
+    },
+    settings: {
+      get: vi.fn().mockResolvedValue({ enabled: false }),
+      set: vi.fn().mockResolvedValue({ ok: true })
+    },
+    on: vi.fn(() => () => {})
   }
 }))
 
+import { useSettingsStore } from '@/stores/settings'
 import { ObservabilityTab } from './ObservabilityTab'
 
 describe('ObservabilityTab', () => {
@@ -40,6 +46,7 @@ describe('ObservabilityTab', () => {
     if (!i18n.isInitialized) await i18n.init()
   })
   beforeEach(() => {
+    useSettingsStore.setState(useSettingsStore.getInitialState(), true)
     cleanup()
   })
   afterEach(() => cleanup())
@@ -50,6 +57,25 @@ describe('ObservabilityTab', () => {
     expect(screen.getByTestId('obs-tab-queue')).toBeInTheDocument()
     expect(screen.getByTestId('obs-tab-perf')).toBeInTheDocument()
     expect(screen.getByTestId('obs-export-diagnostic')).toBeInTheDocument()
+  })
+
+  it('renders the telemetry toggle in the footer', async () => {
+    render(<ObservabilityTab />)
+    const toggle = await screen.findByTestId('obs-telemetry-toggle')
+    expect(toggle).toBeInTheDocument()
+  })
+
+  it('telemetry toggle is unchecked by default', async () => {
+    render(<ObservabilityTab />)
+    const toggle = await screen.findByTestId('obs-telemetry-toggle') as HTMLInputElement
+    expect(toggle.checked).toBe(false)
+  })
+
+  it('telemetry toggle is checked when telemetry is enabled', async () => {
+    useSettingsStore.setState({ telemetry: { enabled: true } })
+    render(<ObservabilityTab />)
+    const toggle = await screen.findByTestId('obs-telemetry-toggle') as HTMLInputElement
+    expect(toggle.checked).toBe(true)
   })
 
   it('switches to the queue panel when clicking the queue tab', async () => {

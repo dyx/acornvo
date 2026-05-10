@@ -493,6 +493,10 @@
       "stopStream": "Stop streaming"
     }
   },
+  "telemetry": {
+    "enable": "Enable telemetry",
+    "description": "Aggregate anonymous usage stats (AI requests, tokens, clips, performance) daily. Data never leaves your device."
+  },
   "update": {
     "newVersion": "New version {{version}} is ready",
     "installNow": "Install now",
