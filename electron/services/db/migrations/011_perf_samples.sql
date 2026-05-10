@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS telemetry_local (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(day, metric);
 
-CREATE INDEX IF NOT EXISTS idx_ops_log_ts ON ops_log(ts DESC);
+-- idx_ops_log_ts on ops_log(ts DESC) is already created by migration 003;
+-- not re-creating here to avoid failure when ops_log table doesn't exist.
 
 PRAGMA user_version = 11;
