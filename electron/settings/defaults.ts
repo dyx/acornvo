@@ -4,6 +4,7 @@ import type {
   AppearanceSettings,
   AiSettings,
   BrowserSettings,
+  UpdateSettings,
   SettingsNamespace,
   SettingsByNs
 } from '@shared/settings-types'
@@ -13,14 +14,16 @@ export const DEFAULTS: {
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
+  update: UpdateSettings
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off' },
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
   ai: { defaultProfileId: null },
-  browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
+  browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' },
+  update: { autoCheck: true }
 }
 
-const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = ['general', 'appearance', 'ai', 'browser']
+const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = ['general', 'appearance', 'ai', 'browser', 'update']
 
 export function isKnownNamespace(value: unknown): value is SettingsNamespace {
   return typeof value === 'string' && (KNOWN_NAMESPACES as readonly string[]).includes(value)

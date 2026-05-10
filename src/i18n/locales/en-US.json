@@ -389,18 +389,18 @@
     "bookmark.empty": "No bookmarks yet"
   },
   "jobs": {
-  "status": {
-    "pending": "Pending",
-    "running": "Running",
-    "done": "Done",
-    "failed": "Failed",
-    "canceled": "Canceled"
-  },
-  "action": {
-    "retry": "Retry",
-    "cancel": "Cancel"
-  },
-  "clearDone": "Clear completed"
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "canceled": "Canceled"
+    },
+    "action": {
+      "retry": "Retry",
+      "cancel": "Cancel"
+    },
+    "clearDone": "Clear completed"
   },
   "chat": {
     "untitled": "Untitled chat",
@@ -492,5 +492,11 @@
       "showHelp": "Show shortcuts",
       "stopStream": "Stop streaming"
     }
+  },
+  "update": {
+    "newVersion": "New version {{version}} is ready",
+    "installNow": "Install now",
+    "later": "Later",
+    "autoCheck": "Check for updates automatically"
   }
 }

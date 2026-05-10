@@ -155,6 +155,28 @@ const request: IpcClient<IpcContract> = {
       ipcRenderer.on(channel, listener);
       return () => ipcRenderer.removeListener(channel, listener);
     },
+  },
+  queue: {
+    health: () => invoke('queue.health'),
+    recent: () => invoke('queue.recent'),
+    retry: (id) => invoke('queue.retry', id),
+    discard: (id) => invoke('queue.discard', id)
+  },
+  perf: {
+    aggregates: (area, windowMs) => invoke('perf.aggregates', area, windowMs)
+  },
+  app: {
+    runtimeInfo: () => invoke('app.runtimeInfo')
+  },
+  licenses: {
+    read: () => invoke('licenses.read')
+  },
+  update: {
+    checkManual: () => invoke('update.checkManual'),
+    installNow: () => invoke('update.installNow')
+  },
+  shell: {
+    openExternal: (url) => invoke('shell.openExternal', url)
   }
 }
 

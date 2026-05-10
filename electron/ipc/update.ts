@@ -1,6 +1,11 @@
+import { autoUpdater } from 'electron-updater'
+import { checkForUpdatesManual } from '../update/updater'
+
 export const updateHandlers = {
   async checkManual() {
-    // Placeholder — will be wired in phase 8.1
-    return { status: 'up-to-date' as const }
+    return checkForUpdatesManual()
+  },
+  async installNow() {
+    autoUpdater.quitAndInstall()
   }
 }

@@ -33,13 +33,18 @@ export interface BrowserSettings {
   searchEngine: SearchEngine
 }
 
-export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser'
+export interface UpdateSettings {
+  autoCheck: boolean
+}
+
+export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'update'
 
 export type SettingsByNs = {
   general: GeneralSettings
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
+  update: UpdateSettings
 }
 
 /**

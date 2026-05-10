@@ -420,18 +420,18 @@
     "bookmark.empty": "还没有书签"
   },
   "jobs": {
-  "status": {
-    "pending": "等待中",
-    "running": "进行中",
-    "done": "已完成",
-    "failed": "失败",
-    "canceled": "已取消"
-  },
-  "action": {
-    "retry": "重试",
-    "cancel": "取消"
-  },
-  "clearDone": "清除已完成"
+    "status": {
+      "pending": "等待中",
+      "running": "进行中",
+      "done": "已完成",
+      "failed": "失败",
+      "canceled": "已取消"
+    },
+    "action": {
+      "retry": "重试",
+      "cancel": "取消"
+    },
+    "clearDone": "清除已完成"
   },
   "chat": {
     "untitled": "未命名对话",
@@ -523,5 +523,11 @@
       "showHelp": "显示快捷键",
       "stopStream": "停止生成"
     }
+  },
+  "update": {
+    "newVersion": "新版本 {{version}} 已就绪",
+    "installNow": "立即安装",
+    "later": "稍后",
+    "autoCheck": "自动检查更新"
   }
 }

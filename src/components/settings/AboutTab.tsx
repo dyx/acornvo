@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
+import { useSettingsStore } from '@/stores/settings'
 import { ExternalLink, RefreshCw } from 'lucide-react'
 
 interface LicenseEntry {
@@ -62,6 +63,8 @@ export function AboutTab(): JSX.Element {
         <CheckUpdateButton />
         <WebsiteLinkButton />
       </footer>
+
+      <AutoCheckToggle />
     </div>
   )
 }
@@ -182,5 +185,28 @@ function WebsiteLinkButton(): JSX.Element {
       <ExternalLink className="size-4" />
       {t('about.website')}
     </button>
+  )
+}
+
+function AutoCheckToggle(): JSX.Element | null {
+  const { t } = useTranslation()
+  const autoCheck = useSettingsStore((s) => s.update.autoCheck)
+  const setUpdate = useSettingsStore((s) => s.setUpdate)
+
+  return (
+    <label
+      data-testid="about-auto-check"
+      className="flex items-center gap-2 pt-3 text-sm cursor-pointer"
+    >
+      <input
+        type="checkbox"
+        checked={autoCheck}
+        onChange={(e) => {
+          void setUpdate({ autoCheck: e.target.checked })
+        }}
+        className="size-4"
+      />
+      <span>{t('update.autoCheck')}</span>
+    </label>
   )
 }

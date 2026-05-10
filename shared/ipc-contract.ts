@@ -75,7 +75,8 @@ export type {
   GeneralSettings,
   AppearanceSettings,
   AiSettings,
-  BrowserSettings
+  BrowserSettings,
+  UpdateSettings
 } from './settings-types'
 
 // --- jobs namespace types (phase-14) ---
@@ -529,7 +530,8 @@ export type IpcContract = {
 	    read: () => { id: string; license: string; repository: string | null; publisher: string | null }[]
 	  }
 	  update: {
-	    checkManual: () => { status: 'up-to-date' | 'available' | 'failed'; version?: string; message?: string }
+	    checkManual: () => Promise<{ status: 'up-to-date' | 'available' | 'failed'; version?: string; message?: string }>
+	    installNow: () => Promise<void>
 	  }
 	  shell: {
 	    openExternal: (url: string) => void
@@ -562,6 +564,10 @@ export type IpcEventContract = {
   'browser:tabStateChanged': TabStateChangedPayload
   'settings:changed': SettingsChangedPayload
   'jobs:changed': Job
+  'update:available': { version: string }
+  'update:download-progress': { percent: number; bytesPerSecond: number; total: number; transferred: number }
+  'update:downloaded': { version: string }
+  'update:error': { message: string }
 }
 
 // --- chat namespace types (phase-16) ---

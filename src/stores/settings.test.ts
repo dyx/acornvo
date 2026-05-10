@@ -9,6 +9,7 @@ vi.mock('@/ipc/client', () => ({
         if (ns === 'appearance') return { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' }
         if (ns === 'ai') return { defaultProfileId: null }
         if (ns === 'browser') return { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
+        if (ns === 'update') return { autoCheck: true }
         throw new Error('unknown ns')
       }),
       set: vi.fn().mockResolvedValue({ ok: true })
@@ -34,9 +35,9 @@ describe('useSettingsStore', () => {
     expect(s.browser.blockAds).toBe(true)
   })
 
-  it('loadAll fetches all 4 namespaces and sets ready=true', async () => {
+  it('loadAll fetches all 5 namespaces and sets ready=true', async () => {
     await useSettingsStore.getState().loadAll()
-    expect(ipc.settings.get).toHaveBeenCalledTimes(4)
+    expect(ipc.settings.get).toHaveBeenCalledTimes(5)
     expect(useSettingsStore.getState().ready).toBe(true)
   })
 
