@@ -247,6 +247,44 @@
       "rename": "重命名"
     }
   },
+  "obs": {
+    "title": "可观测",
+    "tabs": {
+      "ai": "AI",
+      "queue": "队列",
+      "perf": "性能"
+    },
+    "export": {
+      "diagnostic": "导出诊断",
+      "diagnosticBusy": "导出中..."
+    },
+    "window": {
+      "24h": "24小时",
+      "7d": "7天",
+      "30d": "30天"
+    },
+    "ai": {
+      "totalRequests": "请求数",
+      "totalTokens": "Token数",
+      "estimatedCost": "预估费用",
+      "unknownProfile": "未知",
+      "unknownModel": "未知"
+    },
+    "queue": {
+      "pending": "等待中",
+      "running": "运行中",
+      "failed": "失败",
+      "retry": "重试",
+      "discard": "丢弃"
+    },
+    "perf": {
+      "area": "区域",
+      "count": "计数",
+      "p50": "P50",
+      "p95": "P95",
+      "successRate": "成功率"
+    }
+  },
   "settings": {
     "title": "设置",
     "common": {
@@ -269,7 +307,8 @@
       "general": "通用",
       "appearance": "外观",
       "ai": "AI 提供商",
-      "browser": "浏览器"
+      "browser": "浏览器",
+      "observability": "可观测"
     },
     "ai": {
       "profiles": "AI 提供商",

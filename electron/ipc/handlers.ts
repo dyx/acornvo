@@ -22,6 +22,8 @@ import { settingsHandlers } from './settings'
 import { createJobsHandlers } from './jobs'
 import { aiHandlers } from './ai'
 import { createChatHandlers } from './chat'
+import { createQueueHandlers } from './queue'
+import { perfHandlers as perfIpcHandlers } from './perf'
 import { getQueueBootstrap } from '../queue'
 import { registry } from '../agent/registry'
 import { approvalGate } from '../agent/approval'
@@ -48,6 +50,14 @@ const jobsHandlers = createJobsHandlers({
     const b = getQueueBootstrap()
     if (!b) return { error: 'E_NOT_FOUND' }
     return b.runner.cancel(id)
+  }
+})
+
+const queueHandlers = createQueueHandlers({
+  getStore: () => {
+    const b = getQueueBootstrap()
+    if (!b) throw new IpcError('E_NOT_FOUND', 'no grove opened (queue not initialized)')
+    return b.store
   }
 })
 
@@ -162,5 +172,7 @@ export const ipcHandlers: HandlerMap = {
   settings: settingsHandlers,
   jobs: jobsHandlers,
   ai: aiHandlers,
-  chat: chatHandlers
+  chat: chatHandlers,
+  queue: queueHandlers,
+  perf: perfIpcHandlers
 }

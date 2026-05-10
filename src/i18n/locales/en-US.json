@@ -216,6 +216,44 @@
       "rename": "Renamed"
     }
   },
+  "obs": {
+    "title": "Observability",
+    "tabs": {
+      "ai": "AI",
+      "queue": "Queue",
+      "perf": "Perf"
+    },
+    "export": {
+      "diagnostic": "Export Diagnostic",
+      "diagnosticBusy": "Exporting..."
+    },
+    "window": {
+      "24h": "24h",
+      "7d": "7d",
+      "30d": "30d"
+    },
+    "ai": {
+      "totalRequests": "Requests",
+      "totalTokens": "Tokens",
+      "estimatedCost": "Est. Cost",
+      "unknownProfile": "Unknown",
+      "unknownModel": "Unknown"
+    },
+    "queue": {
+      "pending": "Pending",
+      "running": "Running",
+      "failed": "Failed",
+      "retry": "Retry",
+      "discard": "Discard"
+    },
+    "perf": {
+      "area": "Area",
+      "count": "Count",
+      "p50": "P50",
+      "p95": "P95",
+      "successRate": "Success"
+    }
+  },
   "settings": {
     "title": "Settings",
     "common": {
@@ -238,7 +276,8 @@
       "general": "General",
       "appearance": "Appearance",
       "ai": "AI",
-      "browser": "Browser"
+      "browser": "Browser",
+      "observability": "Observability"
     },
     "ai": {
       "profiles": "AI Profiles",

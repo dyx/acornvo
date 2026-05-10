@@ -509,7 +509,19 @@ export type IpcContract = {
     approveTool: (callId: string, opts?: { editedArgs?: unknown }) => { ok: true }
     rejectTool: (callId: string) => { ok: true }
     subscribeStream: (sessionId: string) => { ok: true; channel: string }
-  }
+	  }
+	  queue: {
+	    health: () => { pending: number; running: number; failed: number }
+	    recent: () => {
+	      failed: { id: string; kind: string; last_error: string; updated_at: string }[]
+	      opsLog: { ts: string; area: string; message: string }[]
+	    }
+	    retry: (id: string) => void
+	    discard: (id: string) => void
+	  }
+	  perf: {
+	    aggregates: (area: string, windowMs: number) => { count: number; p50: number; p95: number; successRate: number }
+	  }
 }
 
 /**
