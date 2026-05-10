@@ -1,5 +1,6 @@
 import * as opsLog from '../services/ops/log'
 import type { Op, OpsItem } from '@shared/ops-types'
+import { exportDiagnosticBundle } from '../obs/diagnostic'
 
 export async function handleOpsList(
   input: { limit: number; offset: number; op?: Op }
@@ -8,5 +9,6 @@ export async function handleOpsList(
 }
 
 export const opsHandlers = {
-  list: handleOpsList
+  list: handleOpsList,
+  exportDiagnostic: () => exportDiagnosticBundle()
 }

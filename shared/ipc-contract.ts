@@ -390,6 +390,7 @@ export type IpcContract = {
       items: OpsItem[]
       total: number
     }
+    exportDiagnostic: () => Promise<string>
   }
   conflict: {
     list: (opts?: { limit?: number; offset?: number }) => ConflictListResult

@@ -84,7 +84,8 @@ const request: IpcClient<IpcContract> = {
     stats: () => invoke('search.stats')
   },
   ops: {
-    list: (opts) => invoke('ops.list', opts)
+    list: (opts) => invoke('ops.list', opts),
+    exportDiagnostic: () => invoke('ops.exportDiagnostic')
   },
   browser: {
     createTab: (url) => invoke('browser.createTab', url),
