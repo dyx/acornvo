@@ -1,88 +1,88 @@
 ## 1. 数据库与依赖
 
-- [ ] 1.1 `migrations/010_perf_samples.sql`：建 perf_samples + telemetry_local + 补 ops_log 索引；`user_version=10`
-- [ ] 1.2 `package.json`：新增依赖 `electron-builder`、`electron-updater`、可选 `electron-log`、`license-checker`
+- [x] 1.1 `migrations/010_perf_samples.sql`：建 perf_samples + telemetry_local + 补 ops_log 索引；`user_version=10`
+- [x] 1.2 `package.json`：新增依赖 `electron-builder`、`electron-updater`、可选 `electron-log`、`license-checker`
 
 ## 2. Logger
 
-- [ ] 2.1 `electron/obs/logger.ts`：JSON Lines 输出；按平台目录；按天文件名；10MB 分片
-- [ ] 2.2 启动 rotate：7 天 + 50MB → 40MB 两阶段裁剪
-- [ ] 2.3 关键 area 替换 console：indexer / clipper / ai / agent / app / queue / update（逐文件迁移）
-- [ ] 2.4 开发构建镜像到 stdout；生产仅写文件
+- [x] 2.1 `electron/obs/logger.ts`：JSON Lines 输出；按平台目录；按天文件名；10MB 分片
+- [x] 2.2 启动 rotate：7 天 + 50MB → 40MB 两阶段裁剪
+- [x] 2.3 关键 area 替换 console：indexer / clipper / ai / agent / app / queue / update（逐文件迁移）
+- [x] 2.4 开发构建镜像到 stdout；生产仅写文件
 
 ## 3. Perf 采样
 
-- [ ] 3.1 `electron/obs/perf.ts`：`start(area, meta) → end({ok,meta})`；写 perf_samples
-- [ ] 3.2 key path 埋点：project.open / indexer.scan / indexer.update / clipper.save / clipper.ai-review / agent.step / search.query
-- [ ] 3.3 滚动清理：启动时 > 100000 行 → 删到 80000
-- [ ] 3.4 `getAggregates(area, window)` 实现 P50 / P95 / successRate / count
+- [x] 3.1 `electron/obs/perf.ts`：`start(area, meta) → end({ok,meta})`；写 perf_samples
+- [x] 3.2 key path 埋点：project.open / indexer.scan / indexer.update / clipper.save / clipper.ai-review / agent.step / search.query
+- [x] 3.3 滚动清理：启动时 > 100000 行 → 删到 80000
+- [x] 3.4 `getAggregates(area, window)` 实现 P50 / P95 / successRate / count
 
 ## 4. Crash Reporter
 
-- [ ] 4.1 `electron/obs/crashReporter.ts`：`app.on('render-process-gone')` / `process.uncaughtException` / `unhandledRejection` → 写 crashes/ 日志
-- [ ] 4.2 调 `crashReporter.start({ uploadToServer:false })`；minidumps 落到 crashes/minidumps/
-- [ ] 4.3 `checkLastRun()` 扫描未 ack；`ack(file)` 移到 crashes/acked/
-- [ ] 4.4 acked 超 30 天自动删
+- [x] 4.1 `electron/obs/crashReporter.ts`：`app.on('render-process-gone')` / `process.uncaughtException` / `unhandledRejection` → 写 crashes/ 日志
+- [x] 4.2 调 `crashReporter.start({ uploadToServer:false })`；minidumps 落到 crashes/minidumps/
+- [x] 4.3 `checkLastRun()` 扫描未 ack；`ack(file)` 移到 crashes/acked/
+- [x] 4.4 acked 超 30 天自动删
 
 ## 5. Diagnostic bundle
 
-- [ ] 5.1 `electron/obs/diagnostic.ts`：`exportDiagnosticBundle()` 生成 zip
-- [ ] 5.2 内容：7 天 log + crashes/\*.log + about.json + env.json
-- [ ] 5.3 API key 正则扫描替换 `[REDACTED:api-key]`（zip 内副本；原文件保留）
-- [ ] 5.4 输出到 Downloads/Acornvo-Diagnostics-YYYYMMDD-HHMMSS.zip + `shell.showItemInFolder`
+- [x] 5.1 `electron/obs/diagnostic.ts`：`exportDiagnosticBundle()` 生成 zip
+- [x] 5.2 内容：7 天 log + crashes/\*.log + about.json + env.json
+- [x] 5.3 API key 正则扫描替换 `[REDACTED:api-key]`（zip 内副本；原文件保留）
+- [x] 5.4 输出到 Downloads/Acornvo-Diagnostics-YYYYMMDD-HHMMSS.zip + `shell.showItemInFolder`
 
 ## 6. Observability 页面
 
-- [ ] 6.1 `src/pages/settings/Observability.tsx`：tab 布局（AI / 队列 / 性能）+ 底部导出按钮
-- [ ] 6.2 AI 使用卡：24h/7d/30d 切换；数字卡片；profile 横条；工具聚合；日期折线
-- [ ] 6.3 队列卡：pending/running/failed 计数；最近 20 条失败 + 重试/丢弃；最近 20 条 ops_log；5s 轮询
-- [ ] 6.4 性能卡：每 area 的 P50/P95/成功率；阈值红色标注
-- [ ] 6.5 settings 侧边新增 "可观测" tab；路由 /settings/observability
+- [x] 6.1 `src/pages/settings/Observability.tsx`：tab 布局（AI / 队列 / 性能）+ 底部导出按钮
+- [x] 6.2 AI 使用卡：24h/7d/30d 切换；数字卡片；profile 横条；工具聚合；日期折线
+- [x] 6.3 队列卡：pending/running/failed 计数；最近 20 条失败 + 重试/丢弃；最近 20 条 ops_log；5s 轮询
+- [x] 6.4 性能卡：每 area 的 P50/P95/成功率；阈值红色标注
+- [x] 6.5 settings 侧边新增 "可观测" tab；路由 /settings/observability
 
 ## 7. About 页面
 
-- [ ] 7.1 Vite define 注入 `__GIT_HASH__`；开发 build 显示 "dev"
-- [ ] 7.2 `src/pages/settings/About.tsx`：版本 / git hash / 运行时 / 平台架构
-- [ ] 7.3 依赖清单：构建前跑 `license-checker` 生成 `build/licenses.json`；about 页面读取显示前 20 条 + 完整清单展开
-- [ ] 7.4 "检查更新" 按钮 → 对接 auto-update 手动触发
-- [ ] 7.5 官网链接 → `shell.openExternal`
-- [ ] 7.6 settings 侧边新增 "关于" tab；路由 /settings/about
+- [x] 7.1 Vite define 注入 `__GIT_HASH__`；开发 build 显示 "dev"
+- [x] 7.2 `src/pages/settings/About.tsx`：版本 / git hash / 运行时 / 平台架构
+- [x] 7.3 依赖清单：构建前跑 `license-checker` 生成 `build/licenses.json`；about 页面读取显示前 20 条 + 完整清单展开
+- [x] 7.4 "检查更新" 按钮 → 对接 auto-update 手动触发
+- [x] 7.5 官网链接 → `shell.openExternal`
+- [x] 7.6 settings 侧边新增 "关于" tab；路由 /settings/about
 
 ## 8. Auto Update
 
-- [ ] 8.1 `electron/update/updater.ts`：`initAutoUpdate()` 启动 60s + 每 4h；`checkForUpdatesManual()`
-- [ ] 8.2 事件桥接到主窗口：available / download-progress / downloaded / error
-- [ ] 8.3 downloaded 后显示 banner（"有新版本 vX.Y.Z" + 立即安装 / 稍后）；quitAndInstall
-- [ ] 8.4 `settings.update.autoCheck` 开关持久；默认 true
-- [ ] 8.5 错误静默 logger.error；不打扰用户
+- [x] 8.1 `electron/update/updater.ts`：`initAutoUpdate()` 启动 60s + 每 4h；`checkForUpdatesManual()`
+- [x] 8.2 事件桥接到主窗口：available / download-progress / downloaded / error
+- [x] 8.3 downloaded 后显示 banner（"有新版本 vX.Y.Z" + 立即安装 / 稍后）；quitAndInstall
+- [x] 8.4 `settings.update.autoCheck` 开关持久；默认 true
+- [x] 8.5 错误静默 logger.error；不打扰用户
 
 ## 9. Telemetry
 
-- [ ] 9.1 settings 新增 `telemetry.enabled` 默认 false
-- [ ] 9.2 telemetry_local 表（migration 010 已建）
-- [ ] 9.3 每日 00:10 聚合 job（kind='telemetry-aggregate'）复用 phase 14 队列；写昨日行
-- [ ] 9.4 observability 页面底部 "本地遥测" 开关 + 说明文案
-- [ ] 9.5 关闭开关停止新增聚合；历史数据保留
+- [x] 9.1 settings 新增 `telemetry.enabled` 默认 false
+- [x] 9.2 telemetry_local 表（migration 010 已建）
+- [x] 9.3 每日 00:10 聚合 job（kind='telemetry-aggregate'）复用 phase 14 队列；写昨日行
+- [x] 9.4 observability 页面底部 "本地遥测" 开关 + 说明文案
+- [x] 9.5 关闭开关停止新增聚合；历史数据保留
 
 ## 10. Packaging
 
-- [ ] 10.1 `electron-builder.yml`：appId / productName / files / mac (dmg x64+arm64) / win (nsis) / linux (AppImage) / publish generic
-- [ ] 10.2 `build/` 资源：icon.icns / icon.ico / icon.png / entitlements.mac.plist
-- [ ] 10.3 npm scripts：dist:mac / dist:win / dist:linux / dist:all / notarize:mac / generate:licenses
-- [ ] 10.4 `.github/workflows/release.yml`：tag push 触发；三平台矩阵；secrets 引用；上传 Release artifacts
-- [ ] 10.5 README "Install / Update / Troubleshoot" 段 + 签名证书获取指引
+- [x] 10.1 `electron-builder.yml`：appId / productName / files / mac (dmg x64+arm64) / win (nsis) / linux (AppImage) / publish generic
+- [x] 10.2 `build/` 资源：icon.icns / icon.ico / icon.png / entitlements.mac.plist
+- [x] 10.3 npm scripts：dist:mac / dist:win / dist:linux / dist:all / notarize:mac / generate:licenses
+- [x] 10.4 `.github/workflows/release.yml`：tag push 触发；三平台矩阵；secrets 引用；上传 Release artifacts
+- [x] 10.5 README "Install / Update / Troubleshoot" 段 + 签名证书获取指引
 
 ## 11. App shell 接线
 
-- [ ] 11.1 主进程 app ready → `initAutoUpdate()`（若 settings.autoCheck）
-- [ ] 11.2 主窗口 ready-to-show → `crashReporter.checkLastRun()` → 若非空 IPC 通知渲染器显示 banner
-- [ ] 11.3 渲染器 banner 组件：三按钮（查看日志 / 导出诊断包 / 忽略）
-- [ ] 11.4 生产构建：`webContents.on('devtools-opened')` 立即 close + 记日志
+- [x] 11.1 主进程 app ready → `initAutoUpdate()`（若 settings.autoCheck）
+- [x] 11.2 主窗口 ready-to-show → `crashReporter.checkLastRun()` → 若非空 IPC 通知渲染器显示 banner
+- [x] 11.3 渲染器 banner 组件：三按钮（查看日志 / 导出诊断包 / 忽略）
+- [x] 11.4 生产构建：`webContents.on('devtools-opened')` 立即 close + 记日志
 
 ## 12. i18n
 
-- [ ] 12.1 `obs.*` / `about.*` / `crash.*` / `update.*` / `telemetry.*` keys
-- [ ] 12.2 zh-CN + en 同步
+- [x] 12.1 `obs.*` / `about.*` / `crash.*` / `update.*` / `telemetry.*` keys
+- [x] 12.2 zh-CN + en 同步
 
 ## 13. 验收
 
