@@ -32,8 +32,10 @@
     "notarize:mac": "node scripts/notarize-mac.mjs"
   },
   "dependencies": {
+    "@ant-design/x": "^2.7.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@langchain/react": "^1.0.2",
     "@mozilla/readability": "^0.5.0",
     "@node-rs/jieba": "^2.0.1",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -58,6 +60,7 @@
     "gray-matter": "^4.0.3",
     "i18next": "^26.0.7",
     "iconv-lite": "^0.7.2",
+    "langchain": "^1.4.0",
     "lucide-react": "^1.11.0",
     "postcss": "^8.5.10",
     "radix-ui": "^1.4.3",
