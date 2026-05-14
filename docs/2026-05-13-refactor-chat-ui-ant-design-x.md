@@ -1,13 +1,5 @@
 # PRD · 子项目 B · Chat UI 迁移到 @ant-design/x
 
-> 日期：2026-05-13
-> 状态：已设计，未实施
-> 关联：本 session 同期产出的子项目 A PRD（AI 内核 → LangChain v1）
-> 前置条件：A 已完成并稳定（A 保证 IPC 契约 `AgentEvent` 不变 —— 即 §A.K1）
-> 后续动作：本 session 完成后，按 OpenSpec 工作流另起 `phase-21-chat-ui-ant-design-x` change
-
----
-
 ## 1 · 背景与目标
 
 ### 1.1 现状
@@ -473,7 +465,7 @@ bumpFocusInput / bumpShowShortcuts
 
 ## 10 · 实施分块（仅供后续 plan 参考）
 
-> 本 session 不实施。按 OpenSpec change `phase-21-chat-ui-ant-design-x` 走 propose → plan → apply。每个 block 完成后整套 chat 用例应通过。
+> 本 session 不实施。按 OpenSpec change `phase-20-chat-ui-ant-design-x` 走 propose → plan → apply。每个 block 完成后整套 chat 用例应通过。
 
 1. **基础设施**：装包；`src/lib/theme.ts`；`App.tsx` 用 XProvider 包根；其他页面冒烟（不影响）；i18n locale 桥
 2. **派生层与 roles**：写 `bubbleSelectors.ts`、`chatRoles.tsx`、`ExternalLinkAnchor`；单测
@@ -536,14 +528,3 @@ bumpFocusInput / bumpShowShortcuts
 14. 删除会话确认：DeleteSessionDialog 替换为 antd Modal，行为一致
 15. 错误：error 事件 → `ChatBanner`（antd Alert）展示
 
----
-
-## 14 · 未来（不在 B 范围内）
-
-- `Sources` 接 RAG 引用文献展示
-- `Think` / `ThoughtChain` 接 reasoning tokens（依赖 §A 的 ChatAnthropic.thinking 配置）
-- `Suggestion` 接 slash commands（`/search`、`/summarize` 等）
-- `Attachments` 的 file preview Drawer
-- `Notification` 替代现有 radix toast（app-level 通知统一）
-- Cmd+K 命令面板（独立 phase）
-- Welcome onboarding tour（首次启动引导）

@@ -1,12 +1,5 @@
 # PRD · 子项目 A · AI 内核迁移到 LangChain v1
 
-> 日期：2026-05-13
-> 状态：已设计，未实施
-> 关联：本 session 同期产出的子项目 B PRD（Chat UI → @ant-design/x）
-> 后续动作：本 session 完成后，按 OpenSpec 工作流另起 `phase-20-ai-langchain-migration` change（propose → plan → apply → archive）
-
----
-
 ## 1 · 背景与目标
 
 ### 1.1 现状
@@ -349,7 +342,7 @@ export function normalizeLLMError(err: unknown): LlmError & Error {
 
 ## 10 · 实施分块（仅供后续 plan 参考）
 
-> 本 session 不实施。后续按 OpenSpec change `phase-20-ai-langchain-migration` 走 propose → plan → apply。
+> 本 session 不实施。后续按 OpenSpec change `phase-19-ai-langchain-migration` 走 propose → plan → apply。
 
 1. **依赖与 model-factory** —— 装包；写 `model-factory.ts` + 单测；旧 client.ts 暂存不动
 2. **Reviewer 切换** —— `reviewer.ts` 重写；测试对齐；reviewer 已可独立走通
@@ -382,11 +375,3 @@ export function normalizeLLMError(err: unknown): LlmError & Error {
 4. **Cancel 后 thread 清理策略** —— 用户 cancel 后是否立即清 checkpointer 中该 thread 状态？倾向保留 24h 供"重连"，过期再清；放 plan 阶段定。
 
 ---
-
-## 13 · 未来（不在 A 范围内）
-
-- 新增 provider：Azure OpenAI / Google Gemini / AWS Bedrock —— LangChain 已支持，加 `model-factory.ts` switch 分支即可
-- LangSmith tracing 接入
-- Sub-agent / multi-agent 编排（如让"理果" agent 与"松语" agent 协作）
-- RAG / 向量库集成（与现有向量库规划合并）
-- Streaming thinking / reasoning tokens —— 配 ChatAnthropic.thinking 暴露给前端（B 阶段决策）
