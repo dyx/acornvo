@@ -38,7 +38,7 @@
 
 ## 6. Agent Runner + Stream Translator（block 4）
 
-- [ ] 6.1 新建 `electron/agent/stream-translator.ts`：实现 LangGraph 事件 → AgentEvent 的 8 个映射场景（见 design.md 表）；含 AIMessage.id 幂等去重 helper
+- [ ] 6.1 扩 `shared/agent-types.ts`：`tool.start` 与 `tool.result` 事件类型添加可选 `callId?: string` 字段（K1 例外清单第 2 条，供 phase-20 `bubbleSelectors` 按 callId 折叠工具调用与结果用）；新建 `electron/agent/stream-translator.ts` 实现 LangGraph 事件 → AgentEvent 的 8 个映射场景（见 design.md 表，含 `tool.start.callId` = `AIMessage.tool_calls[i].id`、`tool.result.callId` = `ToolMessage.tool_call_id` 的透传）；含 AIMessage.id 幂等去重 helper
 - [ ] 6.2 写 `electron/agent/stream-translator.test.ts`：覆盖全部 8 个映射场景
 - [ ] 6.3 新建 `electron/agent/runner.ts`：实现 `runAgent`；调 `agent.stream({ messages: [完整历史] }, { configurable: { thread_id }, streamMode: ['updates','messages'], signal })`；attachments 注入 pre-user message；persistence 通过 stream-translator 回调写 session_messages / tool_calls
 - [ ] 6.4 在 `electron/ai/prompts/chat-agent.ts` 把导出从 `{ role:'system', content }` 改为 `systemPrompt: string`；其他调用方调整

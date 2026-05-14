@@ -15,6 +15,7 @@ AI 链路当前完全手写：4 份 provider HTTP client（约 600 LOC）、手�
 - **新能力：app 重启后扫描未 resolve interrupt 重 emit `tool.approval-needed`**（启动钩子）
 - **行为差异（BREAKING 仅对内部 step.warning 事件）**：去除单工具串行约束，跟随 LangGraph v1 默认并行执行 tool_calls；不再 emit `step.warning`
 - **AgentEvent IPC 契约保持不变**（K1）：stream-translator 在 runner 内部把 LangGraph 事件翻译回现有 AgentEvent，前端零改动
+- **K1 例外清单第 2 条（additive 扩展）**：`tool.start` 与 `tool.result` 事件添加可选字段 `callId?: string`，由 stream-translator 透传 LangGraph 的 `tool_call_id`；旧前端消费者忽略字段无影响；新前端（phase-20 `bubbleSelectors`）据此把工具调用与结果按 callId 折叠进对应 assistant 消息的 ThoughtChain
 
 ## Capabilities
 

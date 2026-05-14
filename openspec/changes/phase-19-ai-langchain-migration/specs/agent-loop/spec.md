@@ -80,16 +80,19 @@
 runner SHALL 通过 `streamWriter.emit(event)` 按发生时序发送以下事件类型（按需出现，未发生的类型 MUST 省略）：
 - `step.start { step }`
 - `token { text }`（流式文本片段）
-- `tool.start { tool, args }`
+- `tool.start { tool, args, callId? }`
 - `tool.approval-needed { callId, tool, args }`
-- `tool.result { tool, result }`
+- `tool.result { tool, result, callId? }`
 - `message.appended { message }`
 - `usage { promptTokens, completionTokens, model }`
 - `canceled`
 - `done`
 - `error { error }`
 
-事件协议 MUST 保持与现行 IPC 契约完全一致（K1）。`step.warning` 事件类型保留在协议中以兼容旧 renderer 解析逻辑，但 runner **不再** emit 该事件（见下文「并行工具调用」决策）。
+事件协议 MUST 保持与现行 IPC 契约完全一致（K1），**除以下两项 additive 例外**：
+
+1. `step.warning` 事件类型保留在协议中以兼容旧 renderer 解析逻辑，但 runner **不再** emit 该事件（见下文「并行工具调用」决策）
+2. `tool.start` 与 `tool.result` 事件添加可选字段 `callId?: string`：由 stream-translator 透传 LangGraph 的 `tool_call_id`（`tool.start.callId` = `AIMessage.tool_calls[i].id`；`tool.result.callId` = `ToolMessage.tool_call_id`）。旧前端消费者忽略字段无影响；phase-20 `bubbleSelectors` 据此按 callId 折叠工具调用与结果。`shared/agent-types.ts` 中类型同步扩展。
 
 #### Scenario: 事件顺序
 - **WHEN** 一步非工具回答

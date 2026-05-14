@@ -69,7 +69,10 @@
 
 **理由**：前端 UI 已稳定；本次只换内核不动外壳；acceptance 测试不动是迁移正确性的核心证据。
 
-**例外**：内部 `step.warning` 事件不再触发（因并行工具决策见下），但事件类型保留在协议中以避免 renderer 解析失败。
+**例外清单**：
+
+1. 内部 `step.warning` 事件不再触发（因并行工具决策见下），但事件类型保留在协议中以避免 renderer 解析失败
+2. **`tool.start` 与 `tool.result` 事件添加可选字段 `callId?: string`**（additive 扩展）：由 stream-translator 透传 LangGraph 的 `tool_call_id`（`tool.start.callId` = `AIMessage.tool_calls[i].id`；`tool.result.callId` = `ToolMessage.tool_call_id`）。旧前端消费者忽略字段无影响；phase-20 `bubbleSelectors` 据此把工具调用与结果按 callId 精准折叠进对应 assistant 消息的 ThoughtChain（替代旧实现的本地 nextMsgId 生成）。`shared/agent-types.ts` 中相应类型同步扩展。
 
 ### T1 · 工具迁移路径
 
@@ -105,8 +108,8 @@
 | LangGraph 输出 | 翻译为 AgentEvent | 备注 |
 |---|---|---|
 | `["updates", { model: { messages: [AIMessage] } }]` 无 tool_calls | `message.appended`（assistant）+ 写库 | 终止 |
-| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ `tool.start` | 一步可多 tool_calls |
-| `["updates", { tools: { messages: [ToolMessage] } }]` | `tool.result` + 写库（role=tool） | |
+| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ 对每个 tool_call emit `tool.start { tool, args, callId }` | callId = `tool_calls[i].id`；K1 例外第 2 条 |
+| `["updates", { tools: { messages: [ToolMessage] } }]` | `tool.result { tool, result, callId }` + 写库（role=tool, toolCallId=callId） | callId = `ToolMessage.tool_call_id`；K1 例外第 2 条 |
 | `["messages", [AIMessageChunk, metadata]]` | `token { text }` | 仅 model 节点的 chunk |
 | `result.__interrupt__` 含 action_requests | `tool.approval-needed { callId, tool, args }` | callId = interrupt id |
 | LangChain 抛非 AbortError 异常 | `error { error: normalize(...) }` | 走 normalize-errors |
