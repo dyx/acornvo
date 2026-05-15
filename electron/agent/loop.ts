@@ -20,7 +20,7 @@ export interface RunAgentDeps {
   };
   registry: LocalRegistry;
   approval: ApprovalGate;
-  systemPrompt: () => { role: 'system'; content: string };
+  systemPrompt: () => string | { role: 'system'; content: string };
   vaultRoot: string;
   cancel: AbortSignal;
   clipsGet?: (id: number) => Promise<{ body: string } | null>;
@@ -57,8 +57,13 @@ export async function runAgent({ sessionId, userText, profileId, history, deps, 
     const p = getPerf()
     const end = p?.start('agent.step', { step, sessionId })
     try {
+      const sysContent = deps.systemPrompt();
+      const sysMessage =
+        typeof sysContent === 'string'
+          ? { role: 'system' as const, content: sysContent }
+          : sysContent;
       const llmMessages: { role: string; content: string; toolCalls?: any; toolCallId?: string }[] = [
-        deps.systemPrompt(),
+        sysMessage,
       ];
       if (preUserBlock) {
         llmMessages.push({ role: 'user', content: preUserBlock });
