@@ -1,24 +1,24 @@
 ## 1. 依赖与脚手架
 
-- [ ] 1.1 在 package.json 添加 `langchain`、`@langchain/core`、`@langchain/openai`、`@langchain/anthropic`、`@langchain/ollama`、`@langchain/langgraph`、`@langchain/langgraph-checkpoint-sqlite`；锁版本
-- [ ] 1.2 在 package.json 移除（AI 链路中的）`eventsource-parser`；保留 `ajv` 给业务别处使用，但确认 AI 链路不再 import
-- [ ] 1.3 `pnpm install` 并提交 lockfile；验证 Electron 打包不破
+- [x] 1.1 在 package.json 添加 `langchain`、`@langchain/core`、`@langchain/openai`、`@langchain/anthropic`、`@langchain/ollama`、`@langchain/langgraph`、`@langchain/langgraph-checkpoint-sqlite`；锁版本
+- [x] 1.2 在 package.json 移除（AI 链路中的）`eventsource-parser`；保留 `ajv` 给业务别处使用，但确认 AI 链路不再 import
+- [x] 1.3 `pnpm install` 并提交 lockfile；验证 Electron 打包不破
 
 ## 2. Model Factory（block 1）
 
-- [ ] 2.1 新建 `electron/ai/model-factory.ts`：实现 `buildChatModel(profile)`，覆盖 openai / openai-compatible / anthropic / ollama 四个分支
-- [ ] 2.2 实现 LRU 缓存（max=8），key 含 `id::provider::model::baseUrl::apiKeyHash`
-- [ ] 2.3 在 `settings-effects` 中接入缓存失效（profile 更新时按 `p.id` 前缀清除）
-- [ ] 2.4 写 `electron/ai/model-factory.test.ts`：覆盖四个 provider 构造正确性、baseURL/apiKey/temperature 传递、缓存命中、profile 更新后失效
+- [x] 2.1 新建 `electron/ai/model-factory.ts`：实现 `buildChatModel(profile)`，覆盖 openai / openai-compatible / anthropic / ollama 四个分支
+- [x] 2.2 实现 LRU 缓存（max=8），key 含 `id::provider::model::baseUrl::apiKeyHash`
+- [x] 2.3 在 `settings-effects` 中接入缓存失效（profile 更新时按 `p.id` 前缀清除）
+- [x] 2.4 写 `electron/ai/model-factory.test.ts`：覆盖四个 provider 构造正确性、baseURL/apiKey/temperature 传递、缓存命中、profile 更新后失效
 
 ## 3. 错误归一化（block 1）
 
-- [ ] 3.1 新建 `electron/ai/normalize-errors.ts`：实现 `normalizeLLMError(err)`，覆盖 AbortError 透传、LangChain provider 错误、HTTP status 兜底、Zod 解析失败、未知
-- [ ] 3.2 写 `electron/ai/normalize-errors.test.ts`：每种错误类型至少一个用例
+- [x] 3.1 新建 `electron/ai/normalize-errors.ts`：实现 `normalizeLLMError(err)`，覆盖 AbortError 透传、LangChain provider 错误、HTTP status 兜底、Zod 解析失败、未知
+- [x] 3.2 写 `electron/ai/normalize-errors.test.ts`：每种错误类型至少一个用例
 
 ## 4. Reviewer 切换（block 2）
 
-- [ ] 4.1 把 `electron/ai/prompts/review-clip.ts` 的 schema 改写为 Zod；render 仍返回 `{ system, user }`
+- [x] 4.1 把 `electron/ai/prompts/review-clip.ts` 的 schema 改写为 Zod；render 仍返回 `{ system, user }`
 - [ ] 4.2 重写 `electron/ai/reviewer.ts`：用 `buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(messages)`；保留 frontmatter 写回、mtime 校验、`E_*` 错误码语义；catch 走 `normalizeLLMError`
 - [ ] 4.3 改写 `electron/ai/reviewer.test.ts`：mock `BaseChatModel.withStructuredOutput`；保留原行为对等表；删除 markdown 剥离、Ajv 校验相关测试
 - [ ] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
