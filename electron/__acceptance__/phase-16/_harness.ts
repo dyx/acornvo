@@ -6,12 +6,17 @@ import { tmpdir } from 'node:os';
 import { runMigrations } from '../../services/db/migrations';
 import { dbService } from '../../services/db';
 import { createSessions } from '../../agent/sessions';
-import { createRegistry } from '../../agent/registry';
 import { createApproval } from '../../agent/approval';
 import { createConcurrencyGate } from '../../agent/concurrency';
-import { bootstrapAgent } from '../../agent/bootstrap';
 import { createChatHandlers } from '../../ipc/chat';
-import type { ChatWithToolsResult } from '../../../shared/agent-types';
+import type { ChatWithToolsResult, Tool } from '../../../shared/agent-types';
+
+// Legacy registry shape — Plan 3 removed registry.ts. These acceptance tests
+// still drive the legacy loop, so we provide an inline empty stub.
+type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
+function createRegistry(): LocalRegistry {
+  return { list: () => [], get: () => undefined };
+}
 
 export interface Rig {
   db: Database.Database;
@@ -46,7 +51,6 @@ export function setup(opts?: { globalCap?: number }): Rig {
   };
 
   const registry = createRegistry();
-  bootstrapAgent(registry);
   const approval = createApproval();
   const concurrency = createConcurrencyGate({ globalCap: opts?.globalCap ?? 4 });
   const sessions = createSessions();

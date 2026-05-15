@@ -1,7 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runAgent } from './loop';
-import { createRegistry } from './registry';
 import { createApproval } from './approval';
+
+// Inline stub for the deleted `./registry` module. Plan 6 will delete loop.ts
+// entirely; until then these tests verify the legacy path against an empty
+// registry stub (the tests already wire tools through `registry.register`).
+function createRegistry() {
+  const tools = new Map<string, { name: string; description: string; parameters: object; sideEffect: boolean; execute: (...a: unknown[]) => unknown }>();
+  return {
+    register(t: { name: string; description: string; parameters: object; sideEffect: boolean; execute: (...a: unknown[]) => unknown }) {
+      tools.set(t.name, t);
+    },
+    list() {
+      return [...tools.values()];
+    },
+    get(name: string) {
+      return tools.get(name);
+    },
+  };
+}
 
 const STREAM = () => {
   const events: any[] = [];

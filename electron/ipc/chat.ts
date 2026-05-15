@@ -1,5 +1,11 @@
-import type { Registry } from '../agent/registry';
+import type { Tool } from '../../shared/agent-types';
 import type { ApprovalGate } from '../agent/approval';
+
+// Stub of the deleted `agent/registry` shape — Plan 3 dropped the registry
+// but the legacy loop in `agent/loop.ts` still expects a list/get pair. The
+// runner consumes `agentTools` directly and ignores this field.
+type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
+const EMPTY_REGISTRY: LocalRegistry = { list: () => [], get: () => undefined };
 import type { ConcurrencyGate } from '../agent/concurrency';
 import type { SessionsDao } from '../agent/sessions';
 import type { RendererTarget } from '../agent/streamWriter';
@@ -9,7 +15,9 @@ import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
 import { IpcError } from '../../shared/ipc-contract';
 
 export interface ChatDeps {
-  registry: Registry;
+  /** Legacy field, optional. The new runner ignores it; only the deprecated
+   *  `loop.ts` path reads `deps.registry.list()`. Defaults to an empty stub. */
+  registry?: LocalRegistry;
   approval: ApprovalGate;
   concurrency: ConcurrencyGate;
   sessions: SessionsDao;
@@ -62,7 +70,7 @@ export function createChatHandlers(deps: ChatDeps) {
         deps: {
           llmClient: deps.llmClient,
           sessions: deps.sessions,
-          registry: deps.registry,
+          registry: deps.registry ?? EMPTY_REGISTRY,
           approval: deps.approval,
           systemPrompt: () =>
             chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot()), locale: 'zh' }),

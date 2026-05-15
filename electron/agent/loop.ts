@@ -1,6 +1,9 @@
 import type { AgentEvent, Tool, ToolCall, ToolResult, SessionMessage, RunAgentArgs, Attachment } from '../../shared/agent-types';
-import type { Registry } from './registry';
 import type { ApprovalGate } from './approval';
+
+// Local stub of the deleted `./registry` interface to keep this legacy loop
+// alive until Plan 6 deletes the file outright.
+type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
 import { aiUsage } from '../ai/usage';
 import { collectAttachmentContext } from './attachments';
 import { getPerf } from '../obs/perf';
@@ -15,7 +18,7 @@ export interface RunAgentDeps {
     recordToolCall: (sessionId: string, tc: ToolCall, opts: { sideEffect: boolean; messageId?: number }) => Promise<string>;
     finishToolCall: (rowId: string, fields: { result?: ToolResult; approved?: boolean | null; error?: string }) => Promise<void>;
   };
-  registry: Registry;
+  registry: LocalRegistry;
   approval: ApprovalGate;
   systemPrompt: () => { role: 'system'; content: string };
   vaultRoot: string;
