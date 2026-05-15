@@ -1,25 +1,27 @@
-import type { Tool } from '../../../shared/agent-types';
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';
 import { reviewClip } from '../../ai/reviewer';
 
-const tool: Tool<{ clipId: string; force?: boolean }, unknown> = {
-  name: 'clip_summary',
-  description: 'Generate (or re-fetch the cached) AI summary for a clipped article. Returns the summary, tags, and review timestamp. Pass `force: true` to re-run even if a recent review exists.',
-  parameters: {
-    type: 'object',
-    properties: {
-      clipId: { type: 'string', description: 'Clip ID — find these by searching files where frontmatter.kind === "clip".' },
-      force: { type: 'boolean', description: 'Re-run review even if cached.' },
-    },
-    required: ['clipId'],
-  },
-  sideEffect: false,
-  async execute(args) {
-    const clipId = Number(args.clipId);
-    if (!Number.isFinite(clipId) || clipId < 1) {
-      return { ok: false as const, error: 'E_INVALID_ARGS', detail: 'clipId must be a positive integer' };
+const ClipSummarySchema = z.object({
+  clipId: z
+    .string()
+    .min(1)
+    .describe('Clip ID — find these by searching files where frontmatter.kind === "clip".'),
+  force: z.boolean().optional().describe('Re-run review even if cached.'),
+});
+
+export const clipSummaryTool = tool(
+  async ({ clipId, force }) => {
+    const num = Number(clipId);
+    if (!Number.isFinite(num) || num < 1) {
+      return {
+        ok: false as const,
+        error: 'E_INVALID_ARGS',
+        detail: 'clipId must be a positive integer',
+      };
     }
     try {
-      const r = await reviewClip(clipId, { force: !!args.force });
+      const r = await reviewClip(num, { force: !!force });
       return {
         ok: true as const,
         data: {
@@ -30,9 +32,17 @@ const tool: Tool<{ clipId: string; force?: boolean }, unknown> = {
           cacheHit: r.cacheHit,
         },
       };
-    } catch (e: any) {
-      return { ok: false as const, error: e?.code ?? 'E_REVIEW_FAILED', detail: e?.message };
+    } catch (e) {
+      const err = e as { code?: string; message?: string };
+      return { ok: false as const, error: err.code ?? 'E_REVIEW_FAILED', detail: err.message };
     }
   },
-};
-export default tool;
+  {
+    name: 'clip_summary',
+    description:
+      'Generate (or re-fetch the cached) AI summary for a clipped article. Returns the summary, tags, and review timestamp. Pass `force: true` to re-run even if a recent review exists.',
+    schema: ClipSummarySchema,
+  }
+);
+
+export default clipSummaryTool;
