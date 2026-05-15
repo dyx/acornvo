@@ -5,36 +5,55 @@ import { migrationsDir } from '../../services/db/migrations/index';
 
 vi.mock('../../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
 import { dbService } from '../../services/db';
-import listTags from './list_tags';
+import { listTagsTool } from './list_tags';
 
 let db: Database.Database;
+
 beforeEach(() => {
   vi.resetAllMocks();
   db = new Database(':memory:');
   runMigrations(db, migrationsDir());
-  (dbService.requireCurrent as any).mockReturnValue(db);
-  for (const [name, n] of [['ml', 9], ['music', 4], ['movie', 7], ['blog', 1]] as const) {
-    db.prepare("INSERT INTO tags (name, usage_count) VALUES (?, ?)").run(name, n);
+  (dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue(db);
+  for (const [name, n] of [
+    ['ml', 9],
+    ['music', 4],
+    ['movie', 7],
+    ['blog', 1],
+  ] as const) {
+    db.prepare('INSERT INTO tags (name, usage_count) VALUES (?, ?)').run(name, n);
   }
 });
 
-describe('list_tags', () => {
+describe('list_tags tool', () => {
   it('returns all tags sorted by usage desc when no prefix', async () => {
-    const r: any = await listTags.execute({ limit: 10 } as any, { sessionId: 's', vaultRoot: '/v', signal: new AbortController().signal, log: () => {} });
-    expect(r.items.map((t: any) => t.name)).toEqual(['ml', 'movie', 'music', 'blog']);
+    const r = (await listTagsTool.invoke({ limit: 10 })) as {
+      items: Array<{ name: string; usage_count: number }>;
+    };
+    expect(r.items.map((t) => t.name)).toEqual(['ml', 'movie', 'music', 'blog']);
   });
 
   it('filters by prefix', async () => {
-    const r: any = await listTags.execute({ prefix: 'm' } as any, { sessionId: 's', vaultRoot: '/v', signal: new AbortController().signal, log: () => {} });
-    const names = r.items.map((t: any) => t.name);
+    const r = (await listTagsTool.invoke({ prefix: 'm' })) as {
+      items: Array<{ name: string }>;
+    };
+    const names = r.items.map((t) => t.name);
     expect(names).toContain('ml');
     expect(names).toContain('music');
     expect(names).not.toContain('blog');
   });
 
-  it('clamps limit to 1..200, default 50', async () => {
-    expect(listTags.parameters).toMatchObject({ type: 'object' });
-    const r: any = await listTags.execute({ limit: 9999 } as any, { sessionId: 's', vaultRoot: '/v', signal: new AbortController().signal, log: () => {} });
+  it('caps limit at 200', async () => {
+    const r = (await listTagsTool.invoke({ limit: 200 })) as { items: unknown[] };
     expect(r.items.length).toBeLessThanOrEqual(200);
+  });
+
+  it('rejects limit > 200 via Zod schema', async () => {
+    await expect(listTagsTool.invoke({ limit: 9999 })).rejects.toThrow();
+  });
+
+  it('exposes LangChain tool shape', () => {
+    expect(listTagsTool.name).toBe('list_tags');
+    expect(listTagsTool.schema).toBeDefined();
+    expect(typeof listTagsTool.invoke).toBe('function');
   });
 });
