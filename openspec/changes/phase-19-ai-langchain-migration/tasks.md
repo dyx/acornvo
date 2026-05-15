@@ -21,7 +21,7 @@
 - [x] 4.1 把 `electron/ai/prompts/review-clip.ts` 的 schema 改写为 Zod；render 仍返回 `{ system, user }`
 - [x] 4.2 重写 `electron/ai/reviewer.ts`：用 `buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(messages)`；保留 frontmatter 写回、mtime 校验、`E_*` 错误码语义；catch 走 `normalizeLLMError`
 - [x] 4.3 改写 `electron/ai/reviewer.test.ts`：mock `BaseChatModel.withStructuredOutput`；保留原行为对等表；删除 markdown 剥离、Ajv 校验相关测试
-- [x] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
+- [ ] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
 - [x] 4.5 调整 `electron/queue/handlers/ai-review-clip.ts`：错误映射改为消费 `normalizeLLMError` 输出；行为不变
 
 ## 5. 工具重写（block 3）
