@@ -47,13 +47,27 @@ export function normalizeLLMError(raw: unknown): NormalizedLlmError {
   // 1) AbortError — re-throw as-is (caller maps to `canceled`).
   if (isAbort(raw)) throw raw;
 
-  const e = asError(raw) as Error & {
+  // Read fields off the raw value first so plain object errors (e.g.
+  // `{ status: 503, message: 'down' }`) don't lose their properties when
+  // wrapped via `asError`.
+  const source = (raw && typeof raw === 'object' ? raw : {}) as {
     code?: string;
     name?: string;
     status?: number;
     response?: { status?: number };
     httpStatus?: number;
     providerMessage?: string;
+    message?: string;
+  };
+  const wrapped = asError(raw);
+  const e = {
+    message: source.message ?? wrapped.message,
+    name: source.name ?? wrapped.name,
+    code: source.code,
+    status: source.status,
+    response: source.response,
+    httpStatus: source.httpStatus,
+    providerMessage: source.providerMessage,
   };
 
   // 2) Pre-coded errors — pass through.
