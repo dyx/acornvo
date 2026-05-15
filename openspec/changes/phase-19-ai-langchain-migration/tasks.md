@@ -19,19 +19,19 @@
 ## 4. Reviewer 切换（block 2）
 
 - [x] 4.1 把 `electron/ai/prompts/review-clip.ts` 的 schema 改写为 Zod；render 仍返回 `{ system, user }`
-- [ ] 4.2 重写 `electron/ai/reviewer.ts`：用 `buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(messages)`；保留 frontmatter 写回、mtime 校验、`E_*` 错误码语义；catch 走 `normalizeLLMError`
-- [ ] 4.3 改写 `electron/ai/reviewer.test.ts`：mock `BaseChatModel.withStructuredOutput`；保留原行为对等表；删除 markdown 剥离、Ajv 校验相关测试
-- [ ] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
-- [ ] 4.5 调整 `electron/queue/handlers/ai-review-clip.ts`：错误映射改为消费 `normalizeLLMError` 输出；行为不变
+- [x] 4.2 重写 `electron/ai/reviewer.ts`：用 `buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(messages)`；保留 frontmatter 写回、mtime 校验、`E_*` 错误码语义；catch 走 `normalizeLLMError`
+- [x] 4.3 改写 `electron/ai/reviewer.test.ts`：mock `BaseChatModel.withStructuredOutput`；保留原行为对等表；删除 markdown 剥离、Ajv 校验相关测试
+- [x] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
+- [x] 4.5 调整 `electron/queue/handlers/ai-review-clip.ts`：错误映射改为消费 `normalizeLLMError` 输出；行为不变
 
 ## 5. 工具重写（block 3）
 
-- [ ] 5.1 重写 `electron/agent/tools/search-files.ts` 为 `tool(fn, { name, description, schema: z.object(...) })`；execute 内含路径/参数限制逻辑
-- [ ] 5.2 重写 `electron/agent/tools/read-file.ts`：Zod schema + 内嵌 `safeResolve` + 60000 字截断
-- [ ] 5.3 重写 `electron/agent/tools/list-tags.ts`：Zod schema + 上限裁剪
-- [ ] 5.4 重写 `electron/agent/tools/update-frontmatter.ts`：Zod schema（含 `reason: z.string().min(1)`）+ 内嵌 `safeResolve` + null 删字段语义
-- [ ] 5.5 重写 `electron/agent/tools/clip-summary.ts`：Zod schema + 调 reviewer
-- [ ] 5.6 新建 `electron/agent/tools/index.ts` 导出 5 个工具数组
+- [x] 5.1 重写 `electron/agent/tools/search-files.ts` 为 `tool(fn, { name, description, schema: z.object(...) })`；execute 内含路径/参数限制逻辑
+- [x] 5.2 重写 `electron/agent/tools/read-file.ts`：Zod schema + 内嵌 `safeResolve` + 60000 字截断
+- [x] 5.3 重写 `electron/agent/tools/list-tags.ts`：Zod schema + 上限裁剪
+- [x] 5.4 重写 `electron/agent/tools/update-frontmatter.ts`：Zod schema（含 `reason: z.string().min(1)`）+ 内嵌 `safeResolve` + null 删字段语义
+- [x] 5.5 重写 `electron/agent/tools/clip-summary.ts`：Zod schema + 调 reviewer
+- [x] 5.6 新建 `electron/agent/tools/index.ts` 导出 5 个工具数组
 - [ ] 5.7 删除 `electron/agent/registry.ts` + `registry.test.ts`
 - [ ] 5.8 删除 `electron/ai/parse-tool-args.ts` + 单测
 - [ ] 5.9 工具单元测试：每个工具的核心场景（成功、错误码、路径越狱、schema 校验失败）
