@@ -79,4 +79,22 @@ describe('update_frontmatter tool', () => {
     expect(updateFrontmatterTool.schema).toBeDefined();
     expect(typeof updateFrontmatterTool.invoke).toBe('function');
   });
+
+  it('throws when vaultRoot is missing from configurable', async () => {
+    await expect(
+      updateFrontmatterTool.invoke(
+        { path: 'a.md', patch: {}, reason: 'r' },
+        { configurable: {} }
+      )
+    ).rejects.toThrow(/vaultRoot missing/);
+  });
+
+  it('Zod rejects empty reason before runtime check fires', async () => {
+    await expect(
+      updateFrontmatterTool.invoke(
+        { path: 'a.md', patch: {}, reason: '' },
+        { configurable: { vaultRoot: '/tmp' } }
+      )
+    ).rejects.toThrow();
+  });
 });

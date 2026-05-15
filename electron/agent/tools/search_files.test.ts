@@ -62,4 +62,8 @@ describe('search_files tool', () => {
   it('rejects empty query via Zod schema', async () => {
     await expect(searchFilesTool.invoke({ query: '' } as { query: string })).rejects.toThrow();
   });
+
+  it('rejects limit > 20 via Zod schema', async () => {
+    await expect(searchFilesTool.invoke({ query: 'q', limit: 50 })).rejects.toThrow();
+  });
 });

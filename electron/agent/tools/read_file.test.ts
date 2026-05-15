@@ -62,4 +62,10 @@ describe('read_file tool', () => {
   it('rejects empty path via Zod schema', async () => {
     await expect(readFileTool.invoke({ path: '' }, cfg())).rejects.toThrow();
   });
+
+  it('throws when vaultRoot is missing from configurable', async () => {
+    await expect(readFileTool.invoke({ path: 'a.md' }, { configurable: {} })).rejects.toThrow(
+      /vaultRoot missing/
+    );
+  });
 });
