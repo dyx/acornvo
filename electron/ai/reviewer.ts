@@ -1,12 +1,15 @@
-import type { AiReviewResult, LlmError, LlmErrorCode } from '@shared/ai-types';
+import type { AiReviewResult, LlmErrorCode } from '@shared/ai-types';
 import path from 'node:path';
 import fs from 'node:fs';
 import { dbService } from '../services/db';
 import { getCurrent } from '../services/grove';
 import { parseFile } from '../services/frontmatter';
-import { llmClient } from './client';
-import { reviewClip as reviewClipPrompt } from './prompts/review-clip';
+import { reviewClip as reviewClipPrompt, AiReviewSchema } from './prompts/review-clip';
 import { fileHandlers } from '../ipc/file';
+import { buildChatModel, type ResolvedProfile } from './model-factory';
+import { normalizeLLMError } from './normalize-errors';
+import { settingsStore } from '../settings/store';
+import { getProfileDecryptedKey } from '../settings/profile-key';
 
 export interface ReviewClipOpts {
   force?: boolean;
@@ -39,19 +42,27 @@ type ReviewerErrCode =
 
 function rerr(code: ReviewerErrCode, message: string, extra: Record<string, unknown> = {}): Error {
   const e = new Error(message) as Error & { code: ReviewerErrCode };
-  (e as any).code = code;
+  (e as { code: ReviewerErrCode }).code = code;
   Object.assign(e, extra);
   return e;
 }
 
 function loadClip(clipId: number): ClipRow {
   const db = dbService.requireCurrent();
-  const row = db.prepare('SELECT id, url, path, title, excerpt FROM clips WHERE id = ?').get(clipId) as ClipRow | undefined;
+  const row = db
+    .prepare('SELECT id, url, path, title, excerpt FROM clips WHERE id = ?')
+    .get(clipId) as ClipRow | undefined;
   if (!row) throw rerr('E_CLIP_NOT_FOUND', `clip ${clipId} not found`);
   return row;
 }
 
-function loadMd(rel: string): { abs: string; raw: string; mtimeMs: number; frontmatter: Record<string, unknown>; body: string } {
+function loadMd(rel: string): {
+  abs: string;
+  raw: string;
+  mtimeMs: number;
+  frontmatter: Record<string, unknown>;
+  body: string;
+} {
   const grove = getCurrent();
   if (!grove) throw rerr('E_FILE_NOT_FOUND', 'no grove opened');
   const root = grove.vaultRoot;
@@ -64,50 +75,109 @@ function loadMd(rel: string): { abs: string; raw: string; mtimeMs: number; front
   }
   const raw = fs.readFileSync(abs, 'utf8');
   const { frontmatter, body } = parseFile(raw);
-  return { abs, raw, mtimeMs: stat.mtimeMs, frontmatter: frontmatter as Record<string, unknown>, body };
+  return {
+    abs,
+    raw,
+    mtimeMs: stat.mtimeMs,
+    frontmatter: frontmatter as Record<string, unknown>,
+    body,
+  };
+}
+
+function resolveProfile(profileId?: string): ResolvedProfile {
+  const db = dbService.requireCurrent();
+  let id = profileId;
+  if (!id) {
+    const ai = settingsStore.get('ai');
+    id = ai?.defaultProfileId ?? undefined;
+  }
+  if (!id) throw rerr('E_MISSING_PROFILE', 'no profileId; settings.ai.defaultProfileId is null');
+
+  const p = db
+    .prepare('SELECT * FROM ai_provider_profiles WHERE id = ?')
+    .get(id) as
+    | {
+        id: string;
+        provider: string;
+        model: string;
+        base_url: string | null;
+        temperature: number;
+        max_tokens: number | null;
+      }
+    | undefined;
+  if (!p) throw rerr('E_MISSING_PROFILE', `profile not found: ${id}`);
+  if (!p.model) throw rerr('E_CONFIG', `profile ${id} has empty model`);
+  if (p.provider === 'openai-compatible' && !p.base_url) {
+    throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on profile ${id}`);
+  }
+  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id);
+  return {
+    id: p.id,
+    provider: p.provider as ResolvedProfile['provider'],
+    model: p.model,
+    baseUrl: p.base_url ?? undefined,
+    apiKey,
+    maxTokens: p.max_tokens ?? undefined,
+    temperature: p.temperature,
+  };
+}
+
+function readUsage(raw: unknown): { input_tokens?: number; output_tokens?: number } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const m = raw as { usage_metadata?: { input_tokens?: number; output_tokens?: number } };
+  return m.usage_metadata;
 }
 
 export async function reviewClip(clipId: number, opts: ReviewClipOpts = {}): Promise<ReviewClipOutput> {
   const clip = loadClip(clipId);
   const md = loadMd(clip.path);
 
-  // Cache short-circuit
+  // Cache short-circuit (unchanged).
   if (md.frontmatter.ai_reviewed_at && !opts.force) {
     const cached: AiReviewResult = {
       summary: String(md.frontmatter.ai_summary ?? ''),
       suggestedTitle: String(md.frontmatter.ai_suggested_title ?? ''),
       tags: Array.isArray(md.frontmatter.ai_tags) ? (md.frontmatter.ai_tags as string[]) : [],
-      keyQuotes: Array.isArray(md.frontmatter.ai_key_quotes) ? (md.frontmatter.ai_key_quotes as string[]) : [],
+      keyQuotes: Array.isArray(md.frontmatter.ai_key_quotes)
+        ? (md.frontmatter.ai_key_quotes as string[])
+        : [],
       reviewedAt: String(md.frontmatter.ai_reviewed_at),
     };
     return { result: cached, cacheHit: true };
   }
 
-  // Call LLM
+  const profile = resolveProfile();
   const { system, user } = reviewClipPrompt.render({
     title: clip.title ?? '',
     url: clip.url,
     body: md.body,
   });
 
-  const llmResp = await llmClient.chatJson<{ summary: string; suggestedTitle: string; tags: string[]; keyQuotes: string[] }>({
-    messages: [
+  const t0 = Date.now();
+  let parsed: ReturnType<typeof AiReviewSchema.parse>;
+  let usage: { input_tokens?: number; output_tokens?: number } | undefined;
+
+  try {
+    const chatModel = buildChatModel(profile);
+    const structured = chatModel.withStructuredOutput(AiReviewSchema, { includeRaw: true });
+    const out = (await structured.invoke([
       { role: 'system', content: system },
       { role: 'user', content: user },
-    ],
-    schema: reviewClipPrompt.schema,
-    maxTokens: 800,
-  });
+    ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> };
+    parsed = out.parsed;
+    usage = readUsage(out.raw);
+  } catch (err) {
+    throw normalizeLLMError(err);
+  }
 
   const result: AiReviewResult = {
-    summary: llmResp.data.summary,
-    suggestedTitle: llmResp.data.suggestedTitle,
-    tags: llmResp.data.tags,
-    keyQuotes: llmResp.data.keyQuotes,
+    summary: parsed.summary,
+    suggestedTitle: parsed.suggestedTitle,
+    tags: parsed.tags,
+    keyQuotes: parsed.keyQuotes,
     reviewedAt: new Date().toISOString(),
   };
 
-  // Write back to frontmatter
   const nextFrontmatter = {
     ...md.frontmatter,
     ai_summary: result.summary,
@@ -118,23 +188,26 @@ export async function reviewClip(clipId: number, opts: ReviewClipOpts = {}): Pro
   };
 
   try {
-    await fileHandlers.writeParsed(clip.path, nextFrontmatter, md.body, { expectedMtime: md.mtimeMs });
+    await fileHandlers.writeParsed(clip.path, nextFrontmatter, md.body, {
+      expectedMtime: md.mtimeMs,
+    });
   } catch (e) {
-    const code = (e as any)?.code;
+    const code = (e as { code?: string })?.code;
     if (code === 'E_MTIME_MISMATCH') {
       throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback');
     }
     throw e;
   }
 
+  const latencyMs = Date.now() - t0;
   return {
     result,
     cacheHit: false,
     llmCall: {
-      model: llmResp.model,
-      latencyMs: llmResp.latencyMs,
-      promptTokens: llmResp.usage?.promptTokens ?? null,
-      completionTokens: llmResp.usage?.completionTokens ?? null,
+      model: profile.model,
+      latencyMs,
+      promptTokens: usage?.input_tokens ?? null,
+      completionTokens: usage?.output_tokens ?? null,
     },
   };
 }
