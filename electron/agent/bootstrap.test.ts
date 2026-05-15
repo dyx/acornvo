@@ -1,4 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('electron', () => ({
+  safeStorage: {
+    isEncryptionAvailable: vi.fn().mockReturnValue(false),
+    encryptString: vi.fn((s: string) => Buffer.from(s)),
+    decryptString: vi.fn((b: Buffer) => b.toString('utf8')),
+  },
+  ipcMain: { handle: vi.fn(), removeHandler: vi.fn() },
+  app: { getPath: vi.fn(() => '/tmp') },
+}));
+vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
+vi.mock('../ai/reviewer', () => ({ reviewClip: vi.fn() }));
+
 import { bootstrapAgent } from './bootstrap';
 import { createRegistry } from './registry';
 
