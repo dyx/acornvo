@@ -58,8 +58,8 @@ export type AgentEvent =
   | { type: 'step.start'; step: number }
   | { type: 'token'; text: string }
   | { type: 'tool.approval-needed'; callId: string; tool: string; args: unknown; reason?: string }
-  | { type: 'tool.start'; tool: string; args: unknown }
-  | { type: 'tool.result'; tool: string; result: ToolResult }
+  | { type: 'tool.start'; tool: string; args: unknown; callId?: string }
+  | { type: 'tool.result'; tool: string; result: ToolResult; callId?: string }
   | { type: 'done'; usage?: TokenUsage }
   | { type: 'error'; error: string; detail?: unknown }
   | { type: 'canceled' };

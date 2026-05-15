@@ -36,6 +36,23 @@ describe('agent-types', () => {
   });
 });
 
+describe('AgentEvent — K1 exception #2 (additive callId)', () => {
+  it('tool.start accepts an optional callId', () => {
+    const e: AgentEvent = { type: 'tool.start', tool: 'x', args: {}, callId: 'cid-1' };
+    expectTypeOf(e).toMatchTypeOf<AgentEvent>();
+  });
+
+  it('tool.start works without callId (back-compat for old renderers)', () => {
+    const e: AgentEvent = { type: 'tool.start', tool: 'x', args: {} };
+    expectTypeOf(e).toMatchTypeOf<AgentEvent>();
+  });
+
+  it('tool.result accepts an optional callId', () => {
+    const e: AgentEvent = { type: 'tool.result', tool: 'x', result: { ok: true, data: 1 }, callId: 'cid-1' };
+    expectTypeOf(e).toMatchTypeOf<AgentEvent>();
+  });
+});
+
 describe('Attachment', () => {
   it('accepts file shape', () => {
     const a: Attachment = { type: 'file', path: 'notes/a.md', title: 'A' };
