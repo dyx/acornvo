@@ -32,19 +32,19 @@
 - [x] 5.4 重写 `electron/agent/tools/update-frontmatter.ts`：Zod schema（含 `reason: z.string().min(1)`）+ 内嵌 `safeResolve` + null 删字段语义
 - [x] 5.5 重写 `electron/agent/tools/clip-summary.ts`：Zod schema + 调 reviewer
 - [x] 5.6 新建 `electron/agent/tools/index.ts` 导出 5 个工具数组
-- [ ] 5.7 删除 `electron/agent/registry.ts` + `registry.test.ts`
+- [x] 5.7 删除 `electron/agent/registry.ts` + `registry.test.ts`
 - [ ] 5.8 删除 `electron/ai/parse-tool-args.ts` + 单测
-- [ ] 5.9 工具单元测试：每个工具的核心场景（成功、错误码、路径越狱、schema 校验失败）
+- [x] 5.9 工具单元测试：每个工具的核心场景（成功、错误码、路径越狱、schema 校验失败）
 
 ## 6. Agent Runner + Stream Translator（block 4）
 
-- [ ] 6.1 扩 `shared/agent-types.ts`：`tool.start` 与 `tool.result` 事件类型添加可选 `callId?: string` 字段（K1 例外清单第 2 条，供 phase-20 `bubbleSelectors` 按 callId 折叠工具调用与结果用）；新建 `electron/agent/stream-translator.ts` 实现 LangGraph 事件 → AgentEvent 的 8 个映射场景（见 design.md 表，含 `tool.start.callId` = `AIMessage.tool_calls[i].id`、`tool.result.callId` = `ToolMessage.tool_call_id` 的透传）；含 AIMessage.id 幂等去重 helper
-- [ ] 6.2 写 `electron/agent/stream-translator.test.ts`：覆盖全部 8 个映射场景
-- [ ] 6.3 新建 `electron/agent/runner.ts`：实现 `runAgent`；调 `agent.stream({ messages: [完整历史] }, { configurable: { thread_id }, streamMode: ['updates','messages'], signal })`；attachments 注入 pre-user message；persistence 通过 stream-translator 回调写 session_messages / tool_calls
-- [ ] 6.4 在 `electron/ai/prompts/chat-agent.ts` 把导出从 `{ role:'system', content }` 改为 `systemPrompt: string`；其他调用方调整
-- [ ] 6.5 在应用启动阶段构造 `createAgent({ model, tools, middleware: [hitl], checkpointer })` 单例（hitl 与 checkpointer 在 block 5 接入；本 block 暂传 noop placeholder）
-- [ ] 6.6 IPC 入口 `agent.send` 切到 runner；保留 `loop.ts` 作 fallback flag（feature flag 默认开新 runner）
-- [ ] 6.7 写 `electron/agent/runner.test.ts`：mock `agent.stream` 返回 async iterable；断言事件序列与 K1 契约
+- [x] 6.1 扩 `shared/agent-types.ts`：`tool.start` 与 `tool.result` 事件类型添加可选 `callId?: string` 字段（K1 例外清单第 2 条，供 phase-20 `bubbleSelectors` 按 callId 折叠工具调用与结果用）；新建 `electron/agent/stream-translator.ts` 实现 LangGraph 事件 → AgentEvent 的 8 个映射场景（见 design.md 表，含 `tool.start.callId` = `AIMessage.tool_calls[i].id`、`tool.result.callId` = `ToolMessage.tool_call_id` 的透传）；含 AIMessage.id 幂等去重 helper
+- [x] 6.2 写 `electron/agent/stream-translator.test.ts`：覆盖全部 8 个映射场景
+- [x] 6.3 新建 `electron/agent/runner.ts`：实现 `runAgent`；调 `agent.stream({ messages: [完整历史] }, { configurable: { thread_id }, streamMode: ['updates','messages'], signal })`；attachments 注入 pre-user message；persistence 通过 stream-translator 回调写 session_messages / tool_calls
+- [x] 6.4 在 `electron/ai/prompts/chat-agent.ts` 把导出从 `{ role:'system', content }` 改为 `systemPrompt: string`；其他调用方调整
+- [x] 6.5 在应用启动阶段构造 `createAgent({ model, tools, middleware: [hitl], checkpointer })` 单例（hitl 与 checkpointer 在 block 5 接入；本 block 暂传 noop placeholder）
+- [x] 6.6 IPC 入口 `agent.send` 切到 runner；保留 `loop.ts` 作 fallback flag（feature flag 默认开新 runner）
+- [x] 6.7 写 `electron/agent/runner.test.ts`：mock `agent.stream` 返回 async iterable；断言事件序列与 K1 契约
 - [ ] 6.8 跑现有 `electron/__acceptance__/*` chat 用例：要求 100% 通过且 mock 表面不改
 
 ## 7. HITL + Checkpointer（block 5）
