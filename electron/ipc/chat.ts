@@ -1,22 +1,30 @@
 import type { Tool } from '../../shared/agent-types';
 import type { ApprovalGate } from '../agent/approval';
-
-// Stub of the deleted `agent/registry` shape — Plan 3 dropped the registry
-// but the legacy loop in `agent/loop.ts` still expects a list/get pair. The
-// runner consumes `agentTools` directly and ignores this field.
-type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
-const EMPTY_REGISTRY: LocalRegistry = { list: () => [], get: () => undefined };
 import type { ConcurrencyGate } from '../agent/concurrency';
 import type { SessionsDao } from '../agent/sessions';
 import type { RendererTarget } from '../agent/streamWriter';
 import { createStreamWriter } from '../agent/streamWriter';
-import { runAgent } from '../agent/loop';
+import { runAgent as runAgentLegacy } from '../agent/loop';
+import { runAgent as runAgentNew } from '../agent/runner';
+import { getAgentBuilder } from '../agent/agent-singleton';
 import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
 import { IpcError } from '../../shared/ipc-contract';
+import { type ResolvedProfile } from '../ai/model-factory';
+import { aiUsage } from '../ai/usage';
+import { dbService } from '../services/db';
+import { getProfileDecryptedKey } from '../settings/profile-key';
+
+// Stub of the deleted `agent/registry` shape — Plan 3 dropped the registry
+// but the legacy loop in `agent/loop.ts` still expects a list/get pair. The
+// new runner consumes `agentTools` directly and ignores this field.
+type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
+const EMPTY_REGISTRY: LocalRegistry = { list: () => [], get: () => undefined };
+
+const USE_LEGACY_AGENT = process.env.AGENT_USE_LEGACY === '1';
 
 export interface ChatDeps {
-  /** Legacy field, optional. The new runner ignores it; only the deprecated
-   *  `loop.ts` path reads `deps.registry.list()`. Defaults to an empty stub. */
+  /** Legacy field, optional. The new runner ignores it; only `loop.ts` reads
+   *  `deps.registry.list()`. Defaults to an empty stub. */
   registry?: LocalRegistry;
   approval: ApprovalGate;
   concurrency: ConcurrencyGate;
@@ -25,6 +33,33 @@ export interface ChatDeps {
   vaultRoot: () => string;
   llmClient: { chatWithTools: (opts: any) => Promise<any> };
   clipsGet?: (id: number) => Promise<{ body: string } | null>;
+}
+
+function resolveProfile(profileId: string): ResolvedProfile {
+  const db = dbService.requireCurrent();
+  const p = db
+    .prepare('SELECT * FROM ai_provider_profiles WHERE id = ?')
+    .get(profileId) as
+    | {
+        id: string;
+        provider: string;
+        model: string;
+        base_url: string | null;
+        temperature: number;
+        max_tokens: number | null;
+      }
+    | undefined;
+  if (!p) throw new IpcError('E_MISSING_PROFILE', `profile not found: ${profileId}`);
+  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id);
+  return {
+    id: p.id,
+    provider: p.provider as ResolvedProfile['provider'],
+    model: p.model,
+    apiKey,
+    baseUrl: p.base_url ?? undefined,
+    temperature: p.temperature,
+    maxTokens: p.max_tokens ?? undefined,
+  };
 }
 
 export function createChatHandlers(deps: ChatDeps) {
@@ -45,9 +80,14 @@ export function createChatHandlers(deps: ChatDeps) {
     },
     'sessions.getMessages': (id: string) => deps.sessions.getMessages(id),
 
-    sendUserMessage: async (opts: { sessionId: string; text: string; profileId?: string; attachments?: import('../../shared/agent-types').Attachment[] }) => {
+    sendUserMessage: async (opts: {
+      sessionId: string;
+      text: string;
+      profileId?: string;
+      attachments?: import('../../shared/agent-types').Attachment[];
+    }) => {
       const list = await deps.sessions.list();
-      const sess = list.find(s => s.id === opts.sessionId);
+      const sess = list.find((s) => s.id === opts.sessionId);
       if (!sess) throw new IpcError('E_NOT_FOUND', 'session not found');
       const profileId = opts.profileId ?? sess.profileId ?? undefined;
       if (!profileId) throw new IpcError('E_MISSING_PROFILE', 'no profile bound to session');
@@ -61,22 +101,72 @@ export function createChatHandlers(deps: ChatDeps) {
       const writer = createStreamWriter(opts.sessionId, deps.getTargets);
       const history = await deps.sessions.getMessages(opts.sessionId);
 
-      // Fire-and-forget — renderer subscribes for events.
-      void runAgent({
+      if (USE_LEGACY_AGENT) {
+        void runAgentLegacy({
+          sessionId: opts.sessionId,
+          userText: opts.text,
+          profileId,
+          history,
+          deps: {
+            llmClient: deps.llmClient,
+            sessions: deps.sessions,
+            registry: deps.registry ?? EMPTY_REGISTRY,
+            approval: deps.approval,
+            systemPrompt: () =>
+              chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot()), locale: 'zh' }),
+            vaultRoot: deps.vaultRoot(),
+            cancel: ctl.signal,
+            clipsGet: deps.clipsGet,
+          },
+          streamWriter: writer,
+          attachments: opts.attachments,
+        })
+          .catch((err: any) => {
+            writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message });
+          })
+          .finally(() => {
+            aborts.delete(opts.sessionId);
+            deps.concurrency.release(opts.sessionId);
+          });
+        return { ok: true } as const;
+      }
+
+      const profile = resolveProfile(profileId);
+      const agent = getAgentBuilder().buildForProfile(profile);
+
+      void runAgentNew({
         sessionId: opts.sessionId,
         userText: opts.text,
         profileId,
         history,
         deps: {
-          llmClient: deps.llmClient,
+          agent: agent as unknown as Parameters<typeof runAgentNew>[0]['deps']['agent'],
           sessions: deps.sessions,
-          registry: deps.registry ?? EMPTY_REGISTRY,
-          approval: deps.approval,
-          systemPrompt: () =>
-            chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot()), locale: 'zh' }),
+          systemPrompt: chatAgentSystemPrompt({
+            vaultName: basenameOf(deps.vaultRoot()),
+            locale: 'zh',
+          }),
           vaultRoot: deps.vaultRoot(),
           cancel: ctl.signal,
           clipsGet: deps.clipsGet,
+          modelName: profile.model,
+          recordUsage: (u, model) => {
+            try {
+              aiUsage.insert({
+                jobId: null,
+                profileId: profile.id,
+                model,
+                promptTokens: u?.input_tokens ?? 0,
+                completionTokens: u?.output_tokens ?? 0,
+                latencyMs: 0,
+                ok: 1,
+                error: null,
+                sessionId: opts.sessionId,
+              });
+            } catch {
+              /* best effort */
+            }
+          },
         },
         streamWriter: writer,
         attachments: opts.attachments,
