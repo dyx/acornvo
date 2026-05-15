@@ -5,6 +5,9 @@ import { resolve } from 'node:path'
 import { runMigrations } from '../services/db/migrations'
 
 vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+vi.mock('../ai/model-factory', () => ({
+  invalidateByProfile: vi.fn()
+}))
 vi.mock('electron', () => ({
   safeStorage: {
     isEncryptionAvailable: vi.fn().mockReturnValue(true),
@@ -13,6 +16,7 @@ vi.mock('electron', () => ({
   }
 }))
 
+import { invalidateByProfile } from '../ai/model-factory'
 import { dbService } from '../services/db'
 import { profilesStore } from './profiles'
 import { secretsStore } from './secrets'
@@ -135,6 +139,22 @@ describe('profilesStore', () => {
 
   it('delete on missing id throws E_PROFILE_NOT_FOUND', () => {
     expect(() => profilesStore.delete('nope')).toThrow(/E_PROFILE_NOT_FOUND/)
+  })
+
+  it('invalidates model-factory cache when a profile is updated', () => {
+    const mock = invalidateByProfile as unknown as ReturnType<typeof vi.fn>
+    mock.mockClear()
+    const { id } = profilesStore.create({ name: 'inv-up', provider: 'openai', model: 'gpt-4o' })
+    profilesStore.update(id, { name: 'renamed' })
+    expect(mock).toHaveBeenCalledWith(id)
+  })
+
+  it('invalidates model-factory cache when a profile is deleted', () => {
+    const mock = invalidateByProfile as unknown as ReturnType<typeof vi.fn>
+    mock.mockClear()
+    const { id } = profilesStore.create({ name: 'inv-del', provider: 'openai', model: 'gpt-4o' })
+    profilesStore.delete(id)
+    expect(mock).toHaveBeenCalledWith(id)
   })
 })
 
