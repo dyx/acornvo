@@ -1,10 +1,8 @@
-import type { Tool } from '../../shared/agent-types';
 import type { ApprovalGate } from '../agent/approval';
 import type { ConcurrencyGate } from '../agent/concurrency';
 import type { SessionsDao } from '../agent/sessions';
 import type { RendererTarget } from '../agent/streamWriter';
 import { createStreamWriter } from '../agent/streamWriter';
-import { runAgent as runAgentLegacy } from '../agent/loop';
 import {
   runAgent as runAgentNew,
   resumeAgent,
@@ -20,24 +18,12 @@ import { writeUsage } from '../ai/usage';
 import { dbService } from '../services/db';
 import { getProfileDecryptedKey } from '../settings/profile-key';
 
-// Stub of the deleted `agent/registry` shape — Plan 3 dropped the registry
-// but the legacy loop in `agent/loop.ts` still expects a list/get pair. The
-// new runner consumes `agentTools` directly and ignores this field.
-type LocalRegistry = { list: () => Tool[]; get: (n: string) => Tool | undefined };
-const EMPTY_REGISTRY: LocalRegistry = { list: () => [], get: () => undefined };
-
-const USE_LEGACY_AGENT = process.env.AGENT_USE_LEGACY === '1';
-
 export interface ChatDeps {
-  /** Legacy field, optional. The new runner ignores it; only `loop.ts` reads
-   *  `deps.registry.list()`. Defaults to an empty stub. */
-  registry?: LocalRegistry;
   approval: ApprovalGate;
   concurrency: ConcurrencyGate;
   sessions: SessionsDao;
   getTargets: () => RendererTarget[];
   vaultRoot: () => string;
-  llmClient: { chatWithTools: (opts: any) => Promise<any> };
   clipsGet?: (id: number) => Promise<{ body: string } | null>;
 }
 
@@ -166,36 +152,6 @@ export function createChatHandlers(deps: ChatDeps) {
       aborts.set(opts.sessionId, ctl);
       const writer = createStreamWriter(opts.sessionId, deps.getTargets);
       const history = await deps.sessions.getMessages(opts.sessionId);
-
-      if (USE_LEGACY_AGENT) {
-        void runAgentLegacy({
-          sessionId: opts.sessionId,
-          userText: opts.text,
-          profileId,
-          history,
-          deps: {
-            llmClient: deps.llmClient,
-            sessions: deps.sessions,
-            registry: deps.registry ?? EMPTY_REGISTRY,
-            approval: deps.approval,
-            systemPrompt: () =>
-              chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot()), locale: 'zh' }),
-            vaultRoot: deps.vaultRoot(),
-            cancel: ctl.signal,
-            clipsGet: deps.clipsGet,
-          },
-          streamWriter: writer,
-          attachments: opts.attachments,
-        })
-          .catch((err: any) => {
-            writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message });
-          })
-          .finally(() => {
-            aborts.delete(opts.sessionId);
-            deps.concurrency.release(opts.sessionId);
-          });
-        return { ok: true } as const;
-      }
 
       const profile = resolveProfile(profileId);
       const agent = getAgentBuilder().buildForProfile(profile);

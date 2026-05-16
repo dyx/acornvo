@@ -32,7 +32,6 @@ import { getQueueBootstrap } from '../queue'
 import { approvalGate } from '../agent/approval'
 import { concurrencyGate } from '../agent/concurrency'
 import { sessions } from '../agent/sessions'
-import { llmClient } from '../ai/client'
 import { dbService } from '../services/db'
 import { getManager } from '../browser/manager'
 import { createPipeline } from '../clipper/pipeline'
@@ -80,7 +79,6 @@ const chatHandlers = createChatHandlers({
   sessions,
   getTargets: getChatTargets,
   vaultRoot: () => dbService.getCurrentGrovePath() ?? '/vault',
-  llmClient: llmClient as any,
   clipsGet: async (id: number) => {
     const db = dbService.requireCurrent();
     const row = db.prepare('SELECT path FROM clips WHERE id = ?').get(id) as { path: string } | undefined;
