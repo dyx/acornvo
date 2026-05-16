@@ -477,7 +477,9 @@
       "send": "Send",
       "stop": "Stop",
       "noProfile": "No AI profile",
-      "goToSettings": "Go to settings"
+      "goToSettings": "Go to settings",
+      "attach": "Attach files",
+      "busy": "Session is responding, please wait"
     },
     "messages": {
       "jumpToLatest": "New messages ↓",
