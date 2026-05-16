@@ -469,7 +469,11 @@
       "clip_summary": "总结剪藏"
     },
     "message": {
-      "newMessages": "新消息 ↓"
+      "newMessages": "新消息 ↓",
+      "copy": "复制",
+      "copied": "已复制",
+      "retry": "重试",
+      "quote": "引用"
     },
     "empty": {
       "heading": "今天想聊点什么？",

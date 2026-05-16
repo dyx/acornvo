@@ -438,7 +438,11 @@
       "clip_summary": "Summarize clip"
     },
     "message": {
-      "newMessages": "New messages ↓"
+      "newMessages": "New messages ↓",
+      "copy": "Copy",
+      "copied": "Copied",
+      "retry": "Retry",
+      "quote": "Quote"
     },
     "empty": {
       "heading": "What's on your mind?",
