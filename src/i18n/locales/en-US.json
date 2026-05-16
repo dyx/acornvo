@@ -437,6 +437,9 @@
       "update_frontmatter": "Update frontmatter",
       "clip_summary": "Summarize clip"
     },
+    "message": {
+      "newMessages": "New messages ↓"
+    },
     "empty": {
       "heading": "What's on your mind?",
       "subheading": "Try one of these",

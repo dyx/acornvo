@@ -468,6 +468,9 @@
       "update_frontmatter": "更新 frontmatter",
       "clip_summary": "总结剪藏"
     },
+    "message": {
+      "newMessages": "新消息 ↓"
+    },
     "empty": {
       "heading": "今天想聊点什么？",
       "subheading": "试试这些常用想法",
