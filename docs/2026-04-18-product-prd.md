@@ -45,7 +45,7 @@
 |---|---|---|
 | P-1 | 存储模型 | 多树林（multi-vault），每个树林一独立根目录 |
 | P-2 | 数据源 | 本地 markdown 文件为真实源，SQLite 为索引 |
-| P-3 | LLM 抽象 | `@mariozechner/pi-mono`（pi-ai + pi-agent-core + pi-web-ui） |
+| P-3 | LLM 抽象 | **LangChain v1**（多 provider chat models）+ **LangGraph v1**（agent + HITL + checkpointer），见 `electron/ai/model-factory.ts` 与 `electron/agent/runner.ts` |
 | P-4 | Markdown 编辑器 | Vditor（默认 IR 模式；可切 SV 双向滚动 / WYSIWYG） |
 | P-5 | Wikilink | 暂不支持（坚持标准 md 链接，Obsidian 侧自行解析） |
 | P-6 | 松语上下文 | @ 文件全文注入 + agent tool 自主读取（混合） |
@@ -89,9 +89,9 @@
 | 中文分词 | **@node-rs/jieba**（Rust napi，三平台预编译 binary） |
 | 状态管理 | **Zustand**（轻量，符合项目复杂度） |
 | 路由 | **React Router（memory router）** |
-| LLM 接入 | **@mariozechner/pi-ai**（统一多 provider 接口） |
-| Agent 框架 | **@mariozechner/pi-agent-core**（松语的 tool calling 驱动） |
-| 聊天 UI | **@mariozechner/pi-web-ui**（或按需自建于 shadcn 上） |
+| LLM 接入 | **LangChain v1**（`@langchain/openai` / `@langchain/anthropic` / `@langchain/ollama` 统一多 provider） |
+| Agent 框架 | **LangGraph v1**（`createAgent` + `humanInTheLoopMiddleware` + `SqliteSaver` checkpointer） |
+| 聊天 UI | **@ant-design/x**（Bubble/Sender/Welcome 等 chat 组件，phase-20） |
 | API Key 存储 | **Electron `safeStorage`**（内置） |
 | 回收站 | **Electron `shell.trashItem()`**（内置） |
 | 文件监听 | **chokidar** |
@@ -115,7 +115,7 @@ acornvo/
 │   │   ├── file.ts              # md 文件读写、冲突协调
 │   │   ├── clip.ts              # 拾果：网页抽取 + md 转换
 │   │   ├── browser.ts           # WebContentsView 生命周期
-│   │   ├── ai.ts                # 理果、松语调用 pi-ai/pi-agent-core
+│   │   ├── ai.ts                # 理果、松语调用 LangChain + LangGraph
 │   │   ├── search.ts            # 文件跳转 + 全文搜索
 │   │   ├── usage.ts             # token 用量查询
 │   │   └── settings.ts          # 全局/树林设置读写
@@ -128,14 +128,14 @@ acornvo/
 │   │   ├── conflict.ts          # 外部修改冲突检测 + conflicts/ 写入
 │   │   ├── history.ts           # frontmatter 版本历史写入/清理
 │   │   ├── ai-reviewer.ts       # 理果：结构化抽取 prompt
-│   │   ├── ai-agent.ts          # 松语：pi-agent-core + tools
+│   │   ├── ai-agent.ts          # 松语：LangGraph + tools
 │   │   ├── queue.ts             # p-queue + SQLite 持久化 + 重启恢复
 │   │   ├── usage.ts             # 调用记录 + 费用估算
 │   │   ├── keychain.ts          # safeStorage 封装：API Key 加密读写
 │   │   ├── trash.ts             # shell.trashItem 封装
 │   │   ├── updater.ts           # electron-updater 封装
 │   │   └── db.ts                # better-sqlite3 实例 + migrations
-│   └── tools/                   # pi-agent-core 工具定义
+│   └── tools/                   # LangGraph 工具定义
 │       ├── read-file.ts
 │       ├── list-files.ts
 │       ├── grep-files.ts
@@ -381,7 +381,7 @@ CREATE INDEX idx_usage_model ON usage(model_id);
    - 注入当前树林的**标签词汇表**（按 `usage_count` 排前 30 + 最近 30）
    - 注入树林既有分类列表（用于 AI 倾向复用）
    - 约束：rating 1-5、tags 3-5 个、分类单层路径（可 `/` 分隔）
-4. 通过 `pi-ai` 调用用户在设置中指定的"理果模型"
+4. 通过 `LangChain` 调用用户在设置中指定的"理果模型"
 5. **记录用量**：`usage.ts` 写入 `usage` 表（input/output tokens、估算成本、file_path、purpose='review'）
 6. 用 Zod 校验响应 JSON；失败则重试一次，再失败则标记 `reviewed_error`
 7. 合并到 frontmatter 并回写 md 文件
@@ -398,7 +398,7 @@ CREATE INDEX idx_usage_model ON usage(model_id);
 - UI 状态栏常驻"理果中 3/10"进度指示 + 暂停/继续按钮
 
 **关键文件：**
-- `electron/services/ai-reviewer.ts`：prompt 模板 + pi-ai 调用 + Zod 校验
+- `electron/services/ai-reviewer.ts`：prompt 模板 + LangChain 调用 + Zod 校验
 - `electron/services/queue.ts`：p-queue + SQLite 持久化
 - `electron/services/history.ts`：版本历史写入 + 清理（30 天或 >5 版保留）
 - `electron/services/usage.ts`：token 记录 + 费用估算
@@ -408,14 +408,14 @@ CREATE INDEX idx_usage_model ON usage(model_id);
 
 **UI 布局：**
 - 左侧：对话历史列表（可新建会话）
-- 中间：消息流（`pi-web-ui` 的聊天组件，或自建于 shadcn 上）
+- 中间：消息流（`@ant-design/x` 的聊天组件，或自建于 shadcn 上）
 - 底部输入框：
   - `@` 触发文件选择器（检索树林内 md 文件，按标题/路径模糊匹配）
   - 已选文件展示为 chip，可删除
   - 发送快捷键 `Cmd/Ctrl+Enter`
 - 顶部：当前模型选择、系统提示编辑入口
 
-**Agent 架构（pi-agent-core）：**
+**Agent 架构（LangGraph）：**
 
 工具定义：
 
@@ -444,7 +444,7 @@ CREATE INDEX idx_usage_model ON usage(model_id);
 - 每轮模型调用结束写 `usage` 表：`purpose='chat'`、`chat_id` 关联会话
 
 **关键文件：**
-- `electron/services/ai-agent.ts`：pi-agent-core 初始化 + 工具注册 + 流式响应
+- `electron/services/ai-agent.ts`：LangGraph 初始化 + 工具注册 + 流式响应
 - `electron/tools/*`：各 tool 实现
 - `src/pages/Chat.tsx` + `src/components/FileMention.tsx`
 
@@ -461,7 +461,7 @@ CREATE INDEX idx_usage_model ON usage(model_id);
       {
         "id": "deepseek",
         "label": "DeepSeek",
-        "provider": "deepseek",          // pi-ai provider id
+        "provider": "openai-compatible", // LangChain provider id (openai | openai-compatible | anthropic | ollama)
         "apiKeyRef": "deepseek",         // 在 secrets.enc 中的 key 名
         "baseURL": "https://api.deepseek.com",
         "model": "deepseek-chat",
@@ -548,7 +548,7 @@ keychain.ts: safeStorage.encryptString(apiKey) → Buffer
 ### 读取流程
 
 - 主进程启动时一次性解密 `secrets.enc` 到内存 `Map<apiKeyRef, key>`
-- pi-ai 调用前按 `preset.apiKeyRef` 从 Map 取出
+- LangChain 调用前按 `preset.apiKeyRef` 从 Map 取出
 - **绝不把明文 key 通过 IPC 发回 renderer**
 
 ### 降级与同步考量
@@ -653,7 +653,7 @@ keychain.ts: safeStorage.encryptString(apiKey) → Buffer
 
 ### 记录
 
-每次 `pi-ai` 调用后同步写 `usage` 表：
+每次 `LangChain` 调用后同步写 `usage` 表：
 
 ```ts
 {
@@ -754,7 +754,7 @@ queue.ts: INSERT queue(kind='review') + pQueue.add
    ↓
 ai-reviewer.ts:
    - history.ts 备份旧 frontmatter → .acornvo/history/.../v1.yml
-   - 构造 prompt → pi-ai 调用
+   - 构造 prompt → LangChain 调用
    - usage.ts 写用量记录
    - Zod 校验 → merge frontmatter → 回写 md
    ↓ (chokidar 再次捕获，自我过滤命中 → 跳过)
@@ -776,8 +776,8 @@ UI: StatusBar 进度递减 + toast "已完成理果"
 3. **冲突处理与历史**：watcher 自我过滤 + clean/dirty 分叉 + ConflictDialog + history.ts
 4. **拾果**：WebContentsView 多标签 + Readability/Turndown + 标记（网址收藏）+ 图片下载
 5. **安全存储 + 设置**：safeStorage API Key + 模型预设 UI + 连通性测试
-6. **理果**：pi-ai 接入 + prompt + Zod 校验 + 持久化队列 + Frontmatter 侧栏 + 历史回滚 + 用量记录
-7. **松语**：pi-agent-core + tool 定义 + 聊天 UI + @ 选择 + 会话持久化 + 用量记录
+6. **理果**：LangChain 接入 + prompt + Zod 校验 + 持久化队列 + Frontmatter 侧栏 + 历史回滚 + 用量记录
+7. **松语**：LangGraph + tool 定义 + 聊天 UI + @ 选择 + 会话持久化 + 用量记录
 8. **用量与 i18n**：UsagePanel 图表 + 中英切换 + 主题
 9. **自动更新与打包签名**：electron-updater + electron-builder 三平台产物 + macOS notarization + Windows code sign
 
@@ -786,7 +786,8 @@ UI: StatusBar 进度递减 + toast "已完成理果"
 ## 关键文件 / 依赖引用
 
 **需要引入的第三方：**
-- `@mariozechner/pi-ai`、`@mariozechner/pi-agent-core`、`@mariozechner/pi-web-ui`（来自 https://github.com/badlogic/pi-mono 各子包）
+- `langchain` / `@langchain/core` / `@langchain/openai` / `@langchain/anthropic` / `@langchain/ollama` / `@langchain/langgraph` / `@langchain/langgraph-checkpoint-sqlite`
+- `@ant-design/x`（chat UI 组件库）
 - `vditor`
 - `@mozilla/readability`、`turndown`、`turndown-plugin-gfm`
 - `better-sqlite3`
@@ -987,7 +988,7 @@ UI: StatusBar 进度递减 + toast "已完成理果"
 | 🔴 | `write_markdown` 试图写树林外 | tool 实现统一过 `safeResolve`，越界拒绝 |
 | 🔴 | `write_markdown` 覆盖已有文件 | 默认拒绝；agent 需显式传 `overwrite:true` 才允许（防误伤） |
 | 🔴 | `write_markdown` 路径含非法字符（Win 的 `< > : " \| ? *`） | 自动规范化：非法字符替 `_`；超长截断到 100 字符 |
-| 🔴 | Agent 死循环调用 tool | `pi-agent-core` 设置 `maxIterations=20`，超限终止并返回当前内容 |
+| 🔴 | Agent 死循环调用 tool | `LangGraph` 设置 `maxIterations=20`，超限终止并返回当前内容 |
 | 🔴 | 流式响应中用户关闭窗口 / 切换树林 | AbortController 取消；消息只落盘到最后已确认 chunk |
 | 🔴 | @ 的文件在对话中途被删除 | 注入前 stat 一次，不存在的 mention 标灰+警告"此文件已删除" |
 | 🟡 | @ 了超大文件（>50K tokens） | 注入改为"frontmatter + 首 5K 字 + 提示 agent 可用 `read_file` 读全文" |
