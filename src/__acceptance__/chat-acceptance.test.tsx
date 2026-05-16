@@ -103,8 +103,6 @@ function mkSlot(overrides: Record<string, unknown> = {}) {
   return {
     loaded: true,
     messages: [{ id: 'mu1', role: 'user' as const, text: 'initial message', createdAt: 100 }],
-    streamingBuffer: '',
-    flushedLength: 0,
     pendingApprovals: [] as any[],
     pendingAttachments: [] as any[],
     pendingPromptText: '',
@@ -450,7 +448,9 @@ describe('acceptance 11.13–11.14 — attachment edge cases (store-level)', () 
 
     const pending = useChatStore.getState().bySession.s1?.pendingAttachments ?? []
     expect(pending).toHaveLength(1)
-    expect(pending[0].path).toBe('/very/long/path/note.md')
+    const first = pending[0]
+    if (first.type !== 'file') throw new Error('expected file attachment')
+    expect(first.path).toBe('/very/long/path/note.md')
   })
 
   it('removeAttachment removes the attachment at the given index', () => {
@@ -682,10 +682,15 @@ describe.skip('acceptance — ApprovalPanel integration with Chat page', () => {
 
 describe('acceptance — Stream subscriber fires events into store', () => {
   beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeEach(async () => {
+    resetStore()
+    vi.clearAllMocks()
+    const { __setChatTokenBatching } = await import('@/stores/chat')
+    __setChatTokenBatching(false)
+  })
   afterEach(() => { uninstallChatStreamSubscriber() })
 
-  it('token events accumulate in streamingBuffer via stream subscriber', () => {
+  it('token events lazily create + append the streaming assistant message', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
@@ -698,10 +703,16 @@ describe('acceptance — Stream subscriber fires events into store', () => {
     fireStream('s1', { type: 'token', text: 'H' })
     fireStream('s1', { type: 'token', text: 'i' })
 
-    expect(useChatStore.getState().bySession.s1?.streamingBuffer).toBe('Hi')
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages).toHaveLength(1)
+    expect(slot?.messages[0]).toMatchObject({
+      role: 'assistant',
+      text: 'Hi',
+      status: 'streaming',
+    })
   })
 
-  it('done event commits buffer as assistant message', () => {
+  it('done event flips the streaming assistant to done and session to idle', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
@@ -714,19 +725,25 @@ describe('acceptance — Stream subscriber fires events into store', () => {
     fireStream('s1', { type: 'token', text: 'Hello' }, { type: 'done' })
 
     const slot = useChatStore.getState().bySession.s1
-    expect(slot?.streamingBuffer).toBe('')
     expect(slot?.status).toBe('idle')
-    const msgs = slot?.messages ?? []
-    const assistantMsg = msgs.find((m) => m.role === 'assistant')
+    const assistantMsg = slot?.messages.find((m) => m.role === 'assistant')
     expect(assistantMsg).toBeTruthy()
     expect(assistantMsg!.text).toBe('Hello')
+    expect(assistantMsg!.status).toBe('done')
   })
 
-  it('canceled event sets status to idle while preserving buffer', () => {
+  it('canceled event sets status to idle (streaming text already in messages array)', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
-      bySession: { s1: mkSlot({ messages: [], streamingBuffer: 'partial text', status: 'streaming' }) },
+      bySession: {
+        s1: mkSlot({
+          messages: [
+            { id: 'a', role: 'assistant' as const, text: 'partial text', status: 'streaming' as const, createdAt: 0 },
+          ],
+          status: 'streaming',
+        }),
+      },
       sessionsLoading: false, sessionsError: null
     })
 
@@ -736,7 +753,7 @@ describe('acceptance — Stream subscriber fires events into store', () => {
 
     const slot = useChatStore.getState().bySession.s1
     expect(slot?.status).toBe('idle')
-    expect(slot?.streamingBuffer).toBe('partial text')
+    expect(slot?.messages.find((m) => m.role === 'assistant')?.text).toBe('partial text')
   })
 
   it('error event sets status to error with error code', () => {
@@ -849,7 +866,9 @@ describe('acceptance — Stream subscriber fires events into store', () => {
 
     fireStream('s2', { type: 'token', text: 'X' })
 
-    expect(useChatStore.getState().bySession.s1?.streamingBuffer).toBe('')
-    expect(useChatStore.getState().bySession.s2?.streamingBuffer).toBe('X')
+    const s1 = useChatStore.getState().bySession.s1
+    const s2 = useChatStore.getState().bySession.s2
+    expect(s1?.messages.find((m) => m.role === 'assistant')).toBeUndefined()
+    expect(s2?.messages.find((m) => m.role === 'assistant')?.text).toBe('X')
   })
 })

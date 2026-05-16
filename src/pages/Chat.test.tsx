@@ -173,8 +173,6 @@ describe.skip('Chat empty-state', () => {
         s1: {
           loaded: true,
           messages: [{ id: 'm1', role: 'user', text: 'hello', createdAt: Date.now() }],
-          streamingBuffer: '',
-          flushedLength: 0,
           pendingApprovals: [],
           pendingAttachments: [],
           pendingPromptText: '',
