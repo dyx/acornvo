@@ -46,7 +46,7 @@ Note: `ChatMessage.status` field is added by Plan 4 (Store slimming). For now Pl
 - Create: `src/components/chat/bubbleSelectors.test.ts`
 - Test: `src/components/chat/bubbleSelectors.test.ts`
 
-- [ ] **Step 1: Write the test file with the 11 scenarios from chat-derive-bubble spec**
+- [x] **Step 1: Write the test file with the 11 scenarios from chat-derive-bubble spec**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/bubbleSelectors.test.ts`:
 
@@ -256,7 +256,7 @@ type ToolStep = {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/bubbleSelectors.test.ts`
 Expected: FAIL with "Cannot find module './bubbleSelectors'".
@@ -269,7 +269,7 @@ Expected: FAIL with "Cannot find module './bubbleSelectors'".
 **Files:**
 - Create: `src/components/chat/bubbleSelectors.ts`
 
-- [ ] **Step 1: Write the minimal implementation**
+- [x] **Step 1: Write the minimal implementation**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/bubbleSelectors.ts`:
 
@@ -403,12 +403,12 @@ export interface ChatMessage {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/bubbleSelectors.test.ts`
 Expected: PASS (11 scenarios).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/bubbleSelectors.ts src/components/chat/bubbleSelectors.test.ts src/stores/chat.ts
@@ -423,7 +423,7 @@ git commit -m "feat(chat-derive-bubble): deriveBubbleItems folds tool messages b
 **Files:**
 - No code change. This task confirms Task 1 has all 11 scenarios from `chat-derive-bubble` spec.
 
-- [ ] **Step 1: Count test cases in `bubbleSelectors.test.ts`**
+- [x] **Step 1: Count test cases in `bubbleSelectors.test.ts`**
 
 Run: `grep -c "^  it(" /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/bubbleSelectors.test.ts`
 Expected: `11`.
@@ -441,7 +441,7 @@ If count is < 11, re-read `openspec/changes/phase-20-chat-ui-ant-design-x/specs/
 - 完成态 ✓
 - 位置 fallback（covers the `toolCallId` missing fallback Requirement bullet）✓
 
-- [ ] **Step 2: Commit coverage marker**
+- [x] **Step 2: Commit coverage marker**
 
 ```bash
 git commit --allow-empty -m "test(chat-derive-bubble): confirmed 11/11 scenarios covered"
@@ -455,12 +455,12 @@ git commit --allow-empty -m "test(chat-derive-bubble): confirmed 11/11 scenarios
 **Files:**
 - Create: `src/components/chat/ExternalLinkAnchor.test.tsx`
 
-- [ ] **Step 1: Inspect ipc client to know the openExternal call signature**
+- [x] **Step 1: Inspect ipc client to know the openExternal call signature**
 
 Run: `grep -n "openExternal" /Users/aaa/develop/workspace-ai/acornvo/src/ipc/client.ts`
 Expected: a method like `ipc.file.openExternal(url: string)`. Use the exact name discovered.
 
-- [ ] **Step 2: Write the test**
+- [x] **Step 2: Write the test**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ExternalLinkAnchor.test.tsx`:
 
@@ -514,7 +514,7 @@ describe('ExternalLinkAnchor', () => {
 })
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ExternalLinkAnchor.test.tsx`
 Expected: FAIL with "Cannot find module './ExternalLinkAnchor'".
@@ -527,7 +527,7 @@ Expected: FAIL with "Cannot find module './ExternalLinkAnchor'".
 **Files:**
 - Create: `src/components/chat/ExternalLinkAnchor.tsx`
 
-- [ ] **Step 1: Write the implementation**
+- [x] **Step 1: Write the implementation**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ExternalLinkAnchor.tsx`:
 
@@ -551,12 +551,12 @@ export function ExternalLinkAnchor({ href, children, ...rest }: Props) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ExternalLinkAnchor.test.tsx`
 Expected: PASS (3 scenarios).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/ExternalLinkAnchor.tsx src/components/chat/ExternalLinkAnchor.test.tsx
@@ -571,7 +571,7 @@ git commit -m "feat(chat-message-list): ExternalLinkAnchor for IPC-routed extern
 **Files:**
 - Create: `src/components/chat/chatRoles.tsx`
 
-- [ ] **Step 1: Write minimal implementation with stable role config**
+- [x] **Step 1: Write minimal implementation with stable role config**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/chatRoles.tsx`:
 
@@ -609,12 +609,12 @@ export const chatRoles: RolesMap = {
 }
 ```
 
-- [ ] **Step 2: Verify TypeScript compiles**
+- [x] **Step 2: Verify TypeScript compiles**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx tsc --noEmit -p tsconfig.web.json --composite false 2>&1 | grep -i "chatRoles\|bubbleSelectors\|ExternalLink"`
 Expected: no errors mentioning the new files.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/chatRoles.tsx
@@ -629,7 +629,7 @@ git commit -m "feat(chat-message-list): chatRoles stub (user/assistant placement
 **Files:**
 - Create: `src/components/chat/chatRoles.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/chatRoles.test.tsx`:
 
@@ -680,12 +680,12 @@ describe('chatRoles', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/chatRoles.test.tsx`
 Expected: PASS (5 assertions).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/chatRoles.test.tsx
@@ -701,7 +701,7 @@ git commit -m "test(chat-message-list): chatRoles role config + stubbed contentR
 - Create: `src/lib/date-utils.ts`
 - Create: `src/lib/date-utils.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/lib/date-utils.test.ts`:
 
@@ -749,12 +749,12 @@ describe('groupSession', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/lib/date-utils.test.ts`
 Expected: FAIL with "Cannot find module './date-utils'".
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/lib/date-utils.ts`:
 
@@ -774,12 +774,12 @@ export function groupSession(updatedAt: number): SessionGroup {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/lib/date-utils.test.ts`
 Expected: PASS (6 assertions).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/date-utils.ts src/lib/date-utils.test.ts
@@ -797,11 +797,11 @@ git commit -m "feat(chat-session-list): groupSession(updatedAt) → today | this
 **Files:**
 - Create: `src/components/chat/ConversationsAdapter.tsx`
 
-- [ ] **Step 1: Inspect Conversations API surface**
+- [x] **Step 1: Inspect Conversations API surface**
 
 Skim the `x-components` skill for `Conversations` props (`items`, `activeKey`, `onActiveChange`, `groupable`, `creation`, `menu`, narrow-mode patterns). Confirm `items[i].menu` accepts antd `MenuProps` items.
 
-- [ ] **Step 2: Implement the adapter**
+- [x] **Step 2: Implement the adapter**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ConversationsAdapter.tsx`:
 
@@ -944,7 +944,7 @@ export function ConversationsAdapter() {
 
 Note: the exact `creation` prop shape may differ in your antd-x version — consult the `x-components` skill if `Conversations` doesn't expose `creation`. Fallback: render a `<Button>` above `<Conversations>` for the new-session entry.
 
-- [ ] **Step 3: Add i18n keys**
+- [x] **Step 3: Add i18n keys**
 
 Edit `src/i18n/locales/zh.json` (and `en.json`) to add the keys referenced above:
 
@@ -963,12 +963,12 @@ Edit `src/i18n/locales/zh.json` (and `en.json`) to add the keys referenced above
 
 Run: `grep -n '"chat":' /Users/aaa/develop/workspace-ai/acornvo/src/i18n/locales/zh.json` to locate the namespace; insert the new keys inside. Mirror the same structure (English wording) in `en.json`.
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/chat/ConversationsAdapter.tsx src/i18n/locales/zh.json src/i18n/locales/en.json
@@ -983,7 +983,7 @@ git commit -m "feat(chat-session-list): ConversationsAdapter (groups, menu, narr
 **Files:**
 - Create: `src/components/chat/ConversationsAdapter.test.tsx`
 
-- [ ] **Step 1: Write tests covering all chat-session-list scenarios**
+- [x] **Step 1: Write tests covering all chat-session-list scenarios**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ConversationsAdapter.test.tsx`:
 
@@ -1213,12 +1213,12 @@ describe('ConversationsAdapter', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ConversationsAdapter.test.tsx`
 Expected: PASS (12 scenarios). If a Conversations internal prop doesn't expose a particular hook (e.g. `creation`), adjust the adapter and re-run.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/ConversationsAdapter.test.tsx
@@ -1234,11 +1234,11 @@ git commit -m "test(chat-session-list): 12-scenario coverage for ConversationsAd
 **Files:**
 - Create: `src/components/chat/ChatInputArea.tsx`
 
-- [ ] **Step 1: Inspect Sender API surface**
+- [x] **Step 1: Inspect Sender API surface**
 
 Skim the `x-components` skill for `Sender` props (`value`, `onChange`, `onSubmit`, `onCancel`, `loading`, `header`, `prefix`, `onKeyDown`). Confirm `Sender.ref` exposes a focus method or that focus can be triggered via a child ref.
 
-- [ ] **Step 2: Implement the component**
+- [x] **Step 2: Implement the component**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ChatInputArea.tsx`:
 
@@ -1331,7 +1331,7 @@ export function ChatInputArea() {
 }
 ```
 
-- [ ] **Step 3: Add i18n keys**
+- [x] **Step 3: Add i18n keys**
 
 Append to `src/i18n/locales/zh.json` under `"chat"`:
 
@@ -1345,12 +1345,12 @@ Append to `src/i18n/locales/zh.json` under `"chat"`:
 
 Mirror in `en.json` with English wording.
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass. If `Sender.ref` typing fails, use `as any` cast or define the type locally.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/chat/ChatInputArea.tsx src/i18n/locales/zh.json src/i18n/locales/en.json
@@ -1365,11 +1365,11 @@ git commit -m "feat(chat-input): ChatInputArea — Sender + Esc cancel + papercl
 **Files:**
 - Create: `src/components/chat/AttachmentsAdapter.tsx`
 
-- [ ] **Step 1: Inspect Attachments API surface**
+- [x] **Step 1: Inspect Attachments API surface**
 
 Skim the `x-components` skill for `Attachments` — note its `items` shape, `onItemRemove`, `overflow`, and ref-exposed methods (especially `select(opts)`).
 
-- [ ] **Step 2: Implement AttachmentsAdapter**
+- [x] **Step 2: Implement AttachmentsAdapter**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/AttachmentsAdapter.tsx`:
 
@@ -1430,12 +1430,12 @@ If the IPC layer does NOT expose `ipc.file.openDialog`, fall back to `innerRef.c
 
 Run: `grep -n "openDialog\|selectFiles\|chooseFiles" /Users/aaa/develop/workspace-ai/acornvo/src/ipc/client.ts /Users/aaa/develop/workspace-ai/acornvo/shared/ipc-contract.ts 2>/dev/null`
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/chat/AttachmentsAdapter.tsx
@@ -1450,7 +1450,7 @@ git commit -m "feat(chat-attachments): AttachmentsAdapter with imperative select
 **Files:**
 - Create: `src/components/chat/ChatInputArea.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ChatInputArea.test.tsx`:
 
@@ -1570,12 +1570,12 @@ describe('ChatInputArea', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ChatInputArea.test.tsx`
 Expected: PASS (8 scenarios).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/ChatInputArea.test.tsx
@@ -1590,7 +1590,7 @@ git commit -m "test(chat-input): 8-scenario coverage for ChatInputArea"
 **Files:**
 - Create: `src/components/chat/AttachmentsAdapter.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/AttachmentsAdapter.test.tsx`:
 
@@ -1703,12 +1703,12 @@ describe('AttachmentsAdapter', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/AttachmentsAdapter.test.tsx`
 Expected: PASS (5 scenarios). If antd-x `Attachments` doesn't render a per-item close button with the exact aria-label, narrow the selector to the rendered icon.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/AttachmentsAdapter.test.tsx
@@ -1721,15 +1721,15 @@ git commit -m "test(chat-attachments): 5-scenario coverage for AttachmentsAdapte
 
 After all 14 tasks pass, before moving to Plan 3:
 
-- [ ] `src/components/chat/bubbleSelectors.ts` exports `deriveBubbleItems`, `BubbleItem`, `ToolStep`.
-- [ ] `src/components/chat/chatRoles.tsx` exports a stable `chatRoles` map with stub `contentRender` for assistant.
-- [ ] `src/components/chat/ExternalLinkAnchor.tsx` overrides `<a>` to use `ipc.file.openExternal`.
-- [ ] `src/components/chat/ConversationsAdapter.tsx` wires sessions + groups + menu + narrow-mode + red dot.
-- [ ] `src/components/chat/ChatInputArea.tsx` wraps `Sender` with submit / cancel / Esc / focus-bump.
-- [ ] `src/components/chat/AttachmentsAdapter.tsx` forwardRef-exposes `select()` and drives store.
-- [ ] `src/lib/date-utils.ts` exports `groupSession`.
-- [ ] `ChatMessage.status?: 'pending' | 'streaming' | 'done' | 'error'` added to store (Plan 4 task 6.2 makes it official, but Plan 2 needs the field).
-- [ ] `npx vitest run src/components/chat/{bubbleSelectors,chatRoles,ExternalLinkAnchor,ConversationsAdapter,ChatInputArea,AttachmentsAdapter}.test.{ts,tsx}` all pass.
-- [ ] `npx vitest run src/lib/date-utils.test.ts` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] **No legacy components removed yet** — `Chat.tsx` still imports `SessionList`, `MessageList`, `ChatInput`, `ApprovalPanel`. Plan 5 handles the swap-in + deletions; Plan 3 lands `Bubble.List`.
+- [x] `src/components/chat/bubbleSelectors.ts` exports `deriveBubbleItems`, `BubbleItem`, `ToolStep`.
+- [x] `src/components/chat/chatRoles.tsx` exports a stable `chatRoles` map with stub `contentRender` for assistant.
+- [x] `src/components/chat/ExternalLinkAnchor.tsx` overrides `<a>` to use `ipc.file.openExternal`.
+- [x] `src/components/chat/ConversationsAdapter.tsx` wires sessions + groups + menu + narrow-mode + red dot.
+- [x] `src/components/chat/ChatInputArea.tsx` wraps `Sender` with submit / cancel / Esc / focus-bump.
+- [x] `src/components/chat/AttachmentsAdapter.tsx` forwardRef-exposes `select()` and drives store.
+- [x] `src/lib/date-utils.ts` exports `groupSession`.
+- [x] `ChatMessage.status?: 'pending' | 'streaming' | 'done' | 'error'` added to store (Plan 4 task 6.2 makes it official, but Plan 2 needs the field).
+- [x] `npx vitest run src/components/chat/{bubbleSelectors,chatRoles,ExternalLinkAnchor,ConversationsAdapter,ChatInputArea,AttachmentsAdapter}.test.{ts,tsx}` all pass.
+- [x] `npx vitest run src/lib/date-utils.test.ts` passes.
+- [x] `npm run typecheck` passes.
+- [x] **No legacy components removed yet** — `Chat.tsx` still imports `SessionList`, `MessageList`, `ChatInput`, `ApprovalPanel`. Plan 5 handles the swap-in + deletions; Plan 3 lands `Bubble.List`.

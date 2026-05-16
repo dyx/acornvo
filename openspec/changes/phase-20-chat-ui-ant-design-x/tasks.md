@@ -17,26 +17,26 @@
 
 ## 2. 派生层与 roles（block 2）
 
-- [ ] 2.1 新建 `src/components/chat/bubbleSelectors.ts`：实现 `deriveBubbleItems(messages, pendingApprovals): BubbleItem[]`；按 `toolCallId === toolCalls[i].id` 折叠 tool 消息进 toolSteps；fallback 按位置匹配；纯函数无副作用
-- [ ] 2.2 写 `src/components/chat/bubbleSelectors.test.ts`：覆盖 chat-derive-bubble 规格的 11 个 scenario（纯文本 user / assistant、单工具按 callId 折叠、并行工具折叠、工具结果未到达、单待审、多待审独立、流式有 token、流式开始无 token、完成态）
-- [ ] 2.3 新建 `src/components/chat/chatRoles.tsx`：顶层 stable 导出 `chatRoles: BubbleListProps['role']`；user/assistant placement 与 avatar；assistant `contentRender` 复合 ThoughtChain + XMarkdown + 条件 `ApprovalInlineActions`；footer 渲 `Actions`
-- [ ] 2.4 新建 `src/components/chat/ExternalLinkAnchor.tsx`：XMarkdown 的 `a` 标签 override；onClick 阻止默认 + 调 `ipc.file.openExternal(url)`
-- [ ] 2.5 写 `src/components/chat/chatRoles.test.tsx`：role.contentRender 快照测试三种情形（user 简单、assistant 含 toolCalls、assistant 含 pendingApproval）
-- [ ] 2.6 写 `src/components/chat/ExternalLinkAnchor.test.tsx`：click 触发 `ipc.file.openExternal` 调用断言；阻止默认行为断言
+- [x] 2.1 新建 `src/components/chat/bubbleSelectors.ts`：实现 `deriveBubbleItems(messages, pendingApprovals): BubbleItem[]`；按 `toolCallId === toolCalls[i].id` 折叠 tool 消息进 toolSteps；fallback 按位置匹配；纯函数无副作用
+- [x] 2.2 写 `src/components/chat/bubbleSelectors.test.ts`：覆盖 chat-derive-bubble 规格的 11 个 scenario（纯文本 user / assistant、单工具按 callId 折叠、并行工具折叠、工具结果未到达、单待审、多待审独立、流式有 token、流式开始无 token、完成态）
+- [x] 2.3 新建 `src/components/chat/chatRoles.tsx`：顶层 stable 导出 `chatRoles: BubbleListProps['role']`；user/assistant placement 与 avatar；assistant `contentRender` 复合 ThoughtChain + XMarkdown + 条件 `ApprovalInlineActions`；footer 渲 `Actions`
+- [x] 2.4 新建 `src/components/chat/ExternalLinkAnchor.tsx`：XMarkdown 的 `a` 标签 override；onClick 阻止默认 + 调 `ipc.file.openExternal(url)`
+- [x] 2.5 写 `src/components/chat/chatRoles.test.tsx`：role.contentRender 快照测试三种情形（user 简单、assistant 含 toolCalls、assistant 含 pendingApproval）
+- [x] 2.6 写 `src/components/chat/ExternalLinkAnchor.test.tsx`：click 触发 `ipc.file.openExternal` 调用断言；阻止默认行为断言
 
 ## 3. Conversations + Sender（block 3）
 
-- [ ] 3.1 新建 `src/components/chat/ConversationsAdapter.tsx`：用 antd-x `Conversations` 渲染 store sessions；activeKey/onActiveChange 与 `chat.selectSession` 双向绑；`groupable=true`；`creation` 入口调 `chat.createSession`
-- [ ] 3.2 写 `src/lib/date-utils.ts` 中 `groupSession(updatedAt: number): 'today' | 'thisWeek' | 'earlier'` helper + 单测
-- [ ] 3.3 在 ConversationsAdapter 内实现菜单：rename 内联编辑 antd `Input`（Enter 提交调 `chat.renameSession` / Esc 取消）；delete 弹 `Modal.confirm` 调 `chat.deleteSession`
-- [ ] 3.4 实现折叠态桥：窗口宽 <960px 时切窄列表 mode（图标 + 截断标题 ≤8 字符）；用 `useMediaQuery` 或 ResizeObserver 检测；新建按钮仍可见
-- [ ] 3.5 实现后台 session 待审红点：state 从 store derive（`bySession[sid].pendingApprovals.length > 0 && sid !== activeSessionId`）；用 antd `Badge` dot 渲染
-- [ ] 3.6 写 `src/components/chat/ConversationsAdapter.test.tsx`：覆盖 chat-session-list 规格的 12 个 scenario
-- [ ] 3.7 新建 `src/components/chat/ChatInputArea.tsx`：用 antd-x `Sender`；`onSubmit` 调 `chat.sendUserMessage`；`onCancel` 调 `chat.cancelStream`；`loading` 绑 `status==='streaming'`；订阅 `focusInputBump` 触发 focus
-- [ ] 3.8 实现 ChatInputArea 中 prefix paperclip 按钮：触发 Attachments select；新建 `src/components/chat/AttachmentsAdapter.tsx` 嵌入 `Sender.Header`（pendingAttachments 非空时显示）
-- [ ] 3.9 ChatInputArea 中处理 Esc 取消快捷键（onKeyDown 透传 + 调 `chat.cancelStream`）
-- [ ] 3.10 写 `src/components/chat/ChatInputArea.test.tsx`：覆盖 chat-input 规格 8 个 scenario
-- [ ] 3.11 写 `src/components/chat/AttachmentsAdapter.test.tsx`：覆盖 chat-attachments 规格 5 个 scenario
+- [x] 3.1 新建 `src/components/chat/ConversationsAdapter.tsx`：用 antd-x `Conversations` 渲染 store sessions；activeKey/onActiveChange 与 `chat.selectSession` 双向绑；`groupable=true`；`creation` 入口调 `chat.createSession`
+- [x] 3.2 写 `src/lib/date-utils.ts` 中 `groupSession(updatedAt: number): 'today' | 'thisWeek' | 'earlier'` helper + 单测
+- [x] 3.3 在 ConversationsAdapter 内实现菜单：rename 内联编辑 antd `Input`（Enter 提交调 `chat.renameSession` / Esc 取消）；delete 弹 `Modal.confirm` 调 `chat.deleteSession`
+- [x] 3.4 实现折叠态桥：窗口宽 <960px 时切窄列表 mode（图标 + 截断标题 ≤8 字符）；用 `useMediaQuery` 或 ResizeObserver 检测；新建按钮仍可见
+- [x] 3.5 实现后台 session 待审红点：state 从 store derive（`bySession[sid].pendingApprovals.length > 0 && sid !== activeSessionId`）；用 antd `Badge` dot 渲染
+- [x] 3.6 写 `src/components/chat/ConversationsAdapter.test.tsx`：覆盖 chat-session-list 规格的 12 个 scenario
+- [x] 3.7 新建 `src/components/chat/ChatInputArea.tsx`：用 antd-x `Sender`；`onSubmit` 调 `chat.sendUserMessage`；`onCancel` 调 `chat.cancelStream`；`loading` 绑 `status==='streaming'`；订阅 `focusInputBump` 触发 focus
+- [x] 3.8 实现 ChatInputArea 中 prefix paperclip 按钮：触发 Attachments select；新建 `src/components/chat/AttachmentsAdapter.tsx` 嵌入 `Sender.Header`（pendingAttachments 非空时显示）
+- [x] 3.9 ChatInputArea 中处理 Esc 取消快捷键（onKeyDown 透传 + 调 `chat.cancelStream`）
+- [x] 3.10 写 `src/components/chat/ChatInputArea.test.tsx`：覆盖 chat-input 规格 8 个 scenario
+- [x] 3.11 写 `src/components/chat/AttachmentsAdapter.test.tsx`：覆盖 chat-attachments 规格 5 个 scenario
 
 ## 4. Bubble.List + ThoughtChain（block 4）
 
