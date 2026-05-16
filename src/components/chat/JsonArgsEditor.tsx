@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Input, Typography } from 'antd'
+
+const { TextArea } = Input
 
 interface JsonArgsEditorProps {
   initialArgs: unknown
@@ -27,7 +30,6 @@ export function JsonArgsEditor({ initialArgs, onChange }: JsonArgsEditorProps) {
     [onChange]
   )
 
-  // Notify parent of initial state
   useEffect(() => {
     try {
       const parsed = JSON.parse(text)
@@ -35,23 +37,23 @@ export function JsonArgsEditor({ initialArgs, onChange }: JsonArgsEditorProps) {
     } catch {
       onChange(text, false)
     }
-    // Run only once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
-      <textarea
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minHeight: 0, flex: 1 }}>
+      <TextArea
         data-testid="json-args-textarea"
         value={text}
         onChange={(e) => handleChange(e.target.value)}
-        className="flex-1 min-h-0 w-full resize-none rounded-md border border-border bg-muted p-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+        autoSize={{ minRows: 8, maxRows: 24 }}
         spellCheck={false}
+        style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)', fontSize: 12 }}
       />
       {error && (
-        <p data-testid="json-args-error" className="text-xs text-destructive mt-1">
+        <Typography.Text data-testid="json-args-error" type="danger" style={{ fontSize: 12 }}>
           {t('chat.approval.invalidJson')}: {error}
-        </p>
+        </Typography.Text>
       )}
     </div>
   )
