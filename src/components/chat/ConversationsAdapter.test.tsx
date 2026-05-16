@@ -76,8 +76,6 @@ function mkSessionState(overrides: Record<string, unknown> = {}) {
   return {
     loaded: true,
     messages: [],
-    streamingBuffer: '',
-    flushedLength: 0,
     pendingApprovals: [],
     pendingAttachments: [],
     pendingPromptText: '',

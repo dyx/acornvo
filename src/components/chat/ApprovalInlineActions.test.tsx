@@ -51,8 +51,6 @@ const seedActive = (sid: string | null = 's1') => {
           [sid]: {
             loaded: true,
             messages: [],
-            streamingBuffer: '',
-            flushedLength: 0,
             pendingApprovals: [approval],
             pendingAttachments: [],
             pendingPromptText: '',

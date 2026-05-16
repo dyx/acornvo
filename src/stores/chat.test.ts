@@ -23,7 +23,7 @@ vi.mock('@/ipc/client', () => ({
 }))
 
 import { ipc } from '@/ipc/client'
-import { installChatStreamSubscriber, useChatStore } from './chat'
+import { installChatStreamSubscriber, useChatStore, __setChatTokenBatching } from './chat'
 
 beforeEach(() => {
   useChatStore.setState(useChatStore.getInitialState(), true)
@@ -168,7 +168,7 @@ describe('chat store — actions', () => {
     useChatStore.setState((cur) => ({
       bySession: {
         ...cur.bySession,
-        s1: { ...(cur.bySession.s1 ?? {} as any), loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], status: 'streaming', error: null }
+        s1: { ...(cur.bySession.s1 ?? {} as any), loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], status: 'streaming', error: null }
       }
     }))
     await expect(
@@ -205,8 +205,6 @@ describe('chat store — actions', () => {
           ...(cur.bySession.s1 ?? {} as any),
           loaded: true,
           messages: [],
-          streamingBuffer: '',
-          flushedLength: 0,
           pendingApprovals: [
             { callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1 },
             { callId: 'c2', toolName: 'delete_file', args: {}, reason: '', receivedAt: 2 }
@@ -233,8 +231,6 @@ describe('chat store — actions', () => {
           ...(cur.bySession.s1 ?? {} as any),
           loaded: true,
           messages: [],
-          streamingBuffer: '',
-          flushedLength: 0,
           pendingApprovals: [
             { callId: 'c1', toolName: 'write_file', args: {}, reason: '', receivedAt: 1 },
             { callId: 'c2', toolName: 'delete_file', args: {}, reason: '', receivedAt: 2 }
@@ -284,35 +280,121 @@ describe('chat stream subscriber', () => {
 
   beforeEach(async () => {
     Object.keys(handlers).forEach((k) => delete handlers[k])
-    // Override onStream mock to capture per-session handlers
     vi.mocked(ipc.chat as any).onStream = vi.fn((sessionId: string, cb: (evt: any) => void) => {
       handlers[sessionId] = cb
       return () => { delete handlers[sessionId] }
     })
     await useChatStore.getState().loadSessions()
     installChatStreamSubscriber()
+    __setChatTokenBatching(false)
   })
 
-  it('appends streaming token to buffer for the matching session', () => {
+  it('first token lazily creates a streaming assistant message', () => {
+    handlers['s1']({ type: 'token', text: '你' })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages).toHaveLength(1)
+    expect(slot?.messages[0]).toMatchObject({
+      role: 'assistant',
+      text: '你',
+      status: 'streaming',
+    })
+    expect(slot?.status).toBe('streaming')
+  })
+
+  it('subsequent tokens append to the same streaming assistant', () => {
     handlers['s1']({ type: 'token', text: '你' })
     handlers['s1']({ type: 'token', text: '好' })
-    expect(useChatStore.getState().bySession.s1?.streamingBuffer).toBe('你好')
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages).toHaveLength(1)
+    expect(slot?.messages[0].text).toBe('你好')
   })
 
-  it('does not leak token into other session buffer', () => {
+  it('does not leak token into other session', () => {
     handlers['s2']({ type: 'token', text: 'X' })
-    expect(useChatStore.getState().bySession.s1?.streamingBuffer ?? '').toBe('')
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages ?? []).toHaveLength(0)
   })
 
-  it('on done event commits message and resets buffer + status', () => {
+  it('done flips the streaming assistant status to done and session to idle', () => {
     handlers['s1']({ type: 'token', text: 'hello' })
     handlers['s1']({ type: 'done' })
     const slot = useChatStore.getState().bySession.s1
-    expect(slot?.streamingBuffer).toBe('')
-    expect(slot?.flushedLength).toBe(0)
-    expect(slot?.status).toBe('idle')
     const msg = slot?.messages.find((m) => m.role === 'assistant' && m.text === 'hello')
     expect(msg).toBeTruthy()
+    expect(msg?.status).toBe('done')
+    expect(slot?.status).toBe('idle')
+  })
+
+  it('done with pendingApprovals flips session status to awaiting-approval', () => {
+    handlers['s1']({ type: 'token', text: 'hi' })
+    useChatStore.setState((s) => ({
+      bySession: {
+        ...s.bySession,
+        s1: {
+          ...(s.bySession.s1 ?? {} as any),
+          pendingApprovals: [
+            { callId: 'A', toolName: 'fa', args: {}, reason: '', receivedAt: 0 },
+          ],
+        },
+      },
+    }))
+    handlers['s1']({ type: 'done' })
+    expect(useChatStore.getState().bySession.s1?.status).toBe('awaiting-approval')
+  })
+
+  it('message.appended (assistant) merges with the streaming placeholder', () => {
+    handlers['s1']({ type: 'token', text: 'hello' })
+    handlers['s1']({
+      type: 'message.appended',
+      message: {
+        id: 42,
+        sessionId: 's1',
+        role: 'assistant' as const,
+        content: 'hello',
+        toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+        createdAt: new Date('2024-06-01T00:00:00.000Z').toISOString(),
+      },
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages).toHaveLength(1)
+    expect(slot?.messages[0]).toMatchObject({
+      id: '42',
+      role: 'assistant',
+      text: 'hello',
+      status: 'streaming',
+      toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+    })
+  })
+
+  it('tool.start consumes callId and stores it on toolCallId', () => {
+    handlers['s1']({ type: 'tool.start', callId: 'X1', tool: 'search', args: { q: 'x' } })
+    const slot = useChatStore.getState().bySession.s1
+    const toolMsg = slot?.messages.find((m) => m.role === 'tool')
+    expect(toolMsg?.toolCallId).toBe('X1')
+  })
+
+  it('tool.result consumes callId and stores it on toolCallId', () => {
+    handlers['s1']({
+      type: 'tool.result',
+      callId: 'X1',
+      tool: 'search',
+      result: { ok: true, data: [1] },
+    })
+    const slot = useChatStore.getState().bySession.s1
+    const toolMsg = slot?.messages.find((m) => m.role === 'tool')
+    expect(toolMsg?.toolCallId).toBe('X1')
+    expect(toolMsg?.text).toBe(JSON.stringify({ ok: true, data: [1] }))
+  })
+
+  it('token batching on — multiple tokens within 16ms collapse to one streaming message', async () => {
+    __setChatTokenBatching(true)
+    handlers['s1']({ type: 'token', text: 'a' })
+    handlers['s1']({ type: 'token', text: 'b' })
+    handlers['s1']({ type: 'token', text: 'c' })
+    await new Promise((r) => setTimeout(r, 30))
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot?.messages).toHaveLength(1)
+    expect(slot?.messages[0].text).toBe('abc')
   })
 
   it('approval-needed pushes onto queue and sets status', () => {

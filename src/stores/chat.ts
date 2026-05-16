@@ -36,8 +36,6 @@ export type SessionStatus = 'idle' | 'streaming' | 'awaiting-approval' | 'error'
 export interface SessionState {
   loaded: boolean
   messages: ChatMessage[]
-  streamingBuffer: string
-  flushedLength: number
   pendingApprovals: PendingApproval[]
   pendingAttachments: Attachment[]
   pendingPromptText: string
@@ -65,6 +63,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
     toolCalls: m.toolCalls,
     toolCallId: m.toolCallId,
     createdAt: new Date(m.createdAt).getTime(),
+    status: 'done',
   }
 }
 
@@ -101,8 +100,6 @@ interface ChatStore {
 const emptySession = (): SessionState => ({
   loaded: false,
   messages: [],
-  streamingBuffer: '',
-  flushedLength: 0,
   pendingApprovals: [],
   pendingAttachments: [],
   pendingPromptText: '',
@@ -244,8 +241,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           ...s.bySession[sid],
           status: 'streaming',
           error: null,
-          streamingBuffer: '',
-          flushedLength: 0,
           pendingAttachments: [],
           lastUserText: text,
           lastUserAttachments: attachments ?? []
@@ -391,108 +386,232 @@ function nextMsgId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+// ── token batching ───────────────────────────────────────────────────
+
+export let __chatTokenBatching = true
+
+export function __setChatTokenBatching(enabled: boolean): void {
+  __chatTokenBatching = enabled
+}
+
+const pendingTokenBucket = new Map<string, string>()
+const pendingFlushTimer = new Map<string, ReturnType<typeof setTimeout>>()
+
+function applyToken(sid: string, txt: string): void {
+  useChatStore.setState((s) => {
+    const cur = s.bySession[sid] ?? emptySession()
+    const lastIdx = cur.messages.length - 1
+    const last = cur.messages[lastIdx]
+    const isStreamingAssistant =
+      last && last.role === 'assistant' && last.status === 'streaming'
+    let nextMessages: ChatMessage[]
+    if (isStreamingAssistant) {
+      nextMessages = cur.messages.map((m, i) =>
+        i === lastIdx ? { ...m, text: m.text + txt } : m,
+      )
+    } else {
+      nextMessages = [
+        ...cur.messages,
+        {
+          id: nextMsgId(),
+          role: 'assistant' as const,
+          text: txt,
+          status: 'streaming' as const,
+          createdAt: Date.now(),
+        },
+      ]
+    }
+    return {
+      bySession: {
+        ...s.bySession,
+        [sid]: { ...cur, messages: nextMessages, status: 'streaming' },
+      },
+    }
+  })
+}
+
+function flushTokenBucket(sid: string): void {
+  const txt = pendingTokenBucket.get(sid) ?? ''
+  pendingTokenBucket.delete(sid)
+  const tid = pendingFlushTimer.get(sid)
+  if (tid) clearTimeout(tid)
+  pendingFlushTimer.delete(sid)
+  if (!txt) return
+  applyToken(sid, txt)
+}
+
+function enqueueToken(sid: string, txt: string): void {
+  if (!__chatTokenBatching) {
+    applyToken(sid, txt)
+    return
+  }
+  pendingTokenBucket.set(sid, (pendingTokenBucket.get(sid) ?? '') + txt)
+  if (!pendingFlushTimer.has(sid)) {
+    const tid = setTimeout(() => flushTokenBucket(sid), 16)
+    pendingFlushTimer.set(sid, tid)
+  }
+}
+
 const streamUnsubs = new Map<string, () => void>()
 
 function subscribeSessionStream(sid: string): void {
   if (streamUnsubs.has(sid)) return
   const unsub = (ipc.chat as any).onStream(sid, (event: AgentEvent) => {
+    if (event.type === 'token') {
+      enqueueToken(sid, event.text)
+      return
+    }
     useChatStore.setState((s) => {
       const cur = s.bySession[sid] ?? emptySession()
       switch (event.type) {
-        case 'token':
-          return {
-            bySession: {
-              ...s.bySession,
-              [sid]: {
-                ...cur,
-                streamingBuffer: cur.streamingBuffer + event.text,
-                status: 'streaming'
-              }
-            }
-          }
         case 'done': {
-          const msg: ChatMessage = {
-            id: nextMsgId(),
-            role: 'assistant',
-            text: cur.streamingBuffer,
-            createdAt: Date.now()
-          }
+          flushTokenBucket(sid)
+          const post = useChatStore.getState().bySession[sid] ?? cur
+          const idx = (() => {
+            for (let i = post.messages.length - 1; i >= 0; i--) {
+              const m = post.messages[i]
+              if (m.role === 'assistant' && m.status === 'streaming') return i
+            }
+            return -1
+          })()
+          const nextMessages =
+            idx === -1
+              ? post.messages
+              : post.messages.map((m, i) =>
+                  i === idx ? { ...m, status: 'done' as const } : m,
+                )
           return {
             bySession: {
               ...s.bySession,
               [sid]: {
-                ...cur,
-                streamingBuffer: '',
-                flushedLength: 0,
-                status:
-                  cur.pendingApprovals.length > 0 ? 'awaiting-approval' : 'idle',
-                messages: [...cur.messages, msg]
-              }
-            }
+                ...post,
+                messages: nextMessages,
+                status: post.pendingApprovals.length > 0 ? 'awaiting-approval' : 'idle',
+              },
+            },
           }
         }
-        case 'tool.start':
+        case 'tool.start': {
+          flushTokenBucket(sid)
+          const post = useChatStore.getState().bySession[sid] ?? cur
+          const callId = (event as { callId?: string }).callId
+          let nextMessages: ChatMessage[] = post.messages
+          if (callId) {
+            for (let i = post.messages.length - 1; i >= 0; i--) {
+              const m = post.messages[i]
+              if (m.role === 'assistant' && m.toolCalls?.length) {
+                const matches = m.toolCalls.some((tc) => tc.id === callId)
+                if (!matches) {
+                  const promoted = m.toolCalls.map((tc) =>
+                    tc.id === '' && tc.name === event.tool ? { ...tc, id: callId } : tc,
+                  )
+                  nextMessages = post.messages.map((mm, j) =>
+                    j === i ? { ...mm, toolCalls: promoted } : mm,
+                  )
+                }
+                break
+              }
+            }
+          }
           return {
             bySession: {
               ...s.bySession,
               [sid]: {
-                ...cur,
+                ...post,
                 messages: [
-                  ...cur.messages,
+                  ...nextMessages,
                   {
                     id: nextMsgId(),
                     role: 'tool' as const,
                     text: event.tool,
+                    toolCallId: callId,
                     toolCalls: [
-                      { id: nextMsgId(), name: event.tool, args: event.args }
+                      { id: callId ?? nextMsgId(), name: event.tool, args: event.args },
                     ],
-                    createdAt: Date.now()
-                  }
-                ]
-              }
-            }
+                    createdAt: Date.now(),
+                    status: 'pending' as const,
+                  },
+                ],
+              },
+            },
           }
+        }
         case 'tool.result': {
+          flushTokenBucket(sid)
+          const post = useChatStore.getState().bySession[sid] ?? cur
+          const callId = (event as { callId?: string }).callId
           const isApprovalTimeout =
             event.result.ok === false && event.result.error === 'E_APPROVAL_TIMEOUT'
+          const text =
+            event.result.ok === true
+              ? JSON.stringify(event.result)
+              : `error: ${event.result.error}`
           return {
             bySession: {
               ...s.bySession,
               [sid]: {
-                ...cur,
+                ...post,
                 pendingApprovals: isApprovalTimeout
-                  ? cur.pendingApprovals.map((a) =>
+                  ? post.pendingApprovals.map((a) =>
                       a.toolName === event.tool && !a.timedOut
                         ? { ...a, timedOut: true }
-                        : a
+                        : a,
                     )
-                  : cur.pendingApprovals,
+                  : post.pendingApprovals,
                 messages: [
-                  ...cur.messages,
+                  ...post.messages,
                   {
                     id: nextMsgId(),
                     role: 'tool' as const,
-                    text:
-                      event.result.ok === true
-                        ? JSON.stringify(event.result.data)
-                        : `error: ${event.result.error}`,
-                    createdAt: Date.now()
-                  }
-                ]
-              }
-            }
+                    text,
+                    toolCallId: callId,
+                    createdAt: Date.now(),
+                    status: 'done' as const,
+                  },
+                ],
+              },
+            },
           }
         }
-        case 'message.appended':
+        case 'message.appended': {
+          flushTokenBucket(sid)
+          const post = useChatStore.getState().bySession[sid] ?? cur
+          const incoming = toChatMessage(event.message)
+          if (incoming.role !== 'assistant') {
+            return {
+              bySession: {
+                ...s.bySession,
+                [sid]: { ...post, messages: [...post.messages, incoming] },
+              },
+            }
+          }
+          const lastIdx = post.messages.length - 1
+          const last = post.messages[lastIdx]
+          if (last && last.role === 'assistant' && last.status === 'streaming') {
+            const merged: ChatMessage = {
+              ...last,
+              id: incoming.id,
+              toolCalls: incoming.toolCalls ?? last.toolCalls,
+              text: last.text || incoming.text,
+              status: last.status,
+            }
+            return {
+              bySession: {
+                ...s.bySession,
+                [sid]: {
+                  ...post,
+                  messages: post.messages.map((m, i) => (i === lastIdx ? merged : m)),
+                },
+              },
+            }
+          }
           return {
             bySession: {
               ...s.bySession,
-              [sid]: {
-                ...cur,
-                messages: [...cur.messages, toChatMessage(event.message)]
-              }
-            }
+              [sid]: { ...post, messages: [...post.messages, incoming] },
+            },
           }
+        }
         case 'tool.approval-needed':
           return {
             bySession: {
@@ -532,7 +651,6 @@ function subscribeSessionStream(sid: string): void {
             }
           }
         case 'step.start':
-          // no-op: informational only
           return s
         default:
           return s

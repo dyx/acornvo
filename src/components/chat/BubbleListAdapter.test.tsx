@@ -63,8 +63,6 @@ const seedMessages = (messages: ChatMessage[], pendingApprovals: PendingApproval
       s1: {
         loaded: true,
         messages,
-        streamingBuffer: '',
-        flushedLength: 0,
         pendingApprovals,
         pendingAttachments: [],
         pendingPromptText: '',

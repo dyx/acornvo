@@ -48,8 +48,6 @@ const seedSession = (
       s1: {
         loaded: true,
         messages: [],
-        streamingBuffer: '',
-        flushedLength: 0,
         pendingApprovals: [],
         pendingAttachments: [],
         pendingPromptText: '',

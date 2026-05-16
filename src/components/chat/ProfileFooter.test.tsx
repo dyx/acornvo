@@ -51,7 +51,7 @@ describe('ProfileFooter', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: 'p1' }],
       activeSessionId: 's1',
-      bySession: { s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null } },
+      bySession: { s1: { loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null } },
       sessionsLoading: false,
       sessionsError: null
     })
@@ -65,7 +65,7 @@ describe('ProfileFooter', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
-      bySession: { s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null } },
+      bySession: { s1: { loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null } },
       sessionsLoading: false,
       sessionsError: null
     })

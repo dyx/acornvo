@@ -43,8 +43,6 @@ function seed(atts: { type: 'file'; path: string; title: string }[] = []) {
       s1: {
         loaded: true,
         messages: [],
-        streamingBuffer: '',
-        flushedLength: 0,
         pendingApprovals: [],
         pendingAttachments: atts,
         pendingPromptText: '',

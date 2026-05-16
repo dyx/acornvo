@@ -58,8 +58,6 @@ const seed = () => {
       s1: {
         loaded: true,
         messages: [],
-        streamingBuffer: '',
-        flushedLength: 0,
         pendingApprovals: [updateFrontmatterApproval, writeFileApproval],
         pendingAttachments: [],
         pendingPromptText: '',
