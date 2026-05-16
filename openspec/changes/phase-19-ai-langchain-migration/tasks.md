@@ -33,7 +33,7 @@
 - [x] 5.5 重写 `electron/agent/tools/clip-summary.ts`：Zod schema + 调 reviewer
 - [x] 5.6 新建 `electron/agent/tools/index.ts` 导出 5 个工具数组
 - [x] 5.7 删除 `electron/agent/registry.ts` + `registry.test.ts`
-- [ ] 5.8 删除 `electron/ai/parse-tool-args.ts` + 单测
+- [x] 5.8 删除 `electron/ai/parse-tool-args.ts` + 单测
 - [x] 5.9 工具单元测试：每个工具的核心场景（成功、错误码、路径越狱、schema 校验失败）
 
 ## 6. Agent Runner + Stream Translator（block 4）
@@ -58,22 +58,22 @@
 - [x] 7.7 新增 `agent.cancel` 行为：abort signal + 不立即清 thread；标记 thread last-active-at 用于 24h 清理
 - [x] 7.8 新增启动恢复钩子：在 `app-lifecycle` 启动阶段扫描未 resolve 的 interrupt 并重 emit `tool.approval-needed`
 - [x] 7.9 在 `chat.deleteSession` 中加入级联删除 checkpointer 3 张表 `thread_id = sessionId` 行（同事务）
-- [ ] 7.10 新增后台 24h 清理任务（job-queue 或定时器，按 design open question 4 实施时决定）
-- [ ] 7.11 重写 `electron/agent/approval.test.ts`：测 HITL 4 种 decision（approve / edit / reject / cancel）+ 启动恢复
-- [ ] 7.12 新增 `electron/agent/checkpointer-recovery.test.ts`：模拟挂起 interrupt 重启后被重 emit
+- [x] 7.10 新增后台 24h 清理任务（job-queue 或定时器，按 design open question 4 实施时决定）
+- [x] 7.11 重写 `electron/agent/approval.test.ts`：测 HITL 4 种 decision（approve / edit / reject / cancel）+ 启动恢复
+- [x] 7.12 新增 `electron/agent/checkpointer-recovery.test.ts`：模拟挂起 interrupt 重启后被重 emit
 
 ## 8. Usage 适配（穿插 block 2/4）
 
-- [ ] 8.1 把 `electron/ai/usage.ts` 改为从 `AIMessage.usage_metadata`（input_tokens / output_tokens）提取 token 数
-- [ ] 8.2 reviewer 与 runner 在每次 LLM 调用完成后调 `recordUsage(...)`；失败路径仍写 ok=0 行
-- [ ] 8.3 调整 `electron/ai/usage.test.ts`：input 改为 mock AIMessage；聚合断言不变
+- [x] 8.1 把 `electron/ai/usage.ts` 改为从 `AIMessage.usage_metadata`（input_tokens / output_tokens）提取 token 数
+- [x] 8.2 reviewer 与 runner 在每次 LLM 调用完成后调 `recordUsage(...)`；失败路径仍写 ok=0 行
+- [x] 8.3 调整 `electron/ai/usage.test.ts`：input 改为 mock AIMessage；聚合断言不变
 
 ## 9. 清理（block 6）
 
-- [ ] 9.1 删除 `electron/ai/providers/openai.ts` + 单测
-- [ ] 9.2 删除 `electron/ai/providers/anthropic.ts` + 单测
-- [ ] 9.3 删除 `electron/ai/providers/ollama.ts` + 单测
-- [ ] 9.4 删除 `electron/ai/providers/openai-compatible.ts` + 单测
+- [x] 9.1 删除 `electron/ai/providers/openai.ts` + 单测
+- [x] 9.2 删除 `electron/ai/providers/anthropic.ts` + 单测
+- [x] 9.3 删除 `electron/ai/providers/ollama.ts` + 单测
+- [x] 9.4 删除 `electron/ai/providers/openai-compatible.ts` + 单测
 - [ ] 9.5 删除 `electron/ai/client.ts`（功能已迁到 model-factory）
 - [ ] 9.6 删除 `electron/agent/loop.ts`（功能已迁到 runner）
 - [ ] 9.7 删除 `electron/agent/approval.ts`（功能已迁到 HITL middleware）
