@@ -179,8 +179,8 @@ export async function translateStreamEntry(
       const node = nodes[nodeKey];
       const messages: unknown[] = node?.messages ?? [];
       for (const m of messages) {
-        if (isAIMessage(m)) await handleAssistantMessage(deps, m as AIMessage);
-        else if (isToolMessage(m)) await handleToolMessage(deps, m as ToolMessage);
+        if (isAIMessage(m as never)) await handleAssistantMessage(deps, m as AIMessage);
+        else if (isToolMessage(m as never)) await handleToolMessage(deps, m as ToolMessage);
       }
     }
     return;
@@ -190,7 +190,7 @@ export async function translateStreamEntry(
     const tuple = payload as [unknown, { langgraph_node?: string }];
     const [chunk, metadata] = tuple;
     if (metadata?.langgraph_node !== 'model') return;
-    if (!isAIMessageChunk(chunk)) return;
+    if (!isAIMessageChunk(chunk as never)) return;
     const content = (chunk as AIMessageChunk).content;
     const text = typeof content === 'string' ? content : '';
     if (text) deps.emit({ type: 'token', text });
@@ -218,10 +218,12 @@ export function emitDone(
   modelName: string
 ): void {
   deps.recordUsage(finalUsage, modelName);
+  const promptTokens = finalUsage?.input_tokens ?? 0;
+  const completionTokens = finalUsage?.output_tokens ?? 0;
   deps.emit({
     type: 'done',
     usage: finalUsage
-      ? { promptTokens: finalUsage.input_tokens ?? 0, completionTokens: finalUsage.output_tokens ?? 0 }
+      ? { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens }
       : undefined,
   });
 }

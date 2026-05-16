@@ -74,11 +74,12 @@ export const updateFrontmatterTool = tool(
       parsed.frontmatter as Record<string, unknown>,
       args.patch as Record<string, unknown>
     );
-    const newContent = normalizeForDisk(stringify(merged, parsed.body), { eol: read.eol });
+    const eol: 'lf' | 'crlf' = read.eol === 'crlf' ? 'crlf' : 'lf';
+    const newContent = normalizeForDisk(stringify(merged, parsed.body), { eol });
     try {
       const w = await writeWithVerify(abs, newContent, {
         expectedMtime: args.expectedMtime,
-        eol: read.eol,
+        eol,
       });
       return {
         ok: true as const,

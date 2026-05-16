@@ -196,7 +196,7 @@ describe('emitDone — scenario 8: final usage', () => {
     const deps = makeDeps();
     emitDone(deps, { input_tokens: 100, output_tokens: 50 }, 'gpt-x');
     expect(deps.events).toEqual([
-      { type: 'done', usage: { promptTokens: 100, completionTokens: 50 } },
+      { type: 'done', usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 } },
     ]);
     expect(deps.recordUsage).toHaveBeenCalledWith({ input_tokens: 100, output_tokens: 50 }, 'gpt-x');
   });

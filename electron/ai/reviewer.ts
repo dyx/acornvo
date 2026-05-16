@@ -65,7 +65,7 @@ function loadMd(rel: string): {
 } {
   const grove = getCurrent();
   if (!grove) throw rerr('E_FILE_NOT_FOUND', 'no grove opened');
-  const root = grove.vaultRoot;
+  const root = grove.path;
   const abs = path.join(root, rel);
   let stat: fs.Stats;
   try {

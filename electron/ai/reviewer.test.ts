@@ -10,7 +10,7 @@ vi.mock('../services/db', () => ({
   dbService: { requireCurrent: vi.fn() },
 }));
 vi.mock('../services/grove', () => ({
-  getCurrent: vi.fn(() => ({ vaultRoot: '/tmp' })),
+  getCurrent: vi.fn(() => ({ path: '/tmp' })),
 }));
 vi.mock('./model-factory', () => ({
   buildChatModel: vi.fn(),
@@ -88,7 +88,7 @@ beforeEach(() => {
   db = new Database(':memory:');
   runMigrations(db, migrationsDir());
   (dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue(db);
-  (getCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ vaultRoot: TMP });
+  (getCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ path: TMP });
   (settingsStore.get as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ defaultProfileId: 'p1' });
   (getProfileDecryptedKey as unknown as ReturnType<typeof vi.fn>).mockReturnValue('sk-test');
   (fileHandlers.writeParsed as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
