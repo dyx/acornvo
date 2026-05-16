@@ -3,7 +3,7 @@ import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
 import type { Locale } from 'antd/lib/locale'
 
-export const themeTokens: ThemeConfig['token'] = {
+export const themeTokens: NonNullable<ThemeConfig['token']> = {
   colorBgContainer: 'var(--color-paper)',
   colorBgLayout: 'var(--color-paper-2)',
   colorBorder: 'var(--color-line)',
