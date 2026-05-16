@@ -231,6 +231,18 @@ async function bootstrap(): Promise<void> {
         })
       }
     })()
+    // Phase 19: start the 24h checkpointer sweeper.
+    void (async () => {
+      try {
+        const { startSweeper, stopSweeper } = await import('./agent/checkpointer-sweeper')
+        startSweeper()
+        appLifecycle.onBeforeQuit(() => stopSweeper())
+      } catch (err) {
+        logger.warn('agent.checkpointer-sweeper failed to start', {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
+    })()
   })
 
   // Auto-update: check the user's preference; default to enabled.
