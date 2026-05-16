@@ -94,3 +94,68 @@ export const aiUsage = {
     return { items: items.map(rowFromDb), total };
   },
 };
+
+export interface UsageInput {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+}
+
+export interface WriteUsageArgs {
+  usage?: UsageInput;
+  profileId: string;
+  model: string;
+  latencyMs: number;
+  ok: 0 | 1;
+  error: string | null;
+  sessionId?: string;
+  jobId?: string | null;
+}
+
+/**
+ * Build an aiUsage.insert payload from a LangChain `AIMessage.usage_metadata`.
+ * Returns `null` if no usage metadata is present (caller should fall back to
+ * a zero-token row to preserve the 1-row-per-call invariant).
+ */
+export function rowFromUsageMetadata(
+  usage: UsageInput | undefined,
+  base: Omit<WriteUsageArgs, 'usage'>,
+): Parameters<typeof aiUsage.insert>[0] | null {
+  if (!usage) return null;
+  return {
+    jobId: base.jobId ?? null,
+    profileId: base.profileId,
+    model: base.model,
+    promptTokens: usage.input_tokens ?? 0,
+    completionTokens: usage.output_tokens ?? 0,
+    latencyMs: base.latencyMs,
+    ok: base.ok,
+    error: base.error,
+    sessionId: base.sessionId,
+  };
+}
+
+/**
+ * Writes exactly one ai_usage row per call site. If `usage` is present the row
+ * carries the extracted token counts; otherwise it carries zeros so that
+ * dashboards (1-row-per-LLM-call) stay accurate even when the model didn't
+ * report usage_metadata.
+ */
+export function writeUsage(args: WriteUsageArgs): void {
+  const row = rowFromUsageMetadata(args.usage, args);
+  if (row) {
+    aiUsage.insert(row);
+    return;
+  }
+  aiUsage.insert({
+    jobId: args.jobId ?? null,
+    profileId: args.profileId,
+    model: args.model,
+    promptTokens: 0,
+    completionTokens: 0,
+    latencyMs: args.latencyMs,
+    ok: args.ok,
+    error: args.error,
+    sessionId: args.sessionId,
+  });
+}
