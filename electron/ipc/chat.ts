@@ -12,6 +12,7 @@ import {
   type PendingInterrupt,
 } from '../agent/runner';
 import { getAgentBuilder } from '../agent/agent-singleton';
+import { markThreadCanceled } from '../agent/checkpoint-meta';
 import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
 import { IpcError } from '../../shared/ipc-contract';
 import { type ResolvedProfile } from '../ai/model-factory';
@@ -233,6 +234,11 @@ export function createChatHandlers(deps: ChatDeps) {
       const ctl = aborts.get(sessionId);
       if (ctl) ctl.abort();
       deps.approval.cancelSession(sessionId);
+      try {
+        markThreadCanceled(sessionId);
+      } catch {
+        /* best effort */
+      }
       return { ok: true } as const;
     },
 

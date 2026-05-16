@@ -14,6 +14,7 @@ import {
 } from '@langchain/core/messages';
 import { Command } from '@langchain/langgraph';
 import { collectAttachmentContext } from './attachments';
+import { markThreadActive } from './checkpoint-meta';
 import {
   translateStreamEntry,
   emitError,
@@ -141,6 +142,11 @@ export async function runAgent({
     content: userText,
   });
   emit({ type: 'message.appended', message: userMsg });
+  try {
+    markThreadActive(sessionId);
+  } catch {
+    /* mark is best-effort; absence only affects Plan 5 sweeper. */
+  }
 
   // Collect attachments → synthesize a pre-user block (NOT persisted in session_messages).
   let preUserBlock: string | null = null;
