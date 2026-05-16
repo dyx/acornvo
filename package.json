@@ -32,7 +32,9 @@
     "notarize:mac": "node scripts/notarize-mac.mjs"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.2",
     "@ant-design/x": "^2.7.0",
+    "@ant-design/x-markdown": "^0.1.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@langchain/anthropic": "^1.0.0",
@@ -52,6 +54,7 @@
     "@tanstack/react-virtual": "^3.13.24",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "antd": "^5.22.0",
     "archiver": "^7.0.1",
     "autoprefixer": "^10.5.0",
     "better-sqlite3": "^12.9.0",
@@ -59,6 +62,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
     "diff": "^9.0.0",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.3.9",
