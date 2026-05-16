@@ -43,6 +43,28 @@ describe('sessions DAO', () => {
     expect(db.prepare("SELECT COUNT(*) AS n FROM tool_calls WHERE session_id = ?").get(a.id)).toEqual({ n: 0 });
   });
 
+  it('delete cascades into LangGraph checkpointer + sidecar tables', async () => {
+    const a = await s.createSession({ profileId: 'p1' });
+    db.prepare("INSERT INTO checkpoints (thread_id, checkpoint_ns, checkpoint_id) VALUES (?, '', 'cp-1')").run(a.id);
+    db.prepare(
+      "INSERT INTO writes (thread_id, checkpoint_ns, checkpoint_id, task_id, idx, channel) VALUES (?, '', 'cp-1', 't', 0, 'c')"
+    ).run(a.id);
+    db.prepare(
+      "INSERT INTO checkpoint_meta (thread_id, last_active_at, canceled_at) VALUES (?, ?, NULL)"
+    ).run(a.id, 1000);
+
+    await s.delete(a.id);
+
+    expect(db.prepare("SELECT COUNT(*) AS n FROM checkpoints WHERE thread_id = ?").get(a.id)).toEqual({ n: 0 });
+    expect(db.prepare("SELECT COUNT(*) AS n FROM writes WHERE thread_id = ?").get(a.id)).toEqual({ n: 0 });
+    expect(db.prepare("SELECT COUNT(*) AS n FROM checkpoint_meta WHERE thread_id = ?").get(a.id)).toEqual({ n: 0 });
+  });
+
+  it('delete on a session with no checkpointer rows still succeeds', async () => {
+    const a = await s.createSession({ profileId: 'p1' });
+    await expect(s.delete(a.id)).resolves.not.toThrow();
+  });
+
   it('appendMessage auto-titles with first user message (<=40 chars, trimmed)', async () => {
     const a = await s.createSession({ profileId: 'p1' });
     await s.appendMessage(a.id, { role: 'user', content: '  Hello, please help me find that note about attention mechanisms in transformers.' });

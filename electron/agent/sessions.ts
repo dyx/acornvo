@@ -36,6 +36,10 @@ export function createSessions(): SessionsDao {
     async delete(id) {
       const tx = db().transaction((sid: string) => {
         db().prepare("DELETE FROM tool_calls WHERE session_id = ?").run(sid);
+        // Phase 19: cascade into LangGraph checkpointer + sidecar tables.
+        db().prepare("DELETE FROM checkpoints WHERE thread_id = ?").run(sid);
+        db().prepare("DELETE FROM writes WHERE thread_id = ?").run(sid);
+        db().prepare("DELETE FROM checkpoint_meta WHERE thread_id = ?").run(sid);
         db().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
       });
       tx(id);
