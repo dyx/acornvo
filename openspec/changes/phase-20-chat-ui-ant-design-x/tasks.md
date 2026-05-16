@@ -1,19 +1,19 @@
 ## 0. 前置依赖确认（开工前阻塞 gate）
 
-- [ ] 0.1 确认 phase-19 已 archive 且主线已合 K1 callId 扩展（`tool.start.callId?` / `tool.result.callId?` 字段在 `shared/agent-types.ts` 中存在）
-- [ ] 0.2 确认 phase-19 stream-translator 已把 LangGraph `tool_call_id` 透传到 `tool.start.callId` / `tool.result.callId`（读 `electron/agent/stream-translator.ts` 验证）
-- [ ] 0.3 grep 全局确认 `chat` 范围外是否仍用 `react-markdown` / `remark-gfm` / `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu`；列出 chat 域内可清理引用 vs 保留 package 的判断
+- [x] 0.1 确认 phase-19 已 archive 且主线已合 K1 callId 扩展（`tool.start.callId?` / `tool.result.callId?` 字段在 `shared/agent-types.ts` 中存在）
+- [x] 0.2 确认 phase-19 stream-translator 已把 LangGraph `tool_call_id` 透传到 `tool.start.callId` / `tool.result.callId`（读 `electron/agent/stream-translator.ts` 验证）
+- [x] 0.3 grep 全局确认 `chat` 范围外是否仍用 `react-markdown` / `remark-gfm` / `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu`；列出 chat 域内可清理引用 vs 保留 package 的判断
 
 ## 1. 基础设施（block 1）
 
-- [ ] 1.1 package.json 添加 `antd`、`@ant-design/x-markdown`、`@ant-design/icons`、`dayjs`；锁版本
-- [ ] 1.2 `npm install` 并验证 Electron 打包不破（`npm run dev` 启动正常、`npm run build:unpack` 通过）
-- [ ] 1.3 新建 `src/lib/theme.ts`：导出 `themeTokens` 对象（含 `colorBgContainer` / `colorBgLayout` / `colorBorder` / `colorText` / `colorTextSecondary` / `fontFamily` / `borderRadius`，按 design.md §B-Th1 表）
-- [ ] 1.4 修改 `src/App.tsx`：顶层用 `XProvider` 包根；传入 `theme: { token: themeTokens, components: { Bubble: {...}, Sender: {...} } }` 与 `locale={antdLocale}`
-- [ ] 1.5 实现 antd locale 桥：以 `i18n.language` 起头 `zh*` 切 `zhCN` 否则 `enUS`；通过 useTranslation 或订阅 `i18n.on('languageChanged')` 触发 XProvider re-render
-- [ ] 1.6 写 `src/lib/theme.test.ts`：烟雾测试 5 个 token 映射（CSS 变量字符串透传 + borderRadius/fontFamily 字面值）
-- [ ] 1.7 非 chat 页冒烟：Library / Browse / Editor 视觉无变化（手测 + 跑既有 e2e 套件）
-- [ ] 1.8 暗色模式手测：切换 dark mode，chat 页 antd 组件背景与文字色跟随 CSS 变量；记录派生 hover 色不跟随的已知 trade-off
+- [x] 1.1 package.json 添加 `antd`、`@ant-design/x-markdown`、`@ant-design/icons`、`dayjs`；锁版本
+- [x] 1.2 `npm install` 并验证 Electron 打包不破（`npm run dev` 启动正常、`npm run build:unpack` 通过）
+- [x] 1.3 新建 `src/lib/theme.ts`：导出 `themeTokens` 对象（含 `colorBgContainer` / `colorBgLayout` / `colorBorder` / `colorText` / `colorTextSecondary` / `fontFamily` / `borderRadius`，按 design.md §B-Th1 表）
+- [x] 1.4 修改 `src/App.tsx`：顶层用 `XProvider` 包根；传入 `theme: { token: themeTokens, components: { Bubble: {...}, Sender: {...} } }` 与 `locale={antdLocale}`
+- [x] 1.5 实现 antd locale 桥：以 `i18n.language` 起头 `zh*` 切 `zhCN` 否则 `enUS`；通过 useTranslation 或订阅 `i18n.on('languageChanged')` 触发 XProvider re-render
+- [x] 1.6 写 `src/lib/theme.test.ts`：烟雾测试 5 个 token 映射（CSS 变量字符串透传 + borderRadius/fontFamily 字面值）
+- [x] 1.7 非 chat 页冒烟：Library / Browse / Editor 视觉无变化（手测 + 跑既有 e2e 套件）
+- [x] 1.8 暗色模式手测：切换 dark mode，chat 页 antd 组件背景与文字色跟随 CSS 变量；记录派生 hover 色不跟随的已知 trade-off
 
 ## 2. 派生层与 roles（block 2）
 

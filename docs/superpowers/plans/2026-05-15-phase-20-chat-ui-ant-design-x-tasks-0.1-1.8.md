@@ -24,7 +24,7 @@
 **Files:**
 - Inspect (no edit): `shared/agent-types.ts`
 
-- [ ] **Step 1: Locate `tool.start` and `tool.result` event definitions**
+- [x] **Step 1: Locate `tool.start` and `tool.result` event definitions**
 
 Run: `grep -n "tool.start\|tool.result\|tool.approval-needed" /Users/aaa/develop/workspace-ai/acornvo/shared/agent-types.ts`
 
@@ -34,15 +34,15 @@ Expected: each event variant must show an OPTIONAL `callId?: string` field, e.g.
 | { type: 'tool.result'; callId?: string; tool: string; result: ToolResult }
 ```
 
-- [ ] **Step 2: If callId is missing on either variant, STOP**
+- [x] **Step 2: If callId is missing on either variant, STOP**
 
 If the grep output shows `{ type: 'tool.start'; tool: string; args: unknown }` (no `callId?`) or the result variant lacks `callId?`, phase-19 K1 has NOT merged. Halt execution and announce to the user: "phase-19 K1 callId extension not yet on main; phase-20 is blocked. Please verify phase-19 archive status."
 
-- [ ] **Step 3: Record verification in plan log**
+- [x] **Step 3: Record verification in plan log**
 
 If both fields are present, mark this task complete. No code change in this task; this is a pre-flight gate.
 
-- [ ] **Step 4: Commit (no-op marker)**
+- [x] **Step 4: Commit (no-op marker)**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): verify phase-19 K1 callId extension present on tool events"
@@ -56,7 +56,7 @@ git commit --allow-empty -m "chore(phase-20): verify phase-19 K1 callId extensio
 **Files:**
 - Inspect (no edit): `electron/agent/stream-translator.ts`
 
-- [ ] **Step 1: Inspect stream-translator for tool_call_id propagation**
+- [x] **Step 1: Inspect stream-translator for tool_call_id propagation**
 
 Run: `grep -n "tool_call_id\|callId" /Users/aaa/develop/workspace-ai/acornvo/electron/agent/stream-translator.ts`
 
@@ -66,15 +66,15 @@ emit({ type: 'tool.start', callId: chunk.tool_call_id, tool: ..., args: ... })
 emit({ type: 'tool.result', callId: chunk.tool_call_id, tool: ..., result: ... })
 ```
 
-- [ ] **Step 2: If callId is not propagated, STOP**
+- [x] **Step 2: If callId is not propagated, STOP**
 
 If grep returns no matches or the translator omits `callId` on emit, phase-19 stream-translator is incomplete. Halt execution and announce: "phase-19 stream-translator does not propagate tool_call_id → tool.start/result.callId. phase-20 is blocked. File a fix-up in phase-19."
 
-- [ ] **Step 3: Record verification**
+- [x] **Step 3: Record verification**
 
 If callId is propagated, mark task complete.
 
-- [ ] **Step 4: Commit (no-op marker)**
+- [x] **Step 4: Commit (no-op marker)**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): verify stream-translator propagates tool_call_id → event.callId"
@@ -88,22 +88,22 @@ git commit --allow-empty -m "chore(phase-20): verify stream-translator propagate
 **Files:**
 - Output: capture grep results in scratch notes (no file edits)
 
-- [ ] **Step 1: List all imports of `react-markdown` and `remark-gfm`**
+- [x] **Step 1: List all imports of `react-markdown` and `remark-gfm`**
 
 Run: `grep -rn "from 'react-markdown'\|from 'remark-gfm'" /Users/aaa/develop/workspace-ai/acornvo/src 2>/dev/null`
 
-- [ ] **Step 2: List all imports of `@radix-ui/react-dialog` and `@radix-ui/react-dropdown-menu`**
+- [x] **Step 2: List all imports of `@radix-ui/react-dialog` and `@radix-ui/react-dropdown-menu`**
 
 Run: `grep -rn "from '@radix-ui/react-dialog'\|from '@radix-ui/react-dropdown-menu'" /Users/aaa/develop/workspace-ai/acornvo/src 2>/dev/null`
 
-- [ ] **Step 3: Classify hits as chat-domain vs non-chat-domain**
+- [x] **Step 3: Classify hits as chat-domain vs non-chat-domain**
 
 A path under `src/components/chat/` or `src/pages/Chat.tsx` counts as chat-domain. Others (e.g. `src/components/TitleBar.tsx`, `src/components/StatusBar.tsx`, `src/components/search/QuickSwitcher.tsx`, `src/pages/Settings.tsx`) count as non-chat.
 
 Record the answer to this question for Plan 5 (Cleanup) Task 6 (`tasks 7.6`):
 > Are `react-markdown` / `remark-gfm` / `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu` used outside chat? If YES, keep the package in `package.json` after chat-domain imports are deleted. If NO, remove the package.
 
-- [ ] **Step 4: Write findings to commit message**
+- [x] **Step 4: Write findings to commit message**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): inventory react-markdown/remark-gfm/radix-dialog/radix-dropdown usage
@@ -128,12 +128,12 @@ remark-gfm non-chat hits: <count>
 **Files:**
 - Modify: `package.json`
 
-- [ ] **Step 1: Verify @ant-design/x is already present**
+- [x] **Step 1: Verify @ant-design/x is already present**
 
 Run: `grep '"@ant-design/x"' /Users/aaa/develop/workspace-ai/acornvo/package.json`
 Expected: `"@ant-design/x": "^2.7.0",`
 
-- [ ] **Step 2: Edit dependencies block alphabetically**
+- [x] **Step 2: Edit dependencies block alphabetically**
 
 Add these four entries to the `dependencies` block of `package.json` (between existing alphabetical neighbors):
 
@@ -152,7 +152,7 @@ Place them in correct alphabetical order:
 
 Lock versions: do NOT use `latest` or unbounded ranges.
 
-- [ ] **Step 3: Commit dependency additions (no install yet)**
+- [x] **Step 3: Commit dependency additions (no install yet)**
 
 ```bash
 git add package.json
@@ -167,24 +167,24 @@ git commit -m "chore(deps): add antd + @ant-design/x-markdown + @ant-design/icon
 **Files:**
 - Modify: `package-lock.json` (generated)
 
-- [ ] **Step 1: Install dependencies**
+- [x] **Step 1: Install dependencies**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm install`
 Expected: install completes; `package-lock.json` updates with antd / @ant-design/x-markdown / @ant-design/icons / dayjs.
 
-- [ ] **Step 2: Verify dev server starts**
+- [x] **Step 2: Verify dev server starts**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run dev` (in another shell or as background task).
 Expected: Vite + Electron main both start without compile errors. App window opens. Look for the standard "vite ready" and "main started" log lines.
 
 Once verified, kill the dev process.
 
-- [ ] **Step 3: Verify production build packs**
+- [x] **Step 3: Verify production build packs**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run build:unpack`
 Expected: `electron-builder --dir` completes; `dist/mac-arm64/` (or platform-specific) contains the unpacked app. No native module errors (especially `better-sqlite3`).
 
-- [ ] **Step 4: Commit lockfile**
+- [x] **Step 4: Commit lockfile**
 
 ```bash
 git add package-lock.json
@@ -199,7 +199,7 @@ git commit -m "chore(deps): npm install — antd / x-markdown / icons / dayjs"
 **Files:**
 - Create: `src/lib/theme.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/lib/theme.test.ts`:
 
@@ -238,7 +238,7 @@ describe('themeTokens', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/lib/theme.test.ts`
 Expected: FAIL with "Cannot find module './theme'" (or similar import error).
@@ -251,7 +251,7 @@ Expected: FAIL with "Cannot find module './theme'" (or similar import error).
 **Files:**
 - Create: `src/lib/theme.ts`
 
-- [ ] **Step 1: Write the minimal implementation**
+- [x] **Step 1: Write the minimal implementation**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/lib/theme.ts`:
 
@@ -269,12 +269,12 @@ export const themeTokens: ThemeConfig['token'] = {
 }
 ```
 
-- [ ] **Step 2: Run theme test to verify it passes**
+- [x] **Step 2: Run theme test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/lib/theme.test.ts`
 Expected: PASS (7 assertions).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/lib/theme.ts src/lib/theme.test.ts
@@ -290,7 +290,7 @@ git commit -m "feat(chat-theme-bridge): map CSS variables to antd theme tokens"
 **Files:**
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Add a helper to derive antd locale from i18n.language**
+- [x] **Step 1: Add a helper to derive antd locale from i18n.language**
 
 Inside `src/App.tsx`, add an import and a small helper at the top of the module (after the existing imports):
 
@@ -306,7 +306,7 @@ function pickAntdLocale(lng: string) {
 }
 ```
 
-- [ ] **Step 2: Wrap the root tree with XProvider**
+- [x] **Step 2: Wrap the root tree with XProvider**
 
 Inside the `App` component, before the `return (`, call `useTranslation()` so re-renders fire on language change:
 
@@ -346,12 +346,12 @@ return (
 
 Note: keep the inner `<div>` unchanged; only the outer wrapper changes. Do NOT pass `components: { Bubble: ..., Sender: ... }` yet — token-only suffices for Plan 1; component-level theming lands when Bubble.List / Sender go live in Plan 3.
 
-- [ ] **Step 3: Run dev to verify it boots**
+- [x] **Step 3: Run dev to verify it boots**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run dev` (background).
 Expected: app window renders normally. No console errors. Visual: Library / Browse / Editor / Chat all look identical to before. Kill dev when verified.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/App.tsx
@@ -366,7 +366,7 @@ git commit -m "feat(chat-theme-bridge): wrap App with XProvider + antd locale br
 **Files:**
 - Modify: `src/lib/theme.test.ts`
 
-- [ ] **Step 1: Extract `pickAntdLocale` helper to `src/lib/theme.ts` for testability**
+- [x] **Step 1: Extract `pickAntdLocale` helper to `src/lib/theme.ts` for testability**
 
 Edit `src/lib/theme.ts` — add the export below the `themeTokens` const:
 
@@ -382,7 +382,7 @@ export function pickAntdLocale(lng: string): Locale {
 
 And update the existing import block at the top of `src/lib/theme.ts` if needed.
 
-- [ ] **Step 2: Update App.tsx to import the helper from theme.ts**
+- [x] **Step 2: Update App.tsx to import the helper from theme.ts**
 
 In `src/App.tsx`, remove the inline `pickAntdLocale` helper and the `zhCN` / `enUS` imports (they live in `theme.ts` now). Replace with:
 
@@ -390,7 +390,7 @@ In `src/App.tsx`, remove the inline `pickAntdLocale` helper and the `zhCN` / `en
 import { themeTokens, pickAntdLocale } from '@/lib/theme'
 ```
 
-- [ ] **Step 3: Add locale bridge assertions to the test file**
+- [x] **Step 3: Add locale bridge assertions to the test file**
 
 Append to `src/lib/theme.test.ts`:
 
@@ -422,12 +422,12 @@ describe('pickAntdLocale', () => {
 })
 ```
 
-- [ ] **Step 4: Run tests to verify all pass**
+- [x] **Step 4: Run tests to verify all pass**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/lib/theme.test.ts`
 Expected: PASS (12 assertions total: 7 themeTokens + 5 pickAntdLocale).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/theme.ts src/lib/theme.test.ts src/App.tsx
@@ -442,14 +442,14 @@ git commit -m "test(chat-theme-bridge): cover pickAntdLocale (zh* → zhCN, else
 **Files:**
 - Inspect: `src/pages/Library.tsx`, `src/pages/Browse.tsx`, `src/pages/Editor.tsx`, `src/pages/History.tsx`, `src/pages/Search.tsx`, `src/pages/Settings.tsx`
 
-- [ ] **Step 1: Run full vitest suite**
+- [x] **Step 1: Run full vitest suite**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run`
 Expected: all existing tests pass. XProvider wrap is non-disruptive (no new failures). Library acceptance + Browse acceptance specifically must stay green.
 
 If any non-chat test fails: investigate the cause (likely XProvider conflicting with a Tailwind / Radix setup); do NOT mask by tweaking the test. If the conflict is real, narrow XProvider's scope (wrap only the `<Outlet />` instead of the whole tree).
 
-- [ ] **Step 2: Manual smoke each non-chat page in dev**
+- [x] **Step 2: Manual smoke each non-chat page in dev**
 
 Run: `npm run dev` (background). For each route, open and visually verify:
 - `/library` — file tree, search input, list rendering unchanged
@@ -461,7 +461,7 @@ Run: `npm run dev` (background). For each route, open and visually verify:
 
 Document any visual diff in the commit message body. Expected: NO diffs.
 
-- [ ] **Step 3: Commit smoke-test confirmation**
+- [x] **Step 3: Commit smoke-test confirmation**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): smoke-test non-chat pages under XProvider — no regression"
@@ -475,7 +475,7 @@ git commit --allow-empty -m "chore(phase-20): smoke-test non-chat pages under XP
 **Files:**
 - No code change; observe behavior in dev
 
-- [ ] **Step 1: Open dev mode and switch to dark mode**
+- [x] **Step 1: Open dev mode and switch to dark mode**
 
 Run: `npm run dev` (background). Open Settings → Theme → switch from light to dark (or use OS-level appearance switch if app respects `prefers-color-scheme`).
 
@@ -484,11 +484,11 @@ Verify:
 - Chat page (still on legacy components) renders correctly in dark mode — bubble backgrounds, sidebar, input area all follow `--color-paper-2` / `--color-paper`.
 - antd-aware areas (none yet since chat is still legacy; this is a baseline) show no white flashes or untinted areas.
 
-- [ ] **Step 2: Document the known derived-hover-color trade-off**
+- [x] **Step 2: Document the known derived-hover-color trade-off**
 
 antd's hover/focus color variants are derived via HSL math on the literal color value. Because `themeTokens` passes `var(--color-paper)` etc. as opaque strings, derived hover/focus tints will NOT track dark-mode CSS variable changes. This is acknowledged in `design.md §B-Th1`. Note this caveat in the commit message — no fix needed in Plan 1.
 
-- [ ] **Step 3: Commit confirmation with caveat note**
+- [x] **Step 3: Commit confirmation with caveat note**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): smoke-test dark mode under XProvider — base palette tracks; derived hover tints don't (known trade-off, B-Th1)"
@@ -500,11 +500,11 @@ git commit --allow-empty -m "chore(phase-20): smoke-test dark mode under XProvid
 
 After all 11 tasks pass, before moving to Plan 2:
 
-- [ ] `package.json` contains `antd`, `@ant-design/x-markdown`, `@ant-design/icons`, `dayjs` with locked versions.
-- [ ] `src/lib/theme.ts` exports `themeTokens` and `pickAntdLocale`.
-- [ ] `src/App.tsx` renders `<XProvider theme={{ token: themeTokens }} locale={antdLocale}>`.
-- [ ] `npx vitest run src/lib/theme.test.ts` passes (12 assertions).
-- [ ] `npx vitest run` passes overall (no non-chat regressions).
-- [ ] Manual: non-chat pages visually unchanged.
-- [ ] Manual: dark mode base palette still works under XProvider.
-- [ ] Pre-flight verifications (Tasks 1–3) documented in commit history.
+- [x] `package.json` contains `antd`, `@ant-design/x-markdown`, `@ant-design/icons`, `dayjs` with locked versions.
+- [x] `src/lib/theme.ts` exports `themeTokens` and `pickAntdLocale`.
+- [x] `src/App.tsx` renders `<XProvider theme={{ token: themeTokens }} locale={antdLocale}>`.
+- [x] `npx vitest run src/lib/theme.test.ts` passes (12 assertions).
+- [x] `npx vitest run` passes overall (no non-chat regressions).
+- [x] Manual: non-chat pages visually unchanged.
+- [x] Manual: dark mode base palette still works under XProvider.
+- [x] Pre-flight verifications (Tasks 1–3) documented in commit history.
