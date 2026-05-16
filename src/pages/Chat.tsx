@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Welcome, Prompts } from '@ant-design/x'
 import type { PromptsItemType } from '@ant-design/x'
-import { Flex, Alert, Modal } from 'antd'
+import { Flex, Alert, Modal, Dropdown } from 'antd'
 import { Link } from 'react-router-dom'
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
 
@@ -74,53 +73,44 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
   const current = profiles.find((p) => p.id === profileId) ?? null
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          data-testid="chat-profile-chip"
-          className="text-xs px-2 py-1 rounded-md hover:bg-muted inline-flex items-center gap-1 shrink-0 max-w-[240px]"
-          title={
-            current
-              ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
-              : t('chat.topbar.noProfile')
-          }
-        >
-          {current ? (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: profiles.map((p) => ({
+          key: p.id,
+          label: (
             <>
-              <span className="truncate">{current.name}</span>
-              <span className="text-muted-foreground shrink-0">
-                {t('chat.topbar.modelSeparator')}
-              </span>
-              <span className="text-muted-foreground truncate">{current.model}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
-          )}
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="z-50 min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md"
-          sideOffset={4}
-          align="end"
-        >
-          <DropdownMenu.Label className="text-xs text-muted-foreground px-2 py-1.5">
-            {t('chat.topbar.switchProfile')}
-          </DropdownMenu.Label>
-          {profiles.map((p) => (
-            <DropdownMenu.Item
-              key={p.id}
-              className="text-xs px-2 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground cursor-default outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-              onSelect={() => updateSessionProfile(sessionId, p.id)}
-            >
               {p.name}
               <span className="text-muted-foreground ml-2">{p.model}</span>
-            </DropdownMenu.Item>
-          ))}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+            </>
+          ),
+          onClick: () => void updateSessionProfile(sessionId, p.id),
+        })),
+      }}
+    >
+      <button
+        type="button"
+        data-testid="chat-profile-chip"
+        className="text-xs px-2 py-1 rounded-md hover:bg-muted inline-flex items-center gap-1 shrink-0 max-w-[240px]"
+        title={
+          current
+            ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
+            : t('chat.topbar.noProfile')
+        }
+      >
+        {current ? (
+          <>
+            <span className="truncate">{current.name}</span>
+            <span className="text-muted-foreground shrink-0">
+              {t('chat.topbar.modelSeparator')}
+            </span>
+            <span className="text-muted-foreground truncate">{current.model}</span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
+        )}
+      </button>
+    </Dropdown>
   )
 }
 
