@@ -19,6 +19,7 @@ export interface ChatMessage {
   attachments?: Attachment[]
   createdAt: number
   error?: string
+  status?: 'pending' | 'streaming' | 'done' | 'error'
 }
 
 export interface PendingApproval {
