@@ -1,4 +1,3 @@
-import type { ApprovalGate } from '../agent/approval';
 import type { ConcurrencyGate } from '../agent/concurrency';
 import type { SessionsDao } from '../agent/sessions';
 import type { RendererTarget } from '../agent/streamWriter';
@@ -19,7 +18,6 @@ import { dbService } from '../services/db';
 import { getProfileDecryptedKey } from '../settings/profile-key';
 
 export interface ChatDeps {
-  approval: ApprovalGate;
   concurrency: ConcurrencyGate;
   sessions: SessionsDao;
   getTargets: () => RendererTarget[];
@@ -123,7 +121,6 @@ export function createChatHandlers(deps: ChatDeps) {
       deps.sessions.createSession(opts),
     'sessions.delete': async (id: string) => {
       await deps.sessions.delete(id);
-      deps.approval.cancelSession(id);
       return { ok: true } as const;
     },
     'sessions.rename': async (id: string, title: string) => {
@@ -193,7 +190,6 @@ export function createChatHandlers(deps: ChatDeps) {
     cancelStream: async (sessionId: string) => {
       const ctl = aborts.get(sessionId);
       if (ctl) ctl.abort();
-      deps.approval.cancelSession(sessionId);
       try {
         markThreadCanceled(sessionId);
       } catch {
@@ -205,9 +201,7 @@ export function createChatHandlers(deps: ChatDeps) {
     approveTool: async (callId: string, opts?: { editedArgs?: unknown }) => {
       const pending = pendingInterrupts.get(callId);
       if (!pending) {
-        // Legacy gate still serves any in-flight loop.ts approval.
-        deps.approval.approve(callId, opts?.editedArgs);
-        return { ok: true } as const;
+        throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`);
       }
       const decision: AgentDecision =
         opts?.editedArgs !== undefined
@@ -230,8 +224,7 @@ export function createChatHandlers(deps: ChatDeps) {
     rejectTool: async (callId: string) => {
       const pending = pendingInterrupts.get(callId);
       if (!pending) {
-        deps.approval.reject(callId);
-        return { ok: true } as const;
+        throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`);
       }
       pending.decisions.set(callId, { type: 'reject' });
       if (pending.decisions.size < pending.callIds.length) {

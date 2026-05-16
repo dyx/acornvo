@@ -29,7 +29,6 @@ import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
 import { crashHandlers } from './crash'
 import { getQueueBootstrap } from '../queue'
-import { approvalGate } from '../agent/approval'
 import { concurrencyGate } from '../agent/concurrency'
 import { sessions } from '../agent/sessions'
 import { dbService } from '../services/db'
@@ -74,7 +73,6 @@ function getChatTargets() {
 }
 
 const chatHandlers = createChatHandlers({
-  approval: approvalGate,
   concurrency: concurrencyGate,
   sessions,
   getTargets: getChatTargets,

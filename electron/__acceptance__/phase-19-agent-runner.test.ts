@@ -46,7 +46,6 @@ import { runMigrations } from '../services/db/migrations';
 import { dbService } from '../services/db';
 import { getAgentBuilder } from '../agent/agent-singleton';
 import { createSessions } from '../agent/sessions';
-import { createApproval } from '../agent/approval';
 import { createConcurrencyGate } from '../agent/concurrency';
 import { createChatHandlers, pendingInterrupts } from '../ipc/chat';
 import type { AgentEvent } from '../../shared/agent-types';
@@ -63,7 +62,6 @@ interface Rig {
   events: AgentEvent[];
   agent: MockAgent;
   handlers: ReturnType<typeof createChatHandlers>;
-  approval: ReturnType<typeof createApproval>;
   sessions: ReturnType<typeof createSessions>;
   vaultRoot: string;
   cleanup(): void;
@@ -101,16 +99,13 @@ function setupRig(opts?: { globalCap?: number }): Rig {
     buildForProfile: () => agentInstance,
   });
 
-  const approval = createApproval();
   const concurrency = createConcurrencyGate({ globalCap: opts?.globalCap ?? 4 });
   const sessions = createSessions();
   const handlers = createChatHandlers({
-    approval,
     concurrency,
     sessions,
     getTargets: () => [{ send: (_c: string, e: AgentEvent) => events.push(e), isDestroyed: () => false }],
     vaultRoot: () => vaultRoot,
-    llmClient: { chatWithTools: vi.fn() },
   });
 
   return {
@@ -121,7 +116,6 @@ function setupRig(opts?: { globalCap?: number }): Rig {
       streamCalls,
     },
     handlers,
-    approval,
     sessions,
     vaultRoot,
     cleanup: () => {
