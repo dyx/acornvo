@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Welcome, Prompts } from '@ant-design/x'
 import type { PromptsItemType } from '@ant-design/x'
-import { Flex } from 'antd'
+import { Flex, Alert, Modal } from 'antd'
+import { Link } from 'react-router-dom'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
@@ -10,8 +11,60 @@ import { useProfilesStore } from '@/stores/profiles'
 import { ConversationsAdapter } from '@/components/chat/ConversationsAdapter'
 import { BubbleListAdapter } from '@/components/chat/BubbleListAdapter'
 import { ChatInputArea } from '@/components/chat/ChatInputArea'
-import { ChatBanner } from '@/components/chat/ChatBanner'
-import { ShortcutsDialog } from '@/components/chat/ShortcutsDialog'
+
+function MissingProfileBanner() {
+  const { t } = useTranslation()
+  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const sessions = useChatStore((s) => s.sessions)
+  const profiles = useProfilesStore((s) => s.profiles)
+  if (profiles.length > 0) return null
+  const active = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null
+  if (!active || active.profileId) return null
+  return (
+    <Alert
+      type="error"
+      banner
+      message={t('chat.error.missingProfile')}
+      action={
+        <Link to="/settings/ai" data-testid="chat-banner-settings-link">
+          {t('chat.error.goToSettings')}
+        </Link>
+      }
+    />
+  )
+}
+
+function ShortcutsModal() {
+  const { t } = useTranslation()
+  const showShortcutsBump = useChatStore((s) => s.showShortcutsBump)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (showShortcutsBump > 0) setOpen(true)
+  }, [showShortcutsBump])
+
+  return (
+    <Modal
+      open={open}
+      onCancel={() => setOpen(false)}
+      title={t('chat.shortcuts.title')}
+      footer={null}
+      width={480}
+    >
+      <ul style={{ paddingLeft: 16, margin: 0 }}>
+        <li>
+          <kbd>Cmd+Enter</kbd> — {t('chat.shortcuts.send')}
+        </li>
+        <li>
+          <kbd>Enter</kbd> — {t('chat.shortcuts.newSession')}
+        </li>
+        <li>
+          <kbd>Esc</kbd> — {t('chat.shortcuts.focusInput')}
+        </li>
+      </ul>
+    </Modal>
+  )
+}
 
 function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
   const { t } = useTranslation()
@@ -142,7 +195,7 @@ export function Chat() {
       </aside>
 
       <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <ChatBanner />
+        <MissingProfileBanner />
         <header className="flex h-[42px] shrink-0 items-center gap-2.5 border-b border-[color:var(--color-line)] px-[18px]">
           <h2 className="font-serif text-[14px] font-medium m-0 flex-1 truncate text-[color:var(--color-ink)]">
             {title}
@@ -167,7 +220,7 @@ export function Chat() {
         <ChatInputArea />
       </main>
 
-      <ShortcutsDialog />
+      <ShortcutsModal />
     </div>
   )
 }
