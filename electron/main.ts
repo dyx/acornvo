@@ -214,6 +214,23 @@ async function bootstrap(): Promise<void> {
   mainWindow.webContents.once('did-finish-load', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('bootstrap:ready', bootstrapResult)
+    // Phase 19: re-emit pending HITL approvals to a freshly-loaded renderer.
+    void (async () => {
+      try {
+        const { recoverPendingApprovals } = await import('./agent/startup-recovery')
+        const r = await recoverPendingApprovals({
+          getTargets: () =>
+            mainWindow && !mainWindow.isDestroyed() ? [mainWindow.webContents] : [],
+        })
+        if (r.recovered > 0) {
+          logger.info('agent.startup-recovery', { recovered: r.recovered, candidates: r.candidates })
+        }
+      } catch (err) {
+        logger.warn('agent.startup-recovery failed', {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
+    })()
   })
 
   // Auto-update: check the user's preference; default to enabled.

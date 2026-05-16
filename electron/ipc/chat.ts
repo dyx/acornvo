@@ -68,13 +68,19 @@ function resolveProfile(profileId: string): ResolvedProfile {
   };
 }
 
+/**
+ * Keyed by tool_call.id. Populated by runAgent / resumeAgent when an
+ * interrupt fires; consumed by approveTool / rejectTool.
+ *
+ * Exported at module level so the startup-recovery hook (Task 9) can write
+ * recovered entries directly. There is only one chat handler instance per
+ * process today; tests that need isolation can re-import this module via
+ * `vi.resetModules()`.
+ */
+export const pendingInterrupts = new Map<string, PendingInterrupt>();
+
 export function createChatHandlers(deps: ChatDeps) {
   const aborts = new Map<string, AbortController>();
-  /**
-   * Keyed by tool_call.id. Populated by runAgent / resumeAgent when an
-   * interrupt fires; consumed by approveTool / rejectTool.
-   */
-  const pendingInterrupts = new Map<string, PendingInterrupt>();
 
   async function fireResume(pending: PendingInterrupt): Promise<void> {
     const decisions: AgentDecision[] = pending.callIds.map(
