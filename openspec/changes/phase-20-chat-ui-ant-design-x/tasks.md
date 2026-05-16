@@ -60,17 +60,17 @@
 
 ## 6. Store 瘦身（block 6）
 
-- [ ] 6.1 修改 `src/stores/chat.ts`：删 `SessionState.streamingBuffer` 与 `flushedLength` 字段；从 `emptySession()` 移除；从 `sendUserMessage` reducer 移除
-- [ ] 6.2 修改 `ChatMessage` interface：增 `status?: 'pending' | 'streaming' | 'done' | 'error'` 字段；`toChatMessage` 从 DB 加载时 status='done'
-- [ ] 6.3 改 `token` reducer：懒创建 streaming assistant（首个 token 时若末位非 streaming assistant 则 push 一条 `{id, role:'assistant', text:event.text, status:'streaming', createdAt}`）；后续 token 追加 text
-- [ ] 6.4 改 `message.appended` reducer：assistant 消息若末位已有 streaming assistant 占位则合并（替换 id 为后端 AIMessage.id、补 toolCalls、保留累积 text）；其他角色直接 push
-- [ ] 6.5 改 `done` reducer：把最新 assistant 消息 status 改为 'done'；删除 streamingBuffer 落最终消息的旧逻辑
-- [ ] 6.6 改 `tool.start` reducer：消费 `event.callId`（phase-19 K1 扩展）；如有则 push tool message 时 toolCallId=event.callId；同时把 callId 写入对应 assistant 消息的 toolCalls[i].id（如尚未写入）
-- [ ] 6.7 改 `tool.result` reducer：消费 `event.callId`；如有则 push tool message 时 toolCallId=event.callId
-- [ ] 6.8 实现 token 16ms 合批：reducer 用 microtask + setTimeout(16) 合并；提供 `__chatTokenBatching` 全局开关（默认 true，测试可关）
-- [ ] 6.9 修改 `src/stores/chat.test.ts`：删 streamingBuffer 用例；新增 status 字段断言、token 懒创建、message.appended 合并、tool.start/result 带 callId、token 合批关闭后的逐 token 断言场景
-- [ ] 6.10 删除 `src/hooks/useStreamingText.ts` 与 `src/hooks/useStreamingText.test.ts`
-- [ ] 6.11 grep 项目内所有 `useStreamingText` / `streamingBuffer` / `flushedLength` 引用，清零
+- [x] 6.1 修改 `src/stores/chat.ts`：删 `SessionState.streamingBuffer` 与 `flushedLength` 字段；从 `emptySession()` 移除；从 `sendUserMessage` reducer 移除
+- [x] 6.2 修改 `ChatMessage` interface：增 `status?: 'pending' | 'streaming' | 'done' | 'error'` 字段；`toChatMessage` 从 DB 加载时 status='done'
+- [x] 6.3 改 `token` reducer：懒创建 streaming assistant（首个 token 时若末位非 streaming assistant 则 push 一条 `{id, role:'assistant', text:event.text, status:'streaming', createdAt}`）；后续 token 追加 text
+- [x] 6.4 改 `message.appended` reducer：assistant 消息若末位已有 streaming assistant 占位则合并（替换 id 为后端 AIMessage.id、补 toolCalls、保留累积 text）；其他角色直接 push
+- [x] 6.5 改 `done` reducer：把最新 assistant 消息 status 改为 'done'；删除 streamingBuffer 落最终消息的旧逻辑
+- [x] 6.6 改 `tool.start` reducer：消费 `event.callId`（phase-19 K1 扩展）；如有则 push tool message 时 toolCallId=event.callId；同时把 callId 写入对应 assistant 消息的 toolCalls[i].id（如尚未写入）
+- [x] 6.7 改 `tool.result` reducer：消费 `event.callId`；如有则 push tool message 时 toolCallId=event.callId
+- [x] 6.8 实现 token 16ms 合批：reducer 用 microtask + setTimeout(16) 合并；提供 `__chatTokenBatching` 全局开关（默认 true，测试可关）
+- [x] 6.9 修改 `src/stores/chat.test.ts`：删 streamingBuffer 用例；新增 status 字段断言、token 懒创建、message.appended 合并、tool.start/result 带 callId、token 合批关闭后的逐 token 断言场景
+- [x] 6.10 删除 `src/hooks/useStreamingText.ts` 与 `src/hooks/useStreamingText.test.ts`
+- [x] 6.11 grep 项目内所有 `useStreamingText` / `streamingBuffer` / `flushedLength` 引用，清零
 
 ## 7. 清理（block 7）
 

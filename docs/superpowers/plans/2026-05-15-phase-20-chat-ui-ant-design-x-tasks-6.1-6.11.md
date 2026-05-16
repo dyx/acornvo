@@ -43,7 +43,7 @@
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Edit the SessionState interface**
+- [x] **Step 1: Edit the SessionState interface**
 
 Open `/Users/aaa/develop/workspace-ai/acornvo/src/stores/chat.ts`. Locate the `SessionState` interface (around line 35–47) and delete the two lines:
 
@@ -68,7 +68,7 @@ export interface SessionState {
 }
 ```
 
-- [ ] **Step 2: Edit emptySession()**
+- [x] **Step 2: Edit emptySession()**
 
 Locate `emptySession()` (around line 100). Delete the two corresponding lines:
 
@@ -93,7 +93,7 @@ const emptySession = (): SessionState => ({
 })
 ```
 
-- [ ] **Step 3: Edit sendUserMessage reducer**
+- [x] **Step 3: Edit sendUserMessage reducer**
 
 Locate `sendUserMessage` (around line 230). Inside the `set((s) => ({...}))` body, delete the two lines:
 
@@ -102,7 +102,7 @@ Locate `sendUserMessage` (around line 230). Inside the `set((s) => ({...}))` bod
           flushedLength: 0,
 ```
 
-- [ ] **Step 4: Do NOT typecheck or commit yet**
+- [x] **Step 4: Do NOT typecheck or commit yet**
 
 The token / done / tool.start / tool.result reducers still reference `streamingBuffer`. They'll be rewritten in Tasks 4–7. Build is intentionally broken between Tasks 1 and 7.
 
@@ -114,7 +114,7 @@ The token / done / tool.start / tool.result reducers still reference `streamingB
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Add the status field**
+- [x] **Step 1: Add the status field**
 
 Locate `ChatMessage` interface (around line 13). Plan 2 may have added `status?:` already. Confirm it exists and reads:
 
@@ -134,7 +134,7 @@ export interface ChatMessage {
 
 If Plan 2 did not add the field, add it now.
 
-- [ ] **Step 2: Update toChatMessage() to set status='done'**
+- [x] **Step 2: Update toChatMessage() to set status='done'**
 
 Locate `toChatMessage()` (around line 59). Change to:
 
@@ -152,7 +152,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
 }
 ```
 
-- [ ] **Step 3: Do NOT commit yet — bundle with rest of store rewrite**
+- [x] **Step 3: Do NOT commit yet — bundle with rest of store rewrite**
 
 ---
 
@@ -162,7 +162,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Add the batching infrastructure (above the subscribe function)**
+- [x] **Step 1: Add the batching infrastructure (above the subscribe function)**
 
 In `/Users/aaa/develop/workspace-ai/acornvo/src/stores/chat.ts`, locate the section just before `subscribeSessionStream` (around line 393). Insert:
 
@@ -233,7 +233,7 @@ function enqueueToken(sid: string, txt: string): void {
 }
 ```
 
-- [ ] **Step 2: Replace the case 'token' branch in subscribeSessionStream**
+- [x] **Step 2: Replace the case 'token' branch in subscribeSessionStream**
 
 Locate the `subscribeSessionStream` function (around line 395) and find the `case 'token':` branch (around line 401). Replace it with a call to `enqueueToken`:
 
@@ -245,7 +245,7 @@ Locate the `subscribeSessionStream` function (around line 395) and find the `cas
 
 Note: returning `s` unchanged is correct because `enqueueToken` triggers its own `setState` later (or immediately if batching is off).
 
-- [ ] **Step 3: Do NOT commit yet**
+- [x] **Step 3: Do NOT commit yet**
 
 ---
 
@@ -255,7 +255,7 @@ Note: returning `s` unchanged is correct because `enqueueToken` triggers its own
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Replace the case 'message.appended' branch**
+- [x] **Step 1: Replace the case 'message.appended' branch**
 
 In `subscribeSessionStream`, locate `case 'message.appended':` (around line 485). Before mutating state, flush any pending token bucket so the streaming text is up-to-date:
 
@@ -304,7 +304,7 @@ In `subscribeSessionStream`, locate `case 'message.appended':` (around line 485)
         }
 ```
 
-- [ ] **Step 2: Do NOT commit yet**
+- [x] **Step 2: Do NOT commit yet**
 
 ---
 
@@ -314,7 +314,7 @@ In `subscribeSessionStream`, locate `case 'message.appended':` (around line 485)
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Replace the case 'done' branch**
+- [x] **Step 1: Replace the case 'done' branch**
 
 In `subscribeSessionStream`, locate `case 'done':` (around line 412) and replace the entire block with:
 
@@ -348,7 +348,7 @@ In `subscribeSessionStream`, locate `case 'done':` (around line 412) and replace
 
 Note: the old code constructed a brand-new assistant message from `streamingBuffer`. The new code does not — message has been accumulating in-place since the first token (Task 3). The `done` event only flips status.
 
-- [ ] **Step 2: Do NOT commit yet**
+- [x] **Step 2: Do NOT commit yet**
 
 ---
 
@@ -358,7 +358,7 @@ Note: the old code constructed a brand-new assistant message from `streamingBuff
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Replace the case 'tool.start' branch**
+- [x] **Step 1: Replace the case 'tool.start' branch**
 
 In `subscribeSessionStream`, locate `case 'tool.start':` (around line 433). Replace with:
 
@@ -412,7 +412,7 @@ In `subscribeSessionStream`, locate `case 'tool.start':` (around line 433). Repl
         }
 ```
 
-- [ ] **Step 2: Do NOT commit yet**
+- [x] **Step 2: Do NOT commit yet**
 
 ---
 
@@ -422,7 +422,7 @@ In `subscribeSessionStream`, locate `case 'tool.start':` (around line 433). Repl
 **Files:**
 - Modify: `src/stores/chat.ts`
 
-- [ ] **Step 1: Replace the case 'tool.result' branch**
+- [x] **Step 1: Replace the case 'tool.result' branch**
 
 In `subscribeSessionStream`, locate `case 'tool.result':` (around line 454). Replace with:
 
@@ -467,7 +467,7 @@ In `subscribeSessionStream`, locate `case 'tool.result':` (around line 454). Rep
 
 Note: tool message `text` now stores the full `{ok, data}` or `error: ...` form. The selector in Plan 2 parses this back. If the selector was written to expect bare `JSON.stringify(event.result.data)` (the old shape), update `parseToolResultText` in `src/components/chat/bubbleSelectors.ts` to handle either shape (see Plan 2 Task 2 — it already handles both `{ok, data}` shape via `JSON.parse` and `error: ...` fallback, so this matches).
 
-- [ ] **Step 2: Do NOT commit yet**
+- [x] **Step 2: Do NOT commit yet**
 
 ---
 
@@ -477,7 +477,7 @@ Note: tool message `text` now stores the full `{ok, data}` or `error: ...` form.
 **Files:**
 - No file change in this task — validation pass.
 
-- [ ] **Step 1: Run typecheck**
+- [x] **Step 1: Run typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web 2>&1 | tail -50`
 Expected: pass. If errors point to leftover `streamingBuffer`/`flushedLength` references in other modules, list them — Task 11 cleans them up; but if the store itself fails to compile, fix it now.
@@ -486,12 +486,12 @@ Common pitfalls:
 - `ChatMessage.status === 'streaming'` requires `status` field present on the type (Task 2).
 - The case branches all return either `s` unchanged or a new state shape — keep TypeScript narrowing happy by NOT mixing return shapes within a switch arm.
 
-- [ ] **Step 2: Run the existing chat.test.ts to see which assertions break**
+- [x] **Step 2: Run the existing chat.test.ts to see which assertions break**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/stores/chat.test.ts 2>&1 | tail -30`
 Expected: many failures referencing `streamingBuffer` / `flushedLength` / message id shape changes. List them — Task 9 rewrites the test file.
 
-- [ ] **Step 3: Do NOT commit yet — bundle with Task 9 changes**
+- [x] **Step 3: Do NOT commit yet — bundle with Task 9 changes**
 
 ---
 
@@ -501,13 +501,13 @@ Expected: many failures referencing `streamingBuffer` / `flushedLength` / messag
 **Files:**
 - Modify: `src/stores/chat.test.ts`
 
-- [ ] **Step 1: Open the file and identify legacy assertions**
+- [x] **Step 1: Open the file and identify legacy assertions**
 
 Run: `grep -n "streamingBuffer\|flushedLength" /Users/aaa/develop/workspace-ai/acornvo/src/stores/chat.test.ts`
 
 For each match, either delete (assertion about a removed field) or replace (assertion that should now check `messages[i].text` or `messages[i].status` instead).
 
-- [ ] **Step 2: Add new test cases**
+- [x] **Step 2: Add new test cases**
 
 Append the following `describe('store streaming reducers', () => { ... })` block (or merge into the existing one). Replace the file as needed. Key new cases:
 
@@ -656,12 +656,12 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
 
 Replace the placeholder `emit(...)` stub with the actual subscriber-callback helper used elsewhere in `chat.test.ts`. Run `grep -n "onStream\|emit\|capture" /Users/aaa/develop/workspace-ai/acornvo/src/stores/chat.test.ts` to find it.
 
-- [ ] **Step 3: Run tests to verify all pass**
+- [x] **Step 3: Run tests to verify all pass**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/stores/chat.test.ts`
 Expected: PASS. Iterate on any failing assertion — the new reducer logic must match the new tests.
 
-- [ ] **Step 4: Commit the entire store rewrite (Tasks 1–7 + 9 + theme test stable)**
+- [x] **Step 4: Commit the entire store rewrite (Tasks 1–7 + 9 + theme test stable)**
 
 ```bash
 git add src/stores/chat.ts src/stores/chat.test.ts
@@ -677,26 +677,26 @@ git commit -m "refactor(chat-store): lazy streaming assistant + status field + c
 - Delete: `src/hooks/useStreamingText.ts`
 - Delete: `src/hooks/useStreamingText.test.ts`
 
-- [ ] **Step 1: Verify no remaining imports**
+- [x] **Step 1: Verify no remaining imports**
 
 Run: `grep -rn "useStreamingText" /Users/aaa/develop/workspace-ai/acornvo/src /Users/aaa/develop/workspace-ai/acornvo/electron /Users/aaa/develop/workspace-ai/acornvo/shared 2>/dev/null`
 Expected: no results (Plan 3's `Chat.tsx` rewrite removed the last import).
 
 If any reference remains, STOP and re-read Plan 3 Task 12. Either Plan 3 missed a hook reference, or a non-chat file uses it (unlikely — the hook was chat-only). Fix the caller before deleting.
 
-- [ ] **Step 2: Delete the files**
+- [x] **Step 2: Delete the files**
 
 ```bash
 rm /Users/aaa/develop/workspace-ai/acornvo/src/hooks/useStreamingText.ts
 rm /Users/aaa/develop/workspace-ai/acornvo/src/hooks/useStreamingText.test.ts
 ```
 
-- [ ] **Step 3: Run tests to confirm no fallout**
+- [x] **Step 3: Run tests to confirm no fallout**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run`
 Expected: pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -711,7 +711,7 @@ git commit -m "chore(chat-store): delete useStreamingText hook + test (replaced 
 **Files:**
 - Modify: any source files still referencing the removed identifiers (expected: none after Task 10).
 
-- [ ] **Step 1: Final grep sweep**
+- [x] **Step 1: Final grep sweep**
 
 Run each command and confirm zero results across `src/`, `electron/`, `shared/`:
 
@@ -721,7 +721,7 @@ grep -rn "streamingBuffer" /Users/aaa/develop/workspace-ai/acornvo/src /Users/aa
 grep -rn "flushedLength" /Users/aaa/develop/workspace-ai/acornvo/src /Users/aaa/develop/workspace-ai/acornvo/electron /Users/aaa/develop/workspace-ai/acornvo/shared 2>/dev/null
 ```
 
-- [ ] **Step 2: If grep returns results, clean each one**
+- [x] **Step 2: If grep returns results, clean each one**
 
 Likely candidates:
 - `src/__acceptance__/chat-acceptance.test.tsx` — its `mkSlot()` helper probably still seeds the two fields. Plan 5 Task 7 (`tasks 7.7`) rewrites this file fully — defer cleanup there if it shows up.
@@ -729,12 +729,12 @@ Likely candidates:
 
 If the only remaining hits are in `chat-acceptance.test.tsx`, leave them; Plan 5 Task 7 handles. Document this in the commit.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run`
 Expected: all pass (chat-acceptance.test.tsx may still fail; that's Plan 5's job).
 
-- [ ] **Step 4: Commit completion marker**
+- [x] **Step 4: Commit completion marker**
 
 ```bash
 git commit --allow-empty -m "chore(chat-store): grep clean — useStreamingText/streamingBuffer/flushedLength removed from non-acceptance code paths
@@ -748,14 +748,14 @@ Remaining hits in src/__acceptance__/chat-acceptance.test.tsx — handled by Pla
 
 After all 11 tasks pass, before moving to Plan 5:
 
-- [ ] `SessionState` no longer declares `streamingBuffer` or `flushedLength`.
-- [ ] `ChatMessage` declares `status?: 'pending' | 'streaming' | 'done' | 'error'`.
-- [ ] `subscribeSessionStream` token reducer lazily creates / appends the streaming assistant.
-- [ ] `message.appended` reducer merges with the streaming placeholder when present.
-- [ ] `done` reducer flips status without re-creating the message.
-- [ ] `tool.start` and `tool.result` reducers consume `event.callId` and stamp it onto `toolCallId`.
-- [ ] `__setChatTokenBatching(boolean)` exported for tests; default-on 16ms batching active in production.
-- [ ] `src/hooks/useStreamingText.{ts,test.ts}` deleted.
-- [ ] Grep shows zero references to `useStreamingText` / `streamingBuffer` / `flushedLength` outside the acceptance test (acceptance handled in Plan 5).
-- [ ] `npx vitest run src/stores/chat.test.ts` passes (with new + retained assertions).
-- [ ] `npm run typecheck` passes.
+- [x] `SessionState` no longer declares `streamingBuffer` or `flushedLength`.
+- [x] `ChatMessage` declares `status?: 'pending' | 'streaming' | 'done' | 'error'`.
+- [x] `subscribeSessionStream` token reducer lazily creates / appends the streaming assistant.
+- [x] `message.appended` reducer merges with the streaming placeholder when present.
+- [x] `done` reducer flips status without re-creating the message.
+- [x] `tool.start` and `tool.result` reducers consume `event.callId` and stamp it onto `toolCallId`.
+- [x] `__setChatTokenBatching(boolean)` exported for tests; default-on 16ms batching active in production.
+- [x] `src/hooks/useStreamingText.{ts,test.ts}` deleted.
+- [x] Grep shows zero references to `useStreamingText` / `streamingBuffer` / `flushedLength` outside the acceptance test (acceptance handled in Plan 5).
+- [x] `npx vitest run src/stores/chat.test.ts` passes (with new + retained assertions).
+- [x] `npm run typecheck` passes.
