@@ -1,9 +1,10 @@
+import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
 
-export function ProfileFooter(): JSX.Element {
+export function ProfileFooter(): ReactElement {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const sessions = useChatStore((s) => s.sessions)
