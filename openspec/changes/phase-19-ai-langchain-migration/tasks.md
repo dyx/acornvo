@@ -21,7 +21,7 @@
 - [x] 4.1 把 `electron/ai/prompts/review-clip.ts` 的 schema 改写为 Zod；render 仍返回 `{ system, user }`
 - [x] 4.2 重写 `electron/ai/reviewer.ts`：用 `buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(messages)`；保留 frontmatter 写回、mtime 校验、`E_*` 错误码语义；catch 走 `normalizeLLMError`
 - [x] 4.3 改写 `electron/ai/reviewer.test.ts`：mock `BaseChatModel.withStructuredOutput`；保留原行为对等表；删除 markdown 剥离、Ajv 校验相关测试
-- [ ] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
+- [x] 4.4 删除 `electron/ai/parse-json.ts` + `parse-json.test.ts`
 - [x] 4.5 调整 `electron/queue/handlers/ai-review-clip.ts`：错误映射改为消费 `normalizeLLMError` 输出；行为不变
 
 ## 5. 工具重写（block 3）
@@ -74,16 +74,16 @@
 - [x] 9.2 删除 `electron/ai/providers/anthropic.ts` + 单测
 - [x] 9.3 删除 `electron/ai/providers/ollama.ts` + 单测
 - [x] 9.4 删除 `electron/ai/providers/openai-compatible.ts` + 单测
-- [ ] 9.5 删除 `electron/ai/client.ts`（功能已迁到 model-factory）
-- [ ] 9.6 删除 `electron/agent/loop.ts`（功能已迁到 runner）
-- [ ] 9.7 删除 `electron/agent/approval.ts`（功能已迁到 HITL middleware）
-- [ ] 9.8 删除 `electron/agent/loop.test.ts`（被 runner.test.ts 替代）
-- [ ] 9.9 grep 确认无任何文件仍 import 已删除模块
-- [ ] 9.10 在 acceptance 套件中确认所有 chat 用例仍 100% 通过
+- [x] 9.5 删除 `electron/ai/client.ts`（功能已迁到 model-factory）
+- [x] 9.6 删除 `electron/agent/loop.ts`（功能已迁到 runner）
+- [x] 9.7 删除 `electron/agent/approval.ts`（功能已迁到 HITL middleware）
+- [x] 9.8 删除 `electron/agent/loop.test.ts`（被 runner.test.ts 替代）
+- [x] 9.9 grep 确认无任何文件仍 import 已删除模块
+- [x] 9.10 在 acceptance 套件中确认所有 chat 用例仍 100% 通过
 
 ## 10. 文档与发布
 
-- [ ] 10.1 更新 README 或 docs 中提及 AI 链路实现的段落
-- [ ] 10.2 撰写 release note：说明并行工具调用行为差异、HITL 重启恢复新能力、step.warning 事件不再触发
-- [ ] 10.3 跑全套 `pnpm test` + acceptance：全绿
+- [x] 10.1 更新 README 或 docs 中提及 AI 链路实现的段落
+- [x] 10.2 撰写 release note：说明并行工具调用行为差异、HITL 重启恢复新能力、step.warning 事件不再触发
+- [x] 10.3 跑全套 `pnpm test` + acceptance：全绿
 - [ ] 10.4 在 OpenSpec 中 verify + archive 本 change
