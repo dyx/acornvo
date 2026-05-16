@@ -74,16 +74,16 @@
 
 ## 7. 清理（block 7）
 
-- [ ] 7.1 删除旧组件文件：`SessionList.tsx`、`SessionListRow.tsx`、`SessionContextMenu.tsx`、`MessageList.tsx`、`UserBubble.tsx`、`AssistantMarkdown.tsx`、`ToolCallCard.tsx`、`ToolResultCard.tsx`、`ChatInput.tsx`、`AttachmentChips.tsx`、`ApprovalPanel.tsx`、`MessageOps.tsx`、`DeleteSessionDialog.tsx`、`ShortcutsDialog.tsx`、`ChatBanner.tsx`、`SessionStatusBadge.tsx`
-- [ ] 7.2 删除旧组件单测：`SessionList.test.tsx`、`MessageList.test.tsx`、`AttachmentChips.test.tsx`、`ApprovalPanel.test.tsx`、`ChatInput.test.tsx`
-- [ ] 7.3 把 `ChatBanner` 用法替换为 antd `Alert`（error 事件展示）；保留行为
-- [ ] 7.4 把 `SessionStatusBadge` 用法替换为 antd `Badge`
-- [ ] 7.5 把 `ShortcutsDialog` 用法替换为 antd `Modal`（组件式或 `Modal.useModal` 命令式，按 design.md Open Question 5 实施期决定）
-- [ ] 7.6 grep + 清理 chat 域内 `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu` 引用；按 0.3 grep 结果决定是否从 package.json 移除（chat 域外仍用则保留）
-- [ ] 7.7 改写 `src/__acceptance__/chat-acceptance.test.tsx`：`mkSlot` 删 streamingBuffer/flushedLength + 加 status；选择器从 `data-testid` 改为 ARIA role + i18n name；流式断言改用 store status 而非 DOM textContent；IPC mock 表面（K1）不动；保留全部业务断言
-- [ ] 7.8 验证 `ProfileFooter.test.tsx` 仅微调（antd token 视觉差不影响断言）；保留
-- [ ] 7.9 验证 `FrontmatterDiff.test.tsx` 保留无修改
-- [ ] 7.10 在 `JsonArgsEditor` 内适配 antd token（输入框边框 / 字体）；功能不变
+- [x] 7.1 删除旧组件文件：`SessionList.tsx`、`SessionListRow.tsx`、`SessionContextMenu.tsx`、`MessageList.tsx`、`UserBubble.tsx`、`AssistantMarkdown.tsx`、`ToolCallCard.tsx`、`ToolResultCard.tsx`、`ChatInput.tsx`、`AttachmentChips.tsx`、`ApprovalPanel.tsx`、`MessageOps.tsx`、`DeleteSessionDialog.tsx`、`ShortcutsDialog.tsx`、`ChatBanner.tsx`、`SessionStatusBadge.tsx`
+- [x] 7.2 删除旧组件单测：`SessionList.test.tsx`、`MessageList.test.tsx`、`AttachmentChips.test.tsx`、`ApprovalPanel.test.tsx`、`ChatInput.test.tsx`
+- [x] 7.3 把 `ChatBanner` 用法替换为 antd `Alert`（error 事件展示）；保留行为
+- [x] 7.4 把 `SessionStatusBadge` 用法替换为 antd `Badge`
+- [x] 7.5 把 `ShortcutsDialog` 用法替换为 antd `Modal`（组件式或 `Modal.useModal` 命令式，按 design.md Open Question 5 实施期决定）
+- [x] 7.6 grep + 清理 chat 域内 `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu` 引用；按 0.3 grep 结果决定是否从 package.json 移除（chat 域外仍用则保留）
+- [x] 7.7 改写 `src/__acceptance__/chat-acceptance.test.tsx`：`mkSlot` 删 streamingBuffer/flushedLength + 加 status；选择器从 `data-testid` 改为 ARIA role + i18n name；流式断言改用 store status 而非 DOM textContent；IPC mock 表面（K1）不动；保留全部业务断言
+- [x] 7.8 验证 `ProfileFooter.test.tsx` 仅微调（antd token 视觉差不影响断言）；保留
+- [x] 7.9 验证 `FrontmatterDiff.test.tsx` 保留无修改
+- [x] 7.10 在 `JsonArgsEditor` 内适配 antd token（输入框边框 / 字体）；功能不变
 
 ## 8. 验证（block 7 收尾）
 

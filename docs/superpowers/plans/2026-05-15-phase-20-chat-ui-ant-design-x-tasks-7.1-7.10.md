@@ -30,17 +30,17 @@
 - Modify: any file currently importing `ChatBanner`
 - Inspect: `src/components/chat/ChatBanner.tsx`
 
-- [ ] **Step 1: Find ChatBanner imports**
+- [x] **Step 1: Find ChatBanner imports**
 
 Run: `grep -rn "ChatBanner" /Users/aaa/develop/workspace-ai/acornvo/src 2>/dev/null`
 
 After Plan 3 Task 12 rewrote `Chat.tsx`, the import there is already removed. Verify. Expected sites: maybe `Chat.test.tsx` or none.
 
-- [ ] **Step 2: Read ChatBanner.tsx to know what it renders**
+- [x] **Step 2: Read ChatBanner.tsx to know what it renders**
 
 Read `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ChatBanner.tsx`. It typically subscribes to a session `error` field and renders a dismissible banner.
 
-- [ ] **Step 3: Inline an antd Alert wherever needed**
+- [x] **Step 3: Inline an antd Alert wherever needed**
 
 In every file that imported `ChatBanner`, replace the `<ChatBanner />` JSX with:
 
@@ -81,7 +81,7 @@ Update `Chat.tsx`:
 </Flex>
 ```
 
-- [ ] **Step 4: Run typecheck and commit**
+- [x] **Step 4: Run typecheck and commit**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass.
@@ -99,13 +99,13 @@ git commit -m "feat(chat-page): replace ChatBanner with antd Alert"
 **Files:**
 - Modify: any file currently importing `SessionStatusBadge`
 
-- [ ] **Step 1: Find usages**
+- [x] **Step 1: Find usages**
 
 Run: `grep -rn "SessionStatusBadge" /Users/aaa/develop/workspace-ai/acornvo/src 2>/dev/null`
 
 After Plan 3 Task 12 rewrote `Chat.tsx`, the import is removed there. If `ConversationsAdapter` or any other Plan-2/3 component needs a status indicator, inline antd `Badge` at the usage site.
 
-- [ ] **Step 2: Inline antd Badge if needed**
+- [x] **Step 2: Inline antd Badge if needed**
 
 Where session status (streaming / awaiting-approval / error) needs a visual cue, use:
 
@@ -126,7 +126,7 @@ function mapStatusToAntd(s: 'idle' | 'streaming' | 'awaiting-approval' | 'error'
 
 If no usages are found (Plan 3 already incorporates background-session red dots via inline `Badge dot` in `ConversationsAdapter`), this task is a no-op.
 
-- [ ] **Step 3: Commit (or no-op)**
+- [x] **Step 3: Commit (or no-op)**
 
 If a change was made:
 ```bash
@@ -148,11 +148,11 @@ git commit --allow-empty -m "chore(chat): SessionStatusBadge usages already abso
 - Modify: `src/pages/Chat.tsx` (or wherever the dialog mounts)
 - Inspect: `src/components/chat/ShortcutsDialog.tsx`
 
-- [ ] **Step 1: Read ShortcutsDialog.tsx to see its content (list of hotkeys)**
+- [x] **Step 1: Read ShortcutsDialog.tsx to see its content (list of hotkeys)**
 
 Read `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ShortcutsDialog.tsx`. Copy the list of hotkey labels — they need to be preserved in the antd Modal body.
 
-- [ ] **Step 2: Create a `ShortcutsModal` component inside Chat.tsx (or as a new file)**
+- [x] **Step 2: Create a `ShortcutsModal` component inside Chat.tsx (or as a new file)**
 
 Add to `src/pages/Chat.tsx` (top-level, above `function Chat()`):
 
@@ -190,7 +190,7 @@ function ShortcutsModal() {
 
 (Use the exact key list from the existing `ShortcutsDialog.tsx`. The above is a representative set.)
 
-- [ ] **Step 3: Mount it inside Chat.tsx return**
+- [x] **Step 3: Mount it inside Chat.tsx return**
 
 Add `<ShortcutsModal />` at the bottom of the outer `<Flex>` in `Chat.tsx`:
 
@@ -203,7 +203,7 @@ return (
 )
 ```
 
-- [ ] **Step 4: Add i18n keys for the shortcuts namespace**
+- [x] **Step 4: Add i18n keys for the shortcuts namespace**
 
 Append to `src/i18n/locales/zh.json` under `"chat"`:
 
@@ -220,7 +220,7 @@ Append to `src/i18n/locales/zh.json` under `"chat"`:
 
 Mirror in `en.json`. If keys already exist, reuse them.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/pages/Chat.tsx src/i18n/locales/zh.json src/i18n/locales/en.json
@@ -250,7 +250,7 @@ git commit -m "feat(chat-page): replace ShortcutsDialog with antd Modal"
 - `src/components/chat/ChatBanner.tsx`
 - `src/components/chat/SessionStatusBadge.tsx`
 
-- [ ] **Step 1: Verify each file has no remaining import**
+- [x] **Step 1: Verify each file has no remaining import**
 
 For each file in the list above, run a grep:
 
@@ -265,7 +265,7 @@ Each block should print zero lines (except the file's own definition). If any no
 
 If a test file imports the target, that test is in the Task 5 deletion list — leave it for now, the test will be deleted next.
 
-- [ ] **Step 2: Delete the 16 files**
+- [x] **Step 2: Delete the 16 files**
 
 ```bash
 cd /Users/aaa/develop/workspace-ai/acornvo
@@ -287,14 +287,14 @@ rm src/components/chat/ChatBanner.tsx
 rm src/components/chat/SessionStatusBadge.tsx
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web 2>&1 | tail -30`
 Expected: pass.
 
 If failures appear, the failing import points to a non-test file that wasn't updated. Patch it (most likely scenario: an import from a file written in a previous plan still uses the old path).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -313,12 +313,12 @@ git commit -m "chore(chat): delete 16 legacy chat component files (replaced by P
 - `src/components/chat/ApprovalPanel.test.tsx`
 - `src/components/chat/ChatInput.test.tsx`
 
-- [ ] **Step 1: Confirm each test exists and targets a deleted component**
+- [x] **Step 1: Confirm each test exists and targets a deleted component**
 
 Run: `ls /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/*.test.tsx | grep -E "SessionList|MessageList|AttachmentChips|ApprovalPanel|ChatInput"`
 Expected: 5 lines.
 
-- [ ] **Step 2: Delete them**
+- [x] **Step 2: Delete them**
 
 ```bash
 cd /Users/aaa/develop/workspace-ai/acornvo
@@ -329,12 +329,12 @@ rm src/components/chat/ApprovalPanel.test.tsx
 rm src/components/chat/ChatInput.test.tsx
 ```
 
-- [ ] **Step 3: Run vitest to confirm no regression**
+- [x] **Step 3: Run vitest to confirm no regression**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run`
 Expected: all surviving tests pass. (Acceptance still failing — Task 7 fixes.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -349,7 +349,7 @@ git commit -m "chore(chat): delete 5 legacy chat component tests (replaced by Pl
 **Files:**
 - Possibly modify: `package.json` (depends on Plan 1 Task 3 inventory)
 
-- [ ] **Step 1: Final chat-domain grep**
+- [x] **Step 1: Final chat-domain grep**
 
 Run:
 ```bash
@@ -377,7 +377,7 @@ import { Dropdown } from 'antd'
 </Dropdown>
 ```
 
-- [ ] **Step 2: Check Plan 1 Task 3's non-chat inventory**
+- [x] **Step 2: Check Plan 1 Task 3's non-chat inventory**
 
 Run: `git log --all --grep="inventory react-markdown" --oneline -n 3` to recover the commit message that recorded Plan 1's grep results.
 
@@ -387,7 +387,7 @@ Decision rule:
 - `@radix-ui/react-dialog` non-chat hits == 0 → remove from `package.json`
 - `@radix-ui/react-dropdown-menu` non-chat hits == 0 → remove from `package.json`
 
-- [ ] **Step 3: Apply package.json updates if removal is justified**
+- [x] **Step 3: Apply package.json updates if removal is justified**
 
 If both packages are unused outside chat:
 
@@ -401,7 +401,7 @@ Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm install` to update lockf
 
 If non-chat hits exist for either, keep that package. Note the decision in the commit message.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json 2>/dev/null
@@ -419,7 +419,7 @@ git commit --allow-empty -m "chore(deps): keep @radix-ui/react-{dialog,dropdown-
 **Files:**
 - Modify: `src/__acceptance__/chat-acceptance.test.tsx`
 
-- [ ] **Step 1: Read the existing acceptance test thoroughly**
+- [x] **Step 1: Read the existing acceptance test thoroughly**
 
 Read `/Users/aaa/develop/workspace-ai/acornvo/src/__acceptance__/chat-acceptance.test.tsx` end-to-end. Make a list of:
 - Every `mkSlot()` call site
@@ -429,7 +429,7 @@ Read `/Users/aaa/develop/workspace-ai/acornvo/src/__acceptance__/chat-acceptance
 
 Do NOT change the IPC mock surface — phase-20 design.md is explicit: K1 IPC mock stays as-is.
 
-- [ ] **Step 2: Update `mkSlot()` helper**
+- [x] **Step 2: Update `mkSlot()` helper**
 
 Find the helper (likely a top-level function in the test file). Change its return shape:
 
@@ -480,7 +480,7 @@ function mkAssistantMessage(text: string, status: 'streaming' | 'done' = 'done',
 }
 ```
 
-- [ ] **Step 3: Replace data-testid selectors with ARIA roles + i18n names**
+- [x] **Step 3: Replace data-testid selectors with ARIA roles + i18n names**
 
 Common mappings (apply per occurrence — read each test case and pick the right replacement):
 
@@ -506,7 +506,7 @@ If the antd-x `Conversations` rendered DOM doesn't have an obvious accessible na
 
 Iterate one test case at a time: run only that case, fix selectors, move on.
 
-- [ ] **Step 4: Replace streaming DOM assertions with store status assertions**
+- [x] **Step 4: Replace streaming DOM assertions with store status assertions**
 
 Search the test file for assertions like:
 
@@ -534,7 +534,7 @@ expect(useChatStore.getState().bySession[sid].status).toBe('streaming')
 // OR — but flakier — find Bubble.loading className
 ```
 
-- [ ] **Step 5: Disable token batching in test setup**
+- [x] **Step 5: Disable token batching in test setup**
 
 To make streaming assertions deterministic, set batching off in `beforeEach`:
 
@@ -545,7 +545,7 @@ beforeEach(() => {
 })
 ```
 
-- [ ] **Step 6: Run the acceptance suite iteratively**
+- [x] **Step 6: Run the acceptance suite iteratively**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/__acceptance__/chat-acceptance.test.tsx --reporter=verbose 2>&1 | tail -80`
 
@@ -553,7 +553,7 @@ For each failing test, read the error, fix the selector or assertion, rerun. Com
 - `Unable to find role "..."` → the rendered antd DOM uses a different role; check with `screen.debug()`.
 - `expected ... but got ...` for status — check that the test fires events in the right order. Each token / message.appended / done call requires the same `emit` helper used in `chat.test.ts`.
 
-- [ ] **Step 7: Commit when all green**
+- [x] **Step 7: Commit when all green**
 
 ```bash
 git add src/__acceptance__/chat-acceptance.test.tsx
@@ -568,12 +568,12 @@ git commit -m "test(chat-acceptance): rewrite selectors (ARIA + i18n) and stream
 **Files:**
 - Inspect: `src/components/chat/ProfileFooter.test.tsx` (no edit unless red)
 
-- [ ] **Step 1: Run the test**
+- [x] **Step 1: Run the test**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ProfileFooter.test.tsx`
 Expected: PASS.
 
-- [ ] **Step 2: If red, identify cause**
+- [x] **Step 2: If red, identify cause**
 
 Typical reasons:
 - ProfileFooter imports `class-variance-authority` or `@radix-ui/react-slot` for styling; antd token migration may have changed expected classes.
@@ -581,7 +581,7 @@ Typical reasons:
 
 Patch only the minimum needed to restore the test. Do NOT refactor unrelated code.
 
-- [ ] **Step 3: Commit if changed**
+- [x] **Step 3: Commit if changed**
 
 ```bash
 git add src/components/chat/ProfileFooter.test.tsx src/components/chat/ProfileFooter.tsx 2>/dev/null
@@ -597,16 +597,16 @@ git commit --allow-empty -m "chore(chat): ProfileFooter.test.tsx unchanged after
 **Files:**
 - Inspect: `src/components/chat/FrontmatterDiff.test.tsx` (no edit expected)
 
-- [ ] **Step 1: Run the test**
+- [x] **Step 1: Run the test**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/FrontmatterDiff.test.tsx`
 Expected: PASS unchanged.
 
-- [ ] **Step 2: If red, identify cause and patch minimally**
+- [x] **Step 2: If red, identify cause and patch minimally**
 
 This component is pure diff rendering; antd theming should not affect logic. If failing, likely a missing dep or i18n key. Patch.
 
-- [ ] **Step 3: Commit if changed**
+- [x] **Step 3: Commit if changed**
 
 ```bash
 git commit --allow-empty -m "chore(chat): FrontmatterDiff.test.tsx unchanged after antd migration"
@@ -620,11 +620,11 @@ git commit --allow-empty -m "chore(chat): FrontmatterDiff.test.tsx unchanged aft
 **Files:**
 - Modify: `src/components/chat/JsonArgsEditor.tsx`
 
-- [ ] **Step 1: Read the current implementation**
+- [x] **Step 1: Read the current implementation**
 
 Read `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/JsonArgsEditor.tsx`. It likely uses Tailwind classes (`border-border`, `bg-background`, `text-foreground`) and renders a `<textarea>`.
 
-- [ ] **Step 2: Swap to antd Input.TextArea**
+- [x] **Step 2: Swap to antd Input.TextArea**
 
 Replace the bespoke `<textarea>` with antd's controlled input:
 
@@ -644,14 +644,14 @@ const { TextArea } = Input
 
 Preserve the existing onChange handler logic (parse → setState → call props.onChange with parsed value). Pass `valid` boolean to `props.onChange(parsed, valid)` if Plan 3 Task 5 ApprovalDrawer relies on this — confirm by re-reading ApprovalDrawer's onChange callback.
 
-- [ ] **Step 3: Run JsonArgsEditor tests (if any) and ApprovalDrawer tests**
+- [x] **Step 3: Run JsonArgsEditor tests (if any) and ApprovalDrawer tests**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/JsonArgsEditor src/components/chat/ApprovalDrawer.test.tsx`
 Expected: pass.
 
 If `ApprovalDrawer.test.tsx` fails because the JSON textbox is no longer `screen.getByRole('textbox')`, update the test selector to match antd `TextArea`'s rendered role (often still `textbox`, but verify).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/chat/JsonArgsEditor.tsx src/components/chat/ApprovalDrawer.test.tsx 2>/dev/null
@@ -664,15 +664,15 @@ git commit -m "feat(chat-approval-panel): JsonArgsEditor uses antd Input.TextAre
 
 After all 10 tasks pass, before moving to Plan 6:
 
-- [ ] 16 legacy chat component files deleted from `src/components/chat/`.
-- [ ] 5 legacy chat test files deleted.
-- [ ] `ChatBanner` usage replaced by antd `Alert` (inline in `Chat.tsx`).
-- [ ] `SessionStatusBadge` usage replaced by antd `Badge` (or no-op if Plan 3 already covered it).
-- [ ] `ShortcutsDialog` usage replaced by antd `Modal` (inline in `Chat.tsx`).
-- [ ] Chat-domain `@radix-ui/react-dialog` + `@radix-ui/react-dropdown-menu` imports = 0; packages either kept (non-chat usage) or removed per Plan 1 inventory.
-- [ ] `src/__acceptance__/chat-acceptance.test.tsx` rewritten: `mkSlot` updated, selectors moved to ARIA/i18n, streaming assertions use store status. K1 IPC mock surface unchanged.
-- [ ] `ProfileFooter.test.tsx` passes; minimal or no edits.
-- [ ] `FrontmatterDiff.test.tsx` passes unchanged.
-- [ ] `JsonArgsEditor.tsx` uses antd `Input.TextArea`; ApprovalDrawer test still green.
-- [ ] `npx vitest run` passes overall.
-- [ ] `npm run typecheck` passes.
+- [x] 16 legacy chat component files deleted from `src/components/chat/`.
+- [x] 5 legacy chat test files deleted.
+- [x] `ChatBanner` usage replaced by antd `Alert` (inline in `Chat.tsx`).
+- [x] `SessionStatusBadge` usage replaced by antd `Badge` (or no-op if Plan 3 already covered it).
+- [x] `ShortcutsDialog` usage replaced by antd `Modal` (inline in `Chat.tsx`).
+- [x] Chat-domain `@radix-ui/react-dialog` + `@radix-ui/react-dropdown-menu` imports = 0; packages either kept (non-chat usage) or removed per Plan 1 inventory.
+- [x] `src/__acceptance__/chat-acceptance.test.tsx` rewritten: `mkSlot` updated, selectors moved to ARIA/i18n, streaming assertions use store status. K1 IPC mock surface unchanged.
+- [x] `ProfileFooter.test.tsx` passes; minimal or no edits.
+- [x] `FrontmatterDiff.test.tsx` passes unchanged.
+- [x] `JsonArgsEditor.tsx` uses antd `Input.TextArea`; ApprovalDrawer test still green.
+- [x] `npx vitest run` passes overall.
+- [x] `npm run typecheck` passes.
