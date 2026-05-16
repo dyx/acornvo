@@ -14,6 +14,15 @@ import { CrashBanner } from '@/components/CrashBanner'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
+import { XProvider } from '@ant-design/x'
+import zhCN from 'antd/locale/zh_CN'
+import enUS from 'antd/locale/en_US'
+import { useTranslation } from 'react-i18next'
+import { themeTokens } from '@/lib/theme'
+
+function pickAntdLocale(lng: string) {
+  return lng.toLowerCase().startsWith('zh') ? zhCN : enUS
+}
 
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
   if (!visible) return null
@@ -32,6 +41,8 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 }
 
 export function App(): JSX.Element {
+  const { i18n } = useTranslation()
+  const antdLocale = pickAntdLocale(i18n.language)
   const { toast } = useToast()
   useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
@@ -65,32 +76,34 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
-      <TitleBar />
-      <CrashBanner />
-      <UpdateBanner />
-      <div className="flex flex-1 overflow-hidden">
-        <AppRail />
-        <main className="flex-1 overflow-hidden">
-          <Outlet />
-        </main>
+    <XProvider theme={{ token: themeTokens }} locale={antdLocale}>
+      <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
+        <TitleBar />
+        <CrashBanner />
+        <UpdateBanner />
+        <div className="flex flex-1 overflow-hidden">
+          <AppRail />
+          <main className="flex-1 overflow-hidden">
+            <Outlet />
+          </main>
+        </div>
+        <StatusBar
+          indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
+          totalDocs={progress.total}
+        />
+
+        <IndexBanner />
+        <DbRebuildOverlay visible={isRebuilding} />
+        <QuickSwitcher />
+        <IndexProgressOverlay
+          visible={indexState === 'scanning'}
+          scanned={progress.scanned}
+          total={progress.total}
+          currentPath={progress.currentPath}
+          onCancel={() => ipc.index.cancelScan()}
+        />
+        <Toaster />
       </div>
-      <StatusBar 
-        indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null} 
-        totalDocs={progress.total}
-      />
-      
-      <IndexBanner />
-      <DbRebuildOverlay visible={isRebuilding} />
-      <QuickSwitcher />
-      <IndexProgressOverlay
-        visible={indexState === 'scanning'}
-        scanned={progress.scanned}
-        total={progress.total}
-        currentPath={progress.currentPath}
-        onCancel={() => ipc.index.cancelScan()}
-      />
-      <Toaster />
-    </div>
+    </XProvider>
   )
 }
