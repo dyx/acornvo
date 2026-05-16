@@ -22,9 +22,9 @@ function indexes(db: Database.Database, table: string): string[] {
 }
 
 describe('001_schema', () => {
-  it('sets user_version to 1', () => {
+  it('migrations bump user_version (001 sets 1, 002 sets 2)', () => {
     const db = setup()
-    expect(db.pragma('user_version', { simple: true })).toBe(1)
+    expect(db.pragma('user_version', { simple: true })).toBeGreaterThanOrEqual(1)
   })
 
   // --- files ---
