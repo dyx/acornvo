@@ -5,7 +5,7 @@ import { migrationsDir } from '../services/db/migrations/index';
 
 vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
 import { dbService } from '../services/db';
-import { aiUsage } from './usage';
+import { aiUsage, rowFromUsageMetadata, writeUsage } from './usage';
 
 let db: Database.Database;
 beforeEach(() => {
@@ -119,5 +119,70 @@ describe('aiUsage.list', () => {
     expect(r1.total).toBe(2);
     const r2 = aiUsage.list({ limit: 10, offset: 0, profileId: 'p1', okOnly: true });
     expect(r2.total).toBe(1);
+  });
+});
+
+describe('rowFromUsageMetadata', () => {
+  it('returns row with input_tokens → promptTokens', () => {
+    const row = rowFromUsageMetadata(
+      { input_tokens: 100, output_tokens: 50 },
+      { profileId: 'p1', model: 'm', latencyMs: 1000, ok: 1, error: null },
+    );
+    expect(row).toMatchObject({
+      promptTokens: 100,
+      completionTokens: 50,
+      ok: 1,
+      latencyMs: 1000,
+    });
+  });
+
+  it('returns null when usage is undefined', () => {
+    const row = rowFromUsageMetadata(undefined, {
+      profileId: 'p1', model: 'm', latencyMs: 0, ok: 1, error: null,
+    });
+    expect(row).toBeNull();
+  });
+
+  it('treats missing input/output as 0', () => {
+    const row = rowFromUsageMetadata({}, {
+      profileId: 'p1', model: 'm', latencyMs: 0, ok: 1, error: null,
+    });
+    expect(row?.promptTokens).toBe(0);
+    expect(row?.completionTokens).toBe(0);
+  });
+});
+
+describe('writeUsage', () => {
+  it('writes a row with usage values when usage_metadata is present', () => {
+    writeUsage({
+      usage: { input_tokens: 10, output_tokens: 5 },
+      profileId: 'p1', model: 'm', latencyMs: 100, ok: 1, error: null,
+    });
+    const r = db.prepare('SELECT * FROM ai_usage').get() as any;
+    expect(r.prompt_tokens).toBe(10);
+    expect(r.completion_tokens).toBe(5);
+    expect(r.ok).toBe(1);
+    expect(r.latency_ms).toBe(100);
+  });
+
+  it('writes a zero-token row when usage is missing (preserves 1-row-per-call invariant)', () => {
+    writeUsage({
+      profileId: 'p1', model: 'm', latencyMs: 100, ok: 0, error: 'E_UNKNOWN',
+    });
+    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any;
+    expect(r.prompt_tokens).toBe(0);
+    expect(r.completion_tokens).toBe(0);
+    expect(r.ok).toBe(0);
+    expect(r.error).toBe('E_UNKNOWN');
+  });
+
+  it('uses explicit promptTokens/completionTokens when caller already extracted them', () => {
+    writeUsage({
+      profileId: 'p1', model: 'm', latencyMs: 100, ok: 1, error: null,
+      promptTokens: 42, completionTokens: 7,
+    });
+    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any;
+    expect(r.prompt_tokens).toBe(42);
+    expect(r.completion_tokens).toBe(7);
   });
 });
