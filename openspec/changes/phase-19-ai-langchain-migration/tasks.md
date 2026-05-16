@@ -45,19 +45,19 @@
 - [x] 6.5 在应用启动阶段构造 `createAgent({ model, tools, middleware: [hitl], checkpointer })` 单例（hitl 与 checkpointer 在 block 5 接入；本 block 暂传 noop placeholder）
 - [x] 6.6 IPC 入口 `agent.send` 切到 runner；保留 `loop.ts` 作 fallback flag（feature flag 默认开新 runner）
 - [x] 6.7 写 `electron/agent/runner.test.ts`：mock `agent.stream` 返回 async iterable；断言事件序列与 K1 契约
-- [ ] 6.8 跑现有 `electron/__acceptance__/*` chat 用例：要求 100% 通过且 mock 表面不改
+- [x] 6.8 跑现有 `electron/__acceptance__/*` chat 用例：要求 100% 通过且 mock 表面不改
 
 ## 7. HITL + Checkpointer（block 5）
 
-- [ ] 7.1 新建 migration `electron/db/migrations/002_langgraph_checkpoints.sql`：显式登记 `checkpoints` / `checkpoint_writes` / `checkpoint_blobs` 3 张表
-- [ ] 7.2 注册 migration 并提升 `user_version`；确认现有 sessions / session_messages / tool_calls 不受影响
-- [ ] 7.3 在 `electron/agent/runner.ts` 中实例化 `SqliteSaver` 单例并注入 `createAgent({ checkpointer })`
-- [ ] 7.4 构造 `humanInTheLoopMiddleware({ interruptOn: { update_frontmatter: { allowAccept, allowEdit, allowReject } } })` 并注入 middleware 数组
-- [ ] 7.5 把 IPC `agent.approve` / `agent.reject` 实现改为 `agent.invoke(new Command({ resume: { decisions: [...] } }), { configurable: { thread_id } })`；保持外部签名不变
-- [ ] 7.6 在 stream-translator 中实现 `__interrupt__` → `tool.approval-needed` 映射，callId 取 interrupt id
-- [ ] 7.7 新增 `agent.cancel` 行为：abort signal + 不立即清 thread；标记 thread last-active-at 用于 24h 清理
-- [ ] 7.8 新增启动恢复钩子：在 `app-lifecycle` 启动阶段扫描未 resolve 的 interrupt 并重 emit `tool.approval-needed`
-- [ ] 7.9 在 `chat.deleteSession` 中加入级联删除 checkpointer 3 张表 `thread_id = sessionId` 行（同事务）
+- [x] 7.1 新建 migration `electron/db/migrations/002_langgraph_checkpoints.sql`：显式登记 `checkpoints` / `checkpoint_writes` / `checkpoint_blobs` 3 张表
+- [x] 7.2 注册 migration 并提升 `user_version`；确认现有 sessions / session_messages / tool_calls 不受影响
+- [x] 7.3 在 `electron/agent/runner.ts` 中实例化 `SqliteSaver` 单例并注入 `createAgent({ checkpointer })`
+- [x] 7.4 构造 `humanInTheLoopMiddleware({ interruptOn: { update_frontmatter: { allowAccept, allowEdit, allowReject } } })` 并注入 middleware 数组
+- [x] 7.5 把 IPC `agent.approve` / `agent.reject` 实现改为 `agent.invoke(new Command({ resume: { decisions: [...] } }), { configurable: { thread_id } })`；保持外部签名不变
+- [x] 7.6 在 stream-translator 中实现 `__interrupt__` → `tool.approval-needed` 映射，callId 取 interrupt id
+- [x] 7.7 新增 `agent.cancel` 行为：abort signal + 不立即清 thread；标记 thread last-active-at 用于 24h 清理
+- [x] 7.8 新增启动恢复钩子：在 `app-lifecycle` 启动阶段扫描未 resolve 的 interrupt 并重 emit `tool.approval-needed`
+- [x] 7.9 在 `chat.deleteSession` 中加入级联删除 checkpointer 3 张表 `thread_id = sessionId` 行（同事务）
 - [ ] 7.10 新增后台 24h 清理任务（job-queue 或定时器，按 design open question 4 实施时决定）
 - [ ] 7.11 重写 `electron/agent/approval.test.ts`：测 HITL 4 种 decision（approve / edit / reject / cancel）+ 启动恢复
 - [ ] 7.12 新增 `electron/agent/checkpointer-recovery.test.ts`：模拟挂起 interrupt 重启后被重 emit
