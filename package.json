@@ -62,7 +62,6 @@
     "diff": "^9.0.0",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.3.9",
-    "eventsource-parser": "^3.0.8",
     "gray-matter": "^4.0.3",
     "i18next": "^26.0.7",
     "iconv-lite": "^0.7.2",
