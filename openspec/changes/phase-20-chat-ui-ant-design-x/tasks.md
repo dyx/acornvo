@@ -40,23 +40,23 @@
 
 ## 4. Bubble.List + ThoughtChain（block 4）
 
-- [ ] 4.1 新建 `src/components/chat/BubbleListAdapter.tsx`：消费 bubbleSelectors 输出 + `useMemo` 包派生结果；用 chatRoles 渲 Bubble.List；启用 `autoScroll`
-- [ ] 4.2 在 chatRoles.assistant.contentRender 内完善 ThoughtChain：把 `BubbleItem.content.toolSteps` 转 ThoughtChain items（step icon / name / args 可折叠 / result 可折叠 / loading 态 / 待审 inline Actions）
-- [ ] 4.3 在 chatRoles.assistant.contentRender 内集成 `XMarkdown` 渲 `content.text`；通过 `components={{ a: ExternalLinkAnchor }}` 重写外链
-- [ ] 4.4 实现 "新消息 ↓" 浮动按钮：如 X 内置 autoScroll 不达 80px 阈值则用 wrapper 检测滚动位置；smooth scroll 跳回 + 恢复 autoScroll
-- [ ] 4.5 实现 chatRoles.assistant.footer 的 Actions：`Actions.Copy` + 自定义 Retry（最后一条失败 assistant）+ 自定义 Quote
-- [ ] 4.6 写 `src/components/chat/streaming-markdown.smoke.test.tsx`：XMarkdown streaming 烟雾测试（未闭合 fenced code、半行 table、未闭合 `**`）；断言不抛错且最终态正确
-- [ ] 4.7 写 `src/components/chat/BubbleListAdapter.test.tsx`：覆盖 chat-message-list 规格 scenario（user 渲染、assistant 含 toolCalls、tool 折叠、流式不掉帧、done 切完成态、markdown 基本元素、外链打开、自动滚动 3 case、复制、失败重试）
+- [x] 4.1 新建 `src/components/chat/BubbleListAdapter.tsx`：消费 bubbleSelectors 输出 + `useMemo` 包派生结果；用 chatRoles 渲 Bubble.List；启用 `autoScroll`
+- [x] 4.2 在 chatRoles.assistant.contentRender 内完善 ThoughtChain：把 `BubbleItem.content.toolSteps` 转 ThoughtChain items（step icon / name / args 可折叠 / result 可折叠 / loading 态 / 待审 inline Actions）
+- [x] 4.3 在 chatRoles.assistant.contentRender 内集成 `XMarkdown` 渲 `content.text`；通过 `components={{ a: ExternalLinkAnchor }}` 重写外链
+- [x] 4.4 实现 "新消息 ↓" 浮动按钮：如 X 内置 autoScroll 不达 80px 阈值则用 wrapper 检测滚动位置；smooth scroll 跳回 + 恢复 autoScroll
+- [x] 4.5 实现 chatRoles.assistant.footer 的 Actions：`Actions.Copy` + 自定义 Retry（最后一条失败 assistant）+ 自定义 Quote
+- [x] 4.6 写 `src/components/chat/streaming-markdown.smoke.test.tsx`：XMarkdown streaming 烟雾测试（未闭合 fenced code、半行 table、未闭合 `**`）；断言不抛错且最终态正确
+- [x] 4.7 写 `src/components/chat/BubbleListAdapter.test.tsx`：覆盖 chat-message-list 规格 scenario（user 渲染、assistant 含 toolCalls、tool 折叠、流式不掉帧、done 切完成态、markdown 基本元素、外链打开、自动滚动 3 case、复制、失败重试）
 
 ## 5. 审批 inline + Drawer（block 5）
 
-- [ ] 5.1 新建 `src/components/chat/ApprovalInlineActions.tsx`：antd-x `Actions` 渲 Approve / Reject / Edit 三按钮；Approve / Reject 直接调 store；Edit 设 drawerOpen=true 并渲 ApprovalDrawer
-- [ ] 5.2 新建 `src/components/chat/ApprovalDrawer.tsx`：antd `Drawer` width=520；标题 + 待审 `Tag`；Reason 区；条件渲 `FrontmatterDiff`（update_frontmatter）或 `JsonArgsEditor`（其他）；Footer 含取消 + 确认并同意
-- [ ] 5.3 ApprovalDrawer.onSubmit 调 `chat.approveTool(sessionId, callId, editedArgs)`；JSON 解析失败时 antd `message.error` 不关 Drawer
-- [ ] 5.4 在 chatRoles.assistant.contentRender 中：当 toolStep 含 pendingApproval 时渲 `ApprovalInlineActions`（已在 task 4.2 通过 ThoughtChain step 内嵌）
-- [ ] 5.5 重写 `src/pages/Chat.tsx`：两栏布局（左 ConversationsAdapter，右 Flex { BubbleListAdapter + ChatInputArea + ProfileFooter }）；删除右栏 ApprovalPanel 引用；空态渲 `Welcome` + `Prompts`
-- [ ] 5.6 写 `src/components/chat/ApprovalInlineActions.test.tsx`：覆盖 chat-approval-panel 规格 inline 部分 scenario（收到 approval 渲染 inline、非当前 session 不渲、处理后消失、单消息多并行待审、多消息各自待审、超时取消）
-- [ ] 5.7 写 `src/components/chat/ApprovalDrawer.test.tsx`：覆盖 Drawer 部分 scenario（update_frontmatter diff、编辑参数后同意、编辑无效 JSON、关闭 Drawer 不提交）
+- [x] 5.1 新建 `src/components/chat/ApprovalInlineActions.tsx`：antd-x `Actions` 渲 Approve / Reject / Edit 三按钮；Approve / Reject 直接调 store；Edit 设 drawerOpen=true 并渲 ApprovalDrawer
+- [x] 5.2 新建 `src/components/chat/ApprovalDrawer.tsx`：antd `Drawer` width=520；标题 + 待审 `Tag`；Reason 区；条件渲 `FrontmatterDiff`（update_frontmatter）或 `JsonArgsEditor`（其他）；Footer 含取消 + 确认并同意
+- [x] 5.3 ApprovalDrawer.onSubmit 调 `chat.approveTool(sessionId, callId, editedArgs)`；JSON 解析失败时 antd `message.error` 不关 Drawer
+- [x] 5.4 在 chatRoles.assistant.contentRender 中：当 toolStep 含 pendingApproval 时渲 `ApprovalInlineActions`（已在 task 4.2 通过 ThoughtChain step 内嵌）
+- [x] 5.5 重写 `src/pages/Chat.tsx`：两栏布局（左 ConversationsAdapter，右 Flex { BubbleListAdapter + ChatInputArea + ProfileFooter }）；删除右栏 ApprovalPanel 引用；空态渲 `Welcome` + `Prompts`
+- [x] 5.6 写 `src/components/chat/ApprovalInlineActions.test.tsx`：覆盖 chat-approval-panel 规格 inline 部分 scenario（收到 approval 渲染 inline、非当前 session 不渲、处理后消失、单消息多并行待审、多消息各自待审、超时取消）
+- [x] 5.7 写 `src/components/chat/ApprovalDrawer.test.tsx`：覆盖 Drawer 部分 scenario（update_frontmatter diff、编辑参数后同意、编辑无效 JSON、关闭 Drawer 不提交）
 
 ## 6. Store 瘦身（block 6）
 

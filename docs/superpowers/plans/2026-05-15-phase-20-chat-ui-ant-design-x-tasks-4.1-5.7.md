@@ -50,7 +50,7 @@ type BubbleItem = {
 **Files:**
 - Create: `src/components/chat/BubbleListAdapter.tsx`
 
-- [ ] **Step 1: Implement the adapter**
+- [x] **Step 1: Implement the adapter**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/BubbleListAdapter.tsx`:
 
@@ -104,7 +104,7 @@ export function BubbleListAdapter() {
 
 `ScrollToBottomButton` is implemented in Task 5 below.
 
-- [ ] **Step 2: Verify typecheck (will fail until Task 5 lands ScrollToBottomButton)**
+- [x] **Step 2: Verify typecheck (will fail until Task 5 lands ScrollToBottomButton)**
 
 Skip typecheck until Task 5 lands the helper. Do NOT commit yet.
 
@@ -116,11 +116,11 @@ Skip typecheck until Task 5 lands the helper. Do NOT commit yet.
 **Files:**
 - Modify: `src/components/chat/chatRoles.tsx`
 
-- [ ] **Step 1: Inspect ThoughtChain API**
+- [x] **Step 1: Inspect ThoughtChain API**
 
 Skim the `x-components` skill section on **ThoughtChain**. Confirm `items` shape (status, title, description, content, icon, extra slots).
 
-- [ ] **Step 2: Replace the stub with ThoughtChain + XMarkdown**
+- [x] **Step 2: Replace the stub with ThoughtChain + XMarkdown**
 
 Edit `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/chatRoles.tsx`. Replace the existing `contentRender` for `assistant` with:
 
@@ -232,7 +232,7 @@ export const chatRoles: RolesMap = {
 }
 ```
 
-- [ ] **Step 3: Verify typecheck (will fail until Tasks 4 + 5 land)**
+- [x] **Step 3: Verify typecheck (will fail until Tasks 4 + 5 land)**
 
 Skip typecheck for now — `ApprovalInlineActions` and `ScrollToBottomButton` don't exist yet. Do NOT commit.
 
@@ -244,17 +244,17 @@ Skip typecheck for now — `ApprovalInlineActions` and `ScrollToBottomButton` do
 **Files:**
 - No file change. Verification of Task 2 content.
 
-- [ ] **Step 1: Confirm XMarkdown is imported and used in chatRoles.tsx**
+- [x] **Step 1: Confirm XMarkdown is imported and used in chatRoles.tsx**
 
 Run: `grep -n "XMarkdown" /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/chatRoles.tsx`
 Expected: 2 import + use sites (one for string content, one for toolSteps text).
 
-- [ ] **Step 2: Confirm `components={{ a: ExternalLinkAnchor }}` is wired**
+- [x] **Step 2: Confirm `components={{ a: ExternalLinkAnchor }}` is wired**
 
 Run: `grep -n "ExternalLinkAnchor" /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/chatRoles.tsx`
 Expected: 2 use sites passing the component to XMarkdown.
 
-- [ ] **Step 3: Commit (will commit Task 2's changes together with Task 4+5 below)**
+- [x] **Step 3: Commit (will commit Task 2's changes together with Task 4+5 below)**
 
 No commit in this task; the integration is part of Task 2's diff and lands after Task 4 (ApprovalInlineActions) + Task 5 (ScrollToBottomButton) make the file compile.
 
@@ -267,11 +267,11 @@ No commit in this task; the integration is part of Task 2's diff and lands after
 **Files:**
 - Create: `src/components/chat/ApprovalInlineActions.tsx`
 
-- [ ] **Step 1: Inspect Actions API**
+- [x] **Step 1: Inspect Actions API**
 
 Skim the `x-components` skill section on **Actions**. Confirm shape of action items (`key`, `icon`, `label`, `onClick`).
 
-- [ ] **Step 2: Implement the component**
+- [x] **Step 2: Implement the component**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ApprovalInlineActions.tsx`:
 
@@ -333,7 +333,7 @@ export function ApprovalInlineActions({
 }
 ```
 
-- [ ] **Step 3: Add i18n keys**
+- [x] **Step 3: Add i18n keys**
 
 Append to `src/i18n/locales/zh.json` (top-level) — add an `approval` namespace if missing:
 
@@ -354,7 +354,7 @@ Append to `src/i18n/locales/zh.json` (top-level) — add an `approval` namespace
 
 Mirror in `en.json`.
 
-- [ ] **Step 4: Do NOT commit yet — ApprovalDrawer pending**
+- [x] **Step 4: Do NOT commit yet — ApprovalDrawer pending**
 
 ---
 
@@ -365,7 +365,7 @@ Mirror in `en.json`.
 **Files:**
 - Create: `src/components/chat/ApprovalDrawer.tsx`
 
-- [ ] **Step 1: Inspect existing JsonArgsEditor + FrontmatterDiff**
+- [x] **Step 1: Inspect existing JsonArgsEditor + FrontmatterDiff**
 
 Run: `grep -n "export " /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/JsonArgsEditor.tsx /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/FrontmatterDiff.tsx`
 
@@ -375,7 +375,7 @@ Note the exported component names and their props. Most likely:
 
 Adjust the implementation below if the actual prop shape differs.
 
-- [ ] **Step 2: Implement ApprovalDrawer**
+- [x] **Step 2: Implement ApprovalDrawer**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ApprovalDrawer.tsx`:
 
@@ -468,7 +468,7 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
 
 Note: if `JsonArgsEditor`'s `onChange` signature differs (e.g. fires only on valid JSON), adjust the second parameter. Inspect `JsonArgsEditor.tsx` body to confirm. If it doesn't surface a "valid" boolean, track validity yourself by attempting `JSON.parse` on the editor's raw string.
 
-- [ ] **Step 3: Do NOT commit yet — bundle commit with Task 6 below**
+- [x] **Step 3: Do NOT commit yet — bundle commit with Task 6 below**
 
 ---
 
@@ -478,7 +478,7 @@ Note: if `JsonArgsEditor`'s `onChange` signature differs (e.g. fires only on val
 **Files:**
 - Create: `src/components/chat/ScrollToBottomButton.tsx`
 
-- [ ] **Step 1: Implement detection + smooth scroll**
+- [x] **Step 1: Implement detection + smooth scroll**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ScrollToBottomButton.tsx`:
 
@@ -542,7 +542,7 @@ export function ScrollToBottomButton({
 
 If Bubble.List does not expose a scroll-container selector via `data-testid`, fall back to scrolling the wrapper itself. Inspect `Bubble.List`'s rendered DOM in dev tools and adjust the selector if needed.
 
-- [ ] **Step 2: Add i18n key**
+- [x] **Step 2: Add i18n key**
 
 Append to `src/i18n/locales/zh.json` under `"chat"`:
 
@@ -554,7 +554,7 @@ Append to `src/i18n/locales/zh.json` under `"chat"`:
 
 Mirror in `en.json`: `"newMessages": "New messages ↓"`.
 
-- [ ] **Step 3: Now compile and commit all of Tasks 1–6 together**
+- [x] **Step 3: Now compile and commit all of Tasks 1–6 together**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass. All four new files (`BubbleListAdapter`, `ApprovalInlineActions`, `ApprovalDrawer`, `ScrollToBottomButton`) plus the upgraded `chatRoles.tsx` should compile.
@@ -577,7 +577,7 @@ git commit -m "feat(chat-message-list,chat-approval-panel): BubbleListAdapter + 
 **Files:**
 - Modify: `src/components/chat/chatRoles.tsx`
 
-- [ ] **Step 1: Extract a stateful AssistantFooter sub-component**
+- [x] **Step 1: Extract a stateful AssistantFooter sub-component**
 
 `chatRoles` is a static object but actions need access to store. Solution: render a small React component inside `footer`. Edit `src/components/chat/chatRoles.tsx` and add:
 
@@ -661,7 +661,7 @@ assistant: {
 
 If the Bubble footer slot signature differs (e.g. it passes `(key)` directly instead of `(_, info)`), adapt the destructuring per the `x-components` skill.
 
-- [ ] **Step 2: Add i18n keys**
+- [x] **Step 2: Add i18n keys**
 
 Append to `src/i18n/locales/zh.json` under `"chat.message"`:
 
@@ -674,7 +674,7 @@ Append to `src/i18n/locales/zh.json` under `"chat.message"`:
 
 Mirror in `en.json`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/chatRoles.tsx src/i18n/locales/zh.json src/i18n/locales/en.json
@@ -689,7 +689,7 @@ git commit -m "feat(chat-message-list): Actions footer (Copy / Retry / Quote) on
 **Files:**
 - Create: `src/components/chat/streaming-markdown.smoke.test.tsx`
 
-- [ ] **Step 1: Write the smoke test**
+- [x] **Step 1: Write the smoke test**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/streaming-markdown.smoke.test.tsx`:
 
@@ -736,14 +736,14 @@ describe('XMarkdown streaming smoke', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/streaming-markdown.smoke.test.tsx`
 Expected: PASS (5 assertions).
 
 If XMarkdown's package path or default export differs, consult the `x-markdown` skill for the correct import.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/streaming-markdown.smoke.test.tsx
@@ -758,7 +758,7 @@ git commit -m "test(chat-message-list): streaming-markdown smoke (unclosed fence
 **Files:**
 - Create: `src/components/chat/BubbleListAdapter.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/BubbleListAdapter.test.tsx`:
 
@@ -931,12 +931,12 @@ describe('BubbleListAdapter', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/BubbleListAdapter.test.tsx`
 Expected: PASS (10 scenarios). Some assertions (loading-indicator class, ThoughtChain selectors) may need fine-tuning based on antd-x rendered DOM — iterate as needed using the `x-components` skill.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/BubbleListAdapter.test.tsx
@@ -951,7 +951,7 @@ git commit -m "test(chat-message-list): 10-scenario coverage for BubbleListAdapt
 **Files:**
 - Create: `src/components/chat/ApprovalInlineActions.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ApprovalInlineActions.test.tsx`:
 
@@ -1051,12 +1051,12 @@ describe('ApprovalInlineActions', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ApprovalInlineActions.test.tsx`
 Expected: PASS (6 scenarios).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/ApprovalInlineActions.test.tsx
@@ -1071,7 +1071,7 @@ git commit -m "test(chat-approval-panel): 6-scenario coverage for ApprovalInline
 **Files:**
 - Create: `src/components/chat/ApprovalDrawer.test.tsx`
 
-- [ ] **Step 1: Write tests**
+- [x] **Step 1: Write tests**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/ApprovalDrawer.test.tsx`:
 
@@ -1195,12 +1195,12 @@ describe('ApprovalDrawer', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/components/chat/ApprovalDrawer.test.tsx`
 Expected: PASS (4 scenarios). Adjust selectors for `JsonArgsEditor`'s actual rendered shape (textarea vs CodeMirror vs Monaco).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/chat/ApprovalDrawer.test.tsx
@@ -1215,11 +1215,11 @@ git commit -m "test(chat-approval-panel): 4-scenario coverage for ApprovalDrawer
 **Files:**
 - Modify: `src/pages/Chat.tsx`
 
-- [ ] **Step 1: Inspect Welcome + Prompts API**
+- [x] **Step 1: Inspect Welcome + Prompts API**
 
 Skim the `x-components` skill for `Welcome` and `Prompts` props. Note slot names (`title`, `description`, `extra`, `items`).
 
-- [ ] **Step 2: Replace `Chat.tsx` body entirely**
+- [x] **Step 2: Replace `Chat.tsx` body entirely**
 
 Replace `/Users/aaa/develop/workspace-ai/acornvo/src/pages/Chat.tsx` with:
 
@@ -1306,7 +1306,7 @@ export function Chat() {
 }
 ```
 
-- [ ] **Step 3: Add i18n keys for Welcome**
+- [x] **Step 3: Add i18n keys for Welcome**
 
 Append to `src/i18n/locales/zh.json` under `"chat"`:
 
@@ -1319,12 +1319,12 @@ Append to `src/i18n/locales/zh.json` under `"chat"`:
 
 Mirror in `en.json` with English wording.
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web`
 Expected: pass. If `ProfileFooter` props mismatch (no longer needs session info from page level), inspect `src/components/chat/ProfileFooter.tsx` and adapt.
 
-- [ ] **Step 5: Manual smoke**
+- [x] **Step 5: Manual smoke**
 
 Run: `npm run dev`. Open chat page. Verify:
 - Two columns visible (sessions left, message area right).
@@ -1333,7 +1333,7 @@ Run: `npm run dev`. Open chat page. Verify:
 - Sending a message renders Bubble.List with user + (streamed) assistant bubble.
 - Right-side approval column is **gone** (no `ApprovalPanel` import).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pages/Chat.tsx src/i18n/locales/zh.json src/i18n/locales/en.json
@@ -1346,12 +1346,12 @@ git commit -m "feat(chat-page): two-column layout with Welcome + Prompts empty s
 
 After all 12 tasks pass, before moving to Plan 4:
 
-- [ ] `src/components/chat/BubbleListAdapter.tsx` renders Bubble.List driven by `deriveBubbleItems`.
-- [ ] `src/components/chat/chatRoles.tsx` assistant `contentRender` composes ThoughtChain + XMarkdown + ApprovalInlineActions; `footer` renders Copy / Retry / Quote.
-- [ ] `src/components/chat/ApprovalInlineActions.tsx` + `ApprovalDrawer.tsx` exist.
-- [ ] `src/components/chat/ScrollToBottomButton.tsx` exists and works in the Bubble.List wrapper.
-- [ ] `src/pages/Chat.tsx` rewritten as two-column layout; right approval column removed.
-- [ ] All Plan-3 tests pass (`BubbleListAdapter`, `ApprovalInlineActions`, `ApprovalDrawer`, `streaming-markdown.smoke`).
-- [ ] `npm run typecheck` passes.
-- [ ] Manual: chat page renders, sending/streaming a message works visually under XProvider.
-- [ ] **Legacy files NOT yet deleted** — `SessionList.tsx`, `MessageList.tsx`, `ApprovalPanel.tsx`, `ChatInput.tsx`, etc. still exist but are no longer imported. Plan 5 deletes them; Plan 4 first slims the store.
+- [x] `src/components/chat/BubbleListAdapter.tsx` renders Bubble.List driven by `deriveBubbleItems`.
+- [x] `src/components/chat/chatRoles.tsx` assistant `contentRender` composes ThoughtChain + XMarkdown + ApprovalInlineActions; `footer` renders Copy / Retry / Quote.
+- [x] `src/components/chat/ApprovalInlineActions.tsx` + `ApprovalDrawer.tsx` exist.
+- [x] `src/components/chat/ScrollToBottomButton.tsx` exists and works in the Bubble.List wrapper.
+- [x] `src/pages/Chat.tsx` rewritten as two-column layout; right approval column removed.
+- [x] All Plan-3 tests pass (`BubbleListAdapter`, `ApprovalInlineActions`, `ApprovalDrawer`, `streaming-markdown.smoke`).
+- [x] `npm run typecheck` passes.
+- [x] Manual: chat page renders, sending/streaming a message works visually under XProvider.
+- [x] **Legacy files NOT yet deleted** — `SessionList.tsx`, `MessageList.tsx`, `ApprovalPanel.tsx`, `ChatInput.tsx`, etc. still exist but are no longer imported. Plan 5 deletes them; Plan 4 first slims the store.
