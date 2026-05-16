@@ -117,25 +117,48 @@ async function handleToolMessage(deps: TranslatorDeps, msg: ToolMessage): Promis
   }
 }
 
-interface InterruptShape {
-  id?: string;
-  action_requests?: Array<{ id?: string; action?: string; tool?: string; args?: { reason?: unknown } | Record<string, unknown> }>;
-  requests?: Array<{ id?: string; action?: string; tool?: string; args?: { reason?: unknown } | Record<string, unknown> }>;
+export interface ActionRequest {
+  name: string;
+  args: Record<string, unknown>;
+  description?: string;
 }
 
-/** Scenario 5: interrupt resume needed. */
-function handleInterrupt(deps: TranslatorDeps, interrupt: InterruptShape): void {
-  const reqs = interrupt.action_requests ?? interrupt.requests ?? [];
-  for (const action of reqs) {
+export interface InterruptShape {
+  id?: string;
+  value?: { actionRequests?: ActionRequest[] };
+  /** Pre-v1 / fallback shapes seen in other LangGraph builds. */
+  actionRequests?: ActionRequest[];
+  action_requests?: ActionRequest[];
+}
+
+/**
+ * Scenario 5: interrupt resume needed.
+ *
+ * Each ActionRequest maps to one of the tool_calls on the immediately-prior
+ * assistant message. We use the matching tool_call.id as `callId` so the
+ * renderer can fold the approval bubble together with the eventual tool
+ * result. `correspondingCallIds[i]` is the tool_call.id for action i — the
+ * caller (runner.ts) knows that mapping; we don't try to recover it here.
+ */
+export function emitInterrupt(
+  deps: TranslatorDeps,
+  interrupt: InterruptShape,
+  correspondingCallIds: string[] = []
+): void {
+  const reqs =
+    interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? [];
+  reqs.forEach((action, i) => {
     const args = (action.args ?? {}) as { reason?: unknown };
+    const callId = correspondingCallIds[i] ?? String(interrupt.id ?? '');
+    const tool = action.name ?? (action as unknown as { action?: string; tool?: string }).action ?? (action as unknown as { tool?: string }).tool ?? '';
     deps.emit({
       type: 'tool.approval-needed',
-      callId: String(interrupt.id ?? action.id ?? ''),
-      tool: String(action.action ?? action.tool ?? ''),
+      callId,
+      tool,
       args,
       reason: typeof args.reason === 'string' ? args.reason : undefined,
     });
-  }
+  });
 }
 
 /**
@@ -173,10 +196,6 @@ export async function translateStreamEntry(
     if (text) deps.emit({ type: 'token', text });
     return;
   }
-}
-
-export function emitInterrupt(deps: TranslatorDeps, interrupt: InterruptShape): void {
-  handleInterrupt(deps, interrupt);
 }
 
 export function emitError(deps: TranslatorDeps, err: unknown): void {

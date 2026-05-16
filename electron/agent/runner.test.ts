@@ -134,6 +134,58 @@ describe('runAgent — cancellation', () => {
   });
 });
 
+describe('runAgent — HITL interrupt', () => {
+  it('emits tool.approval-needed and records PendingInterrupt keyed by tool_call.id', async () => {
+    const events: AgentEvent[] = [];
+    const aiToolCall = new AIMessage({
+      content: '',
+      tool_calls: [
+        { id: 'cid-uf', name: 'update_frontmatter', args: { path: 'a.md', patch: { rating: 5 }, reason: 'r' } },
+      ],
+      id: 'ai-1',
+    });
+    const stream = asyncIter([
+      ['updates', { model: { messages: [aiToolCall] } }],
+      [
+        'updates',
+        {
+          __interrupt__: [
+            {
+              id: 'int-xyz',
+              value: {
+                actionRequests: [
+                  { name: 'update_frontmatter', args: { path: 'a.md', patch: { rating: 5 }, reason: 'r' } },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    ]);
+    const pendingInterrupts = new Map<string, import('./runner').PendingInterrupt>();
+    const deps = { ...baseDeps(stream), pendingInterrupts, profileId: 'p-1' };
+    await runAgent({
+      sessionId: 's1',
+      userText: 'set rating',
+      profileId: 'p-1',
+      history: [],
+      deps,
+      streamWriter: { write: (e) => events.push(e) },
+    });
+    const approval = events.find((e) => e.type === 'tool.approval-needed');
+    expect(approval).toBeTruthy();
+    if (approval && approval.type === 'tool.approval-needed') {
+      expect(approval.callId).toBe('cid-uf');
+      expect(approval.tool).toBe('update_frontmatter');
+    }
+    // done is NOT emitted — runner suspends after interrupt.
+    expect(events.some((e) => e.type === 'done')).toBe(false);
+    // pendingInterrupts indexed by tool_call.id.
+    expect(pendingInterrupts.get('cid-uf')?.interruptId).toBe('int-xyz');
+    expect(pendingInterrupts.get('cid-uf')?.callIds).toEqual(['cid-uf']);
+  });
+});
+
 describe('runAgent — error mapping', () => {
   it('emits error with normalized code on non-Abort throws', async () => {
     const events: AgentEvent[] = [];

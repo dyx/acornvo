@@ -127,13 +127,13 @@ describe('translateStreamEntry — scenario 4: streaming tokens', () => {
 });
 
 describe('emitInterrupt — scenario 5: HITL request', () => {
-  it('emits tool.approval-needed with callId from interrupt id', () => {
+  it('emits tool.approval-needed using interrupt id when no toolCall ids provided', () => {
     const deps = makeDeps();
     emitInterrupt(deps, {
       id: 'int-1',
       action_requests: [
         {
-          action: 'update_frontmatter',
+          name: 'update_frontmatter',
           args: { path: 'a.md', patch: {}, reason: 'do it' },
         },
       ],
@@ -145,6 +145,31 @@ describe('emitInterrupt — scenario 5: HITL request', () => {
         tool: 'update_frontmatter',
         args: { path: 'a.md', patch: {}, reason: 'do it' },
         reason: 'do it',
+      },
+    ]);
+  });
+
+  it('uses corresponding tool_call.id as callId when provided (v1 shape with value.actionRequests)', () => {
+    const deps = makeDeps();
+    emitInterrupt(
+      deps,
+      {
+        id: 'int-2',
+        value: {
+          actionRequests: [
+            { name: 'update_frontmatter', args: { path: 'b.md', patch: { rating: 5 }, reason: 'r' } },
+          ],
+        },
+      },
+      ['tc-99']
+    );
+    expect(deps.events).toEqual([
+      {
+        type: 'tool.approval-needed',
+        callId: 'tc-99',
+        tool: 'update_frontmatter',
+        args: { path: 'b.md', patch: { rating: 5 }, reason: 'r' },
+        reason: 'r',
       },
     ]);
   });

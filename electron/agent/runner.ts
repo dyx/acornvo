@@ -18,9 +18,28 @@ import {
   emitError,
   emitCanceled,
   emitDone,
+  emitInterrupt,
+  type InterruptShape,
   type TranslatorDeps,
 } from './stream-translator';
 import { getPerf } from '../obs/perf';
+
+/**
+ * Per-action approval slot. The renderer addresses each pending approval by
+ * its tool_call.id (so the bubble UI can fold approval + result together).
+ * When all `totalDecisions` for an interrupt have been resolved, the runner's
+ * resume path replays `decisions[]` in order via `Command({ resume })`.
+ */
+export interface PendingInterrupt {
+  sessionId: string;
+  profileId: string;
+  interruptId: string;
+  /** tool_call ids in the same order as the upstream actionRequests. */
+  callIds: string[];
+  /** Decisions filled in by IPC approveTool/rejectTool, keyed by callId. */
+  decisions: Map<string, unknown>;
+  modelName: string;
+}
 
 export interface RunnerDeps {
   /** Built once at app start by `agent-singleton.ts`. */
@@ -56,6 +75,11 @@ export interface RunnerDeps {
     model: string
   ) => void;
   modelName: string;
+  /** Shared with the chat IPC handler so approve/reject can look up the live
+   *  interrupt by callId and post a `Command({ resume })`. */
+  pendingInterrupts?: Map<string, PendingInterrupt>;
+  /** Required to record PendingInterrupts; passed in by chat.ts. */
+  profileId?: string;
 }
 
 type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps'> & { deps: RunnerDeps };
@@ -144,6 +168,7 @@ export async function runAgent({
   const messages = toLangChainMessages(deps.systemPrompt, history, preUserBlock, userText);
 
   let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined;
+  let lastAssistantToolCallIds: string[] = [];
 
   try {
     const stream = deps.agent.stream(
@@ -163,16 +188,45 @@ export async function runAgent({
       }
       await translateStreamEntry(translatorDeps, entry, deps.modelName);
 
-      // Capture last usage_metadata from any AIMessage we see (Scenario 8 needs it).
       if (Array.isArray(entry) && entry[0] === 'updates') {
-        const payload = entry[1] as Record<string, { messages?: unknown[] }> | undefined;
-        const modelNode = payload?.model;
+        const payload = entry[1] as Record<string, unknown> | undefined;
+
+        const modelNode = payload?.model as { messages?: unknown[] } | undefined;
         if (modelNode?.messages) {
           for (const m of modelNode.messages) {
-            const u = (m as { usage_metadata?: { input_tokens?: number; output_tokens?: number } })
-              .usage_metadata;
-            if (u) lastUsage = u;
+            const ai = m as {
+              usage_metadata?: { input_tokens?: number; output_tokens?: number };
+              tool_calls?: Array<{ id?: string }>;
+            };
+            if (ai.usage_metadata) lastUsage = ai.usage_metadata;
+            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
+              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''));
+            }
           }
+        }
+
+        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined;
+        if (Array.isArray(interrupts) && interrupts.length > 0) {
+          for (const ir of interrupts) {
+            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds);
+            if (deps.pendingInterrupts && deps.profileId) {
+              const reqs =
+                ir.value?.actionRequests ?? ir.actionRequests ?? ir.action_requests ?? [];
+              const pending: PendingInterrupt = {
+                sessionId,
+                profileId: deps.profileId,
+                interruptId: String(ir.id ?? ''),
+                callIds: reqs.map((_, i) => lastAssistantToolCallIds[i] ?? ''),
+                decisions: new Map(),
+                modelName: deps.modelName,
+              };
+              for (const cid of pending.callIds) {
+                if (cid) deps.pendingInterrupts.set(cid, pending);
+              }
+            }
+          }
+          end?.({ ok: true, meta: { interrupted: true } });
+          return;
         }
       }
     }
