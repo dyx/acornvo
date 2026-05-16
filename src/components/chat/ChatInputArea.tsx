@@ -93,9 +93,7 @@ export function ChatInputArea() {
           onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
         />
       }
-      header={
-        pendingAttachments.length > 0 ? <AttachmentsAdapter ref={attachmentsRef} /> : null
-      }
+      header={<AttachmentsAdapter ref={attachmentsRef} visible={pendingAttachments.length > 0} />}
     />
   )
 }

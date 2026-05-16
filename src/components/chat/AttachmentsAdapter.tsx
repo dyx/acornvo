@@ -8,6 +8,10 @@ export type AttachmentsAdapterHandle = {
   select: (opts?: { multiple?: boolean }) => void
 }
 
+type Props = {
+  visible?: boolean
+}
+
 function getFilePath(file: File): string {
   const w = window as unknown as {
     webUtils?: { getPathForFile?: (f: File) => string }
@@ -26,7 +30,7 @@ function getFilePath(file: File): string {
   return file.name
 }
 
-export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) => {
+export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(({ visible = true }, ref) => {
   const innerRef = useRef<AttachmentsRef | null>(null)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const pendingAttachments = useChatStore((s) =>
@@ -42,6 +46,7 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) 
   }))
 
   return (
+    <div style={visible ? undefined : { display: 'none' }}>
     <Attachments
       ref={innerRef}
       overflow="scrollX"
@@ -62,6 +67,7 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) 
         return true
       }}
     />
+    </div>
   )
 })
 AttachmentsAdapter.displayName = 'AttachmentsAdapter'
