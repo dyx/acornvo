@@ -484,7 +484,8 @@
       "confirmDeleteTitle": "删除会话？",
       "confirmDeleteBody": "此操作不可撤销，会话内所有消息将被删除。",
       "confirmDeleteOk": "删除",
-      "confirmDeleteCancel": "取消"
+      "confirmDeleteCancel": "取消",
+      "approvalPending": "有待审批"
     },
     "error": {
       "step_limit": "已达 8 步思考上限。",

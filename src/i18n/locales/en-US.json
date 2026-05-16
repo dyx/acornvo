@@ -453,7 +453,8 @@
       "confirmDeleteTitle": "Delete chat?",
       "confirmDeleteBody": "This cannot be undone. All messages in this chat will be deleted.",
       "confirmDeleteOk": "Delete",
-      "confirmDeleteCancel": "Cancel"
+      "confirmDeleteCancel": "Cancel",
+      "approvalPending": "Approval pending"
     },
     "error": {
       "step_limit": "Reached the 8-step thinking limit.",
