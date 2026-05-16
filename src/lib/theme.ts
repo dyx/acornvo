@@ -1,4 +1,7 @@
 import type { ThemeConfig } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
+import enUS from 'antd/locale/en_US'
+import type { Locale } from 'antd/lib/locale'
 
 export const themeTokens: ThemeConfig['token'] = {
   colorBgContainer: 'var(--color-paper)',
@@ -8,4 +11,8 @@ export const themeTokens: ThemeConfig['token'] = {
   colorTextSecondary: 'var(--color-ink-3)',
   fontFamily: '"Source Han Serif SC", serif',
   borderRadius: 6,
+}
+
+export function pickAntdLocale(lng: string): Locale {
+  return lng.toLowerCase().startsWith('zh') ? zhCN : enUS
 }

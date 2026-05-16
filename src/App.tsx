@@ -15,14 +15,8 @@ import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
 import { XProvider } from '@ant-design/x'
-import zhCN from 'antd/locale/zh_CN'
-import enUS from 'antd/locale/en_US'
 import { useTranslation } from 'react-i18next'
-import { themeTokens } from '@/lib/theme'
-
-function pickAntdLocale(lng: string) {
-  return lng.toLowerCase().startsWith('zh') ? zhCN : enUS
-}
+import { themeTokens, pickAntdLocale } from '@/lib/theme'
 
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
   if (!visible) return null

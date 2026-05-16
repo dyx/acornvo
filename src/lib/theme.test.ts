@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { themeTokens } from './theme'
+import zhCN from 'antd/locale/zh_CN'
+import enUS from 'antd/locale/en_US'
+import { themeTokens, pickAntdLocale } from './theme'
 
 describe('themeTokens', () => {
   it('maps colorBgContainer to --color-paper CSS variable', () => {
@@ -28,5 +30,27 @@ describe('themeTokens', () => {
 
   it('sets borderRadius literal number 6', () => {
     expect(themeTokens.borderRadius).toBe(6)
+  })
+})
+
+describe('pickAntdLocale', () => {
+  it('returns zhCN for "zh-CN"', () => {
+    expect(pickAntdLocale('zh-CN')).toBe(zhCN)
+  })
+
+  it('returns zhCN for "zh" (bare)', () => {
+    expect(pickAntdLocale('zh')).toBe(zhCN)
+  })
+
+  it('returns zhCN for "ZH-cn" (case-insensitive)', () => {
+    expect(pickAntdLocale('ZH-cn')).toBe(zhCN)
+  })
+
+  it('returns enUS for "en-US"', () => {
+    expect(pickAntdLocale('en-US')).toBe(enUS)
+  })
+
+  it('returns enUS for "fr-FR" (default fallback)', () => {
+    expect(pickAntdLocale('fr-FR')).toBe(enUS)
   })
 })
