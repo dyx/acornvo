@@ -421,6 +421,8 @@
       "queued": "{{count}} more pending",
       "timeout": "Approval timed out — auto-rejecting",
       "invalidJson": "Invalid JSON",
+      "pendingTag": "Pending",
+      "submit": "Submit",
       "tools": {
         "update_frontmatter": "Update frontmatter",
         "write_file": "Write file",

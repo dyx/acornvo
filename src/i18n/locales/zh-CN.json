@@ -452,6 +452,8 @@
       "queued": "还有 {{count}} 条待审",
       "timeout": "审批超时，将自动拒绝",
       "invalidJson": "JSON 格式错误",
+      "pendingTag": "待审",
+      "submit": "确认并同意",
       "tools": {
         "update_frontmatter": "更新 frontmatter",
         "write_file": "写入文件",
