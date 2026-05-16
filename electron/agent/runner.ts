@@ -12,6 +12,7 @@ import {
   ToolMessage,
   type BaseMessage,
 } from '@langchain/core/messages';
+import { Command } from '@langchain/langgraph';
 import { collectAttachmentContext } from './attachments';
 import {
   translateStreamEntry,
@@ -45,7 +46,7 @@ export interface RunnerDeps {
   /** Built once at app start by `agent-singleton.ts`. */
   agent: {
     stream(
-      input: { messages: BaseMessage[] },
+      input: { messages: BaseMessage[] } | Command,
       config: {
         configurable: { thread_id: string };
         streamMode: ['updates', 'messages'];
@@ -242,5 +243,110 @@ export async function runAgent({
     }
     emitError(translatorDeps, err);
     end?.({ ok: false, meta: { error: e?.code ?? 'E_UNKNOWN' } });
+  }
+}
+
+export type AgentDecision =
+  | { type: 'approve' }
+  | { type: 'edit'; editedAction: { name: string; args: Record<string, unknown> } }
+  | { type: 'reject'; message?: string };
+
+export interface ResumeAgentArgs {
+  sessionId: string;
+  agent: RunnerDeps['agent'];
+  decisions: AgentDecision[];
+  cancel: AbortSignal;
+  streamWriter: { write: (e: AgentEvent) => void };
+  sessions: RunnerDeps['sessions'];
+  recordUsage: RunnerDeps['recordUsage'];
+  modelName: string;
+  pendingInterrupts?: Map<string, PendingInterrupt>;
+  profileId?: string;
+}
+
+/**
+ * Resumes an interrupted agent thread with HITL decisions. `decisions[]` must
+ * match the order of the originating interrupt's actionRequests (one decision
+ * per request). After resume the stream behaves like a normal agent run —
+ * tool messages, optional follow-up assistant message, then done.
+ */
+export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
+  const translatorDeps: TranslatorDeps = {
+    emit: (e) => args.streamWriter.write(e),
+    persist: {
+      appendMessage: (m) => args.sessions.appendMessage(args.sessionId, m),
+      recordToolCall: (tc, opts) => args.sessions.recordToolCall(args.sessionId, tc, opts),
+      finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields),
+    },
+    recordUsage: args.recordUsage,
+    seenAiMessageIds: new Set(),
+    toolCallRowIdByCallId: new Map(),
+  };
+
+  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined;
+  let lastAssistantToolCallIds: string[] = [];
+
+  try {
+    const stream = args.agent.stream(new Command({ resume: { decisions: args.decisions } }), {
+      configurable: { thread_id: args.sessionId },
+      streamMode: ['updates', 'messages'],
+      signal: args.cancel,
+    });
+
+    for await (const entry of stream) {
+      if (args.cancel.aborted) {
+        emitCanceled(translatorDeps);
+        return;
+      }
+      await translateStreamEntry(translatorDeps, entry, args.modelName);
+
+      if (Array.isArray(entry) && entry[0] === 'updates') {
+        const payload = entry[1] as Record<string, unknown> | undefined;
+        const modelNode = payload?.model as { messages?: unknown[] } | undefined;
+        if (modelNode?.messages) {
+          for (const m of modelNode.messages) {
+            const ai = m as {
+              usage_metadata?: { input_tokens?: number; output_tokens?: number };
+              tool_calls?: Array<{ id?: string }>;
+            };
+            if (ai.usage_metadata) lastUsage = ai.usage_metadata;
+            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
+              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''));
+            }
+          }
+        }
+        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined;
+        if (Array.isArray(interrupts) && interrupts.length > 0) {
+          for (const ir of interrupts) {
+            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds);
+            if (args.pendingInterrupts && args.profileId) {
+              const reqs =
+                ir.value?.actionRequests ?? ir.actionRequests ?? ir.action_requests ?? [];
+              const pending: PendingInterrupt = {
+                sessionId: args.sessionId,
+                profileId: args.profileId,
+                interruptId: String(ir.id ?? ''),
+                callIds: reqs.map((_, i) => lastAssistantToolCallIds[i] ?? ''),
+                decisions: new Map(),
+                modelName: args.modelName,
+              };
+              for (const cid of pending.callIds) {
+                if (cid) args.pendingInterrupts.set(cid, pending);
+              }
+            }
+          }
+          return;
+        }
+      }
+    }
+
+    emitDone(translatorDeps, lastUsage, args.modelName);
+  } catch (err) {
+    const e = err as { name?: string };
+    if (e?.name === 'AbortError' || args.cancel.aborted) {
+      emitCanceled(translatorDeps);
+      return;
+    }
+    emitError(translatorDeps, err);
   }
 }

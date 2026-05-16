@@ -5,7 +5,12 @@ import type { SessionsDao } from '../agent/sessions';
 import type { RendererTarget } from '../agent/streamWriter';
 import { createStreamWriter } from '../agent/streamWriter';
 import { runAgent as runAgentLegacy } from '../agent/loop';
-import { runAgent as runAgentNew } from '../agent/runner';
+import {
+  runAgent as runAgentNew,
+  resumeAgent,
+  type AgentDecision,
+  type PendingInterrupt,
+} from '../agent/runner';
 import { getAgentBuilder } from '../agent/agent-singleton';
 import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
 import { IpcError } from '../../shared/ipc-contract';
@@ -64,6 +69,62 @@ function resolveProfile(profileId: string): ResolvedProfile {
 
 export function createChatHandlers(deps: ChatDeps) {
   const aborts = new Map<string, AbortController>();
+  /**
+   * Keyed by tool_call.id. Populated by runAgent / resumeAgent when an
+   * interrupt fires; consumed by approveTool / rejectTool.
+   */
+  const pendingInterrupts = new Map<string, PendingInterrupt>();
+
+  async function fireResume(pending: PendingInterrupt): Promise<void> {
+    const decisions: AgentDecision[] = pending.callIds.map(
+      (cid) => (pending.decisions.get(cid) as AgentDecision) ?? { type: 'approve' },
+    );
+    for (const cid of pending.callIds) pendingInterrupts.delete(cid);
+    const profile = resolveProfile(pending.profileId);
+    const agent = getAgentBuilder().buildForProfile(profile);
+    const ctl = aborts.get(pending.sessionId) ?? new AbortController();
+    aborts.set(pending.sessionId, ctl);
+    const writer = createStreamWriter(pending.sessionId, deps.getTargets);
+    void resumeAgent({
+      sessionId: pending.sessionId,
+      agent: agent as unknown as Parameters<typeof resumeAgent>[0]['agent'],
+      decisions,
+      cancel: ctl.signal,
+      streamWriter: writer,
+      sessions: deps.sessions,
+      recordUsage: buildRecordUsage(profile, pending.sessionId),
+      modelName: pending.modelName,
+      pendingInterrupts,
+      profileId: pending.profileId,
+    })
+      .catch((err: { code?: string; message?: string }) =>
+        writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message }),
+      )
+      .finally(() => aborts.delete(pending.sessionId));
+  }
+
+  function buildRecordUsage(profile: ResolvedProfile, sessionId: string) {
+    return (
+      u: { input_tokens?: number; output_tokens?: number } | undefined,
+      model: string,
+    ) => {
+      try {
+        aiUsage.insert({
+          jobId: null,
+          profileId: profile.id,
+          model,
+          promptTokens: u?.input_tokens ?? 0,
+          completionTokens: u?.output_tokens ?? 0,
+          latencyMs: 0,
+          ok: 1,
+          error: null,
+          sessionId,
+        });
+      } catch {
+        /* best effort */
+      }
+    };
+  }
 
   return {
     'sessions.list': () => deps.sessions.list(),
@@ -150,23 +211,9 @@ export function createChatHandlers(deps: ChatDeps) {
           cancel: ctl.signal,
           clipsGet: deps.clipsGet,
           modelName: profile.model,
-          recordUsage: (u, model) => {
-            try {
-              aiUsage.insert({
-                jobId: null,
-                profileId: profile.id,
-                model,
-                promptTokens: u?.input_tokens ?? 0,
-                completionTokens: u?.output_tokens ?? 0,
-                latencyMs: 0,
-                ok: 1,
-                error: null,
-                sessionId: opts.sessionId,
-              });
-            } catch {
-              /* best effort */
-            }
-          },
+          recordUsage: buildRecordUsage(profile, opts.sessionId),
+          pendingInterrupts,
+          profileId,
         },
         streamWriter: writer,
         attachments: opts.attachments,
@@ -190,11 +237,41 @@ export function createChatHandlers(deps: ChatDeps) {
     },
 
     approveTool: async (callId: string, opts?: { editedArgs?: unknown }) => {
-      deps.approval.approve(callId, opts?.editedArgs);
+      const pending = pendingInterrupts.get(callId);
+      if (!pending) {
+        // Legacy gate still serves any in-flight loop.ts approval.
+        deps.approval.approve(callId, opts?.editedArgs);
+        return { ok: true } as const;
+      }
+      const decision: AgentDecision =
+        opts?.editedArgs !== undefined
+          ? {
+              type: 'edit',
+              editedAction: {
+                name: 'update_frontmatter',
+                args: opts.editedArgs as Record<string, unknown>,
+              },
+            }
+          : { type: 'approve' };
+      pending.decisions.set(callId, decision);
+      if (pending.decisions.size < pending.callIds.length) {
+        // Wait for the other actions in this interrupt to be resolved.
+        return { ok: true } as const;
+      }
+      await fireResume(pending);
       return { ok: true } as const;
     },
     rejectTool: async (callId: string) => {
-      deps.approval.reject(callId);
+      const pending = pendingInterrupts.get(callId);
+      if (!pending) {
+        deps.approval.reject(callId);
+        return { ok: true } as const;
+      }
+      pending.decisions.set(callId, { type: 'reject' });
+      if (pending.decisions.size < pending.callIds.length) {
+        return { ok: true } as const;
+      }
+      await fireResume(pending);
       return { ok: true } as const;
     },
     subscribeStream: async (sessionId: string) =>
