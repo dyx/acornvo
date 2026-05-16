@@ -1,6 +1,6 @@
 import type { JobHandler } from '../runner';
 import { reviewClip } from '../../ai/reviewer';
-import { aiUsage } from '../../ai/usage';
+import { writeUsage } from '../../ai/usage';
 import { settingsStore } from '../../settings/store';
 import { getPerf } from '../../obs/perf';
 
@@ -26,7 +26,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
 
   try {
     const out = await reviewClip(clipId, { force });
-    aiUsage.insert({
+    writeUsage({
       jobId: job.id,
       profileId: profileId ?? null,
       model: out.llmCall?.model ?? null,
@@ -41,12 +41,10 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     return { kind: 'ok' };
   } catch (e) {
     const code = (e as any)?.code ?? 'E_UNKNOWN';
-    aiUsage.insert({
+    writeUsage({
       jobId: job.id,
       profileId: profileId ?? null,
       model: null,
-      promptTokens: null,
-      completionTokens: null,
       latencyMs: Date.now() - t0,
       ok: 0,
       error: code,

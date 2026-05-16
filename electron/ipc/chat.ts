@@ -16,7 +16,7 @@ import { markThreadCanceled } from '../agent/checkpoint-meta';
 import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
 import { IpcError } from '../../shared/ipc-contract';
 import { type ResolvedProfile } from '../ai/model-factory';
-import { aiUsage } from '../ai/usage';
+import { writeUsage } from '../ai/usage';
 import { dbService } from '../services/db';
 import { getProfileDecryptedKey } from '../settings/profile-key';
 
@@ -116,12 +116,10 @@ export function createChatHandlers(deps: ChatDeps) {
       model: string,
     ) => {
       try {
-        aiUsage.insert({
-          jobId: null,
+        writeUsage({
           profileId: profile.id,
           model,
-          promptTokens: u?.input_tokens ?? 0,
-          completionTokens: u?.output_tokens ?? 0,
+          usage: u,
           latencyMs: 0,
           ok: 1,
           error: null,

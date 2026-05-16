@@ -103,13 +103,17 @@ export interface UsageInput {
 
 export interface WriteUsageArgs {
   usage?: UsageInput;
-  profileId: string;
-  model: string;
+  profileId: string | null;
+  model: string | null;
   latencyMs: number;
   ok: 0 | 1;
   error: string | null;
   sessionId?: string;
   jobId?: string | null;
+  /** Pre-known token counts when the call site already has them (e.g. the
+   *  legacy queue handler reads them off `out.llmCall.{promptTokens,completionTokens}`). */
+  promptTokens?: number | null;
+  completionTokens?: number | null;
 }
 
 /**
@@ -119,7 +123,7 @@ export interface WriteUsageArgs {
  */
 export function rowFromUsageMetadata(
   usage: UsageInput | undefined,
-  base: Omit<WriteUsageArgs, 'usage'>,
+  base: Omit<WriteUsageArgs, 'usage' | 'promptTokens' | 'completionTokens'>,
 ): Parameters<typeof aiUsage.insert>[0] | null {
   if (!usage) return null;
   return {
@@ -151,8 +155,8 @@ export function writeUsage(args: WriteUsageArgs): void {
     jobId: args.jobId ?? null,
     profileId: args.profileId,
     model: args.model,
-    promptTokens: 0,
-    completionTokens: 0,
+    promptTokens: args.promptTokens ?? 0,
+    completionTokens: args.completionTokens ?? 0,
     latencyMs: args.latencyMs,
     ok: args.ok,
     error: args.error,

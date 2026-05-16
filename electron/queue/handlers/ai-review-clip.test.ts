@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('../../ai/reviewer', () => ({ reviewClip: vi.fn() }));
-vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() } }));
+vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() }, writeUsage: vi.fn() }));
 vi.mock('../../settings/store', () => ({
   settingsStore: { get: vi.fn() },
 }));
 
 import { reviewClip } from '../../ai/reviewer';
-import { aiUsage } from '../../ai/usage';
+import { writeUsage } from '../../ai/usage';
 import { settingsStore } from '../../settings/store';
 import { aiReviewClipHandler } from './ai-review-clip';
 
@@ -81,7 +81,7 @@ describe('aiReviewClipHandler', () => {
     });
     (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
     await aiReviewClipHandler(baseCtx());
-    expect(aiUsage.insert).toHaveBeenCalledWith(expect.objectContaining({
+    expect(writeUsage).toHaveBeenCalledWith(expect.objectContaining({
       jobId: 'job-1', profileId: 'p1', model: 'm', ok: 1, error: null,
     }));
   });
@@ -90,7 +90,7 @@ describe('aiReviewClipHandler', () => {
     const e: any = new Error('x'); e.code = 'E_AUTH';
     (reviewClip as any).mockRejectedValue(e);
     await aiReviewClipHandler(baseCtx());
-    expect(aiUsage.insert).toHaveBeenCalledWith(expect.objectContaining({
+    expect(writeUsage).toHaveBeenCalledWith(expect.objectContaining({
       jobId: 'job-1', ok: 0, error: 'E_AUTH',
     }));
   });
