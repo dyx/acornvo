@@ -1,4 +1,4 @@
-import { createAgent } from 'langchain';
+import { createAgent, humanInTheLoopMiddleware } from 'langchain';
 import { SqliteSaver } from '@langchain/langgraph-checkpoint-sqlite';
 import type { BaseCheckpointSaver } from '@langchain/langgraph';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -33,12 +33,21 @@ function getCheckpointer(): BaseCheckpointSaver {
 export function getAgentBuilder(): SingletonHandle {
   if (handle) return handle;
   const cp = getCheckpointer();
+  const hitl = humanInTheLoopMiddleware({
+    interruptOn: {
+      update_frontmatter: {
+        allowedDecisions: ['approve', 'edit', 'reject'],
+        description: 'update_frontmatter writes to disk and requires user confirmation.',
+      },
+    },
+  });
   handle = {
     buildForProfile: (profile: ResolvedProfile) => {
       const model = buildChatModel(profile) as unknown as BaseChatModel;
       return createAgent({
         model,
         tools: agentTools as unknown as Parameters<typeof createAgent>[0]['tools'],
+        middleware: [hitl] as unknown as Parameters<typeof createAgent>[0]['middleware'],
         checkpointer: cp,
       });
     },
