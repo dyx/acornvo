@@ -47,22 +47,6 @@ profile.provider='openai-compatible' 时 profile.baseUrl MUST 非空；`buildCha
 - **WHEN** provider='openai-compatible' 但 profile.baseUrl 为空
 - **THEN** 上层在 buildChatModel 之前抛 `E_CONFIG`
 
-### Requirement: 结构化输出（替代 chatJson）
-需要 JSON 结果的调用方（reviewer 等）SHALL 使用 `buildChatModel(profile).withStructuredOutput(zodSchema).invoke(messages)`。该路径由 LangChain 内部完成：
-- provider 原生 JSON / tools 模式（若支持）
-- Zod 自动校验
-- 失败时抛 LangChain 解析异常 → 由 `normalize-errors` 映射为 `E_RESPONSE`
-
-系统 MUST NOT 自写 markdown code fence 剥离、正则抽取或 Ajv 校验链路。
-
-#### Scenario: 结构化输出成功
-- **WHEN** 调 `.withStructuredOutput(AiReviewSchema).invoke(messages)`，LLM 返回合法对象
-- **THEN** 返回 Zod 解析后的对象；类型与 schema 对齐
-
-#### Scenario: 结构化输出解析失败
-- **WHEN** LLM 返回不可解析或缺字段的对象
-- **THEN** LangChain 抛解析异常；normalize-errors 映射为 `{ code: 'E_RESPONSE' }`
-
 ### Requirement: 错误归一化
 `electron/ai/normalize-errors.ts` SHALL 暴露 `normalizeLLMError(err): LlmError & Error`，覆盖：
 - `AbortError` → 透传（runner emit `canceled`）
@@ -99,6 +83,24 @@ profile.provider='openai-compatible' 时 profile.baseUrl MUST 非空；`buildCha
 #### Scenario: renderer 无法获取 key
 - **WHEN** renderer 代码查看任何 IPC payload
 - **THEN** payload 中永远不包含明文 apiKey
+
+## ADDED Requirements
+
+### Requirement: 结构化输出（替代 chatJson）
+需要 JSON 结果的调用方（reviewer 等）SHALL 使用 `buildChatModel(profile).withStructuredOutput(zodSchema).invoke(messages)`。该路径由 LangChain 内部完成：
+- provider 原生 JSON / tools 模式（若支持）
+- Zod 自动校验
+- 失败时抛 LangChain 解析异常 → 由 `normalize-errors` 映射为 `E_RESPONSE`
+
+系统 MUST NOT 自写 markdown code fence 剥离、正则抽取或 Ajv 校验链路。
+
+#### Scenario: 结构化输出成功
+- **WHEN** 调 `.withStructuredOutput(AiReviewSchema).invoke(messages)`，LLM 返回合法对象
+- **THEN** 返回 Zod 解析后的对象；类型与 schema 对齐
+
+#### Scenario: 结构化输出解析失败
+- **WHEN** LLM 返回不可解析或缺字段的对象
+- **THEN** LangChain 抛解析异常；normalize-errors 映射为 `{ code: 'E_RESPONSE' }`
 
 ## REMOVED Requirements
 

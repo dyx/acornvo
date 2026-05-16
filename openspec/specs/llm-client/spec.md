@@ -2,114 +2,104 @@
 
 ## Purpose
 统一 LLM 客户端抽象。根据 profile 的 provider 分派到具体实现（OpenAI / Anthropic / Ollama / OpenAI-compatible），提供 chat 和 chatJson 接口，统一错误归一化和超时控制。
-
 ## Requirements
-
 ### Requirement: Provider 抽象
-`electron/ai/client.ts` SHALL 暴露 `llmClient`：
-- `chat({ profileId, messages, model?, temperature?, maxTokens?, signal? }) → Promise<{ text, usage? }>`
-- `chatJson({ profileId, messages, schema, ... }) → Promise<{ data, usage? }>`
-- `chatWithTools(opts) → Promise<ChatWithToolsResult>`（phase 16 新增，详见 llm-tool-use 规格）
-- `chatStream(opts)`：`chat` 的流式版本；通过 `onToken` 回调消费
+`electron/ai/model-factory.ts` SHALL 暴露 `buildChatModel(profile): BaseChatModel`：
+- 根据 `profile.provider` 构造对应 `@langchain/*` 的 `ChatXxx` 实例（`ChatOpenAI` / `ChatAnthropic` / `ChatOllama`）
+- `openai-compatible` 走 `ChatOpenAI` 并设 `configuration.baseURL`
+- `apiKey` 通过 `getProfileDecryptedKey(profileId)` 在 main 进程内获取明文，MUST NOT 经 IPC 传到 renderer
+- 同一 profile 在未变更时 SHALL 复用缓存的 model 实例（LRU，max=8）
+- profile 更新时 `settings-effects` SHALL invalidate 缓存条目（按 `p.id` 前缀清除）
 
-内部 SHALL 根据 profile.provider 分派到具体 provider 实现（`openai` / `anthropic` / `ollama` / `openai-compatible`）。`profileId` 默认取 `settings.ai.defaultProfileId`。
+调用方（reviewer / agent runner）通过 `model.invoke(...)`、`model.stream(...)`、`model.withStructuredOutput(zod)` 使用，**不再有** `llmClient.chat` / `chatJson` / `chatStream` / `chatWithTools` 等顶层 API。
 
-#### Scenario: 用默认 profile 调 chat
-- **WHEN** 调 `llmClient.chat({ messages: [...] })` 且未传 profileId
-- **THEN** 读 `settings.ai.defaultProfileId`，用该 profile 构造请求
+#### Scenario: 用默认 profile 构造 model
+- **WHEN** 调 `buildChatModel(profile)` 且 profile.provider='openai'
+- **THEN** 返回 `ChatOpenAI` 实例，model/apiKey/temperature/maxTokens/baseURL 与 profile 对齐
 
 #### Scenario: 未设默认 profile
-- **WHEN** `settings.ai.defaultProfileId === null` 且未传 profileId
-- **THEN** 抛 `E_MISSING_PROFILE`
+- **WHEN** 上层（reviewer 或 runner）在 `settings.ai.defaultProfileId === null` 时尝试调用
+- **THEN** 调用方在 buildChatModel 之前抛 `E_MISSING_PROFILE`
 
-#### Scenario: provider 分派
-- **WHEN** profile.provider='openai'
-- **THEN** 调 `POST ${baseUrl ?? 'https://api.openai.com'}/v1/chat/completions`；Authorization: `Bearer ${decryptedKey}`
+#### Scenario: 缓存命中
+- **WHEN** 连续两次以同 profile 调 buildChatModel
+- **THEN** 第二次返回与第一次相同的 model 实例引用
 
-#### Scenario: 调用 chatWithTools
-- **WHEN** 调 `chatWithTools({ messages, tools })`
-- **THEN** 按 profile.provider 转换 tools → 发起请求 → 解析响应 → 返回 `ChatWithToolsResult`（见 llm-tool-use 规格）
-
-#### Scenario: 流式调用
-- **WHEN** 调 `chatStream({ messages, onToken })`
-- **THEN** 使用 provider 流式接口；每个 token chunk 触发 onToken；最终返回聚合 text
+#### Scenario: profile 更新后缓存失效
+- **WHEN** 用户在 settings 修改 profile 的 apiKey 或 model；`settings-effects` 触发缓存清除
+- **THEN** 下次 buildChatModel 返回新构造的 model 实例
 
 ### Requirement: Anthropic provider
-当 profile.provider='anthropic' 时 llmClient SHALL 构造符合 Anthropic Messages API 的请求：
-- `POST ${baseUrl ?? 'https://api.anthropic.com'}/v1/messages`
-- header: `x-api-key: ${decryptedKey}`、`anthropic-version: 2023-06-01`
-- body: `{ model, max_tokens, temperature, system, messages }`（把 `role: 'system'` 提到 system 字段）
-- 响应的 `content[].text` 拼接为 text
+当 profile.provider='anthropic' 时 `buildChatModel` SHALL 构造 `ChatAnthropic({ model, apiKey, temperature, maxTokens })`，`@langchain/anthropic` 内部负责 system 字段提取、Messages API 调用、错误处理与 SSE 流式解析。系统 MUST NOT 自写 HTTP 请求或 SSE 解析。
 
-#### Scenario: system 提取
-- **WHEN** 请求 messages 含 `{role:'system', content: 'S'}, {role:'user', content:'U'}`
-- **THEN** Anthropic body 为 `{ system: 'S', messages: [{role:'user', content:'U'}] }`
+#### Scenario: Anthropic 构造
+- **WHEN** profile.provider='anthropic'，apiKey='sk-ant-xxx'
+- **THEN** `new ChatAnthropic({ ... })` 被构造；后续 invoke/stream 自动按 Anthropic API 工作
 
 ### Requirement: Ollama provider
-profile.provider='ollama' 时 SHALL 调 `POST ${baseUrl ?? 'http://localhost:11434'}/api/chat`，body `{ model, messages, stream: false, options: { temperature, num_predict: maxTokens } }`。chatJson 时追加 `format: 'json'`。
+profile.provider='ollama' 时 `buildChatModel` SHALL 构造 `ChatOllama({ model, baseUrl: profile.baseUrl ?? 'http://localhost:11434', temperature, numPredict: maxTokens })`。
 
 #### Scenario: 本地 ollama
-- **WHEN** profile 无 apiKeyRef，provider='ollama'
-- **THEN** 请求无 Authorization header；其他字段按 Ollama 约定
+- **WHEN** profile 无 apiKeyRef，provider='ollama'，baseUrl=null
+- **THEN** ChatOllama 默认使用 http://localhost:11434
 
 ### Requirement: openai-compatible
-profile.provider='openai-compatible' 时 baseUrl MUST 非空；其余与 openai 相同。
+profile.provider='openai-compatible' 时 profile.baseUrl MUST 非空；`buildChatModel` SHALL 构造 `ChatOpenAI({ ..., configuration: { baseURL: profile.baseUrl } })`。
 
 #### Scenario: baseUrl 缺失
 - **WHEN** provider='openai-compatible' 但 profile.baseUrl 为空
-- **THEN** 抛 `E_CONFIG`
-
-### Requirement: chatJson 解析鲁棒
-`chatJson` SHALL 按以下顺序尝试把 LLM 文本解析为 JSON：
-1. strip markdown code fence（`` ```json `` 或 `` ``` ``）
-2. 直接 `JSON.parse(trimmed)`
-3. 失败则正则抽取 `\{[\s\S]*\}`；对最长括号平衡子串再 `JSON.parse`
-4. Ajv 按传入 schema validate；通过才返回 data
-
-全部失败 → 抛 `E_RESPONSE`，error.message 含 "invalid JSON from LLM"。
-
-#### Scenario: 带 code fence
-- **WHEN** LLM 返回 ` ```json\n{"a":1}\n``` `
-- **THEN** chatJson 解析成功，data = `{a:1}`
-
-#### Scenario: 前后有解释文字
-- **WHEN** LLM 返回 `这是你的结果:\n{"a":1}\n谢谢`
-- **THEN** 正则抽取 `{"a":1}` 解析成功
-
-#### Scenario: schema 不匹配
-- **WHEN** LLM 返回 `{"b":2}` 但 schema require `a`
-- **THEN** Ajv validate 失败；抛 `E_RESPONSE`
+- **THEN** 上层在 buildChatModel 之前抛 `E_CONFIG`
 
 ### Requirement: 错误归一化
-llmClient SHALL 捕获所有底层异常并映射到以下错误码：
-- 401/403 → `E_AUTH`
-- 429 → `E_RATE`
-- 5xx → `E_SERVER`
-- fetch TypeError / AbortError timeout → `E_NETWORK`
-- 解析失败 → `E_RESPONSE`
+`electron/ai/normalize-errors.ts` SHALL 暴露 `normalizeLLMError(err): LlmError & Error`，覆盖：
+- `AbortError` → 透传（runner emit `canceled`）
+- LangChain provider 错误（`AuthenticationError` / `RateLimitError` / `APIError`）→ `E_AUTH` / `E_RATE` / `E_SERVER`
+- HTTP status 兜底：401/403 → `E_AUTH`；429 → `E_RATE`；≥500 → `E_SERVER`；fetch TypeError → `E_NETWORK`
+- Zod / structured-output 解析失败 → `E_RESPONSE`
 - 配置缺失 → `E_CONFIG`（含 `E_MISSING_PROFILE`）
-- 其他 → `E_UNKNOWN`
+- 未知 → `E_UNKNOWN`
 
-错误对象 MUST 含 `{ code, message, httpStatus?, providerMessage? }`。
+错误对象 MUST 含 `{ code, message, httpStatus?, providerMessage? }`。所有 IPC 出口仍返回 `LlmErrorCode` 字符串。
 
 #### Scenario: 401 映射
-- **WHEN** OpenAI 返回 HTTP 401
-- **THEN** llmClient 抛 `{ code: 'E_AUTH', httpStatus: 401, providerMessage: ... }`
+- **WHEN** OpenAI 返回 HTTP 401，LangChain 抛 `AuthenticationError`
+- **THEN** normalizeLLMError 返回 `{ code: 'E_AUTH', httpStatus: 401, providerMessage: ... }`
 
-#### Scenario: 超时
-- **WHEN** fetch 超过 60s 未响应
-- **THEN** 触发 AbortController；抛 `{ code: 'E_NETWORK', message: 'timeout' }`
+#### Scenario: 速率限制
+- **WHEN** Anthropic 抛 `RateLimitError`
+- **THEN** 归一化为 `{ code: 'E_RATE' }`
+
+#### Scenario: 网络超时
+- **WHEN** fetch 抛 TypeError 或 AbortError 含 'timeout'
+- **THEN** 归一化为 `{ code: 'E_NETWORK' }`
 
 ### Requirement: 请求超时
-llmClient SHALL 对每次请求使用 AbortController + `setTimeout`，默认 60000ms 超时。调用方可传 `signal` 覆盖。
+调用方 SHALL 通过 `model.invoke(messages, { signal })` 或在 model 构造时设 `requestTimeoutMs` 控制超时（默认 60000ms 与现行行为一致）。系统 MUST NOT 自写 `AbortController + setTimeout`。
 
 #### Scenario: 默认 60s 超时
-- **WHEN** 调 `chat` 未传 signal
-- **THEN** 60s 到达时 fetch 被 abort；抛 `E_NETWORK`
+- **WHEN** 调用方未传 signal 且 model 默认 timeout=60000
+- **THEN** LangChain 内部 60s 到达时 abort；抛错被 normalize-errors 映射为 `E_NETWORK`
 
 ### Requirement: key 仅在 main 解密
-llmClient SHALL 通过 `getProfileDecryptedKey(profileId)`（phase 13）获取明文 key，仅在 main 进程内使用；MUST NOT 通过 IPC 把 key 传递到 renderer。
+`buildChatModel` SHALL 通过 `getProfileDecryptedKey(profileId)` 获取明文 key，仅在 main 进程内使用；MUST NOT 通过 IPC 把 key 传到 renderer。
 
 #### Scenario: renderer 无法获取 key
 - **WHEN** renderer 代码查看任何 IPC payload
-- **THEN** payload 中永远不包含明文 apiKey（即便 chat 响应）
+- **THEN** payload 中永远不包含明文 apiKey
+
+### Requirement: 结构化输出（替代 chatJson）
+需要 JSON 结果的调用方（reviewer 等）SHALL 使用 `buildChatModel(profile).withStructuredOutput(zodSchema).invoke(messages)`。该路径由 LangChain 内部完成：
+- provider 原生 JSON / tools 模式（若支持）
+- Zod 自动校验
+- 失败时抛 LangChain 解析异常 → 由 `normalize-errors` 映射为 `E_RESPONSE`
+
+系统 MUST NOT 自写 markdown code fence 剥离、正则抽取或 Ajv 校验链路。
+
+#### Scenario: 结构化输出成功
+- **WHEN** 调 `.withStructuredOutput(AiReviewSchema).invoke(messages)`，LLM 返回合法对象
+- **THEN** 返回 Zod 解析后的对象；类型与 schema 对齐
+
+#### Scenario: 结构化输出解析失败
+- **WHEN** LLM 返回不可解析或缺字段的对象
+- **THEN** LangChain 抛解析异常；normalize-errors 映射为 `{ code: 'E_RESPONSE' }`
+

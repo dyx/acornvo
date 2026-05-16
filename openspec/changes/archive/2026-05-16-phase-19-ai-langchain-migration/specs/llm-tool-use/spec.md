@@ -1,3 +1,12 @@
+## ADDED Requirements
+
+### Requirement: 弃用占位（capability 已迁出）
+本 capability 的全部职责 SHALL 由 `agent-loop`（LangGraph `createAgent` + `agent.stream`）与 `llm-client`（`buildChatModel` + `withStructuredOutput`）联合承担，本 spec 仅保留作为历史索引。新调用方 MUST NOT 再依赖任何 `chatWithTools` / `streamText` 形态的 API。
+
+#### Scenario: 调用方迁移
+- **WHEN** 业务代码需要工具调用 / 流式文本 / 结构化输出
+- **THEN** 直接使用 `agent.stream(...)` 或 `model.withStructuredOutput(zod).invoke(...)`，不再经本 capability
+
 ## REMOVED Requirements
 
 ### Requirement: chatWithTools 接口

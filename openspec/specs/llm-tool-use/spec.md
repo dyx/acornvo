@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Spec for llm-tool-use capability.
+
+## Requirements
 
 ### Requirement: chatWithTools 接口
 `llmClient` SHALL 新增 `chatWithTools(opts): Promise<ChatWithToolsResult>`：

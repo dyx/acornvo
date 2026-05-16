@@ -86,4 +86,4 @@
 - [x] 10.1 更新 README 或 docs 中提及 AI 链路实现的段落
 - [x] 10.2 撰写 release note：说明并行工具调用行为差异、HITL 重启恢复新能力、step.warning 事件不再触发
 - [x] 10.3 跑全套 `pnpm test` + acceptance：全绿
-- [ ] 10.4 在 OpenSpec 中 verify + archive 本 change
+- [x] 10.4 在 OpenSpec 中 verify + archive 本 change
