@@ -181,6 +181,9 @@ const request: IpcClient<IpcContract> = {
   crash: {
     ack: (file: string) => invoke('crash.ack', file),
     openLogsFolder: () => invoke('crash.openLogsFolder')
+  },
+  window: {
+    themeApplied: (effective) => invoke<void>('window.themeApplied', effective)
   }
 }
 
