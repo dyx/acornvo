@@ -540,6 +540,9 @@ export type IpcContract = {
 	    ack: (file: string) => Promise<void>
 	    openLogsFolder: () => Promise<void>
 	  }
+	  window: {
+	    themeApplied: (effective: 'light' | 'dark') => Promise<void>
+	  }
 }
 
 /**
