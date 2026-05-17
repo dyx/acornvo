@@ -87,13 +87,13 @@
 
 ## 8. 验证（block 7 收尾）
 
-- [ ] 8.1 跑 `npm test -- src/__acceptance__/chat-acceptance.test.tsx` 全绿
-- [ ] 8.2 跑 `npm test` 全套，确认非 chat 单测全绿
-- [ ] 8.3 跑 `npm run typecheck` 无错误
-- [ ] 8.4 跑 `npm run lint` 无错误
+- [x] 8.1 跑 `npm test -- src/__acceptance__/chat-acceptance.test.tsx` 全绿
+- [x] 8.2 跑 `npm test` 全套，确认非 chat 单测全绿
+- [x] 8.3 跑 `npm run typecheck` 无错误
+- [x] 8.4 跑 `npm run lint` 无错误
 - [ ] 8.5 手测 PRD §13 的 15 项行为对等清单（空态 / 普通对话流式 / 长对话滚动 / 工具调用展示 / 待审批 / 编辑 args / cancel / 切换 session / 删除 session / profile 切换 / 附件 / 暗色模式 / 快捷键 / 删除会话确认 / 错误）
 - [ ] 8.6 手测附件多文件添加 / 单个移除 / 发送清空全链路
 - [ ] 8.7 手测窗口缩放折叠态（≥960 / <960 互切；点击切换在两种模式下均生效）
-- [ ] 8.8 检查 bundle size 变化（与 baseline 对比 `npm run build` 后 dist 大小）；如显著增加则评估 antd / antd-x tree-shaking 与 babel-plugin-import 等优化
-- [ ] 8.9 跑 `openspec validate phase-20-chat-ui-ant-design-x` 无错误
+- [x] 8.8 检查 bundle size 变化（与 baseline 对比 `npm run build` 后 dist 大小）；如显著增加则评估 antd / antd-x tree-shaking 与 babel-plugin-import 等优化
+- [x] 8.9 跑 `openspec validate phase-20-chat-ui-ant-design-x` 无错误
 - [ ] 8.10 暗色模式 + 中英 i18n 全链路冒烟（两遍 §8.5 清单各一次）

@@ -18,13 +18,13 @@
 **Files:**
 - Run only: `src/__acceptance__/chat-acceptance.test.tsx`
 
-- [ ] **Step 1: Execute**
+- [x] **Step 1: Execute**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/__acceptance__/chat-acceptance.test.tsx --reporter=verbose`
 
 Expected: 100% PASS. Plan 5 Task 7 rewrote the file's selectors and mkSlot; this is the canonical gate.
 
-- [ ] **Step 2: If RED, root-cause**
+- [x] **Step 2: If RED, root-cause**
 
 For each failure:
 - Read the error message + the failing assertion in the test file
@@ -37,7 +37,7 @@ Common patterns:
 - "Expected status 'streaming' got 'idle'" → `__setChatTokenBatching(false)` is not being called in `beforeEach`; ensure Plan 5 Task 7 Step 5 is in place.
 - "Cannot read property 'streamingBuffer'" → Plan 4 didn't fully purge the field; revisit Plan 4 Task 11.
 
-- [ ] **Step 3: Commit confirmation**
+- [x] **Step 3: Commit confirmation**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): chat-acceptance.test.tsx — all green"
@@ -51,18 +51,18 @@ git commit --allow-empty -m "chore(phase-20): chat-acceptance.test.tsx — all g
 **Files:**
 - Run: entire test suite
 
-- [ ] **Step 1: Execute**
+- [x] **Step 1: Execute**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run`
 Expected: 100% PASS across all test files (chat + non-chat).
 
-- [ ] **Step 2: Inspect non-chat suite specifically**
+- [x] **Step 2: Inspect non-chat suite specifically**
 
 If any non-chat test fails:
 - Library / Browse / Editor / History / Search / Settings tests have nothing to do with chat changes. A failure here is a regression introduced by Plan 1 (XProvider wrapping) or Plan 5 (Radix package removal).
 - Read the error carefully. If a Radix component test fails, Plan 5 Task 6 was wrong about non-chat usage of that package. Restore it.
 
-- [ ] **Step 3: Commit confirmation**
+- [x] **Step 3: Commit confirmation**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): full vitest suite — all green"
@@ -76,19 +76,19 @@ git commit --allow-empty -m "chore(phase-20): full vitest suite — all green"
 **Files:**
 - Run: `tsc --noEmit` (both projects)
 
-- [ ] **Step 1: Execute**
+- [x] **Step 1: Execute**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck`
 Expected: 0 errors in both `tsconfig.node.json` and `tsconfig.web.json` passes.
 
-- [ ] **Step 2: Read errors closely if any**
+- [x] **Step 2: Read errors closely if any**
 
 Common late-stage errors:
 - `Property 'status' does not exist on type 'ChatMessage'` → Plan 4 Task 2 not committed
 - `Cannot find module './SessionList'` → Plan 5 Task 4 deleted a file still imported elsewhere
 - antd type mismatches around `ConfigProvider.theme.token` → tighten the import path in Plan 1's `theme.ts`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): typecheck — 0 errors"
@@ -102,18 +102,18 @@ git commit --allow-empty -m "chore(phase-20): typecheck — 0 errors"
 **Files:**
 - Run: ESLint
 
-- [ ] **Step 1: Execute**
+- [x] **Step 1: Execute**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run lint`
 Expected: 0 errors. Warnings are tolerable but fix obvious unused-import warnings.
 
-- [ ] **Step 2: Common eslint complaints to handle proactively**
+- [x] **Step 2: Common eslint complaints to handle proactively**
 
 - Unused imports from deleted modules — remove
 - React hook deps array missing values — add them or wrap with `useEvent` pattern
 - `@typescript-eslint/no-explicit-any` on the `as any` casts in Plan 3 Bubble.List `roles` and Plan 2 Sender `ref` — add an inline `// eslint-disable-next-line @typescript-eslint/no-explicit-any` with a one-line reason
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A 2>/dev/null
@@ -247,12 +247,12 @@ git commit --allow-empty -m "chore(phase-20): manual collapse-mode (≥960 / <96
 **Files:**
 - Run: `npm run build`; inspect `dist/`.
 
-- [ ] **Step 1: Baseline current main build**
+- [x] **Step 1: Baseline current main build**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run build`
 Expected: build completes. Note: `prebuild` regenerates licenses; `typecheck` is a precondition (Task 3 already validated).
 
-- [ ] **Step 2: Measure bundle outputs**
+- [x] **Step 2: Measure bundle outputs**
 
 After build, run:
 
@@ -262,7 +262,7 @@ du -sh /Users/aaa/develop/workspace-ai/acornvo/out/renderer/assets/*.js 2>/dev/n
 
 Capture the totals. Compare to the pre-Phase-20 baseline (use `git log --all --grep="phase-19" --oneline | head -1` to find the last phase-19 commit, then `git stash; git checkout <commit>; npm run build; du -sh ...; git checkout main; git stash pop` — OR refer to a pre-recorded baseline note in `docs/`).
 
-- [ ] **Step 3: Compare**
+- [x] **Step 3: Compare**
 
 If total renderer JS grew by > 200KB gzipped (rule of thumb: antd + antd-x adds ~150–200KB gzipped), evaluate tree-shaking:
 - Check `vite.config.ts` / `electron.vite.config.ts` — confirm Vite's default tree-shaking is on (it is).
@@ -271,7 +271,7 @@ If total renderer JS grew by > 200KB gzipped (rule of thumb: antd + antd-x adds 
 
 For Phase-20 the expected delta is ~150–250KB gzipped (antd + x-markdown + icons). Anything beyond 300KB warrants investigation.
 
-- [ ] **Step 4: Commit findings**
+- [x] **Step 4: Commit findings**
 
 ```bash
 git commit --allow-empty -m "chore(phase-20): bundle size delta after antd migration: <before> → <after> renderer JS (gzipped <delta>) — within expected range / requires optimization (see Step 3)"
@@ -285,12 +285,12 @@ git commit --allow-empty -m "chore(phase-20): bundle size delta after antd migra
 **Files:**
 - Run: `openspec validate`
 
-- [ ] **Step 1: Execute**
+- [x] **Step 1: Execute**
 
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && openspec validate phase-20-chat-ui-ant-design-x`
 Expected: validation passes with no errors. Warnings about completed tasks should be informational.
 
-- [ ] **Step 2: If errors appear**
+- [x] **Step 2: If errors appear**
 
 Most likely error: spec scenario language mismatched implementation. The fix path:
 - If a scenario references a behavior we did NOT implement (e.g. "Conversations.creation icon = Plus"), patch the implementation to match
@@ -298,7 +298,7 @@ Most likely error: spec scenario language mismatched implementation. The fix pat
 
 Do NOT modify any spec file unless the spec itself is wrong. Generally implementation drift, not spec drift.
 
-- [ ] **Step 3: Re-run validate and commit**
+- [x] **Step 3: Re-run validate and commit**
 
 Run: `openspec validate phase-20-chat-ui-ant-design-x` again until clean.
 
