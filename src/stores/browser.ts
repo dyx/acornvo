@@ -14,7 +14,6 @@ export interface BrowserPort {
   reload(id: TabId): Promise<void>
   goBack(id: TabId): Promise<void>
   goForward(id: TabId): Promise<void>
-  setReaderMode(id: TabId, on: boolean): Promise<void>
   setViewport(rect: SetViewportArgs): Promise<void>
   suspendTab(id: TabId): Promise<void>
   resumeTab(id: TabId): Promise<{ id: TabId; url: string }>
@@ -30,7 +29,6 @@ let port: BrowserPort = {
   reload: () => { throw new Error('BrowserPort not configured') },
   goBack: () => { throw new Error('BrowserPort not configured') },
   goForward: () => { throw new Error('BrowserPort not configured') },
-  setReaderMode: () => { throw new Error('BrowserPort not configured') },
   setViewport: () => { throw new Error('BrowserPort not configured') },
   suspendTab: () => { throw new Error('BrowserPort not configured') },
   resumeTab: () => { throw new Error('BrowserPort not configured') },
@@ -69,7 +67,6 @@ function makeTab(id: TabId, url: string): Tab {
     loading: false,
     canGoBack: false,
     canGoForward: false,
-    readerMode: false,
     suspended: false,
     savedUrl: url,
     isClipped: false
@@ -105,6 +102,7 @@ export interface BrowserState {
   tabs: Tab[]
   activeTabId: TabId | null
   bookmarksOpen: boolean
+  bookmarksRevision: number
   viewport: SetViewportArgs
 
   getActiveTab(): Tab | undefined
@@ -114,13 +112,13 @@ export interface BrowserState {
   closeTab(id: TabId): Promise<void>
   activateTab(id: TabId): Promise<void>
   reorderTab(id: TabId, targetIndex: number): void
-  setReaderMode(id: TabId, on: boolean): Promise<void>
   navigate(id: TabId, url: string): Promise<void>
   goBack(id: TabId): Promise<void>
   goForward(id: TabId): Promise<void>
   reload(id: TabId): Promise<void>
   setViewport(rect: SetViewportArgs): void
   setBookmarksOpen(open: boolean): void
+  bumpBookmarksRevision(): void
   applyTabPatch(id: TabId, patch: TabPatch): void
 }
 
@@ -128,6 +126,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   bookmarksOpen: false,
+  bookmarksRevision: 0,
   viewport: { x: 0, y: 0, width: 0, height: 0 },
 
   getActiveTab: () => {
@@ -206,13 +205,6 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
     })
   },
 
-  async setReaderMode(id, on) {
-    await port.setReaderMode(id, on)
-    set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === id ? { ...t, readerMode: on } : t))
-    }))
-  },
-
   async navigate(id, url) {
     await port.navigate(id, url)
     set((s) => ({
@@ -236,6 +228,10 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
 
   setBookmarksOpen(open) {
     set({ bookmarksOpen: open })
+  },
+
+  bumpBookmarksRevision() {
+    set((s) => ({ bookmarksRevision: s.bookmarksRevision + 1 }))
   },
 
   applyTabPatch(id, patch) {

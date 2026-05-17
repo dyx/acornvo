@@ -82,28 +82,6 @@ export const browserHandlers: H = {
     const wc = getManager().get(id)?.view.webContents
     if (wc?.navigationHistory.canGoForward()) wc.navigationHistory.goForward()
   },
-  setReaderMode(id, on) {
-    const tab = getManager().get(id)
-    if (!tab) return
-    const wc = tab.view.webContents
-    const READER_CSS = `
-      body { max-width: 720px !important; margin: 0 auto !important;
-             font-family: Georgia, serif; font-size: 18px; line-height: 1.7; color: #222; }
-      header, nav, footer, aside, [class*="sidebar"], [class*="banner"], [class*="ad"] { display: none !important; }
-      img { max-width: 100% !important; height: auto !important; }
-    `
-    ;(globalThis as any).__readerCssKeys ??= new Map<TabId, string>()
-    const m = (globalThis as any).__readerCssKeys as Map<TabId, string>
-    if (on) {
-      void wc.insertCSS(READER_CSS).then((key) => m.set(id, key))
-    } else {
-      const key = m.get(id)
-      if (key) {
-        void wc.removeInsertedCSS(key)
-        m.delete(id)
-      }
-    }
-  },
   setViewport(rect: SetViewportArgs) {
     getBounds().setViewport(rect)
   },

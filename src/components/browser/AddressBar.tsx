@@ -20,13 +20,11 @@ export function AddressBar(): JSX.Element {
   const goBack = useBrowserStore((s) => s.goBack)
   const goForward = useBrowserStore((s) => s.goForward)
   const reload = useBrowserStore((s) => s.reload)
-  const setReaderMode = useBrowserStore((s) => s.setReaderMode)
   const reactNavigate = useNavigate()
   const clipperStage = useClipperStore((s) => s.stage)
   const startClip = useClipperStore((s) => s.start)
 
   const [value, setValue] = useState(tab?.url ?? '')
-  const [pasteUrl, setPasteUrl] = useState<string | null>(null)
   const [bookmark, setBookmark] = useState<Bookmark | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [openClippedConfirm, setOpenClippedConfirm] = useState(false)
@@ -68,19 +66,6 @@ export function AddressBar(): JSX.Element {
       alive = false
     }
   }, [tab?.url])
-
-  // Sniff clipboard for url paste-suggestion
-  async function checkClipboard(): Promise<void> {
-    try {
-      if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) return
-      const text = (await navigator.clipboard.readText()).trim()
-      if (/^https?:\/\//.test(text) && text !== tab?.url) {
-        setPasteUrl(text)
-      }
-    } catch {
-      // Clipboard read can fail in headless / permission-denied
-    }
-  }
 
   if (!tab) {
     return (
@@ -145,7 +130,7 @@ export function AddressBar(): JSX.Element {
           aria-label={t('browser.address', 'address bar')}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onFocus={() => void checkClipboard()}
+          onFocus={(e) => e.currentTarget.select()}
           onKeyDown={(e) => {
             if (e.key === 'Enter') submit()
             else if (e.key === 'Escape') setValue(tab.url)
@@ -153,17 +138,6 @@ export function AddressBar(): JSX.Element {
           className="flex-1 border-none bg-transparent font-mono text-[12.5px] text-[color:var(--color-ink)] outline-none"
         />
       </div>
-      <button
-        type="button"
-        aria-label={t('browser.reader', 'reader mode')}
-        className={[
-          'flex size-[30px] items-center justify-center rounded-[7px] text-sm text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]',
-          tab.readerMode ? 'text-[color:var(--color-accent)]' : ''
-        ].join(' ')}
-        onClick={() => void setReaderMode(tab.id, !tab.readerMode)}
-      >
-        ¶
-      </button>
       <button
         type="button"
         aria-label={t('browser.bookmark', 'bookmark')}
@@ -201,18 +175,6 @@ export function AddressBar(): JSX.Element {
           {clipState === 'clipped' ? t('browser.clipped_label', '已拾果') : t('browser.clip_label', '拾果')}
         </button>
       </span>
-      {pasteUrl && (
-        <button
-          type="button"
-          className="ml-2 truncate rounded-[7px] bg-[color:var(--color-paper-3)] px-2 py-1 font-mono text-[11px] text-[color:var(--color-ink-2)]"
-          onClick={() => {
-            void browserNavigate(tab.id, pasteUrl)
-            setPasteUrl(null)
-          }}
-        >
-          {t('browser.paste_open', 'Paste & open')}: {pasteUrl}
-        </button>
-      )}
       {bookmark ? (
         <BookmarkDialog
           open={dialogOpen}

@@ -431,7 +431,6 @@ export type IpcContract = {
     reload: (id: TabId) => void
     goBack: (id: TabId) => void
     goForward: (id: TabId) => void
-    setReaderMode: (id: TabId, on: boolean) => void
     setViewport: (rect: SetViewportArgs) => void
     suspendTab: (id: TabId) => void
     resumeTab: (id: TabId) => { id: TabId; url: string }

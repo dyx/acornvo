@@ -69,7 +69,6 @@ export function attachTabEvents(
   const onDidNavigate = (_e: Electron.Event, url: string): void => {
     emit({
       url,
-      readerMode: false, // spec: navigation resets reader mode
       canGoBack: webContents.navigationHistory.canGoBack(),
       canGoForward: webContents.navigationHistory.canGoForward()
     })

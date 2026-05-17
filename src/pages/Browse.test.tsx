@@ -52,7 +52,6 @@ function mockPort() {
     reload: vi.fn(),
     goBack: vi.fn(),
     goForward: vi.fn(),
-    setReaderMode: vi.fn(),
     setViewport: vi.fn(),
     suspendTab: vi.fn(),
     resumeTab: vi.fn()
@@ -83,7 +82,7 @@ describe('Browse page', () => {
     const port = mockPort()
     setBrowserPort(port)
     useBrowserStore.setState({
-      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
+      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
       activeTabId: 'existing'
     })
     render(<Browse />)

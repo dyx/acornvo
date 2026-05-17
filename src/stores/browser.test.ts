@@ -21,7 +21,6 @@ function makePort(overrides: Partial<BrowserPort> = {}): BrowserPort {
     reload: vi.fn(async () => {}),
     goBack: vi.fn(async () => {}),
     goForward: vi.fn(async () => {}),
-    setReaderMode: vi.fn(async () => {}),
     setViewport: vi.fn(async () => {}),
     suspendTab: vi.fn(async (_id: string) => {}),
     resumeTab: vi.fn(async (id: string) => ({ id, url: 'about:blank' })),
@@ -56,7 +55,7 @@ describe('browser store — state', () => {
   it('exposes selectors for active tab', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 't1', url: 'https://a', title: 'A', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://a', isClipped: false }
+        { id: 't1', url: 'https://a', title: 'A', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://a', isClipped: false }
       ],
       activeTabId: 't1'
     })
@@ -89,9 +88,9 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false }
+        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
+        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
+        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
       ],
       activeTabId: 'b'
     })
@@ -111,7 +110,7 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'only', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x', isClipped: false }
+        { id: 'only', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://x', isClipped: false }
       ],
       activeTabId: 'only'
     })
@@ -128,8 +127,8 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false }
+        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
+        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
       ],
       activeTabId: 'a'
     })
@@ -143,29 +142,13 @@ describe('browser store — actions', () => {
   it('reorderTab moves a tab to the target index', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false }
+        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
+        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
+        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
       ]
     })
     useBrowserStore.getState().reorderTab('a', 2)
     expect(useBrowserStore.getState().tabs.map((t) => t.id)).toEqual(['b', 'c', 'a'])
-  })
-
-  it('setReaderMode flips the local flag and forwards to port', async () => {
-    const port = makePort()
-    setBrowserPort(port)
-    useBrowserStore.setState({
-      tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false }
-      ],
-      activeTabId: 'a'
-    })
-
-    await useBrowserStore.getState().setReaderMode('a', true)
-
-    expect(useBrowserStore.getState().tabs[0].readerMode).toBe(true)
-    expect(port.setReaderMode).toHaveBeenCalledWith('a', true)
   })
 
   it('navigate forwards to port and locally patches savedUrl', async () => {
@@ -173,7 +156,7 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://old', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://old', isClipped: false }
+        { id: 'a', url: 'https://old', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://old', isClipped: false }
       ],
       activeTabId: 'a'
     })
@@ -214,7 +197,7 @@ describe('browser store — tabStateChanged subscription', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x', isClipped: false }
+        { id: 'a', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://x', isClipped: false }
       ],
       activeTabId: 'a'
     })
@@ -253,7 +236,7 @@ describe('browser store — LRU suspend', () => {
       tabs: Array.from({ length: 20 }, (_, i) => ({
         id: `t${i + 1}`, url: '', title: '', favicon: null,
         loading: false, canGoBack: false, canGoForward: false,
-        readerMode: false, suspended: false, savedUrl: '', isClipped: false })),
+        suspended: false, savedUrl: '', isClipped: false })),
       activeTabId: 't20'
     })
 
@@ -277,7 +260,7 @@ describe('browser store — LRU suspend', () => {
       tabs: Array.from({ length: 20 }, (_, i) => ({
         id: `t${i + 1}`, url: '', title: '', favicon: null,
         loading: false, canGoBack: false, canGoForward: false,
-        readerMode: false, suspended: false, savedUrl: '', isClipped: false })),
+        suspended: false, savedUrl: '', isClipped: false })),
       activeTabId: 't1'
     })
 
@@ -300,7 +283,7 @@ describe('browser store — resume', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://restored', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: true, savedUrl: 'https://restored', isClipped: false }
+        { id: 'a', url: 'https://restored', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: true, savedUrl: 'https://restored', isClipped: false }
       ],
       activeTabId: null
     })

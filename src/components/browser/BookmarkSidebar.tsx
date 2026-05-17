@@ -12,12 +12,13 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
   const navigate = useBrowserStore((s) => s.navigate)
   const createTab = useBrowserStore((s) => s.createTab)
   const setBookmarksOpen = useBrowserStore((s) => s.setBookmarksOpen)
+  const bookmarksRevision = useBrowserStore((s) => s.bookmarksRevision)
 
   const [items, setItems] = useState<Bookmark[]>([])
   const [q, setQ] = useState('')
   const [tag, setTag] = useState<string | null>(null)
 
-  // Debounced query effect
+  // Debounced query effect — refires on revision bump so new/edited/deleted bookmarks show up.
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -29,12 +30,7 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [q, tag])
-
-  // Initial load
-  useEffect(() => {
-    void ipc.bookmarks.list({ limit: 200, offset: 0 }).then((r) => setItems(r.items))
-  }, [])
+  }, [q, tag, bookmarksRevision])
 
   // Union of tags across loaded items
   const tagsAll = useMemo(() => {

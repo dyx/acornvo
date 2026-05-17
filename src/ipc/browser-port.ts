@@ -11,7 +11,6 @@ export const browserPort: BrowserPort = {
   reload: (id) => ipc.browser.reload(id),
   goBack: (id) => ipc.browser.goBack(id),
   goForward: (id) => ipc.browser.goForward(id),
-  setReaderMode: (id, on) => ipc.browser.setReaderMode(id, on),
   setViewport: (rect) => ipc.browser.setViewport(rect),
   suspendTab: (id) => ipc.browser.suspendTab(id),
   resumeTab: (id) => ipc.browser.resumeTab(id),

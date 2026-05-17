@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
+import { useBrowserStore } from '@/stores/browser'
 import type { Bookmark, BookmarkInput } from '@shared/browser-types'
 import {
   Dialog,
@@ -37,6 +38,7 @@ export type BookmarkDialogProps = NewProps | EditProps
 export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
   const { t } = useTranslation()
   useNativeBrowserViewOcclusion(props.open)
+  const bumpBookmarksRevision = useBrowserStore((s) => s.bumpBookmarksRevision)
   const [url, setUrl] = useState(props.initial.url)
   const [title, setTitle] = useState(props.initial.title ?? '')
   const [tags, setTags] = useState(props.initial.tags?.join(', ') ?? '')
@@ -76,6 +78,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
       })
       props.onSaved(bm)
     }
+    bumpBookmarksRevision()
     props.onOpenChange(false)
   }
 
@@ -84,6 +87,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
     if (!window.confirm(t('browser.bookmark.delete_confirm', 'Delete this bookmark?'))) return
     await ipc.bookmarks.delete(props.initial.id)
     props.onDeleted()
+    bumpBookmarksRevision()
     props.onOpenChange(false)
   }
 

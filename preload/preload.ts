@@ -95,7 +95,6 @@ const request: IpcClient<IpcContract> = {
     reload: (id) => invoke('browser.reload', id),
     goBack: (id) => invoke('browser.goBack', id),
     goForward: (id) => invoke('browser.goForward', id),
-    setReaderMode: (id, on) => invoke('browser.setReaderMode', id, on),
     setViewport: (rect) => invoke('browser.setViewport', rect),
     suspendTab: (id) => invoke('browser.suspendTab', id),
     resumeTab: (id) => invoke('browser.resumeTab', id),

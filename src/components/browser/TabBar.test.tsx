@@ -18,7 +18,6 @@ function tab(id: string, overrides: Partial<any> = {}) {
     loading: false,
     canGoBack: false,
     canGoForward: false,
-    readerMode: false,
     suspended: false,
     savedUrl: 'https://x',
     isClipped: false,
@@ -31,7 +30,7 @@ const port = {
   closeTab: vi.fn(),
   activateTab: vi.fn(),
   navigate: vi.fn(), reload: vi.fn(), goBack: vi.fn(), goForward: vi.fn(),
-  setReaderMode: vi.fn(), setViewport: vi.fn(), suspendTab: vi.fn(), resumeTab: vi.fn()
+  setViewport: vi.fn(), suspendTab: vi.fn(), resumeTab: vi.fn()
 } as any
 
 describe('TabBar', () => {

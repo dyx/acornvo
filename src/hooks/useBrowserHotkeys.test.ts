@@ -14,7 +14,6 @@ const port = {
   reload: vi.fn(async () => {}),
   goBack: vi.fn(async () => {}),
   goForward: vi.fn(async () => {}),
-  setReaderMode: vi.fn(async () => {}),
   setViewport: vi.fn(async () => {}),
   suspendTab: vi.fn(async () => {}),
   resumeTab: vi.fn(async (id: string) => ({ id, url: 'about:blank' }))
@@ -24,7 +23,7 @@ function makeTab(id: string) {
   return {
     id, url: 'https://x', title: id, favicon: null,
     loading: false, canGoBack: true, canGoForward: true,
-    readerMode: false, suspended: false, savedUrl: 'https://x'
+    suspended: false, savedUrl: 'https://x'
   }
 }
 
