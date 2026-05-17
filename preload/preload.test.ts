@@ -64,11 +64,12 @@ describe('preload window.api.chat', () => {
   it('exposes sessions/get/create/delete/rename/getMessages + sendUserMessage + cancelStream + approveTool + rejectTool + onStream', async () => {
     await import('./preload')
     const api = exposeInMainWorld.mock.calls[0][1]
-    expect(typeof api.chat.sessions.list).toBe('function')
-    expect(typeof api.chat.sessions.create).toBe('function')
-    expect(typeof api.chat.sessions.delete).toBe('function')
-    expect(typeof api.chat.sessions.rename).toBe('function')
-    expect(typeof api.chat.sessions.getMessages).toBe('function')
+    expect(typeof api.chat['sessions.list']).toBe('function')
+    expect(typeof api.chat['sessions.create']).toBe('function')
+    expect(typeof api.chat['sessions.delete']).toBe('function')
+    expect(typeof api.chat['sessions.rename']).toBe('function')
+    expect(typeof api.chat['sessions.getMessages']).toBe('function')
+    expect(typeof api.chat['sessions.updateProfile']).toBe('function')
     expect(typeof api.chat.sendUserMessage).toBe('function')
     expect(typeof api.chat.cancelStream).toBe('function')
     expect(typeof api.chat.approveTool).toBe('function')

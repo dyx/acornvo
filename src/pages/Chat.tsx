@@ -12,6 +12,47 @@ import { ConversationsAdapter } from '@/components/chat/ConversationsAdapter'
 import { BubbleListAdapter } from '@/components/chat/BubbleListAdapter'
 import { ChatInputArea } from '@/components/chat/ChatInputArea'
 
+function SessionsErrorBanner() {
+  const sessionsError = useChatStore((s) => s.sessionsError)
+  if (!sessionsError) return null
+  return (
+    <Alert
+      type="error"
+      banner
+      closable
+      data-testid="chat-sessions-error-banner"
+      message={sessionsError}
+      onClose={() => useChatStore.setState({ sessionsError: null })}
+    />
+  )
+}
+
+function StreamErrorBanner() {
+  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const streamError = useChatStore((s) =>
+    activeSessionId ? (s.bySession[activeSessionId]?.error ?? null) : null
+  )
+  if (!streamError) return null
+  return (
+    <Alert
+      type="error"
+      banner
+      closable
+      data-testid="chat-stream-error-banner"
+      message={streamError}
+      onClose={() => {
+        const sid = useChatStore.getState().activeSessionId
+        if (!sid) return
+        useChatStore.setState((s) => {
+          const cur = s.bySession[sid]
+          if (!cur) return s
+          return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
+        })
+      }}
+    />
+  )
+}
+
 function MissingProfileBanner() {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -210,6 +251,8 @@ export function Chat() {
       </aside>
 
       <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <SessionsErrorBanner />
+        <StreamErrorBanner />
         <MissingProfileBanner />
         <header className="flex h-[42px] shrink-0 items-center gap-2.5 border-b border-[color:var(--color-line)] px-[18px]">
           <h2 className="font-serif text-[14px] font-medium m-0 flex-1 truncate text-[color:var(--color-ink)]">

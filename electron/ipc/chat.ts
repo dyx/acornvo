@@ -139,24 +139,46 @@ export function createChatHandlers(deps: ChatDeps) {
       profileId?: string;
       attachments?: import('../../shared/agent-types').Attachment[];
     }) => {
+      console.log('[ipc.chat] sendUserMessage: sid=%s textLen=%d', opts.sessionId, opts.text.length);
       const list = await deps.sessions.list();
       const sess = list.find((s) => s.id === opts.sessionId);
-      if (!sess) throw new IpcError('E_NOT_FOUND', 'session not found');
+      if (!sess) {
+        console.warn('[ipc.chat] sendUserMessage: session %s not found in DB', opts.sessionId);
+        throw new IpcError('E_NOT_FOUND', 'session not found');
+      }
       const profileId = opts.profileId ?? sess.profileId ?? undefined;
+      console.log('[ipc.chat] sendUserMessage: resolved profileId=%s', profileId);
       if (!profileId) throw new IpcError('E_MISSING_PROFILE', 'no profile bound to session');
 
       const ack = deps.concurrency.tryAcquire(opts.sessionId);
+      console.log('[ipc.chat] sendUserMessage: concurrency ack=%s', ack);
       if (ack === 'busy') throw new IpcError('E_BUSY', 'a loop is already running for this session');
       if (ack === 'global-busy') throw new IpcError('E_GLOBAL_BUSY', 'too many concurrent agent loops');
 
       const ctl = new AbortController();
       aborts.set(opts.sessionId, ctl);
       const writer = createStreamWriter(opts.sessionId, deps.getTargets);
+      const targets = deps.getTargets();
+      console.log('[ipc.chat] sendUserMessage: streamWriter channel=%s targets=%d', writer.channel, targets.length);
       const history = await deps.sessions.getMessages(opts.sessionId);
+      console.log('[ipc.chat] sendUserMessage: history messages=%d', history.length);
 
-      const profile = resolveProfile(profileId);
-      const agent = getAgentBuilder().buildForProfile(profile);
+      let profile: ReturnType<typeof resolveProfile>;
+      let agent: ReturnType<ReturnType<typeof getAgentBuilder>['buildForProfile']>;
+      try {
+        profile = resolveProfile(profileId);
+        console.log('[ipc.chat] sendUserMessage: profile=%s provider=%s model=%s baseUrl=%s hasKey=%s',
+          profile.id, profile.provider, profile.model, profile.baseUrl ?? '(none)', profile.apiKey ? 'yes' : 'no');
+        agent = getAgentBuilder().buildForProfile(profile);
+        console.log('[ipc.chat] sendUserMessage: agent built');
+      } catch (err) {
+        console.error('[ipc.chat] sendUserMessage: profile/agent build failed', err);
+        deps.concurrency.release(opts.sessionId);
+        aborts.delete(opts.sessionId);
+        throw err;
+      }
 
+      console.log('[ipc.chat] sendUserMessage: dispatching runAgent…');
       void runAgentNew({
         sessionId: opts.sessionId,
         userText: opts.text,
@@ -180,10 +202,15 @@ export function createChatHandlers(deps: ChatDeps) {
         streamWriter: writer,
         attachments: opts.attachments,
       })
+        .then(() => {
+          console.log('[ipc.chat] sendUserMessage: runAgent resolved for sid=%s', opts.sessionId);
+        })
         .catch((err: any) => {
+          console.error('[ipc.chat] sendUserMessage: runAgent rejected for sid=%s', opts.sessionId, err);
           writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message });
         })
         .finally(() => {
+          console.log('[ipc.chat] sendUserMessage: runAgent finally for sid=%s', opts.sessionId);
           aborts.delete(opts.sessionId);
           deps.concurrency.release(opts.sessionId);
         });

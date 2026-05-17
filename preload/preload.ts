@@ -138,13 +138,14 @@ const request: IpcClient<IpcContract> = {
     'usage.list': (opts) => invoke('ai.usage.list', opts)
   },
   chat: {
-    sessions: {
-      list: () => invoke('chat.sessions.list'),
-      create: (opts: { profileId: string | null; title?: string | null }) => invoke('chat.sessions.create', opts),
-      delete: (id: string) => invoke('chat.sessions.delete', id),
-      rename: (id: string, title: string) => invoke('chat.sessions.rename', id, title),
-      getMessages: (id: string) => invoke('chat.sessions.getMessages', id),
-    },
+    'sessions.list': () => invoke('chat.sessions.list'),
+    'sessions.create': (opts: { profileId: string | null; title?: string | null }) =>
+      invoke('chat.sessions.create', opts),
+    'sessions.delete': (id: string) => invoke('chat.sessions.delete', id),
+    'sessions.rename': (id: string, title: string) => invoke('chat.sessions.rename', id, title),
+    'sessions.getMessages': (id: string) => invoke('chat.sessions.getMessages', id),
+    'sessions.updateProfile': (id: string, profileId: string | null) =>
+      invoke('chat.sessions.updateProfile', id, profileId),
     sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string }) => invoke('chat.sendUserMessage', opts),
     cancelStream: (sessionId: string) => invoke('chat.cancelStream', sessionId),
     approveTool: (callId: string, opts?: { editedArgs?: unknown }) => invoke('chat.approveTool', callId, opts),

@@ -131,6 +131,7 @@ export async function runAgent({
   streamWriter,
   attachments,
 }: RunAgentArgsInternal): Promise<void> {
+  console.log('[runAgent] start sid=%s model=%s historyLen=%d', sessionId, deps.modelName, history.length);
   const emit = (e: AgentEvent) => streamWriter.write(e);
   const cancel = deps.cancel;
   const perf = getPerf();
@@ -142,6 +143,7 @@ export async function runAgent({
     content: userText,
   });
   emit({ type: 'message.appended', message: userMsg });
+  console.log('[runAgent] user message appended sid=%s', sessionId);
   try {
     markThreadActive(sessionId);
   } catch {
@@ -178,7 +180,8 @@ export async function runAgent({
   let lastAssistantToolCallIds: string[] = [];
 
   try {
-    const stream = deps.agent.stream(
+    console.log('[runAgent] agent.stream() invoked sid=%s', sessionId);
+    const stream = await deps.agent.stream(
       { messages },
       {
         configurable: { thread_id: sessionId },
@@ -187,8 +190,12 @@ export async function runAgent({
       }
     );
 
+    let entryCount = 0;
     for await (const entry of stream) {
+      entryCount++;
+      if (entryCount === 1) console.log('[runAgent] first stream entry sid=%s', sessionId);
       if (cancel.aborted) {
+        console.log('[runAgent] cancel detected sid=%s entryCount=%d', sessionId, entryCount);
         emitCanceled(translatorDeps);
         end?.({ ok: true, meta: { canceled: true } });
         return;
@@ -238,10 +245,12 @@ export async function runAgent({
       }
     }
 
+    console.log('[runAgent] stream finished normally sid=%s entries=%d', sessionId, entryCount);
     emitDone(translatorDeps, lastUsage, deps.modelName);
     end?.({ ok: true });
   } catch (err) {
-    const e = err as { name?: string; code?: string };
+    const e = err as { name?: string; code?: string; message?: string };
+    console.error('[runAgent] caught error sid=%s name=%s code=%s msg=%s', sessionId, e?.name, e?.code, e?.message, err);
     if (e?.name === 'AbortError' || cancel.aborted) {
       emitCanceled(translatorDeps);
       end?.({ ok: true, meta: { canceled: true } });
@@ -293,7 +302,7 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
   let lastAssistantToolCallIds: string[] = [];
 
   try {
-    const stream = args.agent.stream(new Command({ resume: { decisions: args.decisions } }), {
+    const stream = await args.agent.stream(new Command({ resume: { decisions: args.decisions } }), {
       configurable: { thread_id: args.sessionId },
       streamMode: ['updates', 'messages'],
       signal: args.cancel,

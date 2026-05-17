@@ -229,9 +229,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async sendUserMessage({ text, attachments }) {
     const cur = get()
     const sid = cur.activeSessionId
-    if (!sid) return
+    console.log('[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d', sid, text.length, attachments?.length ?? 0)
+    if (!sid) {
+      console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
+      return
+    }
     const state = cur.bySession[sid]
     if (state?.status === 'streaming') {
+      console.warn('[chat-store] sendUserMessage: already streaming → BusyError')
       throw new BusyError()
     }
     set((s) => ({
@@ -249,8 +254,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }
     }))
     try {
-      await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
+      console.log('[chat-store] sendUserMessage: calling ipc.chat.sendUserMessage…')
+      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
+      console.log('[chat-store] sendUserMessage: IPC returned', result)
     } catch (err) {
+      console.error('[chat-store] sendUserMessage: IPC threw', err)
       set((s) => ({
         bySession: {
           ...s.bySession,
@@ -268,6 +276,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async cancelStream() {
     const sid = get().activeSessionId
     if (!sid) return
+    set((s) => {
+      const cur = s.bySession[sid]
+      if (!cur || cur.status !== 'streaming') return s
+      return {
+        bySession: {
+          ...s.bySession,
+          [sid]: { ...cur, status: 'idle' as const }
+        }
+      }
+    })
     try {
       await ipc.chat.cancelStream(sid)
     } catch {
@@ -317,9 +335,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   async updateSessionProfile(id, profileId) {
     try {
-      await ipc.chat['sessions.updateProfile'](id, profileId)
+      let targetId = id
+      if (!targetId) {
+        targetId = await get().createSession()
+        if (!targetId) return
+      }
+      await ipc.chat['sessions.updateProfile'](targetId, profileId)
       set((s) => ({
-        sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, profileId } : ses))
+        sessions: s.sessions.map((ses) => (ses.id === targetId ? { ...ses, profileId } : ses))
       }))
     } catch (err) {
       set({ sessionsError: err instanceof Error ? err.message : String(err) })
@@ -472,7 +495,9 @@ const streamUnsubs = new Map<string, () => void>()
 
 function subscribeSessionStream(sid: string): void {
   if (streamUnsubs.has(sid)) return
+  console.log('[chat-stream] subscribing sid=%s channel=chat:stream:%s', sid, sid)
   const unsub = (ipc.chat as any).onStream(sid, (event: AgentEvent) => {
+    console.log('[chat-stream] event sid=%s type=%s', sid, event.type, event)
     if (event.type === 'token') {
       enqueueToken(sid, event.text)
       return

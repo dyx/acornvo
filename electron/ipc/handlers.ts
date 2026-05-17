@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
+import { BrowserWindow } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
 import { join } from 'node:path'
@@ -63,13 +64,9 @@ const queueHandlers = createQueueHandlers({
 })
 
 function getChatTargets() {
-  try {
-    const { mainWindow } = require('../main') as { mainWindow: any }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      return [mainWindow.webContents]
-    }
-  } catch {}
-  return []
+  return BrowserWindow.getAllWindows()
+    .filter((w) => !w.isDestroyed())
+    .map((w) => w.webContents)
 }
 
 const chatHandlers = createChatHandlers({

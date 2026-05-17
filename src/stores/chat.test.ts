@@ -12,6 +12,7 @@ vi.mock('@/ipc/client', () => ({
       'sessions.create': vi.fn().mockResolvedValue({ id: 'snew', title: '未命名对话', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }),
       'sessions.rename': vi.fn().mockResolvedValue({ ok: true }),
       'sessions.delete': vi.fn().mockResolvedValue({ ok: true }),
+      'sessions.updateProfile': vi.fn().mockResolvedValue({ ok: true }),
       sendUserMessage: vi.fn().mockResolvedValue({ ok: true }),
       cancelStream: vi.fn().mockResolvedValue({ ok: true }),
       approveTool: vi.fn().mockResolvedValue({ ok: true }),
@@ -182,6 +183,17 @@ describe('chat store — actions', () => {
     expect(ipc.chat.cancelStream).toHaveBeenCalledWith('s1')
   })
 
+  it('cancelStream optimistically flips status from streaming to idle locally', async () => {
+    useChatStore.setState((s) => ({
+      bySession: {
+        ...s.bySession,
+        s1: { ...(s.bySession.s1 ?? {}), status: 'streaming' as const, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', loaded: true, error: null, lastUserText: '', lastUserAttachments: [] }
+      }
+    }))
+    await useChatStore.getState().cancelStream()
+    expect(useChatStore.getState().bySession.s1?.status).toBe('idle')
+  })
+
   it('approveTool calls IPC with editedArgs as second arg', async () => {
     await useChatStore.getState().approveTool('s1', 'call_1', { foo: 1 })
     expect(ipc.chat.approveTool).toHaveBeenCalledWith('call_1', { editedArgs: { foo: 1 } })
@@ -253,6 +265,19 @@ describe('chat store — actions', () => {
     await useChatStore.getState().updateSessionProfile('s1', 'p2')
     // IPC handler not yet implemented; verify local state update only
     expect(useChatStore.getState().sessions.find((x) => x.id === 's1')?.profileId).toBe('p2')
+  })
+
+  it('updateSessionProfile auto-creates a session when id is empty', async () => {
+    // simulate the no-active-session state where ProfileChip passes ''
+    useChatStore.setState({ sessions: [], activeSessionId: null, bySession: {} })
+    await useChatStore.getState().updateSessionProfile('', 'p2')
+    const s = useChatStore.getState()
+    expect(s.sessions).toHaveLength(1)
+    expect(s.sessions[0].id).toBe('snew')
+    expect(s.sessions[0].profileId).toBe('p2')
+    expect(s.activeSessionId).toBe('snew')
+    expect(ipc.chat['sessions.create']).toHaveBeenCalledOnce()
+    expect(ipc.chat['sessions.updateProfile']).toHaveBeenCalledWith('snew', 'p2')
   })
 
   it('pushAttachment appends attachment to pendingAttachments for active session', async () => {

@@ -58,7 +58,7 @@ describe('runAgent — single-turn no tool calls', () => {
     expect(types).toEqual(['message.appended', 'message.appended', 'done']);
     const done = events[2];
     if (done.type !== 'done') throw new Error('expected done');
-    expect(done.usage).toEqual({ promptTokens: 10, completionTokens: 5 });
+    expect(done.usage).toEqual({ promptTokens: 10, completionTokens: 5, totalTokens: 15 });
   });
 });
 
