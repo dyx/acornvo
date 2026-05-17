@@ -1,54 +1,71 @@
-# chat-session-list Specification
+## ADDED Requirements
 
-## Purpose
-Chat 会话列表：左栏展示会话列表，支持新建/重命名/删除/搜索，状态 badge 指示流式与审批。
+### Requirement: Conversations 渲染
+ConversationsAdapter SHALL 用 `@ant-design/x` 的 `Conversations` 组件渲染 store `sessions` 列表。每个 session 映射为 `{ key: session.id, label: session.title || t('chat.untitled'), group, menu }`，并通过 `activeKey={activeSessionId}` 与 `onActiveChange={selectSession}` 与 store 双向绑定。
 
-## Requirements
+#### Scenario: 标题渲染
+- **WHEN** session.title 非空
+- **THEN** Conversations 显示 session.title
 
-### Requirement: SessionList 左栏渲染
-SessionList SHALL 渲染在 Chat 页面左侧（300px），顶部 MUST 包含 "+" 新建按钮与搜索框，下方按 `updated_at DESC` 列出所有 session。每行 MUST 显示：title（单行截断）、相对时间、hover 显示删除按钮；active session 左侧 3px 主色竖线。
+#### Scenario: 空标题占位
+- **WHEN** session.title 为空字符串或 null
+- **THEN** Conversations 显示 i18n 文案 `t('chat.untitled')`
 
-#### Scenario: 初次打开
-- **WHEN** 打开 /chat 且 sessions.list 非空
-- **THEN** 列表按时间倒序渲染；默认选中第一个 session；MessageList 加载该 session 的消息
+#### Scenario: 点击切换
+- **WHEN** 用户点一个非当前 session
+- **THEN** 调 `chat.selectSession(id)`；activeSessionId 更新；右栏渲染该 session 的 messages
 
-#### Scenario: 无 session 自动建
-- **WHEN** sessions.list 返回空
-- **THEN** 自动调 chat.sessions.create；新建的 session 出现在顶部且被选中
+### Requirement: 按时间分组
+sessions SHALL 按 `updatedAt` 三段分组：今日 / 本周 / 更早。Conversations 的 `groupable` prop MUST 启用。分组键由本地 helper（参考 `groupSession(updatedAt)` ≈ `'today' | 'thisWeek' | 'earlier'`）派生。
 
-#### Scenario: 搜索过滤
-- **WHEN** 用户在搜索框输入 "笔记"
-- **THEN** 本地 filter title 包含"笔记"的 session；其他隐藏
+#### Scenario: 今日 session
+- **WHEN** session.updatedAt 在今日 00:00 至现在之间
+- **THEN** 在 "今日" 分组下渲染
 
-### Requirement: CRUD 操作
-SessionList SHALL 支持以下操作：
-- 新建：顶部 "+" → 调 `chat.sessions.create()` → activate
-- 重命名：双击 title 或右键 "重命名" → 变 inline input；Enter 提交；Esc 取消
-- 删除：hover 行的删除按钮或右键 "删除" → 二次确认对话框 → 调 `chat.sessions.delete` → 若删的是当前 session，选中下一条或新建
-- 复制 session id：右键菜单 "复制 session id" → clipboard
+#### Scenario: 本周 session
+- **WHEN** session.updatedAt 早于今日 00:00 但晚于本周一 00:00
+- **THEN** 在 "本周" 分组下渲染
 
-#### Scenario: 新建
-- **WHEN** 用户点 "+"
-- **THEN** 调 sessions.create（默认 title="未命名对话"）→ 新 session 出现在顶部 → 自动 activate → 中间区域显示空态引导
+#### Scenario: 更早 session
+- **WHEN** session.updatedAt 早于本周一 00:00
+- **THEN** 在 "更早" 分组下渲染
+
+### Requirement: 上下文菜单
+每个 session 行 SHALL 通过 Conversations item 的 `menu` 字段提供 hover 触发的菜单，至少包含：重命名、删除。
 
 #### Scenario: 重命名
-- **WHEN** 用户双击某 session 的 title 输入 "旅行计划" 按 Enter
-- **THEN** 调 sessions.rename；列表 title 更新
+- **WHEN** 用户点菜单 "重命名"
+- **THEN** 行内进入编辑态显示 antd `Input`；按 Enter 提交调 `chat.renameSession(id, newTitle)`；按 Esc 取消
 
-#### Scenario: 删除当前 session
-- **WHEN** 用户删除当前选中的 session 并确认
-- **THEN** 调 sessions.delete；列表下一条被选中；若列表空 → 自动新建
+#### Scenario: 删除确认
+- **WHEN** 用户点菜单 "删除"
+- **THEN** 弹 antd `Modal.confirm`（替换原 `DeleteSessionDialog`）；确认后调 `chat.deleteSession(id)`；若删除的是当前 session 则自动切到列表第一个
 
-### Requirement: 状态指示
-SessionList 行 SHALL 用可选 badge 显示状态：
-- session 正在流式中 → 行右侧一个跑马灯小点（主色脉动）
-- 有 pending approval（非当前 session）→ 红点
-- 最近一次错误（E_NETWORK 等）→ 黄色感叹号 icon（点击查看错误详情）
+### Requirement: 新建入口
+Conversations 的 `creation` prop SHALL 提供新建按钮，label 为 `t('chat.new')`；点击调 `chat.createSession()`，store 成功后自动激活新 session。
 
-#### Scenario: 后台流式
-- **WHEN** 用户在 A session 发送后切到 B session 继续聊天
-- **THEN** A session 行显示主色脉动；完成后脉动消失
+#### Scenario: 新建会话
+- **WHEN** 用户点 Conversations 顶部新建按钮
+- **THEN** 调 `chat.createSession()`；新 session 出现在列表 "今日" 分组顶；自动激活；Bubble.List 渲染空态
 
-#### Scenario: 后台 approval 提示
-- **WHEN** B session 发生 approval-needed 且当前在 A session
-- **THEN** B 行右侧红点；点 B → 切到 B session；右侧 approval 展开
+### Requirement: 折叠态桥
+窗口宽 <960px 时 ConversationsAdapter SHALL 包一层窄列表 mode：仅显示会话图标 + 截断标题（最多 8 字符）。新建按钮仍可见。其他行为（点击切换、菜单触发）保持。
+
+#### Scenario: 窄窗渲染
+- **WHEN** 视窗宽度 <960px
+- **THEN** 切换到窄列表 mode；分组标题隐藏；每行仅图标 + 截断标题
+
+#### Scenario: 窄窗下点击切换
+- **WHEN** 用户在窄列表 mode 下点击一个 session 行
+- **THEN** 该 session 激活；行底色高亮
+
+### Requirement: 后台 session 待审标记
+当某 session 收到 `tool.approval-needed` 但不是 activeSessionId 时，Conversations 对应 item SHALL 显示红点标记（antd `Badge` dot）。activeSessionId 切到该 session 后红点 MUST 消失。
+
+#### Scenario: 后台 session 收到待审
+- **WHEN** session A 是 active；session B 收到 `tool.approval-needed`
+- **THEN** Conversations 中 B 行右侧显示红点
+
+#### Scenario: 切换后清除
+- **WHEN** 用户从 A 切到 B
+- **THEN** B 的红点立即消失；inline Actions 在 B 的 ThoughtChain step 中显示

@@ -1,39 +1,38 @@
-# chat-page Specification
+## ADDED Requirements
 
-## Purpose
-Chat 页面骨架：三栏布局（SessionList / MessageList+Input / ApprovalPanel），路由激活与空态引导。
+### Requirement: 两栏布局
+Chat 页 SHALL 渲染两栏布局：左栏 `Conversations`（默认 280px，窗口宽 <960px 时进入折叠态，行为见 chat-session-list 规格）；右栏垂直 Flex（`Bubble.List` 在上，`Sender` 在下，可选 `ProfileFooter` 紧贴 Sender 下方）。**右栏审批面板已删除**。所有 chat UI MUST 在 `XProvider` 包根下渲染。
 
-## Requirements
+#### Scenario: 默认宽度
+- **WHEN** 用户在 ≥960px 窗口打开 chat 页
+- **THEN** 左栏 280px 展开渲染 Conversations 完整布局；右栏占据剩余空间
 
-### Requirement: /chat 路由
-应用 SHALL 在 `/chat` 渲染 `Chat.tsx` 真实页面（取代 phase 1 的 "即将推出" 占位）。页面顶栏 MUST 显示当前 session 标题与绑定 profile 名 + 模型标签；点击 profile 标签可切换 profile（更新 `sessions.profile_id`）。
+#### Scenario: 无右侧审批栏
+- **WHEN** 当前 session 收到 `tool.approval-needed`
+- **THEN** 右栏宽度不变；审批以 inline Actions 出现在对应 assistant 消息的 ThoughtChain step 中
 
-#### Scenario: 打开 /chat
-- **WHEN** 用户点 AppRail "松语" 或通过地址栏进入 /chat
-- **THEN** 显示三栏布局；若无 session 则自动新建一个空 session 并选中
+### Requirement: 空态渲染
+当用户进入一个无消息历史的 session 时，Bubble.List 区域 SHALL 渲染 `@ant-design/x` 的 `Welcome` 组件 + `Prompts wrap` 显示 4 个示例 prompt 卡片。点击任一卡片 MUST 把卡片对应文本填入 Sender 输入框而 NOT 立即发送。
 
-#### Scenario: 顶栏切换 profile
-- **WHEN** 用户在顶栏点 profile 标签
-- **THEN** 弹出下拉列出 ai_provider_profiles；选中后调 IPC 更新 session.profile_id；下一次 sendUserMessage 使用新 profile
+#### Scenario: 新建 session 后空态
+- **WHEN** 用户点 Conversations 新建按钮
+- **THEN** 右栏 Bubble.List 区域渲染 Welcome 头部 + 4 个 Prompts 卡片；Sender 自动聚焦
 
-### Requirement: 三栏布局
-Chat 页面 SHALL 采用三栏布局：左侧 SessionList（默认 300px，可折叠到 48px）、中间 MessageList + ChatInput（flex 1）、右侧 ApprovalRail（默认宽 0；有 pending approval 时滑入 320px）。窗口宽度 < 960px 时 SessionList MUST 自动折叠为 icon-only。
+#### Scenario: 点 Prompt 卡片
+- **WHEN** 用户点其中一个 Prompts 卡片
+- **THEN** Sender 文本被填入卡片对应文本；不调用 `chat.sendUserMessage`；输入框保持可编辑且聚焦
 
-#### Scenario: 正常宽度
-- **WHEN** 窗口宽度 >= 960px
-- **THEN** 三栏完整显示；左栏 300px；右栏按 approval 状态动态展开/收起
+### Requirement: Sender 与 store 绑定
+`Sender.onSubmit` SHALL 调 `chat.sendUserMessage({ text, attachments })`；`Sender.onCancel` SHALL 调 `chat.cancelStream()`；`Sender.loading` prop SHALL 等于 `bySession[activeSessionId].status === 'streaming'`。
 
-#### Scenario: 窄屏折叠
-- **WHEN** 窗口宽度 < 960px
-- **THEN** SessionList 自动折叠为 48px icon-only；点击头部切换回展开
+#### Scenario: 提交消息
+- **WHEN** 用户输入文本后按 Cmd+Enter（或点提交按钮）且 status='idle'
+- **THEN** 调 `chat.sendUserMessage`；Sender 文本清空；pendingAttachments 清空；status 切到 'streaming'
 
-### Requirement: 空态引导
-新建空 session 进入对话区时 SHALL 显示 4 个示例 prompt 卡片作为空态引导。点击卡片 MUST 将文本填入 ChatInput 但不自动发送。
+#### Scenario: 流式中取消
+- **WHEN** 当前 session status='streaming' 且用户点 Sender 取消按钮
+- **THEN** 调 `chat.cancelStream`；UI loading 视觉立即解除（status 由后端 `canceled` 事件回写为 'idle'）
 
-#### Scenario: 空 session 打开
-- **WHEN** 用户打开一个无任何 message 的 session
-- **THEN** 中间区域显示 4 个引导卡片；点击任一填充到 ChatInput；焦点移到 input 末尾
-
-#### Scenario: 已有消息不显示
-- **WHEN** session 至少有 1 条 message
-- **THEN** 不再显示引导卡片；只渲染 MessageList
+#### Scenario: 切换 session 后状态隔离
+- **WHEN** 用户从 session A（streaming 中）切到 session B（idle）
+- **THEN** Sender.loading 跟随 session B 的 status='idle'；session A 的 streaming 仍在 store 中独立维护
