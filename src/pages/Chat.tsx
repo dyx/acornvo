@@ -178,9 +178,18 @@ export function Chat() {
     if (didInit.current) return
     didInit.current = true
     const init = async () => {
+      console.log('[Chat] init: loading sessions and profiles…')
       await Promise.all([loadSessions(), refreshProfiles()])
-      if (useChatStore.getState().sessions.length === 0) {
+      const state = useChatStore.getState()
+      console.log('[Chat] init: sessions=%d, activeSessionId=%s, sessionsError=%s',
+        state.sessions.length, state.activeSessionId, state.sessionsError)
+      console.log('[Chat] init: profiles=%d', useProfilesStore.getState().profiles.length)
+      if (state.sessions.length === 0) {
+        console.log('[Chat] init: no sessions, creating one…')
         await createSession()
+        const after = useChatStore.getState()
+        console.log('[Chat] init: after create — sessions=%d, activeSessionId=%s, error=%s',
+          after.sessions.length, after.activeSessionId, after.sessionsError)
       }
     }
     void init()
@@ -206,9 +215,10 @@ export function Chat() {
           <h2 className="font-serif text-[14px] font-medium m-0 flex-1 truncate text-[color:var(--color-ink)]">
             {title}
           </h2>
-          {activeSession && (
-            <ProfileChip sessionId={activeSession.id} profileId={activeSession.profileId} />
-          )}
+          <ProfileChip
+            sessionId={activeSession?.id ?? ''}
+            profileId={activeSession?.profileId ?? null}
+          />
           <button
             type="button"
             data-testid="chat-shortcuts-btn"
