@@ -1,5 +1,6 @@
 // src/stores/settings-effects.ts
 import { i18n } from '@/i18n'
+import { ipc } from '@/ipc/client'
 import { useSettingsStore } from './settings'
 import type { Theme, Locale } from '@shared/settings-types'
 
@@ -12,6 +13,7 @@ function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
   const effective = theme === 'system' ? resolveSystemTheme() : theme
   document.documentElement.dataset.theme = effective
+  void ipc.window.themeApplied(effective)
 }
 
 function applyFontScale(scale: number): void {

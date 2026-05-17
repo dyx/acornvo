@@ -5,6 +5,10 @@ import { i18n } from '@/i18n'
 import { useSettingsStore } from './settings'
 import { installSettingsEffects, __resetEffectsForTest } from './settings-effects'
 
+vi.mock('@/ipc/client', () => ({
+  ipc: { window: { themeApplied: vi.fn().mockResolvedValue(undefined) } }
+}))
+
 describe('settings effects', () => {
   beforeAll(async () => {
     if (!i18n.isInitialized) await i18n.init()
