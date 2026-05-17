@@ -1,10 +1,10 @@
-// electron/__acceptance__/keychain-unavailable.test.ts
+// tests/acceptance/electron/keychain-unavailable.test.ts
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { resolve } from 'node:path'
-import { runMigrations } from '../services/db/migrations'
+import { runMigrations } from '../../../electron/services/db/migrations'
 
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+vi.mock('../../../electron/services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
 vi.mock('electron', () => ({
   safeStorage: {
     isEncryptionAvailable: vi.fn().mockReturnValue(false),
@@ -13,10 +13,10 @@ vi.mock('electron', () => ({
   }
 }))
 
-import { dbService } from '../services/db'
-import { profilesStore } from '../settings/profiles'
-import { settingsHandlers } from '../ipc/settings'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import { dbService } from '../../../electron/services/db'
+import { profilesStore } from '../../../electron/settings/profiles'
+import { settingsHandlers } from '../../../electron/ipc/settings'
+import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../../../electron/settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')

@@ -25,30 +25,30 @@ vi.mock('electron', () => ({
   app: { getPath: () => '/tmp', isPackaged: false, on: () => {} },
   BrowserWindow: class {},
 }));
-vi.mock('../services/db', () => ({
+vi.mock('../../../electron/services/db', () => ({
   dbService: {
     requireCurrent: vi.fn(),
     getCurrent: vi.fn(() => null),
     getCurrentGrovePath: vi.fn(() => '/vault'),
   },
 }));
-vi.mock('../settings/profile-key', () => ({
+vi.mock('../../../electron/settings/profile-key', () => ({
   getProfileDecryptedKey: vi.fn(() => 'sk-test'),
 }));
-vi.mock('../ai/model-factory', () => ({
+vi.mock('../../../electron/ai/model-factory', () => ({
   buildChatModel: vi.fn(() => ({})),
 }));
-vi.mock('../agent/agent-singleton', () => ({
+vi.mock('../../../electron/agent/agent-singleton', () => ({
   getAgentBuilder: vi.fn(),
 }));
 
-import { runMigrations } from '../services/db/migrations';
-import { dbService } from '../services/db';
-import { getAgentBuilder } from '../agent/agent-singleton';
-import { createSessions } from '../agent/sessions';
-import { createConcurrencyGate } from '../agent/concurrency';
-import { createChatHandlers, pendingInterrupts } from '../ipc/chat';
-import type { AgentEvent } from '../../shared/agent-types';
+import { runMigrations } from '../../../electron/services/db/migrations';
+import { dbService } from '../../../electron/services/db';
+import { getAgentBuilder } from '../../../electron/agent/agent-singleton';
+import { createSessions } from '../../../electron/agent/sessions';
+import { createConcurrencyGate } from '../../../electron/agent/concurrency';
+import { createChatHandlers, pendingInterrupts } from '../../../electron/ipc/chat';
+import type { AgentEvent } from '../../../shared/agent-types';
 
 type StreamEntry = [string, unknown];
 

@@ -1,8 +1,8 @@
-// electron/__acceptance__/ad-block-toggle.test.ts
+// tests/acceptance/electron/ad-block-toggle.test.ts
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { resolve } from 'node:path'
-import { runMigrations } from '../services/db/migrations'
+import { runMigrations } from '../../../electron/services/db/migrations'
 
 // vi.mock factories are hoisted — use vi.hoisted for mutable state they reference.
 const { registeredListener } = vi.hoisted(() => {
@@ -34,7 +34,7 @@ vi.mock('electron', () => ({
     decryptString: vi.fn((b: Buffer) => b.toString('utf8'))
   }
 }))
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+vi.mock('../../../electron/services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs')>()
   // Override readFileSync only for the ad-block list; let migration .sql files pass through to disk.
@@ -48,9 +48,9 @@ vi.mock('node:fs', async (importOriginal) => {
   return { ...actual, readFileSync, default: { ...actual, readFileSync } }
 })
 
-import { dbService } from '../services/db'
-import { settingsStore } from '../settings/store'
-import { initAdBlock, __resetForTest as resetAdBlock } from '../browser/adblock'
+import { dbService } from '../../../electron/services/db'
+import { settingsStore } from '../../../electron/settings/store'
+import { initAdBlock, __resetForTest as resetAdBlock } from '../../../electron/browser/adblock'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')

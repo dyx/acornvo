@@ -1,4 +1,4 @@
-// electron/__acceptance__/clear-cookies.test.ts
+// tests/acceptance/electron/clear-cookies.test.ts
 import { describe, it, expect, vi } from 'vitest'
 
 // Use vi.hoisted so the mock references are available when the hoisted vi.mock factory runs.
@@ -13,10 +13,10 @@ vi.mock('electron', () => ({
   },
   safeStorage: { isEncryptionAvailable: vi.fn().mockReturnValue(true) }
 }))
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+vi.mock('../../../electron/services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
 
 import { session } from 'electron'
-import { settingsHandlers } from '../ipc/settings'
+import { settingsHandlers } from '../../../electron/ipc/settings'
 
 describe('acceptance 9.12 — browserClearCookies', () => {
   it('clears the persistent browser partition cookies', async () => {
