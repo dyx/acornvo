@@ -56,10 +56,10 @@ function ShortcutsModal() {
           <kbd>Cmd+Enter</kbd> — {t('chat.shortcuts.send')}
         </li>
         <li>
-          <kbd>Enter</kbd> — {t('chat.shortcuts.newSession')}
+          <kbd>Shift+Enter</kbd> — {t('chat.shortcuts.send')}
         </li>
         <li>
-          <kbd>Esc</kbd> — {t('chat.shortcuts.focusInput')}
+          <kbd>Esc</kbd> — {t('chat.shortcuts.stopStream')}
         </li>
       </ul>
     </Modal>

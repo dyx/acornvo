@@ -505,6 +505,7 @@ export type IpcContract = {
     'sessions.delete': (id: string) => { ok: true }
     'sessions.rename': (id: string, title: string) => { ok: true }
     'sessions.getMessages': (id: string) => SessionMessage[]
+    'sessions.updateProfile': (id: string, profileId: string | null) => { ok: true }
     sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string; attachments?: import('./agent-types').Attachment[] }) => { ok: true }
     cancelStream: (sessionId: string) => { ok: true }
     approveTool: (callId: string, opts?: { editedArgs?: unknown }) => { ok: true }

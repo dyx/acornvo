@@ -9,6 +9,7 @@ export interface SessionsDao {
   list(): Promise<Session[]>;
   delete(id: string): Promise<void>;
   rename(id: string, title: string): Promise<void>;
+  updateProfile(id: string, profileId: string | null): Promise<void>;
   getMessages(id: string): Promise<SessionMessage[]>;
   appendMessage(sessionId: string, m: Omit<SessionMessage, 'id' | 'sessionId' | 'createdAt'>): Promise<SessionMessage>;
   recordToolCall(sessionId: string, tc: ToolCall, opts: { sideEffect: boolean; messageId?: number }): Promise<string>;
@@ -47,6 +48,10 @@ export function createSessions(): SessionsDao {
 
     async rename(id, title) {
       db().prepare("UPDATE sessions SET title = ?, updated_at = ? WHERE id = ?").run(title, nowIso(), id);
+    },
+
+    async updateProfile(id, profileId) {
+      db().prepare("UPDATE sessions SET profile_id = ?, updated_at = ? WHERE id = ?").run(profileId, nowIso(), id);
     },
 
     async getMessages(sessionId) {

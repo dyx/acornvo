@@ -118,6 +118,8 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
   )
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
+  const truncateMessagesFrom = useChatStore((s) => s.truncateMessagesFrom)
+  const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
   const me = messages.find((m) => m.id === messageKey)
   const isLastAssistant =
@@ -146,6 +148,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
                   const idx = messages.findIndex((m) => m.id === messageKey)
                   const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
                   if (prior) {
+                    truncateMessagesFrom(messageKey)
                     void sendUserMessage({
                       text: prior.text,
                       attachments: prior.attachments ?? []
@@ -165,6 +168,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
               .map((l) => `> ${l}`)
               .join('\n')
             setPendingPromptText(`${quoted}\n\n`)
+            bumpFocusInput()
           }
         }
       ]}

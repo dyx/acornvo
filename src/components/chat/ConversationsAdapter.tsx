@@ -60,6 +60,13 @@ export function ConversationsAdapter() {
                   setEditingTitle('')
                 }
               }}
+              onBlur={() => {
+                if (editingTitle.trim()) {
+                  renameSession(s.id, editingTitle.trim())
+                }
+                setEditingId(null)
+                setEditingTitle('')
+              }}
             />
           ) : (
             <span>

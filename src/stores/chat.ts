@@ -97,6 +97,7 @@ interface ChatStore {
   removeAttachment: (index: number) => void
   bumpFocusInput: () => void
   bumpShowShortcuts: () => void
+  truncateMessagesFrom: (messageId: string) => void
 }
 
 const emptySession = (): SessionState => ({
@@ -269,8 +270,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (!sid) return
     try {
       await ipc.chat.cancelStream(sid)
-    } catch (err) {
-      // silently ignore cancel errors
+    } catch {
+      // Cancel errors are expected (e.g. nothing to cancel) — intentionally silent.
     }
   },
 
@@ -290,7 +291,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
       }))
     } catch (err) {
-      // silently ignore
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -310,16 +311,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
       }))
     } catch (err) {
-      // silently ignore
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
     }
   },
 
   async updateSessionProfile(id, profileId) {
-    // TODO: Backend handler for sessions.updateProfile not yet implemented.
-    // For now, update profileId locally only; a future IPC call should persist it.
-    set((s) => ({
-      sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, profileId } : ses))
-    }))
+    try {
+      await ipc.chat['sessions.updateProfile'](id, profileId)
+      set((s) => ({
+        sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, profileId } : ses))
+      }))
+    } catch (err) {
+      set({ sessionsError: err instanceof Error ? err.message : String(err) })
+    }
   },
 
   setPendingPromptText(text) {
@@ -375,6 +379,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   bumpShowShortcuts() {
     set((s) => ({ showShortcutsBump: s.showShortcutsBump + 1 }))
+  },
+
+  truncateMessagesFrom(messageId) {
+    const sid = get().activeSessionId
+    if (!sid) return
+    set((s) => {
+      const cur = s.bySession[sid]
+      if (!cur) return s
+      const idx = cur.messages.findIndex((m) => m.id === messageId)
+      if (idx === -1) return s
+      return {
+        bySession: {
+          ...s.bySession,
+          [sid]: { ...cur, messages: cur.messages.slice(0, idx) }
+        }
+      }
+    })
   }
 }))
 

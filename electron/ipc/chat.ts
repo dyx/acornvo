@@ -127,6 +127,10 @@ export function createChatHandlers(deps: ChatDeps) {
       await deps.sessions.rename(id, title);
       return { ok: true } as const;
     },
+    'sessions.updateProfile': async (id: string, profileId: string | null) => {
+      await deps.sessions.updateProfile(id, profileId);
+      return { ok: true } as const;
+    },
     'sessions.getMessages': (id: string) => deps.sessions.getMessages(id),
 
     sendUserMessage: async (opts: {
