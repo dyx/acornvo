@@ -30,44 +30,46 @@ function getFilePath(file: File): string {
   return file.name
 }
 
-export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(({ visible = true }, ref) => {
-  const innerRef = useRef<AttachmentsRef | null>(null)
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const pendingAttachments = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingAttachments ?? [] : [],
-  )
-  const pushAttachment = useChatStore((s) => s.pushAttachment)
-  const removeAttachment = useChatStore((s) => s.removeAttachment)
+export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(
+  ({ visible = true }, ref) => {
+    const innerRef = useRef<AttachmentsRef | null>(null)
+    const activeSessionId = useChatStore((s) => s.activeSessionId)
+    const pendingAttachments = useChatStore((s) =>
+      activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
+    )
+    const pushAttachment = useChatStore((s) => s.pushAttachment)
+    const removeAttachment = useChatStore((s) => s.removeAttachment)
 
-  useImperativeHandle(ref, () => ({
-    select: ({ multiple = true } = {}) => {
-      innerRef.current?.select({ multiple })
-    },
-  }))
+    useImperativeHandle(ref, () => ({
+      select: ({ multiple = true } = {}) => {
+        innerRef.current?.select({ multiple })
+      }
+    }))
 
-  return (
-    <div style={visible ? undefined : { display: 'none' }}>
-    <Attachments
-      ref={innerRef}
-      overflow="scrollX"
-      items={pendingAttachments.map((a, i) => ({
-        uid: String(i),
-        name: a.title,
-        status: 'done',
-      }))}
-      beforeUpload={(file) => {
-        const path = getFilePath(file)
-        const att: Attachment = { type: 'file', path, title: file.name } as Attachment
-        pushAttachment(att)
-        return false
-      }}
-      onRemove={(item) => {
-        const idx = Number(item.uid)
-        if (!Number.isNaN(idx)) removeAttachment(idx)
-        return true
-      }}
-    />
-    </div>
-  )
-})
+    return (
+      <div style={visible ? undefined : { display: 'none' }}>
+        <Attachments
+          ref={innerRef}
+          overflow="scrollX"
+          items={pendingAttachments.map((a, i) => ({
+            uid: String(i),
+            name: a.title,
+            status: 'done'
+          }))}
+          beforeUpload={(file) => {
+            const path = getFilePath(file)
+            const att: Attachment = { type: 'file', path, title: file.name } as Attachment
+            pushAttachment(att)
+            return false
+          }}
+          onRemove={(item) => {
+            const idx = Number(item.uid)
+            if (!Number.isNaN(idx)) removeAttachment(idx)
+            return true
+          }}
+        />
+      </div>
+    )
+  }
+)
 AttachmentsAdapter.displayName = 'AttachmentsAdapter'

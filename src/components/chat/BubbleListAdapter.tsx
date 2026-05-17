@@ -8,15 +8,15 @@ import { ScrollToBottomButton } from './ScrollToBottomButton'
 export function BubbleListAdapter() {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
   )
   const pendingApprovals = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.pendingApprovals ?? []) : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingApprovals ?? []) : []
   )
 
   const items = useMemo(
     () => deriveBubbleItems(messages, pendingApprovals),
-    [messages, pendingApprovals],
+    [messages, pendingApprovals]
   )
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -30,7 +30,7 @@ export function BubbleListAdapter() {
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
-        minHeight: 0,
+        minHeight: 0
       }}
     >
       <Bubble.List
@@ -38,7 +38,7 @@ export function BubbleListAdapter() {
           key: b.key,
           role: b.role,
           content: b.content,
-          loading: b.loading,
+          loading: b.loading
         }))}
         role={chatRoles}
         autoScroll

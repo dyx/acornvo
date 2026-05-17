@@ -11,13 +11,13 @@ export function ChatInputArea() {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const status = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.status ?? 'idle' : 'idle',
+    activeSessionId ? (s.bySession[activeSessionId]?.status ?? 'idle') : 'idle'
   )
   const pendingAttachments = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingAttachments ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
   )
   const pendingPromptText = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingPromptText ?? '' : '',
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingPromptText ?? '') : ''
   )
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)

@@ -30,7 +30,7 @@ function parseToolResultText(text: string): ToolStep['result'] {
 
 export function deriveBubbleItems(
   messages: ChatMessage[],
-  pendingApprovals: PendingApproval[],
+  pendingApprovals: PendingApproval[]
 ): BubbleItem[] {
   const items: BubbleItem[] = []
 
@@ -56,7 +56,7 @@ export function deriveBubbleItems(
           role: 'assistant',
           content: { text: m.text, toolSteps },
           streaming,
-          loading,
+          loading
         })
       } else {
         items.push({ key: m.id, role: 'assistant', content: m.text, streaming, loading })

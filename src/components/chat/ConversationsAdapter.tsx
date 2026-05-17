@@ -38,8 +38,7 @@ export function ConversationsAdapter() {
     () =>
       sessions.map((s) => {
         const hasBackgroundApproval =
-          s.id !== activeSessionId &&
-          (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
+          s.id !== activeSessionId && (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
         const baseLabel = s.title || t('chat.untitled')
         const label =
           editingId === s.id ? (
@@ -66,30 +65,17 @@ export function ConversationsAdapter() {
             <span>
               {narrow ? baseLabel.slice(0, 8) : baseLabel}
               {hasBackgroundApproval && (
-                <Badge
-                  dot
-                  offset={[6, 0]}
-                  aria-label={t('chat.session.approvalPending')}
-                />
+                <Badge dot offset={[6, 0]} aria-label={t('chat.session.approvalPending')} />
               )}
             </span>
           )
         return {
           key: s.id,
           label,
-          group: groupSession(s.updatedAt),
+          group: groupSession(s.updatedAt)
         }
       }),
-    [
-      sessions,
-      activeSessionId,
-      bySession,
-      editingId,
-      editingTitle,
-      narrow,
-      t,
-      renameSession,
-    ],
+    [sessions, activeSessionId, bySession, editingId, editingTitle, narrow, t, renameSession]
   )
 
   const menu: ConversationsProps['menu'] = (conversation: ConversationItemType) => ({
@@ -103,7 +89,7 @@ export function ConversationsAdapter() {
           const baseLabel = s?.title || t('chat.untitled')
           setEditingId(String(conversation.key))
           setEditingTitle(baseLabel)
-        },
+        }
       },
       {
         key: 'delete',
@@ -117,11 +103,11 @@ export function ConversationsAdapter() {
             okText: t('chat.session.confirmDeleteOk'),
             okType: 'danger',
             cancelText: t('common.cancel'),
-            onOk: () => deleteSession(String(conversation.key)),
+            onOk: () => deleteSession(String(conversation.key))
           })
-        },
-      },
-    ],
+        }
+      }
+    ]
   })
 
   return (
@@ -136,7 +122,7 @@ export function ConversationsAdapter() {
         icon: <PlusOutlined />,
         onClick: () => {
           void createSession()
-        },
+        }
       }}
       style={{ width: narrow ? 48 : 280 }}
     />

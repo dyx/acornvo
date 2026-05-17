@@ -84,8 +84,8 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
               <span className="text-muted-foreground ml-2">{p.model}</span>
             </>
           ),
-          onClick: () => void updateSessionProfile(sessionId, p.id),
-        })),
+          onClick: () => void updateSessionProfile(sessionId, p.id)
+        }))
       }}
     >
       <button
@@ -123,7 +123,7 @@ function EmptyState() {
     { key: 'p1', label: t('chat.empty.card1') },
     { key: 'p2', label: t('chat.empty.card2') },
     { key: 'p3', label: t('chat.empty.card3') },
-    { key: 'p4', label: t('chat.empty.card4') },
+    { key: 'p4', label: t('chat.empty.card4') }
   ]
 
   return (
@@ -173,10 +173,7 @@ export function Chat() {
   const title = activeSession?.title || t('chat.untitled')
 
   return (
-    <div
-      className="flex h-full w-full bg-[color:var(--color-paper)]"
-      data-testid="chat-page-root"
-    >
+    <div className="flex h-full w-full bg-[color:var(--color-paper)]" data-testid="chat-page-root">
       <aside
         data-testid="chat-session-list"
         className="flex shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] overflow-hidden"

@@ -12,15 +12,12 @@ export function ProfileFooter(): ReactElement {
 
   const activeSession = sessions.find((s) => s.id === activeSessionId)
   const profile = activeSession?.profileId
-    ? profiles.find((p) => p.id === activeSession.profileId) ?? null
+    ? (profiles.find((p) => p.id === activeSession.profileId) ?? null)
     : null
 
   if (profile) {
     return (
-      <span
-        data-testid="chat-input-profile"
-        className="text-xs text-muted-foreground"
-      >
+      <span data-testid="chat-input-profile" className="text-xs text-muted-foreground">
         {profile.name} · {profile.model}
       </span>
     )

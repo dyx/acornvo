@@ -51,7 +51,7 @@ function toChatSession(s: Session): ChatSession {
     title: s.title ?? '',
     profileId: s.profileId,
     createdAt: new Date(s.createdAt).getTime(),
-    updatedAt: new Date(s.updatedAt).getTime(),
+    updatedAt: new Date(s.updatedAt).getTime()
   }
 }
 
@@ -63,13 +63,15 @@ function toChatMessage(m: SessionMessage): ChatMessage {
     toolCalls: m.toolCalls,
     toolCallId: m.toolCallId,
     createdAt: new Date(m.createdAt).getTime(),
-    status: 'done',
+    status: 'done'
   }
 }
 
 export class BusyError extends Error {
   code = 'E_BUSY' as const
-  constructor() { super('session is streaming') }
+  constructor() {
+    super('session is streaming')
+  }
 }
 
 interface ChatStore {
@@ -124,7 +126,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       const list = await ipc.chat['sessions.list']()
       set((s) => ({
         sessions: list.map(toChatSession),
-        activeSessionId: s.activeSessionId ?? (list[0]?.id ?? null)
+        activeSessionId: s.activeSessionId ?? list[0]?.id ?? null
       }))
     } catch (err) {
       set({ sessionsError: err instanceof Error ? err.message : String(err) })
@@ -162,7 +164,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
               ...emptySession(),
               ...s.bySession[id],
               error: err instanceof Error ? err.message : String(err),
-              status: 'error' as const,
+              status: 'error' as const
             }
           }
         }))
@@ -194,9 +196,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       await ipc.chat['sessions.rename'](id, title)
       set((s) => ({
-        sessions: s.sessions.map((ses) =>
-          ses.id === id ? { ...ses, title } : ses
-        )
+        sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, title } : ses))
       }))
     } catch (err) {
       set({ sessionsError: err instanceof Error ? err.message : String(err) })
@@ -257,7 +257,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ...emptySession(),
             ...s.bySession[sid],
             status: 'error',
-            error: err instanceof Error ? err.message : String(err),
+            error: err instanceof Error ? err.message : String(err)
           }
         }
       }))
@@ -318,9 +318,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     // TODO: Backend handler for sessions.updateProfile not yet implemented.
     // For now, update profileId locally only; a future IPC call should persist it.
     set((s) => ({
-      sessions: s.sessions.map((ses) =>
-        ses.id === id ? { ...ses, profileId } : ses
-      )
+      sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, profileId } : ses))
     }))
   },
 
@@ -402,13 +400,10 @@ function applyToken(sid: string, txt: string): void {
     const cur = s.bySession[sid] ?? emptySession()
     const lastIdx = cur.messages.length - 1
     const last = cur.messages[lastIdx]
-    const isStreamingAssistant =
-      last && last.role === 'assistant' && last.status === 'streaming'
+    const isStreamingAssistant = last && last.role === 'assistant' && last.status === 'streaming'
     let nextMessages: ChatMessage[]
     if (isStreamingAssistant) {
-      nextMessages = cur.messages.map((m, i) =>
-        i === lastIdx ? { ...m, text: m.text + txt } : m,
-      )
+      nextMessages = cur.messages.map((m, i) => (i === lastIdx ? { ...m, text: m.text + txt } : m))
     } else {
       nextMessages = [
         ...cur.messages,
@@ -417,15 +412,15 @@ function applyToken(sid: string, txt: string): void {
           role: 'assistant' as const,
           text: txt,
           status: 'streaming' as const,
-          createdAt: Date.now(),
-        },
+          createdAt: Date.now()
+        }
       ]
     }
     return {
       bySession: {
         ...s.bySession,
-        [sid]: { ...cur, messages: nextMessages, status: 'streaming' },
-      },
+        [sid]: { ...cur, messages: nextMessages, status: 'streaming' }
+      }
     }
   })
 }
@@ -477,18 +472,16 @@ function subscribeSessionStream(sid: string): void {
           const nextMessages =
             idx === -1
               ? post.messages
-              : post.messages.map((m, i) =>
-                  i === idx ? { ...m, status: 'done' as const } : m,
-                )
+              : post.messages.map((m, i) => (i === idx ? { ...m, status: 'done' as const } : m))
           return {
             bySession: {
               ...s.bySession,
               [sid]: {
                 ...post,
                 messages: nextMessages,
-                status: post.pendingApprovals.length > 0 ? 'awaiting-approval' : 'idle',
-              },
-            },
+                status: post.pendingApprovals.length > 0 ? 'awaiting-approval' : 'idle'
+              }
+            }
           }
         }
         case 'tool.start': {
@@ -503,10 +496,10 @@ function subscribeSessionStream(sid: string): void {
                 const matches = m.toolCalls.some((tc) => tc.id === callId)
                 if (!matches) {
                   const promoted = m.toolCalls.map((tc) =>
-                    tc.id === '' && tc.name === event.tool ? { ...tc, id: callId } : tc,
+                    tc.id === '' && tc.name === event.tool ? { ...tc, id: callId } : tc
                   )
                   nextMessages = post.messages.map((mm, j) =>
-                    j === i ? { ...mm, toolCalls: promoted } : mm,
+                    j === i ? { ...mm, toolCalls: promoted } : mm
                   )
                 }
                 break
@@ -525,15 +518,13 @@ function subscribeSessionStream(sid: string): void {
                     role: 'tool' as const,
                     text: event.tool,
                     toolCallId: callId,
-                    toolCalls: [
-                      { id: callId ?? nextMsgId(), name: event.tool, args: event.args },
-                    ],
+                    toolCalls: [{ id: callId ?? nextMsgId(), name: event.tool, args: event.args }],
                     createdAt: Date.now(),
-                    status: 'pending' as const,
-                  },
-                ],
-              },
-            },
+                    status: 'pending' as const
+                  }
+                ]
+              }
+            }
           }
         }
         case 'tool.result': {
@@ -543,9 +534,7 @@ function subscribeSessionStream(sid: string): void {
           const isApprovalTimeout =
             event.result.ok === false && event.result.error === 'E_APPROVAL_TIMEOUT'
           const text =
-            event.result.ok === true
-              ? JSON.stringify(event.result)
-              : `error: ${event.result.error}`
+            event.result.ok === true ? JSON.stringify(event.result) : `error: ${event.result.error}`
           return {
             bySession: {
               ...s.bySession,
@@ -553,9 +542,7 @@ function subscribeSessionStream(sid: string): void {
                 ...post,
                 pendingApprovals: isApprovalTimeout
                   ? post.pendingApprovals.map((a) =>
-                      a.toolName === event.tool && !a.timedOut
-                        ? { ...a, timedOut: true }
-                        : a,
+                      a.toolName === event.tool && !a.timedOut ? { ...a, timedOut: true } : a
                     )
                   : post.pendingApprovals,
                 messages: [
@@ -566,11 +553,11 @@ function subscribeSessionStream(sid: string): void {
                     text,
                     toolCallId: callId,
                     createdAt: Date.now(),
-                    status: 'done' as const,
-                  },
-                ],
-              },
-            },
+                    status: 'done' as const
+                  }
+                ]
+              }
+            }
           }
         }
         case 'message.appended': {
@@ -581,8 +568,8 @@ function subscribeSessionStream(sid: string): void {
             return {
               bySession: {
                 ...s.bySession,
-                [sid]: { ...post, messages: [...post.messages, incoming] },
-              },
+                [sid]: { ...post, messages: [...post.messages, incoming] }
+              }
             }
           }
           const lastIdx = post.messages.length - 1
@@ -593,23 +580,23 @@ function subscribeSessionStream(sid: string): void {
               id: incoming.id,
               toolCalls: incoming.toolCalls ?? last.toolCalls,
               text: last.text || incoming.text,
-              status: last.status,
+              status: last.status
             }
             return {
               bySession: {
                 ...s.bySession,
                 [sid]: {
                   ...post,
-                  messages: post.messages.map((m, i) => (i === lastIdx ? merged : m)),
-                },
-              },
+                  messages: post.messages.map((m, i) => (i === lastIdx ? merged : m))
+                }
+              }
             }
           }
           return {
             bySession: {
               ...s.bySession,
-              [sid]: { ...post, messages: [...post.messages, incoming] },
-            },
+              [sid]: { ...post, messages: [...post.messages, incoming] }
+            }
           }
         }
         case 'tool.approval-needed':

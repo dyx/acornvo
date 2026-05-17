@@ -22,7 +22,7 @@ describe('XMarkdown streaming smoke', () => {
     const { container } = render(
       <XMarkdown>
         {'hello **world** with a [link](https://example.com) and `inline code`'}
-      </XMarkdown>,
+      </XMarkdown>
     )
     expect(container.querySelector('strong')?.textContent).toBe('world')
     expect(container.querySelector('a')?.getAttribute('href')).toBe('https://example.com')

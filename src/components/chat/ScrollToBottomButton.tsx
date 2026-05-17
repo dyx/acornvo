@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 export function ScrollToBottomButton({
   containerRef,
-  threshold = 80,
+  threshold = 80
 }: {
   containerRef: RefObject<HTMLDivElement | null>
   threshold?: number
@@ -45,7 +45,7 @@ export function ScrollToBottomButton({
         position: 'absolute',
         right: 16,
         bottom: 16,
-        zIndex: 2,
+        zIndex: 2
       }}
     >
       {t('chat.message.newMessages')}

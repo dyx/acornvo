@@ -10,7 +10,13 @@ vi.mock('@/ipc/client', () => ({
     chat: {
       'sessions.list': vi.fn().mockResolvedValue([]),
       'sessions.getMessages': vi.fn().mockResolvedValue([]),
-      'sessions.create': vi.fn().mockResolvedValue({ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }),
+      'sessions.create': vi.fn().mockResolvedValue({
+        id: 's1',
+        title: 'Test',
+        createdAt: '2024-06-01T00:00:00.000Z',
+        updatedAt: '2024-06-01T00:00:00.000Z',
+        profileId: null
+      }),
       'sessions.rename': vi.fn().mockResolvedValue({ ok: true }),
       'sessions.delete': vi.fn().mockResolvedValue({ ok: true }),
       sendUserMessage: vi.fn().mockResolvedValue({ ok: true }),
@@ -38,7 +44,9 @@ function renderWithRouter(ui: React.ReactElement) {
 }
 
 describe('ProfileFooter', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -46,13 +54,39 @@ describe('ProfileFooter', () => {
 
   it('shows profile name and model when profile is bound', () => {
     useProfilesStore.setState({
-      profiles: [{ id: 'p1', name: 'GPT-4o', provider: 'openai', model: 'gpt-4o', temperature: 0.7, topP: 1, maxTokens: 4096, apiKeyRef: 'ref-1', baseUrl: 'https://api.openai.com/v1', createdAt: '', updatedAt: '' }],
+      profiles: [
+        {
+          id: 'p1',
+          name: 'GPT-4o',
+          provider: 'openai',
+          model: 'gpt-4o',
+          temperature: 0.7,
+          topP: 1,
+          maxTokens: 4096,
+          apiKeyRef: 'ref-1',
+          baseUrl: 'https://api.openai.com/v1',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
       loading: false
     })
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: 'p1' }],
       activeSessionId: 's1',
-      bySession: { s1: { loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null, lastUserText: '', lastUserAttachments: [] } },
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [],
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null,
+          lastUserText: '',
+          lastUserAttachments: []
+        }
+      },
       sessionsLoading: false,
       sessionsError: null
     })
@@ -66,7 +100,19 @@ describe('ProfileFooter', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
-      bySession: { s1: { loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'idle', error: null, lastUserText: '', lastUserAttachments: [] } },
+      bySession: {
+        s1: {
+          loaded: true,
+          messages: [],
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'idle',
+          error: null,
+          lastUserText: '',
+          lastUserAttachments: []
+        }
+      },
       sessionsLoading: false,
       sessionsError: null
     })

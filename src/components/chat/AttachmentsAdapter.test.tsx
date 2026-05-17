@@ -26,8 +26,8 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      dispatchEvent: () => false
+    })
   })
 }
 
@@ -49,9 +49,9 @@ function seed(atts: { type: 'file'; path: string; title: string }[] = []) {
         status: 'idle' as const,
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      },
-    },
+        lastUserAttachments: []
+      }
+    }
   } as Partial<ReturnType<typeof useChatStore.getState>>)
 }
 
@@ -65,18 +65,26 @@ describe('AttachmentsAdapter', () => {
 
   it('renders empty list (no file cards) when pendingAttachments is empty', () => {
     seed([])
-    const { container } = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const { container } = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(container.querySelectorAll('.ant-file-card-file-name')).toHaveLength(0)
   })
 
   it('renders each attachment with its title', () => {
     seed([
       { type: 'file', path: '/tmp/a.md', title: 'a.md' },
-      { type: 'file', path: '/tmp/b.md', title: 'b.md' },
+      { type: 'file', path: '/tmp/b.md', title: 'b.md' }
     ])
-    const { container } = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const { container } = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     const names = Array.from(container.querySelectorAll('.ant-file-card-file-name')).map(
-      (el) => el.textContent,
+      (el) => el.textContent
     )
     expect(names).toEqual(['a.md', 'b.md'])
   })
@@ -85,7 +93,11 @@ describe('AttachmentsAdapter', () => {
     const pushAttachment = vi.fn()
     useChatStore.setState({ pushAttachment } as Partial<ReturnType<typeof useChatStore.getState>>)
     seed([])
-    render(<Wrap><AttachmentsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
     expect(fileInput).toBeTruthy()
     const file = new File(['hello'], 'x.md', { type: 'text/markdown' })
@@ -95,7 +107,7 @@ describe('AttachmentsAdapter', () => {
     expect(pushAttachment).toHaveBeenCalledWith({
       type: 'file',
       path: '/tmp/x.md',
-      title: 'x.md',
+      title: 'x.md'
     })
   })
 
@@ -104,9 +116,13 @@ describe('AttachmentsAdapter', () => {
     useChatStore.setState({ removeAttachment } as Partial<ReturnType<typeof useChatStore.getState>>)
     seed([
       { type: 'file', path: '/tmp/a.md', title: 'a.md' },
-      { type: 'file', path: '/tmp/b.md', title: 'b.md' },
+      { type: 'file', path: '/tmp/b.md', title: 'b.md' }
     ])
-    const { container } = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const { container } = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     const closeButtons = Array.from(container.querySelectorAll('.ant-file-card-list-remove'))
     expect(closeButtons).toHaveLength(2)
     await userEvent.click(closeButtons[1] as HTMLElement)
@@ -115,18 +131,30 @@ describe('AttachmentsAdapter', () => {
 
   it('after store clears pendingAttachments, list re-renders empty', () => {
     seed([{ type: 'file', path: '/tmp/a.md', title: 'a.md' }])
-    const r1 = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const r1 = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(r1.container.querySelectorAll('.ant-file-card-file-name')).toHaveLength(1)
     r1.unmount()
     seed([])
-    const r2 = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const r2 = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(r2.container.querySelectorAll('.ant-file-card-file-name')).toHaveLength(0)
   })
 
   it('select() handle is exposed via forwardRef', () => {
     seed([])
     const ref = createRef<AttachmentsAdapterHandle>()
-    render(<Wrap><AttachmentsAdapter ref={ref} /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter ref={ref} />
+      </Wrap>
+    )
     expect(typeof ref.current?.select).toBe('function')
     // Calling select() opens a file dialog; just verify it doesn't throw.
     expect(() => ref.current!.select({ multiple: true })).not.toThrow()

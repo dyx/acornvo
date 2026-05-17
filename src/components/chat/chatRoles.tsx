@@ -11,7 +11,7 @@ import {
   ToolOutlined,
   CopyOutlined,
   RedoOutlined,
-  EnterOutlined,
+  EnterOutlined
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useChatStore } from '@/stores/chat'
@@ -60,7 +60,7 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
                     label: 'args',
                     children: (
                       <pre style={{ margin: 0 }}>{JSON.stringify(s.call.args, null, 2)}</pre>
-                    ),
+                    )
                   },
                   ...(s.result
                     ? [
@@ -73,28 +73,30 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
                                 ? JSON.stringify(s.result.data, null, 2)
                                 : `error: ${s.result.error}`}
                             </pre>
-                          ),
-                        },
+                          )
+                        }
                       ]
-                    : []),
+                    : [])
                 ]}
               />
               {s.pendingApproval && (
                 <ApprovalInlineActions approval={s.pendingApproval} callId={s.call.id} />
               )}
             </div>
-          ),
+          )
         }
       })}
     />
   )
 }
 
-function AssistantBubble({ content }: { content: string | { text: string; toolSteps: ToolStep[] } }) {
+function AssistantBubble({
+  content
+}: {
+  content: string | { text: string; toolSteps: ToolStep[] }
+}) {
   if (typeof content === 'string') {
-    return (
-      <XMarkdown components={{ a: ExternalLinkAnchor as never }}>{content}</XMarkdown>
-    )
+    return <XMarkdown components={{ a: ExternalLinkAnchor as never }}>{content}</XMarkdown>
   }
   return (
     <div>
@@ -110,7 +112,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
   )
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
@@ -130,7 +132,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
           onItemClick: async () => {
             await navigator.clipboard.writeText(me?.text ?? '')
             antdMessage.success(t('chat.message.copied'))
-          },
+          }
         },
         ...(isErrorTail
           ? [
@@ -140,17 +142,15 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
                 label: t('chat.message.retry'),
                 onItemClick: () => {
                   const idx = messages.findIndex((m) => m.id === messageKey)
-                  const prior = [...messages.slice(0, idx)]
-                    .reverse()
-                    .find((m) => m.role === 'user')
+                  const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
                   if (prior) {
                     void sendUserMessage({
                       text: prior.text,
-                      attachments: prior.attachments ?? [],
+                      attachments: prior.attachments ?? []
                     })
                   }
-                },
-              },
+                }
+              }
             ]
           : []),
         {
@@ -163,8 +163,8 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
               .map((l) => `> ${l}`)
               .join('\n')
             setPendingPromptText(`${quoted}\n\n`)
-          },
-        },
+          }
+        }
       ]}
     />
   )
@@ -173,7 +173,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
 export const chatRoles: RolesMap = {
   user: {
     placement: 'end',
-    avatar: <Avatar icon={<UserOutlined />} />,
+    avatar: <Avatar icon={<UserOutlined />} />
   },
   assistant: {
     placement: 'start',
@@ -181,6 +181,6 @@ export const chatRoles: RolesMap = {
     contentRender: (content) => (
       <AssistantBubble content={content as string | { text: string; toolSteps: ToolStep[] }} />
     ),
-    footer: (_content, info) => <AssistantFooter messageKey={String(info?.key ?? '')} />,
-  },
+    footer: (_content, info) => <AssistantFooter messageKey={String(info?.key ?? '')} />
+  }
 }

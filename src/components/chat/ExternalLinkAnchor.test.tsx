@@ -6,9 +6,9 @@ import { ExternalLinkAnchor } from './ExternalLinkAnchor'
 vi.mock('@/ipc/client', () => ({
   ipc: {
     file: {
-      openExternal: vi.fn(),
-    },
-  },
+      openExternal: vi.fn()
+    }
+  }
 }))
 
 import { ipc } from '@/ipc/client'
@@ -33,7 +33,7 @@ describe('ExternalLinkAnchor', () => {
     render(
       <div onClick={onClickSpy}>
         <ExternalLinkAnchor href="https://example.com">x</ExternalLinkAnchor>
-      </div>,
+      </div>
     )
     await userEvent.click(screen.getByText('x'))
     expect(onClickSpy).toHaveBeenCalled()

@@ -15,10 +15,7 @@ export function FrontmatterDiff({ before, after }: FrontmatterDiffProps) {
   const beforeText = formatFrontmatter(before)
   const afterText = formatFrontmatter(after)
 
-  const changes = useMemo(
-    () => diffLines(beforeText, afterText),
-    [beforeText, afterText]
-  )
+  const changes = useMemo(() => diffLines(beforeText, afterText), [beforeText, afterText])
 
   return (
     <div className="flex gap-px rounded-md overflow-hidden border border-border">

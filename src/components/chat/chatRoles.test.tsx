@@ -23,8 +23,8 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      dispatchEvent: () => false
+    })
   })
 }
 
@@ -55,9 +55,9 @@ describe('chatRoles', () => {
     const node = chatRoles.assistant.contentRender!(
       {
         text: 'I called a tool',
-        toolSteps: [{ call: { id: 'A', name: 'search', args: {} } }],
+        toolSteps: [{ call: { id: 'A', name: 'search', args: {} } }]
       } as never,
-      {} as never,
+      {} as never
     )
     const { container } = render(<Wrap>{node}</Wrap>)
     expect(container.textContent).toContain('search')
@@ -67,7 +67,7 @@ describe('chatRoles', () => {
   it('assistant contentRender renders only markdown text when toolSteps is empty', () => {
     const node = chatRoles.assistant.contentRender!(
       { text: 'no tools', toolSteps: [] } as never,
-      {} as never,
+      {} as never
     )
     const { container } = render(<Wrap>{node}</Wrap>)
     expect(container.querySelector('[class*="thought-chain"]')).toBeNull()

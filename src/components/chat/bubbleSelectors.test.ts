@@ -5,7 +5,7 @@ import type { ChatMessage, PendingApproval } from '@/stores/chat'
 const mkMsg = (m: Partial<ChatMessage> & Pick<ChatMessage, 'id' | 'role'>): ChatMessage => ({
   text: '',
   createdAt: 0,
-  ...m,
+  ...m
 })
 
 describe('deriveBubbleItems', () => {
@@ -17,10 +17,10 @@ describe('deriveBubbleItems', () => {
   it('renders plain assistant message (done)', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'm2', role: 'assistant', text: 'hello', status: 'done' as const })],
-      [],
+      []
     )
     expect(out).toEqual([
-      { key: 'm2', role: 'assistant', content: 'hello', streaming: false, loading: false },
+      { key: 'm2', role: 'assistant', content: 'hello', streaming: false, loading: false }
     ])
   })
 
@@ -33,16 +33,16 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: 'ok',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }],
+          toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }]
         }),
         mkMsg({
           id: 't',
           role: 'tool',
           toolCallId: 'A',
-          text: '{"ok":true,"data":[1]}',
-        }),
+          text: '{"ok":true,"data":[1]}'
+        })
       ],
-      [],
+      []
     )
     expect(out).toHaveLength(2)
     expect(out[1]).toMatchObject({
@@ -53,10 +53,10 @@ describe('deriveBubbleItems', () => {
         toolSteps: [
           {
             call: { id: 'A', name: 'search', args: { q: 'x' } },
-            result: { ok: true, data: [1] },
-          },
-        ],
-      },
+            result: { ok: true, data: [1] }
+          }
+        ]
+      }
     })
   })
 
@@ -70,21 +70,21 @@ describe('deriveBubbleItems', () => {
           status: 'done' as const,
           toolCalls: [
             { id: 'A', name: 'fA', args: {} },
-            { id: 'B', name: 'fB', args: {} },
-          ],
+            { id: 'B', name: 'fB', args: {} }
+          ]
         }),
         mkMsg({ id: 't1', role: 'tool', toolCallId: 'B', text: '{"ok":true,"data":"b"}' }),
-        mkMsg({ id: 't2', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":"a"}' }),
+        mkMsg({ id: 't2', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":"a"}' })
       ],
-      [],
+      []
     )
     expect(out).toHaveLength(1)
     const a = out[0]
     expect(a.content).toMatchObject({
       toolSteps: [
         { call: { id: 'A', name: 'fA', args: {} }, result: { ok: true, data: 'a' } },
-        { call: { id: 'B', name: 'fB', args: {} }, result: { ok: true, data: 'b' } },
-      ],
+        { call: { id: 'B', name: 'fB', args: {} }, result: { ok: true, data: 'b' } }
+      ]
     })
   })
 
@@ -96,10 +96,10 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'streaming' as const,
-          toolCalls: [{ id: 'A', name: 'fA', args: {} }],
-        }),
+          toolCalls: [{ id: 'A', name: 'fA', args: {} }]
+        })
       ],
-      [],
+      []
     )
     const c = out[0].content as { toolSteps: ToolStep[] }
     expect(c.toolSteps[0].result).toBeUndefined()
@@ -111,7 +111,7 @@ describe('deriveBubbleItems', () => {
       toolName: 'write_file',
       args: { path: 'x.md' },
       reason: 'destructive',
-      receivedAt: 100,
+      receivedAt: 100
     }
     const out = deriveBubbleItems(
       [
@@ -120,10 +120,10 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'write_file', args: { path: 'x.md' } }],
-        }),
+          toolCalls: [{ id: 'A', name: 'write_file', args: { path: 'x.md' } }]
+        })
       ],
-      [approval],
+      [approval]
     )
     const c = out[0].content as { toolSteps: ToolStep[] }
     expect(c.toolSteps[0].pendingApproval).toEqual(approval)
@@ -141,11 +141,11 @@ describe('deriveBubbleItems', () => {
           status: 'done' as const,
           toolCalls: [
             { id: 'A', name: 'fa', args: {} },
-            { id: 'B', name: 'fb', args: {} },
-          ],
-        }),
+            { id: 'B', name: 'fb', args: {} }
+          ]
+        })
       ],
-      [pA, pB],
+      [pA, pB]
     )
     const steps = (out[0].content as { toolSteps: ToolStep[] }).toolSteps
     expect(steps[0].pendingApproval).toEqual(pA)
@@ -155,7 +155,7 @@ describe('deriveBubbleItems', () => {
   it('marks streaming=true loading=false when assistant has token text', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'a', role: 'assistant', text: 'hel', status: 'streaming' as const })],
-      [],
+      []
     )
     expect(out[0]).toMatchObject({ streaming: true, loading: false })
   })
@@ -163,16 +163,13 @@ describe('deriveBubbleItems', () => {
   it('marks streaming=true loading=true when assistant has empty text and no toolCalls', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'a', role: 'assistant', text: '', status: 'streaming' as const })],
-      [],
+      []
     )
     expect(out[0]).toMatchObject({ streaming: true, loading: true })
   })
 
   it('treats missing status as done', () => {
-    const out = deriveBubbleItems(
-      [mkMsg({ id: 'a', role: 'assistant', text: 'historical' })],
-      [],
-    )
+    const out = deriveBubbleItems([mkMsg({ id: 'a', role: 'assistant', text: 'historical' })], [])
     expect(out[0]).toMatchObject({ streaming: false, loading: false })
   })
 
@@ -185,11 +182,11 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+          toolCalls: [{ id: 'A', name: 'fa', args: {} }]
         }),
-        mkMsg({ id: 't', role: 'tool', text: '{"ok":true,"data":[]}' }),
+        mkMsg({ id: 't', role: 'tool', text: '{"ok":true,"data":[]}' })
       ],
-      [],
+      []
     )
     const steps = (out[0].content as { toolSteps: ToolStep[] }).toolSteps
     expect(steps[0].result).toEqual({ ok: true, data: [] })

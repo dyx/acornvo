@@ -25,8 +25,8 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      dispatchEvent: () => false
+    })
   })
 }
 
@@ -39,7 +39,7 @@ const approval = {
   toolName: 'write_file',
   args: { path: 'a.md' },
   reason: 'destructive',
-  receivedAt: 0,
+  receivedAt: 0
 }
 
 const seedActive = (sid: string | null = 's1') => {
@@ -57,16 +57,16 @@ const seedActive = (sid: string | null = 's1') => {
             status: 'awaiting-approval' as const,
             error: null,
             lastUserText: '',
-            lastUserAttachments: [],
-          },
+            lastUserAttachments: []
+          }
         }
-      : {},
+      : {}
   } as Partial<ReturnType<typeof useChatStore.getState>>)
 }
 
 const findActionItem = (iconLabel: 'check' | 'close' | 'edit'): HTMLElement => {
   const icon = document.querySelector(
-    `.ant-actions-item span[aria-label="${iconLabel}"]`,
+    `.ant-actions-item span[aria-label="${iconLabel}"]`
   ) as HTMLElement | null
   if (!icon) throw new Error(`No actions item with icon ${iconLabel}`)
   return icon.closest('.ant-actions-item') as HTMLElement
@@ -80,7 +80,7 @@ describe('ApprovalInlineActions', () => {
     render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     expect(findActionItem('check')).toBeTruthy()
     expect(findActionItem('close')).toBeTruthy()
@@ -90,12 +90,12 @@ describe('ApprovalInlineActions', () => {
   it('Approve click calls approveTool with sessionId+callId', async () => {
     const approveTool = vi.fn()
     useChatStore.setState({
-      approveTool,
+      approveTool
     } as Partial<ReturnType<typeof useChatStore.getState>>)
     render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     await userEvent.click(findActionItem('check'))
     expect(approveTool).toHaveBeenCalledWith('s1', 'A')
@@ -104,12 +104,12 @@ describe('ApprovalInlineActions', () => {
   it('Reject click calls rejectTool', async () => {
     const rejectTool = vi.fn()
     useChatStore.setState({
-      rejectTool,
+      rejectTool
     } as Partial<ReturnType<typeof useChatStore.getState>>)
     render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     await userEvent.click(findActionItem('close'))
     expect(rejectTool).toHaveBeenCalledWith('s1', 'A')
@@ -119,7 +119,7 @@ describe('ApprovalInlineActions', () => {
     render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     await userEvent.click(findActionItem('edit'))
     expect(await screen.findByText('write_file')).toBeTruthy()
@@ -130,7 +130,7 @@ describe('ApprovalInlineActions', () => {
     const { container } = render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     expect(container.textContent).toBe('')
   })
@@ -139,14 +139,14 @@ describe('ApprovalInlineActions', () => {
     const { unmount } = render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     expect(() => unmount()).not.toThrow()
     seedActive('s2')
     render(
       <Wrap>
         <ApprovalInlineActions approval={approval} callId="A" />
-      </Wrap>,
+      </Wrap>
     )
     expect(findActionItem('check')).toBeTruthy()
   })

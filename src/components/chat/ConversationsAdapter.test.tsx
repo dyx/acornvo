@@ -27,8 +27,8 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      dispatchEvent: () => false
+    })
   })
 }
 
@@ -45,7 +45,7 @@ function seed(state: Partial<ReturnType<typeof useChatStore.getState>>) {
     sessionsError: null,
     focusInputBump: 0,
     showShortcutsBump: 0,
-    ...state,
+    ...state
   } as Partial<ReturnType<typeof useChatStore.getState>>)
 }
 
@@ -60,7 +60,7 @@ function mkSession(
     createdAt: number
     updatedAt: number
     profileId: string | null
-  }> = {},
+  }> = {}
 ) {
   return {
     id: 's1',
@@ -68,7 +68,7 @@ function mkSession(
     createdAt: today,
     updatedAt: today,
     profileId: null,
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -83,7 +83,7 @@ function mkSessionState(overrides: Record<string, unknown> = {}) {
     error: null,
     lastUserText: '',
     lastUserAttachments: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -116,7 +116,7 @@ describe('ConversationsAdapter', () => {
   beforeEach(() => {
     seed({
       sessions: [mkSession({ id: 's1', title: 'Today A' })],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
   })
 
@@ -124,7 +124,7 @@ describe('ConversationsAdapter', () => {
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('Today A')).toBeTruthy()
   })
@@ -132,12 +132,12 @@ describe('ConversationsAdapter', () => {
   it('renders untitled placeholder when title is empty', () => {
     seed({
       sessions: [mkSession({ id: 's1', title: '' })],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     // zh-CN default: "未命名对话"
     expect(screen.getByText(/未命名|Untitled/)).toBeTruthy()
@@ -146,17 +146,14 @@ describe('ConversationsAdapter', () => {
   it('switches active session on click', async () => {
     const selectSession = vi.fn()
     seed({
-      sessions: [
-        mkSession({ id: 's1', title: 'A' }),
-        mkSession({ id: 's2', title: 'B' }),
-      ],
-      activeSessionId: 's1',
+      sessions: [mkSession({ id: 's1', title: 'A' }), mkSession({ id: 's2', title: 'B' })],
+      activeSessionId: 's1'
     })
     useChatStore.setState({ selectSession } as Partial<ReturnType<typeof useChatStore.getState>>)
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     await userEvent.click(screen.getByText('B'))
     expect(selectSession).toHaveBeenCalledWith('s2')
@@ -167,14 +164,14 @@ describe('ConversationsAdapter', () => {
       sessions: [
         mkSession({ id: '1', title: 'Now', createdAt: today, updatedAt: today }),
         mkSession({ id: '2', title: 'Yest', createdAt: yesterday, updatedAt: yesterday }),
-        mkSession({ id: '3', title: 'Old', createdAt: longAgo, updatedAt: longAgo }),
+        mkSession({ id: '3', title: 'Old', createdAt: longAgo, updatedAt: longAgo })
       ],
-      activeSessionId: '1',
+      activeSessionId: '1'
     })
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('Now')).toBeTruthy()
     expect(screen.getByText('Yest')).toBeTruthy()
@@ -187,7 +184,7 @@ describe('ConversationsAdapter', () => {
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     await openItemMenu('Today A')
     const rename = await screen.findByText(/重命名|Rename/, {}, { timeout: 1500 })
@@ -204,7 +201,7 @@ describe('ConversationsAdapter', () => {
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     await openItemMenu('Today A')
     const rename = await screen.findByText(/重命名|Rename/, {}, { timeout: 1500 })
@@ -220,7 +217,7 @@ describe('ConversationsAdapter', () => {
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     await openItemMenu('Today A')
     // Find the delete menu item by text (matches both zh-CN "删除" and en "Delete").
@@ -235,7 +232,7 @@ describe('ConversationsAdapter', () => {
     const okBtn = await screen.findByRole(
       'button',
       { name: (name: string) => /删\s*除|Delete/i.test(name) && !/取消|Cancel/.test(name) },
-      { timeout: 1500 },
+      { timeout: 1500 }
     )
     await userEvent.click(okBtn)
     expect(deleteSession).toHaveBeenCalledWith('s1')
@@ -247,7 +244,7 @@ describe('ConversationsAdapter', () => {
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     // antd-x renders Creation as a <button> with the i18n label "新对话" (chat.newSession in zh-CN).
     const btn = screen.getByRole('button', { name: /新对话|New chat|New session/i })
@@ -261,12 +258,12 @@ describe('ConversationsAdapter', () => {
     window.dispatchEvent(new Event('resize'))
     seed({
       sessions: [mkSession({ id: 's1', title: 'ABCDEFGHIJ' })],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('ABCDEFGH')).toBeTruthy()
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: original })
@@ -281,15 +278,15 @@ describe('ConversationsAdapter', () => {
     seed({
       sessions: [
         mkSession({ id: 's1', title: 'SessionOne' }),
-        mkSession({ id: 's2', title: 'SessionTwo' }),
+        mkSession({ id: 's2', title: 'SessionTwo' })
       ],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
     useChatStore.setState({ selectSession } as Partial<ReturnType<typeof useChatStore.getState>>)
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     // 'SessionTwo'.slice(0, 8) === 'SessionT'
     await userEvent.click(screen.getByText('SessionT'))
@@ -300,24 +297,19 @@ describe('ConversationsAdapter', () => {
 
   it('shows red dot on background session with pendingApprovals', () => {
     seed({
-      sessions: [
-        mkSession({ id: 's1', title: 'A' }),
-        mkSession({ id: 's2', title: 'B' }),
-      ],
+      sessions: [mkSession({ id: 's1', title: 'A' }), mkSession({ id: 's2', title: 'B' })],
       activeSessionId: 's1',
       bySession: {
         s2: mkSessionState({
-          pendingApprovals: [
-            { callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 },
-          ],
-          status: 'awaiting-approval',
-        }),
-      },
+          pendingApprovals: [{ callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 }],
+          status: 'awaiting-approval'
+        })
+      }
     })
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const labelB = screen.getByText('B').closest('span') as HTMLElement
     expect(labelB).toBeTruthy()
@@ -327,24 +319,19 @@ describe('ConversationsAdapter', () => {
 
   it('hides red dot once session B becomes active', () => {
     seed({
-      sessions: [
-        mkSession({ id: 's1', title: 'A' }),
-        mkSession({ id: 's2', title: 'B' }),
-      ],
+      sessions: [mkSession({ id: 's1', title: 'A' }), mkSession({ id: 's2', title: 'B' })],
       activeSessionId: 's2', // B is now active
       bySession: {
         s2: mkSessionState({
-          pendingApprovals: [
-            { callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 },
-          ],
-          status: 'awaiting-approval',
-        }),
-      },
+          pendingApprovals: [{ callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 }],
+          status: 'awaiting-approval'
+        })
+      }
     })
     render(
       <Wrap>
         <ConversationsAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const labelB = screen.getByText('B').closest('span') as HTMLElement
     expect(labelB).toBeTruthy()

@@ -7,7 +7,7 @@ import { ApprovalDrawer } from './ApprovalDrawer'
 
 export function ApprovalInlineActions({
   approval,
-  callId,
+  callId
 }: {
   approval: PendingApproval
   callId: string
@@ -28,20 +28,20 @@ export function ApprovalInlineActions({
             key: 'approve',
             icon: <CheckOutlined />,
             label: t('chat.approval.approve'),
-            onItemClick: () => void approveTool(activeSessionId, callId),
+            onItemClick: () => void approveTool(activeSessionId, callId)
           },
           {
             key: 'reject',
             icon: <CloseOutlined />,
             label: t('chat.approval.reject'),
-            onItemClick: () => void rejectTool(activeSessionId, callId),
+            onItemClick: () => void rejectTool(activeSessionId, callId)
           },
           {
             key: 'edit',
             icon: <EditOutlined />,
             label: t('chat.approval.edit'),
-            onItemClick: () => setDrawerOpen(true),
-          },
+            onItemClick: () => setDrawerOpen(true)
+          }
         ]}
       />
       <ApprovalDrawer

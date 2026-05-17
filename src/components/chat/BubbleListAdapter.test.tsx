@@ -13,7 +13,9 @@ if (typeof (globalThis as { ResizeObserver?: unknown }).ResizeObserver === 'unde
     disconnect() {}
   }
 }
-if (typeof (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver === 'undefined') {
+if (
+  typeof (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver === 'undefined'
+) {
   ;(globalThis as { IntersectionObserver: unknown }).IntersectionObserver = class {
     root: Element | Document | null = null
     rootMargin = ''
@@ -37,13 +39,13 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
+      dispatchEvent: () => false
+    })
   })
 }
 
 vi.mock('@/ipc/client', () => ({
-  ipc: { file: { openExternal: vi.fn() } },
+  ipc: { file: { openExternal: vi.fn() } }
 }))
 
 // eslint-disable-next-line import/first
@@ -69,9 +71,9 @@ const seedMessages = (messages: ChatMessage[], pendingApprovals: PendingApproval
         status: 'idle' as const,
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      },
-    },
+        lastUserAttachments: []
+      }
+    }
   } as Partial<ReturnType<typeof useChatStore.getState>>)
 }
 
@@ -84,7 +86,7 @@ describe('BubbleListAdapter', () => {
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('hi there')).toBeTruthy()
   })
@@ -97,20 +99,20 @@ describe('BubbleListAdapter', () => {
         text: 'done',
         status: 'done',
         toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }],
-        createdAt: 0,
+        createdAt: 0
       },
       {
         id: 't',
         role: 'tool',
         toolCallId: 'A',
         text: '{"ok":true,"data":[1]}',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('search')).toBeTruthy()
     expect(screen.getByText('done')).toBeTruthy()
@@ -124,33 +126,31 @@ describe('BubbleListAdapter', () => {
         text: '',
         status: 'done',
         toolCalls: [{ id: 'A', name: 'fa', args: {} }],
-        createdAt: 0,
+        createdAt: 0
       },
       {
         id: 't',
         role: 'tool',
         toolCallId: 'A',
         text: '{"ok":true,"data":null}',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const bubbles = document.querySelectorAll('.ant-bubble')
     expect(bubbles.length).toBe(1)
   })
 
   it('streaming state surfaces a loading affordance', () => {
-    seedMessages([
-      { id: 'a', role: 'assistant', text: '', status: 'streaming', createdAt: 0 },
-    ])
+    seedMessages([{ id: 'a', role: 'assistant', text: '', status: 'streaming', createdAt: 0 }])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(document.querySelector('[class*="loading"], [class*="typing"]')).toBeTruthy()
   })
@@ -160,7 +160,7 @@ describe('BubbleListAdapter', () => {
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.getByText('hello')).toBeTruthy()
   })
@@ -172,13 +172,13 @@ describe('BubbleListAdapter', () => {
         role: 'assistant',
         text: '**bold** and `code`',
         status: 'done',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(document.querySelector('strong')?.textContent).toBe('bold')
     expect(document.querySelector('code')?.textContent).toBe('code')
@@ -191,13 +191,13 @@ describe('BubbleListAdapter', () => {
         role: 'assistant',
         text: '[link](https://example.com)',
         status: 'done',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const anchor = document.querySelector('a')
     expect(anchor).toBeTruthy()
@@ -209,15 +209,13 @@ describe('BubbleListAdapter', () => {
     const writeText = vi.fn(async () => {})
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText },
-      configurable: true,
+      configurable: true
     })
-    seedMessages([
-      { id: 'a', role: 'assistant', text: 'hello', status: 'done', createdAt: 0 },
-    ])
+    seedMessages([{ id: 'a', role: 'assistant', text: 'hello', status: 'done', createdAt: 0 }])
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const copyIcon = document.querySelector('.ant-actions-item span[aria-label="copy"]')
     expect(copyIcon).toBeTruthy()
@@ -237,16 +235,16 @@ describe('BubbleListAdapter', () => {
         text: 'failed',
         status: 'error',
         error: 'boom',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
     useChatStore.setState({
-      sendUserMessage,
+      sendUserMessage
     } as Partial<ReturnType<typeof useChatStore.getState>>)
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     const retryIcon = document.querySelector('.ant-actions-item span[aria-label="redo"]')
     expect(retryIcon).toBeTruthy()
@@ -254,7 +252,7 @@ describe('BubbleListAdapter', () => {
     await waitFor(() => {
       expect(sendUserMessage).toHaveBeenCalledWith({
         text: 'please run',
-        attachments: [],
+        attachments: []
       })
     })
   })
@@ -264,7 +262,7 @@ describe('BubbleListAdapter', () => {
     render(
       <Wrap>
         <BubbleListAdapter />
-      </Wrap>,
+      </Wrap>
     )
     expect(screen.queryByText(/新消息|New messages/)).toBeNull()
   })
