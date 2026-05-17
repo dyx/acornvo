@@ -16,7 +16,7 @@
 - **THEN** 显示"无法解析文件编码，请检查文件" + 路径 + "在系统文本编辑器中打开"入口（`shell.openPath(absPath)`）
 
 ### Requirement: Vditor 集成（IR 模式）
-编辑器 SHALL 使用 Vditor 的 `ir`（即时渲染）模式，保持 md 文本忠实度，不做格式归一化重写。Vditor 资源 MUST 从本地 `public/vditor/` 加载（`cdn: '/vditor'`），不访问公网 CDN。
+编辑器 SHALL 使用 Vditor 的 `ir`（即时渲染）模式，保持 md 文本忠实度，不做格式归一化重写。Vditor 资源 MUST 从本地 `public/vditor/dist/` 加载（`cdn: '/vditor'`，Vditor 内部会拼接 `/dist/<sub>` 段），不访问公网 CDN。
 
 #### Scenario: 离线可用
 - **WHEN** 断网打开 Acornvo 并进入 `/editor/:path`
