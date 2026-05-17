@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Welcome, Prompts } from '@ant-design/x'
 import type { PromptsItemType } from '@ant-design/x'
 import { Flex, Alert, Modal, Dropdown } from 'antd'
+import { DownOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
@@ -72,11 +73,19 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
 
   const current = profiles.find((p) => p.id === profileId) ?? null
 
-  return (
-    <Dropdown
-      trigger={['click']}
-      menu={{
-        items: profiles.map((p) => ({
+  const menuItems =
+    profiles.length === 0
+      ? [
+          {
+            key: '__empty',
+            label: (
+              <Link to="/settings/ai" className="block">
+                {t('chat.topbar.noProfile')} — {t('chat.error.goToSettings')}
+              </Link>
+            )
+          }
+        ]
+      : profiles.map((p) => ({
           key: p.id,
           label: (
             <>
@@ -86,12 +95,13 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
           ),
           onClick: () => void updateSessionProfile(sessionId, p.id)
         }))
-      }}
-    >
+
+  return (
+    <Dropdown trigger={['click']} menu={{ items: menuItems }}>
       <button
         type="button"
         data-testid="chat-profile-chip"
-        className="text-xs px-2 py-1 rounded-md hover:bg-muted inline-flex items-center gap-1 shrink-0 max-w-[240px]"
+        className="text-xs px-2 py-1 rounded-md border border-[color:var(--color-line)] hover:bg-muted inline-flex items-center gap-1 shrink-0 max-w-[240px]"
         title={
           current
             ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
@@ -109,6 +119,7 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
         ) : (
           <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
         )}
+        <DownOutlined style={{ fontSize: 10, opacity: 0.5 }} />
       </button>
     </Dropdown>
   )
@@ -160,19 +171,20 @@ export function Chat() {
   const bySession = useChatStore((s) => s.bySession)
   const loadSessions = useChatStore((s) => s.loadSessions)
   const createSession = useChatStore((s) => s.createSession)
+  const refreshProfiles = useProfilesStore((s) => s.refresh)
 
   const didInit = useRef(false)
   useEffect(() => {
     if (didInit.current) return
     didInit.current = true
     const init = async () => {
-      await loadSessions()
+      await Promise.all([loadSessions(), refreshProfiles()])
       if (useChatStore.getState().sessions.length === 0) {
         await createSession()
       }
     }
     void init()
-  }, [loadSessions, createSession])
+  }, [loadSessions, createSession, refreshProfiles])
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null
   const activeSlot = activeSessionId ? bySession[activeSessionId] : null
