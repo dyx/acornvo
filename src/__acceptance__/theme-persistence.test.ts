@@ -34,7 +34,8 @@ vi.mock('@/ipc/client', () => {
         }),
         keychainAvailable: vi.fn().mockResolvedValue(true)
       },
-      on: vi.fn(() => () => {})
+      on: vi.fn(() => () => {}),
+      window: { themeApplied: vi.fn().mockResolvedValue(undefined) }
     }
   }
 })
