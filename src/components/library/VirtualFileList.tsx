@@ -11,7 +11,9 @@ import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
 import { Search } from 'lucide-react'
 
-const ROW_HEIGHT = 60
+// First-paint estimate only — actual row height is measured per element so
+// virtualizer.scrollOffsets don't drift even if FileRow content grows.
+const ROW_HEIGHT_ESTIMATE = 76
 const OVERSCAN = 10
 const SEARCH_DEBOUNCE_MS = 150
 
@@ -39,7 +41,7 @@ export function VirtualFileList(): JSX.Element {
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT,
+    estimateSize: () => ROW_HEIGHT_ESTIMATE,
     overscan: OVERSCAN
   })
 
@@ -118,10 +120,15 @@ export function VirtualFileList(): JSX.Element {
           {virtualizer.getVirtualItems().map((vi) => {
             const file = items[vi.index]
             return (
-              <div key={file.path} style={{
-                position: 'absolute', top: 0, left: 0, width: '100%',
-                transform: `translateY(${vi.start}px)`, height: vi.size
-              }}>
+              <div
+                key={file.path}
+                data-index={vi.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: 'absolute', top: 0, left: 0, width: '100%',
+                  transform: `translateY(${vi.start}px)`
+                }}
+              >
                 <FileRow file={file} active={file.path === selectedPath}
                   onClick={() => void select(file.path)}
                   onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)}
