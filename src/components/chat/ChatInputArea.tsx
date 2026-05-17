@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sender } from '@ant-design/x'
 import type { SenderRef } from '@ant-design/x/es/sender/interface'
 import { PaperClipOutlined } from '@ant-design/icons'
 import { Button, message as antdMessage } from 'antd'
 import { useChatStore, BusyError } from '@/stores/chat'
+import type { Attachment } from '@shared/agent-types'
 import { AttachmentsAdapter, type AttachmentsAdapterHandle } from './AttachmentsAdapter'
+
+const EMPTY_ATTACHMENTS: Attachment[] = []
 
 export function ChatInputArea() {
   const { t } = useTranslation()
@@ -14,7 +17,9 @@ export function ChatInputArea() {
     activeSessionId ? (s.bySession[activeSessionId]?.status ?? 'idle') : 'idle'
   )
   const pendingAttachments = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
+    activeSessionId
+      ? (s.bySession[activeSessionId]?.pendingAttachments ?? EMPTY_ATTACHMENTS)
+      : EMPTY_ATTACHMENTS
   )
   const pendingPromptText = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.pendingPromptText ?? '') : ''
@@ -44,56 +49,81 @@ export function ChatInputArea() {
 
   const isStreaming = status === 'streaming'
 
-  const handleSubmit = async (val: string) => {
-    if (!val.trim() && pendingAttachments.length === 0) return
-    try {
-      await sendUserMessage({ text: val, attachments: pendingAttachments })
-      setText('')
-      setPendingPromptText('')
-    } catch (err) {
-      if (err instanceof BusyError) {
-        antdMessage.error(t('chat.input.busy'))
-      } else {
-        antdMessage.error(err instanceof Error ? err.message : String(err))
+  const handleSubmit = useCallback(
+    async (val: string) => {
+      if (!val.trim() && pendingAttachments.length === 0) return
+      try {
+        await sendUserMessage({ text: val, attachments: pendingAttachments })
+        setText('')
+        setPendingPromptText('')
+      } catch (err) {
+        if (err instanceof BusyError) {
+          antdMessage.error(t('chat.input.busy'))
+        } else {
+          antdMessage.error(err instanceof Error ? err.message : String(err))
+        }
       }
-    }
-  }
+    },
+    [pendingAttachments, sendUserMessage, setPendingPromptText, t]
+  )
+
+  const handleChange = useCallback(
+    (v: string) => {
+      setText(v)
+      setPendingPromptText(v)
+    },
+    [setPendingPromptText]
+  )
+
+  const handleCancel = useCallback(() => {
+    void cancelStream()
+  }, [cancelStream])
+
+  const handleKeyDown = useCallback(
+    (ev: React.KeyboardEvent<Element>) => {
+      if (ev.key === 'Escape' && isStreaming) {
+        ev.preventDefault()
+        void cancelStream()
+        return
+      }
+      if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
+        ev.preventDefault()
+        void handleSubmit(text)
+      }
+    },
+    [isStreaming, cancelStream, handleSubmit, text]
+  )
+
+  const attachVisible = pendingAttachments.length > 0
+  const senderHeader = useMemo(
+    () => <AttachmentsAdapter ref={attachmentsRef} visible={attachVisible} />,
+    [attachVisible]
+  )
+  const senderPrefix = useMemo(
+    () => (
+      <Button
+        type="text"
+        icon={<PaperClipOutlined />}
+        aria-label={t('chat.input.attach')}
+        onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
+      />
+    ),
+    [t]
+  )
 
   return (
     <Sender
       ref={senderRef}
       value={text}
-      onChange={(v) => {
-        setText(v)
-        setPendingPromptText(v)
-      }}
+      onChange={handleChange}
       onSubmit={handleSubmit}
-      onCancel={() => {
-        void cancelStream()
-      }}
+      onCancel={handleCancel}
       loading={isStreaming}
       placeholder={t('chat.input.placeholder')}
       submitType="shiftEnter"
-      onKeyDown={(ev) => {
-        if (ev.key === 'Escape' && isStreaming) {
-          ev.preventDefault()
-          void cancelStream()
-          return
-        }
-        if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) {
-          ev.preventDefault()
-          void handleSubmit(text)
-        }
-      }}
-      prefix={
-        <Button
-          type="text"
-          icon={<PaperClipOutlined />}
-          aria-label={t('chat.input.attach')}
-          onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
-        />
-      }
-      header={<AttachmentsAdapter ref={attachmentsRef} visible={pendingAttachments.length > 0} />}
+      onKeyDown={handleKeyDown}
+      prefix={senderPrefix}
+      header={senderHeader}
     />
   )
 }

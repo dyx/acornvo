@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Welcome, Prompts } from '@ant-design/x'
 import type { PromptsItemType } from '@ant-design/x'
@@ -114,24 +114,31 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
   )
 }
 
+const EMPTY_STATE_FLEX_STYLE = { flex: 1, padding: 32 }
+const EMPTY_STATE_WELCOME_STYLE = { marginBottom: 24, maxWidth: 640, width: '100%' }
+const EMPTY_STATE_PROMPTS_STYLE = { maxWidth: 640, width: '100%' }
+
 function EmptyState() {
   const { t } = useTranslation()
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
-  const promptItems: PromptsItemType[] = [
-    { key: 'p1', label: t('chat.empty.card1') },
-    { key: 'p2', label: t('chat.empty.card2') },
-    { key: 'p3', label: t('chat.empty.card3') },
-    { key: 'p4', label: t('chat.empty.card4') }
-  ]
+  const promptItems = useMemo<PromptsItemType[]>(
+    () => [
+      { key: 'p1', label: t('chat.empty.card1') },
+      { key: 'p2', label: t('chat.empty.card2') },
+      { key: 'p3', label: t('chat.empty.card3') },
+      { key: 'p4', label: t('chat.empty.card4') }
+    ],
+    [t]
+  )
 
   return (
-    <Flex vertical align="center" justify="center" style={{ flex: 1, padding: 32 }}>
+    <Flex vertical align="center" justify="center" style={EMPTY_STATE_FLEX_STYLE}>
       <Welcome
         title={t('chat.empty.heading')}
         description={t('chat.empty.subheading')}
-        style={{ marginBottom: 24, maxWidth: 640, width: '100%' }}
+        style={EMPTY_STATE_WELCOME_STYLE}
       />
       <Prompts
         wrap
@@ -140,7 +147,7 @@ function EmptyState() {
           setPendingPromptText(String(data.label ?? ''))
           bumpFocusInput()
         }}
-        style={{ maxWidth: 640, width: '100%' }}
+        style={EMPTY_STATE_PROMPTS_STYLE}
       />
     </Flex>
   )

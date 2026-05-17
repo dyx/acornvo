@@ -15,9 +15,13 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useChatStore } from '@/stores/chat'
+import type { ChatMessage } from '@/stores/chat'
 import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { ExternalLinkAnchor } from './ExternalLinkAnchor'
 import type { ToolStep } from './bubbleSelectors'
+
+const XMARKDOWN_COMPONENTS = { a: ExternalLinkAnchor as never }
+const EMPTY_MESSAGES: ChatMessage[] = []
 
 type RolesMap = Record<'user' | 'assistant', Partial<BubbleProps>>
 
@@ -96,14 +100,12 @@ function AssistantBubble({
   content: string | { text: string; toolSteps: ToolStep[] }
 }) {
   if (typeof content === 'string') {
-    return <XMarkdown components={{ a: ExternalLinkAnchor as never }}>{content}</XMarkdown>
+    return <XMarkdown components={XMARKDOWN_COMPONENTS}>{content}</XMarkdown>
   }
   return (
     <div>
       {content.toolSteps.length > 0 && <ToolStepsChain steps={content.toolSteps} />}
-      {content.text && (
-        <XMarkdown components={{ a: ExternalLinkAnchor as never }}>{content.text}</XMarkdown>
-      )}
+      {content.text && <XMarkdown components={XMARKDOWN_COMPONENTS}>{content.text}</XMarkdown>}
     </div>
   )
 }
@@ -112,7 +114,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   )
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)

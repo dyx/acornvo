@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react'
 import { Attachments } from '@ant-design/x'
 import type { AttachmentsRef } from '@ant-design/x/es/attachments'
 import { useChatStore } from '@/stores/chat'
@@ -11,6 +11,8 @@ export type AttachmentsAdapterHandle = {
 type Props = {
   visible?: boolean
 }
+
+const EMPTY_ATTACHMENTS: Attachment[] = []
 
 function getFilePath(file: File): string {
   const w = window as unknown as {
@@ -35,7 +37,9 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(
     const innerRef = useRef<AttachmentsRef | null>(null)
     const activeSessionId = useChatStore((s) => s.activeSessionId)
     const pendingAttachments = useChatStore((s) =>
-      activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
+      activeSessionId
+        ? (s.bySession[activeSessionId]?.pendingAttachments ?? EMPTY_ATTACHMENTS)
+        : EMPTY_ATTACHMENTS
     )
     const pushAttachment = useChatStore((s) => s.pushAttachment)
     const removeAttachment = useChatStore((s) => s.removeAttachment)
@@ -46,16 +50,22 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(
       }
     }))
 
+    const attachmentItems = useMemo(
+      () =>
+        pendingAttachments.map((a, i) => ({
+          uid: String(i),
+          name: a.title,
+          status: 'done' as const
+        })),
+      [pendingAttachments]
+    )
+
     return (
       <div style={visible ? undefined : { display: 'none' }}>
         <Attachments
           ref={innerRef}
           overflow="scrollX"
-          items={pendingAttachments.map((a, i) => ({
-            uid: String(i),
-            name: a.title,
-            status: 'done'
-          }))}
+          items={attachmentItems}
           beforeUpload={(file) => {
             const path = getFilePath(file)
             const att: Attachment = { type: 'file', path, title: file.name } as Attachment

@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
@@ -36,7 +36,8 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 
 export function App(): JSX.Element {
   const { i18n } = useTranslation()
-  const antdLocale = pickAntdLocale(i18n.language)
+  const antdLocale = useMemo(() => pickAntdLocale(i18n.language), [i18n.language])
+  const antdTheme = useMemo(() => ({ token: themeTokens }), [])
   const { toast } = useToast()
   useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
@@ -70,7 +71,7 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <XProvider theme={{ token: themeTokens }} locale={antdLocale}>
+    <XProvider theme={antdTheme} locale={antdLocale}>
       <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
         <TitleBar />
         <CrashBanner />
