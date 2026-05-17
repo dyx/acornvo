@@ -1,4 +1,5 @@
-import { app, BrowserWindow, powerMonitor } from 'electron'
+import { app, BrowserWindow, nativeTheme, powerMonitor } from 'electron'
+import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { logger as obsLogger, rotateOnBoot } from './obs/logger'
@@ -40,6 +41,10 @@ function createMainWindow(): BrowserWindow {
     minHeight: 600,
     center: true,
     show: false,
+    titleBarStyle: 'hiddenInset',
+    ...(process.platform === 'win32'
+      ? { titleBarOverlay: getOverlayForTheme() }
+      : {}),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -49,6 +54,13 @@ function createMainWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/preload.js')
     }
   })
+
+  const onThemeChanged = (): void => {
+    if (process.platform === 'win32' && !win.isDestroyed()) {
+      win.setTitleBarOverlay(getOverlayForTheme())
+    }
+  }
+  nativeTheme.on('updated', onThemeChanged)
 
   win.once('ready-to-show', () => {
     const files = checkLastRun()
@@ -75,6 +87,10 @@ function createMainWindow(): BrowserWindow {
       event.preventDefault()
       win.hide()
     }
+  })
+
+  win.on('closed', () => {
+    nativeTheme.off('updated', onThemeChanged)
   })
 
   installExternalLinkGuards(win)
