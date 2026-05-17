@@ -1,7 +1,7 @@
 import { useEffect, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, FolderOpen } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { GroveColor } from '@shared/grove'
 import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
@@ -15,16 +15,15 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
-const dotColor: Record<GroveColor, string> = {
+export const dotColor: Record<GroveColor, string> = {
   acorn: 'var(--color-acorn)',
   leaf: 'var(--color-leaf)',
   berry: 'var(--color-berry)',
   sky: 'var(--color-sky)'
 }
 
-export function GroveSwitcher({ className }: { className?: string }): JSX.Element | null {
+export function GroveSwitcher({ className }: { className?: string }): JSX.Element {
   const { t } = useTranslation()
-  const location = useLocation()
   const current = useGroveStore((s) => s.current)
   const recent = useGroveStore((s) => s.recent)
   const loadRecent = useGroveStore((s) => s.loadRecent)
@@ -35,8 +34,6 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   useEffect(() => {
     void loadRecent()
   }, [loadRecent])
-
-  if (location.pathname === '/picker') return null
 
   const recentFive = recent.slice(0, 5)
 
@@ -52,7 +49,6 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   }
 
   async function handleNew(): Promise<void> {
-    // Delegate to the Picker: navigate there and fire the custom event
     navigate('/picker')
     setTimeout(() => window.dispatchEvent(new CustomEvent('acorn:picker:new')), 0)
   }
@@ -78,25 +74,32 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
           type="button"
           aria-label={t('switcher.ariaLabel')}
           className={cn(
-            'inline-flex items-center gap-2 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 py-1 text-sm text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-2)]',
+            '[-webkit-app-region:no-drag]',
+            'inline-flex items-center gap-1.5',
+            'h-6 px-2 rounded',
+            'text-[12.5px] text-[color:var(--color-ink)]',
+            'hover:bg-[color:var(--color-paper-3)]',
+            'transition-colors',
             className
           )}
         >
           {current ? (
             <>
               <span
-                className="h-2.5 w-2.5 rounded-sm"
+                className="h-2 w-2 rounded-[2px]"
                 style={{ background: dotColor[current.color] }}
               />
-              <span className="serif">{current.name}</span>
+              <span className="font-serif">{current.name}</span>
             </>
           ) : (
-            <span className="text-[color:var(--color-ink-3)]">{t('switcher.noGrove')}</span>
+            <span className="text-[color:var(--color-ink-3)]">
+              {t('switcher.selectGrove')}
+            </span>
           )}
-          <ChevronDown className="h-3.5 w-3.5 text-[color:var(--color-ink-3)]" />
+          <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="center">
         {recentFive.map((item) => (
           <DropdownMenuItem
             key={item.id}
