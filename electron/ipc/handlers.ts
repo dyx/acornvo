@@ -29,6 +29,7 @@ import { appHandlers, licensesHandlers } from './app'
 import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
 import { crashHandlers } from './crash'
+import { windowHandlers } from './window'
 import { getQueueBootstrap } from '../queue'
 import { concurrencyGate } from '../agent/concurrency'
 import { sessions } from '../agent/sessions'
@@ -174,5 +175,6 @@ export const ipcHandlers: HandlerMap = {
   licenses: licensesHandlers,
   update: updateHandlers,
   shell: shellHandlers,
-  crash: crashHandlers
+  crash: crashHandlers,
+  window: windowHandlers
 }
