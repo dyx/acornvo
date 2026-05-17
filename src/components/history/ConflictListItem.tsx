@@ -51,7 +51,7 @@ export function ConflictListItem({ conflict, onClick }: ConflictListItemProps): 
   return (
     <div
       data-testid="conflict-row"
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)] hover:bg-[color:var(--paper-2)] cursor-pointer transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--color-line)] hover:bg-[color:var(--color-paper-2)] cursor-pointer transition-colors"
       onClick={() => onClick(conflict.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -64,7 +64,7 @@ export function ConflictListItem({ conflict, onClick }: ConflictListItemProps): 
       aria-label={`${conflict.path} - ${resolvedByLabel(conflict.resolved_by)}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[color:var(--ink)] truncate">{conflict.path}</p>
+        <p className="text-sm text-[color:var(--color-ink)] truncate">{conflict.path}</p>
         <p className="text-xs text-muted-foreground">{formatTime(conflict.ts)}</p>
       </div>
       <span

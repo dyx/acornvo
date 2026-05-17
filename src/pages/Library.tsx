@@ -24,7 +24,7 @@ export function Library(): JSX.Element {
   }, [refresh])
 
   return (
-    <div className="flex h-full w-full flex-col bg-[color:var(--paper)]">
+    <div className="flex h-full w-full flex-col bg-[color:var(--color-paper)]">
       <IndexBanner />
       <div className="flex flex-1 overflow-hidden">
         <CategorySidebar />

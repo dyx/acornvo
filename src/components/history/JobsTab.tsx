@@ -215,11 +215,11 @@ export function JobsTab(): JSX.Element {
   return (
     <div data-testid="jobs-tab" className="flex flex-col h-full">
       {/* toolbar: filters + clear-done button */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[color:var(--line)] flex-shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[color:var(--color-line)] flex-shrink-0">
         {/* kind filter */}
         <select
           data-testid="kind-filter"
-          className="h-8 rounded-md border border-[color:var(--line)] bg-[color:var(--paper)] px-2 text-xs text-[color:var(--ink)]"
+          className="h-8 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2 text-xs text-[color:var(--color-ink)]"
           value={state.kindFilter}
           onChange={(e) => dispatch({ type: 'SET_KIND_FILTER', kind: e.target.value })}
         >
@@ -234,7 +234,7 @@ export function JobsTab(): JSX.Element {
         {/* status filter */}
         <select
           data-testid="status-filter"
-          className="h-8 rounded-md border border-[color:var(--line)] bg-[color:var(--paper)] px-2 text-xs text-[color:var(--ink)]"
+          className="h-8 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2 text-xs text-[color:var(--color-ink)]"
           value={state.statusFilter}
           onChange={(e) => dispatch({ type: 'SET_STATUS_FILTER', status: e.target.value })}
         >

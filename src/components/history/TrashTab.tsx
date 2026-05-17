@@ -53,7 +53,7 @@ function TrashRow({
   return (
     <div
       data-testid="trash-row"
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)] hover:bg-[color:var(--paper-2)] cursor-pointer transition-colors"
+      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--color-line)] hover:bg-[color:var(--color-paper-2)] cursor-pointer transition-colors"
       style={{ height: ROW_HEIGHT }}
       onClick={() => onClick(item.path)}
       onKeyDown={(e) => {
@@ -67,7 +67,7 @@ function TrashRow({
       aria-label={`${item.path} - ${opLabel(item.op)}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[color:var(--ink)] truncate">{item.path}</p>
+        <p className="text-sm text-[color:var(--color-ink)] truncate">{item.path}</p>
         <p className="text-xs text-muted-foreground">{formatTime(item.ts)}</p>
       </div>
       <span

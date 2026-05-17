@@ -100,14 +100,14 @@ export function VirtualFileList(): JSX.Element {
   }
 
   return (
-    <div className="flex w-[360px] flex-shrink-0 flex-col border-r-[0.5px] border-[color:var(--line)]">
-      <div className="flex items-center gap-2 border-b-[0.5px] border-[color:var(--line)] bg-[color:var(--paper-2)] px-3.5 py-2.5">
-        <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border-[0.5px] border-[color:var(--line)] bg-[color:var(--paper)] px-2.5">
-          <Search size={12} className="text-[color:var(--ink-3)]" />
+    <div className="flex w-[360px] flex-shrink-0 flex-col border-r-[0.5px] border-[color:var(--color-line)]">
+      <div className="flex items-center gap-2 border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3.5 py-2.5">
+        <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5">
+          <Search size={12} className="text-[color:var(--color-ink-3)]" />
           <input
             type="search" value={query} onChange={(e) => setQuery(e.target.value)}
             placeholder={t('library.search_ph')}
-            className="flex-1 border-none bg-transparent text-[12px] text-[color:var(--ink)] outline-none"
+            className="flex-1 border-none bg-transparent text-[12px] text-[color:var(--color-ink)] outline-none"
           />
         </div>
       </div>
@@ -135,7 +135,7 @@ export function VirtualFileList(): JSX.Element {
         </div>
       </div>
 
-      <div className="border-t-[0.5px] border-[color:var(--line)] bg-[color:var(--paper-2)] px-3.5 py-2 font-mono text-[10.5px] text-[color:var(--ink-3)]">
+      <div className="border-t-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3.5 py-2 font-mono text-[10.5px] text-[color:var(--color-ink-3)]">
         {t('library.shown_total', { shown: items.length, total })}
       </div>
 

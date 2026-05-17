@@ -29,17 +29,17 @@ function ViewButton(props: {
       className={cn(
         'mx-2 my-px flex w-[calc(100%-1rem)] items-center gap-1.5 rounded-md border border-transparent px-2.5 py-1 text-left text-[13px]',
         props.active
-          ? 'border-[color:var(--line-2)] bg-[color:var(--paper)] text-[color:var(--ink)]'
-          : 'text-[color:var(--ink-2)]'
+          ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-paper)] text-[color:var(--color-ink)]'
+          : 'text-[color:var(--color-ink-2)]'
       )}
       style={{ paddingLeft: 10 + (props.indent ?? 0) * 12 }}
     >
       {props.dot ? (
-        <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[color:var(--acorn)]" />
+        <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[color:var(--color-acorn)]" />
       ) : null}
       <span className="flex-1 truncate">{props.label}</span>
       {props.count !== undefined ? (
-        <span className="font-mono text-[11px] text-[color:var(--ink-4)]">{props.count}</span>
+        <span className="font-mono text-[11px] text-[color:var(--color-ink-4)]">{props.count}</span>
       ) : null}
     </button>
   )
@@ -94,7 +94,7 @@ export function CategorySidebar(): JSX.Element {
 
   return (
     <aside
-      className="flex w-[200px] flex-shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[color:var(--line)] bg-[color:var(--paper-2)] py-3.5"
+      className="flex w-[200px] flex-shrink-0 flex-col overflow-y-auto border-r-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3.5"
       data-testid="library-category-sidebar"
     >
       <SectionLabel>{t('library.views')}</SectionLabel>
@@ -143,8 +143,8 @@ export function CategorySidebar(): JSX.Element {
                   setFilter({ tag: tag.name, pathPrefix: undefined, category: undefined, rating: undefined })
                 }
                 className={cn(
-                  'rounded-full border-[0.5px] border-[color:var(--line)] bg-[color:var(--paper-3)] px-2 py-0.5 font-mono text-[color:var(--ink-3)]',
-                  filter.tag === tag.name && 'bg-[color:var(--acorn-bg)] text-[color:var(--ink)]'
+                  'rounded-full border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-3)] px-2 py-0.5 font-mono text-[color:var(--color-ink-3)]',
+                  filter.tag === tag.name && 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-ink)]'
                 )}
                 style={{ fontSize: fontSizeForUsage(tag.usage_count, maxUsage) }}
               >
@@ -160,7 +160,7 @@ export function CategorySidebar(): JSX.Element {
 
 function SectionLabel({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <div className="px-3.5 pb-1.5 pt-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-4)]">
+    <div className="px-3.5 pb-1.5 pt-3.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--color-ink-4)]">
       {children}
     </div>
   )

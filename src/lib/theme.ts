@@ -6,6 +6,7 @@ import type { Locale } from 'antd/lib/locale'
 export const themeTokens: NonNullable<ThemeConfig['token']> = {
   colorBgContainer: 'var(--color-paper)',
   colorBgLayout: 'var(--color-paper-2)',
+  colorBgElevated: 'var(--color-paper-2)',
   colorBorder: 'var(--color-line)',
   colorText: 'var(--color-ink)',
   colorTextSecondary: 'var(--color-ink-3)',

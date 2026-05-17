@@ -113,7 +113,7 @@ export function JobRow({ job, onChanged }: JobRowProps): JSX.Element {
   return (
     <div
       data-testid="job-row"
-      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)]"
+      className="flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--color-line)]"
       style={{ height: JOB_ROW_HEIGHT }}
     >
       {/* kind badge */}
@@ -125,7 +125,7 @@ export function JobRow({ job, onChanged }: JobRowProps): JSX.Element {
 
       {/* payload summary + meta + lastError */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[color:var(--ink)] truncate">
+        <p className="text-sm text-[color:var(--color-ink)] truncate">
           {payloadSummary(job.payload)}
         </p>
         <p className="text-xs text-muted-foreground flex items-center gap-2">

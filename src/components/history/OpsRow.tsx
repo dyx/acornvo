@@ -56,7 +56,7 @@ export function OpsRow({ item, onClick }: OpsRowProps): JSX.Element {
   return (
     <div
       data-testid="ops-row"
-      className={`flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--line)] ${isClickable ? 'cursor-pointer hover:bg-[color:var(--paper-2)] transition-colors' : ''}`}
+      className={`flex items-center gap-3 px-4 py-2.5 border-b border-[color:var(--color-line)] ${isClickable ? 'cursor-pointer hover:bg-[color:var(--color-paper-2)] transition-colors' : ''}`}
       role="listitem"
       aria-label={`${item.op}: ${item.path}`}
       onClick={() => {
@@ -76,7 +76,7 @@ export function OpsRow({ item, onClick }: OpsRowProps): JSX.Element {
         {opLabel(item.op)}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[color:var(--ink)] truncate">{item.path}</p>
+        <p className="text-sm text-[color:var(--color-ink)] truncate">{item.path}</p>
       </div>
       <span className="text-xs text-muted-foreground flex-shrink-0">
         {formatTime(item.ts)}

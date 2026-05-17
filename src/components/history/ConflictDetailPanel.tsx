@@ -180,8 +180,8 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
 
   if (loading) {
     return (
-      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--line)]">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--line)]">
+      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)]">
           <p className="text-sm text-muted-foreground">加载中…</p>
         </div>
       </div>
@@ -190,8 +190,8 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
 
   if (!meta) {
     return (
-      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--line)]">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--line)]">
+      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)]">
           <p className="text-sm text-muted-foreground">无法加载冲突信息</p>
           {onClose ? (
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭">
@@ -204,13 +204,13 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
   }
 
   return (
-    <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--line)]">
+    <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
       {/* Header */}
-      <div className="border-b border-[color:var(--line)] px-4 py-3">
+      <div className="border-b border-[color:var(--color-line)] px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium text-[color:var(--ink)] truncate">{meta.path}</p>
+              <p className="text-sm font-medium text-[color:var(--color-ink)] truncate">{meta.path}</p>
               <span
                 className={cn(
                   'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0',
@@ -253,7 +253,7 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
       </div>
 
       {/* Side selector */}
-      <div className="flex items-center gap-1 px-4 py-2 border-b border-[color:var(--line)] bg-[color:var(--paper-2)]">
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
         <span className="text-xs text-muted-foreground mr-2">对比：</span>
         {SIDES_OPTIONS.map((opt) => (
           <Button
@@ -280,7 +280,7 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
       </div>
 
       {/* Footer */}
-      <div className="border-t border-[color:var(--line)] px-4 py-2.5 flex justify-end">
+      <div className="border-t border-[color:var(--color-line)] px-4 py-2.5 flex justify-end">
         <Button variant="outline" size="sm" onClick={() => setDeleteAllDialogOpen(true)} className="text-red-600 hover:text-red-700">
           <Trash2 className="size-3.5 mr-1" />
           删除全部冲突

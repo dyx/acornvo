@@ -44,14 +44,14 @@ function DiffRow({
     <div className="flex font-mono text-xs leading-5">
       {/* left gutter + line */}
       <div className={cn('flex w-1/2 min-w-0', leftBg)}>
-        <span className="inline-block w-10 text-right pr-2 text-[color:var(--ink)]/30 select-none flex-shrink-0">
+        <span className="inline-block w-10 text-right pr-2 text-[color:var(--color-ink)]/30 select-none flex-shrink-0">
           {leftNum > 0 ? leftNum : ''}
         </span>
         <span className="flex-1 whitespace-pre-wrap break-all pr-1">{leftText}</span>
       </div>
       {/* right gutter + line */}
       <div className={cn('flex w-1/2 min-w-0', rightBg)}>
-        <span className="inline-block w-10 text-right pr-2 text-[color:var(--ink)]/30 select-none flex-shrink-0">
+        <span className="inline-block w-10 text-right pr-2 text-[color:var(--color-ink)]/30 select-none flex-shrink-0">
           {rightNum > 0 ? rightNum : ''}
         </span>
         <span className="flex-1 whitespace-pre-wrap break-all pr-1">{rightText}</span>
@@ -67,13 +67,13 @@ export function DiffView({ diff }: DiffViewProps): JSX.Element {
   return (
     <div data-testid="diff-view" className="flex flex-col h-full overflow-auto">
       {/* stats bar */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[color:var(--line)] text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[color:var(--color-line)] text-xs text-muted-foreground">
         <span className="text-green-600 dark:text-green-400">+{stats.added}</span>
         <span className="text-red-600 dark:text-red-400">-{stats.removed}</span>
       </div>
 
       {/* column headers */}
-      <div className="flex border-b border-[color:var(--line)] px-3 py-1.5 bg-[color:var(--paper-2)]">
+      <div className="flex border-b border-[color:var(--color-line)] px-3 py-1.5 bg-[color:var(--color-paper-2)]">
         <div className="w-1/2">
           <SideLabel side={left.label} />
         </div>

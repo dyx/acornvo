@@ -27,34 +27,34 @@ export function FileRow({ file, active, onClick, onDoubleClick, onContextMenu }:
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'cursor-pointer border-b-[0.5px] border-[color:var(--line)] px-3.5 py-2.5',
-        active && 'border-l-2 border-l-[color:var(--acorn)] bg-[color:var(--acorn-bg)] pl-3'
+        'cursor-pointer border-b-[0.5px] border-[color:var(--color-line)] px-3.5 py-2.5',
+        active && 'border-l-2 border-l-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] pl-3'
       )}
     >
       <div className="mb-0.5 flex items-baseline gap-2">
-        <span className="serif flex-1 truncate text-[13.5px] font-medium text-[color:var(--ink)]">
+        <span className="serif flex-1 truncate text-[13.5px] font-medium text-[color:var(--color-ink)]">
           {file.title ?? file.path}
         </span>
         {file.is_reviewing ? (
-          <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-[color:var(--acorn)]"
+          <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-[color:var(--color-acorn)]"
             aria-label={t('library.reviewing')} />
         ) : null}
       </div>
-      <div className="mb-1 flex items-center gap-2 truncate font-mono text-[10.5px] text-[color:var(--ink-4)]">
+      <div className="mb-1 flex items-center gap-2 truncate font-mono text-[10.5px] text-[color:var(--color-ink-4)]">
         {file.path}
       </div>
-      <div className="flex items-center gap-1.5 font-mono text-[10.5px] text-[color:var(--ink-3)]">
+      <div className="flex items-center gap-1.5 font-mono text-[10.5px] text-[color:var(--color-ink-3)]">
         {file.rating !== null ? (
           <span className="flex gap-px" aria-label={`rating ${file.rating}`}>
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i} className={cn(
-                'h-1.5 w-1.5 rounded-[1px] border-[0.5px] border-[color:var(--line)]',
-                i < (file.rating ?? 0) ? 'bg-[color:var(--acorn)]' : 'bg-[color:var(--paper-3)]'
+                'h-1.5 w-1.5 rounded-[1px] border-[0.5px] border-[color:var(--color-line)]',
+                i < (file.rating ?? 0) ? 'bg-[color:var(--color-acorn)]' : 'bg-[color:var(--color-paper-3)]'
               )} />
             ))}
           </span>
         ) : (
-          <span className="text-[color:var(--acorn-2)]">· {t('library.reviewing')}</span>
+          <span className="text-[color:var(--color-acorn-2)]">· {t('library.reviewing')}</span>
         )}
         <span>·</span>
         <span>{formatClipped(file.clipped_at)}</span>
