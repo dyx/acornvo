@@ -21,6 +21,7 @@ function tab(id: string, overrides: Partial<any> = {}) {
     readerMode: false,
     suspended: false,
     savedUrl: 'https://x',
+    isClipped: false,
     ...overrides
   }
 }

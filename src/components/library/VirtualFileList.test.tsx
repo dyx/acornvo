@@ -63,12 +63,12 @@ describe('VirtualFileList', () => {
     if (_origOffsetHeight) {
       Object.defineProperty(HTMLElement.prototype, 'offsetHeight', _origOffsetHeight)
     } else {
-      delete (HTMLElement.prototype as Record<string, unknown>).offsetHeight
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetHeight
     }
     if (_origOffsetWidth) {
       Object.defineProperty(HTMLElement.prototype, 'offsetWidth', _origOffsetWidth)
     } else {
-      delete (HTMLElement.prototype as Record<string, unknown>).offsetWidth
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetWidth
     }
     vi.useRealTimers()
     cleanup()
@@ -215,7 +215,7 @@ describe('VirtualFileList', () => {
 
   it('hardDelete failure keeps dialog open and preserves store item', async () => {
     // Catch expected unhandled rejection from hardDelete throwing IpcError
-    const rejectionCaught = vi.fn<[unknown]>()
+    const rejectionCaught = vi.fn<(reason: unknown) => void>()
     const onRejection = (reason: unknown) => { rejectionCaught(reason) }
     process.on('unhandledRejection', onRejection)
 
@@ -225,7 +225,7 @@ describe('VirtualFileList', () => {
     })
     vi.mocked(ipc.file.hardDelete).mockResolvedValue({
       ok: false,
-      error: { code: 'E_UNKNOWN', message: 'Delete failed' }
+      error: { code: 'E_UNKNOWN' as any, message: 'Delete failed' }
     })
 
     useLibraryStore.setState({

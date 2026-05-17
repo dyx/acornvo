@@ -159,7 +159,7 @@ describe('10.13 LRU suspend/resume', () => {
     const { port } = renderApp()
     // Seed the store directly rather than waiting for auto-create
     useBrowserStore.setState({
-      tabs: [{ id: 't0', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank' }],
+      tabs: [{ id: 't0', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
       activeTabId: 't0'
     })
     setBrowserPort(port as any)
@@ -177,7 +177,7 @@ describe('10.13 LRU suspend/resume', () => {
     const { port } = renderApp()
     const id = 't-suspended'
     useBrowserStore.setState({
-      tabs: [{ id, url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: true, savedUrl: 'https://x' }],
+      tabs: [{ id, url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: true, savedUrl: 'https://x', isClipped: false }],
       activeTabId: null
     })
     setBrowserPort(port as any)

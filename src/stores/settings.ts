@@ -44,12 +44,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   async loadAll() {
     const [general, appearance, ai, browser, update, telemetry] = await Promise.all([
-      ipc.settings.get('general'),
-      ipc.settings.get('appearance'),
-      ipc.settings.get('ai'),
-      ipc.settings.get('browser'),
-      ipc.settings.get('update'),
-      ipc.settings.get('telemetry')
+      ipc.settings.get('general') as Promise<GeneralSettings>,
+      ipc.settings.get('appearance') as Promise<AppearanceSettings>,
+      ipc.settings.get('ai') as Promise<AiSettings>,
+      ipc.settings.get('browser') as Promise<BrowserSettings>,
+      ipc.settings.get('update') as Promise<UpdateSettings>,
+      ipc.settings.get('telemetry') as Promise<TelemetrySettings>
     ])
     set({ general, appearance, ai, browser, update, telemetry, ready: true })
   },

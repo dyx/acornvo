@@ -33,9 +33,13 @@ export function ChatInputArea() {
   const [text, setText] = useState(pendingPromptText)
   const attachmentsRef = useRef<AttachmentsAdapterHandle | null>(null)
 
-  useEffect(() => {
+  const [prevPrompt, setPrevPrompt] = useState(pendingPromptText)
+  const [prevSessionId, setPrevSessionId] = useState(activeSessionId)
+  if (pendingPromptText !== prevPrompt || activeSessionId !== prevSessionId) {
+    setPrevPrompt(pendingPromptText)
+    setPrevSessionId(activeSessionId)
     setText(pendingPromptText)
-  }, [pendingPromptText, activeSessionId])
+  }
 
   useEffect(() => {
     if (focusInputBump <= 0) return

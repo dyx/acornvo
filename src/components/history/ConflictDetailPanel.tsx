@@ -258,7 +258,7 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
         {SIDES_OPTIONS.map((opt) => (
           <Button
             key={opt.value}
-            variant={sides === opt.value ? 'default' : 'ghost'}
+            variant={sides === opt.value ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setSides(opt.value)}
             className="text-xs h-7"

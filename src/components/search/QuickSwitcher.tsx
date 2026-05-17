@@ -13,7 +13,7 @@ export function QuickSwitcher(): JSX.Element {
   const items = useSearchStore((s) => s.quickSwitcher.items)
   const selectedIndex = useSearchStore((s) => s.quickSwitcher.selectedIndex)
   const close = useSearchStore((s) => s.quickSwitcher.close)
-  const onPick = useSearchStore((s) => s.quickSwitcher.onPick)
+
   const scheduleQuery = useSearchStore((s) => s.quickSwitcher.scheduleQuery)
   const moveSelection = useSearchStore((s) => s.quickSwitcher.moveSelection)
   const setSelectedIndex = useSearchStore((s) => s.quickSwitcher.setSelectedIndex)
@@ -32,7 +32,7 @@ export function QuickSwitcher(): JSX.Element {
     const curOnPick = useSearchStore.getState().quickSwitcher.onPick
     pushRecent(item.path)
     if (curOnPick) {
-      const fs = items.find((i) => i.path === item.path) ?? { path: item.path, title: item.title ?? null, clipped_at: null }
+      const fs = items.find((i) => i.path === item.path) ?? ({ path: item.path, title: item.title ?? null, clipped_at: null } as any)
       curOnPick(fs)
     } else {
       navigate('/editor/' + encodeURIComponent(item.path))

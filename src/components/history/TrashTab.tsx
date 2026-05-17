@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { formatDistanceToNow } from 'date-fns'
@@ -6,7 +6,7 @@ import { zhCN } from 'date-fns/locale'
 import { ipc } from '@/ipc/client'
 import { EmptyState } from './EmptyState'
 import type { OpsItem, Op } from '@shared/ops-types'
-import { Trash2, FolderOpen } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 
 const ROW_HEIGHT = 44
 const OVERSCAN = 10

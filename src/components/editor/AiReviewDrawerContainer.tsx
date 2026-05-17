@@ -43,13 +43,4 @@ export function AiReviewDrawerContainer({ clipId, onClose }: Props) {
   );
 }
 
-export function useAiDrawer(clipId: number | null) {
-  const [open, setOpen] = useState(false);
-  const drawer = open ? (
-    <AiReviewDrawerContainer
-      clipId={clipId}
-      onClose={() => setOpen(false)}
-    />
-  ) : null;
-  return { drawer, openDrawer: () => setOpen(true) };
-}
+

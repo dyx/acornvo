@@ -22,10 +22,12 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
   const [editedArgs, setEditedArgs] = useState<unknown>(approval.args)
   const [jsonValid, setJsonValid] = useState(true)
 
-  useEffect(() => {
+  const [prevCallId, setPrevCallId] = useState(callId)
+  if (callId !== prevCallId) {
+    setPrevCallId(callId)
     setEditedArgs(approval.args)
     setJsonValid(true)
-  }, [approval.args, callId])
+  }
 
   const isFrontmatter = approval.toolName === 'update_frontmatter'
 

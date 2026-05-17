@@ -46,10 +46,13 @@ export function AddressBar(): JSX.Element {
         ? 'clipped'
         : 'hollow'
 
-  // Sync from tab url when tab changes
-  useEffect(() => {
+  const [prevTabUrl, setPrevTabUrl] = useState(tab?.url)
+  const [prevTabId, setPrevTabId] = useState(tab?.id)
+  if (tab?.url !== prevTabUrl || tab?.id !== prevTabId) {
+    setPrevTabUrl(tab?.url)
+    setPrevTabId(tab?.id)
     if (tab?.url !== undefined) setValue(tab.url)
-  }, [tab?.url, tab?.id])
+  }
 
   // Refresh bookmark state when active URL changes
   useEffect(() => {

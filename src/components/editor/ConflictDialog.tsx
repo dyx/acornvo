@@ -20,7 +20,9 @@ export function ConflictDialog(): React.JSX.Element | null {
   if (cs.kind !== 'saveConflict') return null
 
   const localUnsaved = wordsCount(state.body) - wordsCount(state.savedBody)
-  const onLater = (): void => useEditorStore.getState().dismissDialog?.() ?? (() => {})
+  const onLater = (): void => {
+    useEditorStore.getState().dismissDialog?.()
+  }
 
   return (
     <Dialog

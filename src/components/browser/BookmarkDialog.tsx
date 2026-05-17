@@ -41,11 +41,16 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
   const [title, setTitle] = useState(props.initial.title ?? '')
   const [tags, setTags] = useState(props.initial.tags?.join(', ') ?? '')
 
-  useEffect(() => {
+  const [prevUrl, setPrevUrl] = useState(props.initial.url)
+  const [prevId, setPrevId] = useState(props.mode === 'edit' ? props.initial.id : undefined)
+
+  if (props.initial.url !== prevUrl || (props.mode === 'edit' && props.initial.id !== prevId)) {
+    setPrevUrl(props.initial.url)
+    setPrevId(props.mode === 'edit' ? props.initial.id : undefined)
     setUrl(props.initial.url)
     setTitle(props.initial.title ?? '')
     setTags(props.initial.tags?.join(', ') ?? '')
-  }, [props.initial])
+  }
 
   function parseTags(s: string): string[] {
     return s

@@ -44,7 +44,7 @@ describe('CategorySidebar', () => {
   })
 
   it('clicking 果篮 calls setFilter({ pathPrefix: "inbox/" })', () => {
-    const setFilter = vi.spyOn(useLibraryStore.getState(), 'setFilter')
+    const setFilter = vi.fn()
     useLibraryStore.setState({ setFilter })
     render(<CategorySidebar />)
     fireEvent.click(screen.getByRole('button', { name: /果篮/ }))
@@ -57,7 +57,7 @@ describe('CategorySidebar', () => {
   })
 
   it('clicking 待理果 calls setFilter', () => {
-    const setFilter = vi.spyOn(useLibraryStore.getState(), 'setFilter')
+    const setFilter = vi.fn()
     useLibraryStore.setState({ setFilter })
     render(<CategorySidebar />)
     fireEvent.click(screen.getByRole('button', { name: /待理果/ }))
@@ -100,7 +100,7 @@ describe('CategorySidebar', () => {
     useLibraryStore.setState({
       categoryTree: [{ name: '技术', count: 1, children: [] }]
     })
-    const setFilter = vi.spyOn(useLibraryStore.getState(), 'setFilter')
+    const setFilter = vi.fn()
     useLibraryStore.setState({ setFilter })
     render(<CategorySidebar />)
     fireEvent.click(screen.getByText('技术'))
@@ -111,7 +111,7 @@ describe('CategorySidebar', () => {
     useLibraryStore.setState({
       tagCloud: [{ name: 'attention', usage_count: 5 }]
     })
-    const setFilter = vi.spyOn(useLibraryStore.getState(), 'setFilter')
+    const setFilter = vi.fn()
     useLibraryStore.setState({ setFilter })
     render(<CategorySidebar />)
     fireEvent.click(screen.getByText('#attention'))

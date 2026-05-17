@@ -28,14 +28,16 @@ export function NewGroveDialog({ open, onOpenChange, onCreated }: NewGroveDialog
   const [busy, setBusy] = useState(false)
   const createGrove = useGroveStore((s) => s.createGrove)
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (!open) {
       setParentDir('')
       setName('')
       setError(null)
       setBusy(false)
     }
-  }, [open])
+  }
 
   async function chooseParent(): Promise<void> {
     const p = await ipc.project.selectDirectory('createParent')

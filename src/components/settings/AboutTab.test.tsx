@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // src/components/settings/AboutTab.test.tsx
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
 import { i18n } from '@/i18n'

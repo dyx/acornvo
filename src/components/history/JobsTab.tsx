@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import type { Job, JobStatus } from '@shared/job-types'
-import { JOB_STATUSES, JOB_KINDS } from '@shared/job-types'
+import { JOB_KINDS } from '@shared/job-types'
 import { ListChecks, Trash2 } from 'lucide-react'
 import { JobRow, JOB_ROW_HEIGHT } from './JobRow'
 

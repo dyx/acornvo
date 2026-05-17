@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { AiReviewBadge } from './AiReviewBadge'
-import { useAiDrawer } from './AiReviewDrawerContainer'
+import { useAiDrawer } from './useAiDrawer'
 
 function isMac(): boolean {
   return typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC')

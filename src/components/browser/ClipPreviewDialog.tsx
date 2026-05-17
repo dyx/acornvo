@@ -1,5 +1,6 @@
+import type { JSX } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
 import { useBrowserStore } from '@/stores/browser'
@@ -21,13 +22,14 @@ export function ClipPreviewDialog(): JSX.Element | null {
   const [tagsRaw, setTagsRaw] = useState('')
   const [excerpt, setExcerpt] = useState('')
 
-  useEffect(() => {
-    if (preview) {
-      setTitle(preview.title ?? '')
-      setTagsRaw((preview.tags ?? []).join(','))
-      setExcerpt(preview.excerpt ?? '')
-    }
-  }, [preview?.runId])
+  const [prevRunId, setPrevRunId] = useState<string | undefined>(undefined)
+
+  if (preview?.runId !== prevRunId) {
+    setPrevRunId(preview?.runId)
+    setTitle(preview?.title ?? '')
+    setTagsRaw((preview?.tags ?? []).join(','))
+    setExcerpt(preview?.excerpt ?? '')
+  }
 
   const bodyPreview = useMemo(() => (preview?.body ?? '').slice(0, 2000), [preview?.body])
 

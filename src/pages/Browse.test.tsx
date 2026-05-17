@@ -83,7 +83,7 @@ describe('Browse page', () => {
     const port = mockPort()
     setBrowserPort(port)
     useBrowserStore.setState({
-      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank' }],
+      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
       activeTabId: 'existing'
     })
     render(<Browse />)
