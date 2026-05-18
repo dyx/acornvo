@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Globe, Library, MessageSquare, Settings as SettingsIcon } from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
+import { dotColor } from './GroveSwitcher'
 
 interface RailEntry {
   to: string
@@ -34,8 +35,13 @@ export function AppRail(): JSX.Element {
         onClick={() => {
           navigate('/picker')
         }}
-        title={current ? `${current.name} — 切换树林` : '切换树林'}
+        title={current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
         className="mb-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity"
+        style={
+          current
+            ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
+            : undefined
+        }
       >
         {/* Placeholder Acorn Logo */}
         <span className="text-[24px]">🌰</span>
