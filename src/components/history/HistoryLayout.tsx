@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
@@ -7,16 +7,8 @@ import { ConflictsTab } from './ConflictsTab'
 import { ConflictDetailPanel } from './ConflictDetailPanel'
 import { OpsTab } from './OpsTab'
 import { JobsTab } from './JobsTab'
-import { useTitleStore } from '@/stores/title'
 
 type TabId = 'trash' | 'conflicts' | 'ops' | 'jobs'
-
-const TAB_TITLES: Record<TabId, string> = {
-  trash: '废纸篓',
-  conflicts: '冲突',
-  ops: '操作记录',
-  jobs: '任务'
-}
 
 interface HistoryLayoutProps {
   tab: TabId
@@ -25,15 +17,7 @@ interface HistoryLayoutProps {
 
 export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutProps) {
   const navigate = useNavigate()
-  const setTitle = useTitleStore((s) => s.setTitle)
   const [selectedConflictId, setSelectedConflictId] = useState<string | null>(initialSelectedConflictId ?? null)
-
-  useEffect(() => {
-    setTitle(TAB_TITLES[tab])
-    return () => {
-      setTitle('')
-    }
-  }, [tab, setTitle])
 
   const handleClosePanel = () => {
     setSelectedConflictId(null)
