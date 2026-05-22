@@ -1,9 +1,8 @@
 import { useEffect } from 'react'
 import type { JSX } from 'react'
 import { useLibraryStore, installLibrarySubscriber } from '@/stores/library'
-import { CategorySidebar } from '@/components/library/CategorySidebar'
 import { VirtualFileList } from '@/components/library/VirtualFileList'
-import { FilePreviewPanel } from '@/components/library/FilePreviewPanel'
+import { EmbeddedEditorPanel } from '@/components/library/EmbeddedEditorPanel'
 import { IndexBanner } from '@/components/library/IndexBanner'
 
 export function Library(): JSX.Element {
@@ -19,9 +18,15 @@ export function Library(): JSX.Element {
     <div className="flex h-full w-full flex-col bg-[color:var(--color-paper)]">
       <IndexBanner />
       <div className="flex flex-1 overflow-hidden">
-        <CategorySidebar />
-        <VirtualFileList />
-        <FilePreviewPanel />
+        {/* Left Column: Combined List with Tabs */}
+        <div className="flex w-[280px] flex-shrink-0 flex-col border-r-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
+          <VirtualFileList />
+        </div>
+
+        {/* Right Column: Editor */}
+        <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-bg-1)]">
+          <EmbeddedEditorPanel />
+        </div>
       </div>
     </div>
   )

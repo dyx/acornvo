@@ -6,6 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { IpcError } from '@shared/ipc-contract'
 import { ipc } from '@/ipc/client'
 import { useLibraryStore } from '@/stores/library'
+import { useEditorStore } from '@/stores/editor'
 import { FileRow } from './FileRow'
 import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
@@ -22,6 +23,7 @@ export function VirtualFileList(): JSX.Element {
   const navigate = useNavigate()
   const items = useLibraryStore((s) => s.items)
   const total = useLibraryStore((s) => s.total)
+  const filter = useLibraryStore((s) => s.filter)
   const selectedPath = useLibraryStore((s) => s.selectedPath)
   const select = useLibraryStore((s) => s.select)
   const removeItem = useLibraryStore((s) => s.removeItem)
@@ -50,11 +52,15 @@ export function VirtualFileList(): JSX.Element {
     [items, selectedPath]
   )
 
-  function moveSelection(delta: 1 | -1): void {
+  async function moveSelection(delta: 1 | -1): Promise<void> {
     if (items.length === 0) return
     let next = selectedIndex + delta
     if (next < 0) next = 0
     if (next > items.length - 1) next = items.length - 1
+    const s = useEditorStore.getState().state
+    if (s.kind === 'ready' && (s.dirty || s.saving)) {
+      await useEditorStore.getState().flushSave()
+    }
     void select(items[next].path)
     virtualizer.scrollToIndex(next, { align: 'auto' })
   }
@@ -84,8 +90,8 @@ export function VirtualFileList(): JSX.Element {
   }, [])
 
   function onKey(e: React.KeyboardEvent<HTMLDivElement>): void {
-    if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); void moveSelection(1) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); void moveSelection(-1) }
     else if (e.key === 'Enter' && selectedPath) {
       e.preventDefault()
       navigate(`/editor/${encodeURIComponent(selectedPath)}`)
@@ -102,7 +108,23 @@ export function VirtualFileList(): JSX.Element {
   }
 
   return (
-    <div className="flex w-[360px] flex-shrink-0 flex-col border-r-[0.5px] border-[color:var(--color-line)]">
+    <div className="flex w-full flex-1 flex-col">
+      <div className="flex border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
+        <button
+          type="button"
+          onClick={() => setFilter({ pathPrefix: undefined, category: undefined, tag: undefined, rating: undefined })}
+          className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${!filter.rating ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
+        >
+          {t('library.all')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter({ rating: { min: 0, max: 0 }, pathPrefix: undefined, category: undefined, tag: undefined })}
+          className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${filter.rating?.min === 0 ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
+        >
+          {t('library.unreviewed')}
+        </button>
+      </div>
       <div className="flex items-center gap-2 border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3.5 py-2.5">
         <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5">
           <Search size={12} className="text-[color:var(--color-ink-3)]" />
@@ -130,7 +152,13 @@ export function VirtualFileList(): JSX.Element {
                 }}
               >
                 <FileRow file={file} active={file.path === selectedPath}
-                  onClick={() => void select(file.path)}
+                  onClick={async () => {
+                    const s = useEditorStore.getState().state
+                    if (s.kind === 'ready' && (s.dirty || s.saving)) {
+                      await useEditorStore.getState().flushSave()
+                    }
+                    void select(file.path)
+                  }}
                   onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)}
                   onContextMenu={(e) => {
                     e.preventDefault()
