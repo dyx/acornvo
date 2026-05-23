@@ -293,7 +293,7 @@ export function Chat() {
         <div className="flex h-full w-full bg-background" data-testid="chat-page-root">
           <aside
             data-testid="chat-session-list"
-            className="flex shrink-0 flex-col border-r bg-muted/20 overflow-hidden w-64"
+            className="flex shrink-0 flex-col border-r border-[color:var(--color-line)] bg-muted/20 overflow-hidden w-[280px]"
           >
             <ConversationsAdapter />
           </aside>
@@ -305,7 +305,7 @@ export function Chat() {
             <SessionsErrorBanner />
             <StreamErrorBanner />
             <MissingProfileBanner />
-            <header className="flex h-14 shrink-0 items-center gap-3 border-b px-5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[color:var(--color-line)] px-5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
               <h2 className="font-serif text-[15px] font-medium m-0 flex-1 truncate text-foreground">
                 {title}
               </h2>
