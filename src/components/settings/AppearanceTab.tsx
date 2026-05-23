@@ -40,6 +40,12 @@ export function AppearanceTab(): JSX.Element {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [localScale, setLocalScale] = useState(appearance.fontScale)
+
+  useEffect(() => {
+    setLocalScale(appearance.fontScale)
+  }, [appearance.fontScale])
+
   useEffect(() => {
     applyFontScale(appearance.fontScale)
   }, [appearance.fontScale])
@@ -76,15 +82,16 @@ export function AppearanceTab(): JSX.Element {
             min={0.8}
             max={1.4}
             step={0.1}
-            value={[appearance.fontScale]}
+            value={[localScale]}
             onValueChange={([value]) => {
+              setLocalScale(value)
               applyFontScale(value)
               if (debounceRef.current) clearTimeout(debounceRef.current)
               debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
             }}
           />
           <span className="text-sm text-muted-foreground w-8 text-right">
-            {appearance.fontScale.toFixed(1)}x
+            {localScale.toFixed(1)}x
           </span>
         </div>
       </div>
