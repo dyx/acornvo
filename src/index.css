@@ -113,3 +113,9 @@ body {
 .animate-fade-up {
   animation: fade-up 0.3s ease-out both;
 }
+
+/* Fix Vditor fullscreen mode covering the Electron drag region / traffic lights */
+.vditor--fullscreen {
+  top: 40px !important;
+  height: calc(100% - 40px) !important;
+}
