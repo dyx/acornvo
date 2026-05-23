@@ -44,6 +44,10 @@ export function App(): JSX.Element {
   }>({ scanned: 0, total: 0 })
 
   useEffect(() => {
+    ipc.index.status().then((s) => {
+      setProgress((prev) => ({ ...prev, scanned: s.scanned, total: s.total, currentPath: s.currentPath }))
+    })
+
     const offRebuilding = ipc.on('db:rebuilding', () => {
       setIsRebuilding(true)
     })

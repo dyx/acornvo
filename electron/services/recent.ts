@@ -79,3 +79,19 @@ export async function removeById(id: string): Promise<void> {
   }
   await save(next)
 }
+
+export async function updateFilesCount(id: string, count: number): Promise<void> {
+  const file = await load()
+  let changed = false
+  const nextItems = file.items.map((i) => {
+    if (i.id === id && i.files_count !== count) {
+      changed = true
+      return { ...i, files_count: count }
+    }
+    return i
+  })
+  if (changed) {
+    await save({ schema_version: 1, items: nextItems })
+  }
+}
+

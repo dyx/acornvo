@@ -27,6 +27,9 @@ export const indexHandlers = {
   }
 }
 
+import * as groveSvc from '../services/grove'
+import * as recent from '../services/recent'
+
 export function attachIndexEventForwarders(win: BrowserWindow): () => void {
   const offProgress = onProgress((s) => {
     win.webContents.send('index:progress', {
@@ -35,7 +38,15 @@ export function attachIndexEventForwarders(win: BrowserWindow): () => void {
       ...(s.currentPath ? { currentPath: s.currentPath } : {})
     })
   })
-  const offDone = onDone(() => win.webContents.send('index:done', {}))
+  const offDone = onDone(() => {
+    win.webContents.send('index:done', {})
+    const grove = groveSvc.getCurrent()
+    if (grove) {
+      recent.updateFilesCount(grove.id, indexerState().total).catch((err) => {
+        console.error('Failed to update recent files count:', err)
+      })
+    }
+  })
   const offError = onError((message) => win.webContents.send('index:error', { message }))
   const offStateChange = onStateChange((s) =>
     win.webContents.send('index:stateChange', { state: s.state })

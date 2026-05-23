@@ -265,9 +265,16 @@ export async function openGrove(
   try {
     const initResult = await initialize(path)
 
-    // Open db BEFORE bumping last_opened_at — failure rolls back cleanly.
     const { dbService } = await import('./db')
     dbService.openForGrove(path)
+
+    let filesCount = 0
+    try {
+      const db = dbService.requireCurrent()
+      filesCount = (db.prepare('SELECT count(*) as c FROM files').get() as { c: number }).c
+    } catch {
+      /* ignore */
+    }
 
     const now = new Date().toISOString()
     const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
@@ -284,7 +291,7 @@ export async function openGrove(
       color: grove.color,
       pinned: false,
       last_opened_at: now,
-      files_count: 0
+      files_count: filesCount
     })
 
     if (initResult.syncProvider) {
