@@ -2,6 +2,7 @@
 import { create } from 'zustand'
 import type { ClipErrorEnvelope, ClipInput, ClipPreview, ClipStage } from '@shared/clipper-types'
 import { getClipperPort } from '@/ipc/clipper-port'
+import { useBrowserStore } from './browser'
 
 interface ClipperState {
   stage: ClipStage
@@ -54,6 +55,10 @@ export const useClipperStore = create<ClipperState>()((set, get) => ({
       return
     }
     set({ stage: 'done', lastSuccess: { id: r.data.id, path: r.data.path }, preview: null })
+    const activeTab = useBrowserStore.getState().getActiveTab()
+    if (activeTab) {
+      useBrowserStore.getState().applyTabPatch(activeTab.id, { isClipped: true })
+    }
   },
 
   async cancel() {
