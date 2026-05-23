@@ -11,11 +11,6 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { to: '/settings/general', labelKey: 'settings.tab.general', testId: 'settings-rail-general' },
-  {
-    to: '/settings/appearance',
-    labelKey: 'settings.tab.appearance',
-    testId: 'settings-rail-appearance'
-  },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' },
   {

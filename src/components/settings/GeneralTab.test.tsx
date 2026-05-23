@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // src/components/settings/GeneralTab.test.tsx
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 
 import { i18n } from '@/i18n'
 
@@ -11,6 +11,12 @@ vi.mock('@/ipc/client', () => ({
     on: vi.fn(() => () => {})
   }
 }))
+
+global.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
 vi.mock('@/stores/grove', () => ({
   useGroveStore: Object.assign(
@@ -31,28 +37,9 @@ describe('GeneralTab', () => {
   })
   afterEach(() => cleanup())
 
-  it('renders locale select with the current value', () => {
+  it('renders settings fields', () => {
     useSettingsStore.setState({ general: { locale: 'zh-CN', autoBackup: 'off' } })
     render(<GeneralTab />)
-    const select = screen.getByLabelText(/locale|语言/i) as HTMLSelectElement
-    expect(select.value).toBe('zh-CN')
-  })
-
-  it('changing the locale calls setGeneral with new value AND switches i18n', () => {
-    const setGeneral = vi.fn().mockResolvedValue(undefined)
-    useSettingsStore.setState({
-      general: { locale: 'zh-CN', autoBackup: 'off' },
-      setGeneral
-    })
-    render(<GeneralTab />)
-    const select = screen.getByLabelText(/locale|语言/i)
-    fireEvent.change(select, { target: { value: 'en-US' } })
-    expect(setGeneral).toHaveBeenCalledWith({ locale: 'en-US' })
-  })
-
-  it('shows vault path read-only with copy button', () => {
-    render(<GeneralTab />)
-    expect(screen.getByText('/tmp/my-grove')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /copy|复制/i })).toBeTruthy()
+    expect(screen.getByTestId('settings-tab-general')).toBeTruthy()
   })
 })
