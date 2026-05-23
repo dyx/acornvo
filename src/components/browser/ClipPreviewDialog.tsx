@@ -53,30 +53,31 @@ export function ClipPreviewDialog(): JSX.Element | null {
 
           <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr,2fr] gap-3 overflow-hidden">
             {/* Left: meta */}
-            <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2">
               <label className="text-xs">
                 {t('browser.clip.preview.title_field', '标题')}
                 <input
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </label>
 
-              <div className="text-xs text-[color:var(--color-ink-3)]">
-                <div className="truncate" title={preview.url}>
-                  {preview.url}
+              <label className="text-xs text-[color:var(--color-ink-3)]">
+                {t('browser.clip.preview.url', '来源')}
+                <div className="mt-1 break-all rounded border bg-[color:var(--color-paper-2)] px-2 py-1.5 text-[11px] leading-relaxed">
+                  <div className="font-medium text-[color:var(--color-ink)]">{preview.site}</div>
+                  <div className="mt-0.5 opacity-80">{preview.url}</div>
+                  {preview.author && <div className="mt-0.5 opacity-80">作者：{preview.author}</div>}
+                  {preview.publishedTime && <div className="mt-0.5 opacity-80">时间：{preview.publishedTime}</div>}
                 </div>
-                <div>{preview.site}</div>
-                {preview.author && <div>{preview.author}</div>}
-                {preview.publishedTime && <div>{preview.publishedTime}</div>}
-              </div>
+              </label>
 
               <label className="text-xs">
                 {t('browser.clip.preview.tags', '标签（逗号分隔）')}
                 <input
                   aria-label={t('browser.clip.preview.tags', '标签')}
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
                   value={tagsRaw}
                   onChange={(e) => setTagsRaw(e.target.value)}
                   placeholder="ai,news"
@@ -86,20 +87,22 @@ export function ClipPreviewDialog(): JSX.Element | null {
               <label className="text-xs">
                 {t('browser.clip.preview.excerpt', '摘要')}
                 <textarea
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
                   rows={3}
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                 />
               </label>
 
-              <div className="text-xs text-[color:var(--color-ink-3)]">
-                {t('browser.clip.preview.target', '目标路径')}：<br />
-                <code>{preview.suggestedPath}</code>
-              </div>
+              <label className="text-xs text-[color:var(--color-ink-3)] shrink-0">
+                {t('browser.clip.preview.target', '目标路径')}
+                <div className="mt-1 break-all rounded border bg-[color:var(--color-paper-2)] px-2 py-1.5 font-mono text-[11px] leading-relaxed">
+                  {preview.suggestedPath}
+                </div>
+              </label>
 
               {preview.degraded && (
-                <div className="rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-900">
+                <div className="rounded bg-yellow-100 px-2 py-1.5 text-xs text-yellow-900 shrink-0">
                   {t('browser.clip.preview.degraded', '部分抽取，效果可能较差')}
                 </div>
               )}
