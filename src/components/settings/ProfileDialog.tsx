@@ -138,7 +138,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
               value={form.provider}
               onValueChange={(value) => set('provider', value as AiProviderKind)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
