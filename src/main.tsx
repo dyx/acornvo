@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { App } from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { useSettingsStore } from '@/stores/settings'
 import { installSettingsEffects } from '@/stores/settings-effects'
 import { installGroveSubscriber } from '@/stores/grove'
 import { installSettingsSubscriber } from '@/stores/settings'
@@ -53,19 +54,27 @@ if (!container) {
   throw new Error('root element not found in src/index.html')
 }
 
-installSettingsEffects()
-installGroveSubscriber()
-installSettingsSubscriber()
-installChatStreamSubscriber()
-installLibrarySubscriber()
-installEditorSubscriber()
-setBrowserPort(browserPort)
-setBrowserEventPort(browserEventPort)
+void (async () => {
+  try {
+    await useSettingsStore.getState().loadAll()
+  } catch (err) {
+    console.error('Failed to load settings on boot:', err)
+  }
 
-createRoot(container).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
-  </StrictMode>
-)
+  installSettingsEffects()
+  installGroveSubscriber()
+  installSettingsSubscriber()
+  installChatStreamSubscriber()
+  installLibrarySubscriber()
+  installEditorSubscriber()
+  setBrowserPort(browserPort)
+  setBrowserEventPort(browserEventPort)
+
+  createRoot(container).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </StrictMode>
+  )
+})()
