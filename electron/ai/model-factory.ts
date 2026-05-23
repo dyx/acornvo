@@ -65,6 +65,8 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         apiKey: profile.apiKey ?? '',
         temperature,
         maxTokens,
+        timeout: 60_000,
+        maxRetries: 0,
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined,
       }) as unknown as BaseChatModel;
       break;
@@ -74,6 +76,8 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         apiKey: profile.apiKey ?? '',
         temperature,
         maxTokens,
+        timeout: 60_000,
+        maxRetries: 0,
       }) as unknown as BaseChatModel;
       break;
     case 'ollama':
@@ -82,6 +86,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         baseUrl: profile.baseUrl ?? 'http://localhost:11434',
         temperature,
         numPredict: maxTokens,
+        maxRetries: 0,
       }) as unknown as BaseChatModel;
       break;
     default: {
