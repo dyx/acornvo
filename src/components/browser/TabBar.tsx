@@ -34,7 +34,7 @@ export function TabBar(): JSX.Element {
     <div
       role="tablist"
       aria-label="Browser tabs"
-      className="flex h-15 shrink-0 items-end gap-px border-b border-[color:var(--color-line)] bg-[color:var(--color-bg-2)] px-1 pt-2 overflow-x-auto"
+      className="flex h-9 shrink-0 items-end gap-px border-b border-[color:var(--color-line)] bg-[color:var(--color-bg-2)] px-2 overflow-x-auto"
       data-testid="tabbar"
     >
       {tabs.map((t) => {
@@ -47,9 +47,9 @@ export function TabBar(): JSX.Element {
             aria-label={t.title || 'Untitled'}
             data-testid={`tab-${t.id}`}
             className={[
-              'group relative flex min-w-30 max-w-60 items-center gap-1.5 rounded-t-md border border-b-0 px-2 py-1.5 text-xs',
+              'group relative flex min-w-30 max-w-60 items-center gap-1.5 rounded-t-md border-x border-t-0 border-b px-2 py-1.5 text-xs -mb-px',
               active
-                ? 'bg-[color:var(--color-bg)] border-[color:var(--color-line)] border-b-[color:var(--color-bg)]'
+                ? 'bg-[color:var(--color-bg)] border-[color:var(--color-line)] border-b-[color:var(--color-bg)] z-10'
                 : 'border-transparent text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-bg-3)]'
             ].join(' ')}
             onClick={() => void activateTab(t.id)}
