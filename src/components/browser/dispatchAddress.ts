@@ -1,7 +1,8 @@
-// src/components/browser/dispatchAddress.ts
+import type { SearchEngine } from '@shared/settings-types'
+
 export type AddressDispatch = { kind: 'url'; url: string } | { kind: 'search'; url: string }
 
-export function dispatchAddress(raw: string): AddressDispatch {
+export function dispatchAddress(raw: string, engine: SearchEngine = 'google'): AddressDispatch {
   const trimmed = raw.trim()
   if (trimmed.includes('://')) {
     return { kind: 'url', url: trimmed }
@@ -9,10 +10,18 @@ export function dispatchAddress(raw: string): AddressDispatch {
   if (looksLikeDomain(trimmed)) {
     return { kind: 'url', url: 'https://' + trimmed }
   }
-  return {
-    kind: 'search',
-    url: 'https://www.google.com/search?q=' + encodeURIComponent(trimmed)
+  
+  const q = encodeURIComponent(trimmed)
+  let url = `https://www.google.com/search?q=${q}`
+  if (engine === 'bing') {
+    url = `https://www.bing.com/search?q=${q}`
+  } else if (engine === 'duckduckgo') {
+    url = `https://duckduckgo.com/?q=${q}`
+  } else if (engine === 'baidu') {
+    url = `https://www.baidu.com/s?wd=${q}`
   }
+
+  return { kind: 'search', url }
 }
 
 function looksLikeDomain(s: string): boolean {

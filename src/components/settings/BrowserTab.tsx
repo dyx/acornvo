@@ -70,6 +70,7 @@ export function BrowserTab(): JSX.Element {
             <SelectItem value="google">Google</SelectItem>
             <SelectItem value="bing">Bing</SelectItem>
             <SelectItem value="duckduckgo">DuckDuckGo</SelectItem>
+            <SelectItem value="baidu">Baidu</SelectItem>
           </SelectContent>
         </Select>
       </div>

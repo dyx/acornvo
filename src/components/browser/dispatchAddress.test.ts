@@ -59,4 +59,19 @@ describe('dispatchAddress', () => {
       url: 'https://www.google.com/search?q='
     })
   })
+
+  it('respects the search engine parameter', () => {
+    expect(dispatchAddress('react', 'bing')).toEqual({
+      kind: 'search',
+      url: 'https://www.bing.com/search?q=react'
+    })
+    expect(dispatchAddress('react', 'duckduckgo')).toEqual({
+      kind: 'search',
+      url: 'https://duckduckgo.com/?q=react'
+    })
+    expect(dispatchAddress('react', 'baidu')).toEqual({
+      kind: 'search',
+      url: 'https://www.baidu.com/s?wd=react'
+    })
+  })
 })

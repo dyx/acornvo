@@ -9,7 +9,7 @@
 
 export type Locale = 'zh-CN' | 'en-US'
 export type Theme = 'system' | 'light' | 'dark'
-export type SearchEngine = 'google' | 'bing' | 'duckduckgo'
+export type SearchEngine = 'google' | 'bing' | 'duckduckgo' | 'baidu'
 export type AiProviderKind = 'openai' | 'anthropic' | 'ollama' | 'openai-compatible'
 
 export interface GeneralSettings {

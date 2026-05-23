@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
+import { useSettingsStore } from '@/stores/settings'
 import { useBrowserStore } from '@/stores/browser'
 import { useClipperStore } from '@/stores/clipper'
 import { getClipsPort } from '@/ipc/clips-port'
@@ -77,7 +78,8 @@ export function AddressBar(): JSX.Element {
   }
 
   function submit(): void {
-    const dispatch = dispatchAddress(value)
+    const searchEngine = useSettingsStore.getState().browser.searchEngine
+    const dispatch = dispatchAddress(value, searchEngine)
     void browserNavigate(tab!.id, dispatch.url)
   }
 
