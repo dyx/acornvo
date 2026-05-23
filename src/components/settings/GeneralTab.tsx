@@ -99,22 +99,48 @@ export function GeneralTab(): JSX.Element {
 
       <div className="space-y-3 pt-2">
         <span className="block text-sm font-medium">{t('settings.appearance.fontScale')}</span>
-        <div className="flex items-center gap-4 max-w-xs">
-          <Slider
-            min={0.8}
-            max={1.4}
-            step={0.1}
-            value={[localScale]}
-            onValueChange={([value]) => {
-              setLocalScale(value)
-              applyFontScale(value)
+        <div className="flex items-center gap-4 w-64">
+          <div className="relative flex-1 flex items-center h-5">
+            {/* Mark at 1.0x (33.33% of track) */}
+            <button
+              type="button"
+              aria-label="Reset to 1.0x"
+              className="absolute left-[33.33%] z-0 h-3 w-1 -translate-x-1/2 rounded-full bg-[color:var(--color-line)] hover:bg-[color:var(--color-ink-3)] transition-colors cursor-pointer"
+              title="1.0x"
+              onClick={() => {
+                setLocalScale(1.0)
+                applyFontScale(1.0)
+                if (debounceRef.current) clearTimeout(debounceRef.current)
+                void setAppearance({ fontScale: 1.0 })
+              }}
+            />
+            <Slider
+              min={0.8}
+              max={1.4}
+              step={0.1}
+              value={[localScale]}
+              className="z-10"
+              onValueChange={([value]) => {
+                setLocalScale(value)
+                applyFontScale(value)
+                if (debounceRef.current) clearTimeout(debounceRef.current)
+                debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            title="Reset to 1.0x"
+            className="text-sm text-muted-foreground w-8 text-right hover:text-foreground transition-colors cursor-pointer"
+            onClick={() => {
+              setLocalScale(1.0)
+              applyFontScale(1.0)
               if (debounceRef.current) clearTimeout(debounceRef.current)
-              debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
+              void setAppearance({ fontScale: 1.0 })
             }}
-          />
-          <span className="text-sm text-muted-foreground w-8 text-right">
+          >
             {localScale.toFixed(1)}x
-          </span>
+          </button>
         </div>
       </div>
 
