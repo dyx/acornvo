@@ -99,7 +99,7 @@ export function ConversationsAdapter() {
                   const hasApproval =
                     s.id !== activeSessionId && (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
                   const baseLabel = s.title || t('chat.untitled')
-                  const displayLabel = narrow ? baseLabel.slice(0, 8) : baseLabel
+                  const displayLabel = baseLabel
 
                   return (
                     <div
@@ -112,14 +112,14 @@ export function ConversationsAdapter() {
                       )}
                       onClick={() => !isEditing && selectSession(s.id)}
                     >
-                      <div className="flex items-center gap-2 overflow-hidden flex-1">
+                      <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
                         <MessageSquareIcon className="size-4 shrink-0 opacity-70" />
 
                         {isEditing ? (
                           <Input
                             autoFocus
                             size={1}
-                            className="h-6 py-0 px-1 text-sm bg-background"
+                            className="h-6 py-0 px-1 text-sm bg-background flex-1 min-w-0"
                             value={editingTitle}
                             onChange={(e) => setEditingTitle(e.target.value)}
                             onKeyDown={(e) => {
@@ -133,12 +133,12 @@ export function ConversationsAdapter() {
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <span className="truncate flex-1 relative pr-2">
+                          <div className="truncate flex-1 min-w-0 relative pr-2">
                             {displayLabel}
                             {hasApproval && (
                               <span className="absolute right-0 top-1.5 size-1.5 rounded-full bg-orange-500" />
                             )}
-                          </span>
+                          </div>
                         )}
                       </div>
 
