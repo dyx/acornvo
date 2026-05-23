@@ -88,7 +88,7 @@ let currentDbForAgent: unknown = null
 
 function getCheckpointer(): BaseCheckpointSaver {
   const db = dbService.requireCurrent()
-  if (checkpointer && currentDbForAgent === db) return checkpointer
+  if (checkpointer && currentDbForAgent === db && (db as any).open) return checkpointer
   currentDbForAgent = db
   checkpointer = new SqliteSaver(db as unknown as ConstructorParameters<typeof SqliteSaver>[0])
   return checkpointer
@@ -104,7 +104,7 @@ function getCheckpointer(): BaseCheckpointSaver {
  */
 export function getAgentBuilder(): SingletonHandle {
   const db = dbService.requireCurrent()
-  if (handle && currentDbForAgent === db) return handle
+  if (handle && currentDbForAgent === db && (db as any).open) return handle
   const cp = getCheckpointer()
 
   handle = {
