@@ -1,4 +1,8 @@
 import { app, BrowserWindow, nativeTheme, powerMonitor } from 'electron'
+
+// Enable auto dark mode for WebContents (browser tabs) when themeSource is dark
+app.commandLine.appendSwitch('enable-features', 'WebContentsForceDark')
+
 import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
