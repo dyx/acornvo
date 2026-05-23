@@ -434,6 +434,11 @@
   "chat": {
     "untitled": "未命名对话",
     "newSession": "新对话",
+    "group": {
+      "today": "今天",
+      "thisWeek": "本周",
+      "earlier": "更早"
+    },
     "topbar": {
       "helpAria": "快捷键帮助",
       "noProfile": "未配置 AI",

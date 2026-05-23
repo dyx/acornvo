@@ -403,6 +403,11 @@
   "chat": {
     "untitled": "Untitled chat",
     "newSession": "New chat",
+    "group": {
+      "today": "Today",
+      "thisWeek": "This week",
+      "earlier": "Earlier"
+    },
     "topbar": {
       "helpAria": "Keyboard shortcuts help",
       "noProfile": "No AI configured",

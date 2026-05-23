@@ -89,7 +89,7 @@ export function ConversationsAdapter() {
             <div key={groupName}>
               {!narrow && (
                 <h3 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {groupName}
+                  {t(`chat.group.${groupName}` as const)}
                 </h3>
               )}
               <div className="space-y-0.5">
