@@ -34,7 +34,7 @@ export function TabBar(): JSX.Element {
     <div
       role="tablist"
       aria-label="Browser tabs"
-      className="flex h-9 shrink-0 items-end gap-px border-b border-[color:var(--color-line)] bg-[color:var(--color-bg-2)] px-2 overflow-x-auto"
+      className="flex h-[42px] shrink-0 items-center gap-1.5 border-b border-[color:var(--color-line)] bg-[color:var(--color-bg-2)] px-2 overflow-x-auto"
       data-testid="tabbar"
     >
       {tabs.map((t) => {
@@ -47,10 +47,10 @@ export function TabBar(): JSX.Element {
             aria-label={t.title || 'Untitled'}
             data-testid={`tab-${t.id}`}
             className={[
-              'group relative flex min-w-30 max-w-60 items-center gap-1.5 rounded-t-md border-x border-t-0 border-b px-2 py-1.5 text-xs -mb-px',
+              'group relative flex min-w-32 max-w-64 h-7 items-center gap-1.5 rounded-[6px] px-2 text-xs transition-colors border',
               active
-                ? 'bg-[color:var(--color-bg)] border-[color:var(--color-line)] border-b-[color:var(--color-bg)] z-10'
-                : 'border-transparent text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-bg-3)]'
+                ? 'bg-[color:var(--color-paper)] text-[color:var(--color-ink)] border-[color:var(--color-line)] shadow-sm'
+                : 'border-transparent text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-ink)]/5 hover:text-[color:var(--color-ink)]'
             ].join(' ')}
             onClick={() => void activateTab(t.id)}
             onPointerDown={(e) => {
@@ -67,21 +67,23 @@ export function TabBar(): JSX.Element {
             }}
           >
             <TabFavicon tab={t} />
-            <span className="flex-1 truncate text-left">
+            <span className="flex-1 truncate text-left font-medium">
               {t.title || (t.url === 'about:blank' ? 'New tab' : t.url)}
             </span>
             <span
               role="button"
               aria-label={`close tab ${t.title || t.id}`}
               tabIndex={0}
-              className="rounded p-0.5 opacity-60 hover:bg-[color:var(--color-bg-3)] hover:opacity-100"
+              className="flex size-4 items-center justify-center rounded-[4px] text-lg leading-none opacity-0 group-hover:opacity-100 hover:bg-[color:var(--color-ink)]/10"
               onClick={(e) => {
                 e.stopPropagation()
                 void closeTab(t.id)
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              ×
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true">
+                <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+              </svg>
             </span>
           </button>
         )
@@ -89,10 +91,12 @@ export function TabBar(): JSX.Element {
       <button
         type="button"
         aria-label="new tab"
-        className="ml-1 size-7 shrink-0 rounded text-base text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-bg-3)]"
+        className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-[6px] text-base text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-ink)]/5 hover:text-[color:var(--color-ink)] transition-colors"
         onClick={() => void createTab()}
       >
-        ＋
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+          <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z" />
+        </svg>
       </button>
     </div>
   )
