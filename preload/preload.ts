@@ -168,9 +168,6 @@ const request: IpcClient<IpcContract> = {
   app: {
     runtimeInfo: () => invoke('app.runtimeInfo')
   },
-  licenses: {
-    read: () => invoke('licenses.read')
-  },
   update: {
     checkManual: () => invoke('update.checkManual'),
     installNow: () => invoke('update.installNow')

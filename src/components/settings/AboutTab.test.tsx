@@ -20,7 +20,6 @@ vi.mock('@/ipc/client', () => ({
       })
     },
     update: { checkManual: vi.fn() },
-    licenses: { read: vi.fn().mockResolvedValue([]) },
     shell: { openExternal: vi.fn() }
   }
 }))
@@ -54,8 +53,4 @@ describe('AboutTab', () => {
     expect(await screen.findByTestId('about-website')).toBeInTheDocument()
   })
 
-  it('renders license section', async () => {
-    render(<AboutTab />)
-    expect(await screen.findByTestId('about-licenses')).toBeInTheDocument()
-  })
 })

@@ -15,21 +15,3 @@ export const appHandlers = {
     }
   }
 }
-
-export const licensesHandlers = {
-  async read() {
-    const path = app.isPackaged
-      ? join(process.resourcesPath, 'build/licenses.json')
-      : join(process.cwd(), 'build/licenses.json')
-    try {
-      return JSON.parse(readFileSync(path, 'utf8')) as {
-        id: string
-        license: string
-        repository: string | null
-        publisher: string | null
-      }[]
-    } catch {
-      return []
-    }
-  }
-}

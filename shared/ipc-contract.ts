@@ -526,9 +526,6 @@ export type IpcContract = {
 	  app: {
 	    runtimeInfo: () => { appVersion: string; gitHash: string; electron: string; chrome: string; node: string; platform: string; arch: string }
 	  }
-	  licenses: {
-	    read: () => { id: string; license: string; repository: string | null; publisher: string | null }[]
-	  }
 	  update: {
 	    checkManual: () => Promise<{ status: 'up-to-date' | 'available' | 'failed'; version?: string; message?: string }>
 	    installNow: () => Promise<void>

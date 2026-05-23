@@ -5,13 +5,6 @@ import { ipc } from '@/ipc/client'
 import { useSettingsStore } from '@/stores/settings'
 import { ExternalLink, RefreshCw } from 'lucide-react'
 
-interface LicenseEntry {
-  id: string
-  license: string
-  repository: string | null
-  publisher: string | null
-}
-
 export function AboutTab(): JSX.Element {
   const { t } = useTranslation()
   const [info, setInfo] = useState<{
@@ -57,67 +50,12 @@ export function AboutTab(): JSX.Element {
         </dd>
       </dl>
 
-      <LicenseSection />
-
       <footer className="flex gap-3 pt-4 border-t">
         <CheckUpdateButton />
         <WebsiteLinkButton />
       </footer>
 
       <AutoCheckToggle />
-    </div>
-  )
-}
-
-function LicenseSection(): JSX.Element {
-  const { t } = useTranslation()
-  const [licenses, setLicenses] = useState<LicenseEntry[]>([])
-  const [expanded, setExpanded] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    void ipc.licenses.read().then((list) => {
-      if (!cancelled) setLicenses(list)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const visible = expanded ? licenses : licenses.slice(0, 20)
-
-  return (
-    <div data-testid="about-licenses" className="space-y-2">
-      {licenses.length === 0 ? null : (
-        <>
-          <h4 className="text-sm font-medium">{t('about.licenses')}</h4>
-          <ul className="text-xs text-muted-foreground space-y-1 max-h-64 overflow-y-auto">
-            {visible.map((entry) => (
-              <li
-                key={entry.id}
-                data-testid={`about-license-${entry.id.replace(/[^a-zA-Z0-9]/g, '-')}`}
-                className="flex gap-2"
-              >
-                <span className="shrink-0 w-16 truncate">
-                  {Array.isArray(entry.license) ? entry.license.join(', ') : entry.license}
-                </span>
-                <span className="flex-1 truncate">{entry.id}</span>
-              </li>
-            ))}
-          </ul>
-          {licenses.length > 20 && (
-            <button
-              data-testid="about-licenses-expand"
-              className="text-xs text-primary hover:underline"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded
-                ? t('about.licenses.collapse', { total: licenses.length })
-                : t('about.licenses.expand', { total: licenses.length })}
-            </button>
-          )}
-        </>
-      )}
     </div>
   )
 }

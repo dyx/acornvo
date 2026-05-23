@@ -25,7 +25,7 @@ import { aiHandlers } from './ai'
 import { createChatHandlers } from './chat'
 import { createQueueHandlers } from './queue'
 import { perfHandlers as perfIpcHandlers } from './perf'
-import { appHandlers, licensesHandlers } from './app'
+import { appHandlers } from './app'
 import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
 import { crashHandlers } from './crash'
@@ -172,7 +172,6 @@ export const ipcHandlers: HandlerMap = {
   queue: queueHandlers,
   perf: perfIpcHandlers,
   app: appHandlers,
-  licenses: licensesHandlers,
   update: updateHandlers,
   shell: shellHandlers,
   crash: crashHandlers,
