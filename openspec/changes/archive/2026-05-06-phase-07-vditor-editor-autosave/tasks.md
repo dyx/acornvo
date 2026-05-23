@@ -15,7 +15,7 @@
 - [x] 2.7 保存成功后 `savedBody=body` / `savedMtimeMs=newMtime` / 错误计数清零
 - [x] 2.8 `close()`：切换路由或窗口关闭前统一回收 debounce timer + flushSave
 
-## 3. Editor 页与组件（src/pages/Editor.tsx + src/components/editor/*）
+## 3. Editor 页与组件（src/pages/Editor.tsx + src/components/editor/\*）
 
 - [x] 3.1 `Editor.tsx`：读路由参数 `decodeURIComponent(encodedPath)` → 调 `editor.open(path)`；根据 state 渲染 loading/ready/error
 - [x] 3.2 `EditorTitleBar.tsx`：左侧"← 返回果仓"（调 `flushSave` 后 `navigate(-1)`）；中间路径 + dirty 点 + saving 脉动；右侧快捷键提示

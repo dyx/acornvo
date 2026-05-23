@@ -4,15 +4,15 @@ Container for the entire chat thread.
 
 ## Parts
 
-| Part | Description |
-|------|-------------|
-| `.Root` | Outermost container element |
-| `.Viewport` | Scrollable message area |
-| `.Messages` | Renders message list |
-| `.Empty` | Shown when no messages |
-| `.ScrollToBottom` | Button to scroll down |
-| `.Suggestions` | Quick reply suggestions |
-| `.If` | Conditional rendering (deprecated; prefer `AuiIf`) |
+| Part              | Description                                        |
+| ----------------- | -------------------------------------------------- |
+| `.Root`           | Outermost container element                        |
+| `.Viewport`       | Scrollable message area                            |
+| `.Messages`       | Renders message list                               |
+| `.Empty`          | Shown when no messages                             |
+| `.ScrollToBottom` | Button to scroll down                              |
+| `.Suggestions`    | Quick reply suggestions                            |
+| `.If`             | Conditional rendering (deprecated; prefer `AuiIf`) |
 
 ## Basic Structure
 
@@ -22,7 +22,7 @@ Container for the entire chat thread.
     <ThreadPrimitive.Messages
       components={{
         UserMessage: MyUserMessage,
-        AssistantMessage: MyAssistantMessage,
+        AssistantMessage: MyAssistantMessage
       }}
     />
   </ThreadPrimitive.Viewport>
@@ -34,10 +34,7 @@ Container for the entire chat thread.
 Container element. Accepts standard div props.
 
 ```tsx
-<ThreadPrimitive.Root
-  className="flex flex-col h-full"
-  data-testid="chat-thread"
->
+<ThreadPrimitive.Root className="flex flex-col h-full" data-testid="chat-thread">
   {children}
 </ThreadPrimitive.Root>
 ```
@@ -49,7 +46,7 @@ Scrollable area containing messages. Handles auto-scroll on new messages.
 ```tsx
 <ThreadPrimitive.Viewport
   className="flex-1 overflow-y-auto p-4"
-  autoScroll={true}  // Default: true
+  autoScroll={true} // Default: true
 >
   <ThreadPrimitive.Messages />
 </ThreadPrimitive.Viewport>
@@ -70,7 +67,7 @@ Renders the message list.
     SystemMessage: ({ message }) => <div>{message.content}</div>,
 
     // Optional: Edit composer for message editing
-    EditComposer: () => <ComposerPrimitive.Root>...</ComposerPrimitive.Root>,
+    EditComposer: () => <ComposerPrimitive.Root>...</ComposerPrimitive.Root>
   }}
 />
 ```
@@ -93,9 +90,7 @@ Rendered when thread has no messages.
 Button that appears when scrolled up, scrolls to bottom on click.
 
 ```tsx
-<ThreadPrimitive.ScrollToBottom
-  className="fixed bottom-20 right-4 rounded-full p-2 bg-white shadow"
->
+<ThreadPrimitive.ScrollToBottom className="fixed bottom-20 right-4 rounded-full p-2 bg-white shadow">
   ↓ Scroll to bottom
 </ThreadPrimitive.ScrollToBottom>
 ```
@@ -108,10 +103,8 @@ Renders suggested quick replies.
 <ThreadPrimitive.Suggestions
   components={{
     Suggestion: ({ suggestion }) => (
-      <button onClick={() => suggestion.onClick()}>
-        {suggestion.text}
-      </button>
-    ),
+      <button onClick={() => suggestion.onClick()}>{suggestion.text}</button>
+    )
   }}
 />
 ```
@@ -164,7 +157,7 @@ function CustomThread() {
                   >
                     {suggestion.text}
                   </button>
-                ),
+                )
               }}
             />
           </div>
@@ -178,7 +171,7 @@ function CustomThread() {
             <ThreadPrimitive.Messages
               components={{
                 UserMessage: CustomUserMessage,
-                AssistantMessage: CustomAssistantMessage,
+                AssistantMessage: CustomAssistantMessage
               }}
             />
           </div>
@@ -195,28 +188,28 @@ function CustomThread() {
         <CustomComposer />
       </div>
     </ThreadPrimitive.Root>
-  );
+  )
 }
 ```
 
 ## Accessing Thread State
 
 ```tsx
-import { useThread, useThreadRuntime } from "@assistant-ui/react";
+import { useThread, useThreadRuntime } from '@assistant-ui/react'
 
 function ThreadInfo() {
   // Reactive state
-  const { messages, isRunning } = useThread();
+  const { messages, isRunning } = useThread()
 
   // Runtime API
-  const runtime = useThreadRuntime();
-  const handleClear = () => runtime.startRun();
+  const runtime = useThreadRuntime()
+  const handleClear = () => runtime.startRun()
 
   return (
     <div>
       <p>{messages.length} messages</p>
       {isRunning && <p>Generating...</p>}
     </div>
-  );
+  )
 }
 ```

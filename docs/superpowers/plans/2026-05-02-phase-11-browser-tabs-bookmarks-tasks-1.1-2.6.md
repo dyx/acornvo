@@ -34,25 +34,25 @@ Land the foundation for the in-app browser ("拾果"): bookmarks SQLite schema (
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/db/migrations/004_bookmarks.sql` | Create | 1.1 |
-| `electron/services/db/migrations/004_bookmarks.test.ts` | Create | 1.1 |
-| `shared/browser-types.ts` | Create | 1.2 |
-| `public/hosts/block-domains.txt` | Create | 1.3 |
-| `electron-builder` extraResources / vite copy plugin if present | Verify | 1.3 |
-| `electron/browser/contents.ts` | Create stub → implement | 1.4, 2.1, 2.4, 2.5 |
-| `electron/browser/manager.ts` | Create stub → implement | 1.4, 2.2 |
-| `electron/browser/bounds.ts` | Create stub → implement | 1.4, 2.3 |
-| `electron/browser/adblock.ts` | Create stub → implement | 1.4, 2.6 |
-| `electron/ipc/browser.ts` | Create stub | 1.4 |
-| `electron/ipc/bookmarks.ts` | Create stub | 1.4 |
-| `src/pages/Browse.tsx` | Create stub | 1.4 |
-| `src/components/browser/.gitkeep` | Create | 1.4 |
-| `src/stores/browser.ts` | Create stub | 1.4 |
-| `electron/browser/manager.test.ts` | Create | 2.2 |
-| `electron/browser/bounds.test.ts` | Create | 2.3 |
-| `electron/browser/adblock.test.ts` | Create | 2.6 |
+| Path                                                            | Action                  | Owner task         |
+| --------------------------------------------------------------- | ----------------------- | ------------------ |
+| `electron/services/db/migrations/004_bookmarks.sql`             | Create                  | 1.1                |
+| `electron/services/db/migrations/004_bookmarks.test.ts`         | Create                  | 1.1                |
+| `shared/browser-types.ts`                                       | Create                  | 1.2                |
+| `public/hosts/block-domains.txt`                                | Create                  | 1.3                |
+| `electron-builder` extraResources / vite copy plugin if present | Verify                  | 1.3                |
+| `electron/browser/contents.ts`                                  | Create stub → implement | 1.4, 2.1, 2.4, 2.5 |
+| `electron/browser/manager.ts`                                   | Create stub → implement | 1.4, 2.2           |
+| `electron/browser/bounds.ts`                                    | Create stub → implement | 1.4, 2.3           |
+| `electron/browser/adblock.ts`                                   | Create stub → implement | 1.4, 2.6           |
+| `electron/ipc/browser.ts`                                       | Create stub             | 1.4                |
+| `electron/ipc/bookmarks.ts`                                     | Create stub             | 1.4                |
+| `src/pages/Browse.tsx`                                          | Create stub             | 1.4                |
+| `src/components/browser/.gitkeep`                               | Create                  | 1.4                |
+| `src/stores/browser.ts`                                         | Create stub             | 1.4                |
+| `electron/browser/manager.test.ts`                              | Create                  | 2.2                |
+| `electron/browser/bounds.test.ts`                               | Create                  | 2.3                |
+| `electron/browser/adblock.test.ts`                              | Create                  | 2.6                |
 
 ## Pre-flight
 
@@ -73,9 +73,11 @@ Land the foundation for the in-app browser ("拾果"): bookmarks SQLite schema (
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Migration 004 — `bookmarks` table
 
 **Files:**
+
 - Create: `electron/services/db/migrations/004_bookmarks.sql`
 - Create: `electron/services/db/migrations/004_bookmarks.test.ts`
 
@@ -121,9 +123,23 @@ describe('migration 004_bookmarks', () => {
       `INSERT INTO bookmarks(url, title, favicon, tags_json, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)`
     )
-    insert.run('https://example.com', 'Ex', null, null, '2026-05-02T00:00:00Z', '2026-05-02T00:00:00Z')
+    insert.run(
+      'https://example.com',
+      'Ex',
+      null,
+      null,
+      '2026-05-02T00:00:00Z',
+      '2026-05-02T00:00:00Z'
+    )
     expect(() =>
-      insert.run('https://example.com', 'Dup', null, null, '2026-05-02T00:00:00Z', '2026-05-02T00:00:00Z')
+      insert.run(
+        'https://example.com',
+        'Dup',
+        null,
+        null,
+        '2026-05-02T00:00:00Z',
+        '2026-05-02T00:00:00Z'
+      )
     ).toThrow(/UNIQUE/)
   })
 
@@ -195,9 +211,11 @@ git commit -m "feat(phase-11): migration 004 — bookmarks table + indices"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Shared browser types
 
 **Files:**
+
 - Create: `shared/browser-types.ts`
 
 - [ ] **Step 1: Create the types file**
@@ -222,10 +240,7 @@ export interface Tab {
 }
 
 export type TabPatch = Partial<
-  Pick<
-    Tab,
-    'url' | 'title' | 'favicon' | 'loading' | 'canGoBack' | 'canGoForward' | 'readerMode'
-  >
+  Pick<Tab, 'url' | 'title' | 'favicon' | 'loading' | 'canGoBack' | 'canGoForward' | 'readerMode'>
 >
 
 export interface TabStateChangedPayload {
@@ -294,9 +309,11 @@ git commit -m "feat(phase-11): shared Tab / Bookmark / SetViewportArgs types"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Ship `block-domains.txt`
 
 **Files:**
+
 - Create: `public/hosts/block-domains.txt`
 
 - [ ] **Step 1: Verify `public/` is bundled**
@@ -426,11 +443,13 @@ git commit -m "feat(phase-11): bundle curated ad-block hosts list"
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Scaffold module stubs
 
 Create empty placeholder modules so subsequent tasks compile cleanly. Each stub exports a no-op token and is replaced by later tasks.
 
 **Files:**
+
 - Create: `electron/browser/contents.ts`
 - Create: `electron/browser/manager.ts`
 - Create: `electron/browser/bounds.ts`
@@ -525,11 +544,13 @@ git commit -m "feat(phase-11): scaffold browser/* + ipc + page/store stubs"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: `createTabView()` in `electron/browser/contents.ts`
 
 Single factory that creates a `WebContentsView` with the locked-down webPreferences and a designated session partition. Per-tab event subscription and `setWindowOpenHandler` are wired in tasks 2.4 and 2.5; this task delivers only the construction primitive.
 
 **Files:**
+
 - Modify: `electron/browser/contents.ts`
 
 - [ ] **Step 1: Implement `createTabView`**
@@ -598,11 +619,13 @@ git commit -m "feat(phase-11): createTabView factory with sandboxed webPreferenc
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: `manager.ts` — tab registry with attach / detach / destroy
 
 The manager holds the `Map<TabId, ManagedTab>`, knows which tab is currently attached to the parent `BrowserWindow.contentView`, and is the only module that calls `addChildView` / `removeChildView`. It does not own the window — `setMainWindow(win)` is called once at startup. To keep the manager unit-testable we split it into a pure `createManager(deps)` factory plus a singleton wrapper.
 
 **Files:**
+
 - Modify: `electron/browser/manager.ts`
 - Create: `electron/browser/manager.test.ts`
 
@@ -618,12 +641,18 @@ function makeView(label: string) {
 }
 
 function makeDeps(): ManagerDeps & {
-  contentView: { addChildView: ReturnType<typeof vi.fn>; removeChildView: ReturnType<typeof vi.fn>; children: any[] }
+  contentView: {
+    addChildView: ReturnType<typeof vi.fn>
+    removeChildView: ReturnType<typeof vi.fn>
+    children: any[]
+  }
 } {
   const children: any[] = []
   const contentView = {
     children,
-    addChildView: vi.fn((v: any) => { children.push(v) }),
+    addChildView: vi.fn((v: any) => {
+      children.push(v)
+    }),
     removeChildView: vi.fn((v: any) => {
       const i = children.indexOf(v)
       if (i !== -1) children.splice(i, 1)
@@ -708,9 +737,12 @@ describe('manager', () => {
     m.register('t2', makeView('b'))
     m.register('t3', makeView('c'))
 
-    now = 100; m.attach('t1')
-    now = 300; m.attach('t2')
-    now = 200; m.attach('t3') // out of order
+    now = 100
+    m.attach('t1')
+    now = 300
+    m.attach('t2')
+    now = 200
+    m.attach('t3') // out of order
 
     expect(m.pickLruTabId()).toBe('t1')
   })
@@ -879,11 +911,13 @@ git commit -m "feat(phase-11): browser manager — register/attach/destroy + LRU
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: `bounds.ts` — viewport sync
 
 `bounds.ts` stores the **single latest** viewport rectangle and re-applies it to whichever view is currently attached. The IPC handler (Plan 2) calls `setViewport`; the manager (task 2.2) calls `applyTo(view)` whenever it attaches a new view, via the seam established by `setBoundsApplier`.
 
 **Files:**
+
 - Modify: `electron/browser/bounds.ts`
 - Create: `electron/browser/bounds.test.ts`
 
@@ -1036,11 +1070,13 @@ git commit -m "feat(phase-11): browser bounds — viewport rect cache + apply"
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: Per-tab `webContents` event subscription → `browser:tabStateChanged`
 
 Wire WebContents events on creation so renderer can patch its store. We extend `contents.ts` with `attachTabEvents(tabId, webContents, send)` where `send` is the typed event-channel emitter (a thin wrapper on `BrowserWindow.webContents.send`).
 
 **Files:**
+
 - Modify: `electron/browser/contents.ts`
 
 - [ ] **Step 1: Add `attachTabEvents` to `contents.ts`**
@@ -1154,11 +1190,13 @@ git commit -m "feat(phase-11): attachTabEvents forwards webContents events to re
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 9: `setWindowOpenHandler` — http(s) → new tab; other → `shell.openExternal`
 
 Per spec D4: same-window `<a href>` keeps default behavior; `target=_blank` / `window.open` go to the handler. http(s) returns `allow` (which produces a new WebContents we adopt as a new tab); non-http(s) returns `deny` and we shell-open.
 
 **Files:**
+
 - Modify: `electron/browser/contents.ts`
 
 - [ ] **Step 1: Add `attachWindowOpenHandler` and `attachWebContentsCreatedAdoption`**
@@ -1241,11 +1279,13 @@ git commit -m "feat(phase-11): setWindowOpenHandler — http(s) new tab; else sh
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 10: `adblock.ts` — onBeforeRequest cancel-by-hostname (with hosts injection seam)
 
 We split the ad-block module into a pure matcher (`createAdblock(hosts)` returns `{ shouldBlock(url), markBlocked(), drainCount() }`) plus a session-binding helper (`bindToSession(session, adblock)`). Plan 2 task 3.2 supplies the loaded host set; this task ships the matcher + binder.
 
 **Files:**
+
 - Modify: `electron/browser/adblock.ts`
 - Create: `electron/browser/adblock.test.ts`
 

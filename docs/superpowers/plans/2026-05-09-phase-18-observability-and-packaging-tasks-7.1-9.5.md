@@ -10,6 +10,7 @@
 **Plan branch:** `phase-19-ui-remediation`
 
 **Sources:**
+
 - `openspec/changes/phase-18-observability-and-packaging/design.md` (D6, D7, D9, D11)
 - `openspec/changes/phase-18-observability-and-packaging/tasks.md` (§7, §8, §9)
 - `openspec/changes/phase-18-observability-and-packaging/specs/about-page/spec.md`
@@ -17,12 +18,14 @@
 - `openspec/changes/phase-18-observability-and-packaging/specs/telemetry-switch/spec.md`
 
 **Out of scope:**
+
 - Foundation modules (Plan 1)
 - Crash reporter / Diagnostic / Observability page (Plan 2)
 - Packaging, App shell wiring, i18n (Plan 4)
 - Verification (Plan 5)
 
 **Open issues:**
+
 - The `telemetry_local` table is created in **Plan 1's migration 011** — Task §9.2 of OpenSpec is therefore a verification step here, not new SQL.
 - `settings.update.autoCheck` and `settings.telemetry.enabled` require **two new settings namespaces** (`update`, `telemetry`). The settings store's `SettingsByNs` map and defaults must be extended.
 - About-page git hash uses Vite `define` for renderer + a build-time env var for main; the constant name is `__GIT_HASH__`.
@@ -50,9 +53,11 @@ Ship the `/settings/about` page (version, git hash, runtime, licenses, manual up
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 1: Inject `__GIT_HASH__` via Vite `define`
 
 **Files:**
+
 - Modify: `electron.vite.config.ts` (add `define` for renderer + main)
 - Create: `src/types/globals.d.ts` (TypeScript ambient type)
 
@@ -76,15 +81,15 @@ const HASH = JSON.stringify(gitHash())
 
 export default defineConfig({
   main: {
-    define: { __GIT_HASH__: HASH },
+    define: { __GIT_HASH__: HASH }
     // ... existing main config
   },
   preload: {
-    define: { __GIT_HASH__: HASH },
+    define: { __GIT_HASH__: HASH }
     // ... existing preload config
   },
   renderer: {
-    define: { __GIT_HASH__: HASH },
+    define: { __GIT_HASH__: HASH }
     // ... existing renderer config
   }
 })
@@ -117,9 +122,11 @@ git commit -m "build: inject __GIT_HASH__ via Vite define (dev → 'dev')"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 2: AboutTab — version / hash / runtime / platform
 
 **Files:**
+
 - Create: `src/components/settings/AboutTab.tsx`
 - Create: `src/components/settings/AboutTab.test.tsx`
 - Modify: `shared/ipc-contract.ts` — add `app.runtimeInfo()`
@@ -131,15 +138,16 @@ In `shared/ipc-contract.ts`:
 
 ```ts
 app: {
-  runtimeInfo: () => Promise<{
-    appVersion: string
-    gitHash: string
-    electron: string
-    chrome: string
-    node: string
-    platform: NodeJS.Platform
-    arch: string
-  }>
+  runtimeInfo: () =>
+    Promise<{
+      appVersion: string
+      gitHash: string
+      electron: string
+      chrome: string
+      node: string
+      platform: NodeJS.Platform
+      arch: string
+    }>
 }
 ```
 
@@ -285,9 +293,11 @@ git commit -m "feat(ui): About tab with version / hash / runtime / platform"
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 3: License list — generate `build/licenses.json`; render top 20 + expand
 
 **Files:**
+
 - Modify: `package.json` scripts → add `generate:licenses`
 - Create: `scripts/generate-licenses.mjs`
 - Modify: `electron.vite.config.ts` — wire build-time license generation (or add a `prebuild` script step)
@@ -340,7 +350,8 @@ In `shared/ipc-contract.ts`:
 
 ```ts
 licenses: {
-  read: () => Promise<{ id: string; license: string; repository: string | null; publisher: string | null }[]>
+  read: () =>
+    Promise<{ id: string; license: string; repository: string | null; publisher: string | null }[]>
 }
 ```
 
@@ -455,7 +466,11 @@ function LicenseSection(): JSX.Element {
       <h4 className="mb-2 text-sm font-medium">{t('about.licenses')}</h4>
       <ul className="text-xs">
         {visible.map((l, i) => (
-          <li key={l.id} data-testid={`about-license-row-${i}`} className="flex justify-between border-b py-1">
+          <li
+            key={l.id}
+            data-testid={`about-license-row-${i}`}
+            className="flex justify-between border-b py-1"
+          >
             <span className="truncate">{l.id}</span>
             <span className="text-muted-foreground">{l.license}</span>
           </li>
@@ -492,9 +507,11 @@ git commit -m "feat(about): build-time licenses.json + top-20 + expand-all UI"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 4: "Check for updates" button → wire manual auto-update trigger
 
 **Files:**
+
 - Modify: `src/components/settings/AboutTab.tsx`
 - Modify: `shared/ipc-contract.ts` — add `update.checkManual()` returning `{ status: 'up-to-date' | 'available' | 'failed', message?: string, version?: string }`
 - Modify: `electron/ipc/update.ts` (placeholder created here; full body wired in Task 6 of this plan)
@@ -503,11 +520,12 @@ git commit -m "feat(about): build-time licenses.json + top-20 + expand-all UI"
 
 ```ts
 update: {
-  checkManual: () => Promise<{
-    status: 'up-to-date' | 'available' | 'failed'
-    version?: string
-    message?: string
-  }>
+  checkManual: () =>
+    Promise<{
+      status: 'up-to-date' | 'available' | 'failed'
+      version?: string
+      message?: string
+    }>
 }
 ```
 
@@ -534,7 +552,11 @@ Register in router.
 function CheckUpdateButton(): JSX.Element {
   const { t } = useTranslation()
   const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<{ status: string; message?: string; version?: string } | null>(null)
+  const [result, setResult] = useState<{
+    status: string
+    message?: string
+    version?: string
+  } | null>(null)
   return (
     <div className="mt-4 flex items-center gap-2">
       <button
@@ -589,9 +611,11 @@ git commit -m "feat(about): add Check-for-updates button (stubbed; wired to upda
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 5: Website link → `shell.openExternal`
 
 **Files:**
+
 - Modify: `src/components/settings/AboutTab.tsx`
 - Modify: `shared/ipc-contract.ts` — add `shell.openExternal(url: string)`
 - Modify: `electron/ipc/app.ts` (or new `electron/ipc/shell.ts`) — add the handler
@@ -650,9 +674,11 @@ git commit -m "feat(about): website link via shell.openExternal (http(s) only)"
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 6: Wire `/settings/about` route + sidebar entry
 
 **Files:**
+
 - Modify: `src/pages/Settings.tsx` — add Route
 - Modify: `src/components/settings/SettingsLayout.tsx` — add NavLink
 - Modify: `src/i18n/locales/zh-CN.json`, `en-US.json` — `settings.tab.about`
@@ -662,7 +688,7 @@ git commit -m "feat(about): website link via shell.openExternal (http(s) only)"
 ```tsx
 import { AboutTab } from '@/components/settings/AboutTab'
 // inside <Routes>:
-<Route path="about" element={<AboutTab />} />
+;<Route path="about" element={<AboutTab />} />
 ```
 
 - [ ] **Step 2: Add the sidebar link**
@@ -692,9 +718,11 @@ git commit -m "feat(ui): wire /settings/about route + sidebar tab"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 7: `electron/update/updater.ts` — `initAutoUpdate()` + `checkForUpdatesManual()`
 
 **Files:**
+
 - Create: `electron/update/updater.ts`
 - Create: `electron/update/updater.test.ts`
 
@@ -713,7 +741,9 @@ const mockAutoUpdater = {
 
 vi.mock('electron-updater', () => ({ autoUpdater: mockAutoUpdater }))
 vi.mock('electron', () => ({ BrowserWindow: { getAllWindows: () => [] } }))
-vi.mock('@/obs/logger', () => ({ logger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }) }))
+vi.mock('@/obs/logger', () => ({
+  logger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })
+}))
 
 import { checkForUpdatesManual, initAutoUpdate, __resetUpdaterForTests } from './updater'
 
@@ -840,9 +870,11 @@ git commit -m "feat(update): initAutoUpdate (60s + 4h) + checkForUpdatesManual"
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 8: Bridge `available` / `download-progress` / `downloaded` / `error` events to renderer
 
 **Files:**
+
 - Modify: `electron/update/updater.ts` — implement `bridgeEvents`
 - Modify: `shared/ipc-contract.ts` — add `'update:available'`, `'update:download-progress'`, `'update:downloaded'`, `'update:error'` event types
 - Modify: `preload/preload.ts` — expose subscription channels
@@ -928,9 +960,11 @@ git commit -m "feat(update): bridge available/progress/downloaded/error events t
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 9: Renderer banner — "New version vX.Y.Z" + Install / Later (`quitAndInstall`)
 
 **Files:**
+
 - Create: `src/components/UpdateBanner.tsx`
 - Create: `src/components/UpdateBanner.test.tsx`
 - Modify: `src/App.tsx` (or top-level layout) to mount `<UpdateBanner />`
@@ -954,7 +988,9 @@ In `electron/ipc/update.ts`:
 import { autoUpdater } from 'electron-updater'
 
 export const updateHandlers: IpcContract['update'] = {
-  async checkManual() { /* existing */ },
+  async checkManual() {
+    /* existing */
+  },
   async installNow() {
     autoUpdater.quitAndInstall()
   }
@@ -1075,9 +1111,11 @@ git commit -m "feat(update): downloaded banner with Install / Later (quitAndInst
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 10: `settings.update.autoCheck` — persistent default-true toggle
 
 **Files:**
+
 - Modify: `shared/settings-types.ts` — add `UpdateSettings { autoCheck: boolean }`
 - Modify: `electron/settings/defaults.ts` — `update: { autoCheck: true }`
 - Modify: `electron/settings/store.ts` — register the namespace
@@ -1107,7 +1145,9 @@ export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'u
 In `electron/settings/defaults.ts` (or wherever the per-ns defaults live):
 
 ```ts
-update: { autoCheck: true }
+update: {
+  autoCheck: true
+}
 ```
 
 Verify the existing settings store accepts the new namespace; extend its allow-list if it has one.
@@ -1124,12 +1164,25 @@ import { AboutTab } from './AboutTab'
 
 const setUpdate = vi.fn()
 vi.mock('@/stores/settings', () => ({
-  useSettingsStore: <T,>(sel: (s: { update: { autoCheck: boolean }; setUpdate: typeof setUpdate }) => T) =>
-    sel({ update: { autoCheck: true }, setUpdate })
+  useSettingsStore: <T,>(
+    sel: (s: { update: { autoCheck: boolean }; setUpdate: typeof setUpdate }) => T
+  ) => sel({ update: { autoCheck: true }, setUpdate })
 }))
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    app: { runtimeInfo: vi.fn().mockResolvedValue({ appVersion: '0.1', gitHash: 'a', electron: '', chrome: '', node: '', platform: 'darwin', arch: 'arm64' }) },
+    app: {
+      runtimeInfo: vi
+        .fn()
+        .mockResolvedValue({
+          appVersion: '0.1',
+          gitHash: 'a',
+          electron: '',
+          chrome: '',
+          node: '',
+          platform: 'darwin',
+          arch: 'arm64'
+        })
+    },
     licenses: { read: vi.fn().mockResolvedValue([]) },
     update: { checkManual: vi.fn() },
     shell: { openExternal: vi.fn() }
@@ -1191,9 +1244,11 @@ git commit -m "feat(settings): update.autoCheck toggle (default true)"
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 11: Silent error handling in updater
 
 **Files:**
+
 - Modify: `electron/update/updater.ts` — already calls `logger().error/warn` in error paths from Tasks 7–8. Audit and add explicit assertions.
 - Create: `electron/update/updater.errors.test.ts`
 
@@ -1262,9 +1317,11 @@ git commit -m "test(update): manual + auto checks log and never throw on failure
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 12: Add `settings.telemetry.enabled` (default `false`)
 
 **Files:**
+
 - Modify: `shared/settings-types.ts` — add `TelemetrySettings { enabled: boolean }`; extend `SettingsByNs`, `SettingsNamespace`
 - Modify: `electron/settings/defaults.ts` — `telemetry: { enabled: false }`
 - Modify: `electron/settings/store.ts` — register the namespace
@@ -1273,7 +1330,9 @@ git commit -m "test(update): manual + auto checks log and never throw on failure
 
 ```ts
 // shared/settings-types.ts
-export interface TelemetrySettings { enabled: boolean }
+export interface TelemetrySettings {
+  enabled: boolean
+}
 
 export type SettingsByNs = {
   general: GeneralSettings
@@ -1306,9 +1365,11 @@ git commit -m "feat(settings): add telemetry.enabled namespace (default false)"
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 13: Verify `telemetry_local` table exists
 
 **Files:**
+
 - Read-only check on `electron/services/db/migrations/011_perf_samples.sql`
 - Create: `electron/services/db/migrations/011_perf_samples.telemetry.test.ts`
 
@@ -1354,9 +1415,11 @@ git commit -m "test(db): assert telemetry_local schema in migration 011"
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 14: Daily 00:10 telemetry-aggregate job
 
 **Files:**
+
 - Create: `electron/queue/handlers/telemetry-aggregate.ts`
 - Create: `electron/queue/handlers/telemetry-aggregate.test.ts`
 - Modify: `electron/queue/runner.ts` (or handler registry) — register the new kind
@@ -1383,12 +1446,15 @@ describe('telemetry-aggregate handler', () => {
       VALUES (1, 'p1', 100, 50, 200, 1, '2026-05-08T12:00:00Z'),
              (2, 'p1', 200, 100, 250, 1, '2026-05-08T13:00:00Z')
     `)
-    db.exec(`INSERT INTO perf_samples (ts, area, ok, ms) VALUES ('2026-05-08T12:00:00Z', 'search.query', 1, 100)`)
+    db.exec(
+      `INSERT INTO perf_samples (ts, area, ok, ms) VALUES ('2026-05-08T12:00:00Z', 'search.query', 1, 100)`
+    )
 
     await handleTelemetryAggregate({ db, day: '2026-05-08' })
 
-    const rows = db.prepare(`SELECT metric, value FROM telemetry_local WHERE day = ?`).all('2026-05-08') as
-      | { metric: string; value: number }[]
+    const rows = db
+      .prepare(`SELECT metric, value FROM telemetry_local WHERE day = ?`)
+      .all('2026-05-08') as { metric: string; value: number }[]
     const map = Object.fromEntries(rows.map((r) => [r.metric, r.value]))
     expect(map['ai.tokens.total']).toBe(450)
     expect(map['ai.requests']).toBe(2)
@@ -1400,7 +1466,9 @@ describe('telemetry-aggregate handler', () => {
     runMigrations(db, join(process.cwd(), 'electron/services/db/migrations'))
     await handleTelemetryAggregate({ db, day: '2026-05-08' })
     await handleTelemetryAggregate({ db, day: '2026-05-08' })
-    const c = db.prepare(`SELECT COUNT(*) AS n FROM telemetry_local WHERE day = ?`).get('2026-05-08') as { n: number }
+    const c = db
+      .prepare(`SELECT COUNT(*) AS n FROM telemetry_local WHERE day = ?`)
+      .get('2026-05-08') as { n: number }
     // Even with zero source rows we still upsert sentinel zeros; just verify no duplication blow-up.
     expect(c.n).toBeLessThanOrEqual(10)
   })
@@ -1484,23 +1552,16 @@ function utcDayOf(d: Date): string {
 }
 
 function nextRunAtMs(now: Date): number {
-  const next = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    0,
-    10,
-    0,
-    0
-  ))
+  const next = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 10, 0, 0)
+  )
   if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1)
   return next.getTime() - now.getTime()
 }
 
-export function scheduleDailyTelemetry(deps: {
-  store: QueueStore
-  now?: () => Date
-}): { stop: () => void } {
+export function scheduleDailyTelemetry(deps: { store: QueueStore; now?: () => Date }): {
+  stop: () => void
+} {
   const now = deps.now ?? (() => new Date())
   let timer: NodeJS.Timeout | null = null
 
@@ -1581,9 +1642,11 @@ git commit -m "feat(telemetry): daily aggregate job + 00:10 UTC scheduler (off b
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 15: Observability page footer toggle for telemetry
 
 **Files:**
+
 - Modify: `src/components/settings/ObservabilityTab.tsx` — add the toggle
 - Modify: `src/stores/settings.ts` — expose `telemetry` + `setTelemetry`
 - Create: `src/components/settings/ObservabilityTelemetry.test.tsx`
@@ -1600,13 +1663,21 @@ import { ObservabilityTab } from './ObservabilityTab'
 
 const setTelemetry = vi.fn()
 vi.mock('@/stores/settings', () => ({
-  useSettingsStore: <T,>(sel: (s: { telemetry: { enabled: boolean }; setTelemetry: typeof setTelemetry }) => T) =>
-    sel({ telemetry: { enabled: false }, setTelemetry })
+  useSettingsStore: <T,>(
+    sel: (s: { telemetry: { enabled: boolean }; setTelemetry: typeof setTelemetry }) => T
+  ) => sel({ telemetry: { enabled: false }, setTelemetry })
 }))
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    ai: { 'usage.summary': vi.fn().mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] }) },
-    queue: { health: vi.fn().mockResolvedValue({}), recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] }) },
+    ai: {
+      'usage.summary': vi
+        .fn()
+        .mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] })
+    },
+    queue: {
+      health: vi.fn().mockResolvedValue({}),
+      recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] })
+    },
     perf: { aggregates: vi.fn().mockResolvedValue([]) },
     ops: { exportDiagnostic: vi.fn() }
   }
@@ -1670,9 +1741,11 @@ git commit -m "feat(ui): observability footer telemetry toggle (off by default)"
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 16: Disable telemetry stops new aggregation but preserves history
 
 **Files:**
+
 - Modify: `electron/bootstrap.ts` — `applyTelemetrySetting` already handles stop on disable (Task 14)
 - Create: `electron/services/telemetry/scheduler.disable.test.ts`
 

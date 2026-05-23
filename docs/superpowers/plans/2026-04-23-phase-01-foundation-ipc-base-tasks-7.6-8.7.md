@@ -12,18 +12,20 @@
 
 ## File Structure Map
 
-| Path | Role |
-|------|------|
-| `src/ipc/client.ts` | Strongly-typed `ipc` re-export + `useIpc()` hook |
-| `src/stores/home.ts` | Tiny feature store for ping result |
-| `src/pages/Home.tsx` | Extended with ping button and result display |
+| Path                 | Role                                             |
+| -------------------- | ------------------------------------------------ |
+| `src/ipc/client.ts`  | Strongly-typed `ipc` re-export + `useIpc()` hook |
+| `src/stores/home.ts` | Tiny feature store for ping result               |
+| `src/pages/Home.tsx` | Extended with ping button and result display     |
 
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 1: `src/ipc/client.ts` — typed `ipc` re-export + `useIpc` hook
 
 **Files:**
+
 - Create: `src/ipc/client.ts`
 
 - [ ] **Step 1: Create `src/ipc/client.ts`**
@@ -55,14 +57,17 @@ export function useIpc(): IpcClient<IpcContract> {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Delete `src/ipc/.gitkeep`**
 
 Run:
+
 ```bash
 rm -f src/ipc/.gitkeep
 ```
@@ -77,9 +82,11 @@ git commit -m "feat(phase-01): expose typed ipc client and useIpc hook"
 ---
 
 <!-- openspec-task: 7.7 -->
+
 ### Task 2: Home page — ping button, result round-trip via store
 
 **Files:**
+
 - Create: `src/stores/home.ts`
 - Modify: `src/pages/Home.tsx`
 
@@ -117,8 +124,7 @@ import { ipc } from '@/ipc/client'
 import { useHomeStore } from '@/stores/home'
 
 export function Home(): JSX.Element {
-  const { lastPingResult, lastPingError, setPingResult, setPingError } =
-    useHomeStore()
+  const { lastPingResult, lastPingError, setPingResult, setPingError } = useHomeStore()
   const [inFlight, setInFlight] = useState(false)
 
   async function onPing(): Promise<void> {
@@ -139,9 +145,7 @@ export function Home(): JSX.Element {
       <button type="button" onClick={() => void onPing()} disabled={inFlight}>
         {inFlight ? 'pinging…' : 'ping'}
       </button>
-      {lastPingResult !== null && (
-        <p data-testid="ping-result">result: {lastPingResult}</p>
-      )}
+      {lastPingResult !== null && <p data-testid="ping-result">result: {lastPingResult}</p>}
       {lastPingError !== null && (
         <p data-testid="ping-error" style={{ color: 'crimson' }}>
           error: {lastPingError}
@@ -155,14 +159,17 @@ export function Home(): JSX.Element {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke — click the ping button**
 
 Run `npm run dev`. Click the `ping` button. Expected:
+
 - Button disables briefly (`pinging…`).
 - Then `result: hi` appears below the button.
 - No red console errors in DevTools.
@@ -179,9 +186,11 @@ git commit -m "feat(phase-01): home page ping button round-trips through ipc"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 3: Acceptance — `npm run dev` shows "Hello Acornvo"
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run the dev server and visually confirm**
@@ -189,6 +198,7 @@ git commit -m "feat(phase-01): home page ping button round-trips through ipc"
 Run `npm run dev`.
 
 Expected:
+
 - Main Electron window opens, centered, 1280×800.
 - Displays "Hello Acornvo" heading and a `ping` button.
 - Theme follows system (dark background on dark-mode systems, light otherwise).
@@ -201,6 +211,7 @@ If all points pass, check off the openspec task:
 ```bash
 grep -n "8.1" openspec/changes/phase-01-foundation-ipc-base/tasks.md
 ```
+
 (No edit here — `/opsx:executing-plans` updates tasks.md on completion.)
 
 Quit the app.
@@ -208,9 +219,11 @@ Quit the app.
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 4: Acceptance — DevTools `window.api.ping.echo('x')` returns `'x'`; `window.require` is `undefined`
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run dev server and open DevTools console**
@@ -220,20 +233,24 @@ Run `npm run dev`. Open DevTools (`Cmd+Opt+I` / `Ctrl+Shift+I`) → Console.
 - [ ] **Step 2: Verify `ping.echo`**
 
 Type:
+
 ```javascript
 await window.api.ping.echo('x')
 ```
+
 Expected: returns the string `'x'`.
 
 - [ ] **Step 3: Verify Node primitives are absent**
 
 Type each:
+
 ```javascript
 window.require
 window.process
 window.ipcRenderer
 window.Buffer
 ```
+
 Expected: each is `undefined`.
 
 Quit the app.
@@ -241,9 +258,11 @@ Quit the app.
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 5: Acceptance — log file exists and contains "app started"
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run the app to produce a log entry**
@@ -253,30 +272,37 @@ Run `npm run dev`. Wait for the window to appear. Quit.
 - [ ] **Step 2: Confirm file exists**
 
 Run:
+
 ```bash
 ls -la ~/.acornvo/logs/main-$(date +%Y-%m-%d).log
 ```
+
 Expected: file exists, non-empty.
 
 - [ ] **Step 3: Confirm "app started" line**
 
 Run:
+
 ```bash
 grep "app started" ~/.acornvo/logs/main-$(date +%Y-%m-%d).log
 ```
+
 Expected: at least one match, with `version`, `platform`, `electron` keys in the context.
 
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 6: Acceptance — renderer error logs reach the file
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run the dev server and emit a log from the renderer**
 
 Run `npm run dev`. In DevTools console:
+
 ```javascript
 await window.api.log.error('boom', { where: 'smoke' })
 ```
@@ -286,17 +312,21 @@ Quit.
 - [ ] **Step 2: Grep the log file**
 
 Run:
+
 ```bash
 grep "\[renderer\] boom" ~/.acornvo/logs/main-$(date +%Y-%m-%d).log
 ```
+
 Expected: one matching line at `[error]` level with the `{ where: 'smoke' }` context.
 
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 7: Acceptance — macOS `Cmd+W` hides, Dock click re-shows
 
 **Files:**
+
 - None (verification only — macOS only)
 
 - [ ] **Step 1: Skip on non-macOS**
@@ -314,17 +344,21 @@ Press `Cmd+Q`. Expected: app exits cleanly.
 ---
 
 <!-- openspec-task: 8.6 -->
+
 ### Task 8: Acceptance — `tsc --noEmit` is clean; contract break fails compilation
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run both typecheck projects**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: exits 0, no TypeScript errors reported.
 
 - [ ] **Step 2: Deliberately break the contract — expect compile failure**
@@ -343,10 +377,13 @@ export type IpcContract = {
 ```
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: FAIL. Errors should appear in at least:
+
 - `shared/ipc-contract.type-test.ts` (the `_EchoIsString` assertion)
 - `electron/ipc/handlers.ts` (missing `echo` property)
 - `preload/preload.ts` (extra `echo` property under `ping`)
@@ -361,30 +398,37 @@ git checkout shared/ipc-contract.ts
 ```
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS again.
 
 ---
 
 <!-- openspec-task: 8.7 -->
+
 ### Task 9: Acceptance — `openspec validate phase-01-foundation-ipc-base --strict`
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run strict validation**
 
 Run:
+
 ```bash
 openspec validate phase-01-foundation-ipc-base --strict
 ```
+
 Expected: exits 0, "VALID" (or equivalent success message).
 
 - [ ] **Step 2: If validation fails**
 
 Read the error message, locate the offending artifact, and fix it. Common issues:
+
 - A Requirement missing its `#### Scenario:` block.
 - Tasks.md containing unchecked boxes the validator considers incomplete (should not block `--strict` — but verify the validator's expectation).
 - A proposed capability referenced in proposal.md but missing from `specs/<capability>/spec.md`.
@@ -398,6 +442,7 @@ At this point the implementation is complete. Collect any lingering dirty files:
 ```bash
 git status
 ```
+
 If anything is uncommitted that belongs to the acceptance step, commit it:
 
 ```bash
@@ -412,6 +457,7 @@ If clean, no commit needed.
 ## Plan 5 Wrap-up (and phase-01 wrap-up)
 
 After Task 9 of this plan:
+
 - `src/ipc/client.ts` exposes the typed `ipc` symbol.
 - Home page round-trips a ping through the full main ↔ preload ↔ renderer path.
 - All 7 acceptance checks in section 8 of `tasks.md` pass.
@@ -420,6 +466,7 @@ After Task 9 of this plan:
 **Ready for archival** (see `/opsx:archive`) once `/opsx:verify` confirms implementation matches specs.
 
 Known follow-ups (deliberately out of scope for phase-01 — do **not** add to this plan):
+
 - Tightening the CSP (deferred to `vditor-editor-autosave`).
 - Adding `en-US` i18n resources (deferred to `observability-and-packaging`).
 - Replacing the `any` bits inside `registerHandlers`'s dispatch loop with tighter inference — the current `HandlerMap` type already provides full safety at the call site; the internal cast is a one-line exception.

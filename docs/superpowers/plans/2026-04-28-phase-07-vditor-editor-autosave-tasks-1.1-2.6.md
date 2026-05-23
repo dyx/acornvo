@@ -34,21 +34,22 @@ Lay the foundation for the editor: install Vditor, wire its offline assets into 
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json`, `package-lock.json` | Modify (add `vditor`) | 1.1 |
-| `scripts/copy-vditor-assets.mjs` | Create | 1.2 |
-| `src/public/vditor/**` | Create (copied from `node_modules/vditor/dist`) | 1.2 |
-| `.gitignore` | Modify (ignore `src/public/vditor/`) | 1.2 |
-| `src/pages/Editor.tsx` | Create stub | 1.3 |
-| `src/components/editor/.gitkeep` | Create | 1.3 |
-| `src/stores/editor.ts` | Create stub → state machine + actions | 1.3, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 |
-| `src/stores/editor.test.ts` | Create | 2.1–2.6 |
-| `vitest.config.ts` | Modify (extend `test.include` to cover `src/**/*.test.ts`) | 2.1 |
+| Path                                | Action                                                     | Owner task                        |
+| ----------------------------------- | ---------------------------------------------------------- | --------------------------------- |
+| `package.json`, `package-lock.json` | Modify (add `vditor`)                                      | 1.1                               |
+| `scripts/copy-vditor-assets.mjs`    | Create                                                     | 1.2                               |
+| `src/public/vditor/**`              | Create (copied from `node_modules/vditor/dist`)            | 1.2                               |
+| `.gitignore`                        | Modify (ignore `src/public/vditor/`)                       | 1.2                               |
+| `src/pages/Editor.tsx`              | Create stub                                                | 1.3                               |
+| `src/components/editor/.gitkeep`    | Create                                                     | 1.3                               |
+| `src/stores/editor.ts`              | Create stub → state machine + actions                      | 1.3, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 |
+| `src/stores/editor.test.ts`         | Create                                                     | 2.1–2.6                           |
+| `vitest.config.ts`                  | Modify (extend `test.include` to cover `src/**/*.test.ts`) | 2.1                               |
 
 ## Pre-flight
 
 This plan assumes phase-04, phase-05, and phase-06 have landed on `main` with:
+
 - `electron/ipc/file.ts` exporting `fileHandlers.write` + `fileHandlers.readParsed` (phase-04).
 - `electron/services/frontmatter.ts` exporting `parseFile` + `stringify` (phase-04).
 - `selfWrites` registration occurring inside `file.write` (phase-05 — renderer-invisible).
@@ -57,9 +58,11 @@ This plan assumes phase-04, phase-05, and phase-06 have landed on `main` with:
 If phase-05 or phase-06 is **not** yet merged when this plan starts, **stop**: tasks 2.2–2.4 reference `ipc.files.get(path)` and `ipc.file.write(path, body, opts)`. Both must exist on `IpcClient<IpcContract>`.
 
 Verify the prerequisite by running:
+
 ```bash
 node -e "const c=require('./shared/ipc-contract.ts');console.log('files namespace?', !!c.IpcContract)"
 ```
+
 (This will fail because `.ts` isn't loadable directly — the real check is the type-test below in task 2.1 step 1, which references `IpcContract['files']['get']`.)
 
 ---
@@ -67,14 +70,17 @@ node -e "const c=require('./shared/ipc-contract.ts');console.log('files namespac
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install vditor
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm not already installed**
 
 Run:
+
 ```bash
 node -e "const p=require('./package.json');console.log(p.dependencies['vditor']||p.devDependencies?.['vditor']||'absent')"
 ```
@@ -84,6 +90,7 @@ Expected: `absent`. If a version prints, skip Step 2.
 - [ ] **Step 2: Install**
 
 Run:
+
 ```bash
 npm install vditor@^3.10
 ```
@@ -93,6 +100,7 @@ Expected: `package.json` `dependencies` now lists `vditor`. The `postinstall` sc
 - [ ] **Step 3: Verify type-check still passes**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -109,9 +117,11 @@ git commit -m "chore(phase-07): add vditor dependency"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Ship Vditor assets offline via `src/public/vditor/`
 
 **Files:**
+
 - Create: `scripts/copy-vditor-assets.mjs`
 - Modify: `package.json` (extend `postinstall` to invoke the script)
 - Modify: `.gitignore`
@@ -178,6 +188,7 @@ src/public/vditor/
 - [ ] **Step 4: Run the script once and verify output**
 
 Run:
+
 ```bash
 node scripts/copy-vditor-assets.mjs && ls src/public/vditor | head -10
 ```
@@ -187,6 +198,7 @@ Expected: lists files such as `index.min.js`, `index.css`, plus `images/`, `js/`
 - [ ] **Step 5: Verify type-check + lint still pass**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
@@ -205,9 +217,11 @@ git commit -m "chore(phase-07): copy vditor offline assets to src/public/vditor 
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Scaffold Editor page / components dir / store stub
 
 **Files:**
+
 - Create: `src/pages/Editor.tsx`
 - Create: `src/components/editor/.gitkeep`
 - Create: `src/stores/editor.ts`
@@ -218,13 +232,13 @@ git commit -m "chore(phase-07): copy vditor offline assets to src/public/vditor 
 Modify `src/App.tsx:63` — change the `editor` route from `<Placeholder>` to the real component. Replace this line:
 
 ```tsx
-          <Route path="/editor/:path" element={<Placeholder name="editor" />} />
+<Route path="/editor/:path" element={<Placeholder name="editor" />} />
 ```
 
 with:
 
 ```tsx
-          <Route path="/editor/:encodedPath" element={<Editor />} />
+<Route path="/editor/:encodedPath" element={<Editor />} />
 ```
 
 …and add the import near the top (alongside the existing page imports):
@@ -285,6 +299,7 @@ export function Editor(): JSX.Element {
 - [ ] **Step 4: Create the empty editor components dir**
 
 Run:
+
 ```bash
 mkdir -p src/components/editor && touch src/components/editor/.gitkeep
 ```
@@ -318,6 +333,7 @@ export const useEditorStore = create<EditorState & EditorActions>(() => ({
 - [ ] **Step 6: Verify type-check passes**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -344,16 +360,18 @@ git commit -m "feat(phase-07): scaffold Editor page / store stub and wire /edito
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: Define `EditorState` tagged union and store skeleton
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Create: `src/stores/editor.test.ts`
 - Modify: `vitest.config.ts` (extend `test.include`)
 
 The state machine has four shapes per design D2. We lock them in with a type-test today; subsequent tasks fill in the actions. Action signatures referenced here (e.g. `open`, `setBody`, `save`, `flushSave`, `close`) will be implemented in tasks 2.2–2.6 / 2.7–2.8.
 
-- [ ] **Step 1: Extend `vitest.config.ts` to discover `src/**/*.test.ts(x)`**
+- [ ] **Step 1: Extend `vitest.config.ts` to discover `src/**/\*.test.ts(x)`\*\*
 
 Modify `vitest.config.ts`. Replace:
 
@@ -445,6 +463,7 @@ describe('editor store — state machine', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -505,10 +524,13 @@ export const useEditorStore = create<EditorStore>(() => ({
 Update the test file to read `state.kind` instead of `kind`:
 
 In `src/stores/editor.test.ts`, change:
+
 ```ts
 expect(useEditorStore.getState().kind).toBe('idle')
 ```
+
 to:
+
 ```ts
 expect(useEditorStore.getState().state.kind).toBe('idle')
 ```
@@ -516,6 +538,7 @@ expect(useEditorStore.getState().state.kind).toBe('idle')
 - [ ] **Step 5: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -525,6 +548,7 @@ Expected: PASS (2 cases).
 - [ ] **Step 6: Run the full test suite to confirm no regressions**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -541,13 +565,16 @@ git commit -m "feat(phase-07): define EditorState tagged union and editor store 
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: Implement `open(path)` action
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
 `open(path)` per design D2:
+
 1. Set `state = { kind: 'loading', path }`.
 2. Call `ipc.files.get(path)` (phase-06 read path that returns `{ summary, frontmatter, body }` plus a `mtimeMs` field — see note below).
 3. On success → `state = { kind: 'ready', path, frontmatter, body, savedBody: body, savedMtimeMs: <mtime>, dirty: false, saving: false, lastError: null, saveErrorCount: 0 }`.
@@ -670,6 +697,7 @@ describe('editor store — open(path)', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -727,6 +755,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -743,13 +772,16 @@ git commit -m "feat(phase-07): implement editor store open(path) loading→ready
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: Implement `setBody(newBody)` + debounce-ready `scheduleSave()`
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
 `setBody`:
+
 - Only valid when `state.kind === 'ready'`. (Otherwise no-op.)
 - Updates `body` and recomputes `dirty = (body !== savedBody)`.
 - Calls the closure-scoped `scheduleSave()` to (re)start the 1000ms debounce timer.
@@ -765,8 +797,15 @@ Append to `src/stores/editor.test.ts`:
 ```ts
 async function openReady(body = '# Body', mtime = 1000): Promise<void> {
   ipcMock.file.readParsed.mockResolvedValueOnce({
-    content: body, eol: 'lf', mtimeMs: mtime, sha256: 'h', hadBom: false,
-    originalEncoding: 'utf8', frontmatter: {}, body, rawYaml: ''
+    content: body,
+    eol: 'lf',
+    mtimeMs: mtime,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body,
+    rawYaml: ''
   })
   await useEditorStore.getState().open('a.md')
 }
@@ -803,6 +842,7 @@ describe('editor store — setBody', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -863,9 +903,13 @@ The full structure becomes:
 export const useEditorStore = create<EditorStore>((set, get) => ({
   state: { kind: 'idle' },
 
-  async open(path) { /* …as before… */ },
+  async open(path) {
+    /* …as before… */
+  },
 
-  setBody(newBody) { /* …above… */ },
+  setBody(newBody) {
+    /* …above… */
+  },
 
   save: notImplemented,
   flushSave: notImplemented,
@@ -879,6 +923,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -912,13 +957,16 @@ git commit -m "feat(phase-07): editor store setBody + private 1s debounce timer"
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 7: Implement `save()` with in-flight self-iteration
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
 `save()` per design D3 + spec `editor-autosave#保存并发控制`:
+
 1. If `state.kind !== 'ready'`: return (nothing to do).
 2. If `state.saving === true`: return (in-flight; the existing call's post-success branch will self-iterate).
 3. Mark `saving: true`, snapshot `bodyAtSendTime = state.body` and `mtimeAtSendTime = state.savedMtimeMs`.
@@ -948,18 +996,16 @@ describe('editor store — save (success path)', () => {
     ipcMock.file.write.mockResolvedValueOnce({ mtimeMs: 200, sha256: 'h2' })
     // Use writeParsed: route the mock through the same call.
     ;(ipcMock.file as any).writeParsed = vi.fn().mockResolvedValueOnce({
-      mtimeMs: 200, sha256: 'h2'
+      mtimeMs: 200,
+      sha256: 'h2'
     })
 
     await useEditorStore.getState().save()
 
     expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
-    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
-      'a.md',
-      {},
-      '# New body',
-      { expectedMtime: 100 }
-    )
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith('a.md', {}, '# New body', {
+      expectedMtime: 100
+    })
 
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
@@ -1015,12 +1061,12 @@ describe('editor store — save (success path)', () => {
     await new Promise((r) => setTimeout(r, 5))
 
     expect((ipcMock.file as any).writeParsed).toHaveBeenCalledTimes(2)
-    expect((ipcMock.file as any).writeParsed).toHaveBeenNthCalledWith(
-      1, 'a.md', {}, 'B', { expectedMtime: 10 }
-    )
-    expect((ipcMock.file as any).writeParsed).toHaveBeenNthCalledWith(
-      2, 'a.md', {}, 'C', { expectedMtime: 11 }
-    )
+    expect((ipcMock.file as any).writeParsed).toHaveBeenNthCalledWith(1, 'a.md', {}, 'B', {
+      expectedMtime: 10
+    })
+    expect((ipcMock.file as any).writeParsed).toHaveBeenNthCalledWith(2, 'a.md', {}, 'C', {
+      expectedMtime: 11
+    })
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
     expect(s.savedBody).toBe('C')
@@ -1031,6 +1077,7 @@ describe('editor store — save (success path)', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'save'
 ```
@@ -1123,6 +1170,7 @@ Replace `save: notImplemented,` in `src/stores/editor.ts` with:
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'save'
 ```
@@ -1132,6 +1180,7 @@ Expected: 3 PASS.
 - [ ] **Step 4: Run the full suite**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -1148,13 +1197,16 @@ git commit -m "feat(phase-07): editor store save() — single in-flight + self-i
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 8: Implement `flushSave()`
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
 `flushSave()` per design D3:
+
 1. Cancel the debounce timer (`_cancelDebounce()`).
 2. Await any in-flight save by polling `state.saving` until false (with a small async loop) — or simpler: kick off a `save()` and `await` it. If a save is currently in flight, the new `save()` call returns immediately (no-op per task 7's contract) and the existing in-flight save completes. We need to wait on the actual in-flight promise.
 
@@ -1187,10 +1239,7 @@ async function _doSave(): Promise<void> {
 
   useEditorStore.setState((prev) => ({
     ...prev,
-    state:
-      prev.state.kind === 'ready'
-        ? { ...prev.state, saving: true }
-        : prev.state
+    state: prev.state.kind === 'ready' ? { ...prev.state, saving: true } : prev.state
   }))
 
   try {
@@ -1271,9 +1320,12 @@ describe('editor store — flushSave', () => {
     const savePromise = useEditorStore.getState().save()
     // flushSave is called while save is still pending
     let flushed = false
-    const flushPromise = useEditorStore.getState().flushSave().then(() => {
-      flushed = true
-    })
+    const flushPromise = useEditorStore
+      .getState()
+      .flushSave()
+      .then(() => {
+        flushed = true
+      })
     expect(flushed).toBe(false)
     release({ mtimeMs: 2, sha256: 'h2' })
     await savePromise
@@ -1323,6 +1375,7 @@ describe('editor store — flushSave', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'flushSave'
 ```
@@ -1350,6 +1403,7 @@ Replace `flushSave: notImplemented,` with:
 - [ ] **Step 4: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -1366,19 +1420,21 @@ git commit -m "feat(phase-07): editor store flushSave() awaits in-flight + re-sa
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 9: Save error branches — `E_MTIME_MISMATCH` / `E_PERMISSION` / `E_NOSPACE` / generic
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
 Per design D9 and spec `editor-autosave#保存错误重试与上限`:
 
-| Code | Behaviour |
-|---|---|
-| `E_MTIME_MISMATCH` | `lastError = 'conflict'`; **do not** clear dirty; do not increment `saveErrorCount` (conflict is not "save failed", it's "needs human"). Toast wording lands in the UI plan. |
-| `E_PERMISSION` / `E_NOSPACE` / `E_INTERNAL` / `E_WRITE_VERIFY` | `lastError = code`; `saveErrorCount += 1`; keep dirty. If `saveErrorCount >= 3`, store a flag `persistentFailure: true` so the UI plan can display the modal. |
-| any other (e.g. `Error('socket boom')`) | `lastError = stringified message`; `saveErrorCount += 1`; same persistent-failure handling. |
+| Code                                                           | Behaviour                                                                                                                                                                    |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `E_MTIME_MISMATCH`                                             | `lastError = 'conflict'`; **do not** clear dirty; do not increment `saveErrorCount` (conflict is not "save failed", it's "needs human"). Toast wording lands in the UI plan. |
+| `E_PERMISSION` / `E_NOSPACE` / `E_INTERNAL` / `E_WRITE_VERIFY` | `lastError = code`; `saveErrorCount += 1`; keep dirty. If `saveErrorCount >= 3`, store a flag `persistentFailure: true` so the UI plan can display the modal.                |
+| any other (e.g. `Error('socket boom')`)                        | `lastError = stringified message`; `saveErrorCount += 1`; same persistent-failure handling.                                                                                  |
 
 Note: the basic catch block from task 7 already records `lastError` and increments `saveErrorCount`. This task **specialises** the conflict branch (no count increment, distinct `lastError`) and adds a `persistentFailure` flag.
 
@@ -1456,6 +1512,7 @@ describe('editor store — save error branches', () => {
 > The fourth test (`successful save after errors`) is intentionally a placeholder — the explicit reset on success was already implemented in task 7's success branch (`saveErrorCount: 0`, `lastError: null`). What task 2.7 (plan 2) adds is the `persistentFailure: false` reset. Until then, the test stays a no-op.
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'save error branches'
 ```
@@ -1554,23 +1611,24 @@ Replace the catch block in `_doSave` with:
 In the success branch, also clear `persistentFailure`:
 
 ```ts
-      useEditorStore.setState({
-        state: {
-          ...next,
-          savedBody: bodyAtSendTime,
-          savedMtimeMs: r.mtimeMs,
-          saving: false,
-          dirty: newDirty,
-          lastError: null,
-          saveErrorCount: 0,
-          persistentFailure: false
-        }
-      })
+useEditorStore.setState({
+  state: {
+    ...next,
+    savedBody: bodyAtSendTime,
+    savedMtimeMs: r.mtimeMs,
+    saving: false,
+    dirty: newDirty,
+    lastError: null,
+    saveErrorCount: 0,
+    persistentFailure: false
+  }
+})
 ```
 
 - [ ] **Step 4: Run all tests**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -1589,6 +1647,7 @@ git commit -m "feat(phase-07): editor store save error branches — conflict / p
 ## Plan-1 Acceptance
 
 After all 9 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (new file `src/stores/editor.test.ts` ≥ 16 cases)
 - [ ] `npm run lint` PASSES

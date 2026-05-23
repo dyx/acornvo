@@ -38,9 +38,9 @@ description: Focus on implementing custom Chat Provider, helping to adapt any st
 
 ```ts
 // ✅ Correct import examples
-import { Bubble } from '@ant-design/x';
-import { AbstractChatProvider, OpenAIChatProvider } from '@ant-design/x-sdk';
-import XRequest from '@ant-design/x-sdk';
+import { Bubble } from '@ant-design/x'
+import { AbstractChatProvider, OpenAIChatProvider } from '@ant-design/x-sdk'
+import XRequest from '@ant-design/x-sdk'
 ```
 
 # 🚀 Quick Start
@@ -61,11 +61,11 @@ graph TD
 
 ### 🏭 Built-in Provider Overview
 
-| Provider Type | Applicable Scenario | Import |
-| --- | --- | --- |
-| **OpenAIChatProvider** | Standard OpenAI API format | `import { OpenAIChatProvider } from '@ant-design/x-sdk'` |
-| **DeepSeekChatProvider** | Standard DeepSeek API format | `import { DeepSeekChatProvider } from '@ant-design/x-sdk'` |
-| **DefaultChatProvider** | Pass-through raw response, no format conversion | `import { DefaultChatProvider } from '@ant-design/x-sdk'` |
+| Provider Type            | Applicable Scenario                             | Import                                                     |
+| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------- |
+| **OpenAIChatProvider**   | Standard OpenAI API format                      | `import { OpenAIChatProvider } from '@ant-design/x-sdk'`   |
+| **DeepSeekChatProvider** | Standard DeepSeek API format                    | `import { DeepSeekChatProvider } from '@ant-design/x-sdk'` |
+| **DefaultChatProvider**  | Pass-through raw response, no format conversion | `import { DefaultChatProvider } from '@ant-design/x-sdk'`  |
 
 > ⚠️ Export names are `OpenAIChatProvider` / `DeepSeekChatProvider` / `DefaultChatProvider`, watch spelling
 
@@ -77,15 +77,15 @@ graph TD
 - You want full control over `Bubble.List`'s `contentRender` to render messages
 
 ```ts
-import { DefaultChatProvider, XRequest } from '@ant-design/x-sdk';
+import { DefaultChatProvider, XRequest } from '@ant-design/x-sdk'
 
 interface ChatInput {
-  query: string;
-  stream?: boolean;
+  query: string
+  stream?: boolean
 }
 
 interface ChatOutput {
-  choices: Array<{ message: { content: string; role: string } }>;
+  choices: Array<{ message: { content: string; role: string } }>
 }
 
 // DefaultChatProvider generic: <ChatMessage, Input, Output>
@@ -93,9 +93,9 @@ interface ChatOutput {
 const provider = new DefaultChatProvider<ChatOutput | ChatInput, ChatInput, ChatOutput>({
   request: XRequest('https://your-api.com/chat', {
     manual: true,
-    params: { stream: false },
-  }),
-});
+    params: { stream: false }
+  })
+})
 
 // Render using contentRender in Bubble.List's role config
 // role={{ assistant: { contentRender(content) { return content?.choices?.[0]?.message?.content } } }}
@@ -118,24 +118,24 @@ const provider = new DefaultChatProvider<ChatOutput | ChatInput, ChatInput, Chat
 
 ```ts
 // MyChatProvider.ts
-import { AbstractChatProvider } from '@ant-design/x-sdk';
-import type { TransformMessage } from '@ant-design/x-sdk';
-import type { XRequestOptions } from '@ant-design/x-sdk';
+import { AbstractChatProvider } from '@ant-design/x-sdk'
+import type { TransformMessage } from '@ant-design/x-sdk'
+import type { XRequestOptions } from '@ant-design/x-sdk'
 
 interface MyInput {
-  query: string;
-  model?: string;
-  stream?: boolean;
+  query: string
+  model?: string
+  stream?: boolean
 }
 
 interface MyOutput {
-  content: string;
-  finish_reason?: string;
+  content: string
+  finish_reason?: string
 }
 
 interface MyMessage {
-  content: string;
-  role: 'user' | 'assistant';
+  content: string
+  role: 'user' | 'assistant'
 }
 
 export class MyChatProvider extends AbstractChatProvider<MyMessage, MyInput, MyOutput> {
@@ -143,22 +143,22 @@ export class MyChatProvider extends AbstractChatProvider<MyMessage, MyInput, MyO
   // options comes from XRequest(url, options), can access options.params etc.
   transformParams(
     requestParams: Partial<MyInput>,
-    options: XRequestOptions<MyInput, MyOutput, MyMessage>,
+    options: XRequestOptions<MyInput, MyOutput, MyMessage>
   ): MyInput {
     return {
       ...(options?.params || {}),
       query: requestParams.query || '',
       model: 'gpt-3.5-turbo',
-      stream: true,
-    };
+      stream: true
+    }
   }
 
   // Local message: convert onRequest params to the user-side display message (can return array)
   transformLocalMessage(requestParams: Partial<MyInput>): MyMessage {
     return {
       content: requestParams.query || '',
-      role: 'user',
-    };
+      role: 'user'
+    }
   }
 
   // Response conversion:
@@ -168,16 +168,16 @@ export class MyChatProvider extends AbstractChatProvider<MyMessage, MyInput, MyO
   // info.status: current status
   // ⚠️ Return only MyMessage type; do NOT add a status field
   transformMessage(info: TransformMessage<MyMessage, MyOutput>): MyMessage {
-    const { originMessage, chunk } = info;
+    const { originMessage, chunk } = info
 
     if (!chunk?.content || chunk.content === '[DONE]') {
-      return { ...(originMessage || { content: '', role: 'assistant' }) };
+      return { ...(originMessage || { content: '', role: 'assistant' }) }
     }
 
     return {
       content: `${originMessage?.content || ''}${chunk.content}`,
-      role: 'assistant',
-    };
+      role: 'assistant'
+    }
   }
 }
 ```
@@ -195,8 +195,8 @@ export class MyChatProvider extends AbstractChatProvider<MyMessage, MyInput, MyO
 ## Step 4: Use Provider ⏱️ 1 minute
 
 ```ts
-import { MyChatProvider } from './MyChatProvider';
-import XRequest from '@ant-design/x-sdk';
+import { MyChatProvider } from './MyChatProvider'
+import XRequest from '@ant-design/x-sdk'
 
 // ⚠️ Must pass manual: true, otherwise AbstractChatProvider constructor will throw
 const provider = new MyChatProvider({
@@ -204,16 +204,16 @@ const provider = new MyChatProvider({
     manual: true,
     headers: {
       Authorization: 'Bearer your-token',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
     params: {
       model: 'gpt-3.5-turbo',
-      stream: true,
-    },
-  }),
-});
+      stream: true
+    }
+  })
+})
 
-export { provider };
+export { provider }
 ```
 
 # 🔑 Core Types and Exports
@@ -239,8 +239,8 @@ import type {
   XRequestCallbacks, // { onUpdate, onSuccess, onError }
 
   // Message related
-  MessageInfo, // { id, message, status, extraInfo }
-} from '@ant-design/x-sdk';
+  MessageInfo // { id, message, status, extraInfo }
+} from '@ant-design/x-sdk'
 ```
 
 ### XModelMessage Structure (OpenAI message format)
@@ -248,9 +248,9 @@ import type {
 ```ts
 // XModelMessage is the standard OpenAI message format
 // Used for OpenAIChatProvider / DeepSeekChatProvider ChatMessage generic
-const userMessage: XModelMessage = { role: 'user', content: 'Hello' };
-const systemMessage: XModelMessage = { role: 'system', content: 'You are an assistant' };
-const developerMessage: XModelMessage = { role: 'developer', content: 'System prompt' };
+const userMessage: XModelMessage = { role: 'user', content: 'Hello' }
+const systemMessage: XModelMessage = { role: 'system', content: 'You are an assistant' }
+const developerMessage: XModelMessage = { role: 'developer', content: 'System prompt' }
 ```
 
 ### SSEOutput and SSEFields
@@ -260,18 +260,18 @@ const developerMessage: XModelMessage = { role: 'developer', content: 'System pr
 // { data?: string; event?: string; id?: string; retry?: number }
 // DeepSeekChatProvider uses Partial<Record<SSEFields, XModelResponse>>
 
-import { DeepSeekChatProvider, XRequest } from '@ant-design/x-sdk';
-import type { SSEFields, XModelParams, XModelResponse } from '@ant-design/x-sdk';
+import { DeepSeekChatProvider, XRequest } from '@ant-design/x-sdk'
+import type { SSEFields, XModelParams, XModelResponse } from '@ant-design/x-sdk'
 
 const provider = new DeepSeekChatProvider({
   request: XRequest<XModelParams, Partial<Record<SSEFields, XModelResponse>>>(
     'https://api.deepseek.com/v1/chat/completions',
     {
       manual: true,
-      params: { model: 'deepseek-chat', stream: true },
-    },
-  ),
-});
+      params: { model: 'deepseek-chat', stream: true }
+    }
+  )
+})
 ```
 
 # ⚙️ XRequest Advanced Configuration
@@ -288,23 +288,23 @@ const provider = new OpenAIChatProvider({
       // onUpdate: triggered on each streaming chunk arrival
       // chunk: current chunk; responseHeaders: response headers; message: current MessageInfo
       onUpdate: (chunk, responseHeaders, message) => {
-        console.log('Stream update:', message?.message?.content);
+        console.log('Stream update:', message?.message?.content)
       },
       // onSuccess: triggered when all chunks are received
       // chunks: all chunks array; message: final MessageInfo
       onSuccess: (chunks, responseHeaders, message) => {
-        console.log('Request complete:', message?.message?.content);
+        console.log('Request complete:', message?.message?.content)
         // Good place for analytics, logging, etc.
       },
       // onError: triggered on request failure (including AbortError)
       // error: error object; errorInfo: extra error info; message: MessageInfo at failure
       onError: (error, errorInfo, responseHeaders, message) => {
-        console.error('Request failed:', error.message);
-      },
+        console.error('Request failed:', error.message)
+      }
     },
-    params: { model: 'gpt-4o', stream: true },
-  }),
-});
+    params: { model: 'gpt-4o', stream: true }
+  })
+})
 ```
 
 > ⚠️ `callbacks` and `useXChat`'s `requestFallback` do not conflict — both execute. `callbacks` is better for logging/reporting; `requestFallback` controls UI display.
@@ -321,11 +321,11 @@ const request = XRequest('https://your-api.com/chat', {
   // onError can also return a number to dynamically set retry interval
   callbacks: {
     onError: (error) => {
-      if (error.name === 'AbortError') return; // Don't retry on user cancel
-      return 5000; // Return number = retry after 5s (higher priority than retryInterval)
-    },
-  },
-});
+      if (error.name === 'AbortError') return // Don't retry on user cancel
+      return 5000 // Return number = retry after 5s (higher priority than retryInterval)
+    }
+  }
+})
 ```
 
 ## transformStream Custom Stream
@@ -338,19 +338,19 @@ const request = XRequest('https://your-api.com/chat', {
   // Fixed TransformStream
   transformStream: new TransformStream({
     transform(chunk, controller) {
-      controller.enqueue(JSON.parse(chunk));
-    },
+      controller.enqueue(JSON.parse(chunk))
+    }
   }),
   // Or decide dynamically based on URL and response headers
   transformStream: (baseURL, responseHeaders) => {
     if (responseHeaders.get('x-stream-type') === 'ndjson') {
       return new TransformStream({
         /* ... */
-      });
+      })
     }
-    return undefined; // Use default SSE parsing
-  },
-});
+    return undefined // Use default SSE parsing
+  }
+})
 ```
 
 # 🔧 Common Scenario Adaptation
@@ -412,9 +412,9 @@ transformMessage(info) {
 // ✅ In React components, use useState to ensure only created once
 const [provider] = React.useState(
   new MyChatProvider({
-    request: XRequest(URL, { manual: true }),
-  }),
-);
+    request: XRequest(URL, { manual: true })
+  })
+)
 
 // ❌ Don't create directly in render function (creates new instance on every render)
 // const provider = new MyChatProvider(...); // inside component body causes issues

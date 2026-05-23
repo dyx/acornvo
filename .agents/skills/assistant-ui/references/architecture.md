@@ -15,11 +15,11 @@ Internal implementations that manage state:
 ```typescript
 // Internal - not directly used
 interface ThreadRuntimeCore {
-  readonly messages: readonly ThreadMessage[];
-  readonly isRunning: boolean;
-  append(message: AppendMessage): void;
-  cancelRun(): void;
-  subscribe(callback: () => void): Unsubscribe;
+  readonly messages: readonly ThreadMessage[]
+  readonly isRunning: boolean
+  append(message: AppendMessage): void
+  cancelRun(): void
+  subscribe(callback: () => void): Unsubscribe
 }
 ```
 
@@ -29,26 +29,26 @@ Public API exposed via hooks:
 
 ```typescript
 type AssistantRuntime = {
-  thread(): ThreadRuntime;
-  threads(): ThreadListRuntime;
-  getState(): AssistantState;
-  subscribe(callback: () => void): Unsubscribe;
-};
+  thread(): ThreadRuntime
+  threads(): ThreadListRuntime
+  getState(): AssistantState
+  subscribe(callback: () => void): Unsubscribe
+}
 
 type ThreadRuntime = {
-  getState(): ThreadState;
-  append(message: AppendMessage): void;
-  cancelRun(): void;
-  message(index: number): MessageRuntime;
-  composer(): ComposerRuntime;
-};
+  getState(): ThreadState
+  append(message: AppendMessage): void
+  cancelRun(): void
+  message(index: number): MessageRuntime
+  composer(): ComposerRuntime
+}
 
 type MessageRuntime = {
-  getState(): MessageState;
-  edit(message: EditMessage): void;
-  reload(): void;
-  part(index: number): MessagePartRuntime;
-};
+  getState(): MessageState
+  edit(message: EditMessage): void
+  reload(): void
+  part(index: number): MessagePartRuntime
+}
 ```
 
 ### Layer 3: Context Hooks
@@ -57,16 +57,16 @@ React hooks for accessing runtime:
 
 ```tsx
 // Modern API (recommended)
-import { useAui, useAuiState, useAuiEvent } from "@assistant-ui/react";
+import { useAui, useAuiState, useAuiEvent } from '@assistant-ui/react'
 
 // Get API for imperative actions
-const api = useAui();
+const api = useAui()
 
 // Subscribe to state changes
-const messages = useAuiState(s => s.thread.messages);
+const messages = useAuiState((s) => s.thread.messages)
 
 // Listen to events
-useAuiEvent("composer.send", (e) => console.log(e));
+useAuiEvent('composer.send', (e) => console.log(e))
 ```
 
 ### Layer 4: Primitives (UI)
@@ -78,8 +78,8 @@ import {
   ThreadPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
-  ActionBarPrimitive,
-} from "@assistant-ui/react";
+  ActionBarPrimitive
+} from '@assistant-ui/react'
 ```
 
 ## Data Flow
@@ -109,54 +109,51 @@ Primitives re-render with new state
 ## Message Model
 
 ```typescript
-type ThreadMessage =
-  | ThreadUserMessage
-  | ThreadAssistantMessage
-  | ThreadSystemMessage;
+type ThreadMessage = ThreadUserMessage | ThreadAssistantMessage | ThreadSystemMessage
 
 interface ThreadUserMessage {
-  id: string;
-  role: "user";
-  content: MessagePart[];
-  attachments?: Attachment[];
-  createdAt: Date;
+  id: string
+  role: 'user'
+  content: MessagePart[]
+  attachments?: Attachment[]
+  createdAt: Date
 }
 
 interface ThreadAssistantMessage {
-  id: string;
-  role: "assistant";
-  content: MessagePart[];
-  status: "running" | "complete" | "incomplete" | "requires-action";
-  createdAt: Date;
+  id: string
+  role: 'assistant'
+  content: MessagePart[]
+  status: 'running' | 'complete' | 'incomplete' | 'requires-action'
+  createdAt: Date
 }
 
 type MessagePart =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string }
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: string }
   | {
-      type: "tool-call";
-      toolCallId: string;
-      toolName: string;
-      args: unknown;
-      argsText: string;
-      result?: unknown;
-      isError?: boolean;
-      artifact?: unknown;
+      type: 'tool-call'
+      toolCallId: string
+      toolName: string
+      args: unknown
+      argsText: string
+      result?: unknown
+      isError?: boolean
+      artifact?: unknown
     }
-  | { type: "reasoning"; text: string }
+  | { type: 'reasoning'; text: string }
   | {
-      type: "source";
-      sourceType: "url";
-      id: string;
-      url: string;
-      title?: string;
+      type: 'source'
+      sourceType: 'url'
+      id: string
+      url: string
+      title?: string
     }
   | {
-      type: "file";
-      filename?: string;
-      data: string;
-      mimeType: string;
-    };
+      type: 'file'
+      filename?: string
+      data: string
+      mimeType: string
+    }
 ```
 
 ## Branching Model

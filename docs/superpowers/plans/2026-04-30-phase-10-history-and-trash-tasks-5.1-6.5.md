@@ -24,51 +24,53 @@ Plans 1 and 2 must be merged on `main` first. Specifically this plan assumes:
 - `TitleBar.tsx` exists at `src/components/TitleBar.tsx` and currently renders a static `t('app.title')`. It does NOT yet support a per-route override; this plan introduces a tiny `useTitle()` Zustand slice rather than threading props.
 
 Verify before starting:
+
 ```bash
 grep -q "conflict.diff" /Users/aaa/develop/workspace-ai/acornvo/shared/ipc-contract.ts && echo "conflict.diff OK"
 grep -q "ops.list" /Users/aaa/develop/workspace-ai/acornvo/shared/ipc-contract.ts && echo "ops.list OK"
 test -f /Users/aaa/develop/workspace-ai/acornvo/shared/ops-types.ts && echo "ops-types OK"
 test -f /Users/aaa/develop/workspace-ai/acornvo/shared/conflict-types.ts && echo "conflict-types OK"
 ```
+
 All four must print "OK".
 
 If any line fails, **stop**: Plans 1/2 of phase 10 (or phase 9) have not been completed. Do not attempt to add the missing IPC inside this plan — it is owned by other plans.
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json` | Modify (add `@tanstack/react-virtual`, `date-fns`) | 22 (preflight) |
-| `src/components/ui/tabs.tsx` | Create (via `npx shadcn@latest add tabs`) | 22 |
-| `src/components/ui/resizable.tsx` | Create (via `npx shadcn@latest add resizable`) | 22 |
-| `src/components/ui/alert-dialog.tsx` | Create (via `npx shadcn@latest add alert-dialog`) | 22 |
-| `shared/ipc-contract.ts` | Modify (add `file.openContainingDir`, `conflict.openSnapshotFile`) | 23 |
-| `electron/ipc/file.ts` | Modify (add `openContainingDir` handler) | 23 |
-| `electron/ipc/conflicts.ts` | Modify (add `openSnapshotFile` handler) | 23 |
-| `electron/ipc/file.test.ts` | Modify (cover openContainingDir) | 23 |
-| `electron/ipc/conflicts.test.ts` | Modify (cover openSnapshotFile) | 23 |
-| `preload/preload.ts` | Modify (expose new methods) | 23 |
-| `src/App.tsx` | Modify (register `/history` and `/history/:tab`) | 24 (5.1) |
-| `src/pages/History.tsx` | Create | 24 (5.1) |
-| `src/components/history/HistoryLayout.tsx` | Create | 25 (5.2) |
-| `src/components/history/HistoryLayout.test.tsx` | Create | 25 (5.2) |
-| `src/components/history/TrashTab.tsx` | Create | 26 (5.3) |
-| `src/components/history/TrashTab.test.tsx` | Create | 26 (5.3) |
-| `src/components/history/ConflictsTab.tsx` | Create | 27 (5.4) |
-| `src/components/history/ConflictsTab.test.tsx` | Create | 27 (5.4) |
-| `src/components/history/ConflictListItem.tsx` | Create | 27 (5.4) |
-| `src/components/history/OpsTab.tsx` | Create | 28 (5.5) |
-| `src/components/history/OpsTab.test.tsx` | Create | 28 (5.5) |
-| `src/components/history/OpsRow.tsx` | Create | 28 (5.5) |
-| `src/components/history/EmptyState.tsx` | Create | 29 (5.6) |
-| `src/components/TitleBar.tsx` | Modify (read title from store) | 30 (5.7) |
-| `src/stores/title.ts` | Create | 30 (5.7) |
-| `src/i18n/locales/zh-CN.json` | Modify (add `history.*` keys used by tabs) | 24, 26, 27, 28, 29, 30 |
-| `src/components/history/ConflictDetailPanel.tsx` | Create | 31 (6.1), 32 (6.3), 33 (6.4), 34 (6.5) |
-| `src/components/history/ConflictDetailPanel.test.tsx` | Create | 31, 32, 33, 34 |
-| `src/components/history/DiffView.tsx` | Create | 31 (6.1, used by 6.2) |
-| `src/components/history/DiffView.test.tsx` | Create | 31 |
-| `src/components/history/diff-view.test.tsx` (alt name) | — | (use `DiffView.test.tsx`) |
+| Path                                                   | Action                                                             | Owner task                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------- |
+| `package.json`                                         | Modify (add `@tanstack/react-virtual`, `date-fns`)                 | 22 (preflight)                         |
+| `src/components/ui/tabs.tsx`                           | Create (via `npx shadcn@latest add tabs`)                          | 22                                     |
+| `src/components/ui/resizable.tsx`                      | Create (via `npx shadcn@latest add resizable`)                     | 22                                     |
+| `src/components/ui/alert-dialog.tsx`                   | Create (via `npx shadcn@latest add alert-dialog`)                  | 22                                     |
+| `shared/ipc-contract.ts`                               | Modify (add `file.openContainingDir`, `conflict.openSnapshotFile`) | 23                                     |
+| `electron/ipc/file.ts`                                 | Modify (add `openContainingDir` handler)                           | 23                                     |
+| `electron/ipc/conflicts.ts`                            | Modify (add `openSnapshotFile` handler)                            | 23                                     |
+| `electron/ipc/file.test.ts`                            | Modify (cover openContainingDir)                                   | 23                                     |
+| `electron/ipc/conflicts.test.ts`                       | Modify (cover openSnapshotFile)                                    | 23                                     |
+| `preload/preload.ts`                                   | Modify (expose new methods)                                        | 23                                     |
+| `src/App.tsx`                                          | Modify (register `/history` and `/history/:tab`)                   | 24 (5.1)                               |
+| `src/pages/History.tsx`                                | Create                                                             | 24 (5.1)                               |
+| `src/components/history/HistoryLayout.tsx`             | Create                                                             | 25 (5.2)                               |
+| `src/components/history/HistoryLayout.test.tsx`        | Create                                                             | 25 (5.2)                               |
+| `src/components/history/TrashTab.tsx`                  | Create                                                             | 26 (5.3)                               |
+| `src/components/history/TrashTab.test.tsx`             | Create                                                             | 26 (5.3)                               |
+| `src/components/history/ConflictsTab.tsx`              | Create                                                             | 27 (5.4)                               |
+| `src/components/history/ConflictsTab.test.tsx`         | Create                                                             | 27 (5.4)                               |
+| `src/components/history/ConflictListItem.tsx`          | Create                                                             | 27 (5.4)                               |
+| `src/components/history/OpsTab.tsx`                    | Create                                                             | 28 (5.5)                               |
+| `src/components/history/OpsTab.test.tsx`               | Create                                                             | 28 (5.5)                               |
+| `src/components/history/OpsRow.tsx`                    | Create                                                             | 28 (5.5)                               |
+| `src/components/history/EmptyState.tsx`                | Create                                                             | 29 (5.6)                               |
+| `src/components/TitleBar.tsx`                          | Modify (read title from store)                                     | 30 (5.7)                               |
+| `src/stores/title.ts`                                  | Create                                                             | 30 (5.7)                               |
+| `src/i18n/locales/zh-CN.json`                          | Modify (add `history.*` keys used by tabs)                         | 24, 26, 27, 28, 29, 30                 |
+| `src/components/history/ConflictDetailPanel.tsx`       | Create                                                             | 31 (6.1), 32 (6.3), 33 (6.4), 34 (6.5) |
+| `src/components/history/ConflictDetailPanel.test.tsx`  | Create                                                             | 31, 32, 33, 34                         |
+| `src/components/history/DiffView.tsx`                  | Create                                                             | 31 (6.1, used by 6.2)                  |
+| `src/components/history/DiffView.test.tsx`             | Create                                                             | 31                                     |
+| `src/components/history/diff-view.test.tsx` (alt name) | —                                                                  | (use `DiffView.test.tsx`)              |
 
 ## Conventions reused
 
@@ -83,11 +85,13 @@ If any line fails, **stop**: Plans 1/2 of phase 10 (or phase 9) have not been co
 ---
 
 <!-- openspec-task: pre-5.1 -->
+
 ### Task 22: install missing UI deps and add shadcn primitives
 
 This task is the technical pre-flight for the rest of the plan. Without it, every component file fails to import. It does not own an OpenSpec task label but is a prerequisite step.
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `src/components/ui/tabs.tsx`
 - Create: `src/components/ui/resizable.tsx`
@@ -105,6 +109,7 @@ npm install --save-dev react-resizable-panels @radix-ui/react-tabs @radix-ui/rea
 - [ ] **Step 2: Add shadcn primitives**
 
 Run inside the repo root:
+
 ```bash
 npx shadcn@latest add tabs
 npx shadcn@latest add resizable
@@ -112,6 +117,7 @@ npx shadcn@latest add alert-dialog
 ```
 
 Confirm three new files appeared:
+
 ```bash
 ls /Users/aaa/develop/workspace-ai/acornvo/src/components/ui/tabs.tsx
 ls /Users/aaa/develop/workspace-ai/acornvo/src/components/ui/resizable.tsx
@@ -123,6 +129,7 @@ ls /Users/aaa/develop/workspace-ai/acornvo/src/components/ui/alert-dialog.tsx
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS. If shadcn's generated files use a different alias than `@/lib/utils`, fix the import.
 
 - [ ] **Step 4: Commit**
@@ -135,11 +142,13 @@ git commit -m "chore(ui): add tanstack/react-virtual, date-fns, shadcn tabs/resi
 ---
 
 <!-- openspec-task: pre-5.1-ipc -->
+
 ### Task 23: add `file.openContainingDir` and `conflict.openSnapshotFile` IPC
 
 The Trash tab needs to open the directory of a now-deleted (or still-existing) file in the system file manager. The ConflictDetailPanel needs to reveal `local.md`/`remote.md`/`base.md` inside `.acornvo/conflicts/<id>/`. The renderer only has rel-paths and conflict ids — never absolute paths. We add two narrow IPC methods so renderer never resolves paths itself.
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (extend `file` and `conflict` namespaces)
 - Modify: `electron/ipc/file.ts`
 - Modify: `electron/ipc/conflicts.ts`
@@ -238,10 +247,13 @@ async openSnapshotFile(id: string, side: 'local' | 'remote' | 'base'): Promise<{
 - [ ] **Step 4: Wire preload**
 
 Edit `preload/preload.ts`. Inside the `file` namespace add:
+
 ```ts
     openContainingDir: (rel: string) => invoke('file.openContainingDir', rel),
 ```
+
 Inside the `conflict` namespace add:
+
 ```ts
     openSnapshotFile: (id: string, side: 'local' | 'remote' | 'base') =>
       invoke('conflict.openSnapshotFile', id, side),
@@ -269,8 +281,14 @@ describe('file.openContainingDir (phase-10 23)', () => {
   it('returns ok:true when dir exists', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'fcd-'))
     vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-      id: 'g', path: tmp, name: 'g', color: 'acorn',
-      schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+      id: 'g',
+      path: tmp,
+      name: 'g',
+      color: 'acorn',
+      schema_version: 1,
+      created_at: '',
+      last_opened_at: '',
+      sync_warning: null
     })
     await mkdir(join(tmp, 'sub'), { recursive: true })
     await writeFile(join(tmp, 'sub/x.md'), '')
@@ -282,8 +300,14 @@ describe('file.openContainingDir (phase-10 23)', () => {
   it('returns ok:false reason=missing when dir gone', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'fcd-'))
     vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-      id: 'g', path: tmp, name: 'g', color: 'acorn',
-      schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+      id: 'g',
+      path: tmp,
+      name: 'g',
+      color: 'acorn',
+      schema_version: 1,
+      created_at: '',
+      last_opened_at: '',
+      sync_warning: null
     })
     const r = await fileHandlers.openContainingDir('gone/x.md')
     expect(r).toEqual({ ok: false, reason: 'missing' })
@@ -304,7 +328,10 @@ Edit `electron/ipc/conflicts.test.ts`. Add:
 describe('conflictHandlers.openSnapshotFile (phase-10 23)', () => {
   it('reveals local.md when snapshot exists', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
       resolvedBy: 'keep_local'
     })
     const r = await conflictHandlers.openSnapshotFile(id, 'local')
@@ -312,9 +339,9 @@ describe('conflictHandlers.openSnapshotFile (phase-10 23)', () => {
   })
 
   it('rejects invalid side', async () => {
-    await expect(
-      conflictHandlers.openSnapshotFile('any', 'middle' as never)
-    ).rejects.toMatchObject({ code: 'E_INVALID_ARGS' })
+    await expect(conflictHandlers.openSnapshotFile('any', 'middle' as never)).rejects.toMatchObject(
+      { code: 'E_INVALID_ARGS' }
+    )
   })
 
   it('throws E_NOT_FOUND for missing id', async () => {
@@ -331,11 +358,13 @@ describe('conflictHandlers.openSnapshotFile (phase-10 23)', () => {
 npx vitest run electron/ipc/file.test.ts -t "phase-10 23"
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 23"
 ```
+
 Expected: 3 + 3 PASS.
 
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -348,9 +377,11 @@ git commit -m "feat(ipc): file.openContainingDir + conflict.openSnapshotFile (ph
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 24: register `/history` and `/history/:tab` routes
 
 **Files:**
+
 - Modify: `src/App.tsx`
 - Create: `src/pages/History.tsx`
 
@@ -448,6 +479,7 @@ describe('History routing (phase-10 5.1)', () => {
 ```bash
 npx vitest run src/App.history.test.tsx
 ```
+
 Expected: 3 PASS. Note: tests 1 and 3 redirect to `/history/trash` and the second route in the test wrapper renders `History`, which mounts the stubbed `HistoryLayout`.
 
 - [ ] **Step 5: Commit**
@@ -460,9 +492,11 @@ git commit -m "feat(history): /history → /history/trash redirect + /history/:t
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 25: `HistoryLayout.tsx` — Tabs with URL sync
 
 **Files:**
+
 - Create: `src/components/history/HistoryLayout.tsx`
 - Create: `src/components/history/HistoryLayout.test.tsx`
 - Modify: `src/i18n/locales/zh-CN.json` (add `history.tabs.trash` / `.conflicts` / `.ops`)
@@ -496,7 +530,9 @@ import { HistoryLayout } from './HistoryLayout'
 
 // Stub child tabs to keep the test focused
 vi.mock('./TrashTab', () => ({ TrashTab: () => <div data-testid="trash">trash</div> }))
-vi.mock('./ConflictsTab', () => ({ ConflictsTab: () => <div data-testid="conflicts">conflicts</div> }))
+vi.mock('./ConflictsTab', () => ({
+  ConflictsTab: () => <div data-testid="conflicts">conflicts</div>
+}))
 vi.mock('./OpsTab', () => ({ OpsTab: () => <div data-testid="ops">ops</div> }))
 
 function renderAt(path: string) {
@@ -545,6 +581,7 @@ describe('HistoryLayout (phase-10 5.2)', () => {
 ```bash
 npx vitest run src/components/history/HistoryLayout.test.tsx
 ```
+
 Expected: 4 FAIL (file does not exist).
 
 - [ ] **Step 4: Implement**
@@ -627,7 +664,9 @@ Create `src/components/history/TrashTab.tsx`, `src/components/history/ConflictsT
 
 ```tsx
 import type { JSX } from 'react'
-export function TrashTab(): JSX.Element { return <div /> }
+export function TrashTab(): JSX.Element {
+  return <div />
+}
 // (Same shape, just rename the export for the other two.)
 ```
 
@@ -638,6 +677,7 @@ These stubs will be replaced in Tasks 26–28.
 ```bash
 npx vitest run src/components/history/HistoryLayout.test.tsx
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 6: Commit**
@@ -650,9 +690,11 @@ git commit -m "feat(history): HistoryLayout with shadcn Tabs + URL sync (phase-1
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 26: `TrashTab.tsx` — virtualized list of `op='trash'` rows
 
 **Files:**
+
 - Modify: `src/components/history/TrashTab.tsx` (replace stub)
 - Create: `src/components/history/TrashTab.test.tsx`
 - Modify: `src/i18n/locales/zh-CN.json` (add `history.trash.notice`, `history.trash.openDir`, `history.trash.dirMissing`)
@@ -749,6 +791,7 @@ describe('TrashTab (phase-10 5.3)', () => {
 ```bash
 npx vitest run src/components/history/TrashTab.test.tsx
 ```
+
 Expected: 4 FAIL (component is still the stub).
 
 - [ ] **Step 4: Implement**
@@ -878,6 +921,7 @@ Task 29 expands this with optional sub-text and an icon slot.
 ```bash
 npx vitest run src/components/history/TrashTab.test.tsx
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 6: Commit**
@@ -890,9 +934,11 @@ git commit -m "feat(history): TrashTab with virtualized list + open-dir button (
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 27: `ConflictsTab.tsx` — resizable left list / right detail + "清空所有快照"
 
 **Files:**
+
 - Modify: `src/components/history/ConflictsTab.tsx` (replace stub)
 - Create: `src/components/history/ConflictsTab.test.tsx`
 - Create: `src/components/history/ConflictListItem.tsx`
@@ -1060,6 +1106,7 @@ describe('ConflictsTab (phase-10 5.4)', () => {
 ```bash
 npx vitest run src/components/history/ConflictsTab.test.tsx
 ```
+
 Expected: 4 FAIL.
 
 - [ ] **Step 5: Implement**
@@ -1074,11 +1121,7 @@ import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ipc } from '@/ipc/client'
 import { Button } from '@/components/ui/button'
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle
-} from '@/components/ui/resizable'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1121,7 +1164,7 @@ export function ConflictsTab(): JSX.Element {
   }, [version])
 
   const urlId = params.get('id')
-  const selectedId = urlId && items.some((i) => i.id === urlId) ? urlId : items[0]?.id ?? null
+  const selectedId = urlId && items.some((i) => i.id === urlId) ? urlId : (items[0]?.id ?? null)
   const selectId = (id: string): void => {
     setParams((p) => {
       const next = new URLSearchParams(p)
@@ -1215,7 +1258,12 @@ Create `src/components/history/ConflictDetailPanel.tsx` (stub — Tasks 31–34 
 
 ```tsx
 import type { JSX } from 'react'
-export function ConflictDetailPanel({ id }: { id: string | null; onDeleted?: () => void }): JSX.Element {
+export function ConflictDetailPanel({
+  id
+}: {
+  id: string | null
+  onDeleted?: () => void
+}): JSX.Element {
   return <div data-testid="conflict-detail-stub">{id ?? 'none'}</div>
 }
 ```
@@ -1225,6 +1273,7 @@ export function ConflictDetailPanel({ id }: { id: string | null; onDeleted?: () 
 ```bash
 npx vitest run src/components/history/ConflictsTab.test.tsx
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 7: Commit**
@@ -1237,9 +1286,11 @@ git commit -m "feat(history): ConflictsTab with resizable layout + clear-all act
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 28: `OpsTab.tsx` — filter chips + virtualized list + click-through
 
 **Files:**
+
 - Modify: `src/components/history/OpsTab.tsx` (replace stub)
 - Create: `src/components/history/OpsTab.test.tsx`
 - Create: `src/components/history/OpsRow.tsx`
@@ -1290,18 +1341,14 @@ import { zhCN } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import type { OpsItem } from '@shared/ops-types'
 
-export function OpsRow({
-  item,
-  onClick
-}: {
-  item: OpsItem
-  onClick?: () => void
-}): JSX.Element {
+export function OpsRow({ item, onClick }: { item: OpsItem; onClick?: () => void }): JSX.Element {
   const { t } = useTranslation()
   let summary: string
   switch (item.op) {
     case 'conflict_resolve':
-      summary = t('ops.op.conflict_resolve', { by: (item.meta as { resolved_by?: string })?.resolved_by ?? '?' })
+      summary = t('ops.op.conflict_resolve', {
+        by: (item.meta as { resolved_by?: string })?.resolved_by ?? '?'
+      })
       break
     case 'rename':
       summary = t('ops.op.rename', { to: (item.meta as { new_path?: string })?.new_path ?? '?' })
@@ -1375,7 +1422,13 @@ describe('OpsTab (phase-10 5.5)', () => {
       total: 2,
       items: [
         { id: 1, op: 'trash', path: 'a.md', ts: '2026-04-25T10:00:00Z', meta: {} },
-        { id: 2, op: 'conflict_resolve', path: 'b.md', ts: '2026-04-26T10:00:00Z', meta: { id: 'cid-1', resolved_by: 'keep_local' } }
+        {
+          id: 2,
+          op: 'conflict_resolve',
+          path: 'b.md',
+          ts: '2026-04-26T10:00:00Z',
+          meta: { id: 'cid-1', resolved_by: 'keep_local' }
+        }
       ]
     })
     render(wrap(<OpsTab />))
@@ -1391,14 +1444,22 @@ describe('OpsTab (phase-10 5.5)', () => {
     render(wrap(<OpsTab />))
     await screen.findByRole('button', { name: /全部/ })
     await user.click(screen.getByRole('button', { name: /^回收站$/ }))
-    await waitFor(() => expect(mockOpsList).toHaveBeenLastCalledWith({ op: 'trash', limit: 200, offset: 0 }))
+    await waitFor(() =>
+      expect(mockOpsList).toHaveBeenLastCalledWith({ op: 'trash', limit: 200, offset: 0 })
+    )
   })
 
   it('clicking a conflict_resolve row navigates to /history/conflicts?id=<meta.id>', async () => {
     mockOpsList.mockResolvedValueOnce({
       total: 1,
       items: [
-        { id: 9, op: 'conflict_resolve', path: 'b.md', ts: '2026-04-26T10:00:00Z', meta: { id: 'cid-X', resolved_by: 'load_remote' } }
+        {
+          id: 9,
+          op: 'conflict_resolve',
+          path: 'b.md',
+          ts: '2026-04-26T10:00:00Z',
+          meta: { id: 'cid-X', resolved_by: 'load_remote' }
+        }
       ]
     })
     const user = userEvent.setup()
@@ -1421,6 +1482,7 @@ describe('OpsTab (phase-10 5.5)', () => {
 ```bash
 npx vitest run src/components/history/OpsTab.test.tsx
 ```
+
 Expected: 4 FAIL.
 
 - [ ] **Step 5: Implement**
@@ -1459,9 +1521,7 @@ export function OpsTab(): JSX.Element {
     let cancelled = false
     setLoading(true)
     const args =
-      filter === 'all'
-        ? { limit: 200, offset: 0 }
-        : { op: filter, limit: 200, offset: 0 }
+      filter === 'all' ? { limit: 200, offset: 0 } : { op: filter, limit: 200, offset: 0 }
     ipc.ops
       .list(args)
       .then((res) => {
@@ -1543,6 +1603,7 @@ export function OpsTab(): JSX.Element {
 ```bash
 npx vitest run src/components/history/OpsTab.test.tsx
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 7: Commit**
@@ -1555,11 +1616,13 @@ git commit -m "feat(history): OpsTab with filter chips + click-through to confli
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 29: empty states polish
 
 `EmptyState.tsx` was created as a stub in Task 26. This task expands it with optional sub-text and an icon slot, and verifies all three tabs render the right copy when their data sources are empty.
 
 **Files:**
+
 - Modify: `src/components/history/EmptyState.tsx`
 - Create: `src/components/history/EmptyState.test.tsx`
 
@@ -1613,11 +1676,13 @@ describe('EmptyState (phase-10 5.6)', () => {
 ```bash
 npx vitest run src/components/history/EmptyState.test.tsx
 ```
+
 Expected: 2 PASS.
 
 ```bash
 npx vitest run src/components/history/TrashTab.test.tsx src/components/history/ConflictsTab.test.tsx src/components/history/OpsTab.test.tsx
 ```
+
 Expected: empty-state assertions in all three still PASS.
 
 ```bash
@@ -1628,17 +1693,20 @@ git commit -m "feat(history): EmptyState with optional subText/icon (phase-10 5.
 ---
 
 <!-- openspec-task: 5.7 -->
+
 ### Task 30: TitleBar shows "历史" on `/history/*`
 
 Phase 10 says the title bar reads "历史" while on this route. We expose a Zustand `title` slot (created in Task 25 as `src/stores/title.ts`) and have `TitleBar.tsx` read from it.
 
 **Files:**
+
 - Modify: `src/components/TitleBar.tsx`
 - Modify: `src/i18n/locales/zh-CN.json` (add `history.title` if not already present)
 
 - [ ] **Step 1: Add the i18n key (if missing)**
 
 Inside `src/i18n/locales/zh-CN.json`, ensure under `history`:
+
 ```json
 "title": "历史",
 ```
@@ -1702,6 +1770,7 @@ describe('TitleBar (phase-10 5.7)', () => {
 ```bash
 npx vitest run src/components/TitleBar.test.tsx
 ```
+
 Expected: 2 PASS.
 
 ```bash
@@ -1712,11 +1781,13 @@ git commit -m "feat(titlebar): per-route title override; '历史' on /history/* 
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 31: `ConflictDetailPanel.tsx` — header + view toggle + diff body + bottom actions; `DiffView.tsx`
 
 This task builds the full layout. Tasks 32–34 then refine specific behaviours (toggle re-fetch, system-FM open, delete with confirm).
 
 **Files:**
+
 - Modify: `src/components/history/ConflictDetailPanel.tsx` (replace stub)
 - Create: `src/components/history/ConflictDetailPanel.test.tsx`
 - Create: `src/components/history/DiffView.tsx`
@@ -1739,6 +1810,7 @@ Inside `src/i18n/locales/zh-CN.json` at top level (sibling of `history`):
 ```
 
 Inside `history.conflicts`:
+
 ```json
 "detail": {
   "openLocal": "在系统文件管理器中打开 local.md",
@@ -1855,11 +1927,7 @@ describe('DiffView (phase-10 6.2)', () => {
   })
   it('shows identical placeholder', () => {
     render(
-      <DiffView
-        identical
-        left={{ label: 'L', lines: [] }}
-        right={{ label: 'R', lines: [] }}
-      />
+      <DiffView identical left={{ label: 'L', lines: [] }} right={{ label: 'R', lines: [] }} />
     )
     expect(screen.getByText('两份内容完全一致')).toBeInTheDocument()
   })
@@ -1979,7 +2047,11 @@ export function ConflictDetailPanel({
   }, [id, sides])
 
   if (!id) {
-    return <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">—</div>
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
+        —
+      </div>
+    )
   }
   if (missing) {
     return (
@@ -1998,8 +2070,7 @@ export function ConflictDetailPanel({
     onDeleted?.()
   }
 
-  const identical =
-    !!diff && diff.stats.added === 0 && diff.stats.removed === 0
+  const identical = !!diff && diff.stats.added === 0 && diff.stats.removed === 0
 
   return (
     <div className="flex h-full flex-col">
@@ -2012,7 +2083,9 @@ export function ConflictDetailPanel({
           </span>
         </div>
         <div className="text-xs text-muted-foreground">
-          {meta?.ts ? formatDistanceToNow(new Date(meta.ts), { addSuffix: true, locale: zhCN }) : ''}
+          {meta?.ts
+            ? formatDistanceToNow(new Date(meta.ts), { addSuffix: true, locale: zhCN })
+            : ''}
         </div>
         {meta?.winner_path ? (
           <div className="text-xs text-muted-foreground">
@@ -2161,6 +2234,7 @@ describe('ConflictDetailPanel (phase-10 6.1)', () => {
 ```bash
 npx vitest run src/components/history/DiffView.test.tsx src/components/history/ConflictDetailPanel.test.tsx
 ```
+
 Expected: 3 + 3 PASS.
 
 ```bash
@@ -2173,9 +2247,11 @@ This commit covers both 6.1 (header/toggle/diff/actions) and 6.2 (DiffView two c
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 31b: confirm 6.2 coverage
 
 `DiffView` was created in Task 31. Spec 6.2 requires:
+
 - side-by-side double column → `<DiffView>` renders two `<Column>` flex children with a 1px divider. ✓
 - line numbers + coloring (equal/del/add) → table rows include `td` line-number gutter; row class derived from `kind`. ✓
 
@@ -2186,16 +2262,19 @@ This task has no new code — it is a verification checkpoint. No commit require
 ```bash
 npx vitest run src/components/history/DiffView.test.tsx
 ```
+
 Expected: 3 PASS. (kind classes asserted, two labels asserted, identical placeholder asserted.)
 
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 32: re-fetch `conflict.diff(id, sides)` on toggle change
 
 Task 31 already wired `useEffect([id, sides], ...)` to call `ipc.conflict.diff`. This task adds an explicit assertion that toggle clicks change the IPC arg.
 
 **Files:**
+
 - Modify: `src/components/history/ConflictDetailPanel.test.tsx`
 
 - [ ] **Step 1: Append a behavioural test**
@@ -2236,6 +2315,7 @@ describe('ConflictDetailPanel toggle re-fetch (phase-10 6.3)', () => {
 ```bash
 npx vitest run src/components/history/ConflictDetailPanel.test.tsx -t "phase-10 6.3"
 ```
+
 Expected: 2 PASS.
 
 ```bash
@@ -2246,11 +2326,13 @@ git commit -m "test(history): toggle re-calls conflict.diff with new sides (phas
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 33: "在系统文件管理器中打开 local/remote/base" wired to `conflict.openSnapshotFile`
 
 Task 31 already wires the three buttons through to `ipc.conflict.openSnapshotFile(id, side)`. This task adds the behavioural assertions.
 
 **Files:**
+
 - Modify: `src/components/history/ConflictDetailPanel.test.tsx`
 
 - [ ] **Step 1: Append tests**
@@ -2297,6 +2379,7 @@ describe('ConflictDetailPanel openSnapshotFile (phase-10 6.4)', () => {
 ```bash
 npx vitest run src/components/history/ConflictDetailPanel.test.tsx -t "phase-10 6.4"
 ```
+
 Expected: 3 PASS.
 
 ```bash
@@ -2307,11 +2390,13 @@ git commit -m "test(history): three open-in-FM buttons call conflict.openSnapsho
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 34: "删除此快照" + secondary confirm → `conflict.delete(id)` → close detail / refresh list
 
 Task 31 wired the delete button to an `AlertDialog` with confirm. This task adds the behavioural assertions and verifies that `onDeleted` is invoked (so the parent `ConflictsTab` can refresh).
 
 **Files:**
+
 - Modify: `src/components/history/ConflictDetailPanel.test.tsx`
 
 - [ ] **Step 1: Append tests**
@@ -2352,6 +2437,7 @@ describe('ConflictDetailPanel delete (phase-10 6.5)', () => {
 ```bash
 npx vitest run src/components/history/ConflictDetailPanel.test.tsx
 ```
+
 Expected: all PASS (Task 31 + 32 + 33 + 34 specs combined).
 
 Then run the entire history test surface to be sure:
@@ -2359,6 +2445,7 @@ Then run the entire history test surface to be sure:
 ```bash
 npx vitest run src/components/history/ src/App.history.test.tsx src/components/TitleBar.test.tsx
 ```
+
 Expected: all PASS.
 
 Finally, the full suite:
@@ -2366,6 +2453,7 @@ Finally, the full suite:
 ```bash
 npm test
 ```
+
 Expected: all PASS. (If a phase-7 / phase-9 test broke, debug — this plan should not have touched any of those files except via additive imports.)
 
 ```bash
@@ -2384,6 +2472,7 @@ After all tasks pass:
    ```bash
    grep -E "openspec-task: (5\.[1-7]|6\.[1-5])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-10-history-and-trash-tasks-5.1-6.5.md | sort -u
    ```
+
    Expected: 12 unique labels. (Tasks 22, 23, 31b are technical preflight / verification checkpoints and are intentionally not in the OpenSpec list — they have non-numeric labels prefixed `pre-` or `6.2` reused as a checkpoint.)
 
 2. **Three tabs render and respond to URL changes.** `HistoryLayout` reads `tab` from props (which itself comes from `useParams` in `History.tsx`) and on `Tabs.onValueChange` calls `navigate('/history/<v>')`. `MemoryRouter`-backed test asserts both directions.

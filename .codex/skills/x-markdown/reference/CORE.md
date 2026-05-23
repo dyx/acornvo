@@ -15,16 +15,16 @@ npm install @ant-design/x-markdown
 ```
 
 ```tsx
-import { XMarkdown } from '@ant-design/x-markdown';
+import { XMarkdown } from '@ant-design/x-markdown'
 
 const content = `
 # Hello
 
 - item 1
 - item 2
-`;
+`
 
-export default () => <XMarkdown content={content} />;
+export default () => <XMarkdown content={content} />
 ```
 
 ## Safe Defaults

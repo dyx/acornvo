@@ -53,11 +53,11 @@ Acornvo 可以对 Markdown 内容进行 AI 审读，生成摘要、建议标题�
 
 前往 [Releases](https://github.com/<org>/<repo>/releases) 下载对应平台安装包。
 
-| 平台 | 安装包 | 说明 |
-| --- | --- | --- |
-| macOS | `Acornvo-<version>-arm64.dmg` / `Acornvo-<version>-x64.dmg` | Apple Silicon 选择 arm64，Intel 选择 x64 |
-| Windows | `Acornvo-<version>-setup.exe` | 运行安装器即可 |
-| Linux | `Acornvo-<version>.AppImage` | 执行 `chmod +x Acornvo-*.AppImage` 后运行 |
+| 平台    | 安装包                                                      | 说明                                      |
+| ------- | ----------------------------------------------------------- | ----------------------------------------- |
+| macOS   | `Acornvo-<version>-arm64.dmg` / `Acornvo-<version>-x64.dmg` | Apple Silicon 选择 arm64，Intel 选择 x64  |
+| Windows | `Acornvo-<version>-setup.exe`                               | 运行安装器即可                            |
+| Linux   | `Acornvo-<version>.AppImage`                                | 执行 `chmod +x Acornvo-*.AppImage` 后运行 |
 
 ## 快速开始
 

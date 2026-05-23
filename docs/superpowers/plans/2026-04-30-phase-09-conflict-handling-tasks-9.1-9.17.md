@@ -5,6 +5,7 @@
 **Goal:** Run the acceptance pass for phase-09. Convert each `9.x` line of `tasks.md` into either an integration test (preferred — automated, lives next to the editor store) or a documented manual smoke step. Capture the unit-test bundle (9.16) and finalise with `openspec validate phase-09-conflict-handling --strict` (9.17).
 
 **Architecture:** Most acceptance scenarios already have unit tests created across Plans 1–3. This plan **does not duplicate them** — it adds:
+
 1. A handful of true integration tests under `src/integration/conflict-handling.test.ts` (uses jsdom, mocked IPC, real Zustand store + components rendered together).
 2. A manual smoke checklist in `docs/runbooks/phase-09-smoke.md` for the scenarios that need a real Electron window + real filesystem (e.g. `9.5` "log includes force-write" line — only verifiable with electron-log on disk).
 3. Cross-plan unit-test consolidation (9.16) that just runs the relevant subset and confirms green.
@@ -17,6 +18,7 @@
 ## Pre-flight
 
 Plans 1, 2, and 3 must be merged. Phase 7 must be merged. Verify:
+
 ```bash
 test -f /Users/aaa/develop/workspace-ai/acornvo/src/components/editor/ConflictDialog.tsx && \
 test -f /Users/aaa/develop/workspace-ai/acornvo/src/components/editor/ExternalModifiedBanner.tsx && \
@@ -25,21 +27,23 @@ echo "OK"
 ```
 
 Also confirm `npm test` is green at HEAD before starting:
+
 ```bash
 npm test
 ```
+
 Expected: all PASS. Any pre-existing failure must be triaged first; do not start acceptance on a red bar.
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/integration/conflict-handling.test.ts` | Create | 9.1, 9.2, 9.3, 9.4, 9.8, 9.9, 9.13 |
-| `electron/services/conflicts/store.test.ts` | Modify (9.10 path-escape; 9.11 retention) | 9.10, 9.11 |
-| `electron/services/conflicts/retention-startup.test.ts` | Create | 9.11 |
-| `src/stores/editor.test.ts` | Modify (9.12, 9.14, 9.15) | 9.12, 9.14, 9.15 |
-| `electron/services/fs-atomic.test.ts` | Verify (9.16 mtime tolerance — already added by Plan 1 Task 6) | 9.16 |
-| `docs/runbooks/phase-09-smoke.md` | Create (manual checklist for 9.5, 9.6, 9.7) | 9.5, 9.6, 9.7 |
+| Path                                                    | Action                                                         | Owner task                         |
+| ------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
+| `src/integration/conflict-handling.test.ts`             | Create                                                         | 9.1, 9.2, 9.3, 9.4, 9.8, 9.9, 9.13 |
+| `electron/services/conflicts/store.test.ts`             | Modify (9.10 path-escape; 9.11 retention)                      | 9.10, 9.11                         |
+| `electron/services/conflicts/retention-startup.test.ts` | Create                                                         | 9.11                               |
+| `src/stores/editor.test.ts`                             | Modify (9.12, 9.14, 9.15)                                      | 9.12, 9.14, 9.15                   |
+| `electron/services/fs-atomic.test.ts`                   | Verify (9.16 mtime tolerance — already added by Plan 1 Task 6) | 9.16                               |
+| `docs/runbooks/phase-09-smoke.md`                       | Create (manual checklist for 9.5, 9.6, 9.7)                    | 9.5, 9.6, 9.7                      |
 
 ## Conventions reused
 
@@ -54,9 +58,11 @@ Expected: all PASS. Any pre-existing failure must be triaged first; do not start
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 33: integration test — clean editor + external change → silent reload
 
 **Files:**
+
 - Create: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Create the integration test file with 9.1's scenario**
@@ -127,6 +133,7 @@ describe('9.1 clean editor + external change → silent reload', () => {
 ```bash
 npx vitest run src/integration/conflict-handling.test.ts -t "9.1"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -139,9 +146,11 @@ git commit -m "test(phase-09): integration 9.1 clean editor silent-reloads (phas
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 34: integration test — dirty editor + external change → banner; input doesn't save
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -178,6 +187,7 @@ describe('9.2 dirty editor + external change → banner; input does NOT save', (
 ```bash
 npx vitest run src/integration/conflict-handling.test.ts -t "9.2"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -190,9 +200,11 @@ git commit -m "test(phase-09): 9.2 dirty editor shows banner and locks save (pha
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 35: integration test — banner 重载 → 4-file snapshot, local discarded
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -254,9 +266,11 @@ git commit -m "test(phase-09): 9.3 banner reload triggers writeSnapshot (phase-0
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 36: integration test — banner 忽略 + next save → ConflictDialog opens
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -308,21 +322,24 @@ git commit -m "test(phase-09): 9.4 ignore + save → dialog opens (phase-09 9.4)
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 37: smoke checklist — Dialog 保留本地 → disk overwritten + force-write log
 
 This scenario verifies the actual `electron-log` output, which only happens in a real Electron run. Document it in `docs/runbooks/phase-09-smoke.md`.
 
 **Files:**
+
 - Create: `docs/runbooks/phase-09-smoke.md`
 
 - [ ] **Step 1: Create the runbook**
 
 Create `docs/runbooks/phase-09-smoke.md`:
 
-```markdown
+````markdown
 # Phase 09 Conflict Handling — Manual Smoke Checklist
 
 Run after a fresh `npm run dev`. All scenarios assume:
+
 - A grove is opened at `~/scratch/conflict-test/`
 - A file `notes/a.md` exists with body "BASE"
 
@@ -333,6 +350,8 @@ Run after a fresh `npm run dev`. All scenarios assume:
    ```bash
    echo 'EXTERNAL' > ~/scratch/conflict-test/notes/a.md
    ```
+````
+
 3. Continue typing in the editor (debounce will fire `save()` within ~1s).
 4. **Expect:** ConflictDialog opens.
 5. Click "保留本地".
@@ -362,23 +381,25 @@ Run after a fresh `npm run dev`. All scenarios assume:
 
 ## Sign-off
 
-Tester: __________________  Date: __________________
+Tester: ********\_\_******** Date: ********\_\_********
 
 All boxes checked? ☐
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add docs/runbooks/phase-09-smoke.md
 git commit -m "docs(runbook): phase-09 smoke checklist for 9.5/9.6/9.7 (phase-09 9.5)"
-```
+````
 
 > **Execution note:** Plans 1–3 already covered the automated portions of 9.5, 9.6, 9.7 (store-action tests for `keepLocal`, `reloadFromDisk` with `load_remote`, `saveAsCopy`). The runbook entries above ensure the human-only checks (real `force-write` log, real navigation, real disk content) are explicitly validated before this change ships.
 
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 38: smoke checklist 9.6 — covered by Task 37
 
 This label is fully addressed by the section "9.6 Dialog 重载磁盘" in `docs/runbooks/phase-09-smoke.md` (created by Task 37). No additional work; the checkbox below tracks confirming the runbook entry exists.
@@ -388,11 +409,13 @@ This label is fully addressed by the section "9.6 Dialog 重载磁盘" in `docs/
 ```bash
 grep -q "## 9.6 Dialog 重载磁盘" /Users/aaa/develop/workspace-ai/acornvo/docs/runbooks/phase-09-smoke.md && echo OK
 ```
+
 Expected: `OK`.
 
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 39: smoke checklist 9.7 — covered by Task 37
 
 Same pattern: section "9.7 Dialog 另存副本" in `docs/runbooks/phase-09-smoke.md`.
@@ -402,14 +425,17 @@ Same pattern: section "9.7 Dialog 另存副本" in `docs/runbooks/phase-09-smoke
 ```bash
 grep -q "## 9.7 Dialog 另存副本" /Users/aaa/develop/workspace-ai/acornvo/docs/runbooks/phase-09-smoke.md && echo OK
 ```
+
 Expected: `OK`.
 
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 40: integration test — Dialog 稍后处理 → dialog closes, banner reappears, save re-pops dialog next time
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -477,9 +503,11 @@ git commit -m "test(phase-09): 9.8 later → banner → next save → dialog (ph
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 41: integration test — same-second 另存副本 → -1 suffix
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -490,7 +518,9 @@ Append:
 describe('9.9 同秒再次 另存副本 → -1 后缀', () => {
   it('falls back to -1 suffix when desired path exists', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'notes/a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+      summary: { path: 'notes/a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B'
     })
     await useEditorStore.getState().open('notes/a.md')
     useEditorStore.getState().setBody('L')
@@ -499,13 +529,16 @@ describe('9.9 同秒再次 另存副本 → -1 后缀', () => {
       return {
         ...cur,
         conflictState: {
-          kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {}
+          kind: 'saveConflict',
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
         }
       }
     })
     mockIpc.file.exists
-      .mockResolvedValueOnce(true)   // base path taken
-      .mockResolvedValueOnce(false)  // -1 free
+      .mockResolvedValueOnce(true) // base path taken
+      .mockResolvedValueOnce(false) // -1 free
     mockIpc.file.write.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
     mockIpc.conflict.writeSnapshot.mockResolvedValueOnce({ id: 's' })
 
@@ -527,11 +560,13 @@ git commit -m "test(phase-09): 9.9 same-second 另存副本 dedupes with -1 (pha
 ---
 
 <!-- openspec-task: 9.10 -->
+
 ### Task 42: store unit test — `conflict.delete('../../etc')` → E_PERMISSION
 
 This is already covered by Plan 1 Task 12 step 1 (`'throws E_PERMISSION on path-escape attempt'`). Verify and add the IPC-handler-level cousin test (we already added it in Plan 2 Task 14 — `'rejects path-escape'`). Confirm both are in place.
 
 **Files:**
+
 - Verify: `electron/services/conflicts/store.test.ts`
 - Verify: `electron/ipc/conflicts.test.ts`
 
@@ -541,6 +576,7 @@ This is already covered by Plan 1 Task 12 step 1 (`'throws E_PERMISSION on path-
 grep -n "E_PERMISSION" /Users/aaa/develop/workspace-ai/acornvo/electron/services/conflicts/store.test.ts
 grep -n "E_PERMISSION" /Users/aaa/develop/workspace-ai/acornvo/electron/ipc/conflicts.test.ts
 ```
+
 Both should print at least one match. If either is missing, add it back per the snippets in Plan 1 Task 12 / Plan 2 Task 14.
 
 - [ ] **Step 2: Run both files**
@@ -549,6 +585,7 @@ Both should print at least one match. If either is missing, add it back per the 
 npx vitest run electron/services/conflicts/store.test.ts -t "path-escape"
 npx vitest run electron/ipc/conflicts.test.ts -t "path-escape"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: No commit** (verification only, no diff).
@@ -556,11 +593,13 @@ Expected: PASS.
 ---
 
 <!-- openspec-task: 9.11 -->
+
 ### Task 43: retention startup pass — seed 101 dirs, run prune, oldest deleted
 
 This adds an explicit "startup-time" prune scenario. Plan 1 already exercises `prune()` directly; this task wires it into a representative startup hook (or, if no startup hook is added, just calls `prune()` on grove open).
 
 **Files:**
+
 - Create: `electron/services/conflicts/retention-startup.test.ts`
 - (Optional) Modify: `electron/services/grove.ts` to call `prune()` at the end of `openGrove`
 
@@ -569,16 +608,16 @@ This adds an explicit "startup-time" prune scenario. Plan 1 already exercises `p
 Edit `electron/services/grove.ts:204-276` (`openGrove`). After `notifyChange(toSummary(grove))` and before the success `return`:
 
 ```ts
-    // Phase-09 retention: opportunistically prune .acornvo/conflicts/
-    // Failures here are non-fatal — the grove is open regardless.
-    try {
-      const { prune } = await import('./conflicts/store')
-      await prune()
-    } catch (err) {
-      logger.warn('conflicts prune at openGrove failed (non-fatal)', {
-        message: err instanceof Error ? err.message : String(err)
-      })
-    }
+// Phase-09 retention: opportunistically prune .acornvo/conflicts/
+// Failures here are non-fatal — the grove is open regardless.
+try {
+  const { prune } = await import('./conflicts/store')
+  await prune()
+} catch (err) {
+  logger.warn('conflicts prune at openGrove failed (non-fatal)', {
+    message: err instanceof Error ? err.message : String(err)
+  })
+}
 ```
 
 - [ ] **Step 2: Write the test**
@@ -597,8 +636,14 @@ let tmp: string
 beforeEach(async () => {
   tmp = await mkdtemp(join(tmpdir(), 'cf-ret-'))
   vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-    id: 'g', path: tmp, name: 'g', color: 'acorn',
-    schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+    id: 'g',
+    path: tmp,
+    name: 'g',
+    color: 'acorn',
+    schema_version: 1,
+    created_at: '',
+    last_opened_at: '',
+    sync_warning: null
   })
   await mkdir(join(tmp, '.acornvo/conflicts'), { recursive: true })
 })
@@ -613,16 +658,19 @@ describe('9.11 retention: 101 dirs → prune drops the oldest', () => {
     for (let i = 0; i < 101; i++) {
       const dir = join(root, `2026-04-18T12-30-${String(i).padStart(2, '0')}-x`)
       await mkdir(dir, { recursive: true })
-      await writeFile(join(dir, 'meta.json'), JSON.stringify({
-        path: 'x.md',
-        ts: `2026-04-18T12:30:${String(i).padStart(2, '0')}.000Z`,
-        resolved_by: 'keep_local'
-      }))
+      await writeFile(
+        join(dir, 'meta.json'),
+        JSON.stringify({
+          path: 'x.md',
+          ts: `2026-04-18T12:30:${String(i).padStart(2, '0')}.000Z`,
+          resolved_by: 'keep_local'
+        })
+      )
       await writeFile(join(dir, 'local.md'), '')
       await writeFile(join(dir, 'remote.md'), '')
       await writeFile(join(dir, 'base.md'), '')
       // mtime increases monotonically per index — oldest is index 0
-      const t = (Date.now() / 1000) + i
+      const t = Date.now() / 1000 + i
       await utimes(dir, t, t)
     }
     const result = await prune()
@@ -640,6 +688,7 @@ describe('9.11 retention: 101 dirs → prune drops the oldest', () => {
 ```bash
 npx vitest run electron/services/conflicts/retention-startup.test.ts
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -652,11 +701,13 @@ git commit -m "feat(grove): prune conflicts at openGrove + 101→100 retention t
 ---
 
 <!-- openspec-task: 9.12 -->
+
 ### Task 44: explicit test — base.md content equals editor-load-time content across multiple saves
 
 Plan 2 Task 16 already proved `baseBody` is stable across one save. This adds a multi-save assertion.
 
 **Files:**
+
 - Modify: `src/stores/editor.test.ts`
 
 - [ ] **Step 1: Add test**
@@ -668,7 +719,8 @@ describe('9.12 base fields stable across multiple saves', () => {
   it('after 3 saves, baseBody/baseFrontmatter/baseMtimeMs == values at open()', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'a.md', mtimeMs: 1 },
-      frontmatter: { title: 'load' }, body: 'INITIAL'
+      frontmatter: { title: 'load' },
+      body: 'INITIAL'
     })
     await useEditorStore.getState().open('a.md')
     for (let i = 0; i < 3; i++) {
@@ -697,9 +749,11 @@ git commit -m "test(editor): 9.12 base fields stable across 3 saves (phase-09 9.
 ---
 
 <!-- openspec-task: 9.13 -->
+
 ### Task 45: integration test — Dialog 打开期间 Cmd+S 不触发 save; 输入不触发 debounce save
 
 **Files:**
+
 - Modify: `src/integration/conflict-handling.test.ts`
 
 - [ ] **Step 1: Add test**
@@ -711,10 +765,14 @@ describe('9.13 Dialog 打开期间 Cmd+S/输入 都不触发 save', () => {
   it('Cmd+S during saveConflict does not call file.write', async () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
-        summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+        summary: { path: 'a.md', mtimeMs: 1 },
+        frontmatter: {},
+        body: 'B'
       })
       .mockResolvedValueOnce({
-        summary: { path: 'a.md', mtimeMs: 9 }, frontmatter: {}, body: 'R'
+        summary: { path: 'a.md', mtimeMs: 9 },
+        frontmatter: {},
+        body: 'R'
       })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -749,9 +807,11 @@ git commit -m "test(phase-09): 9.13 dialog open locks Cmd+S and debounce save (p
 ---
 
 <!-- openspec-task: 9.14 -->
+
 ### Task 46: editor unit — 3x E_MTIME_MISMATCH does NOT pop "保存持续失败" modal
 
 **Files:**
+
 - Modify: `src/stores/editor.test.ts`
 
 - [ ] **Step 1: Add test**
@@ -763,10 +823,14 @@ describe('9.14 3x E_MTIME_MISMATCH → no persistent-failure modal', () => {
   it('persistentFailure flag stays false after 3 mismatches each followed by 稍后处理', async () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
-        summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+        summary: { path: 'a.md', mtimeMs: 1 },
+        frontmatter: {},
+        body: 'B'
       })
       .mockResolvedValue({
-        summary: { path: 'a.md', mtimeMs: 9 }, frontmatter: {}, body: 'R'
+        summary: { path: 'a.md', mtimeMs: 9 },
+        frontmatter: {},
+        body: 'R'
       })
     await useEditorStore.getState().open('a.md')
     for (let i = 0; i < 3; i++) {
@@ -799,9 +863,11 @@ git commit -m "test(editor): 9.14 mtime mismatches do not trigger persistent-fai
 ---
 
 <!-- openspec-task: 9.15 -->
+
 ### Task 47: editor unit — 3x E_PERMISSION DOES pop "保存持续失败" modal
 
 **Files:**
+
 - Modify: `src/stores/editor.test.ts`
 
 - [ ] **Step 1: Add test**
@@ -812,14 +878,14 @@ Append:
 describe('9.15 3x E_PERMISSION → persistent-failure modal flips on', () => {
   it('persistentFailure becomes true after 3 non-mtime errors', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B'
     })
     await useEditorStore.getState().open('a.md')
     for (let i = 0; i < 3; i++) {
       useEditorStore.getState().setBody(`v${i}`)
-      mockIpc.file.write.mockRejectedValueOnce(
-        new IpcError('E_PERMISSION', 'no perms')
-      )
+      mockIpc.file.write.mockRejectedValueOnce(new IpcError('E_PERMISSION', 'no perms'))
       await useEditorStore.getState().save()
     }
     const s = useEditorStore.getState()
@@ -840,9 +906,11 @@ git commit -m "test(editor): 9.15 3x E_PERMISSION trips persistent-failure flag 
 ---
 
 <!-- openspec-task: 9.16 -->
+
 ### Task 48: unit-test bundle — mtime tolerance, copy-name dedup, prune
 
 This is a verification gate, not new tests. The three buckets are owned by:
+
 - mtime ±2ms tolerance: `electron/services/fs-atomic.test.ts` (Plan 1 Task 5 + Task 6)
 - copy-name dedup: `src/stores/editor.test.ts` (Plan 3 Task 28) + `src/integration/conflict-handling.test.ts` (Task 41)
 - prune: `electron/services/conflicts/store.test.ts` (Plan 1 Task 9) + `retention-startup.test.ts` (Task 43)
@@ -857,6 +925,7 @@ npx vitest run \
   src/stores/editor.test.ts \
   src/integration/conflict-handling.test.ts
 ```
+
 Expected: all PASS. Note any flakes; if any test depends on real timing, increase the timeout in vitest config or rewrite.
 
 - [ ] **Step 2: Run the full suite once more**
@@ -864,6 +933,7 @@ Expected: all PASS. Note any flakes; if any test depends on real timing, increas
 ```bash
 npm test
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 3: No commit** (verification only).
@@ -871,6 +941,7 @@ Expected: all PASS.
 ---
 
 <!-- openspec-task: 9.17 -->
+
 ### Task 49: `openspec validate phase-09-conflict-handling --strict`
 
 **Files:** none (validation only)
@@ -880,7 +951,9 @@ Expected: all PASS.
 ```bash
 openspec validate phase-09-conflict-handling --strict
 ```
+
 Expected: exit 0 with all artifacts validated. If validator complains:
+
 - Missing requirement coverage in tasks → re-check `tasks.md` lines all reference a `## N.x` numbered task block.
 - Schema mismatch → ensure `proposal.md` / `design.md` / `specs/**/spec.md` follow the OpenSpec conventions (compare to a recently-archived phase like phase-05).
 - Spec deltas reference a capability that doesn't exist on `main` (e.g. `editor-autosave` is owned by phase-07; if phase-07 hasn't archived yet, the validator may complain about the MODIFIED Requirements pointing at unknown specs — coordinate with the phase-07 owner before archive).
@@ -892,6 +965,7 @@ This is what `/opsx:executing-plans` does automatically. Only do it manually if 
 ```bash
 openspec mark-complete phase-09-conflict-handling --all
 ```
+
 (or edit `tasks.md` checkboxes by hand — `[ ]` → `[x]`)
 
 - [ ] **Step 3: Final commit**
@@ -910,6 +984,7 @@ git commit -m "chore(openspec): mark phase-09 tasks complete after validation (p
 ```bash
 grep -E "openspec-task: 9\.[0-9]+" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-09-conflict-handling-tasks-9.1-9.17.md | sort -u
 ```
+
 Expected: 17 unique labels.
 
 2. **Manual smoke vs. automated:** 9.5/9.6/9.7 are runbook entries because they verify electron-log/disk content/router URL — easier and more honest as manual checks than as fragile e2e. Their automated cousins (the corresponding store actions) are tested in Plan 3.

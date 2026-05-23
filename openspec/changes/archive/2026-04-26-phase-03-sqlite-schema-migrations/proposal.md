@@ -19,11 +19,13 @@ Acornvo 数据模型是"本地 md 文件为真实源 + SQLite 作索引/缓存"�
 ## Capabilities
 
 ### New Capabilities
+
 - `sqlite-index-store`: 每树林 SQLite 数据库的生命周期、WAL/pragma 配置、完整性自检、损坏重建
 - `db-migrations`: 版本化迁移脚本的执行、回退、`user_version` 跟踪
 - `grove-db-binding`: 树林切换时 db 句柄的打开/关闭联动
 
 ### Modified Capabilities
+
 - `grove-management`: 打开树林流水线中追加 "opened → db.init → integrity check → 可能重建" 一步
 
 ## Impact

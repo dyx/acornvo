@@ -15,23 +15,25 @@
 Plan 1 must be merged first (provides `conflict-types.ts`, `conflicts/store.ts`, the `force` option). Phase 7 must also be merged or scheduled to merge before this plan: it provides `src/stores/editor.ts` with the Zustand state machine. If phase 7 is **not** yet on `main`, **stop** — this plan modifies the editor store.
 
 Verify both prereqs:
+
 ```bash
 test -f /Users/aaa/develop/workspace-ai/acornvo/electron/services/conflicts/store.ts && echo "plan-1 OK"
 test -f /Users/aaa/develop/workspace-ai/acornvo/src/stores/editor.ts && echo "phase-7 OK"
 ```
+
 Both must print "OK".
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/ipc-contract.ts` | Modify (add `conflict` namespace + preserve `IpcError.context`) | 4.1, 4.3 |
-| `electron/ipc/router.ts` | Modify (`normalize` propagates `context`) | 4.3 |
-| `electron/ipc/conflicts.ts` | Create | 4.2 |
-| `electron/ipc/handlers.ts` | Modify (register `conflict` namespace) | 4.2 |
-| `preload/preload.ts` | Modify (add `conflict` invoker) | 4.1 |
-| `src/stores/editor.ts` | Modify (base fields + conflictState + subscriber + save branch + scheduling guard + retry guard) | 5.1, 5.2, 5.3, 5.4, 5.5, 5.6 |
-| `src/stores/editor.test.ts` | Modify (5 new test groups) | 5.1, 5.2, 5.3, 5.4, 5.5, 5.6 |
+| Path                        | Action                                                                                           | Owner task                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `shared/ipc-contract.ts`    | Modify (add `conflict` namespace + preserve `IpcError.context`)                                  | 4.1, 4.3                     |
+| `electron/ipc/router.ts`    | Modify (`normalize` propagates `context`)                                                        | 4.3                          |
+| `electron/ipc/conflicts.ts` | Create                                                                                           | 4.2                          |
+| `electron/ipc/handlers.ts`  | Modify (register `conflict` namespace)                                                           | 4.2                          |
+| `preload/preload.ts`        | Modify (add `conflict` invoker)                                                                  | 4.1                          |
+| `src/stores/editor.ts`      | Modify (base fields + conflictState + subscriber + save branch + scheduling guard + retry guard) | 5.1, 5.2, 5.3, 5.4, 5.5, 5.6 |
+| `src/stores/editor.test.ts` | Modify (5 new test groups)                                                                       | 5.1, 5.2, 5.3, 5.4, 5.5, 5.6 |
 
 ## Conventions reused
 
@@ -42,9 +44,11 @@ Both must print "OK".
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 13: extend `IpcContract` with the `conflict` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `preload/preload.ts`
 
@@ -55,10 +59,7 @@ Edit `shared/ipc-contract.ts`. Below the existing `// --- index namespace types 
 ```ts
 // --- conflict namespace types (phase-09) ---
 
-import type {
-  ConflictItem,
-  ConflictMeta
-} from './conflict-types'
+import type { ConflictItem, ConflictMeta } from './conflict-types'
 
 export interface ConflictListResult {
   items: ConflictItem[]
@@ -111,6 +112,7 @@ Edit `preload/preload.ts`. Inside the `request` object, add a new namespace afte
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS (no main-side handler yet, but the contract surface is consistent — `handlers.ts` will be flagged as missing the `conflict` field; we'll fix in Task 14).
 
 If `npm run typecheck` fails on `handlers.ts` (it will — the `HandlerMap` is exhaustive over `IpcContract`), add a temporary stub in `electron/ipc/handlers.ts` to keep CI green between commits:
@@ -121,7 +123,7 @@ import { conflictHandlers } from './conflicts' // will create in Task 14
 export const ipcHandlers: HandlerMap = {
   // ...
   index: indexHandlers,
-  conflict: conflictHandlers,
+  conflict: conflictHandlers
 }
 ```
 
@@ -137,9 +139,11 @@ git commit -m "feat(ipc): contract + preload for conflict namespace (phase-09 4.
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 14: implement `electron/ipc/conflicts.ts` and register it
 
 **Files:**
+
 - Create: `electron/ipc/conflicts.ts`
 - Modify: `electron/ipc/handlers.ts`
 - Create: `electron/ipc/conflicts.test.ts`
@@ -149,16 +153,9 @@ git commit -m "feat(ipc): contract + preload for conflict namespace (phase-09 4.
 Create `electron/ipc/conflicts.ts`:
 
 ```ts
-import {
-  listSnapshots,
-  readSnapshot,
-  deleteSnapshot
-} from '../services/conflicts/store'
+import { listSnapshots, readSnapshot, deleteSnapshot } from '../services/conflicts/store'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  ConflictListResult,
-  ConflictReadResult
-} from '@shared/ipc-contract'
+import type { ConflictListResult, ConflictReadResult } from '@shared/ipc-contract'
 
 export const conflictHandlers = {
   async list(opts?: { limit?: number; offset?: number }): Promise<ConflictListResult> {
@@ -234,11 +231,19 @@ let tmp: string
 beforeEach(async () => {
   tmp = await mkdtemp(join(tmpdir(), 'cf-h-'))
   vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-    id: 'g', path: tmp, name: 'g', color: 'acorn',
-    schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+    id: 'g',
+    path: tmp,
+    name: 'g',
+    color: 'acorn',
+    schema_version: 1,
+    created_at: '',
+    last_opened_at: '',
+    sync_warning: null
   })
   // make sure conflicts dir exists
-  await (await import('node:fs/promises')).mkdir(join(tmp, '.acornvo/conflicts'), { recursive: true })
+  await (
+    await import('node:fs/promises')
+  ).mkdir(join(tmp, '.acornvo/conflicts'), { recursive: true })
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -261,7 +266,10 @@ describe('conflictHandlers.list', () => {
 describe('conflictHandlers.read', () => {
   it('returns snapshot bodies', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
       resolvedBy: 'keep_local'
     })
     const r = await conflictHandlers.read(id)
@@ -279,7 +287,10 @@ describe('conflictHandlers.read', () => {
 describe('conflictHandlers.delete', () => {
   it('removes the snapshot directory', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     await conflictHandlers.delete(id)
@@ -301,6 +312,7 @@ describe('conflictHandlers.delete', () => {
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts
 ```
+
 Expected: 6 PASS.
 
 - [ ] **Step 5: Type-check the whole project (Plan 2 task 4.1's deferred check)**
@@ -308,6 +320,7 @@ Expected: 6 PASS.
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -320,13 +333,16 @@ git commit -m "feat(ipc): conflict.list/read/delete handlers (phase-09 4.2)"
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 15: end-to-end exposure of `force` + IpcError context propagation
 
 This task closes two loops:
+
 1. `file.write` IPC accepts `{ force: true }` — already true after Plan 1 Task 4 + Task 5, but verify by integration.
 2. `router.ts:normalize` strips the `context` field on `IpcError`. Renderer needs `remoteMtimeMs` after `E_MTIME_MISMATCH`. Fix the normalize function.
 
 **Files:**
+
 - Modify: `electron/ipc/router.ts:61-69` (`normalize`)
 - Modify: `preload/preload.ts:13-17` (`invoke` re-throws with `context`)
 - Modify: `electron/ipc/router.ts` test if any (or add one inline)
@@ -360,6 +376,7 @@ describe('router.normalize (phase-09 4.3)', () => {
 ```bash
 npx vitest run electron/ipc/router.context.test.ts
 ```
+
 (or whichever file you placed it in)
 Expected: 2 FAIL.
 
@@ -402,6 +419,7 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
 ```bash
 npx vitest run electron/ipc/router.context.test.ts
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 6: Smoke-check `file.write force`**
@@ -419,8 +437,14 @@ describe('file.write force flag end-to-end (phase-09 4.3)', () => {
   it('overwrites stale-mtime file when force=true', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'fw-force-'))
     vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-      id: 'g', path: tmp, name: 'g', color: 'acorn',
-      schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+      id: 'g',
+      path: tmp,
+      name: 'g',
+      color: 'acorn',
+      schema_version: 1,
+      created_at: '',
+      last_opened_at: '',
+      sync_warning: null
     })
     await writeFile(join(tmp, 'x.md'), 'old')
     const result = await fileHandlers.write('x.md', 'new', {
@@ -439,6 +463,7 @@ describe('file.write force flag end-to-end (phase-09 4.3)', () => {
 ```bash
 npx vitest run electron/ipc/file.test.ts
 ```
+
 Expected: PASS (existing + new).
 
 ```bash
@@ -449,17 +474,20 @@ git commit -m "fix(ipc): propagate IpcError.context through router + preload (ph
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 16: editor store — `baseBody` / `baseFrontmatter` / `baseMtimeMs`
 
 The editor store from phase 7 already holds `body` / `savedBody` / `savedMtimeMs` / `frontmatter`. We add three "base" fields that are populated **only** by `open(path)` and never touched by `save()`. They represent the canonical "what we loaded from disk before any edits" — needed for the snapshot's `base.md`.
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (extend `ready` variant + `open()` action)
 - Modify: `src/stores/editor.test.ts` (assert base fields populated and stable across saves)
 
 - [ ] **Step 1: Locate the `ready` variant**
 
 Open `src/stores/editor.ts`. Find the discriminated union — phase 7's plan establishes shape like:
+
 ```ts
 | {
     kind: 'ready'
@@ -519,6 +547,7 @@ describe('editor store base fields (phase-09 5.1)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.1"
 ```
+
 Expected: 2 FAIL (fields don't exist).
 
 - [ ] **Step 4: Implement**
@@ -569,11 +598,13 @@ Make **no** change to `save()` — base fields must stay frozen across save succ
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.1"
 ```
+
 Expected: 2 PASS. Run the full editor test file:
 
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
+
 Expected: all PASS (phase 7 tests should not regress).
 
 - [ ] **Step 6: Commit**
@@ -586,9 +617,11 @@ git commit -m "feat(editor): track baseBody/baseFrontmatter/baseMtimeMs frozen a
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 17: editor store — `conflictState` field
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (extend `ready` variant + initialise field)
 - Modify: `src/stores/editor.test.ts`
 
@@ -620,6 +653,7 @@ describe('editor store conflictState (phase-09 5.2)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.2"
 ```
+
 Expected: 1 FAIL.
 
 - [ ] **Step 3: Implement**
@@ -645,11 +679,13 @@ In `open(path)`, set `conflictState: { kind: 'none' }` in the `set({...})` call.
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.2"
 ```
+
 Expected: 1 PASS. Full file:
 
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -662,11 +698,13 @@ git commit -m "feat(editor): conflictState initialised to none on open (phase-09
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 18: editor store — subscribe to `index:fileChanged`
 
 This task implements all of 5.3.1 (filtering), 5.3.2 (silent reload when clean), and 5.3.3 (banner trigger when dirty).
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -676,7 +714,12 @@ Append to `src/stores/editor.test.ts`:
 
 ```ts
 describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
-  let emit: (payload: { path: string; mtime: number; contentHash: string; frontmatter: Record<string, unknown> }) => void
+  let emit: (payload: {
+    path: string
+    mtime: number
+    contentHash: string
+    frontmatter: Record<string, unknown>
+  }) => void
 
   beforeEach(() => {
     // mockIpc.on returns an unsubscribe; capture the registered handler
@@ -689,7 +732,8 @@ describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
   it('ignores events for other paths', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'a.md', mtimeMs: 1 },
-      frontmatter: {}, body: 'b'
+      frontmatter: {},
+      body: 'b'
     })
     await useEditorStore.getState().open('a.md')
     emit({ path: 'b.md', mtime: 999, contentHash: '', frontmatter: {} })
@@ -702,7 +746,8 @@ describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
   it('ignores events whose mtime equals savedMtimeMs (self-write echo)', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'a.md', mtimeMs: 1000 },
-      frontmatter: {}, body: 'b'
+      frontmatter: {},
+      body: 'b'
     })
     await useEditorStore.getState().open('a.md')
     emit({ path: 'a.md', mtime: 1000, contentHash: '', frontmatter: {} })
@@ -715,11 +760,13 @@ describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 1 },
-        frontmatter: {}, body: 'OLD'
+        frontmatter: {},
+        body: 'OLD'
       })
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 2 },
-        frontmatter: {}, body: 'NEW'
+        frontmatter: {},
+        body: 'NEW'
       })
     await useEditorStore.getState().open('a.md')
     emit({ path: 'a.md', mtime: 2, contentHash: '', frontmatter: {} })
@@ -737,7 +784,8 @@ describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
   it('shows externalModified banner when dirty', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'a.md', mtimeMs: 1 },
-      frontmatter: {}, body: 'OLD'
+      frontmatter: {},
+      body: 'OLD'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('USER EDIT')
@@ -755,6 +803,7 @@ describe('editor store index:fileChanged subscriber (phase-09 5.3)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.3"
 ```
+
 Expected: 4 FAIL.
 
 - [ ] **Step 3: Implement the subscription**
@@ -821,6 +870,7 @@ Wire `subscribeWatcher()` from the Editor page mount (phase 7's `src/pages/Edito
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.3"
 ```
+
 Expected: 4 PASS. (If `mockIpc.on` isn't already mocked, extend phase 7's mock setup to include `on: vi.fn()`.)
 
 - [ ] **Step 5: Commit**
@@ -833,11 +883,13 @@ git commit -m "feat(editor): subscribe to index:fileChanged — silent reload or
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 19: editor store — `save()` E_MTIME_MISMATCH branch
 
 This task lands all of 5.4.1 (fetch remote), 5.4.2 (set conflictState=saveConflict), and 5.4.3 (UI signal — implemented as a state transition; the actual modal is in Plan 3).
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (`save()`)
 - Modify: `src/stores/editor.test.ts`
 
@@ -853,11 +905,13 @@ describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 1 },
-        frontmatter: { title: 'old' }, body: 'B0'
+        frontmatter: { title: 'old' },
+        body: 'B0'
       })
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 999 },
-        frontmatter: { title: 'remote' }, body: 'REMOTE'
+        frontmatter: { title: 'remote' },
+        body: 'REMOTE'
       })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('LOCAL')
@@ -880,11 +934,13 @@ describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 1 },
-        frontmatter: {}, body: 'B0'
+        frontmatter: {},
+        body: 'B0'
       })
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 999 },
-        frontmatter: {}, body: 'R'
+        frontmatter: {},
+        body: 'R'
       })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -904,6 +960,7 @@ describe('editor store save() E_MTIME_MISMATCH (phase-09 5.4)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.4"
 ```
+
 Expected: 2 FAIL.
 
 - [ ] **Step 3: Implement**
@@ -956,6 +1013,7 @@ In `src/stores/editor.ts`, find `save()`. Phase 7's body has a `try/catch` aroun
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.4"
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 5: Commit**
@@ -968,11 +1026,13 @@ git commit -m "feat(editor): E_MTIME_MISMATCH transitions to saveConflict (phase
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 20: lock save scheduling while a conflict is unresolved
 
 When `conflictState.kind` is `externalModified` or `saveConflict`, `scheduleSave`, `flushSave`, and the Cmd+S keyboard handler MUST be no-ops.
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -984,7 +1044,9 @@ Append to `src/stores/editor.test.ts`:
 describe('editor store save lock during conflict (phase-09 5.5)', () => {
   it('scheduleSave is a no-op during externalModified', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'b'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'b'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.setState((cur) => {
@@ -1000,7 +1062,9 @@ describe('editor store save lock during conflict (phase-09 5.5)', () => {
 
   it('flushSave is a no-op during saveConflict', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'b'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'b'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.setState((cur) => {
@@ -1026,6 +1090,7 @@ describe('editor store save lock during conflict (phase-09 5.5)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.5"
 ```
+
 Expected: 2 FAIL (writes are still happening because no guard).
 
 - [ ] **Step 3: Implement the guard helper**
@@ -1035,10 +1100,7 @@ In `src/stores/editor.ts`, add near the top of the module:
 ```ts
 function isBlockedByConflict(s: EditorState): boolean {
   if (s.kind !== 'ready') return false
-  return (
-    s.conflictState.kind === 'externalModified' ||
-    s.conflictState.kind === 'saveConflict'
-  )
+  return s.conflictState.kind === 'externalModified' || s.conflictState.kind === 'saveConflict'
 }
 ```
 
@@ -1068,7 +1130,11 @@ const onKeyDown = (e: KeyboardEvent) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault()
     const s = useEditorStore.getState()
-    if (s.kind === 'ready' && (s.conflictState.kind === 'externalModified' || s.conflictState.kind === 'saveConflict')) return
+    if (
+      s.kind === 'ready' &&
+      (s.conflictState.kind === 'externalModified' || s.conflictState.kind === 'saveConflict')
+    )
+      return
     useEditorStore.getState().flushSave()
   }
 }
@@ -1079,6 +1145,7 @@ const onKeyDown = (e: KeyboardEvent) => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.5"
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1091,11 +1158,13 @@ git commit -m "feat(editor): lock scheduleSave/flushSave/Cmd+S during conflict (
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 21: retry counter excludes E_MTIME_MISMATCH
 
 Phase 7 introduced a retry counter that, after 3 consecutive non-mtime save failures, surfaces a "保存持续失败" modal. Mtime mismatches go through ConflictDialog and MUST NOT increment that counter.
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -1130,14 +1199,14 @@ describe('editor store retry counter (phase-09 5.6)', () => {
 
   it('E_PERMISSION DOES increment retryCount', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'b'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'b'
     })
     await useEditorStore.getState().open('a.md')
     for (let i = 0; i < 3; i++) {
       useEditorStore.getState().setBody('L' + i)
-      mockIpc.file.write.mockRejectedValueOnce(
-        new IpcError('E_PERMISSION', 'no perms')
-      )
+      mockIpc.file.write.mockRejectedValueOnce(new IpcError('E_PERMISSION', 'no perms'))
       await useEditorStore.getState().save()
     }
     const s = useEditorStore.getState()
@@ -1152,6 +1221,7 @@ describe('editor store retry counter (phase-09 5.6)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.6"
 ```
+
 Expected: at least 1 FAIL (probably the first — phase 7 likely incremented on every error).
 
 - [ ] **Step 3: Implement**
@@ -1193,6 +1263,7 @@ If `retryCount` is not yet a field, add it to the `ready` variant:
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 5.6"
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 5: Run the full editor test file + main suite**
@@ -1201,6 +1272,7 @@ Expected: 2 PASS.
 npx vitest run src/stores/editor.test.ts
 npm test
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -1215,9 +1287,11 @@ git commit -m "feat(editor): retry counter excludes E_MTIME_MISMATCH (phase-09 5
 ## Self-Review
 
 1. **Spec coverage:** This plan owns labels 4.1, 4.2, 4.3, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6. Verify:
+
 ```bash
 grep -E "openspec-task: (4\.[1-3]|5\.[1-6])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-09-conflict-handling-tasks-4.1-5.6.md | sort -u
 ```
+
 Expected: 9 unique labels.
 
 2. **Type consistency:** `ConflictState` is imported from `@shared/conflict-types` everywhere. The `saveConflict` variant fields (`remoteMtimeMs`, `remoteBody`, `remoteFrontmatter`) match the type definition from Plan 1.

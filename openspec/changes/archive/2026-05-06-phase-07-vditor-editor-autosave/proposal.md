@@ -16,10 +16,12 @@ phase 1-6 已让用户可以"打开树林 → 浏览果仓 → 选中文件"；�
 ## Capabilities
 
 ### New Capabilities
+
 - `editor-page`: `/editor/:encodedPath` 路由、Vditor 集成、TitleBar、错误态、Frontmatter 只读侧卡
 - `editor-autosave`: 防抖/失焦/离页/关窗四时机的保存调度，mtime 乐观锁接线，saving/dirty 状态
 
 ### Modified Capabilities
+
 - `library-view`: "打开编辑器"按钮与行 Enter / 双击由占位改为 `navigate('/editor/' + encodeURIComponent(path))`
 
 ## Impact

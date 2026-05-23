@@ -12,22 +12,24 @@
 
 ## File Structure Map
 
-| Path | Role |
-|------|------|
-| `electron/main.ts` | Main process entry |
-| `electron/app-lifecycle.ts` | Subscriber hooks (`onBeforeQuit`, `onWindowResume`) |
-| `electron/security/csp.ts` | CSP header injection |
-| `electron/security/external-links.ts` | `setWindowOpenHandler` + `will-navigate` guards |
-| `src/index.html` | Renderer HTML entry (minimal — Plan 4 wires React) |
+| Path                                  | Role                                                |
+| ------------------------------------- | --------------------------------------------------- |
+| `electron/main.ts`                    | Main process entry                                  |
+| `electron/app-lifecycle.ts`           | Subscriber hooks (`onBeforeQuit`, `onWindowResume`) |
+| `electron/security/csp.ts`            | CSP header injection                                |
+| `electron/security/external-links.ts` | `setWindowOpenHandler` + `will-navigate` guards     |
+| `src/index.html`                      | Renderer HTML entry (minimal — Plan 4 wires React)  |
 
 > The dev-server URL comes from `process.env['ELECTRON_RENDERER_URL']` (set by electron-vite in dev). In production, `BrowserWindow.loadFile('src/index.html')` is used — we compute the path against `__dirname` via `@electron-toolkit/utils` helper `is` + `MAIN_WINDOW_VITE_DEV_SERVER_URL` pattern that electron-vite installs. We use the electron-vite idiom: `if (process.env['ELECTRON_RENDERER_URL']) loadURL(...) else loadFile(...)`.
 
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 1: Call `initLogger()` before `app.whenReady()`
 
 **Files:**
+
 - Create: `electron/main.ts`
 - Create: `src/index.html` (minimal placeholder; expanded in Plan 4)
 
@@ -72,17 +74,21 @@ bootstrap().catch((err) => {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke — launch the app to confirm it reaches `whenReady`**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Expected: electron-vite starts, main process launches, console logs "app whenReady fired", then exits cleanly on `Ctrl+C` (no window is created yet — next task adds that).
 
 - [ ] **Step 5: Commit**
@@ -95,9 +101,11 @@ git commit -m "feat(phase-01): electron/main.ts boots logger before app.whenRead
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 2: Create `BrowserWindow` with locked-down `webPreferences`
 
 **Files:**
+
 - Modify: `electron/main.ts` (add window creation)
 
 - [ ] **Step 1: Extend `electron/main.ts` with `createMainWindow`**
@@ -163,18 +171,23 @@ bootstrap().catch((err) => {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — launch and confirm a window appears**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Expected:
+
 - An Electron window opens, 1280×800, centered.
 - Shows "Acornvo booting…" text from `src/index.html`.
 - DevTools may or may not open (fine either way).
@@ -192,9 +205,11 @@ git commit -m "feat(phase-01): create 1280x800 main BrowserWindow with sandbox +
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 3: Inject CSP via `session.webRequest.onHeadersReceived`
 
 **Files:**
+
 - Create: `electron/security/csp.ts`
 - Modify: `electron/main.ts` (call `installCsp()` before window creation)
 
@@ -253,17 +268,21 @@ async function bootstrap(): Promise<void> {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke — open DevTools and verify no CSP violation reports**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Open DevTools (menu View → Toggle Developer Tools, or `Cmd+Opt+I` / `Ctrl+Shift+I`).
 
 Go to the **Network** tab, reload (`Cmd+R`). Click the top document request. Confirm the **Response Headers** panel shows `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; ...`.
@@ -282,9 +301,11 @@ git commit -m "feat(phase-01): install baseline CSP via webRequest.onHeadersRece
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 4: `setWindowOpenHandler` — deny and forward to system browser
 
 **Files:**
+
 - Create: `electron/security/external-links.ts`
 - Modify: `electron/main.ts` (call after window creation)
 
@@ -331,15 +352,17 @@ import { installExternalLinkGuards } from './security/external-links'
 And at the end of `createMainWindow`, right before `return win`, add:
 
 ```typescript
-  installExternalLinkGuards(win)
+installExternalLinkGuards(win)
 ```
 
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke — confirm external links open in system browser**
@@ -351,6 +374,7 @@ window.open('https://example.com', '_blank')
 ```
 
 Expected:
+
 - Main Electron window does **not** navigate away.
 - System default browser opens `https://example.com` (or the tab that was previously active becomes visible).
 - Main-process console logs nothing problematic.
@@ -367,9 +391,11 @@ git commit -m "feat(phase-01): setWindowOpenHandler denies + forwards externals 
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 5: Guard `will-navigate` against in-window external nav
 
 **Files:**
+
 - Modify: `electron/security/external-links.ts` (extend `installExternalLinkGuards`)
 
 - [ ] **Step 1: Extend the guard to cover `will-navigate`**
@@ -401,9 +427,11 @@ export function installExternalLinkGuards(win: BrowserWindow): void {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — confirm in-window nav to external URL is blocked**
@@ -415,6 +443,7 @@ location.href = 'https://example.com'
 ```
 
 Expected:
+
 - Main window stays on the Acornvo page (does not navigate).
 - System browser opens `https://example.com`.
 
@@ -430,9 +459,11 @@ git commit -m "feat(phase-01): block will-navigate to external URLs, forward to 
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 6: Wire `registerHandlers(ipcHandlers)` into bootstrap
 
 **Files:**
+
 - Modify: `electron/main.ts` (add `registerHandlers` call)
 
 - [ ] **Step 1: Import and register handlers**
@@ -459,9 +490,11 @@ async function bootstrap(): Promise<void> {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — confirm `ping.echo` works from DevTools**
@@ -492,9 +525,11 @@ git commit -m "feat(phase-01): register ping + log IPC handlers at bootstrap"
 ---
 
 <!-- openspec-task: 5.7 -->
+
 ### Task 7: Platform lifecycle — macOS `Cmd+W` hides, Dock activates, Win/Linux closes
 
 **Files:**
+
 - Modify: `electron/main.ts` (add platform event handlers)
 
 - [ ] **Step 1: Add lifecycle state and handlers to `electron/main.ts`**
@@ -534,20 +569,22 @@ app.on('activate', () => {
 Then modify `createMainWindow` — add a `close` handler that hides on macOS when not quitting. Insert **before** `installExternalLinkGuards(win)` near the end of the function:
 
 ```typescript
-  win.on('close', (event) => {
-    if (process.platform === 'darwin' && !isQuitting) {
-      event.preventDefault()
-      win.hide()
-    }
-  })
+win.on('close', (event) => {
+  if (process.platform === 'darwin' && !isQuitting) {
+    event.preventDefault()
+    win.hide()
+  }
+})
 ```
 
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — macOS `Cmd+W` hides, Dock click re-shows**
@@ -574,9 +611,11 @@ git commit -m "feat(phase-01): platform lifecycle - macOS Cmd+W hides, Dock re-s
 ---
 
 <!-- openspec-task: 5.8 -->
+
 ### Task 8: Expose `appLifecycle.onBeforeQuit` / `onWindowResume` subscribers
 
 **Files:**
+
 - Create: `electron/app-lifecycle.ts`
 - Modify: `electron/main.ts` (wire subscribers into `before-quit` and `powerMonitor.resume`)
 
@@ -654,9 +693,11 @@ powerMonitor.on('resume', () => {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke — register a test subscriber and confirm it runs**
@@ -674,8 +715,12 @@ Run `npm run dev`. Quit with `Cmd+Q` (macOS) or `Alt+F4` (Win/Linux). Expected: 
 Also test that one failing subscriber does not stop others — temporarily register two:
 
 ```typescript
-appLifecycle.onBeforeQuit(async () => { throw new Error('first fails') })
-appLifecycle.onBeforeQuit(async () => { logger.info('second ran') })
+appLifecycle.onBeforeQuit(async () => {
+  throw new Error('first fails')
+})
+appLifecycle.onBeforeQuit(async () => {
+  logger.info('second ran')
+})
 ```
 
 Run and quit. Expected: `first fails` error is logged, then `second ran` is logged, then process exits.
@@ -694,6 +739,7 @@ git commit -m "feat(phase-01): expose appLifecycle.onBeforeQuit and onWindowResu
 ## Plan 3 Wrap-up
 
 After Task 8, `electron/main.ts` should:
+
 - Init logger → wait for `whenReady` → install CSP → register IPC handlers → create locked-down window.
 - Handle `Cmd+W` on macOS to hide instead of close.
 - Route external links via `shell.openExternal`.

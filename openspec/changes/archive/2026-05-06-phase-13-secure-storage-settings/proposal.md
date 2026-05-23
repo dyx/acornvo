@@ -1,6 +1,7 @@
 ## Why
 
 后续阶段（phase 15 AI reviewer、phase 16 松语 agent）需要调用外部 LLM：
+
 - 必须存 API key（OpenAI / Anthropic / 本地兼容 endpoint 等）
 - 必须允许用户切换 provider / model / base URL / 温度等
 - 不能把 key 明文写进 JSON / SQLite
@@ -24,6 +25,7 @@
 ## Capabilities
 
 ### New Capabilities
+
 - `settings-store`: SQLite `settings` 表 + CRUD + 命名空间模型
 - `secrets-store`: 基于 OS keychain 的加密敏感值存取
 - `settings-page`: `/settings` 路由与四个 tab UI
@@ -31,6 +33,7 @@
 - `settings-ipc`: `settings` / `settings.secret` IPC 契约
 
 ### Modified Capabilities
+
 - `browser-navigation`: 广告拦截开关从硬编码改为读 `browserSettings.blockAds`，关闭时移除 `onBeforeRequest` 监听或放行
 - `app-shell`: 路由补齐 `/settings` 真实页面（不再占位）；AppRail 增加"设置"入口（底部位置）
 

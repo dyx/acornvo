@@ -4,13 +4,14 @@
 
 **Goal:** Verify phase-19 K1 `callId` extension landed, add antd / @ant-design/x-markdown / @ant-design/icons / dayjs as deps, wire `XProvider` into `App.tsx` with a CSS-variable→token bridge (`src/lib/theme.ts`), and connect antd locale to `i18n.language`. After this plan: the app boots with XProvider at the root, chat page still renders the legacy components, and non-chat pages have zero visual regressions.
 
-**Architecture:** A single `themeTokens` object maps the existing "squirrel" CSS variables (`--color-paper`, `--color-line`, `--color-ink`, `--color-paper-2`, `--color-ink-3`) to antd `ConfigProvider` tokens (`colorBgContainer`, `colorBorder`, `colorText`, `colorBgLayout`, `colorTextSecondary`). `App.tsx` wraps its root tree in `<XProvider theme={...} locale={antdLocale}>`. `antdLocale` is derived from `i18n.language` (zh* → `zhCN`, else → `enUS`); `useTranslation()` triggers re-renders on language switch so the prop stays in sync. CSS variables and light/dark switching logic stay untouched.
+**Architecture:** A single `themeTokens` object maps the existing "squirrel" CSS variables (`--color-paper`, `--color-line`, `--color-ink`, `--color-paper-2`, `--color-ink-3`) to antd `ConfigProvider` tokens (`colorBgContainer`, `colorBorder`, `colorText`, `colorBgLayout`, `colorTextSecondary`). `App.tsx` wraps its root tree in `<XProvider theme={...} locale={antdLocale}>`. `antdLocale` is derived from `i18n.language` (zh\* → `zhCN`, else → `enUS`); `useTranslation()` triggers re-renders on language switch so the prop stays in sync. CSS variables and light/dark switching logic stay untouched.
 
 **Tech Stack:** TypeScript 5, React 18, Electron, `antd` (latest 5.x), `@ant-design/x` (^2.7.0, already in repo), `@ant-design/x-markdown`, `@ant-design/icons`, `dayjs`, `react-i18next`, `vitest`, `@testing-library/react`.
 
 **Ant Design X reference:** When wiring `XProvider`, theme tokens, or `XComponentsConfig` slots, consult the `x-components` skill (covers Bubble / Sender / Conversations / ThoughtChain / Welcome / Prompts / Actions / Attachments / Sources / Suggestion / Think / FileCard / CodeHighlighter / Mermaid / Folder / **XProvider** / Notification). When unsure about a token, prop, or slot name, invoke the skill before guessing.
 
 **Repo conventions to follow:**
+
 - Imports use the path alias `@/*` for `src/*` and `@shared/*` for `shared/*`.
 - Tests use `vitest` + `@testing-library/react`; co-located with source files as `<name>.test.ts(x)`.
 - Commit style: Conventional Commits (`feat:`, `chore:`, `test:`, `refactor:`, `fix:`).
@@ -19,9 +20,11 @@
 ---
 
 <!-- openspec-task: 0.1 -->
+
 ### Task 1: Verify phase-19 K1 callId extension on tool events
 
 **Files:**
+
 - Inspect (no edit): `shared/agent-types.ts`
 
 - [x] **Step 1: Locate `tool.start` and `tool.result` event definitions**
@@ -29,6 +32,7 @@
 Run: `grep -n "tool.start\|tool.result\|tool.approval-needed" /Users/aaa/develop/workspace-ai/acornvo/shared/agent-types.ts`
 
 Expected: each event variant must show an OPTIONAL `callId?: string` field, e.g.:
+
 ```ts
 | { type: 'tool.start'; callId?: string; tool: string; args: unknown }
 | { type: 'tool.result'; callId?: string; tool: string; result: ToolResult }
@@ -51,9 +55,11 @@ git commit --allow-empty -m "chore(phase-20): verify phase-19 K1 callId extensio
 ---
 
 <!-- openspec-task: 0.2 -->
+
 ### Task 2: Verify stream-translator passes LangGraph tool_call_id through to events
 
 **Files:**
+
 - Inspect (no edit): `electron/agent/stream-translator.ts`
 
 - [x] **Step 1: Inspect stream-translator for tool_call_id propagation**
@@ -61,6 +67,7 @@ git commit --allow-empty -m "chore(phase-20): verify phase-19 K1 callId extensio
 Run: `grep -n "tool_call_id\|callId" /Users/aaa/develop/workspace-ai/acornvo/electron/agent/stream-translator.ts`
 
 Expected: the translator reads LangGraph `tool_call_id` and writes it to `event.callId` for both `tool.start` and `tool.result`. Look for code like:
+
 ```ts
 emit({ type: 'tool.start', callId: chunk.tool_call_id, tool: ..., args: ... })
 emit({ type: 'tool.result', callId: chunk.tool_call_id, tool: ..., result: ... })
@@ -83,9 +90,11 @@ git commit --allow-empty -m "chore(phase-20): verify stream-translator propagate
 ---
 
 <!-- openspec-task: 0.3 -->
+
 ### Task 3: Grep existing react-markdown / remark-gfm / radix dialog+dropdown usage
 
 **Files:**
+
 - Output: capture grep results in scratch notes (no file edits)
 
 - [x] **Step 1: List all imports of `react-markdown` and `remark-gfm`**
@@ -101,6 +110,7 @@ Run: `grep -rn "from '@radix-ui/react-dialog'\|from '@radix-ui/react-dropdown-me
 A path under `src/components/chat/` or `src/pages/Chat.tsx` counts as chat-domain. Others (e.g. `src/components/TitleBar.tsx`, `src/components/StatusBar.tsx`, `src/components/search/QuickSwitcher.tsx`, `src/pages/Settings.tsx`) count as non-chat.
 
 Record the answer to this question for Plan 5 (Cleanup) Task 6 (`tasks 7.6`):
+
 > Are `react-markdown` / `remark-gfm` / `@radix-ui/react-dialog` / `@radix-ui/react-dropdown-menu` used outside chat? If YES, keep the package in `package.json` after chat-domain imports are deleted. If NO, remove the package.
 
 - [x] **Step 4: Write findings to commit message**
@@ -123,9 +133,11 @@ remark-gfm non-chat hits: <count>
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 4: Add antd / @ant-design/x-markdown / @ant-design/icons / dayjs to package.json
 
 **Files:**
+
 - Modify: `package.json`
 
 - [x] **Step 1: Verify @ant-design/x is already present**
@@ -145,6 +157,7 @@ Add these four entries to the `dependencies` block of `package.json` (between ex
 ```
 
 Place them in correct alphabetical order:
+
 - `"@ant-design/icons"` — between `"@ant-design/x"` and `"@electron-toolkit/preload"`
 - `"@ant-design/x-markdown"` — between `"@ant-design/icons"` and `"@electron-toolkit/preload"` (after `icons`)
 - `"antd"` — between `"ajv-formats"` and `"archiver"`
@@ -162,9 +175,11 @@ git commit -m "chore(deps): add antd + @ant-design/x-markdown + @ant-design/icon
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 5: Run npm install and verify Electron dev + build:unpack still work
 
 **Files:**
+
 - Modify: `package-lock.json` (generated)
 
 - [x] **Step 1: Install dependencies**
@@ -194,9 +209,11 @@ git commit -m "chore(deps): npm install — antd / x-markdown / icons / dayjs"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 6: Write failing test for src/lib/theme.ts themeTokens mapping
 
 **Files:**
+
 - Create: `src/lib/theme.test.ts`
 
 - [x] **Step 1: Write the failing test**
@@ -246,9 +263,11 @@ Expected: FAIL with "Cannot find module './theme'" (or similar import error).
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 7: Create src/lib/theme.ts exporting themeTokens
 
 **Files:**
+
 - Create: `src/lib/theme.ts`
 
 - [x] **Step 1: Write the minimal implementation**
@@ -265,7 +284,7 @@ export const themeTokens: ThemeConfig['token'] = {
   colorText: 'var(--color-ink)',
   colorTextSecondary: 'var(--color-ink-3)',
   fontFamily: '"Source Han Serif SC", serif',
-  borderRadius: 6,
+  borderRadius: 6
 }
 ```
 
@@ -285,9 +304,11 @@ git commit -m "feat(chat-theme-bridge): map CSS variables to antd theme tokens"
 
 <!-- openspec-task: 1.4 -->
 <!-- openspec-task: 1.5 -->
+
 ### Task 8: Wire XProvider into App.tsx with theme + locale bridge
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [x] **Step 1: Add a helper to derive antd locale from i18n.language**
@@ -361,9 +382,11 @@ git commit -m "feat(chat-theme-bridge): wrap App with XProvider + antd locale br
 ---
 
 <!-- openspec-task: 1.6 -->
+
 ### Task 9: Extend theme.test.ts with antd locale bridge smoke
 
 **Files:**
+
 - Modify: `src/lib/theme.test.ts`
 
 - [x] **Step 1: Extract `pickAntdLocale` helper to `src/lib/theme.ts` for testability**
@@ -437,9 +460,11 @@ git commit -m "test(chat-theme-bridge): cover pickAntdLocale (zh* → zhCN, else
 ---
 
 <!-- openspec-task: 1.7 -->
+
 ### Task 10: Smoke-test non-chat pages — no visual regression
 
 **Files:**
+
 - Inspect: `src/pages/Library.tsx`, `src/pages/Browse.tsx`, `src/pages/Editor.tsx`, `src/pages/History.tsx`, `src/pages/Search.tsx`, `src/pages/Settings.tsx`
 
 - [x] **Step 1: Run full vitest suite**
@@ -452,6 +477,7 @@ If any non-chat test fails: investigate the cause (likely XProvider conflicting 
 - [x] **Step 2: Manual smoke each non-chat page in dev**
 
 Run: `npm run dev` (background). For each route, open and visually verify:
+
 - `/library` — file tree, search input, list rendering unchanged
 - `/browse/:id` — markdown reader unchanged
 - `/editor/:id` — vditor editor opens, toolbar / preview unchanged
@@ -470,9 +496,11 @@ git commit --allow-empty -m "chore(phase-20): smoke-test non-chat pages under XP
 ---
 
 <!-- openspec-task: 1.8 -->
+
 ### Task 11: Smoke-test dark mode under XProvider
 
 **Files:**
+
 - No code change; observe behavior in dev
 
 - [x] **Step 1: Open dev mode and switch to dark mode**
@@ -480,6 +508,7 @@ git commit --allow-empty -m "chore(phase-20): smoke-test non-chat pages under XP
 Run: `npm run dev` (background). Open Settings → Theme → switch from light to dark (or use OS-level appearance switch if app respects `prefers-color-scheme`).
 
 Verify:
+
 - App backgrounds and text colors update via CSS variables.
 - Chat page (still on legacy components) renders correctly in dark mode — bubble backgrounds, sidebar, input area all follow `--color-paper-2` / `--color-paper`.
 - antd-aware areas (none yet since chat is still legacy; this is a baseline) show no white flashes or untinted areas.

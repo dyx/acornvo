@@ -19,7 +19,7 @@ Persist sessions to SQLite, expose the chat-agent over IPC with per-session lock
 - **`sessions.ts` is a thin DAO** over `dbService.requireCurrent()`. It owns `INSERT`/`SELECT` for `sessions`, `session_messages`, and `tool_calls` and is the only module that translates between the in-memory `SessionMessage` shape and the on-disk row shape (`tool_calls_json` for assistant tool calls, `tool_call_id` for tool messages).
 - **Auto-title:** when `appendMessage` writes the first `role: 'user'` message of a session whose `title` is `NULL`, it back-fills `title` with the trimmed first 40 graphemes of `content`.
 - **`ai_usage.session_id` plumbing** is two-line: phase-15's existing `usage.insert(...)` call site (in the reviewer IPC) gets `session_id: null`; phase-16's loop call site (Task 6.1) passes the active sessionId. Add the column to the existing `usage.insert` signature with a default of `null` for backwards compat.
-- **`electron/ipc/chat.ts`** exports `chatHandlers` matching a new `chat` namespace on `IpcContract`. `sendUserMessage` is a *fire-and-forget* IPC: it kicks off `runAgent` on a worker promise, returns `{ ok: true }` immediately, and the renderer subscribes via the streaming channel for events. `approveTool` / `rejectTool` are simple proxies onto `approvalGate`.
+- **`electron/ipc/chat.ts`** exports `chatHandlers` matching a new `chat` namespace on `IpcContract`. `sendUserMessage` is a _fire-and-forget_ IPC: it kicks off `runAgent` on a worker promise, returns `{ ok: true }` immediately, and the renderer subscribes via the streaming channel for events. `approveTool` / `rejectTool` are simple proxies onto `approvalGate`.
 - **Per-session lock + global cap** (`electron/agent/concurrency.ts`): a `Set<sessionId>` of in-flight loops + a global counter (max 4). `tryAcquire(sessionId)` returns `'busy'` if the same sessionId is in flight, `'global-busy'` if the global cap is hit, or `'ok'` otherwise. The lock is released in a `finally` block in `sendUserMessage`'s worker, so even `runAgent` errors release it.
 - **Stream channel naming**: `chat:stream:<sessionId>`. Renderer registers via `chat.subscribeStream(sessionId)` (which is just a no-op IPC for symmetry / future authorization checks). Each `AgentEvent` is shipped via `webContents.send('chat:stream:<sid>', event)`. Multiple renderer windows are supported by broadcasting to every active `BrowserWindow` (Plan 3 Task 7.1).
 - **AbortController plumbing**: a `Map<sessionId, AbortController>` lives in `electron/ipc/chat.ts`. `sendUserMessage` creates one and passes its `signal` into `runAgent` (which itself forwards it into `llmClient.chatWithTools` → `fetch`). `cancelStream(sessionId)` aborts that controller; the loop catches `AbortError` and emits `{ type: 'canceled' }`.
@@ -35,26 +35,26 @@ Persist sessions to SQLite, expose the chat-agent over IPC with per-session lock
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/agent/sessions.ts` | Create | 5.1 |
-| `electron/agent/sessions.test.ts` | Create | 5.1 |
-| `electron/ai/usage.ts` | Modify (add `sessionId` param to `insert`) | 5.2 |
-| `electron/ai/usage.test.ts` | Modify | 5.2 |
-| `electron/ai/reviewer.ts` | Modify (call sites pass `null`) | 5.2 |
-| `electron/agent/concurrency.ts` | Create | 6.2 |
-| `electron/agent/concurrency.test.ts` | Create | 6.2 |
-| `electron/ipc/chat.ts` | Create | 6.1, 6.2, 7.2 |
-| `electron/ipc/chat.test.ts` | Create | 6.1, 6.2, 7.2 |
-| `electron/agent/streamWriter.ts` | Create | 7.1 |
-| `electron/agent/streamWriter.test.ts` | Create | 7.1 |
-| `electron/ipc/handlers.ts` | Modify (register `chatHandlers`) | 6.1 |
-| `shared/ipc-contract.ts` | Modify (add `chat` namespace + `chat:stream:*` event channel) | 6.1, 7.1 |
-| `preload/preload.ts` | Modify (`window.api.chat.*` + `onChatStream`) | 6.3 |
-| `preload/preload.test.ts` | Modify | 6.3 |
-| `src/i18n/locales/en-US.json` | Modify (add `chat.*`) | 8.1 |
-| `src/i18n/locales/zh-CN.json` | Modify (add `chat.*`) | 8.1 |
-| `src/i18n/chat-keys.test.ts` | Create | 8.1 |
+| Path                                  | Action                                                        | Owner task    |
+| ------------------------------------- | ------------------------------------------------------------- | ------------- |
+| `electron/agent/sessions.ts`          | Create                                                        | 5.1           |
+| `electron/agent/sessions.test.ts`     | Create                                                        | 5.1           |
+| `electron/ai/usage.ts`                | Modify (add `sessionId` param to `insert`)                    | 5.2           |
+| `electron/ai/usage.test.ts`           | Modify                                                        | 5.2           |
+| `electron/ai/reviewer.ts`             | Modify (call sites pass `null`)                               | 5.2           |
+| `electron/agent/concurrency.ts`       | Create                                                        | 6.2           |
+| `electron/agent/concurrency.test.ts`  | Create                                                        | 6.2           |
+| `electron/ipc/chat.ts`                | Create                                                        | 6.1, 6.2, 7.2 |
+| `electron/ipc/chat.test.ts`           | Create                                                        | 6.1, 6.2, 7.2 |
+| `electron/agent/streamWriter.ts`      | Create                                                        | 7.1           |
+| `electron/agent/streamWriter.test.ts` | Create                                                        | 7.1           |
+| `electron/ipc/handlers.ts`            | Modify (register `chatHandlers`)                              | 6.1           |
+| `shared/ipc-contract.ts`              | Modify (add `chat` namespace + `chat:stream:*` event channel) | 6.1, 7.1      |
+| `preload/preload.ts`                  | Modify (`window.api.chat.*` + `onChatStream`)                 | 6.3           |
+| `preload/preload.test.ts`             | Modify                                                        | 6.3           |
+| `src/i18n/locales/en-US.json`         | Modify (add `chat.*`)                                         | 8.1           |
+| `src/i18n/locales/zh-CN.json`         | Modify (add `chat.*`)                                         | 8.1           |
+| `src/i18n/chat-keys.test.ts`          | Create                                                        | 8.1           |
 
 ## Pre-flight
 
@@ -67,9 +67,11 @@ Persist sessions to SQLite, expose the chat-agent over IPC with per-session lock
 ## Tasks
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 1: `electron/agent/sessions.ts` — DAO + auto-title
 
 **Files:**
+
 - Create: `electron/agent/sessions.ts`
 - Create: `electron/agent/sessions.test.ts`
 
@@ -77,86 +79,103 @@ Persist sessions to SQLite, expose the chat-agent over IPC with per-session lock
 
 ```ts
 // electron/agent/sessions.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { resolve } from 'node:path';
-import { runMigrations } from '../services/db/migrations';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import Database from 'better-sqlite3'
+import { resolve } from 'node:path'
+import { runMigrations } from '../services/db/migrations'
 
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
-import { dbService } from '../services/db';
-import { createSessions } from './sessions';
+vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+import { dbService } from '../services/db'
+import { createSessions } from './sessions'
 
-let db: Database.Database;
-let s: ReturnType<typeof createSessions>;
+let db: Database.Database
+let s: ReturnType<typeof createSessions>
 
 beforeEach(() => {
-  db = new Database(':memory:');
-  runMigrations(db, resolve(__dirname, '../services/db/migrations'));
-  (dbService.requireCurrent as any).mockReturnValue(db);
-  s = createSessions();
-});
+  db = new Database(':memory:')
+  runMigrations(db, resolve(__dirname, '../services/db/migrations'))
+  ;(dbService.requireCurrent as any).mockReturnValue(db)
+  s = createSessions()
+})
 
 describe('sessions DAO', () => {
   it('createSession + list', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    const b = await s.createSession({ profileId: 'p1' });
-    const list = await s.list();
-    expect(list.map(x => x.id).sort()).toEqual([a.id, b.id].sort());
-    expect(list[0].updatedAt >= list[1].updatedAt).toBe(true);
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    const b = await s.createSession({ profileId: 'p1' })
+    const list = await s.list()
+    expect(list.map((x) => x.id).sort()).toEqual([a.id, b.id].sort())
+    expect(list[0].updatedAt >= list[1].updatedAt).toBe(true)
+  })
 
   it('rename updates title and updatedAt', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    await new Promise(r => setTimeout(r, 5));
-    await s.rename(a.id, 'My Chat');
-    const fetched = (await s.list()).find(x => x.id === a.id);
-    expect(fetched?.title).toBe('My Chat');
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    await new Promise((r) => setTimeout(r, 5))
+    await s.rename(a.id, 'My Chat')
+    const fetched = (await s.list()).find((x) => x.id === a.id)
+    expect(fetched?.title).toBe('My Chat')
+  })
 
   it('delete cascades to messages + tool_calls', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    await s.appendMessage(a.id, { role: 'user', content: 'hi' });
-    await s.recordToolCall(a.id, { id: 'tc1', name: 'search_files', args: {} }, { sideEffect: false });
-    await s.delete(a.id);
-    expect(db.prepare("SELECT COUNT(*) AS n FROM session_messages").get()).toEqual({ n: 0 });
-    expect(db.prepare("SELECT COUNT(*) AS n FROM tool_calls WHERE session_id = ?").get(a.id)).toEqual({ n: 0 });
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    await s.appendMessage(a.id, { role: 'user', content: 'hi' })
+    await s.recordToolCall(
+      a.id,
+      { id: 'tc1', name: 'search_files', args: {} },
+      { sideEffect: false }
+    )
+    await s.delete(a.id)
+    expect(db.prepare('SELECT COUNT(*) AS n FROM session_messages').get()).toEqual({ n: 0 })
+    expect(
+      db.prepare('SELECT COUNT(*) AS n FROM tool_calls WHERE session_id = ?').get(a.id)
+    ).toEqual({ n: 0 })
+  })
 
   it('appendMessage auto-titles with first user message (≤40 chars, trimmed)', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    await s.appendMessage(a.id, { role: 'user', content: '  Hello, please help me find that note about attention mechanisms in transformers.' });
-    const got = (await s.list()).find(x => x.id === a.id);
-    expect(got?.title?.length).toBeLessThanOrEqual(40);
-    expect(got?.title?.trim()).toBe(got?.title);
-    expect(got?.title).toContain('Hello');
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    await s.appendMessage(a.id, {
+      role: 'user',
+      content: '  Hello, please help me find that note about attention mechanisms in transformers.'
+    })
+    const got = (await s.list()).find((x) => x.id === a.id)
+    expect(got?.title?.length).toBeLessThanOrEqual(40)
+    expect(got?.title?.trim()).toBe(got?.title)
+    expect(got?.title).toContain('Hello')
+  })
 
   it('appendMessage stores tool_calls_json for assistant role', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    const m = await s.appendMessage(a.id, { role: 'assistant', content: '...', toolCalls: [{ id: 'tc1', name: 'x', args: { a: 1 } }] });
-    const all = await s.getMessages(a.id);
-    const found = all.find(x => x.id === m.id);
-    expect(found?.toolCalls).toEqual([{ id: 'tc1', name: 'x', args: { a: 1 } }]);
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    const m = await s.appendMessage(a.id, {
+      role: 'assistant',
+      content: '...',
+      toolCalls: [{ id: 'tc1', name: 'x', args: { a: 1 } }]
+    })
+    const all = await s.getMessages(a.id)
+    const found = all.find((x) => x.id === m.id)
+    expect(found?.toolCalls).toEqual([{ id: 'tc1', name: 'x', args: { a: 1 } }])
+  })
 
   it('appendMessage stores tool_call_id for role=tool', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    await s.appendMessage(a.id, { role: 'tool', content: '{}', toolCallId: 'tc1' });
-    const [m] = await s.getMessages(a.id);
-    expect(m.role).toBe('tool');
-    expect(m.toolCallId).toBe('tc1');
-  });
+    const a = await s.createSession({ profileId: 'p1' })
+    await s.appendMessage(a.id, { role: 'tool', content: '{}', toolCallId: 'tc1' })
+    const [m] = await s.getMessages(a.id)
+    expect(m.role).toBe('tool')
+    expect(m.toolCallId).toBe('tc1')
+  })
 
   it('recordToolCall + finishToolCall round-trip', async () => {
-    const a = await s.createSession({ profileId: 'p1' });
-    const rowId = await s.recordToolCall(a.id, { id: 'tc1', name: 'update_frontmatter', args: { x: 1 } }, { sideEffect: true });
-    await s.finishToolCall(rowId, { result: { ok: true, data: { wrote: true } }, approved: true });
-    const row: any = db.prepare("SELECT * FROM tool_calls WHERE id = ?").get(rowId);
-    expect(row.approved).toBe(1);
-    expect(JSON.parse(row.result_json)).toEqual({ ok: true, data: { wrote: true } });
-    expect(row.finished_at).toBeTruthy();
-  });
-});
+    const a = await s.createSession({ profileId: 'p1' })
+    const rowId = await s.recordToolCall(
+      a.id,
+      { id: 'tc1', name: 'update_frontmatter', args: { x: 1 } },
+      { sideEffect: true }
+    )
+    await s.finishToolCall(rowId, { result: { ok: true, data: { wrote: true } }, approved: true })
+    const row: any = db.prepare('SELECT * FROM tool_calls WHERE id = ?').get(rowId)
+    expect(row.approved).toBe(1)
+    expect(JSON.parse(row.result_json)).toEqual({ ok: true, data: { wrote: true } })
+    expect(row.finished_at).toBeTruthy()
+  })
+})
 ```
 
 - [ ] **Step 2: Run tests — should FAIL**
@@ -171,105 +190,176 @@ Expected: import error.
 
 ```ts
 // electron/agent/sessions.ts
-import { randomUUID } from 'node:crypto';
-import type { Session, SessionMessage, ToolCall, ToolResult } from '../../shared/agent-types';
-import { dbService } from '../services/db';
+import { randomUUID } from 'node:crypto'
+import type { Session, SessionMessage, ToolCall, ToolResult } from '../../shared/agent-types'
+import { dbService } from '../services/db'
 
-const TITLE_LIMIT = 40;
+const TITLE_LIMIT = 40
 
 export interface SessionsDao {
-  createSession(opts: { profileId: string | null; title?: string | null }): Promise<Session>;
-  list(): Promise<Session[]>;
-  delete(id: string): Promise<void>;
-  rename(id: string, title: string): Promise<void>;
-  getMessages(id: string): Promise<SessionMessage[]>;
-  appendMessage(sessionId: string, m: Omit<SessionMessage, 'id' | 'sessionId' | 'createdAt'>): Promise<SessionMessage>;
-  recordToolCall(sessionId: string, tc: ToolCall, opts: { sideEffect: boolean; messageId?: number }): Promise<string>;
-  finishToolCall(rowId: string, fields: { result?: ToolResult; approved?: boolean | null; error?: string }): Promise<void>;
+  createSession(opts: { profileId: string | null; title?: string | null }): Promise<Session>
+  list(): Promise<Session[]>
+  delete(id: string): Promise<void>
+  rename(id: string, title: string): Promise<void>
+  getMessages(id: string): Promise<SessionMessage[]>
+  appendMessage(
+    sessionId: string,
+    m: Omit<SessionMessage, 'id' | 'sessionId' | 'createdAt'>
+  ): Promise<SessionMessage>
+  recordToolCall(
+    sessionId: string,
+    tc: ToolCall,
+    opts: { sideEffect: boolean; messageId?: number }
+  ): Promise<string>
+  finishToolCall(
+    rowId: string,
+    fields: { result?: ToolResult; approved?: boolean | null; error?: string }
+  ): Promise<void>
 }
 
 export function createSessions(): SessionsDao {
-  function db() { return dbService.requireCurrent(); }
-  function nowIso() { return new Date().toISOString(); }
+  function db() {
+    return dbService.requireCurrent()
+  }
+  function nowIso() {
+    return new Date().toISOString()
+  }
 
   return {
     async createSession({ profileId, title = null }) {
-      const id = randomUUID();
-      const t = nowIso();
-      db().prepare("INSERT INTO sessions (id, title, profile_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
-        .run(id, title, profileId ?? null, t, t);
-      return { id, title, profileId, createdAt: t, updatedAt: t };
+      const id = randomUUID()
+      const t = nowIso()
+      db()
+        .prepare(
+          'INSERT INTO sessions (id, title, profile_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+        )
+        .run(id, title, profileId ?? null, t, t)
+      return { id, title, profileId, createdAt: t, updatedAt: t }
     },
 
     async list() {
-      const rows = db().prepare("SELECT id, title, profile_id, created_at, updated_at FROM sessions ORDER BY updated_at DESC").all() as any[];
-      return rows.map(r => ({ id: r.id, title: r.title, profileId: r.profile_id, createdAt: r.created_at, updatedAt: r.updated_at }));
+      const rows = db()
+        .prepare(
+          'SELECT id, title, profile_id, created_at, updated_at FROM sessions ORDER BY updated_at DESC'
+        )
+        .all() as any[]
+      return rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        profileId: r.profile_id,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      }))
     },
 
     async delete(id) {
       const tx = db().transaction((sid: string) => {
-        db().prepare("DELETE FROM tool_calls WHERE session_id = ?").run(sid);
-        db().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
-      });
-      tx(id);
+        db().prepare('DELETE FROM tool_calls WHERE session_id = ?').run(sid)
+        db().prepare('DELETE FROM sessions WHERE id = ?').run(sid)
+      })
+      tx(id)
     },
 
     async rename(id, title) {
-      db().prepare("UPDATE sessions SET title = ?, updated_at = ? WHERE id = ?").run(title, nowIso(), id);
+      db()
+        .prepare('UPDATE sessions SET title = ?, updated_at = ? WHERE id = ?')
+        .run(title, nowIso(), id)
     },
 
     async getMessages(sessionId) {
-      const rows = db().prepare("SELECT id, session_id, role, content, tool_calls_json, tool_call_id, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC").all(sessionId) as any[];
-      return rows.map(r => ({
-        id: r.id, sessionId: r.session_id, role: r.role, content: r.content,
+      const rows = db()
+        .prepare(
+          'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
+        )
+        .all(sessionId) as any[]
+      return rows.map((r) => ({
+        id: r.id,
+        sessionId: r.session_id,
+        role: r.role,
+        content: r.content,
         toolCalls: r.tool_calls_json ? JSON.parse(r.tool_calls_json) : undefined,
         toolCallId: r.tool_call_id ?? undefined,
-        createdAt: r.created_at,
-      }));
+        createdAt: r.created_at
+      }))
     },
 
     async appendMessage(sessionId, m) {
-      const t = nowIso();
+      const t = nowIso()
       const tx = db().transaction(() => {
-        const info = db().prepare("INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-          .run(sessionId, m.role, m.content ?? null, m.toolCalls ? JSON.stringify(m.toolCalls) : null, m.toolCallId ?? null, t);
-        db().prepare("UPDATE sessions SET updated_at = ? WHERE id = ?").run(t, sessionId);
+        const info = db()
+          .prepare(
+            'INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+          )
+          .run(
+            sessionId,
+            m.role,
+            m.content ?? null,
+            m.toolCalls ? JSON.stringify(m.toolCalls) : null,
+            m.toolCallId ?? null,
+            t
+          )
+        db().prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(t, sessionId)
         if (m.role === 'user') {
-          const cur = db().prepare("SELECT title FROM sessions WHERE id = ?").get(sessionId) as { title: string | null } | undefined;
+          const cur = db().prepare('SELECT title FROM sessions WHERE id = ?').get(sessionId) as
+            | { title: string | null }
+            | undefined
           if (cur && (cur.title === null || cur.title === '')) {
-            const title = (m.content ?? '').trim().slice(0, TITLE_LIMIT) || null;
-            if (title) db().prepare("UPDATE sessions SET title = ? WHERE id = ?").run(title, sessionId);
+            const title = (m.content ?? '').trim().slice(0, TITLE_LIMIT) || null
+            if (title)
+              db().prepare('UPDATE sessions SET title = ? WHERE id = ?').run(title, sessionId)
           }
         }
-        return info.lastInsertRowid;
-      });
-      const id = Number(tx());
-      return { id, sessionId, role: m.role, content: m.content ?? null, toolCalls: m.toolCalls, toolCallId: m.toolCallId, createdAt: t };
+        return info.lastInsertRowid
+      })
+      const id = Number(tx())
+      return {
+        id,
+        sessionId,
+        role: m.role,
+        content: m.content ?? null,
+        toolCalls: m.toolCalls,
+        toolCallId: m.toolCallId,
+        createdAt: t
+      }
     },
 
     async recordToolCall(sessionId, tc, opts) {
-      const id = randomUUID();
-      const t = nowIso();
-      db().prepare("INSERT INTO tool_calls (id, session_id, message_id, tool_name, args_json, approved, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-        .run(id, sessionId, opts.messageId ?? null, tc.name, JSON.stringify(tc.args ?? {}), opts.sideEffect ? null : null, t);
-      return id;
+      const id = randomUUID()
+      const t = nowIso()
+      db()
+        .prepare(
+          'INSERT INTO tool_calls (id, session_id, message_id, tool_name, args_json, approved, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )
+        .run(
+          id,
+          sessionId,
+          opts.messageId ?? null,
+          tc.name,
+          JSON.stringify(tc.args ?? {}),
+          opts.sideEffect ? null : null,
+          t
+        )
+      return id
     },
 
     async finishToolCall(rowId, fields) {
-      const t = nowIso();
-      db().prepare("UPDATE tool_calls SET result_json = ?, approved = ?, finished_at = ?, error = ? WHERE id = ?")
+      const t = nowIso()
+      db()
+        .prepare(
+          'UPDATE tool_calls SET result_json = ?, approved = ?, finished_at = ?, error = ? WHERE id = ?'
+        )
         .run(
           fields.result === undefined ? null : JSON.stringify(fields.result),
-          fields.approved === undefined ? null : (fields.approved ? 1 : 0),
+          fields.approved === undefined ? null : fields.approved ? 1 : 0,
           t,
           fields.error ?? null,
-          rowId,
-        );
-    },
-  };
+          rowId
+        )
+    }
+  }
 }
 
-export const sessions = createSessions();
+export const sessions = createSessions()
 ```
 
 - [ ] **Step 4: Run tests — should PASS**
@@ -288,9 +378,11 @@ git commit -m "feat(phase-16): sessions DAO — CRUD + appendMessage + auto-titl
 ```
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 2: `ai_usage.session_id` plumbing
 
 **Files:**
+
 - Modify: `electron/ai/usage.ts`
 - Modify: `electron/ai/usage.test.ts`
 - Modify: `electron/ai/reviewer.ts` (1 call site)
@@ -308,36 +400,51 @@ Confirm `insert` currently takes `{ jobId, profileId, model, promptTokens, compl
 Append to `electron/ai/usage.test.ts`:
 
 ```ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { resolve } from 'node:path';
-import { runMigrations } from '../services/db/migrations';
-import { dbService } from '../services/db';
-import { vi } from 'vitest';
-import { insert } from './usage';
+import { describe, it, expect, beforeEach } from 'vitest'
+import Database from 'better-sqlite3'
+import { resolve } from 'node:path'
+import { runMigrations } from '../services/db/migrations'
+import { dbService } from '../services/db'
+import { vi } from 'vitest'
+import { insert } from './usage'
 
-vi.mock('../services/db', async () => ({ dbService: { requireCurrent: vi.fn() } }));
+vi.mock('../services/db', async () => ({ dbService: { requireCurrent: vi.fn() } }))
 
 describe('ai_usage.session_id column', () => {
-  let db: Database.Database;
+  let db: Database.Database
   beforeEach(() => {
-    db = new Database(':memory:');
-    runMigrations(db, resolve(__dirname, '../services/db/migrations'));
-    (dbService.requireCurrent as any).mockReturnValue(db);
-  });
+    db = new Database(':memory:')
+    runMigrations(db, resolve(__dirname, '../services/db/migrations'))
+    ;(dbService.requireCurrent as any).mockReturnValue(db)
+  })
 
   it('persists sessionId when provided', () => {
-    insert({ profileId: 'p1', model: 'gpt-x', promptTokens: 1, completionTokens: 1, latencyMs: 10, ok: true, sessionId: 'sess1' });
-    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
-    expect(row.session_id).toBe('sess1');
-  });
+    insert({
+      profileId: 'p1',
+      model: 'gpt-x',
+      promptTokens: 1,
+      completionTokens: 1,
+      latencyMs: 10,
+      ok: true,
+      sessionId: 'sess1'
+    })
+    const row: any = db.prepare('SELECT session_id FROM ai_usage').get()
+    expect(row.session_id).toBe('sess1')
+  })
 
   it('persists null when omitted (back-compat with phase-15 callers)', () => {
-    insert({ profileId: 'p1', model: 'gpt-x', promptTokens: 1, completionTokens: 1, latencyMs: 10, ok: true });
-    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
-    expect(row.session_id).toBeNull();
-  });
-});
+    insert({
+      profileId: 'p1',
+      model: 'gpt-x',
+      promptTokens: 1,
+      completionTokens: 1,
+      latencyMs: 10,
+      ok: true
+    })
+    const row: any = db.prepare('SELECT session_id FROM ai_usage').get()
+    expect(row.session_id).toBeNull()
+  })
+})
 ```
 
 - [ ] **Step 3: Run tests — should FAIL (insert ignores sessionId)**
@@ -354,25 +461,31 @@ In `electron/ai/usage.ts`, locate the `insert` function. Add `sessionId?: string
 
 ```ts
 export function insert(opts: {
-  jobId?: string;
-  profileId: string;
-  model: string;
-  promptTokens: number;
-  completionTokens: number;
-  latencyMs: number;
-  ok: boolean;
-  error?: string;
-  sessionId?: string | null;
+  jobId?: string
+  profileId: string
+  model: string
+  promptTokens: number
+  completionTokens: number
+  latencyMs: number
+  ok: boolean
+  error?: string
+  sessionId?: string | null
 }): void {
-  const db = dbService.requireCurrent();
+  const db = dbService.requireCurrent()
   db.prepare(
-    "INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    'INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).run(
-    opts.jobId ?? null, opts.profileId, opts.model,
-    opts.promptTokens, opts.completionTokens, opts.latencyMs,
-    opts.ok ? 1 : 0, opts.error ?? null,
-    opts.sessionId ?? null, new Date().toISOString(),
-  );
+    opts.jobId ?? null,
+    opts.profileId,
+    opts.model,
+    opts.promptTokens,
+    opts.completionTokens,
+    opts.latencyMs,
+    opts.ok ? 1 : 0,
+    opts.error ?? null,
+    opts.sessionId ?? null,
+    new Date().toISOString()
+  )
 }
 ```
 
@@ -394,9 +507,11 @@ git commit -m "feat(phase-16): ai_usage.insert accepts optional sessionId for ch
 ```
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 3: `electron/agent/concurrency.ts` — per-session lock + global cap
 
 **Files:**
+
 - Create: `electron/agent/concurrency.ts`
 - Create: `electron/agent/concurrency.test.ts`
 
@@ -404,43 +519,48 @@ git commit -m "feat(phase-16): ai_usage.insert accepts optional sessionId for ch
 
 ```ts
 // electron/agent/concurrency.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createConcurrencyGate } from './concurrency';
+import { describe, it, expect, beforeEach } from 'vitest'
+import { createConcurrencyGate } from './concurrency'
 
 describe('concurrencyGate', () => {
-  let g: ReturnType<typeof createConcurrencyGate>;
-  beforeEach(() => { g = createConcurrencyGate({ globalCap: 4 }); });
+  let g: ReturnType<typeof createConcurrencyGate>
+  beforeEach(() => {
+    g = createConcurrencyGate({ globalCap: 4 })
+  })
 
-  it('first acquire returns ok', () => { expect(g.tryAcquire('s1')).toBe('ok'); });
+  it('first acquire returns ok', () => {
+    expect(g.tryAcquire('s1')).toBe('ok')
+  })
 
   it('same session twice returns busy', () => {
-    expect(g.tryAcquire('s1')).toBe('ok');
-    expect(g.tryAcquire('s1')).toBe('busy');
-  });
+    expect(g.tryAcquire('s1')).toBe('ok')
+    expect(g.tryAcquire('s1')).toBe('busy')
+  })
 
   it('beyond cap returns global-busy', () => {
-    expect(g.tryAcquire('s1')).toBe('ok');
-    expect(g.tryAcquire('s2')).toBe('ok');
-    expect(g.tryAcquire('s3')).toBe('ok');
-    expect(g.tryAcquire('s4')).toBe('ok');
-    expect(g.tryAcquire('s5')).toBe('global-busy');
-  });
+    expect(g.tryAcquire('s1')).toBe('ok')
+    expect(g.tryAcquire('s2')).toBe('ok')
+    expect(g.tryAcquire('s3')).toBe('ok')
+    expect(g.tryAcquire('s4')).toBe('ok')
+    expect(g.tryAcquire('s5')).toBe('global-busy')
+  })
 
   it('release frees the slot', () => {
-    expect(g.tryAcquire('s1')).toBe('ok');
-    g.release('s1');
-    expect(g.tryAcquire('s1')).toBe('ok');
-  });
+    expect(g.tryAcquire('s1')).toBe('ok')
+    g.release('s1')
+    expect(g.tryAcquire('s1')).toBe('ok')
+  })
 
   it('release of unknown session is a no-op', () => {
-    expect(() => g.release('nope')).not.toThrow();
-  });
+    expect(() => g.release('nope')).not.toThrow()
+  })
 
   it('snapshot reports active count and ids', () => {
-    g.tryAcquire('s1'); g.tryAcquire('s2');
-    expect(g.snapshot()).toEqual({ active: 2, sessions: ['s1', 's2'].sort(), globalCap: 4 });
-  });
-});
+    g.tryAcquire('s1')
+    g.tryAcquire('s2')
+    expect(g.snapshot()).toEqual({ active: 2, sessions: ['s1', 's2'].sort(), globalCap: 4 })
+  })
+})
 ```
 
 - [ ] **Step 2: Run tests — should FAIL**
@@ -456,27 +576,31 @@ Expected: import error.
 ```ts
 // electron/agent/concurrency.ts
 export interface ConcurrencyGate {
-  tryAcquire(sessionId: string): 'ok' | 'busy' | 'global-busy';
-  release(sessionId: string): void;
-  snapshot(): { active: number; sessions: string[]; globalCap: number };
+  tryAcquire(sessionId: string): 'ok' | 'busy' | 'global-busy'
+  release(sessionId: string): void
+  snapshot(): { active: number; sessions: string[]; globalCap: number }
 }
 
 export function createConcurrencyGate(opts: { globalCap?: number } = {}): ConcurrencyGate {
-  const globalCap = opts.globalCap ?? 4;
-  const active = new Set<string>();
+  const globalCap = opts.globalCap ?? 4
+  const active = new Set<string>()
   return {
     tryAcquire(sessionId) {
-      if (active.has(sessionId)) return 'busy';
-      if (active.size >= globalCap) return 'global-busy';
-      active.add(sessionId);
-      return 'ok';
+      if (active.has(sessionId)) return 'busy'
+      if (active.size >= globalCap) return 'global-busy'
+      active.add(sessionId)
+      return 'ok'
     },
-    release(sessionId) { active.delete(sessionId); },
-    snapshot() { return { active: active.size, sessions: [...active].sort(), globalCap }; },
-  };
+    release(sessionId) {
+      active.delete(sessionId)
+    },
+    snapshot() {
+      return { active: active.size, sessions: [...active].sort(), globalCap }
+    }
+  }
 }
 
-export const concurrencyGate = createConcurrencyGate();
+export const concurrencyGate = createConcurrencyGate()
 ```
 
 - [ ] **Step 4: Run tests — should PASS**
@@ -495,9 +619,11 @@ git commit -m "feat(phase-16): concurrencyGate — per-session lock + global cap
 ```
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: `electron/agent/streamWriter.ts` — broadcast `AgentEvent`s on `chat:stream:<sid>`
 
 **Files:**
+
 - Create: `electron/agent/streamWriter.ts`
 - Create: `electron/agent/streamWriter.test.ts`
 
@@ -505,26 +631,26 @@ git commit -m "feat(phase-16): concurrencyGate — per-session lock + global cap
 
 ```ts
 // electron/agent/streamWriter.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createStreamWriter } from './streamWriter';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createStreamWriter } from './streamWriter'
 
 describe('streamWriter', () => {
   it('broadcasts AgentEvent to every supplied webContents on the session-specific channel', () => {
-    const w1 = { send: vi.fn(), isDestroyed: () => false };
-    const w2 = { send: vi.fn(), isDestroyed: () => false };
-    const dead = { send: vi.fn(), isDestroyed: () => true };
-    const writer = createStreamWriter('s1', () => [w1, w2, dead] as any);
-    writer.write({ type: 'token', text: 'hi' });
-    expect(w1.send).toHaveBeenCalledWith('chat:stream:s1', { type: 'token', text: 'hi' });
-    expect(w2.send).toHaveBeenCalledWith('chat:stream:s1', { type: 'token', text: 'hi' });
-    expect(dead.send).not.toHaveBeenCalled();
-  });
+    const w1 = { send: vi.fn(), isDestroyed: () => false }
+    const w2 = { send: vi.fn(), isDestroyed: () => false }
+    const dead = { send: vi.fn(), isDestroyed: () => true }
+    const writer = createStreamWriter('s1', () => [w1, w2, dead] as any)
+    writer.write({ type: 'token', text: 'hi' })
+    expect(w1.send).toHaveBeenCalledWith('chat:stream:s1', { type: 'token', text: 'hi' })
+    expect(w2.send).toHaveBeenCalledWith('chat:stream:s1', { type: 'token', text: 'hi' })
+    expect(dead.send).not.toHaveBeenCalled()
+  })
 
   it('returns the channel name for testability', () => {
-    const writer = createStreamWriter('s2', () => [] as any);
-    expect(writer.channel).toBe('chat:stream:s2');
-  });
-});
+    const writer = createStreamWriter('s2', () => [] as any)
+    expect(writer.channel).toBe('chat:stream:s2')
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should FAIL**
@@ -539,29 +665,32 @@ Expected: import error.
 
 ```ts
 // electron/agent/streamWriter.ts
-import type { AgentEvent } from '../../shared/agent-types';
+import type { AgentEvent } from '../../shared/agent-types'
 
 export interface RendererTarget {
-  send(channel: string, payload: unknown): void;
-  isDestroyed(): boolean;
+  send(channel: string, payload: unknown): void
+  isDestroyed(): boolean
 }
 
 export interface StreamWriter {
-  readonly channel: string;
-  write(e: AgentEvent): void;
+  readonly channel: string
+  write(e: AgentEvent): void
 }
 
-export function createStreamWriter(sessionId: string, getTargets: () => RendererTarget[]): StreamWriter {
-  const channel = `chat:stream:${sessionId}`;
+export function createStreamWriter(
+  sessionId: string,
+  getTargets: () => RendererTarget[]
+): StreamWriter {
+  const channel = `chat:stream:${sessionId}`
   return {
     channel,
     write(e) {
       for (const w of getTargets()) {
-        if (w.isDestroyed()) continue;
-        w.send(channel, e);
+        if (w.isDestroyed()) continue
+        w.send(channel, e)
       }
-    },
-  };
+    }
+  }
 }
 ```
 
@@ -581,9 +710,11 @@ git commit -m "feat(phase-16): streamWriter — per-session broadcast channel fo
 ```
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 5: `electron/ipc/chat.ts` — IPC namespace + register handlers
 
 **Files:**
+
 - Create: `electron/ipc/chat.ts`
 - Create: `electron/ipc/chat.test.ts`
 - Modify: `electron/ipc/handlers.ts`
@@ -595,16 +726,20 @@ In `shared/ipc-contract.ts`, append a new namespace stanza next to existing ones
 
 ```ts
 export interface ChatHandlers {
-  'sessions.list': () => Promise<Session[]>;
-  'sessions.create': (opts: { profileId: string | null; title?: string | null }) => Promise<Session>;
-  'sessions.delete': (id: string) => Promise<{ ok: true }>;
-  'sessions.rename': (id: string, title: string) => Promise<{ ok: true }>;
-  'sessions.getMessages': (id: string) => Promise<SessionMessage[]>;
-  'sendUserMessage': (opts: { sessionId: string; text: string; profileId?: string }) => Promise<{ ok: true }>;
-  'cancelStream': (sessionId: string) => Promise<{ ok: true }>;
-  'approveTool': (callId: string, opts?: { editedArgs?: unknown }) => Promise<{ ok: true }>;
-  'rejectTool': (callId: string) => Promise<{ ok: true }>;
-  'subscribeStream': (sessionId: string) => Promise<{ ok: true; channel: string }>;
+  'sessions.list': () => Promise<Session[]>
+  'sessions.create': (opts: { profileId: string | null; title?: string | null }) => Promise<Session>
+  'sessions.delete': (id: string) => Promise<{ ok: true }>
+  'sessions.rename': (id: string, title: string) => Promise<{ ok: true }>
+  'sessions.getMessages': (id: string) => Promise<SessionMessage[]>
+  sendUserMessage: (opts: {
+    sessionId: string
+    text: string
+    profileId?: string
+  }) => Promise<{ ok: true }>
+  cancelStream: (sessionId: string) => Promise<{ ok: true }>
+  approveTool: (callId: string, opts?: { editedArgs?: unknown }) => Promise<{ ok: true }>
+  rejectTool: (callId: string) => Promise<{ ok: true }>
+  subscribeStream: (sessionId: string) => Promise<{ ok: true; channel: string }>
 }
 
 // Update IpcContract to include `chat: ChatHandlers`
@@ -617,97 +752,114 @@ Import `Session` and `SessionMessage` from `./agent-types`. If the existing cont
 
 ```ts
 // electron/ipc/chat.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { resolve } from 'node:path';
-import { runMigrations } from '../services/db/migrations';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import Database from 'better-sqlite3'
+import { resolve } from 'node:path'
+import { runMigrations } from '../services/db/migrations'
 
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn(), getCurrent: vi.fn(() => ({ name: '/vault' })) } }));
-vi.mock('../ai/client', () => ({ llmClient: { chatWithTools: vi.fn() } }));
+vi.mock('../services/db', () => ({
+  dbService: { requireCurrent: vi.fn(), getCurrent: vi.fn(() => ({ name: '/vault' })) }
+}))
+vi.mock('../ai/client', () => ({ llmClient: { chatWithTools: vi.fn() } }))
 
-import { dbService } from '../services/db';
-import { llmClient } from '../ai/client';
-import { createChatHandlers } from './chat';
-import { createApproval } from '../agent/approval';
-import { createRegistry } from '../agent/registry';
-import { createConcurrencyGate } from '../agent/concurrency';
-import { createSessions } from '../agent/sessions';
-import { bootstrapAgent } from '../agent/bootstrap';
+import { dbService } from '../services/db'
+import { llmClient } from '../ai/client'
+import { createChatHandlers } from './chat'
+import { createApproval } from '../agent/approval'
+import { createRegistry } from '../agent/registry'
+import { createConcurrencyGate } from '../agent/concurrency'
+import { createSessions } from '../agent/sessions'
+import { bootstrapAgent } from '../agent/bootstrap'
 
-let db: Database.Database;
-let handlers: ReturnType<typeof createChatHandlers>;
-let captured: any[];
+let db: Database.Database
+let handlers: ReturnType<typeof createChatHandlers>
+let captured: any[]
 
 beforeEach(() => {
-  db = new Database(':memory:');
-  runMigrations(db, resolve(__dirname, '../services/db/migrations'));
-  (dbService.requireCurrent as any).mockReturnValue(db);
-  (llmClient.chatWithTools as any).mockReset();
+  db = new Database(':memory:')
+  runMigrations(db, resolve(__dirname, '../services/db/migrations'))
+  ;(dbService.requireCurrent as any).mockReturnValue(db)
+  ;(llmClient.chatWithTools as any).mockReset()
 
-  captured = [];
-  const registry = createRegistry();
-  bootstrapAgent(registry);
-  const approval = createApproval();
-  const gate = createConcurrencyGate({ globalCap: 4 });
-  const sessionsDao = createSessions();
+  captured = []
+  const registry = createRegistry()
+  bootstrapAgent(registry)
+  const approval = createApproval()
+  const gate = createConcurrencyGate({ globalCap: 4 })
+  const sessionsDao = createSessions()
   handlers = createChatHandlers({
-    registry, approval, concurrency: gate, sessions: sessionsDao,
-    getTargets: () => [{ send: (_c: string, e: any) => captured.push(e), isDestroyed: () => false }] as any,
-    vaultRoot: '/vault', llmClient: llmClient as any,
-  });
-});
+    registry,
+    approval,
+    concurrency: gate,
+    sessions: sessionsDao,
+    getTargets: () =>
+      [{ send: (_c: string, e: any) => captured.push(e), isDestroyed: () => false }] as any,
+    vaultRoot: '/vault',
+    llmClient: llmClient as any
+  })
+})
 
 describe('chat IPC', () => {
   it('sessions.create + sessions.list round-trip', async () => {
-    const a = await handlers['sessions.create']({ profileId: 'p1' });
-    const list = await handlers['sessions.list']();
-    expect(list.find(x => x.id === a.id)).toBeDefined();
-  });
+    const a = await handlers['sessions.create']({ profileId: 'p1' })
+    const list = await handlers['sessions.list']()
+    expect(list.find((x) => x.id === a.id)).toBeDefined()
+  })
 
   it('sendUserMessage on missing session throws E_NOT_FOUND', async () => {
-    await expect(handlers.sendUserMessage({ sessionId: 'nope', text: 'hi', profileId: 'p1' }))
-      .rejects.toThrow(/E_NOT_FOUND/);
-  });
+    await expect(
+      handlers.sendUserMessage({ sessionId: 'nope', text: 'hi', profileId: 'p1' })
+    ).rejects.toThrow(/E_NOT_FOUND/)
+  })
 
   it('sendUserMessage starts a loop and emits done event on the stream channel', async () => {
-    const sess = await handlers['sessions.create']({ profileId: 'p1' });
-    (llmClient.chatWithTools as any).mockResolvedValueOnce({ text: 'hello', toolCalls: [], finishReason: 'stop' });
-    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' });
-    await waitFor(() => captured.some(e => e.type === 'done'));
-    expect(captured.some(e => e.type === 'message.appended')).toBe(true);
-  });
+    const sess = await handlers['sessions.create']({ profileId: 'p1' })
+    ;(llmClient.chatWithTools as any).mockResolvedValueOnce({
+      text: 'hello',
+      toolCalls: [],
+      finishReason: 'stop'
+    })
+    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' })
+    await waitFor(() => captured.some((e) => e.type === 'done'))
+    expect(captured.some((e) => e.type === 'message.appended')).toBe(true)
+  })
 
   it('sendUserMessage twice in same session → second throws E_BUSY', async () => {
-    const sess = await handlers['sessions.create']({ profileId: 'p1' });
-    (llmClient.chatWithTools as any).mockImplementationOnce(() => new Promise(() => {})); // never resolves
-    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' });
-    await expect(handlers.sendUserMessage({ sessionId: sess.id, text: 'again', profileId: 'p1' }))
-      .rejects.toThrow(/E_BUSY/);
-  });
+    const sess = await handlers['sessions.create']({ profileId: 'p1' })
+    ;(llmClient.chatWithTools as any).mockImplementationOnce(() => new Promise(() => {})) // never resolves
+    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' })
+    await expect(
+      handlers.sendUserMessage({ sessionId: sess.id, text: 'again', profileId: 'p1' })
+    ).rejects.toThrow(/E_BUSY/)
+  })
 
   it('cancelStream aborts and emits canceled', async () => {
-    const sess = await handlers['sessions.create']({ profileId: 'p1' });
-    (llmClient.chatWithTools as any).mockImplementationOnce(async (opts: any) => {
-      await new Promise((res, rej) => opts.signal.addEventListener('abort', () => rej(Object.assign(new Error('abort'), { name: 'AbortError' }))));
-      return { toolCalls: [], finishReason: 'stop' };
-    });
-    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' });
-    await new Promise(r => setTimeout(r, 5));
-    await handlers.cancelStream(sess.id);
-    await waitFor(() => captured.some(e => e.type === 'canceled'));
-  });
+    const sess = await handlers['sessions.create']({ profileId: 'p1' })
+    ;(llmClient.chatWithTools as any).mockImplementationOnce(async (opts: any) => {
+      await new Promise((res, rej) =>
+        opts.signal.addEventListener('abort', () =>
+          rej(Object.assign(new Error('abort'), { name: 'AbortError' }))
+        )
+      )
+      return { toolCalls: [], finishReason: 'stop' }
+    })
+    await handlers.sendUserMessage({ sessionId: sess.id, text: 'hi', profileId: 'p1' })
+    await new Promise((r) => setTimeout(r, 5))
+    await handlers.cancelStream(sess.id)
+    await waitFor(() => captured.some((e) => e.type === 'canceled'))
+  })
 
   it('subscribeStream returns the documented channel name', async () => {
-    const r = await handlers.subscribeStream('abc');
-    expect(r).toEqual({ ok: true, channel: 'chat:stream:abc' });
-  });
-});
+    const r = await handlers.subscribeStream('abc')
+    expect(r).toEqual({ ok: true, channel: 'chat:stream:abc' })
+  })
+})
 
 async function waitFor(pred: () => boolean, ms = 1000) {
-  const t0 = Date.now();
+  const t0 = Date.now()
   while (!pred()) {
-    if (Date.now() - t0 > ms) throw new Error('waitFor timeout');
-    await new Promise(r => setTimeout(r, 5));
+    if (Date.now() - t0 > ms) throw new Error('waitFor timeout')
+    await new Promise((r) => setTimeout(r, 5))
   }
 }
 ```
@@ -724,51 +876,60 @@ Expected: import error.
 
 ```ts
 // electron/ipc/chat.ts
-import type { Registry } from '../agent/registry';
-import type { ApprovalGate } from '../agent/approval';
-import type { ConcurrencyGate } from '../agent/concurrency';
-import type { SessionsDao } from '../agent/sessions';
-import type { RendererTarget } from '../agent/streamWriter';
-import { createStreamWriter } from '../agent/streamWriter';
-import { runAgent } from '../agent/loop';
-import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent';
-import { IpcError } from '../../shared/ipc-contract';
+import type { Registry } from '../agent/registry'
+import type { ApprovalGate } from '../agent/approval'
+import type { ConcurrencyGate } from '../agent/concurrency'
+import type { SessionsDao } from '../agent/sessions'
+import type { RendererTarget } from '../agent/streamWriter'
+import { createStreamWriter } from '../agent/streamWriter'
+import { runAgent } from '../agent/loop'
+import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent'
+import { IpcError } from '../../shared/ipc-contract'
 
 export interface ChatDeps {
-  registry: Registry;
-  approval: ApprovalGate;
-  concurrency: ConcurrencyGate;
-  sessions: SessionsDao;
-  getTargets: () => RendererTarget[];
-  vaultRoot: string;
-  llmClient: { chatWithTools: (opts: any) => Promise<any> };
+  registry: Registry
+  approval: ApprovalGate
+  concurrency: ConcurrencyGate
+  sessions: SessionsDao
+  getTargets: () => RendererTarget[]
+  vaultRoot: string
+  llmClient: { chatWithTools: (opts: any) => Promise<any> }
 }
 
 export function createChatHandlers(deps: ChatDeps) {
-  const aborts = new Map<string, AbortController>();
+  const aborts = new Map<string, AbortController>()
 
   return {
     'sessions.list': () => deps.sessions.list(),
-    'sessions.create': (opts: { profileId: string | null; title?: string | null }) => deps.sessions.createSession(opts),
-    'sessions.delete': async (id: string) => { await deps.sessions.delete(id); deps.approval.cancelSession(id); return { ok: true } as const; },
-    'sessions.rename': async (id: string, title: string) => { await deps.sessions.rename(id, title); return { ok: true } as const; },
+    'sessions.create': (opts: { profileId: string | null; title?: string | null }) =>
+      deps.sessions.createSession(opts),
+    'sessions.delete': async (id: string) => {
+      await deps.sessions.delete(id)
+      deps.approval.cancelSession(id)
+      return { ok: true } as const
+    },
+    'sessions.rename': async (id: string, title: string) => {
+      await deps.sessions.rename(id, title)
+      return { ok: true } as const
+    },
     'sessions.getMessages': (id: string) => deps.sessions.getMessages(id),
 
     sendUserMessage: async (opts: { sessionId: string; text: string; profileId?: string }) => {
-      const list = await deps.sessions.list();
-      const sess = list.find(s => s.id === opts.sessionId);
-      if (!sess) throw new IpcError('E_NOT_FOUND', 'session not found');
-      const profileId = opts.profileId ?? sess.profileId ?? undefined;
-      if (!profileId) throw new IpcError('E_MISSING_PROFILE', 'no profile bound to session');
+      const list = await deps.sessions.list()
+      const sess = list.find((s) => s.id === opts.sessionId)
+      if (!sess) throw new IpcError('E_NOT_FOUND', 'session not found')
+      const profileId = opts.profileId ?? sess.profileId ?? undefined
+      if (!profileId) throw new IpcError('E_MISSING_PROFILE', 'no profile bound to session')
 
-      const ack = deps.concurrency.tryAcquire(opts.sessionId);
-      if (ack === 'busy') throw new IpcError('E_BUSY', 'a loop is already running for this session');
-      if (ack === 'global-busy') throw new IpcError('E_GLOBAL_BUSY', 'too many concurrent agent loops');
+      const ack = deps.concurrency.tryAcquire(opts.sessionId)
+      if (ack === 'busy') throw new IpcError('E_BUSY', 'a loop is already running for this session')
+      if (ack === 'global-busy')
+        throw new IpcError('E_GLOBAL_BUSY', 'too many concurrent agent loops')
 
-      const ctl = new AbortController();
-      aborts.set(opts.sessionId, ctl);
-      const writer = createStreamWriter(opts.sessionId, deps.getTargets);
-      const history = await deps.sessions.getMessages(opts.sessionId);
+      const ctl = new AbortController()
+      aborts.set(opts.sessionId, ctl)
+      const writer = createStreamWriter(opts.sessionId, deps.getTargets)
+      const history = await deps.sessions.getMessages(opts.sessionId)
 
       // Fire-and-forget — renderer subscribes for events.
       void runAgent({
@@ -781,41 +942,53 @@ export function createChatHandlers(deps: ChatDeps) {
           sessions: deps.sessions,
           registry: deps.registry,
           approval: deps.approval,
-          systemPrompt: () => chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot), locale: 'zh' }),
+          systemPrompt: () =>
+            chatAgentSystemPrompt({ vaultName: basenameOf(deps.vaultRoot), locale: 'zh' }),
           vaultRoot: deps.vaultRoot,
-          cancel: ctl.signal,
+          cancel: ctl.signal
         },
-        streamWriter: writer,
-      }).catch((err: any) => {
-        writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message });
-      }).finally(() => {
-        aborts.delete(opts.sessionId);
-        deps.concurrency.release(opts.sessionId);
-      });
+        streamWriter: writer
+      })
+        .catch((err: any) => {
+          writer.write({
+            type: 'error',
+            error: err?.code ?? 'E_AGENT_FAILURE',
+            detail: err?.message
+          })
+        })
+        .finally(() => {
+          aborts.delete(opts.sessionId)
+          deps.concurrency.release(opts.sessionId)
+        })
 
-      return { ok: true } as const;
+      return { ok: true } as const
     },
 
     cancelStream: async (sessionId: string) => {
-      const ctl = aborts.get(sessionId);
-      if (ctl) ctl.abort();
-      deps.approval.cancelSession(sessionId);
-      return { ok: true } as const;
+      const ctl = aborts.get(sessionId)
+      if (ctl) ctl.abort()
+      deps.approval.cancelSession(sessionId)
+      return { ok: true } as const
     },
 
     approveTool: async (callId: string, opts?: { editedArgs?: unknown }) => {
-      deps.approval.approve(callId, opts?.editedArgs);
-      return { ok: true } as const;
+      deps.approval.approve(callId, opts?.editedArgs)
+      return { ok: true } as const
     },
     rejectTool: async (callId: string) => {
-      deps.approval.reject(callId);
-      return { ok: true } as const;
+      deps.approval.reject(callId)
+      return { ok: true } as const
     },
-    subscribeStream: async (sessionId: string) => ({ ok: true as const, channel: `chat:stream:${sessionId}` }),
-  };
+    subscribeStream: async (sessionId: string) => ({
+      ok: true as const,
+      channel: `chat:stream:${sessionId}`
+    })
+  }
 }
 
-function basenameOf(p: string) { return p.split(/[\\/]/).filter(Boolean).pop() ?? p; }
+function basenameOf(p: string) {
+  return p.split(/[\\/]/).filter(Boolean).pop() ?? p
+}
 ```
 
 - [ ] **Step 5: Wire into `electron/ipc/handlers.ts`**
@@ -823,27 +996,30 @@ function basenameOf(p: string) { return p.split(/[\\/]/).filter(Boolean).pop() ?
 Read `electron/ipc/handlers.ts` and add a new export entry alongside the existing handler maps:
 
 ```ts
-import { createChatHandlers } from './chat';
-import { registry } from '../agent/registry';
-import { approvalGate } from '../agent/approval';
-import { concurrencyGate } from '../agent/concurrency';
-import { sessions } from '../agent/sessions';
-import { llmClient } from '../ai/client';
-import { BrowserWindow } from 'electron';
-import { dbService } from '../services/db';
+import { createChatHandlers } from './chat'
+import { registry } from '../agent/registry'
+import { approvalGate } from '../agent/approval'
+import { concurrencyGate } from '../agent/concurrency'
+import { sessions } from '../agent/sessions'
+import { llmClient } from '../ai/client'
+import { BrowserWindow } from 'electron'
+import { dbService } from '../services/db'
 
 const chatHandlers = createChatHandlers({
-  registry, approval: approvalGate, concurrency: concurrencyGate, sessions,
-  getTargets: () => BrowserWindow.getAllWindows().map(w => w.webContents),
+  registry,
+  approval: approvalGate,
+  concurrency: concurrencyGate,
+  sessions,
+  getTargets: () => BrowserWindow.getAllWindows().map((w) => w.webContents),
   vaultRoot: dbService.getCurrent()?.name ?? '',
-  llmClient,
-});
+  llmClient
+})
 
 // Add `chat: chatHandlers` to the existing handlers map.
 export const ipcHandlers = {
   // existing namespaces…
-  chat: chatHandlers,
-};
+  chat: chatHandlers
+}
 ```
 
 (If the existing handlers file uses a flat `chat.sessions.list` style, expand the chat handlers to that shape; the test file targets the methods directly so it's resilient to both shapes.)
@@ -864,9 +1040,11 @@ git commit -m "feat(phase-16): chat IPC namespace — sessions CRUD, sendUserMes
 ```
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 6: Abort chain end-to-end (loop + provider fetch)
 
 **Files:**
+
 - Modify: `electron/ai/providers/openai.ts`, `anthropic.ts`, `ollama.ts` (already accept `signal`; verify it's forwarded into `fetch` for the streaming path)
 - Modify: `electron/ipc/chat.test.ts` (add stronger abort assertion)
 
@@ -875,22 +1053,37 @@ git commit -m "feat(phase-16): chat IPC namespace — sessions CRUD, sendUserMes
 Append to `electron/ai/providers/openai.test.ts`:
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { callProviderTools } from './openai';
+import { describe, it, expect, vi } from 'vitest'
+import { callProviderTools } from './openai'
 
 describe('openai signal propagation', () => {
   it('forwards req.signal to fetch options', async () => {
-    const fetchSpy = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'x' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1 } }) }));
-    (global as any).fetch = fetchSpy;
-    const ctl = new AbortController();
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { content: 'x' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 1, completion_tokens: 1 }
+      })
+    }))
+    ;(global as any).fetch = fetchSpy
+    const ctl = new AbortController()
     await callProviderTools({
-      profile: { id: 'p', provider: 'openai', model: 'gpt-x', apiKeyRef: 'k', decryptedKey: 'sk' } as any,
-      messages: [{ role: 'user', content: 'hi' }], tools: [], signal: ctl.signal,
-    });
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(fetchSpy.mock.calls[0][1].signal).toBe(ctl.signal);
-  });
-});
+      profile: {
+        id: 'p',
+        provider: 'openai',
+        model: 'gpt-x',
+        apiKeyRef: 'k',
+        decryptedKey: 'sk'
+      } as any,
+      messages: [{ role: 'user', content: 'hi' }],
+      tools: [],
+      signal: ctl.signal
+    })
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][1].signal).toBe(ctl.signal)
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should PASS already** (Plan 1 already wires `signal: req.signal`)
@@ -919,9 +1112,11 @@ git commit -m "test(phase-16): assert AbortSignal flows from chat.cancelStream �
 ```
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 7: Preload bindings — `window.api.chat.*` + `onChatStream`
 
 **Files:**
+
 - Modify: `preload/preload.ts`
 - Modify: `preload/preload.test.ts`
 
@@ -930,39 +1125,49 @@ git commit -m "test(phase-16): assert AbortSignal flows from chat.cancelStream �
 Append to `preload/preload.test.ts`:
 
 ```ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const ipcRenderer = { invoke: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
-vi.mock('electron', () => ({ contextBridge: { exposeInMainWorld: (_n: string, v: any) => { (globalThis as any).__exposed = v; } }, ipcRenderer }));
+const ipcRenderer = { invoke: vi.fn(), on: vi.fn(), removeListener: vi.fn() }
+vi.mock('electron', () => ({
+  contextBridge: {
+    exposeInMainWorld: (_n: string, v: any) => {
+      ;(globalThis as any).__exposed = v
+    }
+  },
+  ipcRenderer
+}))
 
-beforeEach(async () => { vi.resetModules(); await import('./preload'); });
+beforeEach(async () => {
+  vi.resetModules()
+  await import('./preload')
+})
 
 describe('preload window.api.chat', () => {
   it('exposes sessions/get/create/delete/rename/getMessages + sendUserMessage + approveTool', () => {
-    const api = (globalThis as any).__exposed as any;
-    expect(typeof api.chat.sessions.list).toBe('function');
-    expect(typeof api.chat.sessions.create).toBe('function');
-    expect(typeof api.chat.sessions.delete).toBe('function');
-    expect(typeof api.chat.sessions.rename).toBe('function');
-    expect(typeof api.chat.sessions.getMessages).toBe('function');
-    expect(typeof api.chat.sendUserMessage).toBe('function');
-    expect(typeof api.chat.cancelStream).toBe('function');
-    expect(typeof api.chat.approveTool).toBe('function');
-    expect(typeof api.chat.rejectTool).toBe('function');
-    expect(typeof api.chat.onStream).toBe('function');
-  });
+    const api = (globalThis as any).__exposed as any
+    expect(typeof api.chat.sessions.list).toBe('function')
+    expect(typeof api.chat.sessions.create).toBe('function')
+    expect(typeof api.chat.sessions.delete).toBe('function')
+    expect(typeof api.chat.sessions.rename).toBe('function')
+    expect(typeof api.chat.sessions.getMessages).toBe('function')
+    expect(typeof api.chat.sendUserMessage).toBe('function')
+    expect(typeof api.chat.cancelStream).toBe('function')
+    expect(typeof api.chat.approveTool).toBe('function')
+    expect(typeof api.chat.rejectTool).toBe('function')
+    expect(typeof api.chat.onStream).toBe('function')
+  })
 
   it('onStream registers per-session listener and returns unsubscribe', () => {
-    const api = (globalThis as any).__exposed as any;
-    const cb = vi.fn();
-    const off = api.chat.onStream('sess-1', cb);
-    expect(ipcRenderer.on).toHaveBeenCalled();
-    const channel = ipcRenderer.on.mock.calls[0][0];
-    expect(channel).toBe('chat:stream:sess-1');
-    off();
-    expect(ipcRenderer.removeListener).toHaveBeenCalledWith(channel, expect.any(Function));
-  });
-});
+    const api = (globalThis as any).__exposed as any
+    const cb = vi.fn()
+    const off = api.chat.onStream('sess-1', cb)
+    expect(ipcRenderer.on).toHaveBeenCalled()
+    const channel = ipcRenderer.on.mock.calls[0][0]
+    expect(channel).toBe('chat:stream:sess-1')
+    off()
+    expect(ipcRenderer.removeListener).toHaveBeenCalledWith(channel, expect.any(Function))
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should FAIL**
@@ -1017,9 +1222,11 @@ git commit -m "feat(phase-16): preload window.api.chat.* + onStream subscriber"
 ```
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 8: i18n — `chat.*` keys (en-US + zh-CN + parity test)
 
 **Files:**
+
 - Modify: `src/i18n/locales/en-US.json`
 - Modify: `src/i18n/locales/zh-CN.json`
 - Create: `src/i18n/chat-keys.test.ts`
@@ -1028,46 +1235,58 @@ git commit -m "feat(phase-16): preload window.api.chat.* + onStream subscriber"
 
 ```ts
 // src/i18n/chat-keys.test.ts
-import { describe, it, expect } from 'vitest';
-import en from './locales/en-US.json';
-import zh from './locales/zh-CN.json';
+import { describe, it, expect } from 'vitest'
+import en from './locales/en-US.json'
+import zh from './locales/zh-CN.json'
 
 function flatten(obj: any, prefix = ''): string[] {
-  const out: string[] = [];
+  const out: string[] = []
   for (const [k, v] of Object.entries(obj)) {
-    const key = prefix ? `${prefix}.${k}` : k;
-    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key));
-    else out.push(key);
+    const key = prefix ? `${prefix}.${k}` : k
+    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key))
+    else out.push(key)
   }
-  return out;
+  return out
 }
 
 describe('chat.* i18n key parity', () => {
   it('chat namespace exists in both locales', () => {
-    expect((en as any).chat).toBeDefined();
-    expect((zh as any).chat).toBeDefined();
-  });
+    expect((en as any).chat).toBeDefined()
+    expect((zh as any).chat).toBeDefined()
+  })
 
   it('en-US and zh-CN contain identical chat.* key sets', () => {
-    const enKeys = flatten((en as any).chat).sort();
-    const zhKeys = flatten((zh as any).chat).sort();
-    expect(zhKeys).toEqual(enKeys);
-  });
+    const enKeys = flatten((en as any).chat).sort()
+    const zhKeys = flatten((zh as any).chat).sort()
+    expect(zhKeys).toEqual(enKeys)
+  })
 
   it('contains the documented core keys', () => {
-    const enKeys = flatten((en as any).chat);
+    const enKeys = flatten((en as any).chat)
     const required = [
-      'approval.title', 'approval.reason', 'approval.args',
-      'approval.approve', 'approval.cancel', 'approval.edit',
-      'tool.search_files', 'tool.read_file', 'tool.list_tags',
-      'tool.update_frontmatter', 'tool.clip_summary',
-      'error.step_limit', 'error.missing_profile', 'error.busy',
-      'error.global_busy', 'error.user_rejected', 'error.approval_timeout',
-      'error.path_escape', 'error.missing_reason',
-    ];
-    for (const k of required) expect(enKeys).toContain(k);
-  });
-});
+      'approval.title',
+      'approval.reason',
+      'approval.args',
+      'approval.approve',
+      'approval.cancel',
+      'approval.edit',
+      'tool.search_files',
+      'tool.read_file',
+      'tool.list_tags',
+      'tool.update_frontmatter',
+      'tool.clip_summary',
+      'error.step_limit',
+      'error.missing_profile',
+      'error.busy',
+      'error.global_busy',
+      'error.user_rejected',
+      'error.approval_timeout',
+      'error.path_escape',
+      'error.missing_reason'
+    ]
+    for (const k of required) expect(enKeys).toContain(k)
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should FAIL**

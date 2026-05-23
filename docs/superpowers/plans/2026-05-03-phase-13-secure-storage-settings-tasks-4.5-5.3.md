@@ -9,6 +9,7 @@
 **Tech Stack:** Same as Plan 2 + electron `session.fromPartition` + `webRequest.onBeforeRequest`.
 
 **Carry-overs:**
+
 - `useSettingsStore` (Plan 2) is the single source of truth for renderer-side settings.
 - `installSettingsBroadcaster` (Plan 2) and `installSettingsSubscriber` (Plan 2) are already wired.
 - Plan 1 error codes (`E_KEYCHAIN_UNAVAILABLE`, `E_DUPLICATE_NAME`) are translated to user-facing toasts in this plan.
@@ -16,9 +17,11 @@
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 1: AI tab — profile list + keychain banner + default selection
 
 **Files:**
+
 - Create: `src/stores/profiles.ts`
 - Create: `src/stores/profiles.test.ts`
 - Create: `src/components/settings/AiTab.tsx`
@@ -98,7 +101,11 @@ Expected: FAIL — module does not exist.
 // src/stores/profiles.ts
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import type { AiProviderProfile, ProfileCreateInput, ProfileUpdateInput } from '@shared/settings-types'
+import type {
+  AiProviderProfile,
+  ProfileCreateInput,
+  ProfileUpdateInput
+} from '@shared/settings-types'
 
 interface ProfilesState {
   profiles: AiProviderProfile[]
@@ -313,7 +320,10 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       </div>
 
       {!keychainAvailable && (
-        <div role="alert" className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {t('settings.secret.unavailable')}
         </div>
       )}
@@ -412,13 +422,15 @@ function AiTabRoute(): JSX.Element {
         if (mounted) setKeychainAvailable(false)
       }
     })()
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [])
   return <AiTab keychainAvailable={keychainAvailable} />
 }
 
 // And update the routes:
-<Route path="ai" element={<AiTabRoute />} />
+;<Route path="ai" element={<AiTabRoute />} />
 ```
 
 Note: ProfileDialog (used by AiTab) is created in task 3 below. The AiTab test passes because it imports ProfileDialog as JSX but doesn't render it (the modal is only rendered when `dialogProfile !== null`).
@@ -430,7 +442,7 @@ We need a way for renderer to ask main if `safeStorage` is available. Add a meth
 Modify `shared/ipc-contract.ts`. Inside `IpcContract.settings`, add:
 
 ```ts
-    keychainAvailable: () => boolean
+keychainAvailable: () => boolean
 ```
 
 Modify `electron/ipc/settings.ts`. Add:
@@ -440,14 +452,14 @@ import { isSafeStorageAvailable } from '../settings/safe-storage-state'
 
 export const settingsHandlers = {
   // ... existing
-  keychainAvailable: () => isSafeStorageAvailable(),
+  keychainAvailable: () => isSafeStorageAvailable()
 }
 ```
 
 Modify `preload/preload.ts`. Inside the `settings` block, add:
 
 ```ts
-    keychainAvailable: () => invoke('settings.keychainAvailable')
+keychainAvailable: () => invoke('settings.keychainAvailable')
 ```
 
 Now replace the `AiTabRoute` stub probe with a real call:
@@ -473,9 +485,11 @@ Expected: PASS.
 ---
 
 <!-- openspec-task: 4.6 -->
+
 ### Task 2: Browser tab
 
 **Files:**
+
 - Create: `src/components/settings/BrowserTab.tsx`
 - Create: `src/components/settings/BrowserTab.test.tsx`
 - Modify: `src/pages/Settings.tsx`
@@ -540,7 +554,9 @@ describe('BrowserTab', () => {
       setBrowser
     })
     render(<BrowserTab />)
-    fireEvent.change(screen.getByLabelText(/search.*engine|搜索引擎/i), { target: { value: 'duckduckgo' } })
+    fireEvent.change(screen.getByLabelText(/search.*engine|搜索引擎/i), {
+      target: { value: 'duckduckgo' }
+    })
     expect(setBrowser).toHaveBeenCalledWith({ searchEngine: 'duckduckgo' })
   })
 
@@ -649,7 +665,7 @@ Modify `src/pages/Settings.tsx`. Replace `BrowserTabStub` and the route:
 import { BrowserTab } from '@/components/settings/BrowserTab'
 
 // Replace stub
-<Route path="browser" element={<BrowserTab />} />
+;<Route path="browser" element={<BrowserTab />} />
 ```
 
 Remove `BrowserTabStub` definition.
@@ -664,9 +680,11 @@ Expected: PASS — all 6 tests green.
 ---
 
 <!-- openspec-task: 4.7 -->
+
 ### Task 3: ProfileDialog with apiKey overwrite semantics
 
 **Files:**
+
 - Create: `src/components/settings/ProfileDialog.tsx`
 - Create: `src/components/settings/ProfileDialog.test.tsx`
 
@@ -725,14 +743,16 @@ describe('ProfileDialog', () => {
     fireEvent.change(screen.getByLabelText(/model|模型/i), { target: { value: 'gpt-4o' } })
     fireEvent.change(screen.getByLabelText(/api.*key/i), { target: { value: 'sk-abc' } })
     fireEvent.click(screen.getByRole('button', { name: /save|保存/i }))
-    await waitFor(() => expect(ipc.settings.aiProfilesCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: 'newprof',
-        provider: 'openai',
-        model: 'gpt-4o',
-        apiKey: 'sk-abc'
-      })
-    ))
+    await waitFor(() =>
+      expect(ipc.settings.aiProfilesCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'newprof',
+          provider: 'openai',
+          model: 'gpt-4o',
+          apiKey: 'sk-abc'
+        })
+      )
+    )
   })
 
   it('edit flow: apiKey field starts EMPTY (NOT bullets) for existing profile', () => {
@@ -746,7 +766,8 @@ describe('ProfileDialog', () => {
     render(<ProfileDialog profile={sampleProfile} onClose={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /save|保存/i }))
     await waitFor(() => expect(ipc.settings.aiProfilesUpdate).toHaveBeenCalled())
-    const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+    const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0]
     expect(call[1].apiKey).toBeUndefined()
   })
 
@@ -755,7 +776,8 @@ describe('ProfileDialog', () => {
     fireEvent.change(screen.getByLabelText(/api.*key/i), { target: { value: 'sk-new' } })
     fireEvent.click(screen.getByRole('button', { name: /save|保存/i }))
     await waitFor(() => {
-      const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+      const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock
+        .calls[0]
       expect(call[1].apiKey).toBe('sk-new')
     })
   })
@@ -1051,9 +1073,11 @@ git commit -m "feat(phase-13): AI tab + Browser tab + ProfileDialog with overwri
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 4: Ad-block module + hot toggle
 
 **Files:**
+
 - Create: `electron/browser/ad-block.ts`
 - Create: `electron/browser/ad-block.test.ts`
 - Create: `src/public/hosts/block-domains.txt`
@@ -1082,19 +1106,27 @@ adservice.google.com
 // electron/browser/ad-block.test.ts
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
-const beforeRequestHandlers: Record<string, (details: { url: string }, cb: (r: { cancel: boolean }) => void) => void> = {}
+const beforeRequestHandlers: Record<
+  string,
+  (details: { url: string }, cb: (r: { cancel: boolean }) => void) => void
+> = {}
 
 vi.mock('electron', () => ({
   session: {
     fromPartition: vi.fn(() => ({
       webRequest: {
-        onBeforeRequest: vi.fn((filter: { urls: string[] }, listener: (details: { url: string }, cb: (r: { cancel: boolean }) => void) => void) => {
-          if (typeof filter === 'function') {
-            beforeRequestHandlers['default'] = filter as never
-          } else {
-            beforeRequestHandlers['default'] = listener
+        onBeforeRequest: vi.fn(
+          (
+            filter: { urls: string[] },
+            listener: (details: { url: string }, cb: (r: { cancel: boolean }) => void) => void
+          ) => {
+            if (typeof filter === 'function') {
+              beforeRequestHandlers['default'] = filter as never
+            } else {
+              beforeRequestHandlers['default'] = listener
+            }
           }
-        })
+        )
       }
     }))
   }
@@ -1125,17 +1157,15 @@ describe('ad-block', () => {
     expect(beforeRequestHandlers['default']).toBeDefined()
 
     let result: { cancel: boolean } | null = null
-    beforeRequestHandlers['default'](
-      { url: 'https://www.googletagmanager.com/gtm.js' },
-      (r) => { result = r }
-    )
+    beforeRequestHandlers['default']({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => {
+      result = r
+    })
     expect(result).toEqual({ cancel: true })
 
     // Allow non-listed domain
-    beforeRequestHandlers['default'](
-      { url: 'https://example.com/normal.js' },
-      (r) => { result = r }
-    )
+    beforeRequestHandlers['default']({ url: 'https://example.com/normal.js' }, (r) => {
+      result = r
+    })
     expect(result).toEqual({ cancel: false })
   })
 
@@ -1158,10 +1188,20 @@ describe('ad-block', () => {
     // In the real subscription path inside initAdBlock, settingsStore.onChange
     // listener calls `register()` when blockAds turns true. Verify by
     // running the listener directly:
-    settingsStore.__emitForTest({ ns: 'browser', key: 'blockAds', newValue: true, oldValue: false } as never)
+    settingsStore.__emitForTest({
+      ns: 'browser',
+      key: 'blockAds',
+      newValue: true,
+      oldValue: false
+    } as never)
     expect(beforeRequestHandlers['default']).toBeDefined()
 
-    settingsStore.__emitForTest({ ns: 'browser', key: 'blockAds', newValue: false, oldValue: true } as never)
+    settingsStore.__emitForTest({
+      ns: 'browser',
+      key: 'blockAds',
+      newValue: false,
+      oldValue: true
+    } as never)
     expect(beforeRequestHandlers['default']).toBeUndefined()
   })
 })
@@ -1203,7 +1243,12 @@ import { logger } from '../services/logger'
 const BROWSER_PARTITION = 'persist:browser-default'
 
 let blockedHosts: Set<string> | null = null
-let listener: ((details: Electron.OnBeforeRequestListenerDetails, cb: (r: { cancel: boolean }) => void) => void) | null = null
+let listener:
+  | ((
+      details: Electron.OnBeforeRequestListenerDetails,
+      cb: (r: { cancel: boolean }) => void
+    ) => void)
+  | null = null
 let unsubFromSettings: (() => void) | null = null
 let cancelCount = 0
 
@@ -1340,9 +1385,11 @@ git commit -m "feat(phase-13): ad-block module with hot toggle on settings.brows
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 5: Renderer root — apply theme / fontScale / locale on settings:changed
 
 **Files:**
+
 - Modify: `src/main.tsx`
 - Modify: `src/stores/root.ts`
 - Create: `src/stores/settings-effects.ts`
@@ -1538,9 +1585,11 @@ git commit -m "feat(phase-13): install settings effects — theme/fontScale/loca
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 6: Phase-12 inbox + searchEngine placeholders
 
 **Files:**
+
 - Create: `electron/settings/runtime-readers.ts`
 - Create: `electron/settings/runtime-readers.test.ts`
 
@@ -1666,6 +1715,7 @@ git commit -m "feat(phase-13): runtime-readers for inboxPath / searchEngine / bl
 - [ ] Dev app: change theme to dark → `<html data-theme="dark">` immediately; reload → setting persists
 
 Surface area for Plan 4:
+
 - All four tabs render real content
 - Hot updates are wired both in main (`ad-block.ts`) and renderer (`settings-effects.ts`)
 - Plan 4 only needs to add the AppRail entry, the `Cmd+,` hotkey, the i18n keys these components reference, and security-audit verification

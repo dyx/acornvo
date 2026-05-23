@@ -12,26 +12,26 @@
 
 ## File Structure Map
 
-| Path | Role | Plan |
-|------|------|------|
-| `shared/ipc-contract.ts` | Extend with `project` namespace + event channels | This plan |
-| `shared/grove.ts` | Domain types (`Grove`, `RecentItem`, `LockInfo`, `SyncProvider`) | This plan |
-| `shared/schemas/project.ts` | Zod schemas for `project.json` + `recent-projects.json` | This plan |
-| `electron/services/paths.ts` | Resolver for `~/.acornvo/*` and `<grove>/.acornvo/*` | This plan |
-| `electron/services/atomicWrite.ts` | Atomic JSON write (tmp + rename) with `0600` perm option | This plan |
-| `electron/services/recent.ts` | `recent-projects.json` CRUD | This plan |
-| `electron/services/lockfile.ts` | `.lock` acquire/release + liveness probe | This plan |
-| `electron/services/grove.ts` | initialize / create / open / close / detectSyncDir / onChange | This plan |
-| `electron/ipc/project.ts` | IPC handlers delegating to services | This plan |
-| `electron/ipc/handlers.ts` | Merge `projectHandlers` into `ipcHandlers` map | This plan |
-| `electron/main.ts` | Add `bootstrap:ready` push, `will-quit` lock release, 2s race | This plan |
-| `preload/preload.ts` | Expose `api.project.*` + event subscriber | This plan |
-| `src/stores/grove.ts` | Zustand slice + actions + `project:changed` subscriber | This plan |
-| `src/pages/ProjectPicker.tsx` | Placeholder page reading bootstrap state | This plan (stub only; full UI in Plan 2) |
-| `src/pages/ProjectPicker.tsx` | Full two-column layout with cards & buttons | Plan 2 |
-| `src/components/GroveSwitcher.tsx` | TitleBar dropdown switcher | Plan 2 |
-| `src/components/TakeoverDialog.tsx` | Force-takeover modal | Plan 2 |
-| `src/components/AcornLogo.tsx` | Brand SVG | Plan 2 |
+| Path                                | Role                                                             | Plan                                     |
+| ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| `shared/ipc-contract.ts`            | Extend with `project` namespace + event channels                 | This plan                                |
+| `shared/grove.ts`                   | Domain types (`Grove`, `RecentItem`, `LockInfo`, `SyncProvider`) | This plan                                |
+| `shared/schemas/project.ts`         | Zod schemas for `project.json` + `recent-projects.json`          | This plan                                |
+| `electron/services/paths.ts`        | Resolver for `~/.acornvo/*` and `<grove>/.acornvo/*`             | This plan                                |
+| `electron/services/atomicWrite.ts`  | Atomic JSON write (tmp + rename) with `0600` perm option         | This plan                                |
+| `electron/services/recent.ts`       | `recent-projects.json` CRUD                                      | This plan                                |
+| `electron/services/lockfile.ts`     | `.lock` acquire/release + liveness probe                         | This plan                                |
+| `electron/services/grove.ts`        | initialize / create / open / close / detectSyncDir / onChange    | This plan                                |
+| `electron/ipc/project.ts`           | IPC handlers delegating to services                              | This plan                                |
+| `electron/ipc/handlers.ts`          | Merge `projectHandlers` into `ipcHandlers` map                   | This plan                                |
+| `electron/main.ts`                  | Add `bootstrap:ready` push, `will-quit` lock release, 2s race    | This plan                                |
+| `preload/preload.ts`                | Expose `api.project.*` + event subscriber                        | This plan                                |
+| `src/stores/grove.ts`               | Zustand slice + actions + `project:changed` subscriber           | This plan                                |
+| `src/pages/ProjectPicker.tsx`       | Placeholder page reading bootstrap state                         | This plan (stub only; full UI in Plan 2) |
+| `src/pages/ProjectPicker.tsx`       | Full two-column layout with cards & buttons                      | Plan 2                                   |
+| `src/components/GroveSwitcher.tsx`  | TitleBar dropdown switcher                                       | Plan 2                                   |
+| `src/components/TakeoverDialog.tsx` | Force-takeover modal                                             | Plan 2                                   |
+| `src/components/AcornLogo.tsx`      | Brand SVG                                                        | Plan 2                                   |
 
 ---
 
@@ -46,9 +46,11 @@
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Extend IPC contract with `project` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add `project` methods, `E_LOCKED` + `E_EXISTS` error codes)
 - Modify: `shared/ipc-contract.type-test.ts` (add compile-time assertions for the new shape)
 
@@ -167,18 +169,17 @@ type _GetCurrentReturn = Assert<
     : false
 >
 
-export type _ProjectExports =
-  | _ListRecentReturn
-  | _OpenGroveReturn
-  | _GetCurrentReturn
+export type _ProjectExports = _ListRecentReturn | _OpenGroveReturn | _GetCurrentReturn
 ```
 
 - [ ] **Step 5: Verify typecheck fails only where we expect (or passes)**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS. Any failure means the contract or type-test has drifted — fix before moving on.
 
 - [ ] **Step 6: Commit**
@@ -191,9 +192,11 @@ git commit -m "feat(phase-02): add project namespace + error codes to IPC contra
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Declare `project:changed` event channel
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add `IpcEventContract` + subscriber type)
 - Modify: `shared/ipc-contract.type-test.ts` (assert event subscriber signature)
 
@@ -253,9 +256,11 @@ export type _EventExports = _EventChannelUnion
 - [ ] **Step 3: Verify typecheck passes**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -268,26 +273,32 @@ git commit -m "feat(phase-02): declare project:changed and bootstrap:ready event
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Add runtime dependencies `uuid` + `zod`
 
 **Files:**
+
 - Modify: `package.json` (dependencies) + `package-lock.json`
 
 - [ ] **Step 1: Install packages**
 
 Run:
+
 ```bash
 npm install uuid zod
 npm install --save-dev @types/uuid
 ```
+
 Expected: exit 0; `uuid` and `zod` appear in `dependencies`, `@types/uuid` in `devDependencies`.
 
 - [ ] **Step 2: Verify resolution**
 
 Run:
+
 ```bash
 node -e "console.log(require('uuid/package.json').version, require('zod/package.json').version)"
 ```
+
 Expected: two version strings print; neither throws.
 
 - [ ] **Step 3: Commit**
@@ -300,9 +311,11 @@ git commit -m "chore(phase-02): add uuid and zod dependencies"
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Extract grove domain types to `shared/grove.ts`
 
 **Files:**
+
 - Create: `shared/grove.ts`
 - Modify: `shared/ipc-contract.ts` (replace forward-reference types with re-exports from `shared/grove.ts`)
 
@@ -382,12 +395,7 @@ export type {
   LockInfo as LockHolderDto
 } from './grove'
 
-import type {
-  GroveSummary,
-  LockInfo,
-  RecentItemView,
-  OpenGroveOutcome
-} from './grove'
+import type { GroveSummary, LockInfo, RecentItemView, OpenGroveOutcome } from './grove'
 ```
 
 Then adjust `IpcContract.project` and `IpcEventContract` to reference the canonical names:
@@ -440,9 +448,11 @@ type _OpenGroveReturn = Assert<
 - [ ] **Step 4: Verify typecheck passes**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS. Any TS error means a leftover reference to the removed forward types — delete or rename.
 
 - [ ] **Step 5: Commit**
@@ -455,9 +465,11 @@ git commit -m "feat(phase-02): extract grove domain types to shared/grove.ts"
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 5: Define Zod schemas for on-disk JSON
 
 **Files:**
+
 - Create: `shared/schemas/project.ts`
 
 - [ ] **Step 1: Write schemas**
@@ -544,12 +556,15 @@ console.log('OK', p.id, r.items.length, l.pid)
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-schemas.ts
 ```
+
 Expected: prints `OK 00000000-0000-4000-8000-000000000000 0 12345`; exit 0.
 
 Then delete the smoke script — keep it out of version control:
+
 ```bash
 rm scripts/smoke-schemas.ts
 rmdir scripts 2>/dev/null || true
@@ -565,9 +580,11 @@ git commit -m "feat(phase-02): define zod schemas for project.json and recent-pr
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 6: Path resolver + atomic write utility
 
 **Files:**
+
 - Create: `electron/services/paths.ts`
 - Create: `electron/services/atomicWrite.ts`
 
@@ -675,12 +692,15 @@ await rm(target)
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-atomic.ts
 ```
+
 Expected: prints `OK true`.
 
 Delete:
+
 ```bash
 rm scripts/smoke-atomic.ts
 rmdir scripts 2>/dev/null || true
@@ -696,9 +716,11 @@ git commit -m "feat(phase-02): add path resolver and atomic JSON write utility"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 7: `recent.ts` service — load / save / upsert / remove
 
 **Files:**
+
 - Create: `electron/services/recent.ts`
 
 - [ ] **Step 1: Write the service**
@@ -706,10 +728,7 @@ git commit -m "feat(phase-02): add path resolver and atomic JSON write utility"
 ```typescript
 import { readFile } from 'node:fs/promises'
 import type { RecentItem } from '@shared/grove'
-import {
-  RecentProjectsFileSchema,
-  type RecentProjectsFile
-} from '@shared/schemas/project'
+import { RecentProjectsFileSchema, type RecentProjectsFile } from '@shared/schemas/project'
 import { atomicWriteJson } from './atomicWrite'
 import { recentProjectsFile } from './paths'
 import { logger } from './logger'
@@ -829,9 +848,11 @@ await rm(scratch, { recursive: true, force: true })
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-recent.ts
 ```
+
 Expected: prints three `true` lines. Delete the script.
 
 ```bash
@@ -849,9 +870,11 @@ git commit -m "feat(phase-02): recent-projects.json service with corrupt-file ba
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 8: `lockfile.ts` service — acquire / release / liveness probe
 
 **Files:**
+
 - Create: `electron/services/lockfile.ts`
 
 - [ ] **Step 1: Write the service**
@@ -866,9 +889,7 @@ import { groveLockFile, groveAcornDir } from './paths'
 import { mkdir } from 'node:fs/promises'
 import { logger } from './logger'
 
-export type AcquireOutcome =
-  | { status: 'acquired' }
-  | { status: 'held'; holder: LockInfo }
+export type AcquireOutcome = { status: 'acquired' } | { status: 'held'; holder: LockInfo }
 
 async function readLock(path: string): Promise<LockInfo | null> {
   let raw: string
@@ -983,9 +1004,11 @@ await rm(grove, { recursive: true, force: true })
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-lock.ts
 ```
+
 Expected: four `true` lines. Delete the script.
 
 ```bash
@@ -1003,9 +1026,11 @@ git commit -m "feat(phase-02): grove lockfile service with liveness probe"
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 9: `grove.ts` service — `initialize` + `detectSyncDir`
 
 **Files:**
+
 - Create: `electron/services/grove.ts` (initial file — more methods added in Tasks 10 & 11)
 
 - [ ] **Step 1: Write the first cut**
@@ -1017,18 +1042,16 @@ import { v4 as uuidv4 } from 'uuid'
 import { ProjectJsonSchema, type ProjectJson } from '@shared/schemas/project'
 import type { Grove, GroveColor, SyncProvider } from '@shared/grove'
 import { atomicWriteJson } from './atomicWrite'
-import {
-  groveAcornDir,
-  groveAssetsDir,
-  groveInboxDir,
-  groveProjectFile
-} from './paths'
+import { groveAcornDir, groveAssetsDir, groveInboxDir, groveProjectFile } from './paths'
 import { logger } from './logger'
 
 const DEFAULT_COLOR: GroveColor = 'acorn'
 
 const SYNC_PATTERNS: Array<{ re: RegExp; provider: SyncProvider }> = [
-  { re: /(?:^|\/)(?:iCloud(?:\s|~|Drive)|Mobile Documents|com~apple~CloudDocs)/i, provider: 'iCloud' },
+  {
+    re: /(?:^|\/)(?:iCloud(?:\s|~|Drive)|Mobile Documents|com~apple~CloudDocs)/i,
+    provider: 'iCloud'
+  },
   { re: /(?:^|\/)Dropbox(?:\/|$|\s)/i, provider: 'Dropbox' },
   { re: /(?:^|\/)OneDrive(?:\/|$|\s|-)/i, provider: 'OneDrive' },
   { re: /(?:^|\/)Google\s*Drive(?:\/|$)/i, provider: 'GoogleDrive' },
@@ -1191,9 +1214,11 @@ await rm(grove, { recursive: true, force: true })
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-grove-init.ts
 ```
+
 Expected: six `true` lines.
 
 ```bash
@@ -1211,9 +1236,11 @@ git commit -m "feat(phase-02): grove.initialize + detectSyncDir with idempotent 
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 10: `grove.ts` — `createGrove`
 
 **Files:**
+
 - Modify: `electron/services/grove.ts` (append `createGrove`)
 
 - [ ] **Step 1: Append the function**
@@ -1310,9 +1337,11 @@ await rm(parent, { recursive: true, force: true })
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-grove-create.ts
 ```
+
 Expected: four `true` lines.
 
 ```bash
@@ -1330,9 +1359,11 @@ git commit -m "feat(phase-02): grove.createGrove with validation and E_EXISTS gu
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 11: `grove.ts` — `openGrove` / `closeGrove` with lock handling
 
 **Files:**
+
 - Modify: `electron/services/grove.ts` (append open/close + current state)
 
 - [ ] **Step 1: Add imports at top if missing**
@@ -1452,7 +1483,13 @@ Create `scripts/smoke-grove-open.ts`:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { mkdir, rm } from 'node:fs/promises'
-import { openGrove, closeGrove, getCurrent, onChange, createGrove } from '../electron/services/grove'
+import {
+  openGrove,
+  closeGrove,
+  getCurrent,
+  onChange,
+  createGrove
+} from '../electron/services/grove'
 
 // Stub HOME so recent.ts writes to scratch
 const scratch = join(tmpdir(), `grove-open-${Date.now()}`)
@@ -1486,9 +1523,11 @@ await rm(scratch, { recursive: true, force: true })
 ```
 
 Run:
+
 ```bash
 npx tsx scripts/smoke-grove-open.ts
 ```
+
 Expected: four `true` lines.
 
 ```bash
@@ -1506,9 +1545,11 @@ git commit -m "feat(phase-02): grove.openGrove / closeGrove with lock handoff an
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 12: Broadcast `project:changed` to all renderers via `webContents.send`
 
 **Files:**
+
 - Create: `electron/services/grove-broadcast.ts`
 - Modify: `electron/main.ts` (wire broadcaster once renderers exist)
 
@@ -1555,8 +1596,8 @@ import { installGroveBroadcaster } from './services/grove-broadcast'
 Inside `bootstrap()` just after `registerHandlers(ipcHandlers)` add:
 
 ```typescript
-  const disposeBroadcaster = installGroveBroadcaster()
-  app.on('will-quit', disposeBroadcaster)
+const disposeBroadcaster = installGroveBroadcaster()
+app.on('will-quit', disposeBroadcaster)
 ```
 
 (Full integration with bootstrap pipeline happens in Task 19 — for now it's enough to wire the broadcaster.)
@@ -1564,9 +1605,11 @@ Inside `bootstrap()` just after `registerHandlers(ipcHandlers)` add:
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1579,9 +1622,11 @@ git commit -m "feat(phase-02): broadcast project:changed to all renderer webCont
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 13: Release lock on `app.will-quit`
 
 **Files:**
+
 - Modify: `electron/main.ts` (add will-quit handler that closes the current grove)
 
 - [ ] **Step 1: Import and wire handler**
@@ -1595,13 +1640,13 @@ import * as groveService from './services/grove'
 Inside `bootstrap()` after `installGroveBroadcaster()`:
 
 ```typescript
-  app.on('will-quit', () => {
-    void groveService.closeGrove().catch((err) => {
-      logger.error('grove close on will-quit failed', {
-        message: err instanceof Error ? err.message : String(err)
-      })
+app.on('will-quit', () => {
+  void groveService.closeGrove().catch((err) => {
+    logger.error('grove close on will-quit failed', {
+      message: err instanceof Error ? err.message : String(err)
     })
   })
+})
 ```
 
 Note: `closeGrove()` is idempotent (returns immediately if no current grove) so registering this twice in dev mode is safe. `will-quit` fires after `before-quit`, so our existing `before-quit` lifecycle hook stays untouched.
@@ -1609,9 +1654,11 @@ Note: `closeGrove()` is idempotent (returns immediately if no current grove) so 
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1624,9 +1671,11 @@ git commit -m "feat(phase-02): release grove lock on app will-quit"
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 14: IPC handler — `project.listRecent`
 
 **Files:**
+
 - Create: `electron/ipc/project.ts` (initial skeleton + listRecent)
 
 - [ ] **Step 1: Write the module**
@@ -1662,9 +1711,11 @@ export const partialHandlers = {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1677,9 +1728,11 @@ git commit -m "feat(phase-02): ipc handler for project.listRecent with valid fla
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 15: IPC handlers — `createGrove` / `openGrove` / `closeGrove`
 
 **Files:**
+
 - Modify: `electron/ipc/project.ts`
 
 - [ ] **Step 1: Append delegating handlers**
@@ -1705,10 +1758,7 @@ async function createGrove(parentDir: string, name: string): Promise<GroveSummar
   }
 }
 
-async function openGrove(
-  path: string,
-  opts?: { force?: boolean }
-): Promise<OpenGroveOutcome> {
+async function openGrove(path: string, opts?: { force?: boolean }): Promise<OpenGroveOutcome> {
   return grove.openGrove(path, opts ?? {})
 }
 
@@ -1727,9 +1777,11 @@ export const partialHandlers = {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1742,9 +1794,11 @@ git commit -m "feat(phase-02): ipc handlers delegate createGrove/openGrove/close
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 16: IPC handler — `getCurrent`
 
 **Files:**
+
 - Modify: `electron/ipc/project.ts`
 
 - [ ] **Step 1: Append**
@@ -1768,9 +1822,11 @@ Update `partialHandlers` to include `getCurrent`.
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1783,9 +1839,11 @@ git commit -m "feat(phase-02): ipc handler for project.getCurrent"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 17: IPC handler — `removeFromRecent`
 
 **Files:**
+
 - Modify: `electron/ipc/project.ts`
 
 - [ ] **Step 1: Append**
@@ -1801,9 +1859,11 @@ Add `removeFromRecent` to `partialHandlers`.
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1816,9 +1876,11 @@ git commit -m "feat(phase-02): ipc handler for project.removeFromRecent"
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 18: IPC handler — `selectDirectory` (native dialog wrapper)
 
 **Files:**
+
 - Modify: `electron/ipc/project.ts`
 - Modify: `electron/main.ts` (export `mainWindow` is already exported — we read it here)
 
@@ -1837,9 +1899,7 @@ Append:
 ```typescript
 async function selectDirectory(purpose: SelectDirectoryPurpose): Promise<string | null> {
   const properties: Array<'openDirectory' | 'createDirectory'> =
-    purpose === 'createParent'
-      ? ['openDirectory', 'createDirectory']
-      : ['openDirectory']
+    purpose === 'createParent' ? ['openDirectory', 'createDirectory'] : ['openDirectory']
   const options = {
     properties,
     buttonLabel: purpose === 'createParent' ? '选择父目录' : '选择树林目录',
@@ -1872,9 +1932,11 @@ export const projectHandlers = {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS — the `satisfies ProjectHandlers` check will fail loudly if any method signature drifted from the IPC contract.
 
 - [ ] **Step 3: Commit**
@@ -1887,9 +1949,11 @@ git commit -m "feat(phase-02): ipc handler for project.selectDirectory (native d
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 19: Register `projectHandlers` with the IPC router
 
 **Files:**
+
 - Modify: `electron/ipc/handlers.ts`
 - Modify: `preload/preload.ts` (expose `api.project.*` + `api.on(channel, handler)`)
 
@@ -1962,8 +2026,7 @@ const request: IpcClient<IpcContract> = {
     closeGrove: () => invoke('project.closeGrove'),
     getCurrent: () => invoke('project.getCurrent'),
     removeFromRecent: (id) => invoke('project.removeFromRecent', id),
-    selectDirectory: (purpose: SelectDirectoryPurpose) =>
-      invoke('project.selectDirectory', purpose)
+    selectDirectory: (purpose: SelectDirectoryPurpose) => invoke('project.selectDirectory', purpose)
   }
 }
 
@@ -1972,8 +2035,7 @@ const events: IpcEventApi = {
     channel: K,
     handler: (payload: IpcEventContract[K]) => void
   ): () => void {
-    const listener = (_e: IpcRendererEvent, payload: IpcEventContract[K]): void =>
-      handler(payload)
+    const listener = (_e: IpcRendererEvent, payload: IpcEventContract[K]): void => handler(payload)
     ipcRenderer.on(channel, listener)
     return () => {
       ipcRenderer.removeListener(channel, listener)
@@ -2026,9 +2088,11 @@ export {}
 - [ ] **Step 4: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2041,9 +2105,11 @@ git commit -m "feat(phase-02): register projectHandlers and expose api.project +
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 20: Register handlers before bootstrap decision runs
 
 **Files:**
+
 - Modify: `electron/main.ts`
 
 - [ ] **Step 1: Reorder `bootstrap()`**
@@ -2083,9 +2149,11 @@ async function bootstrap(): Promise<void> {
 - [ ] **Step 2: Typecheck and lint**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -2098,9 +2166,11 @@ git commit -m "chore(phase-02): ensure ipc handlers register before bootstrap de
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 21: Bootstrap decision pipeline with 2-second timeout
 
 **Files:**
+
 - Create: `electron/bootstrap.ts`
 - Modify: `electron/main.ts` (import and invoke `runBootstrap`)
 
@@ -2199,9 +2269,11 @@ Note: stashing the result on `globalThis` is a **transient** pattern — Task 22
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -2214,9 +2286,11 @@ git commit -m "feat(phase-02): bootstrap decision pipeline with 2s timeout fallb
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 22: Push `bootstrap:ready` to renderer on window load
 
 **Files:**
+
 - Modify: `electron/main.ts`
 
 - [ ] **Step 1: Replace the globalThis stash with an event push**
@@ -2237,21 +2311,27 @@ Remove the temporary `(globalThis as ...).__acornBootstrap = ...` line added in 
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke-test manually**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Open the app. In the devtools console (View → Toggle Developer Tools) evaluate:
+
 ```javascript
 window.api.on('bootstrap:ready', console.log)
 ```
+
 Refresh the renderer (Cmd+R). You should see a `bootstrap:ready` log with `initialRoute: '/picker'` (because there is no `recent-projects.json` yet) and `recent: []`.
 
 Then kill the dev server (Ctrl+C).
@@ -2266,9 +2346,11 @@ git commit -m "feat(phase-02): push bootstrap:ready to renderer on did-finish-lo
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 23: Renderer bootstrap consumer — minimal `/picker` stub
 
 **Files:**
+
 - Create: `src/hooks/useBootstrap.ts`
 - Modify: `src/App.tsx` (route `/` → small bootstrap loader that redirects)
 - Modify: `src/pages/Placeholder.tsx` is unchanged — Picker still shows Placeholder until Plan 2
@@ -2337,9 +2419,11 @@ git rm src/pages/Home.tsx src/stores/home.ts
 - [ ] **Step 3: Smoke-test**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Expected: window loads; URL in dev tools shows `/picker` (because there is no recent list yet); the page shows `picker (plan 2 UI)`. No console errors.
 
 Kill dev server.
@@ -2355,9 +2439,11 @@ git commit -m "feat(phase-02): renderer consumes bootstrap:ready and routes to p
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 24: Zustand grove slice (state only)
 
 **Files:**
+
 - Create: `src/stores/grove.ts`
 
 - [ ] **Step 1: Write the slice**
@@ -2388,9 +2474,11 @@ export const useGroveStore = create<GroveState>((set) => ({
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -2403,9 +2491,11 @@ git commit -m "feat(phase-02): grove store slice (state only)"
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 25: Grove store actions
 
 **Files:**
+
 - Modify: `src/stores/grove.ts`
 
 - [ ] **Step 1: Add actions**
@@ -2436,10 +2526,10 @@ export type GroveState = {
   recent: RecentItemView[]
   lastError: string | null
 } & GroveActions & {
-  _setCurrent: (value: GroveSummary | null) => void
-  _setRecent: (items: RecentItemView[]) => void
-  _setError: (message: string | null) => void
-}
+    _setCurrent: (value: GroveSummary | null) => void
+    _setRecent: (items: RecentItemView[]) => void
+    _setError: (message: string | null) => void
+  }
 
 function findPath(recent: RecentItemView[], id: string): string | null {
   return recent.find((i) => i.id === id)?.path ?? null
@@ -2504,9 +2594,11 @@ export const useGroveStore = create<GroveState>((set, get) => ({
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -2519,9 +2611,11 @@ git commit -m "feat(phase-02): grove store actions — open / create / switch / 
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 26: Subscribe to `project:changed` + on-switch hook registry
 
 **Files:**
+
 - Create: `src/stores/grove-switch-hooks.ts`
 - Modify: `src/stores/grove.ts` (install the subscriber)
 - Modify: `src/main.tsx` (call `installGroveSubscriber()` once)
@@ -2600,21 +2694,27 @@ Place the call once, before `ReactDOM.createRoot(...).render(...)`.
 - [ ] **Step 4: Typecheck + dev smoke**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 In the devtools console, evaluate:
+
 ```javascript
 const { useGroveStore, grove } = await import('/src/stores/grove.ts')
 grove.onSwitch((p) => console.log('onSwitch fired', p))
 await window.api.project.listRecent() // sanity
 ```
+
 Then trigger a change from main (there is no UI to do this yet; you can simulate with devtools by opening via a CLI test). For now the success criterion is: no console errors, `grove.onSwitch` is a function.
 
 Kill the dev server.

@@ -9,6 +9,7 @@
 **Tech Stack:** Same as previous plans + `lucide-react` for icons (already installed).
 
 **Carry-overs:**
+
 - The `/settings/*` route is already mounted in Plan 2.
 - `useSettingsStore`, `useProfilesStore`, `installSettingsEffects` from Plans 2+3.
 - New IPC error codes from Plan 1.
@@ -16,9 +17,11 @@
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Minimal AppRail with bottom gear
 
 **Files:**
+
 - Create: `src/components/AppRail.tsx`
 - Create: `src/components/AppRail.test.tsx`
 - Modify: `src/App.tsx`
@@ -245,6 +248,7 @@ Expected: PASS.
 
 Run: `npm run dev`
 Open the app, open a grove, verify:
+
 - Left edge shows the four-entry rail (60px wide).
 - Library is highlighted on `/library`.
 - Bottom gear pushes to bottom (mt-auto).
@@ -262,17 +266,20 @@ git commit -m "feat(phase-13): minimal AppRail with library/browser/chat/setting
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Confirm `/settings` route registration
 
 > Already done in Plan 2 task 6 (`<Route path="/settings/*" element={<Settings />} />` replaces the placeholder). This task only validates the wiring and removes the obsolete placeholder import.
 
 **Files:**
+
 - Modify: `src/App.tsx`
 - (no new test — covered by `Settings.test.tsx` from Plan 2)
 
 - [ ] **Step 1: Verify the placeholder import is gone**
 
 Open `src/App.tsx`. Confirm:
+
 - `import { Placeholder } from './pages/Placeholder'` — still imported (used by `/browser` and `/chat` until phase-11/17).
 - No `<Route path="/settings" element={<Placeholder name="settings" />} />` anymore.
 - The route is `<Route path="/settings/*" element={<Settings />} />`.
@@ -336,9 +343,11 @@ git commit -m "test(phase-13): App smoke test — /settings → /settings/genera
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: `Cmd/Ctrl+,` global hotkey
 
 **Files:**
+
 - Modify: `src/hooks/useGlobalHotkeys.ts`
 - Modify: `src/hooks/useGlobalHotkeys.test.ts` (create if missing)
 
@@ -369,7 +378,9 @@ import { useGlobalHotkeys } from './useGlobalHotkeys'
 function HotkeyHost({ pathSink }: { pathSink: { path: string } }): JSX.Element {
   useGlobalHotkeys()
   const loc = useLocation()
-  useEffect(() => { pathSink.path = loc.pathname }, [loc.pathname, pathSink])
+  useEffect(() => {
+    pathSink.path = loc.pathname
+  }, [loc.pathname, pathSink])
   return <div data-testid="host" />
 }
 
@@ -401,7 +412,7 @@ describe('useGlobalHotkeys — Cmd+, navigates to /settings', () => {
     expect(sink.path).toBe('/settings')
   })
 
-  it(", with no modifier does NOT navigate", () => {
+  it(', with no modifier does NOT navigate', () => {
     const sink = { path: '/library' }
     render(
       <MemoryRouter initialEntries={['/library']}>
@@ -425,45 +436,45 @@ Modify `src/hooks/useGlobalHotkeys.ts`. Inside the `onKeyDown` function (lines 1
 
 ```ts
 // src/hooks/useGlobalHotkeys.ts — inside onKeyDown
-      if (key === ',' && !ev.shiftKey) {
-        ev.preventDefault()
-        navigate('/settings')
-        return
-      }
+if (key === ',' && !ev.shiftKey) {
+  ev.preventDefault()
+  navigate('/settings')
+  return
+}
 ```
 
 The full updated function (replace lines 16-39):
 
 ```ts
-  useEffect(() => {
-    function onKeyDown(ev: KeyboardEvent): void {
-      const mod = ev.metaKey || ev.ctrlKey
-      if (!mod) return
-      const key = ev.key.toLowerCase()
-      if (key === 'p' && !ev.shiftKey) {
-        ev.preventDefault()
-        openQuickSwitcher()
-        return
-      }
-      if (key === 'f' && ev.shiftKey) {
-        ev.preventDefault()
-        if (location.pathname === '/search') {
-          const el = document.querySelector<HTMLInputElement>('[role="searchbox"]')
-          el?.select()
-        } else {
-          navigate('/search')
-        }
-        return
-      }
-      if (key === ',' && !ev.shiftKey) {
-        ev.preventDefault()
-        navigate('/settings')
-        return
-      }
+useEffect(() => {
+  function onKeyDown(ev: KeyboardEvent): void {
+    const mod = ev.metaKey || ev.ctrlKey
+    if (!mod) return
+    const key = ev.key.toLowerCase()
+    if (key === 'p' && !ev.shiftKey) {
+      ev.preventDefault()
+      openQuickSwitcher()
+      return
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [openQuickSwitcher, navigate, location.pathname])
+    if (key === 'f' && ev.shiftKey) {
+      ev.preventDefault()
+      if (location.pathname === '/search') {
+        const el = document.querySelector<HTMLInputElement>('[role="searchbox"]')
+        el?.select()
+      } else {
+        navigate('/search')
+      }
+      return
+    }
+    if (key === ',' && !ev.shiftKey) {
+      ev.preventDefault()
+      navigate('/settings')
+      return
+    }
+  }
+  window.addEventListener('keydown', onKeyDown)
+  return () => window.removeEventListener('keydown', onKeyDown)
+}, [openQuickSwitcher, navigate, location.pathname])
 ```
 
 - [ ] **Step 4: Run tests**
@@ -481,9 +492,11 @@ git commit -m "feat(phase-13): global hotkey Cmd/Ctrl+, opens /settings"
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: i18n keys (zh-CN + en-US)
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Create: `src/i18n/locales/en-US.json`
 - Modify: `src/i18n/index.ts`
@@ -548,7 +561,8 @@ function flatten(obj: Record<string, unknown>, prefix = ''): Record<string, stri
   for (const [k, v] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${k}` : k
     if (typeof v === 'string') out[path] = v
-    else if (v && typeof v === 'object') Object.assign(out, flatten(v as Record<string, unknown>, path))
+    else if (v && typeof v === 'object')
+      Object.assign(out, flatten(v as Record<string, unknown>, path))
   }
   return out
 }
@@ -881,9 +895,11 @@ git commit -m "feat(phase-13): i18n — settings.* keys + en-US locale"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 5: Security audit — profile list never returns plaintext apiKey
 
 **Files:**
+
 - Modify: `electron/settings/profiles.test.ts` (add scenarios)
 
 The unit tests in Plan 1 already cover most of this; add explicit security-audit assertions and a runtime spot-check.
@@ -916,7 +932,10 @@ describe('security audit — profile CRUD never leaks apiKey plaintext', () => {
 
   it('create() return shape is { id } only — does not echo apiKey', () => {
     const result = profilesStore.create({
-      name: 'a', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-secret'
+      name: 'a',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-secret'
     })
     expect(result).toEqual({ id: expect.any(String) })
     expect(JSON.stringify(result)).not.toMatch(/sk-secret/)
@@ -939,9 +958,11 @@ git commit -m "test(phase-13): security audit — list/create never leak apiKey 
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 6: Security audit — renderer cannot reach `secret.*` or `getDecryptedKey`
 
 **Files:**
+
 - Modify: `preload/preload.test.ts` (extend the test from Plan 2 task 3)
 
 - [ ] **Step 1: Add audit assertions to the preload test**
@@ -962,9 +983,7 @@ describe('security audit — preload contextBridge', () => {
         const fullPath = `${path}.${key}`
         const lower = key.toLowerCase()
         expect(
-          lower.includes('secret') ||
-            lower.includes('decrypt') ||
-            lower === 'getdecryptedkey'
+          lower.includes('secret') || lower.includes('decrypt') || lower === 'getdecryptedkey'
         ).toBe(false)
         if (typeof child === 'object' && child !== null) walk(child, fullPath)
       }
@@ -997,44 +1016,56 @@ git commit -m "test(phase-13): security audit — preload api has no secret/decr
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 7: Security audit — deleting a profile cascades to `settings_secrets`
 
 **Files:**
+
 - Modify: `electron/settings/profiles.test.ts` (add audit case)
 
 - [ ] **Step 1: Append the audit test**
 
 ```ts
 // electron/settings/profiles.test.ts (append to the security audit describe)
-  it('after delete, secrets.get(oldRef) returns null AND no orphan row remains', () => {
-    const { id } = profilesStore.create({ name: 'audit', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-x' })
-    const ref = `ai.key.${id}`
-    expect(secretsStore.get(ref)).toBe('sk-x')
-
-    profilesStore.delete(id)
-
-    expect(secretsStore.get(ref)).toBeNull()
-    const remaining = db
-      .prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key = ?')
-      .get(ref) as { n: number }
-    expect(remaining.n).toBe(0)
-
-    // And no orphan profile row pointing to a missing ref:
-    const profileRow = db
-      .prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?')
-      .get(id)
-    expect(profileRow).toBeUndefined()
+it('after delete, secrets.get(oldRef) returns null AND no orphan row remains', () => {
+  const { id } = profilesStore.create({
+    name: 'audit',
+    provider: 'openai',
+    model: 'gpt-4o',
+    apiKey: 'sk-x'
   })
+  const ref = `ai.key.${id}`
+  expect(secretsStore.get(ref)).toBe('sk-x')
 
-  it('delete is atomic at the SQL level — verify with a fresh select', () => {
-    const { id } = profilesStore.create({ name: 'x', provider: 'openai', model: 'gpt-4o', apiKey: 'k' })
-    profilesStore.delete(id)
-    // After delete: 0 profile rows, 0 secret rows
-    const profiles = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as { n: number }
-    const secrets = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets').get() as { n: number }
-    expect(profiles.n).toBe(0)
-    expect(secrets.n).toBe(0)
+  profilesStore.delete(id)
+
+  expect(secretsStore.get(ref)).toBeNull()
+  const remaining = db
+    .prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key = ?')
+    .get(ref) as { n: number }
+  expect(remaining.n).toBe(0)
+
+  // And no orphan profile row pointing to a missing ref:
+  const profileRow = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?').get(id)
+  expect(profileRow).toBeUndefined()
+})
+
+it('delete is atomic at the SQL level — verify with a fresh select', () => {
+  const { id } = profilesStore.create({
+    name: 'x',
+    provider: 'openai',
+    model: 'gpt-4o',
+    apiKey: 'k'
   })
+  profilesStore.delete(id)
+  // After delete: 0 profile rows, 0 secret rows
+  const profiles = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as {
+    n: number
+  }
+  const secrets = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets').get() as { n: number }
+  expect(profiles.n).toBe(0)
+  expect(secrets.n).toBe(0)
+})
 ```
 
 - [ ] **Step 2: Run tests**

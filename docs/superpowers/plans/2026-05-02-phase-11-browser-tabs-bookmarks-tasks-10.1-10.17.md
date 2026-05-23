@@ -31,11 +31,11 @@ Cover every behaviour from the OpenSpec acceptance section. Each task is a discr
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Browse.acceptance.test.tsx` | Create + extend | 10.1 .. 10.16 |
-| `docs/runbooks/phase-11-acceptance.md` | Create + extend | 10.1 .. 10.16 |
-| `openspec/changes/phase-11-browser-tabs-bookmarks/tasks.md` | Modify (mark all complete) | 10.17 |
+| Path                                                        | Action                     | Owner task    |
+| ----------------------------------------------------------- | -------------------------- | ------------- |
+| `src/pages/Browse.acceptance.test.tsx`                      | Create + extend            | 10.1 .. 10.16 |
+| `docs/runbooks/phase-11-acceptance.md`                      | Create + extend            | 10.1 .. 10.16 |
+| `openspec/changes/phase-11-browser-tabs-bookmarks/tasks.md` | Modify (mark all complete) | 10.17         |
 
 ## Pre-flight
 
@@ -51,9 +51,11 @@ Cover every behaviour from the OpenSpec acceptance section. Each task is a discr
 ## Tasks
 
 <!-- openspec-task: 10.1 -->
+
 ### Task 1: AppRail "拾果" → `/browser` renders TabBar + AddressBar + blank tab
 
 **Files:**
+
 - Create: `src/pages/Browse.acceptance.test.tsx`
 - Create: `docs/runbooks/phase-11-acceptance.md`
 
@@ -186,15 +188,18 @@ describe('OpenSpec acceptance 10.1 — AppRail open browser', () => {
 
 ```markdown
 <!-- docs/runbooks/phase-11-acceptance.md -->
+
 # Phase 11 — Acceptance Runbook
 
 Manual smoke procedures for behaviours that the Electron runtime is required for. Mark each step as `[x]` when complete.
 
 ## How to run
+
 1. `npm run dev` (Electron + Vite, hot-reload)
 2. Use the dev console (Cmd+Opt+I) to confirm logs at each step.
 
 ## 10.1 — AppRail → /browser renders
+
 - [ ] In the rail, the "拾果" entry is present and not disabled.
 - [ ] Clicking "拾果" highlights it (active border) and navigates to `/browser`.
 - [ ] The page shows TabBar at top, AddressBar below it, the bookmark sidebar (collapsed strip) on the left, and a blank "拾果" welcome on the right.
@@ -231,9 +236,11 @@ git commit -m "test(phase-11): acceptance 10.1 — AppRail opens /browser"
 ---
 
 <!-- openspec-task: 10.2 -->
+
 ### Task 2: 10.2 — `example.com` Enter → `https://example.com` loaded
 
 **Files:**
+
 - Modify: `src/pages/Browse.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-11-acceptance.md`
 - Modify: `openspec/changes/phase-11-browser-tabs-bookmarks/tasks.md`
@@ -250,7 +257,10 @@ describe('OpenSpec acceptance 10.2 — bare-domain → https prefix', () => {
     await userEvent.clear(input)
     await userEvent.type(input, 'example.com{Enter}')
 
-    expect(port.navigate).toHaveBeenCalledWith(expect.stringMatching(/^t\d+$/), 'https://example.com')
+    expect(port.navigate).toHaveBeenCalledWith(
+      expect.stringMatching(/^t\d+$/),
+      'https://example.com'
+    )
   })
 })
 ```
@@ -265,6 +275,7 @@ Append to `docs/runbooks/phase-11-acceptance.md`:
 
 ```markdown
 ## 10.2 — Bare-domain → https
+
 - [ ] AddressBar focused; type `example.com` → Enter.
 - [ ] WebContentsView loads `https://example.com` (page title visible).
 ```
@@ -281,6 +292,7 @@ git commit -m "test(phase-11): acceptance 10.2 — bare domain → https"
 ---
 
 <!-- openspec-task: 10.3 -->
+
 ### Task 3: 10.3 — `注意力机制` Enter → Google search URL
 
 - [ ] **Step 1: Append test**
@@ -310,8 +322,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.3"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.3 — Search query
+
 - [ ] Type `注意力机制` → Enter.
 - [ ] Browser loads `https://www.google.com/search?q=...`.
 ```
@@ -326,6 +340,7 @@ git commit -m "test(phase-11): acceptance 10.3 — CJK input → google search"
 ---
 
 <!-- openspec-task: 10.4 -->
+
 ### Task 4: 10.4 — Cmd+T new tab; Cmd+W on last tab → fresh blank
 
 - [ ] **Step 1: Append test**
@@ -369,8 +384,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.4"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.4 — Cmd+T / Cmd+W
+
 - [ ] Cmd+T creates a new tab; Cmd+W closes the active tab.
 - [ ] Closing the LAST tab does NOT close the window — a fresh blank tab appears.
 - [ ] Cmd+1..9 jump to tab N (N capped at last tab); Cmd+9 always last.
@@ -386,6 +403,7 @@ git commit -m "test(phase-11): acceptance 10.4 — Cmd+T/W with last-tab rule"
 ---
 
 <!-- openspec-task: 10.5 -->
+
 ### Task 5: 10.5 — `<a target="_blank">` → new tab + activated
 
 This case requires the actual Electron runtime: `setWindowOpenHandler` only fires on a real WebContents. Use a manual smoke; the acceptance test asserts that the **adoption helper** is registered.
@@ -413,7 +431,8 @@ describe('OpenSpec acceptance 10.5 — target=_blank → new tab (renderer side)
 - [ ] **Step 2: Runbook entry (the real validation)**
 
 ```markdown
-## 10.5 — target=_blank in Electron
+## 10.5 — target=\_blank in Electron
+
 - [ ] Open `https://news.ycombinator.com` in a tab.
 - [ ] Cmd+click any story link (or open a page with `target="_blank"` link and click).
 - [ ] A new tab appears in TabBar, becomes active, and loads the URL.
@@ -431,6 +450,7 @@ git commit -m "test(phase-11): acceptance 10.5 — target=_blank adoption (rende
 ---
 
 <!-- openspec-task: 10.6 -->
+
 ### Task 6: 10.6 — `mailto:` → `shell.openExternal`, no new tab
 
 This too is runtime-dependent. We add a unit-level test against the handler factory in `electron/browser/contents.ts` to assert the dispatch logic.
@@ -455,10 +475,16 @@ import * as electronMock from 'electron'
 
 describe('attachWindowOpenHandler', () => {
   function makeWebContents() {
-    const handlers: { open?: (a: any) => any; events: Record<string, (a: any) => void> } = { events: {} }
+    const handlers: { open?: (a: any) => any; events: Record<string, (a: any) => void> } = {
+      events: {}
+    }
     return {
-      setWindowOpenHandler: (h: any) => { handlers.open = h },
-      on: (e: string, h: any) => { handlers.events[e] = h },
+      setWindowOpenHandler: (h: any) => {
+        handlers.open = h
+      },
+      on: (e: string, h: any) => {
+        handlers.events[e] = h
+      },
       __h: handlers
     } as any
   }
@@ -504,8 +530,10 @@ npx vitest run electron/browser/contents.test.ts
 ```
 
 Runbook:
+
 ```markdown
 ## 10.6 — mailto: in Electron
+
 - [ ] Open a page with a `mailto:` link.
 - [ ] Click the link → no new browser tab; system mail client opens.
 - [ ] Console shows `shell.openExternal` invocation.
@@ -521,9 +549,10 @@ git commit -m "test(phase-11): acceptance 10.6 — mailto/tel routes to shell.op
 ---
 
 <!-- openspec-task: 10.7 -->
+
 ### Task 7: 10.7 — Ad-block intercepts `googletagmanager`
 
-The matcher is unit-tested in Plan 1; this task verifies the *integration*: real session bind → blocked request count > 0. Manual smoke is the primary check; we also extend the unit suite with an integration-style test that runs the bound `onBeforeRequest` callback.
+The matcher is unit-tested in Plan 1; this task verifies the _integration_: real session bind → blocked request count > 0. Manual smoke is the primary check; we also extend the unit suite with an integration-style test that runs the bound `onBeforeRequest` callback.
 
 - [ ] **Step 1: Append unit test for the bound callback**
 
@@ -536,17 +565,25 @@ describe('bindAdblockToSession', () => {
   it('cancels matching requests and counts them; non-matching requests pass through', () => {
     const handlers: { cb?: (d: any, c: any) => void } = {}
     const fakeSession: any = {
-      webRequest: { onBeforeRequest: (cb: any) => { handlers.cb = cb } }
+      webRequest: {
+        onBeforeRequest: (cb: any) => {
+          handlers.cb = cb
+        }
+      }
     }
     const ab = createAdblock(new Set(['googletagmanager.com']))
     bindAdblockToSession(fakeSession, ab)
 
     let last: any = null
-    handlers.cb!({ url: 'https://googletagmanager.com/gtm.js' }, (r: any) => { last = r })
+    handlers.cb!({ url: 'https://googletagmanager.com/gtm.js' }, (r: any) => {
+      last = r
+    })
     expect(last).toEqual({ cancel: true })
 
     last = null
-    handlers.cb!({ url: 'https://example.com/normal.js' }, (r: any) => { last = r })
+    handlers.cb!({ url: 'https://example.com/normal.js' }, (r: any) => {
+      last = r
+    })
     expect(last).toEqual({ cancel: false })
 
     expect(ab.drainCount()).toBe(1)
@@ -561,8 +598,10 @@ npx vitest run electron/browser/adblock.test.ts
 ```
 
 Runbook:
+
 ```markdown
 ## 10.7 — Ad-block in Electron
+
 - [ ] Open any major news site (e.g., `https://www.cnn.com` or a site that uses GTM).
 - [ ] Open DevTools → Network tab.
 - [ ] Reload. Confirm requests to `googletagmanager.com`, `google-analytics.com`, etc. show as `(canceled)`.
@@ -580,6 +619,7 @@ git commit -m "test(phase-11): acceptance 10.7 — ad-block intercepts gtm/ga"
 ---
 
 <!-- openspec-task: 10.8 -->
+
 ### Task 8: 10.8 — Reader toggle works; navigation resets to false
 
 - [ ] **Step 1: Append test**
@@ -609,8 +649,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.8"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.8 — Reader mode in Electron
+
 - [ ] Open a long article page (e.g., a Wikipedia article).
 - [ ] Click the ¶ button (reader toggle); page reformats — header/nav/footer hidden, body width ~720px.
 - [ ] Navigate to a different URL via address bar; reader mode automatically off (page back to normal).
@@ -626,6 +668,7 @@ git commit -m "test(phase-11): acceptance 10.8 — reader toggle + navigation re
 ---
 
 <!-- openspec-task: 10.9 -->
+
 ### Task 9: 10.9 — Cmd+D adds bookmark; star fills
 
 - [ ] **Step 1: Append test**
@@ -648,13 +691,22 @@ describe('OpenSpec acceptance 10.9 — Cmd+D adds bookmark', () => {
     expect((titleInput as HTMLInputElement).value).toBe('Example')
 
     ipcMocks.bookmarks.create.mockResolvedValueOnce({
-      id: 1, url: 'https://x.com', title: 'Example', favicon: null, tags: [], createdAt: '', updatedAt: ''
+      id: 1,
+      url: 'https://x.com',
+      title: 'Example',
+      favicon: null,
+      tags: [],
+      createdAt: '',
+      updatedAt: ''
     })
     await userEvent.click(screen.getByRole('button', { name: /save/i }))
 
-    expect(ipcMocks.bookmarks.create).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'https://x.com', title: 'Example'
-    }))
+    expect(ipcMocks.bookmarks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://x.com',
+        title: 'Example'
+      })
+    )
 
     // After save, the star button should reflect the new bookmark (re-render via state).
     await waitFor(() => {
@@ -671,8 +723,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.9"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.9 — Cmd+D (real)
+
 - [ ] Open any URL.
 - [ ] Cmd+D → BookmarkDialog appears with URL/title prefilled.
 - [ ] Save → dialog closes; star icon ★ filled.
@@ -689,6 +743,7 @@ git commit -m "test(phase-11): acceptance 10.9 — Cmd+D bookmark create + star 
 ---
 
 <!-- openspec-task: 10.10 -->
+
 ### Task 10: 10.10 — duplicate URL → edit modal, no duplicate row
 
 - [ ] **Step 1: Append test**
@@ -703,7 +758,13 @@ describe('OpenSpec acceptance 10.10 — duplicate URL → edit modal', () => {
     fire({ tabId, patch: { url: 'https://dup.com', title: 'Dup' } })
 
     ipcMocks.bookmarks.getByUrl.mockResolvedValueOnce({
-      id: 42, url: 'https://dup.com', title: 'Dup', favicon: null, tags: ['old'], createdAt: '', updatedAt: ''
+      id: 42,
+      url: 'https://dup.com',
+      title: 'Dup',
+      favicon: null,
+      tags: ['old'],
+      createdAt: '',
+      updatedAt: ''
     })
 
     rtlFireEvent.keyDown(window, { key: 'd', metaKey: true })
@@ -724,8 +785,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.10"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.10 — Duplicate URL
+
 - [ ] Bookmark `https://example.com`.
 - [ ] Navigate away and back, then Cmd+D again.
 - [ ] Dialog opens in edit mode (Delete button present); no duplicate row in DB.
@@ -741,6 +804,7 @@ git commit -m "test(phase-11): acceptance 10.10 — duplicate url → edit modal
 ---
 
 <!-- openspec-task: 10.11 -->
+
 ### Task 11: 10.11 — `bookmarks.list({ q: 'news' })` filters by q
 
 The handler unit tests in Plan 2 already cover this. Add a renderer-level acceptance test that exercises the BookmarkSidebar search wiring.
@@ -774,8 +838,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.11"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.11 — Search bookmarks
+
 - [ ] Add 3 bookmarks: title "World news today", "Cooking recipes", "AI news roundup".
 - [ ] Open sidebar; type `news` in search.
 - [ ] After ~200ms, list filtered to 2 rows (titles containing "news").
@@ -791,6 +857,7 @@ git commit -m "test(phase-11): acceptance 10.11 — bookmarks search by q"
 ---
 
 <!-- openspec-task: 10.12 -->
+
 ### Task 12: 10.12 — `bookmarks.list({ tag: 'ai' })` filters by tag
 
 - [ ] **Step 1: Append test**
@@ -800,8 +867,24 @@ describe('OpenSpec acceptance 10.12 — tag filter', () => {
   it('clicking a tag chip calls list with tag', async () => {
     ipcMocks.bookmarks.list.mockResolvedValueOnce({
       items: [
-        { id: 1, url: 'https://a.com', title: 'A', favicon: null, tags: ['ai'], createdAt: '', updatedAt: '' },
-        { id: 2, url: 'https://b.com', title: 'B', favicon: null, tags: ['cooking'], createdAt: '', updatedAt: '' }
+        {
+          id: 1,
+          url: 'https://a.com',
+          title: 'A',
+          favicon: null,
+          tags: ['ai'],
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 2,
+          url: 'https://b.com',
+          title: 'B',
+          favicon: null,
+          tags: ['cooking'],
+          createdAt: '',
+          updatedAt: ''
+        }
       ],
       total: 2
     })
@@ -827,8 +910,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.12"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.12 — Tag filter
+
 - [ ] With three bookmarks tagged `ai`, `cooking`, and `news`, click the `ai` chip in sidebar.
 - [ ] List shows only the row tagged `ai`.
 - [ ] Click the chip again to deselect; list returns to full.
@@ -844,6 +929,7 @@ git commit -m "test(phase-11): acceptance 10.12 — bookmarks filter by tag"
 ---
 
 <!-- openspec-task: 10.13 -->
+
 ### Task 13: 10.13 — LRU: 22 tabs → oldest suspended; resume reloads
 
 - [ ] **Step 1: Append test**
@@ -891,8 +977,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.13"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.13 — LRU in Electron
+
 - [ ] Open 22 tabs to different URLs.
 - [ ] Activity Monitor: Electron child-process count drops by ~2 vs peak (LRU killed oldest).
 - [ ] Click the suspended tab in TabBar (favicon may be greyed); page reloads.
@@ -909,6 +997,7 @@ git commit -m "test(phase-11): acceptance 10.13 — LRU suspend + resume"
 ---
 
 <!-- openspec-task: 10.14 -->
+
 ### Task 14: 10.14 — window resize → WebContentsView follows; debounce no jank
 
 - [ ] **Step 1: Append test (debounce already covered in unit; here we verify wiring through Browse)**
@@ -944,8 +1033,10 @@ npx vitest run src/pages/Browse.acceptance.test.tsx -t "10.14"
 ```
 
 Runbook:
+
 ```markdown
 ## 10.14 — Window resize
+
 - [ ] Drag the window edge slowly from narrow → wide.
 - [ ] WebContentsView resizes smoothly (no flicker, no perceptible lag).
 - [ ] DevTools: `browser.setViewport` IPC calls visible at ~60Hz, not per-pixel.
@@ -961,6 +1052,7 @@ git commit -m "test(phase-11): acceptance 10.14 — viewport debounce coalesces"
 ---
 
 <!-- openspec-task: 10.15 -->
+
 ### Task 15: 10.15 — main renderer external link → `shell.openExternal` (regression)
 
 This re-asserts phase-01's behaviour is intact. The test lives in `electron/security/external-links.test.ts` which we modified in Plan 4 task 9; this acceptance task simply runs that suite and confirms green, then ticks off the runbook.
@@ -977,6 +1069,7 @@ Expected: all green, including the scope assertion from Plan 4.
 
 ```markdown
 ## 10.15 — Main renderer external link unchanged
+
 - [ ] In any Acornvo non-/browser page (e.g., Library), open a help/docs link rendered via React `<a href>` to a public URL.
 - [ ] Confirm system browser opens the URL; main window stays put.
 ```
@@ -991,6 +1084,7 @@ git commit -m "test(phase-11): acceptance 10.15 — main renderer external link 
 ---
 
 <!-- openspec-task: 10.16 -->
+
 ### Task 16: 10.16 — WebContentsView cross-site nav unaffected by phase-01 guard
 
 - [ ] **Step 1: Re-confirm scope test from Plan 4**
@@ -1005,6 +1099,7 @@ Expected: pass — the BrowserWindow guard does not register listeners on indepe
 
 ```markdown
 ## 10.16 — WebContentsView cross-site nav
+
 - [ ] Open `https://example.com` in an in-app browser tab.
 - [ ] Click an `<a href>` to `https://www.iana.org` (or any cross-site link).
 - [ ] Navigation completes IN THE TAB. No external system browser launch.
@@ -1020,6 +1115,7 @@ git commit -m "test(phase-11): acceptance 10.16 — WebContentsView cross-site n
 ---
 
 <!-- openspec-task: 10.17 -->
+
 ### Task 17: 10.17 — `openspec validate phase-11-browser-tabs-bookmarks --strict` passes
 
 This is the final integration check. All tasks should already be `[x]` in `tasks.md`. We run the entire test suite, then `openspec validate --strict`.
@@ -1068,6 +1164,7 @@ If validate fails, address each error inline (commonly: missing scenario keyword
 
 ```markdown
 ## 10.17 — Strict validate
+
 - [ ] `npm run test` exits 0.
 - [ ] `npm run typecheck && npm run lint` both exit 0.
 - [ ] `openspec validate phase-11-browser-tabs-bookmarks --strict` exits 0.

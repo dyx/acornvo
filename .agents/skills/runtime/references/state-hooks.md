@@ -40,23 +40,23 @@ function Controls() {
 Subscribe to state changes with a selector.
 
 ```tsx
-import { useAuiState } from "@assistant-ui/react";
+import { useAuiState } from '@assistant-ui/react'
 
 function MessageCount() {
   // Re-renders when messages change
-  const messages = useAuiState((s) => s.thread.messages);
-  return <div>{messages.length} messages</div>;
+  const messages = useAuiState((s) => s.thread.messages)
+  return <div>{messages.length} messages</div>
 }
 
 function RunningIndicator() {
   // Only re-renders when isRunning changes
-  const isRunning = useAuiState((s) => s.thread.isRunning);
-  return isRunning ? <Spinner /> : null;
+  const isRunning = useAuiState((s) => s.thread.isRunning)
+  return isRunning ? <Spinner /> : null
 }
 
 function ComposerText() {
-  const text = useAuiState((s) => s.thread.composer.text);
-  return <div>Typing: {text}</div>;
+  const text = useAuiState((s) => s.thread.composer.text)
+  return <div>Typing: {text}</div>
 }
 
 function ThreadInfo() {
@@ -64,8 +64,8 @@ function ThreadInfo() {
   const { messages, isRunning, capabilities } = useAuiState((s) => ({
     messages: s.thread.messages,
     isRunning: s.thread.isRunning,
-    capabilities: s.thread.capabilities,
-  }));
+    capabilities: s.thread.capabilities
+  }))
 }
 ```
 
@@ -74,29 +74,30 @@ function ThreadInfo() {
 Listen to runtime events.
 
 ```tsx
-import { useAuiEvent } from "@assistant-ui/react";
+import { useAuiEvent } from '@assistant-ui/react'
 
 function Analytics() {
-  useAuiEvent("composer.send", (event) => {
-    analytics.track("message_sent", {
+  useAuiEvent('composer.send', (event) => {
+    analytics.track('message_sent', {
       threadId: event.threadId,
-      messageId: event.messageId, // optional, may be undefined
-    });
-  });
+      messageId: event.messageId // optional, may be undefined
+    })
+  })
 
-  useAuiEvent("thread.runStart", () => {
-    console.log("Generation started");
-  });
+  useAuiEvent('thread.runStart', () => {
+    console.log('Generation started')
+  })
 
-  useAuiEvent("thread.runEnd", () => {
-    console.log("Generation completed");
-  });
+  useAuiEvent('thread.runEnd', () => {
+    console.log('Generation completed')
+  })
 
-  return null;
+  return null
 }
 ```
 
 Available events:
+
 - `composer.send` - Message submitted from composer
 - `composer.attachmentAdd` - Attachment added in composer
 - `thread.runStart` - Generation started
@@ -111,30 +112,30 @@ Available events:
 ```typescript
 interface AssistantState {
   thread: {
-    messages: ThreadMessage[];
-    isRunning: boolean;
-    capabilities: RuntimeCapabilities;
+    messages: ThreadMessage[]
+    isRunning: boolean
+    capabilities: RuntimeCapabilities
     composer: {
-      text: string;
-      attachments: Attachment[];
-    };
-  };
+      text: string
+      attachments: Attachment[]
+    }
+  }
   threads: {
-    mainThreadId: string;
-    newThreadId: string | null;
-    threadIds: readonly string[];
-    archivedThreadIds: readonly string[];
-    isLoading: boolean;
-    threadItems: readonly ThreadListItemState[];
-    main: ThreadState;
-  };
+    mainThreadId: string
+    newThreadId: string | null
+    threadIds: readonly string[]
+    archivedThreadIds: readonly string[]
+    isLoading: boolean
+    threadItems: readonly ThreadListItemState[]
+    main: ThreadState
+  }
   threadListItem: {
-    id: string;
-    remoteId?: string;
-    externalId?: string;
-    title?: string;
-    status: "archived" | "regular" | "new" | "deleted";
-  };
+    id: string
+    remoteId?: string
+    externalId?: string
+    title?: string
+    status: 'archived' | 'regular' | 'new' | 'deleted'
+  }
 }
 ```
 
@@ -148,13 +149,13 @@ import {
   useAssistantRuntime,
   useThreadRuntime,
   useMessageRuntime,
-  useComposerRuntime,
-} from "@assistant-ui/react";
+  useComposerRuntime
+} from '@assistant-ui/react'
 
-const assistantRuntime = useAssistantRuntime();
-const threadRuntime = useThreadRuntime();
-const messageRuntime = useMessageRuntime();  // Needs message context
-const composerRuntime = useComposerRuntime();
+const assistantRuntime = useAssistantRuntime()
+const threadRuntime = useThreadRuntime()
+const messageRuntime = useMessageRuntime() // Needs message context
+const composerRuntime = useComposerRuntime()
 
 // State subscriptions
 import {
@@ -162,14 +163,14 @@ import {
   useThreadMessages,
   useComposer,
   useMessage,
-  useThreadList,
-} from "@assistant-ui/react";
+  useThreadList
+} from '@assistant-ui/react'
 
-const thread = useThread();           // { messages, isRunning, ... }
-const messages = useThreadMessages(); // ThreadMessage[]
-const composer = useComposer();       // { text, attachments, ... }
-const message = useMessage();         // Current message (needs context)
-const threadList = useThreadList();   // Thread list state
+const thread = useThread() // { messages, isRunning, ... }
+const messages = useThreadMessages() // ThreadMessage[]
+const composer = useComposer() // { text, attachments, ... }
+const message = useMessage() // Current message (needs context)
+const threadList = useThreadList() // Thread list state
 ```
 
 ## Context Requirements
@@ -201,28 +202,25 @@ useMessagePartRuntime()
 
 ```tsx
 // Bad - re-renders on any state change
-const state = useAuiState((s) => s);
+const state = useAuiState((s) => s)
 
 // Good - only re-renders when messages change
-const messages = useAuiState((s) => s.thread.messages);
+const messages = useAuiState((s) => s.thread.messages)
 
 // Better - only re-renders when message count changes
-const count = useAuiState((s) => s.thread.messages.length);
+const count = useAuiState((s) => s.thread.messages.length)
 ```
 
 ### Memoize Derived Data
 
 ```tsx
 function MessageList() {
-  const messages = useAuiState((s) => s.thread.messages);
+  const messages = useAuiState((s) => s.thread.messages)
 
   // Memoize expensive computations
-  const userMessages = useMemo(
-    () => messages.filter((m) => m.role === "user"),
-    [messages]
-  );
+  const userMessages = useMemo(() => messages.filter((m) => m.role === 'user'), [messages])
 
-  return <div>{userMessages.length} user messages</div>;
+  return <div>{userMessages.length} user messages</div>
 }
 ```
 
@@ -231,14 +229,14 @@ function MessageList() {
 ```tsx
 // Bad - entire component re-renders
 function Chat() {
-  const messages = useAuiState((s) => s.thread.messages);
-  const isRunning = useAuiState((s) => s.thread.isRunning);
+  const messages = useAuiState((s) => s.thread.messages)
+  const isRunning = useAuiState((s) => s.thread.isRunning)
   return (
     <div>
       <MessageList messages={messages} />
       <RunningIndicator running={isRunning} />
     </div>
-  );
+  )
 }
 
 // Good - components re-render independently
@@ -248,17 +246,17 @@ function Chat() {
       <MessageList />
       <RunningIndicator />
     </div>
-  );
+  )
 }
 
 function MessageList() {
-  const messages = useAuiState((s) => s.thread.messages);
-  return <div>...</div>;
+  const messages = useAuiState((s) => s.thread.messages)
+  return <div>...</div>
 }
 
 function RunningIndicator() {
-  const isRunning = useAuiState((s) => s.thread.isRunning);
-  return isRunning ? <Spinner /> : null;
+  const isRunning = useAuiState((s) => s.thread.isRunning)
+  return isRunning ? <Spinner /> : null
 }
 ```
 
@@ -267,17 +265,17 @@ function RunningIndicator() {
 For non-React contexts:
 
 ```tsx
-const api = useAui();
+const api = useAui()
 
 useEffect(() => {
-  const runtime = api.thread();
+  const runtime = api.thread()
 
   // Subscribe to changes
   const unsubscribe = runtime.subscribe(() => {
-    const state = runtime.getState();
-    console.log("State changed:", state);
-  });
+    const state = runtime.getState()
+    console.log('State changed:', state)
+  })
 
-  return unsubscribe;
-}, [api]);
+  return unsubscribe
+}, [api])
 ```

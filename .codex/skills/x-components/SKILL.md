@@ -51,20 +51,20 @@ Based on the RICH interaction paradigm:
 
 # 🚀 Quick Start Decision Guide
 
-| If you need to... | Read first |
-| --- | --- |
-| Render a chat message bubble | [COMPONENTS.md → Bubble](reference/COMPONENTS.md#bubble) |
-| Build a chat input box | [COMPONENTS.md → Sender](reference/COMPONENTS.md#sender) |
-| List and switch conversations | [COMPONENTS.md → Conversations](reference/COMPONENTS.md#conversations) |
-| Show AI thinking process | [COMPONENTS.md → ThoughtChain / Think](reference/COMPONENTS.md#thoughtchain--think) |
-| Add action buttons below a message | [COMPONENTS.md → Actions](reference/COMPONENTS.md#actions) |
-| Build a welcome / onboarding screen | [COMPONENTS.md → Welcome + Prompts](reference/COMPONENTS.md#welcome--prompts) |
-| Show file attachments in input | [COMPONENTS.md → Attachments](reference/COMPONENTS.md#attachments) |
-| Show source citations | [COMPONENTS.md → Sources](reference/COMPONENTS.md#sources) |
-| Add quick command suggestions | [COMPONENTS.md → Suggestion](reference/COMPONENTS.md#suggestion) |
-| Display a hierarchical file/folder tree | [COMPONENTS.md → Folder](reference/COMPONENTS.md#folder) |
-| Wire a complete chat page | [PATTERNS.md](reference/PATTERNS.md) |
-| Look up a specific prop | [API.md](reference/API.md) |
+| If you need to...                       | Read first                                                                          |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| Render a chat message bubble            | [COMPONENTS.md → Bubble](reference/COMPONENTS.md#bubble)                            |
+| Build a chat input box                  | [COMPONENTS.md → Sender](reference/COMPONENTS.md#sender)                            |
+| List and switch conversations           | [COMPONENTS.md → Conversations](reference/COMPONENTS.md#conversations)              |
+| Show AI thinking process                | [COMPONENTS.md → ThoughtChain / Think](reference/COMPONENTS.md#thoughtchain--think) |
+| Add action buttons below a message      | [COMPONENTS.md → Actions](reference/COMPONENTS.md#actions)                          |
+| Build a welcome / onboarding screen     | [COMPONENTS.md → Welcome + Prompts](reference/COMPONENTS.md#welcome--prompts)       |
+| Show file attachments in input          | [COMPONENTS.md → Attachments](reference/COMPONENTS.md#attachments)                  |
+| Show source citations                   | [COMPONENTS.md → Sources](reference/COMPONENTS.md#sources)                          |
+| Add quick command suggestions           | [COMPONENTS.md → Suggestion](reference/COMPONENTS.md#suggestion)                    |
+| Display a hierarchical file/folder tree | [COMPONENTS.md → Folder](reference/COMPONENTS.md#folder)                            |
+| Wire a complete chat page               | [PATTERNS.md](reference/PATTERNS.md)                                                |
+| Look up a specific prop                 | [API.md](reference/API.md)                                                          |
 
 # 🛠 Recommended Workflow
 
@@ -76,7 +76,7 @@ Based on the RICH interaction paradigm:
 ## Minimal Full-Page Example
 
 ```tsx
-import { XProvider, Welcome, Prompts, Bubble, Sender } from '@ant-design/x';
+import { XProvider, Welcome, Prompts, Bubble, Sender } from '@ant-design/x'
 
 export default () => (
   <XProvider>
@@ -88,7 +88,7 @@ export default () => (
     <Bubble.List items={[{ key: '1', content: 'Hello World', placement: 'end' }]} />
     <Sender onSubmit={(msg) => console.log(msg)} />
   </XProvider>
-);
+)
 ```
 
 # 🚨 Development Rules
@@ -104,12 +104,12 @@ export default () => (
 
 # 🤝 Skill Collaboration
 
-| Scenario | Skill combination |
-| --- | --- |
-| Full AI chat app | `x-chat-provider` → `x-request` → `use-x-chat` → `x-components` → `x-markdown` |
-| Just building UI structure | `x-components` only |
-| Markdown in bubble replies | `x-components` + `x-markdown` |
-| Streaming data flow only | `use-x-chat` + `x-request` |
+| Scenario                   | Skill combination                                                              |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| Full AI chat app           | `x-chat-provider` → `x-request` → `use-x-chat` → `x-components` → `x-markdown` |
+| Just building UI structure | `x-components` only                                                            |
+| Markdown in bubble replies | `x-components` + `x-markdown`                                                  |
+| Streaming data flow only   | `use-x-chat` + `x-request`                                                     |
 
 # 🔗 Reference Resources
 

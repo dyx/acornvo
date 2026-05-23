@@ -30,12 +30,12 @@ The "acceptance" tasks here are not new code — they are **verification scripts
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/App.tsx` | Modify (remove `/editor-placeholder` if present) | 6.4 |
-| `src/pages/EditorPlaceholder.tsx` (or similar) | Delete (if exists) | 6.4 |
-| `src/i18n/locales/zh-CN.json` | Modify (final audit) | 7.1 |
-| `docs/superpowers/plans/manual-acceptance-phase-07-batch-1.md` | Create — reproducible script | 8.1–8.6 |
+| Path                                                           | Action                                           | Owner task |
+| -------------------------------------------------------------- | ------------------------------------------------ | ---------- |
+| `src/App.tsx`                                                  | Modify (remove `/editor-placeholder` if present) | 6.4        |
+| `src/pages/EditorPlaceholder.tsx` (or similar)                 | Delete (if exists)                               | 6.4        |
+| `src/i18n/locales/zh-CN.json`                                  | Modify (final audit)                             | 7.1        |
+| `docs/superpowers/plans/manual-acceptance-phase-07-batch-1.md` | Create — reproducible script                     | 8.1–8.6    |
 
 ## Pre-flight
 
@@ -54,9 +54,11 @@ All three must PASS. If any fails, fix in the relevant earlier plan before conti
 ## Tasks
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 1: Remove `/editor-placeholder` route (if it exists)
 
 **Files:**
+
 - Modify: `src/App.tsx`
 - Possibly delete: `src/pages/EditorPlaceholder.tsx` or similar
 
@@ -65,6 +67,7 @@ Phase-06 might have introduced a placeholder route used by Library buttons befor
 - [ ] **Step 1: Look for the placeholder**
 
 Run:
+
 ```bash
 grep -rn 'editor-placeholder\|EditorPlaceholder' src/ shared/ electron/ 2>/dev/null
 ```
@@ -75,14 +78,17 @@ grep -rn 'editor-placeholder\|EditorPlaceholder' src/ shared/ electron/ 2>/dev/n
 - [ ] **Step 2: Remove the route from `src/App.tsx`**
 
 Find the line:
+
 ```tsx
 <Route path="/editor-placeholder" element={...} />
 ```
+
 …and delete it. Also remove the corresponding `import { EditorPlaceholder } from './pages/EditorPlaceholder'` line.
 
 - [ ] **Step 3: Delete the placeholder component file**
 
 If `src/pages/EditorPlaceholder.tsx` exists:
+
 ```bash
 git rm src/pages/EditorPlaceholder.tsx
 ```
@@ -109,9 +115,11 @@ git commit -m "chore(phase-07): remove /editor-placeholder route now that /edito
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 2: i18n strings — final audit
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json` (only if drift)
 
 Plan 2 task 3 step 3 added the `editor.*` namespace. This task confirms every i18n key referenced by any `t('editor.…')` call in the new editor code exists in the JSON, and the JSON parses cleanly.
@@ -119,6 +127,7 @@ Plan 2 task 3 step 3 added the `editor.*` namespace. This task confirms every i1
 - [ ] **Step 1: Enumerate every `t('editor.…')` reference**
 
 Run:
+
 ```bash
 grep -rn "t(['\"]editor\." src/components/editor src/pages/Editor.tsx src/components/library 2>/dev/null | sed -E "s/.*t\(['\"]([^'\"]+)['\"].*/\1/" | sort -u
 ```
@@ -128,6 +137,7 @@ This prints every key string used in the editor/library code. Compare against th
 - [ ] **Step 2: Read the JSON keys**
 
 Run:
+
 ```bash
 node -e "const j=require('./src/i18n/locales/zh-CN.json'); function walk(o,p=''){for(const k of Object.keys(o)){const np=p?p+'.'+k:k;if(typeof o[k]==='object'&&o[k]!==null&&!Array.isArray(o[k]))walk(o[k],np);else console.log(np)}};walk(j)" | grep '^editor\.'
 ```
@@ -172,9 +182,11 @@ git commit -m "i18n(phase-07): final audit of editor.* namespace coverage"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 3: Acceptance — Library "open editor" navigates and loads in <300ms
 
 **Files:**
+
 - Create: `docs/superpowers/plans/manual-acceptance-phase-07-batch-1.md`
 
 Spec scenario: from Library, click "打开编辑器" → route changes to `/editor/<encoded>` → page enters `ready` state in <300ms (warm cache).
@@ -183,7 +195,7 @@ Spec scenario: from Library, click "打开编辑器" → route changes to `/edit
 
 Create `docs/superpowers/plans/manual-acceptance-phase-07-batch-1.md`:
 
-```markdown
+````markdown
 # Phase 07 — Acceptance Batch 1 (tasks 8.1–8.6)
 
 Run `npm run dev` and execute each scenario. Each step has an explicit pass criterion.
@@ -196,6 +208,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. Wait for the editor's Vditor host to appear; stop recording.
 
 **Pass:**
+
 - URL changes to `/editor/<encoded>`.
 - Vditor host (`[data-testid=vditor-host]`) is visible within 300ms of the click (read off the Performance flame chart's "Frames" track).
 - No 4xx/5xx in DevTools Network tab.
@@ -209,8 +222,10 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
    ```bash
    tail -c 200 path/to/grove/inbox/sample.md
    ```
+````
 
 **Pass:**
+
 - The file's body ends with `hello\n`.
 - The dirty dot disappears in the TitleBar after the save lands.
 - `stat -f %m path/to/grove/inbox/sample.md` reports a newer mtime than before the edit.
@@ -223,6 +238,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. In Chromium DevTools → Network tab, filter by "ipc" or expand the renderer-side log.
 
 **Pass:**
+
 - After ~1s of stillness, exactly **one** `file.writeParsed` IPC call fires (not 20).
 - Final disk content contains all 20 characters in order.
 - (Optional) If the renderer-side log is harder to read, instrument the test by temporarily wrapping `ipc.file.writeParsed` to console.log; revert after.
@@ -233,6 +249,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 2. Hit `Cmd+S` (mac) / `Ctrl+S` (win/linux).
 
 **Pass:**
+
 - Within ~50ms the saving pulse appears, then the dirty dot disappears.
 - File on disk reflects the 5 new characters.
 - The browser's default "save page" dialog does NOT appear.
@@ -245,6 +262,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. Click "打开编辑器" on the SAME file again.
 
 **Pass:**
+
 - Editor reopens with the 3 characters present in the body (verifies round-trip read after write).
 - DevTools "Memory" tab → "Detached DOM" count does NOT show the previous Vditor instance leaking (snapshot before/after).
 - Manual side-check: open a file, route away, route back ten times — RAM usage in Activity Monitor stays flat (no GC leak).
@@ -256,9 +274,11 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 3. Inspect file on disk via `tail -c 100 …`.
 
 **Pass:**
+
 - Even though debounce did NOT fire, the file already reflects the 2 characters because `visibilitychange=hidden` triggered `flushSave()`.
 - (On linux/win: minimise the window or switch desktop — same expectation.)
-```
+
+````
 
 - [ ] **Step 2: Run scenario 8.1**
 
@@ -266,7 +286,7 @@ Execute the steps in the doc. Record the actual measured latency in a comment on
 
 ```markdown
 **Result (run on YYYY-MM-DD, machine: ...):** 187ms — PASS
-```
+````
 
 - [ ] **Step 3: Commit the doc**
 
@@ -278,6 +298,7 @@ git commit -m "test(phase-07): manual acceptance script for 8.1–8.6 + 8.1 resu
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 4: Acceptance — input → debounce → disk
 
 - [ ] **Step 1: Run scenario 8.2 from the doc**
@@ -304,6 +325,7 @@ git commit -m "test(phase-07): acceptance 8.2 input→debounce→disk passed"
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 5: Acceptance — 20 keystrokes < 1s coalesce to one IPC
 
 - [ ] **Step 1: Instrument** (temporarily)
@@ -342,11 +364,13 @@ git commit -m "test(phase-07): acceptance 8.3 keystroke coalescing passed"
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 6: Acceptance — `Cmd+S` immediately saves
 
 - [ ] **Step 1: Run scenario 8.4**
 
 Type 5 chars, hit Cmd+S well under 1s. Confirm:
+
 - saving pulse appears
 - dirty dot clears
 - file on disk has the 5 chars
@@ -366,11 +390,13 @@ git commit -m "test(phase-07): acceptance 8.4 Cmd+S manual save passed"
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 7: Acceptance — route round-trip preserves content + no Vditor leak
 
 - [ ] **Step 1: Run scenario 8.5**
 
 Make 10 round-trips. Inspect:
+
 1. Body content survives the round-trip (always).
 2. Memory tab: snapshot before round-trips, snapshot after — Vditor instance count is stable. Look for retained `Vditor` constructor instances.
 
@@ -392,6 +418,7 @@ git commit -m "test(phase-07): acceptance 8.5 route round-trip + no leak passed"
 ---
 
 <!-- openspec-task: 8.6 -->
+
 ### Task 8: Acceptance — window hide flushes last input
 
 - [ ] **Step 1: Run scenario 8.6 (mac)**
@@ -418,6 +445,7 @@ git commit -m "test(phase-07): acceptance 8.6 visibilitychange=hidden flush pass
 ## Plan-4 Acceptance
 
 After all 8 tasks complete:
+
 - [ ] `/editor-placeholder` is gone (no grep matches anywhere in the repo)
 - [ ] All `t('editor.…')` keys exist in `src/i18n/locales/zh-CN.json`
 - [ ] `docs/superpowers/plans/manual-acceptance-phase-07-batch-1.md` exists and includes a recorded "PASS" result for each of 8.1–8.6

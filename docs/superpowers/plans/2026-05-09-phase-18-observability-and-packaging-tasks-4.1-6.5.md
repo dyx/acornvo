@@ -10,6 +10,7 @@
 **Plan branch:** `phase-19-ui-remediation`
 
 **Sources:**
+
 - `openspec/changes/phase-18-observability-and-packaging/proposal.md`
 - `openspec/changes/phase-18-observability-and-packaging/design.md` (D3, D4, D5)
 - `openspec/changes/phase-18-observability-and-packaging/tasks.md` (§4, §5, §6)
@@ -18,12 +19,14 @@
 - `openspec/changes/phase-18-observability-and-packaging/specs/observability-page/spec.md`
 
 **Out of scope:**
+
 - Logger / perf modules (Plan 1)
 - About page / Auto-update / Telemetry switch (Plan 3)
 - Packaging, App shell wiring, i18n (Plan 4)
 - Verification (Plan 5)
 
 **Open issues:**
+
 - New file convention: OpenSpec spec text uses `src/pages/settings/Observability.tsx`. The repo's actual settings convention is `src/components/settings/<Name>Tab.tsx` rendered from `src/pages/Settings.tsx` via React Router. We follow the **repo convention** for consistency: `src/components/settings/ObservabilityTab.tsx`. The route remains `/settings/observability`.
 - Adding `archiver` (mature Node zip lib) as a runtime dep for diagnostic bundles. Alternative `adm-zip` is sync-only and less battle-tested; not chosen.
 
@@ -49,9 +52,11 @@ Capture process crashes locally, allow users to export a redacted 7-day diagnost
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: Crash hooks → write `crashes/<kind>-<ts>.log`
 
 **Files:**
+
 - Create: `electron/obs/crashReporter.ts`
 - Create: `electron/obs/crashReporter.test.ts`
 
@@ -145,7 +150,11 @@ export function writeCrash(p: CrashPayload): string {
 
 export function installCrashHooks(): void {
   app.on('render-process-gone', (_e, _wc, details) => {
-    const file = writeCrash({ kind: 'renderer', reason: details.reason, details: { exitCode: details.exitCode } })
+    const file = writeCrash({
+      kind: 'renderer',
+      reason: details.reason,
+      details: { exitCode: details.exitCode }
+    })
     logger().error('crash', { op: 'renderer-gone', meta: { file, reason: details.reason } })
   })
 
@@ -177,9 +186,11 @@ git commit -m "feat(obs): write crash logs on render-process-gone / uncaught / u
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: Wire Electron `crashReporter.start` (minidumps, no upload)
 
 **Files:**
+
 - Modify: `electron/obs/crashReporter.ts` (add `startElectronCrashReporter`)
 - Modify: `electron/bootstrap.ts` to call it before `app.whenReady()`
 
@@ -227,9 +238,11 @@ git commit -m "feat(obs): start Electron crashReporter (no upload), redirect min
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: `checkLastRun()` + `ack(file)`
 
 **Files:**
+
 - Modify: `electron/obs/crashReporter.ts`
 - Create: `electron/obs/crashReporter.checkLastRun.test.ts`
 
@@ -313,9 +326,11 @@ git commit -m "feat(obs): checkLastRun()/ack() for unacknowledged crashes"
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 4: Auto-delete acked crashes older than 30 days
 
 **Files:**
+
 - Modify: `electron/obs/crashReporter.ts` (add `purgeOldAcked`)
 - Create: `electron/obs/crashReporter.purge.test.ts`
 - Modify: `electron/bootstrap.ts` to call `purgeOldAcked()` after `installCrashHooks()`
@@ -414,9 +429,11 @@ git commit -m "feat(obs): purge acked crash logs older than 30 days on boot"
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 5: Implement `exportDiagnosticBundle()` (zip skeleton)
 
 **Files:**
+
 - Create: `electron/obs/diagnostic.ts`
 - Create: `electron/obs/diagnostic.test.ts`
 - Modify: `package.json` (add `archiver` runtime dep)
@@ -440,7 +457,10 @@ const tempBase = mkdtempSync(join(tmpdir(), 'diag-'))
 const downloads = mkdtempSync(join(tmpdir(), 'diag-dl-'))
 
 vi.mock('electron', () => ({
-  app: { getPath: (k: string) => (k === 'downloads' ? downloads : tempBase), getVersion: () => '0.1.0' },
+  app: {
+    getPath: (k: string) => (k === 'downloads' ? downloads : tempBase),
+    getVersion: () => '0.1.0'
+  },
   shell: { showItemInFolder: vi.fn() }
 }))
 
@@ -588,11 +608,13 @@ git commit -m "feat(obs): exportDiagnosticBundle scaffolding (zip with logs + ab
 ---
 
 <!-- openspec-task: 5.2 -->
-### Task 6: Bundle 7-day logs + crashes/*.log + about.json + env.json
+
+### Task 6: Bundle 7-day logs + crashes/\*.log + about.json + env.json
 
 This task is largely satisfied by the skeleton in Task 5. Verify completeness explicitly.
 
 **Files:**
+
 - Modify: `electron/obs/diagnostic.test.ts` (add assertion for crashes/ inclusion)
 
 - [ ] **Step 1: Extend the test to cover crash files and 7-day window**
@@ -635,9 +657,11 @@ git commit -m "test(obs): assert crashes/ inclusion and 7-day log filter in diag
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 7: Redact API keys in zipped log copies
 
 **Files:**
+
 - Modify: `electron/obs/diagnostic.ts` (`scrubSecrets`, plumb into `archive.append`)
 - Create: `electron/obs/diagnostic.scrub.test.ts`
 
@@ -727,11 +751,13 @@ git commit -m "feat(obs): redact api-key patterns from logs inside diagnostic zi
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 8: Output to Downloads/ + `shell.showItemInFolder`
 
 This task is largely covered by Task 5's `bundleFilename` and `shell.showItemInFolder` call. Add explicit IPC + verification.
 
 **Files:**
+
 - Modify: `electron/ipc/ops.ts` (or appropriate handler module) — add `ops.exportDiagnostic()` IPC
 - Modify: `shared/ipc-contract.ts` — declare the new endpoint
 - Modify: `preload/preload.ts` — re-export `ops` namespace if not already
@@ -811,9 +837,11 @@ git commit -m "feat(ipc): ops.exportDiagnostic → triggers bundle + opens Finde
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 9: ObservabilityTab skeleton (3 panels + footer button)
 
 **Files:**
+
 - Create: `src/components/settings/ObservabilityTab.tsx`
 - Create: `src/components/settings/ObservabilityTab.test.tsx`
 
@@ -829,7 +857,11 @@ import { ObservabilityTab } from './ObservabilityTab'
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    ai: { 'usage.summary': vi.fn().mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] }) },
+    ai: {
+      'usage.summary': vi
+        .fn()
+        .mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] })
+    },
     queue: {
       health: vi.fn().mockResolvedValue({ pending: 0, running: 0, failed: 0 }),
       recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] })
@@ -966,9 +998,11 @@ git commit -m "feat(ui): observability tab skeleton (AI/queue/perf panels + expo
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 10: AI usage panel — windows / numbers / profile bar / tools / line chart
 
 **Files:**
+
 - Modify: `src/components/settings/ObservabilityTab.tsx` (`ObservabilityAiPanel`)
 - Create: `src/components/settings/ObservabilityAi.test.tsx`
 
@@ -989,10 +1023,16 @@ vi.mock('@/ipc/client', () => ({
         totals: { requests: 12, tokens: 345, costUSD: 0.07 },
         byProfile: [{ profileId: 'p1', requests: 7, tokens: 200 }],
         byTool: [{ tool: 'search_files', count: 3 }],
-        byDay: [{ day: '2026-05-08', tokens: 100 }, { day: '2026-05-09', tokens: 245 }]
+        byDay: [
+          { day: '2026-05-08', tokens: 100 },
+          { day: '2026-05-09', tokens: 245 }
+        ]
       })
     },
-    queue: { health: vi.fn().mockResolvedValue({}), recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] }) },
+    queue: {
+      health: vi.fn().mockResolvedValue({}),
+      recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] })
+    },
     perf: { aggregates: vi.fn().mockResolvedValue([]) },
     ops: { exportDiagnostic: vi.fn() }
   }
@@ -1033,7 +1073,9 @@ function windowToMs(w: Window): number {
 function ObservabilityAiPanel(): JSX.Element {
   const { t } = useTranslation()
   const [windowSel, setWindowSel] = useState<Window>('24h')
-  const [data, setData] = useState<Awaited<ReturnType<typeof ipc.ai['usage.summary']>> | null>(null)
+  const [data, setData] = useState<Awaited<ReturnType<(typeof ipc.ai)['usage.summary']>> | null>(
+    null
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -1062,9 +1104,21 @@ function ObservabilityAiPanel(): JSX.Element {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <NumberCard testId="obs-ai-total-requests" label={t('obs.ai.totalRequests')} value={data?.totals.requests ?? 0} />
-        <NumberCard testId="obs-ai-total-tokens" label={t('obs.ai.totalTokens')} value={data?.totals.tokens ?? 0} />
-        <NumberCard testId="obs-ai-cost" label={t('obs.ai.estimatedCost')} value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`} />
+        <NumberCard
+          testId="obs-ai-total-requests"
+          label={t('obs.ai.totalRequests')}
+          value={data?.totals.requests ?? 0}
+        />
+        <NumberCard
+          testId="obs-ai-total-tokens"
+          label={t('obs.ai.totalTokens')}
+          value={data?.totals.tokens ?? 0}
+        />
+        <NumberCard
+          testId="obs-ai-cost"
+          label={t('obs.ai.estimatedCost')}
+          value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`}
+        />
       </div>
 
       <ProfileBars data={data?.byProfile ?? []} />
@@ -1074,16 +1128,30 @@ function ObservabilityAiPanel(): JSX.Element {
   )
 }
 
-function NumberCard({ testId, label, value }: { testId: string; label: string; value: number | string }): JSX.Element {
+function NumberCard({
+  testId,
+  label,
+  value
+}: {
+  testId: string
+  label: string
+  value: number | string
+}): JSX.Element {
   return (
     <div className="rounded border p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div data-testid={testId} className="text-xl font-semibold">{value}</div>
+      <div data-testid={testId} className="text-xl font-semibold">
+        {value}
+      </div>
     </div>
   )
 }
 
-function ProfileBars({ data }: { data: { profileId: string; requests: number; tokens: number }[] }): JSX.Element {
+function ProfileBars({
+  data
+}: {
+  data: { profileId: string; requests: number; tokens: number }[]
+}): JSX.Element {
   const max = Math.max(1, ...data.map((d) => d.tokens))
   return (
     <ul data-testid="obs-ai-profile-bars" className="space-y-1">
@@ -1091,7 +1159,10 @@ function ProfileBars({ data }: { data: { profileId: string; requests: number; to
         <li key={d.profileId} className="flex items-center gap-2 text-sm">
           <span className="w-32 truncate">{d.profileId}</span>
           <div className="h-2 flex-1 rounded bg-muted">
-            <div className="h-2 rounded bg-primary" style={{ width: `${(d.tokens / max) * 100}%` }} />
+            <div
+              className="h-2 rounded bg-primary"
+              style={{ width: `${(d.tokens / max) * 100}%` }}
+            />
           </div>
           <span className="w-16 text-right tabular-nums">{d.tokens}</span>
         </li>
@@ -1150,9 +1221,11 @@ git commit -m "feat(ui): observability AI panel — totals/profile/tool/day"
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 11: Queue panel — counts / recent failures + retry/discard / ops_log / 5s polling
 
 **Files:**
+
 - Modify: `src/components/settings/ObservabilityTab.tsx` (`ObservabilityQueuePanel`)
 - Modify: `electron/ipc/jobs.ts` and `shared/ipc-contract.ts` — add `queue.health`, `queue.recent`, `queue.retry(id)`, `queue.discard(id)`
 - Create: `src/components/settings/ObservabilityQueue.test.tsx`
@@ -1170,11 +1243,17 @@ import { ObservabilityTab } from './ObservabilityTab'
 const retry = vi.fn()
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    ai: { 'usage.summary': vi.fn().mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] }) },
+    ai: {
+      'usage.summary': vi
+        .fn()
+        .mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] })
+    },
     queue: {
       health: vi.fn().mockResolvedValue({ pending: 1, running: 0, failed: 1 }),
       recent: vi.fn().mockResolvedValue({
-        failed: [{ id: 'j1', kind: 'ai-review-clip', last_error: 'boom', updated_at: '2026-05-09' }],
+        failed: [
+          { id: 'j1', kind: 'ai-review-clip', last_error: 'boom', updated_at: '2026-05-09' }
+        ],
         opsLog: [{ ts: '2026-05-09', area: 'queue', message: 'started' }]
       }),
       retry,
@@ -1212,10 +1291,11 @@ In `shared/ipc-contract.ts`:
 ```ts
 queue: {
   health: () => Promise<{ pending: number; running: number; failed: number }>
-  recent: () => Promise<{
-    failed: { id: string; kind: string; last_error: string; updated_at: string }[]
-    opsLog: { ts: string; area: string; message: string }[]
-  }>
+  recent: () =>
+    Promise<{
+      failed: { id: string; kind: string; last_error: string; updated_at: string }[]
+      opsLog: { ts: string; area: string; message: string }[]
+    }>
   retry: (id: string) => Promise<void>
   discard: (id: string) => Promise<void>
 }
@@ -1260,15 +1340,21 @@ function ObservabilityQueuePanel(): JSX.Element {
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.pending')}</div>
-          <div data-testid="obs-queue-pending" className="text-xl font-semibold">{health.pending}</div>
+          <div data-testid="obs-queue-pending" className="text-xl font-semibold">
+            {health.pending}
+          </div>
         </div>
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.running')}</div>
-          <div data-testid="obs-queue-running" className="text-xl font-semibold">{health.running}</div>
+          <div data-testid="obs-queue-running" className="text-xl font-semibold">
+            {health.running}
+          </div>
         </div>
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.failed')}</div>
-          <div data-testid="obs-queue-failed" className="text-xl font-semibold">{health.failed}</div>
+          <div data-testid="obs-queue-failed" className="text-xl font-semibold">
+            {health.failed}
+          </div>
         </div>
       </div>
 
@@ -1328,9 +1414,11 @@ git commit -m "feat(ui): observability queue panel (counts/failed/retry/discard/
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 12: Perf panel — per-area P50/P95/successRate + threshold red
 
 **Files:**
+
 - Modify: `src/components/settings/ObservabilityTab.tsx` (`ObservabilityPerfPanel`)
 - Modify: `electron/ipc/jobs.ts` (or new `electron/ipc/perf.ts`) + `shared/ipc-contract.ts` — add `perf.aggregates(area, windowMs)` returning `{ count, p50, p95, successRate }`
 - Create: `src/components/settings/ObservabilityPerf.test.tsx`
@@ -1347,8 +1435,15 @@ import { ObservabilityTab } from './ObservabilityTab'
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    ai: { 'usage.summary': vi.fn().mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] }) },
-    queue: { health: vi.fn().mockResolvedValue({}), recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] }) },
+    ai: {
+      'usage.summary': vi
+        .fn()
+        .mockResolvedValue({ totals: {}, byProfile: [], byTool: [], byDay: [] })
+    },
+    queue: {
+      health: vi.fn().mockResolvedValue({}),
+      recent: vi.fn().mockResolvedValue({ failed: [], opsLog: [] })
+    },
     perf: {
       aggregates: vi
         .fn()
@@ -1379,7 +1474,8 @@ In `shared/ipc-contract.ts`:
 
 ```ts
 perf: {
-  aggregates: (area: string, windowMs: number) => Promise<{ count: number; p50: number; p95: number; successRate: number }>
+  aggregates: (area: string, windowMs: number) =>
+    Promise<{ count: number; p50: number; p95: number; successRate: number }>
 }
 ```
 
@@ -1491,12 +1587,14 @@ git commit -m "feat(ui): observability perf panel with red-threshold indicators"
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 13: Add `Observability` tab + `/settings/observability` route
 
 **Files:**
+
 - Modify: `src/components/settings/SettingsLayout.tsx` (add NavLink entry)
 - Modify: `src/pages/Settings.tsx` (add Route)
-- Modify: `src/i18n/locales/zh-CN.json` and `en-US.json` — add `settings.tab.observability` (just this key here; full obs.* namespace lives with Plan 4 i18n step)
+- Modify: `src/i18n/locales/zh-CN.json` and `en-US.json` — add `settings.tab.observability` (just this key here; full obs.\* namespace lives with Plan 4 i18n step)
 
 - [ ] **Step 1: Add the route**
 
@@ -1505,7 +1603,7 @@ Edit `src/pages/Settings.tsx`:
 ```tsx
 import { ObservabilityTab } from '@/components/settings/ObservabilityTab'
 // ...
-<Route path="observability" element={<ObservabilityTab />} />
+;<Route path="observability" element={<ObservabilityTab />} />
 ```
 
 - [ ] **Step 2: Add the sidebar link**
@@ -1515,10 +1613,18 @@ Edit `src/components/settings/SettingsLayout.tsx`:
 ```tsx
 const TABS: TabDef[] = [
   { to: '/settings/general', labelKey: 'settings.tab.general', testId: 'settings-rail-general' },
-  { to: '/settings/appearance', labelKey: 'settings.tab.appearance', testId: 'settings-rail-appearance' },
+  {
+    to: '/settings/appearance',
+    labelKey: 'settings.tab.appearance',
+    testId: 'settings-rail-appearance'
+  },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' },
-  { to: '/settings/observability', labelKey: 'settings.tab.observability', testId: 'settings-rail-observability' }
+  {
+    to: '/settings/observability',
+    labelKey: 'settings.tab.observability',
+    testId: 'settings-rail-observability'
+  }
 ]
 ```
 

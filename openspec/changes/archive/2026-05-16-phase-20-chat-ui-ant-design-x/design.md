@@ -142,14 +142,14 @@
 
 ```ts
 export const themeTokens = {
-  colorBgContainer:    'var(--color-paper)',
-  colorBgLayout:       'var(--color-paper-2)',
-  colorBorder:         'var(--color-line)',
-  colorText:           'var(--color-ink)',
-  colorTextSecondary:  'var(--color-ink-3)',
-  fontFamily:          '"Source Han Serif SC", serif',
-  borderRadius:        6,
-};
+  colorBgContainer: 'var(--color-paper)',
+  colorBgLayout: 'var(--color-paper-2)',
+  colorBorder: 'var(--color-line)',
+  colorText: 'var(--color-ink)',
+  colorTextSecondary: 'var(--color-ink-3)',
+  fontFamily: '"Source Han Serif SC", serif',
+  borderRadius: 6
+}
 ```
 
 **已知风险**：antd 的派生 token（hover / focus 色变种）基于字面色值算 HSL，CSS 变量会成不透明字符串导致部分 hover 色不跟随 dark mode。烟雾测试覆盖 5 个 token 即可，发现问题再针对性补字面色 fallback。

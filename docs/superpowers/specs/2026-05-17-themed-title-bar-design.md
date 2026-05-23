@@ -47,11 +47,11 @@ Out of scope: refactoring `EditorTitleBar`, fixing the pre-existing `theme: 'sys
 
 ### Cross-platform behavior
 
-| Platform | Native bar | Custom paint | Min/Max/Close |
-|---|---|---|---|
-| macOS | hidden via `hiddenInset` | full | inset traffic lights (OS-drawn) |
-| Windows | hidden via `titleBarOverlay` | full | Win 10/11 overlay (OS-drawn, themed) |
-| Linux | not hidden (no overlay support) | full | WM gestures (right-click / double-click) |
+| Platform | Native bar                      | Custom paint | Min/Max/Close                            |
+| -------- | ------------------------------- | ------------ | ---------------------------------------- |
+| macOS    | hidden via `hiddenInset`        | full         | inset traffic lights (OS-drawn)          |
+| Windows  | hidden via `titleBarOverlay`    | full         | Win 10/11 overlay (OS-drawn, themed)     |
+| Linux    | not hidden (no overlay support) | full         | WM gestures (right-click / double-click) |
 
 Linux gets no native window controls inside our bar. This is an accepted compromise per the "smallest scope" principle agreed during design. Linux users use window-manager gestures.
 
@@ -79,6 +79,7 @@ export function TitleBar(): JSX.Element {
 ```
 
 **Removed from current implementation:**
+
 - `useTitleStore` dependency
 - `useLocation` / `borderless on /picker` branch
 - Traffic-light placeholder (`pl-[60px]`) — `hiddenInset` handles spacing
@@ -106,14 +107,11 @@ Trigger button changes (dropdown content unchanged):
   >
     {current ? (
       <>
-        <span className="h-2 w-2 rounded-[2px]"
-              style={{ background: dotColor[current.color] }} />
+        <span className="h-2 w-2 rounded-[2px]" style={{ background: dotColor[current.color] }} />
         <span className="font-serif">{current.name}</span>
       </>
     ) : (
-      <span className="text-[color:var(--color-ink-3)]">
-        {t('switcher.selectGrove')}
-      </span>
+      <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
     )}
     <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
   </button>
@@ -121,6 +119,7 @@ Trigger button changes (dropdown content unchanged):
 ```
 
 **Changes from current implementation:**
+
 - Remove `border` + `bg-[color:var(--color-paper)]` + `px-2.5 py-1` (button-like styling)
 - Add `h-6 px-2` + hover-only background (flat, breathing-room in title bar)
 - Font size `14 → 12.5`, color dot `10×10 → 8×8 px` with `rounded-[2px]`
@@ -148,10 +147,10 @@ Tint the 🌰 button background with the active grove's color at ~20% alpha:
 
 ### Removed files / call sites
 
-| File | Action |
-|---|---|
-| `src/stores/title.ts` | Delete file entirely |
-| `src/pages/Library.tsx` | Remove `useTitleStore` import + `setTitle` effect (lines ~14, 16-18) |
+| File                                       | Action                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
+| `src/stores/title.ts`                      | Delete file entirely                                                     |
+| `src/pages/Library.tsx`                    | Remove `useTitleStore` import + `setTitle` effect (lines ~14, 16-18)     |
 | `src/components/history/HistoryLayout.tsx` | Remove `useTitleStore` import + `setTitle` effect (lines ~10, 28, 32-36) |
 
 ## Electron main process
@@ -166,7 +165,7 @@ import { app, BrowserWindow, nativeTheme, powerMonitor } from 'electron'
 // Sync with --color-paper-2 / --color-ink-2 in src/index.css.
 // If those tokens change, update these constants too.
 const OVERLAY_LIGHT = { color: '#f0eadc', symbolColor: '#5a534a', height: 28 }
-const OVERLAY_DARK  = { color: '#322d27', symbolColor: '#bfb5a9', height: 28 }
+const OVERLAY_DARK = { color: '#322d27', symbolColor: '#bfb5a9', height: 28 }
 
 function getOverlayForTheme(): Electron.TitleBarOverlay {
   return nativeTheme.shouldUseDarkColors ? OVERLAY_DARK : OVERLAY_LIGHT
@@ -181,10 +180,10 @@ function createMainWindow(): BrowserWindow {
     center: true,
     show: false,
     titleBarStyle: 'hiddenInset',
-    ...(process.platform === 'win32'
-      ? { titleBarOverlay: getOverlayForTheme() }
-      : {}),
-    webPreferences: { /* unchanged */ }
+    ...(process.platform === 'win32' ? { titleBarOverlay: getOverlayForTheme() } : {}),
+    webPreferences: {
+      /* unchanged */
+    }
   })
 
   const onThemeChanged = (): void => {
@@ -203,6 +202,7 @@ function createMainWindow(): BrowserWindow {
 Hex constants are intentionally hardcoded because `titleBarOverlay` does not accept CSS variables. They MUST be kept in sync with `--color-paper-2` and `--color-ink-2` in `src/index.css`. The comment above them documents this contract; if a future change drifts the values, the title bar overlay on Windows will visually mismatch the rest of the chrome.
 
 The oklch values currently defined are:
+
 - Light: `--color-paper-2: oklch(0.955 0.015 82)`, `--color-ink-2: oklch(0.4 0.015 62)`
 - Dark: `--color-paper-2: oklch(0.22 0.018 60)`, `--color-ink-2: oklch(0.78 0.008 70)`
 
@@ -228,7 +228,7 @@ function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
   const effective = theme === 'system' ? resolveSystemTheme() : theme
   document.documentElement.dataset.theme = effective
-  ipc.window.themeApplied(effective)   // new
+  ipc.window.themeApplied(effective) // new
 }
 ```
 
@@ -254,6 +254,7 @@ Expose a `window.themeApplied(effective)` method. Exact shape follows the existi
 ## i18n
 
 Add `switcher.selectGrove` key in `src/i18n/` for `zh-CN` and `en-US`:
+
 - zh: `选择果仓`
 - en: `Select grove`
 
@@ -262,11 +263,13 @@ Add `switcher.selectGrove` key in `src/i18n/` for `zh-CN` and `en-US`:
 ### Unit / integration
 
 **Rewrite** `src/components/TitleBar.test.tsx`:
+
 - Renders `<TitleBar />` with `<GroveSwitcher />` as a child
 - Header element has `[-webkit-app-region:drag]` in its className
 - No dependency on `useTitleStore` (the import shouldn't exist)
 
 **Add** `src/components/GroveSwitcher.test.tsx`:
+
 - When `current === null`, displays "选择果仓" placeholder
 - Dropdown trigger has `[-webkit-app-region:no-drag]`
 - Lists up to 5 recent groves and dispatches `switchTo()` on click
@@ -274,12 +277,14 @@ Add `switcher.selectGrove` key in `src/i18n/` for `zh-CN` and `en-US`:
 - Renders on `/picker` route (regression — previously hid)
 
 **Remove / update**:
+
 - Any acceptance test asserting on the old `TitleBar` title-text content (likely in `tests/acceptance/phase-10/history-integration.test.tsx`)
 - Any test importing `useTitleStore`
 
 ### Manual acceptance (Electron)
 
 After running the app:
+
 - Mac: traffic lights present, switcher centered, full bar drags the window
 - Mac: open Settings → toggle light/dark → bar background updates immediately
 - Win: native min/max/close buttons appear top-right in app's paper color

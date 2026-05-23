@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 4 `file.read(path)` / `file.write(path, body, { expectedMtime })` / `frontmatter.parseFile` / `frontmatter.stringify`
 - phase 5 `selfWrites` 注册由 main 侧在 `file.write` 内部完成（renderer 无感）
 - phase 6 果仓已有 "打开编辑器" 按钮指向占位组件
@@ -11,6 +12,7 @@ UI 参考：无 prototype，但 PRD 约定"左侧果仓不常驻，编辑态占�
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户在 `/editor/:encodedPath` 可打开 md，正文以所见即所得形式编辑，保存时 md 仍保持 LF + 原 frontmatter
 - 自动保存稳健：无论用户停止输入、切换页面、最小化窗口、关闭窗口，都能把最后一次修改落盘
 - 保存经 phase 4 的原子写通路，触发 phase 5 `selfWrites` 静默处理（不重新全量索引）
@@ -18,6 +20,7 @@ UI 参考：无 prototype，但 PRD 约定"左侧果仓不常驻，编辑态占�
 - 不破坏 frontmatter：本阶段 Vditor 只改 body，frontmatter 原样透传
 
 **Non-Goals:**
+
 - 不做 frontmatter 可视化编辑（侧卡只读，修改留后续）
 - 不做图片/附件上传（粘贴图片暂提示"尚未支持"）
 - 不做冲突解决 UI（phase 9）
@@ -29,6 +32,7 @@ UI 参考：无 prototype，但 PRD 约定"左侧果仓不常驻，编辑态占�
 ### D1: Vditor 模式选择 —— 使用 `ir`（即时渲染）
 
 三种模式：
+
 - `wysiwyg`：所见即所得；会把 md 序列化后再反序列化，**不可避免地对原 md 做归一化**（空行、HTML 标签处理等）
 - `ir`：即时渲染（在原 md 文本上就地高亮+预览），**保持 md 原文忠实度最高**
 - `sv`：左源码 + 右预览（分栏）
@@ -45,13 +49,22 @@ Editor 页核心状态（Zustand `src/stores/editor.ts`）：
 type EditorState =
   | { kind: 'idle' }
   | { kind: 'loading'; path: string }
-  | { kind: 'ready'; path: string; frontmatter: Frontmatter; body: string;
-      savedBody: string; savedMtimeMs: number; dirty: boolean; saving: boolean;
-      lastError: string | null }
+  | {
+      kind: 'ready'
+      path: string
+      frontmatter: Frontmatter
+      body: string
+      savedBody: string
+      savedMtimeMs: number
+      dirty: boolean
+      saving: boolean
+      lastError: string | null
+    }
   | { kind: 'error'; path: string; error: string }
 ```
 
 转移：
+
 - 路由进入 → `loading` → 调 `files.get(path)` → `ready` 或 `error`
 - 用户输入 → `dirty=true`；未达 debounce 时机 → 仅更新 `body`
 - 触发保存 → `saving=true` → IPC `file.write(path, fullText, { expectedMtime: savedMtimeMs })`
@@ -60,11 +73,12 @@ type EditorState =
   - 其他错误：`saving=false`、`lastError=error.code`；toast
 - 路由离开 / 关窗前 → 调 `flushSave()`（同步 await 一次）
 
-**理由**：把 saved* 与当前值分开，可在任何时刻算出 `dirty`；`savedMtimeMs` 是下一次 `expectedMtime`。
+**理由**：把 saved\* 与当前值分开，可在任何时刻算出 `dirty`；`savedMtimeMs` 是下一次 `expectedMtime`。
 
 ### D3: 自动保存调度器
 
 统一一个 `scheduleSave()`：
+
 - 每次输入 `scheduleSave()` → 取消旧 timer → 启新 1s timer → 到点调 `save()`
 - `onBlur` 编辑器容器 → `flushSave()`（立即清 timer + 如 dirty 立即 save）
 - `router` 离开 → `flushSave()`
@@ -94,6 +108,7 @@ type EditorState =
 - 右：`Cmd+S 保存` 小字提示（macOS）/ `Ctrl+S`（Win/Linux）
 
 全局快捷键绑定：
+
 - `Cmd/Ctrl+S` → `flushSave()`
 - `Cmd/Ctrl+W` → 先 `flushSave()` 再 `navigate(-1)`（不真的关窗；窗口关闭走 macOS 的隐藏语义 phase 1 已处理）
 

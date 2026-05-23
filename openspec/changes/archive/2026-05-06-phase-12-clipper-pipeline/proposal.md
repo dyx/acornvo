@@ -18,6 +18,7 @@ PRD P-2 / S-7 定义的拾果核心价值是"剪藏（clip）"：把 phase 11 �
 ## Capabilities
 
 ### New Capabilities
+
 - `clipper-extractor`: 从 WebContents 抽取文章正文（Readability + 元信息增强）
 - `clipper-transformer`: HTML → Markdown 转换（Turndown + GFM plugin + 清洗规则）
 - `clipper-pipeline`: 拉通 extract→transform→dedupe→write→index 的端到端流水线
@@ -25,6 +26,7 @@ PRD P-2 / S-7 定义的拾果核心价值是"剪藏（clip）"：把 phase 11 �
 - `clipper-ui`: 剪藏按钮 / 预览 modal / 去重提示 UI
 
 ### Modified Capabilities
+
 - `browser-navigation`: 新增"剪藏触发"需求（AddressBar 剪藏按钮由 phase 11 的 toast 占位替换为真实 pipeline 入口；新增 `Cmd/Ctrl+Shift+S` 快捷键）
 
 ## Impact

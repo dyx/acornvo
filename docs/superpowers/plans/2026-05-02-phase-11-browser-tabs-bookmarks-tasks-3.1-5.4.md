@@ -18,8 +18,8 @@ Wire the persistent partitioned session, load the curated host list into the ad-
 
 - **One persistent session** for all tabs: `session.fromPartition('persist:browser-default')`. Wired once at app start so cookies survive restarts (spec D9).
 - **Ad-block load happens inside `bindBrowserBootstrap`** (a new init function called from `electron/main.ts`): read `public/hosts/block-domains.txt` once, parse into `Set<string>`, build `Adblock`, call `bindAdblockToSession(session, adblock)`. After bind, the matcher's `drainCount` is read every hour by a `setInterval` that logs the aggregate via `logger.info('browser.adblock', { blocked: n })` and resets the counter.
-- **Renderer store (`src/stores/browser.ts`)** holds the *single source of truth* for `tabs[]` / `activeTabId` / `bookmarksOpen`. All UI components read from it; all mutations go through actions. Each action that needs main-process side-effects calls `ipc.browser.*`. Patches arriving via `ipc.on('browser:tabStateChanged', …)` apply optimistically.
-- **LRU suspension** is owned by the store: when `createTab` would push alive count over 20, the store picks the oldest *non-active* tab, calls `ipc.browser.suspendTab(id)`, and updates the local tab to `suspended: true`. `activateTab` on a suspended tab calls `ipc.browser.resumeTab(id)` first (which re-creates the WebContentsView in main) and only then attaches.
+- **Renderer store (`src/stores/browser.ts`)** holds the _single source of truth_ for `tabs[]` / `activeTabId` / `bookmarksOpen`. All UI components read from it; all mutations go through actions. Each action that needs main-process side-effects calls `ipc.browser.*`. Patches arriving via `ipc.on('browser:tabStateChanged', …)` apply optimistically.
+- **LRU suspension** is owned by the store: when `createTab` would push alive count over 20, the store picks the oldest _non-active_ tab, calls `ipc.browser.suspendTab(id)`, and updates the local tab to `suspended: true`. `activateTab` on a suspended tab calls `ipc.browser.resumeTab(id)` first (which re-creates the WebContentsView in main) and only then attaches.
 - **IPC contract additions** are split into two namespaces:
   - `browser`: stateless command surface — every method takes/returns plain data and crosses the process boundary fast. Tab state pushes back to renderer over the typed event channel `browser:tabStateChanged` (already added in Plan 1; this plan formalises it in `IpcEventContract`).
   - `bookmarks`: typed CRUD with `E_DUPLICATE` mapped via the existing `IpcErrorCode` extension.
@@ -34,21 +34,21 @@ Wire the persistent partitioned session, load the curated host list into the ad-
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/browser/init.ts` | Create | 3.1, 3.2, 3.3 |
-| `electron/main.ts` | Modify (call `initBrowserSubsystem`) | 3.1 |
-| `electron/browser/init.test.ts` | Create | 3.2 |
-| `src/stores/browser.ts` | Implement | 4.1, 4.2, 4.3, 4.4, 4.5 |
-| `src/stores/browser.test.ts` | Create | 4.1, 4.2, 4.3, 4.4, 4.5 |
-| `shared/ipc-contract.ts` | Modify (add namespaces + event channel + error code) | 5.1, 5.2 |
-| `preload/preload.ts` | Modify (add browser/bookmarks invokers) | 5.1, 5.2 |
-| `electron/ipc/handlers.ts` | Modify (register new namespaces) | 5.3, 5.4 |
-| `electron/ipc/browser.ts` | Implement | 5.3 |
-| `electron/ipc/browser.test.ts` | Create | 5.3 |
-| `electron/ipc/bookmarks.ts` | Implement | 5.4 |
-| `electron/ipc/bookmarks.test.ts` | Create | 5.4 |
-| `src/ipc/client.ts` (or wherever `ipc` typed wrapper lives) | Verify | 5.1, 5.2 |
+| Path                                                        | Action                                               | Owner task              |
+| ----------------------------------------------------------- | ---------------------------------------------------- | ----------------------- |
+| `electron/browser/init.ts`                                  | Create                                               | 3.1, 3.2, 3.3           |
+| `electron/main.ts`                                          | Modify (call `initBrowserSubsystem`)                 | 3.1                     |
+| `electron/browser/init.test.ts`                             | Create                                               | 3.2                     |
+| `src/stores/browser.ts`                                     | Implement                                            | 4.1, 4.2, 4.3, 4.4, 4.5 |
+| `src/stores/browser.test.ts`                                | Create                                               | 4.1, 4.2, 4.3, 4.4, 4.5 |
+| `shared/ipc-contract.ts`                                    | Modify (add namespaces + event channel + error code) | 5.1, 5.2                |
+| `preload/preload.ts`                                        | Modify (add browser/bookmarks invokers)              | 5.1, 5.2                |
+| `electron/ipc/handlers.ts`                                  | Modify (register new namespaces)                     | 5.3, 5.4                |
+| `electron/ipc/browser.ts`                                   | Implement                                            | 5.3                     |
+| `electron/ipc/browser.test.ts`                              | Create                                               | 5.3                     |
+| `electron/ipc/bookmarks.ts`                                 | Implement                                            | 5.4                     |
+| `electron/ipc/bookmarks.test.ts`                            | Create                                               | 5.4                     |
+| `src/ipc/client.ts` (or wherever `ipc` typed wrapper lives) | Verify                                               | 5.1, 5.2                |
 
 ## Pre-flight
 
@@ -65,9 +65,11 @@ Wire the persistent partitioned session, load the curated host list into the ad-
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: Browser bootstrap — partitioned session + main wiring
 
 **Files:**
+
 - Create: `electron/browser/init.ts`
 - Modify: `electron/main.ts` (call `initBrowserSubsystem(mainWindow)` after `createMainWindow`)
 
@@ -138,9 +140,11 @@ git commit -m "feat(phase-11): browser subsystem init — partitioned session + 
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: Load `block-domains.txt` into adblock host set
 
 **Files:**
+
 - Modify: `electron/browser/init.ts`
 - Create: `electron/browser/init.test.ts`
 
@@ -249,9 +253,11 @@ Expected: 3 passed.
 - [ ] **Step 5: Manual smoke (optional)**
 
 Build and launch the app; check log output for:
+
 ```
 browser: ad-block ready { "hostsCount": 80 }   (or similar)
 ```
+
 This is verified again automatically in Plan 5 acceptance task 10.7.
 
 - [ ] **Step 6: Commit**
@@ -264,9 +270,11 @@ git commit -m "feat(phase-11): load block-domains.txt → adblock; bind to brows
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: Aggregate block counter logger (1h interval)
 
 **Files:**
+
 - Modify: `electron/browser/init.ts`
 
 - [ ] **Step 1: Append logger interval to `initBrowserSubsystem`**
@@ -320,9 +328,11 @@ git commit -m "feat(phase-11): hourly aggregate log of ad-block hits"
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 4: Browser store — state shape
 
 **Files:**
+
 - Modify: `src/stores/browser.ts`
 - Create: `src/stores/browser.test.ts`
 
@@ -355,7 +365,18 @@ describe('browser store — state', () => {
   it('exposes selectors for active tab', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 't1', url: 'https://a', title: 'A', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://a' }
+        {
+          id: 't1',
+          url: 'https://a',
+          title: 'A',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://a'
+        }
       ],
       activeTabId: 't1'
     })
@@ -427,11 +448,13 @@ git commit -m "feat(phase-11): browser store — state + selectors"
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 5: Browser store — actions (createTab/closeTab/activateTab/reorderTab/setReaderMode/navigate/setViewport)
 
 We define a thin abstraction over IPC to keep tests fast: actions accept an injected `BrowserPort` (an interface mirroring `ipc.browser`). The default port is real `ipc.browser`, but tests pass mocks. This keeps the store pure-ish.
 
 **Files:**
+
 - Modify: `src/stores/browser.ts`
 - Modify: `src/stores/browser.test.ts`
 
@@ -446,7 +469,10 @@ import type { BrowserPort } from './browser'
 
 function makePort(overrides: Partial<BrowserPort> = {}): BrowserPort {
   return {
-    createTab: vi.fn(async (url) => ({ id: 'mock-' + Math.random().toString(36).slice(2, 6), url: url ?? 'about:blank' })),
+    createTab: vi.fn(async (url) => ({
+      id: 'mock-' + Math.random().toString(36).slice(2, 6),
+      url: url ?? 'about:blank'
+    })),
     closeTab: vi.fn(async () => {}),
     activateTab: vi.fn(async () => {}),
     navigate: vi.fn(async () => {}),
@@ -484,9 +510,42 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        },
+        {
+          id: 'c',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        }
       ],
       activeTabId: 'b'
     })
@@ -506,7 +565,18 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'only', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x' }
+        {
+          id: 'only',
+          url: 'https://x',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x'
+        }
       ],
       activeTabId: 'only'
     })
@@ -523,8 +593,30 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        }
       ],
       activeTabId: 'a'
     })
@@ -538,9 +630,42 @@ describe('browser store — actions', () => {
   it('reorderTab moves a tab to the target index', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        },
+        {
+          id: 'c',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        }
       ]
     })
     useBrowserStore.getState().reorderTab('a', 2)
@@ -552,7 +677,18 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '' }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: ''
+        }
       ],
       activeTabId: 'a'
     })
@@ -568,7 +704,18 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://old', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://old' }
+        {
+          id: 'a',
+          url: 'https://old',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://old'
+        }
       ],
       activeTabId: 'a'
     })
@@ -634,17 +781,39 @@ export interface BrowserPort {
 
 let port: BrowserPort = {
   // Default port is replaced at app boot (see src/ipc/client.ts wiring in task 5.1)
-  createTab: () => { throw new Error('BrowserPort not configured') },
-  closeTab: () => { throw new Error('BrowserPort not configured') },
-  activateTab: () => { throw new Error('BrowserPort not configured') },
-  navigate: () => { throw new Error('BrowserPort not configured') },
-  reload: () => { throw new Error('BrowserPort not configured') },
-  goBack: () => { throw new Error('BrowserPort not configured') },
-  goForward: () => { throw new Error('BrowserPort not configured') },
-  setReaderMode: () => { throw new Error('BrowserPort not configured') },
-  setViewport: () => { throw new Error('BrowserPort not configured') },
-  suspendTab: () => { throw new Error('BrowserPort not configured') },
-  resumeTab: () => { throw new Error('BrowserPort not configured') }
+  createTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  closeTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  activateTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  navigate: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  reload: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  goBack: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  goForward: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  setReaderMode: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  setViewport: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  suspendTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  resumeTab: () => {
+    throw new Error('BrowserPort not configured')
+  }
 }
 
 export function setBrowserPort(p: BrowserPort): void {
@@ -759,9 +928,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   async navigate(id, url) {
     await port.navigate(id, url)
     set((s) => ({
-      tabs: s.tabs.map((t) =>
-        t.id === id ? { ...t, savedUrl: url, loading: true } : t
-      )
+      tabs: s.tabs.map((t) => (t.id === id ? { ...t, savedUrl: url, loading: true } : t))
     }))
   },
 
@@ -779,7 +946,9 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
 
   applyTabPatch(id, patch) {
     set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch, savedUrl: patch.url ?? t.savedUrl } : t))
+      tabs: s.tabs.map((t) =>
+        t.id === id ? { ...t, ...patch, savedUrl: patch.url ?? t.savedUrl } : t
+      )
     }))
   }
 }))
@@ -803,11 +972,13 @@ git commit -m "feat(phase-11): browser store actions — create/close/activate/n
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 6: Browser store — `browser:tabStateChanged` subscription
 
 Subscribe at module load time so any open Browse page receives patches without per-page wiring.
 
 **Files:**
+
 - Modify: `src/stores/browser.ts`
 - Modify: `src/stores/browser.test.ts`
 
@@ -840,7 +1011,18 @@ describe('browser store — tabStateChanged subscription', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x' }
+        {
+          id: 'a',
+          url: 'https://x',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x'
+        }
       ],
       activeTabId: 'a'
     })
@@ -912,9 +1094,11 @@ git commit -m "feat(phase-11): browser store subscribes to browser:tabStateChang
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 7: LRU suspension on `createTab` overflow
 
 **Files:**
+
 - Modify: `src/stores/browser.ts`
 - Modify: `src/stores/browser.test.ts`
 
@@ -936,9 +1120,16 @@ describe('browser store — LRU suspend', () => {
     // Seed 20 alive tabs; activeTabId at the *last* one so the oldest is t1.
     useBrowserStore.setState({
       tabs: Array.from({ length: 20 }, (_, i) => ({
-        id: `t${i + 1}`, url: '', title: '', favicon: null,
-        loading: false, canGoBack: false, canGoForward: false,
-        readerMode: false, suspended: false, savedUrl: ''
+        id: `t${i + 1}`,
+        url: '',
+        title: '',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        readerMode: false,
+        suspended: false,
+        savedUrl: ''
       })),
       activeTabId: 't20'
     })
@@ -961,9 +1152,16 @@ describe('browser store — LRU suspend', () => {
 
     useBrowserStore.setState({
       tabs: Array.from({ length: 20 }, (_, i) => ({
-        id: `t${i + 1}`, url: '', title: '', favicon: null,
-        loading: false, canGoBack: false, canGoForward: false,
-        readerMode: false, suspended: false, savedUrl: ''
+        id: `t${i + 1}`,
+        url: '',
+        title: '',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        readerMode: false,
+        suspended: false,
+        savedUrl: ''
       })),
       activeTabId: 't1' // active is the oldest
     })
@@ -1033,9 +1231,11 @@ git commit -m "feat(phase-11): LRU suspend oldest non-active tab when alive > 20
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 8: Resume suspended tab on activate
 
 **Files:**
+
 - Modify: `src/stores/browser.ts`
 - Modify: `src/stores/browser.test.ts`
 
@@ -1055,7 +1255,18 @@ describe('browser store — resume', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://restored', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: true, savedUrl: 'https://restored' }
+        {
+          id: 'a',
+          url: 'https://restored',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: true,
+          savedUrl: 'https://restored'
+        }
       ],
       activeTabId: null
     })
@@ -1118,9 +1329,11 @@ git commit -m "feat(phase-11): activateTab resumes suspended tab via resumeTab I
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 9: IPC contract — `browser` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `preload/preload.ts`
 
@@ -1248,8 +1461,7 @@ export const browserPort: BrowserPort = {
 }
 
 export const browserEventPort: BrowserEventPort = {
-  onTabStateChanged: (h) =>
-    ipc.on('browser:tabStateChanged', (p: TabStateChangedPayload) => h(p))
+  onTabStateChanged: (h) => ipc.on('browser:tabStateChanged', (p: TabStateChangedPayload) => h(p))
 }
 ```
 
@@ -1281,9 +1493,11 @@ git commit -m "feat(phase-11): IPC contract — browser namespace + tabStateChan
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 10: IPC contract — `bookmarks` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `preload/preload.ts`
 
@@ -1329,11 +1543,13 @@ git commit -m "feat(phase-11): IPC contract — bookmarks namespace"
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 11: `electron/ipc/browser.ts` — handler implementation
 
 This handler is mostly thin shims to manager / contents / bounds. Tests cover only the URL synthesis used by `createTab` (path-derived) and the suspend/resume orchestration; deep WebContents behaviour is integration-tested in Plan 5.
 
 **Files:**
+
 - Modify: `electron/ipc/browser.ts`
 - Create: `electron/ipc/browser.test.ts`
 - Modify: `electron/ipc/handlers.ts` (register the namespace)
@@ -1399,8 +1615,7 @@ import { BROWSER_SESSION_PARTITION } from '../browser/init'
 
 // --- pure helpers (unit-tested) ---
 export const newTabId = (): TabId => `tab-${randomUUID()}`
-export const resolveCreateUrl = (url: string | undefined): string =>
-  url ?? 'about:blank'
+export const resolveCreateUrl = (url: string | undefined): string => url ?? 'about:blank'
 
 // --- adoption: register an externally-spawned WebContents as a tab ---
 function adoptWebContents(webContents: Electron.WebContents): TabId {
@@ -1549,9 +1764,11 @@ git commit -m "feat(phase-11): browser IPC handlers — wired through manager/bo
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 12: `electron/ipc/bookmarks.ts` — SQLite CRUD with `E_DUPLICATE`
 
 **Files:**
+
 - Modify: `electron/ipc/bookmarks.ts`
 - Create: `electron/ipc/bookmarks.test.ts`
 - Modify: `electron/ipc/handlers.ts`
@@ -1783,9 +2000,7 @@ export function createBookmarkHandlers(deps: BookmarkDeps): IpcContract['bookmar
         .prepare(`SELECT COUNT(*) AS n FROM bookmarks ${whereSql}`)
         .get(...params) as { n: number }
       const items = db
-        .prepare(
-          `SELECT * FROM bookmarks ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-        )
+        .prepare(`SELECT * FROM bookmarks ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
         .all(...params, opts.limit, opts.offset) as RawRow[]
       return { items: items.map(rowToBookmark), total: totalRow.n }
     },
@@ -1800,8 +2015,7 @@ export function createBookmarkHandlers(deps: BookmarkDeps): IpcContract['bookmar
       }
       const newTitle = patch.title !== undefined ? patch.title : existing.title
       const newFavicon = patch.favicon !== undefined ? patch.favicon : existing.favicon
-      const newTagsJson =
-        patch.tags !== undefined ? JSON.stringify(patch.tags) : existing.tags_json
+      const newTagsJson = patch.tags !== undefined ? JSON.stringify(patch.tags) : existing.tags_json
       const updatedAt = deps.nowIso()
       db.prepare(
         `UPDATE bookmarks SET title=?, favicon=?, tags_json=?, updated_at=? WHERE id=?`

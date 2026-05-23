@@ -1,11 +1,13 @@
 ## Context
 
 前置：
+
 - phase 3 的 SQLite + migrations（files / tags / file_tags / files_fts / ... 已建表）
 - phase 4 的 `file.read` / `frontmatter.parseFile` / `safeResolve`
 - phase 2 的 `project:changed` 事件驱动 db / watcher 切换
 
 下游强依赖：
+
 - phase 6 果仓 UI 查 files 表
 - phase 8 全文搜索需要 FTS5（本阶段先写占位 content，分词在 phase 8 再改）
 - phase 9 冲突处理复用 watcher 的 clean/dirty 判断（本阶段仅提供 raw 事件通道 + 自我过滤；clean/dirty 分叉逻辑在 phase 9）
@@ -14,6 +16,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 启动进入树林后能看到完整可查的文件索引
 - 外部改动（Obsidian/git pull/Finder）几秒内反映到索引
 - 应用自己的写不触发自我误报
@@ -22,6 +25,7 @@
 - 索引器是 `files`/`tags`/`file_tags`/`files_fts` 的**唯一写者**（除损坏重建）
 
 **Non-Goals:**
+
 - 不做"内容已变要不要重新理果"的 UI 决策（phase 15）
 - 不做冲突热重载 / toast（phase 9）
 - 不做中文分词（phase 8）
@@ -35,11 +39,13 @@
 选择：`sha256(body)`（解析 frontmatter 后的正文）。
 
 **理由**：
+
 - 理果会改 frontmatter；若 hash 含 frontmatter，每次理果后 hash 变，触发连锁误判
 - 用户编辑正文 hash 才变，与"内容变了要重新理果"的直觉一致
 - 搜索/去重也以 body 语义为准
 
 **备选**：
+
 - `sha256(fullFile)`：对冲突检测更准但与上述冲突
 - 同时保存两种 hash：过度设计
 
@@ -78,25 +84,28 @@ state='watching'
 ```ts
 chokidar.watch(groveRoot, {
   ignored: [
-    /(^|[\/\\])\../,   // dotfiles（.acornvo/.obsidian/.git/.DS_Store）
+    /(^|[\/\\])\../, // dotfiles（.acornvo/.obsidian/.git/.DS_Store）
     /node_modules/,
-    '**/*.tmp', '**/*~', '**/*.swp',
-    (p) => !p.endsWith('.md') && fs.statSync(p).isFile(),  // 非 md 文件直接忽略
+    '**/*.tmp',
+    '**/*~',
+    '**/*.swp',
+    (p) => !p.endsWith('.md') && fs.statSync(p).isFile() // 非 md 文件直接忽略
   ],
   persistent: true,
-  ignoreInitial: true,          // 我们自己做初始全量
+  ignoreInitial: true, // 我们自己做初始全量
   awaitWriteFinish: {
-    stabilityThreshold: 200,     // 等写完
+    stabilityThreshold: 200, // 等写完
     pollInterval: 50
   },
-  followSymlinks: false,         // 不跟 symlink
-  usePolling: false,             // 先默认 false；云盘失灵时后续可切 polling
+  followSymlinks: false, // 不跟 symlink
+  usePolling: false // 先默认 false；云盘失灵时后续可切 polling
 })
 ```
 
 事件：`add` / `change` / `unlink` / `addDir` / `unlinkDir` / `error` / `raw`。
 
 **理由**：
+
 - dotfiles 忽略掉 `.acornvo/` 自动包含
 - `awaitWriteFinish` 避免大文件被半写感知
 - `followSymlinks: false` 避免循环 + 越界
@@ -104,6 +113,7 @@ chokidar.watch(groveRoot, {
 ### D4: 自我过滤机制
 
 模块 scope：
+
 ```
 selfWrites: Map<absPath, { mtimeMs: number, expiresAt: number }>
 ```
@@ -113,12 +123,14 @@ selfWrites: Map<absPath, { mtimeMs: number, expiresAt: number }>
 - 每 30s 清理过期条目
 
 **理由**：
+
 - 3s TTL：覆盖云盘延迟；过短漏过滤，过长外部快速改漏报
 - mtimeMs 对比：防止相同路径的后续真实外部改动误命中
 
 ### D5: 批处理 + 单事务
 
 收到事件后：
+
 - `batch: Map<absPath, { kind: 'add'|'change'|'unlink', stat?, hash? }>`（同路径后来的覆盖前者）
 - `scheduleFlush()`：debounce 500ms；flush 时打开 SQLite 事务：
   1. 对 `unlink` 先处理：按 path DELETE 索引行，记录被删的 `content_hash` 到 `pendingRenames`（path → hash）
@@ -131,6 +143,7 @@ selfWrites: Map<absPath, { mtimeMs: number, expiresAt: number }>
 ### D6: FTS5 写入（本阶段占位）
 
 `files_fts`：`INSERT INTO files_fts(rowid, path, title, summary, content)`，`content` **本阶段存 body 原文**（不做分词）。phase 8 改写时：
+
 - 删除所有 `files_fts` 行
 - 用 jieba 分词重写 content 字段
 - 此处接口留 `tokenizer: (text) => string`，默认 identity（传入即传出），phase 8 注入 jieba
@@ -158,6 +171,7 @@ idle → scanning → ready → watching
 ### D8: 公开事件
 
 供下游订阅：
+
 - `index:progress` / `index:done` / `index:error` / `index:stateChange`（UI 用）
 - `index:fileChanged { path, mtime, contentHash, frontmatter }`（phase 9 / 15 订阅）
 - `index:fileDeleted { path }`（phase 9 订阅）

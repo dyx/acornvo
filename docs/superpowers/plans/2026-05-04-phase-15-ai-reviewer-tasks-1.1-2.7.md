@@ -30,28 +30,29 @@ Land the SQLite migration `008_ai_usage.sql`, the shared TS types (`shared/ai-ty
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/db/migrations/008_ai_usage.sql` | Create | 1.1 |
-| `electron/services/db/migrations/008_ai_usage.test.ts` | Create | 1.1 |
-| `shared/ai-types.ts` | Create | 1.2 |
-| `package.json`, `package-lock.json` | Modify (add ajv, ajv-formats) | 1.3 |
-| `electron/ai/client.ts` | Create | 2.1, 2.6, 2.7 |
-| `electron/ai/client.test.ts` | Create | 2.1, 2.6, 2.7 |
-| `electron/ai/providers/openai.ts` | Create | 2.2 |
-| `electron/ai/providers/openai.test.ts` | Create | 2.2 |
-| `electron/ai/providers/anthropic.ts` | Create | 2.3 |
-| `electron/ai/providers/anthropic.test.ts` | Create | 2.3 |
-| `electron/ai/providers/ollama.ts` | Create | 2.4 |
-| `electron/ai/providers/ollama.test.ts` | Create | 2.4 |
-| `electron/ai/providers/openai-compatible.ts` | Create | 2.5 |
-| `electron/ai/providers/openai-compatible.test.ts` | Create | 2.5 |
-| `electron/ai/parse-json.ts` | Create | 2.6 |
-| `electron/ai/parse-json.test.ts` | Create | 2.6 |
+| Path                                                   | Action                        | Owner task    |
+| ------------------------------------------------------ | ----------------------------- | ------------- |
+| `electron/services/db/migrations/008_ai_usage.sql`     | Create                        | 1.1           |
+| `electron/services/db/migrations/008_ai_usage.test.ts` | Create                        | 1.1           |
+| `shared/ai-types.ts`                                   | Create                        | 1.2           |
+| `package.json`, `package-lock.json`                    | Modify (add ajv, ajv-formats) | 1.3           |
+| `electron/ai/client.ts`                                | Create                        | 2.1, 2.6, 2.7 |
+| `electron/ai/client.test.ts`                           | Create                        | 2.1, 2.6, 2.7 |
+| `electron/ai/providers/openai.ts`                      | Create                        | 2.2           |
+| `electron/ai/providers/openai.test.ts`                 | Create                        | 2.2           |
+| `electron/ai/providers/anthropic.ts`                   | Create                        | 2.3           |
+| `electron/ai/providers/anthropic.test.ts`              | Create                        | 2.3           |
+| `electron/ai/providers/ollama.ts`                      | Create                        | 2.4           |
+| `electron/ai/providers/ollama.test.ts`                 | Create                        | 2.4           |
+| `electron/ai/providers/openai-compatible.ts`           | Create                        | 2.5           |
+| `electron/ai/providers/openai-compatible.test.ts`      | Create                        | 2.5           |
+| `electron/ai/parse-json.ts`                            | Create                        | 2.6           |
+| `electron/ai/parse-json.test.ts`                       | Create                        | 2.6           |
 
 ## Pre-flight
 
 This plan assumes:
+
 - **phase 13 (secure storage / settings) has merged.** That brings `electron/settings/store.ts`, `electron/settings/profile-key.ts` (`getProfileDecryptedKey`), `ai_provider_profiles` table, `shared/settings-types.ts` (`AiProviderKind`, `AiSettings`, `AiProviderProfile`), and `migrations/007_settings.sql`.
 - **phase 14 (queue persistence) has merged.** That brings `electron/queue/runner.ts`, the placeholder `ai-review-clip` handler, and `migrations/007_jobs.sql` (note: phase 13 and phase 14 both used 007 in their drafts; whichever lands second should be renumbered to 008. Phase 15's migration **MUST** therefore become `009_ai_usage.sql` if both 007s are kept distinct — confirm before Task 1 by running `ls electron/services/db/migrations/`).
 - Phase 12 clips DAO (`electron/ipc/clips.ts`) and phase 4 atomic write (`electron/services/fs-atomic.ts`, `electron/ipc/file.ts`) are already on `main`.
@@ -63,9 +64,11 @@ If migration numbering is occupied, **stop and reconcile**: rename `008_ai_usage
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Migration 008 — `ai_usage` table
 
 **Files:**
+
 - Create: `electron/services/db/migrations/008_ai_usage.sql`
 - Create: `electron/services/db/migrations/008_ai_usage.test.ts`
 
@@ -81,47 +84,53 @@ Expected: latest entry is `007_*.sql`. If `008_*.sql` already exists, stop and r
 
 ```ts
 // electron/services/db/migrations/008_ai_usage.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { runMigrations } from './migrations';
-import { migrationsDir } from './index';
+import { describe, it, expect, beforeEach } from 'vitest'
+import Database from 'better-sqlite3'
+import { runMigrations } from './migrations'
+import { migrationsDir } from './index'
 
 describe('migration 008_ai_usage', () => {
-  let db: Database.Database;
+  let db: Database.Database
   beforeEach(() => {
-    db = new Database(':memory:');
-  });
+    db = new Database(':memory:')
+  })
 
   it('creates ai_usage table with expected columns', () => {
-    runMigrations(db, migrationsDir());
-    const cols = db.prepare("PRAGMA table_info('ai_usage')").all() as Array<{ name: string; type: string; notnull: number }>;
-    const byName = Object.fromEntries(cols.map(c => [c.name, c]));
-    expect(byName.id).toMatchObject({ type: 'INTEGER' });
-    expect(byName.job_id).toMatchObject({ type: 'TEXT' });
-    expect(byName.profile_id).toMatchObject({ type: 'TEXT' });
-    expect(byName.model).toMatchObject({ type: 'TEXT' });
-    expect(byName.prompt_tokens).toMatchObject({ type: 'INTEGER' });
-    expect(byName.completion_tokens).toMatchObject({ type: 'INTEGER' });
-    expect(byName.latency_ms).toMatchObject({ type: 'INTEGER' });
-    expect(byName.ok).toMatchObject({ type: 'INTEGER', notnull: 1 });
-    expect(byName.error).toMatchObject({ type: 'TEXT' });
-    expect(byName.created_at).toMatchObject({ type: 'TEXT', notnull: 1 });
-  });
+    runMigrations(db, migrationsDir())
+    const cols = db.prepare("PRAGMA table_info('ai_usage')").all() as Array<{
+      name: string
+      type: string
+      notnull: number
+    }>
+    const byName = Object.fromEntries(cols.map((c) => [c.name, c]))
+    expect(byName.id).toMatchObject({ type: 'INTEGER' })
+    expect(byName.job_id).toMatchObject({ type: 'TEXT' })
+    expect(byName.profile_id).toMatchObject({ type: 'TEXT' })
+    expect(byName.model).toMatchObject({ type: 'TEXT' })
+    expect(byName.prompt_tokens).toMatchObject({ type: 'INTEGER' })
+    expect(byName.completion_tokens).toMatchObject({ type: 'INTEGER' })
+    expect(byName.latency_ms).toMatchObject({ type: 'INTEGER' })
+    expect(byName.ok).toMatchObject({ type: 'INTEGER', notnull: 1 })
+    expect(byName.error).toMatchObject({ type: 'TEXT' })
+    expect(byName.created_at).toMatchObject({ type: 'TEXT', notnull: 1 })
+  })
 
   it('creates the two indexes', () => {
-    runMigrations(db, migrationsDir());
-    const idx = db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='ai_usage'").all() as Array<{ name: string }>;
-    const names = new Set(idx.map(i => i.name));
-    expect(names.has('idx_ai_usage_created')).toBe(true);
-    expect(names.has('idx_ai_usage_profile')).toBe(true);
-  });
+    runMigrations(db, migrationsDir())
+    const idx = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='ai_usage'")
+      .all() as Array<{ name: string }>
+    const names = new Set(idx.map((i) => i.name))
+    expect(names.has('idx_ai_usage_created')).toBe(true)
+    expect(names.has('idx_ai_usage_profile')).toBe(true)
+  })
 
   it('sets user_version to 8', () => {
-    runMigrations(db, migrationsDir());
-    const v = db.pragma('user_version', { simple: true });
-    expect(v).toBe(8);
-  });
-});
+    runMigrations(db, migrationsDir())
+    const v = db.pragma('user_version', { simple: true })
+    expect(v).toBe(8)
+  })
+})
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -170,9 +179,11 @@ git commit -m "feat(phase-15): migration 008 — ai_usage table + indexes"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: `shared/ai-types.ts` — typed surface
 
 **Files:**
+
 - Create: `shared/ai-types.ts`
 - Create: `shared/ai-types.test.ts`
 
@@ -180,7 +191,7 @@ git commit -m "feat(phase-15): migration 008 — ai_usage table + indexes"
 
 ```ts
 // shared/ai-types.test.ts
-import { describe, it, expectTypeOf, expect } from 'vitest';
+import { describe, it, expectTypeOf, expect } from 'vitest'
 import type {
   LlmMessage,
   ChatOptions,
@@ -191,16 +202,16 @@ import type {
   AiReviewResult,
   AiUsageRow,
   LlmErrorCode,
-  LlmError,
-} from './ai-types';
+  LlmError
+} from './ai-types'
 
 describe('ai-types', () => {
   it('LlmMessage allows the three roles', () => {
-    const m: LlmMessage = { role: 'system', content: 's' };
-    const u: LlmMessage = { role: 'user', content: 'u' };
-    const a: LlmMessage = { role: 'assistant', content: 'a' };
-    expect([m, u, a]).toHaveLength(3);
-  });
+    const m: LlmMessage = { role: 'system', content: 's' }
+    const u: LlmMessage = { role: 'user', content: 'u' }
+    const a: LlmMessage = { role: 'assistant', content: 'a' }
+    expect([m, u, a]).toHaveLength(3)
+  })
 
   it('AiReviewResult has the five required fields', () => {
     const r: AiReviewResult = {
@@ -208,10 +219,10 @@ describe('ai-types', () => {
       suggestedTitle: 't',
       tags: ['a', 'b', 'c'],
       keyQuotes: ['q'],
-      reviewedAt: '2026-05-04T00:00:00Z',
-    };
-    expect(r.tags.length).toBe(3);
-  });
+      reviewedAt: '2026-05-04T00:00:00Z'
+    }
+    expect(r.tags.length).toBe(3)
+  })
 
   it('LlmErrorCode is a closed string union', () => {
     expectTypeOf<LlmErrorCode>().toEqualTypeOf<
@@ -223,14 +234,14 @@ describe('ai-types', () => {
       | 'E_SERVER'
       | 'E_RESPONSE'
       | 'E_UNKNOWN'
-    >();
-  });
+    >()
+  })
 
   it('LlmError has code and optional fields', () => {
-    const e: LlmError = { code: 'E_AUTH', message: 'unauthorized', httpStatus: 401 };
-    expect(e.code).toBe('E_AUTH');
-  });
-});
+    const e: LlmError = { code: 'E_AUTH', message: 'unauthorized', httpStatus: 401 }
+    expect(e.code).toBe('E_AUTH')
+  })
+})
 ```
 
 - [ ] **Step 2: Run test to verify it fails (file does not exist)**
@@ -242,66 +253,66 @@ Expected: FAIL — cannot find module `./ai-types`.
 
 ```ts
 // shared/ai-types.ts
-export type LlmRole = 'system' | 'user' | 'assistant';
+export type LlmRole = 'system' | 'user' | 'assistant'
 
 export interface LlmMessage {
-  role: LlmRole;
-  content: string;
+  role: LlmRole
+  content: string
 }
 
 export interface TokenUsage {
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
 }
 
 export interface ChatOptions {
-  profileId?: string;
-  messages: LlmMessage[];
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
+  profileId?: string
+  messages: LlmMessage[]
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  signal?: AbortSignal
 }
 
 export interface ChatJsonOptions extends ChatOptions {
-  schema: object;
+  schema: object
 }
 
 export interface ChatTextResult {
-  text: string;
-  model: string;
-  usage?: TokenUsage;
-  latencyMs: number;
+  text: string
+  model: string
+  usage?: TokenUsage
+  latencyMs: number
 }
 
 export interface ChatJsonResult<T = unknown> {
-  data: T;
-  rawText: string;
-  model: string;
-  usage?: TokenUsage;
-  latencyMs: number;
+  data: T
+  rawText: string
+  model: string
+  usage?: TokenUsage
+  latencyMs: number
 }
 
 export interface AiReviewResult {
-  summary: string;
-  suggestedTitle: string;
-  tags: string[];
-  keyQuotes: string[];
-  reviewedAt: string;
+  summary: string
+  suggestedTitle: string
+  tags: string[]
+  keyQuotes: string[]
+  reviewedAt: string
 }
 
 export interface AiUsageRow {
-  id?: number;
-  jobId: string | null;
-  profileId: string | null;
-  model: string | null;
-  promptTokens: number | null;
-  completionTokens: number | null;
-  latencyMs: number | null;
-  ok: 0 | 1;
-  error: string | null;
-  createdAt: string;
+  id?: number
+  jobId: string | null
+  profileId: string | null
+  model: string | null
+  promptTokens: number | null
+  completionTokens: number | null
+  latencyMs: number | null
+  ok: 0 | 1
+  error: string | null
+  createdAt: string
 }
 
 export type LlmErrorCode =
@@ -312,13 +323,13 @@ export type LlmErrorCode =
   | 'E_NETWORK'
   | 'E_SERVER'
   | 'E_RESPONSE'
-  | 'E_UNKNOWN';
+  | 'E_UNKNOWN'
 
 export interface LlmError {
-  code: LlmErrorCode;
-  message: string;
-  httpStatus?: number;
-  providerMessage?: string;
+  code: LlmErrorCode
+  message: string
+  httpStatus?: number
+  providerMessage?: string
 }
 ```
 
@@ -339,9 +350,11 @@ git commit -m "feat(phase-15): shared/ai-types.ts — LlmMessage / ChatOptions /
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Add `ajv` and `ajv-formats` deps
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm ajv is not already a dep**
@@ -378,9 +391,11 @@ git commit -m "feat(phase-15): add ajv + ajv-formats for LLM JSON schema validat
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: `electron/ai/client.ts` — dispatcher skeleton + `chat`/`chatJson` shape
 
 **Files:**
+
 - Create: `electron/ai/client.ts`
 - Create: `electron/ai/client.test.ts`
 
@@ -390,46 +405,49 @@ This task wires the entry point and dispatches to a provider stub by reading the
 
 ```ts
 // electron/ai/client.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../settings/store', () => ({
-  settingsStore: { get: vi.fn() },
-}));
+  settingsStore: { get: vi.fn() }
+}))
 vi.mock('../settings/profiles', () => ({
-  profilesStore: { get: vi.fn() },
-}));
+  profilesStore: { get: vi.fn() }
+}))
 vi.mock('../settings/profile-key', () => ({
-  getProfileDecryptedKey: vi.fn(),
-}));
+  getProfileDecryptedKey: vi.fn()
+}))
 
-import { settingsStore } from '../settings/store';
-import { profilesStore } from '../settings/profiles';
-import { getProfileDecryptedKey } from '../settings/profile-key';
-import { llmClient } from './client';
+import { settingsStore } from '../settings/store'
+import { profilesStore } from '../settings/profiles'
+import { getProfileDecryptedKey } from '../settings/profile-key'
+import { llmClient } from './client'
 
 describe('llmClient.chat — profile resolution', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
-  });
+    vi.resetAllMocks()
+  })
 
   it('throws E_MISSING_PROFILE when defaultProfileId is null and no profileId passed', async () => {
-    (settingsStore.get as any).mockReturnValue({ defaultProfileId: null });
+    ;(settingsStore.get as any).mockReturnValue({ defaultProfileId: null })
     await expect(
-      llmClient.chat({ messages: [{ role: 'user', content: 'hi' }] }),
-    ).rejects.toMatchObject({ code: 'E_MISSING_PROFILE' });
-  });
+      llmClient.chat({ messages: [{ role: 'user', content: 'hi' }] })
+    ).rejects.toMatchObject({ code: 'E_MISSING_PROFILE' })
+  })
 
   it('throws E_CONFIG when openai-compatible profile lacks baseUrl', async () => {
-    (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
-    (profilesStore.get as any).mockReturnValue({
-      id: 'p1', provider: 'openai-compatible', model: 'm', baseUrl: '',
-    });
-    (getProfileDecryptedKey as any).mockReturnValue('k');
+    ;(settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' })
+    ;(profilesStore.get as any).mockReturnValue({
+      id: 'p1',
+      provider: 'openai-compatible',
+      model: 'm',
+      baseUrl: ''
+    })
+    ;(getProfileDecryptedKey as any).mockReturnValue('k')
     await expect(
-      llmClient.chat({ messages: [{ role: 'user', content: 'hi' }] }),
-    ).rejects.toMatchObject({ code: 'E_CONFIG' });
-  });
-});
+      llmClient.chat({ messages: [{ role: 'user', content: 'hi' }] })
+    ).rejects.toMatchObject({ code: 'E_CONFIG' })
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should fail because file does not exist**
@@ -447,71 +465,95 @@ import type {
   ChatTextResult,
   ChatJsonResult,
   LlmError,
-  LlmErrorCode,
-} from '@shared/ai-types';
-import { settingsStore } from '../settings/store';
-import { profilesStore } from '../settings/profiles';
-import { getProfileDecryptedKey } from '../settings/profile-key';
+  LlmErrorCode
+} from '@shared/ai-types'
+import { settingsStore } from '../settings/store'
+import { profilesStore } from '../settings/profiles'
+import { getProfileDecryptedKey } from '../settings/profile-key'
 
-function llmErr(code: LlmErrorCode, message: string, extra: Partial<LlmError> = {}): LlmError & Error {
-  const err = new Error(message) as LlmError & Error;
-  (err as any).code = code;
-  Object.assign(err, extra);
-  return err;
+function llmErr(
+  code: LlmErrorCode,
+  message: string,
+  extra: Partial<LlmError> = {}
+): LlmError & Error {
+  const err = new Error(message) as LlmError & Error
+  ;(err as any).code = code
+  Object.assign(err, extra)
+  return err
 }
 
 interface ResolvedProfile {
-  id: string;
-  provider: 'openai' | 'anthropic' | 'ollama' | 'openai-compatible';
-  model: string;
-  baseUrl?: string;
-  apiKey: string | null;
-  maxTokens?: number;
-  temperature?: number;
+  id: string
+  provider: 'openai' | 'anthropic' | 'ollama' | 'openai-compatible'
+  model: string
+  baseUrl?: string
+  apiKey: string | null
+  maxTokens?: number
+  temperature?: number
 }
 
 function resolveProfile(profileId?: string): ResolvedProfile {
-  let id = profileId;
+  let id = profileId
   if (!id) {
-    const ai = settingsStore.get('ai');
-    id = ai?.defaultProfileId ?? undefined;
+    const ai = settingsStore.get('ai')
+    id = ai?.defaultProfileId ?? undefined
   }
-  if (!id) throw llmErr('E_MISSING_PROFILE', 'no profileId provided and settings.ai.defaultProfileId is null');
-  const p = profilesStore.get(id);
-  if (!p) throw llmErr('E_MISSING_PROFILE', `profile not found: ${id}`);
-  if (!p.model) throw llmErr('E_CONFIG', `profile ${id} has empty model`);
+  if (!id)
+    throw llmErr(
+      'E_MISSING_PROFILE',
+      'no profileId provided and settings.ai.defaultProfileId is null'
+    )
+  const p = profilesStore.get(id)
+  if (!p) throw llmErr('E_MISSING_PROFILE', `profile not found: ${id}`)
+  if (!p.model) throw llmErr('E_CONFIG', `profile ${id} has empty model`)
   if (p.provider === 'openai-compatible' && !p.baseUrl) {
-    throw llmErr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on profile ${id}`);
+    throw llmErr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on profile ${id}`)
   }
-  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id);
-  return { id: p.id, provider: p.provider, model: p.model, baseUrl: p.baseUrl, apiKey, maxTokens: p.maxTokens, temperature: p.temperature };
+  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id)
+  return {
+    id: p.id,
+    provider: p.provider,
+    model: p.model,
+    baseUrl: p.baseUrl,
+    apiKey,
+    maxTokens: p.maxTokens,
+    temperature: p.temperature
+  }
 }
 
 // Provider modules export `callProvider({ profile, messages, model, temperature, maxTokens, signal, jsonMode? })`
 // Plan 1 fills these in tasks 5-8; chatJson parsing/validation is task 9.
 export const llmClient = {
   async chat(opts: ChatOptions): Promise<ChatTextResult> {
-    const profile = resolveProfile(opts.profileId);
-    const { callProvider } = await loadProvider(profile.provider);
-    return callProvider({ profile, ...opts });
+    const profile = resolveProfile(opts.profileId)
+    const { callProvider } = await loadProvider(profile.provider)
+    return callProvider({ profile, ...opts })
   },
   async chatJson<T = unknown>(opts: ChatJsonOptions): Promise<ChatJsonResult<T>> {
-    const profile = resolveProfile(opts.profileId);
-    const { callProvider } = await loadProvider(profile.provider);
-    const { text, model, usage, latencyMs } = await callProvider({ profile, ...opts, jsonMode: true });
+    const profile = resolveProfile(opts.profileId)
+    const { callProvider } = await loadProvider(profile.provider)
+    const { text, model, usage, latencyMs } = await callProvider({
+      profile,
+      ...opts,
+      jsonMode: true
+    })
     // Plan 1 / Task 9 wires parseAndValidate
-    const { parseAndValidate } = await import('./parse-json');
-    const data = parseAndValidate<T>(text, opts.schema);
-    return { data, rawText: text, model, usage, latencyMs };
-  },
-};
+    const { parseAndValidate } = await import('./parse-json')
+    const data = parseAndValidate<T>(text, opts.schema)
+    return { data, rawText: text, model, usage, latencyMs }
+  }
+}
 
 async function loadProvider(p: ResolvedProfile['provider']) {
   switch (p) {
-    case 'openai': return await import('./providers/openai');
-    case 'anthropic': return await import('./providers/anthropic');
-    case 'ollama': return await import('./providers/ollama');
-    case 'openai-compatible': return await import('./providers/openai-compatible');
+    case 'openai':
+      return await import('./providers/openai')
+    case 'anthropic':
+      return await import('./providers/anthropic')
+    case 'ollama':
+      return await import('./providers/ollama')
+    case 'openai-compatible':
+      return await import('./providers/openai-compatible')
   }
 }
 ```
@@ -533,9 +575,11 @@ git commit -m "feat(phase-15): llmClient skeleton with profile resolution and di
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: `electron/ai/providers/openai.ts` — OpenAI provider
 
 **Files:**
+
 - Create: `electron/ai/providers/openai.ts`
 - Create: `electron/ai/providers/openai.test.ts`
 
@@ -543,89 +587,103 @@ git commit -m "feat(phase-15): llmClient skeleton with profile resolution and di
 
 ```ts
 // electron/ai/providers/openai.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './openai';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { callProvider } from './openai'
 
-const fetchMock = vi.fn();
+const fetchMock = vi.fn()
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.stubGlobal('fetch', fetchMock);
-});
+  vi.resetAllMocks()
+  vi.stubGlobal('fetch', fetchMock)
+})
 
 const baseProfile = {
-  id: 'p1', provider: 'openai' as const, model: 'gpt-4o-mini',
-  baseUrl: undefined, apiKey: 'sk-test',
-};
+  id: 'p1',
+  provider: 'openai' as const,
+  model: 'gpt-4o-mini',
+  baseUrl: undefined,
+  apiKey: 'sk-test'
+}
 
 describe('openai provider', () => {
   it('hits /v1/chat/completions with Bearer auth and chat shape', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'gpt-4o-mini',
         choices: [{ message: { content: 'hello' } }],
-        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-      }),
-    });
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 }
+      })
+    })
     const r = await callProvider({
       profile: baseProfile,
-      messages: [{ role: 'user', content: 'hi' }],
-    });
-    expect(r.text).toBe('hello');
-    expect(r.usage).toMatchObject({ promptTokens: 10, completionTokens: 5, totalTokens: 15 });
-    expect(r.latencyMs).toBeGreaterThanOrEqual(0);
+      messages: [{ role: 'user', content: 'hi' }]
+    })
+    expect(r.text).toBe('hello')
+    expect(r.usage).toMatchObject({ promptTokens: 10, completionTokens: 5, totalTokens: 15 })
+    expect(r.latencyMs).toBeGreaterThanOrEqual(0)
 
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://api.openai.com/v1/chat/completions');
-    expect(init.headers.Authorization).toBe('Bearer sk-test');
+    expect(fetchMock).toHaveBeenCalledOnce()
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.openai.com/v1/chat/completions')
+    expect(init.headers.Authorization).toBe('Bearer sk-test')
     expect(JSON.parse(init.body)).toMatchObject({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: 'hi' }],
-    });
-  });
+      messages: [{ role: 'user', content: 'hi' }]
+    })
+  })
 
   it('passes response_format json_object when jsonMode=true', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
-      json: async () => ({ model: 'm', choices: [{ message: { content: '{}' } }] }),
-    });
-    await callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }], jsonMode: true });
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.response_format).toEqual({ type: 'json_object' });
-  });
+      ok: true,
+      status: 200,
+      json: async () => ({ model: 'm', choices: [{ message: { content: '{}' } }] })
+    })
+    await callProvider({
+      profile: baseProfile,
+      messages: [{ role: 'user', content: 'x' }],
+      jsonMode: true
+    })
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.response_format).toEqual({ type: 'json_object' })
+  })
 
   it('maps 401 to E_AUTH', async () => {
     fetchMock.mockResolvedValue({
-      ok: false, status: 401,
+      ok: false,
+      status: 401,
       json: async () => ({ error: { message: 'invalid key' } }),
-      text: async () => '{"error":{"message":"invalid key"}}',
-    });
+      text: async () => '{"error":{"message":"invalid key"}}'
+    })
     await expect(
-      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] }),
-    ).rejects.toMatchObject({ code: 'E_AUTH', httpStatus: 401 });
-  });
+      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] })
+    ).rejects.toMatchObject({ code: 'E_AUTH', httpStatus: 401 })
+  })
 
   it('maps 429 to E_RATE', async () => {
     fetchMock.mockResolvedValue({
-      ok: false, status: 429,
+      ok: false,
+      status: 429,
       json: async () => ({ error: { message: 'rate' } }),
-      text: async () => '{"error":{"message":"rate"}}',
-    });
+      text: async () => '{"error":{"message":"rate"}}'
+    })
     await expect(
-      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] }),
-    ).rejects.toMatchObject({ code: 'E_RATE', httpStatus: 429 });
-  });
+      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] })
+    ).rejects.toMatchObject({ code: 'E_RATE', httpStatus: 429 })
+  })
 
   it('maps 500 to E_SERVER', async () => {
     fetchMock.mockResolvedValue({
-      ok: false, status: 500, json: async () => ({}), text: async () => 'oops',
-    });
+      ok: false,
+      status: 500,
+      json: async () => ({}),
+      text: async () => 'oops'
+    })
     await expect(
-      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] }),
-    ).rejects.toMatchObject({ code: 'E_SERVER', httpStatus: 500 });
-  });
-});
+      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] })
+    ).rejects.toMatchObject({ code: 'E_SERVER', httpStatus: 500 })
+  })
+})
 ```
 
 - [ ] **Step 2: Run test — should fail (no module)**
@@ -637,99 +695,103 @@ Expected: FAIL.
 
 ```ts
 // electron/ai/providers/openai.ts
-import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types';
+import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types'
 
 interface ProviderRequest {
   profile: {
-    id: string;
-    provider: 'openai' | 'openai-compatible' | string;
-    model: string;
-    baseUrl?: string;
-    apiKey: string | null;
-    temperature?: number;
-    maxTokens?: number;
-  };
-  messages: LlmMessage[];
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
-  jsonMode?: boolean;
+    id: string
+    provider: 'openai' | 'openai-compatible' | string
+    model: string
+    baseUrl?: string
+    apiKey: string | null
+    temperature?: number
+    maxTokens?: number
+  }
+  messages: LlmMessage[]
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  signal?: AbortSignal
+  jsonMode?: boolean
 }
 
 function err(code: LlmErrorCode, message: string, extra: Partial<LlmError> = {}): LlmError & Error {
-  const e = new Error(message) as LlmError & Error;
-  (e as any).code = code;
-  Object.assign(e, extra);
-  return e;
+  const e = new Error(message) as LlmError & Error
+  ;(e as any).code = code
+  Object.assign(e, extra)
+  return e
 }
 
 function statusToCode(status: number): LlmErrorCode {
-  if (status === 401 || status === 403) return 'E_AUTH';
-  if (status === 429) return 'E_RATE';
-  if (status >= 500) return 'E_SERVER';
-  return 'E_UNKNOWN';
+  if (status === 401 || status === 403) return 'E_AUTH'
+  if (status === 429) return 'E_RATE'
+  if (status >= 500) return 'E_SERVER'
+  return 'E_UNKNOWN'
 }
 
 export async function callProvider(req: ProviderRequest): Promise<ChatTextResult> {
-  const baseUrl = req.profile.baseUrl ?? 'https://api.openai.com';
-  const url = baseUrl.replace(/\/$/, '') + '/v1/chat/completions';
-  const model = req.model ?? req.profile.model;
+  const baseUrl = req.profile.baseUrl ?? 'https://api.openai.com'
+  const url = baseUrl.replace(/\/$/, '') + '/v1/chat/completions'
+  const model = req.model ?? req.profile.model
   const body: Record<string, unknown> = {
     model,
     messages: req.messages,
     temperature: req.temperature ?? req.profile.temperature ?? 0.3,
-    max_tokens: req.maxTokens ?? req.profile.maxTokens ?? 800,
-  };
-  if (req.jsonMode) body.response_format = { type: 'json_object' };
+    max_tokens: req.maxTokens ?? req.profile.maxTokens ?? 800
+  }
+  if (req.jsonMode) body.response_format = { type: 'json_object' }
 
-  const t0 = Date.now();
-  let resp: Response;
+  const t0 = Date.now()
+  let resp: Response
   try {
     resp = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${req.profile.apiKey ?? ''}`,
+        Authorization: `Bearer ${req.profile.apiKey ?? ''}`
       },
       body: JSON.stringify(body),
-      signal: req.signal,
-    });
+      signal: req.signal
+    })
   } catch (e) {
-    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout');
-    throw err('E_NETWORK', (e as Error).message);
+    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout')
+    throw err('E_NETWORK', (e as Error).message)
   }
-  const latencyMs = Date.now() - t0;
+  const latencyMs = Date.now() - t0
 
   if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    let providerMessage = text;
+    const text = await resp.text().catch(() => '')
+    let providerMessage = text
     try {
-      const j = JSON.parse(text);
-      providerMessage = j.error?.message ?? text;
-    } catch { /* keep raw */ }
+      const j = JSON.parse(text)
+      providerMessage = j.error?.message ?? text
+    } catch {
+      /* keep raw */
+    }
     throw err(statusToCode(resp.status), `openai ${resp.status}: ${providerMessage}`, {
       httpStatus: resp.status,
-      providerMessage,
-    });
+      providerMessage
+    })
   }
 
-  const json = await resp.json() as {
-    model?: string;
-    choices: Array<{ message: { content: string } }>;
-    usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
-  };
-  const text = json.choices[0]?.message?.content ?? '';
+  const json = (await resp.json()) as {
+    model?: string
+    choices: Array<{ message: { content: string } }>
+    usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number }
+  }
+  const text = json.choices[0]?.message?.content ?? ''
   return {
     text,
     model: json.model ?? model,
     latencyMs,
-    usage: json.usage ? {
-      promptTokens: json.usage.prompt_tokens,
-      completionTokens: json.usage.completion_tokens,
-      totalTokens: json.usage.total_tokens,
-    } : undefined,
-  };
+    usage: json.usage
+      ? {
+          promptTokens: json.usage.prompt_tokens,
+          completionTokens: json.usage.completion_tokens,
+          totalTokens: json.usage.total_tokens
+        }
+      : undefined
+  }
 }
 ```
 
@@ -748,9 +810,11 @@ git commit -m "feat(phase-15): openai provider — fetch + Bearer + json_object 
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: `electron/ai/providers/anthropic.ts` — Anthropic provider
 
 **Files:**
+
 - Create: `electron/ai/providers/anthropic.ts`
 - Create: `electron/ai/providers/anthropic.test.ts`
 
@@ -758,77 +822,83 @@ git commit -m "feat(phase-15): openai provider — fetch + Bearer + json_object 
 
 ```ts
 // electron/ai/providers/anthropic.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './anthropic';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { callProvider } from './anthropic'
 
-const fetchMock = vi.fn();
+const fetchMock = vi.fn()
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.stubGlobal('fetch', fetchMock);
-});
+  vi.resetAllMocks()
+  vi.stubGlobal('fetch', fetchMock)
+})
 
 const baseProfile = {
-  id: 'p1', provider: 'anthropic' as const, model: 'claude-haiku-3.5',
-  baseUrl: undefined, apiKey: 'sk-ant-test',
-};
+  id: 'p1',
+  provider: 'anthropic' as const,
+  model: 'claude-haiku-3.5',
+  baseUrl: undefined,
+  apiKey: 'sk-ant-test'
+}
 
 describe('anthropic provider', () => {
   it('extracts system message and posts to /v1/messages with x-api-key', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'claude-haiku-3.5',
         content: [{ type: 'text', text: 'hi back' }],
-        usage: { input_tokens: 10, output_tokens: 7 },
-      }),
-    });
+        usage: { input_tokens: 10, output_tokens: 7 }
+      })
+    })
     const r = await callProvider({
       profile: baseProfile,
       messages: [
         { role: 'system', content: 'be helpful' },
-        { role: 'user', content: 'hi' },
-      ],
-    });
-    expect(r.text).toBe('hi back');
-    expect(r.usage).toMatchObject({ promptTokens: 10, completionTokens: 7, totalTokens: 17 });
+        { role: 'user', content: 'hi' }
+      ]
+    })
+    expect(r.text).toBe('hi back')
+    expect(r.usage).toMatchObject({ promptTokens: 10, completionTokens: 7, totalTokens: 17 })
 
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://api.anthropic.com/v1/messages');
-    expect(init.headers['x-api-key']).toBe('sk-ant-test');
-    expect(init.headers['anthropic-version']).toBe('2023-06-01');
-    const body = JSON.parse(init.body);
-    expect(body.system).toBe('be helpful');
-    expect(body.messages).toEqual([{ role: 'user', content: 'hi' }]);
-    expect(body.max_tokens).toBeGreaterThan(0);
-  });
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.anthropic.com/v1/messages')
+    expect(init.headers['x-api-key']).toBe('sk-ant-test')
+    expect(init.headers['anthropic-version']).toBe('2023-06-01')
+    const body = JSON.parse(init.body)
+    expect(body.system).toBe('be helpful')
+    expect(body.messages).toEqual([{ role: 'user', content: 'hi' }])
+    expect(body.max_tokens).toBeGreaterThan(0)
+  })
 
   it('concatenates multiple text blocks in response.content', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         content: [
           { type: 'text', text: 'part 1 ' },
-          { type: 'text', text: 'part 2' },
-        ],
-      }),
-    });
+          { type: 'text', text: 'part 2' }
+        ]
+      })
+    })
     const r = await callProvider({
       profile: baseProfile,
-      messages: [{ role: 'user', content: 'x' }],
-    });
-    expect(r.text).toBe('part 1 part 2');
-  });
+      messages: [{ role: 'user', content: 'x' }]
+    })
+    expect(r.text).toBe('part 1 part 2')
+  })
 
   it('maps 401 to E_AUTH', async () => {
     fetchMock.mockResolvedValue({
-      ok: false, status: 401,
-      text: async () => '{"error":{"message":"bad key"}}',
-    });
+      ok: false,
+      status: 401,
+      text: async () => '{"error":{"message":"bad key"}}'
+    })
     await expect(
-      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] }),
-    ).rejects.toMatchObject({ code: 'E_AUTH', httpStatus: 401 });
-  });
-});
+      callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }] })
+    ).rejects.toMatchObject({ code: 'E_AUTH', httpStatus: 401 })
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -840,92 +910,109 @@ Expected: FAIL.
 
 ```ts
 // electron/ai/providers/anthropic.ts
-import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types';
+import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types'
 
 interface ProviderRequest {
-  profile: { id: string; model: string; baseUrl?: string; apiKey: string | null; temperature?: number; maxTokens?: number };
-  messages: LlmMessage[];
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
-  jsonMode?: boolean; // ignored — Anthropic relies on prompt + parser
+  profile: {
+    id: string
+    model: string
+    baseUrl?: string
+    apiKey: string | null
+    temperature?: number
+    maxTokens?: number
+  }
+  messages: LlmMessage[]
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  signal?: AbortSignal
+  jsonMode?: boolean // ignored — Anthropic relies on prompt + parser
 }
 
 function err(code: LlmErrorCode, message: string, extra: Partial<LlmError> = {}): LlmError & Error {
-  const e = new Error(message) as LlmError & Error;
-  (e as any).code = code;
-  Object.assign(e, extra);
-  return e;
+  const e = new Error(message) as LlmError & Error
+  ;(e as any).code = code
+  Object.assign(e, extra)
+  return e
 }
 
 function statusToCode(status: number): LlmErrorCode {
-  if (status === 401 || status === 403) return 'E_AUTH';
-  if (status === 429) return 'E_RATE';
-  if (status >= 500) return 'E_SERVER';
-  return 'E_UNKNOWN';
+  if (status === 401 || status === 403) return 'E_AUTH'
+  if (status === 429) return 'E_RATE'
+  if (status >= 500) return 'E_SERVER'
+  return 'E_UNKNOWN'
 }
 
 export async function callProvider(req: ProviderRequest): Promise<ChatTextResult> {
-  const baseUrl = req.profile.baseUrl ?? 'https://api.anthropic.com';
-  const url = baseUrl.replace(/\/$/, '') + '/v1/messages';
-  const model = req.model ?? req.profile.model;
+  const baseUrl = req.profile.baseUrl ?? 'https://api.anthropic.com'
+  const url = baseUrl.replace(/\/$/, '') + '/v1/messages'
+  const model = req.model ?? req.profile.model
 
-  const sys = req.messages.find(m => m.role === 'system')?.content;
-  const nonSys = req.messages.filter(m => m.role !== 'system');
+  const sys = req.messages.find((m) => m.role === 'system')?.content
+  const nonSys = req.messages.filter((m) => m.role !== 'system')
 
   const body: Record<string, unknown> = {
     model,
     max_tokens: req.maxTokens ?? req.profile.maxTokens ?? 800,
     temperature: req.temperature ?? req.profile.temperature ?? 0.3,
-    messages: nonSys,
-  };
-  if (sys) body.system = sys;
+    messages: nonSys
+  }
+  if (sys) body.system = sys
 
-  const t0 = Date.now();
-  let resp: Response;
+  const t0 = Date.now()
+  let resp: Response
   try {
     resp = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': req.profile.apiKey ?? '',
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify(body),
-      signal: req.signal,
-    });
+      signal: req.signal
+    })
   } catch (e) {
-    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout');
-    throw err('E_NETWORK', (e as Error).message);
+    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout')
+    throw err('E_NETWORK', (e as Error).message)
   }
-  const latencyMs = Date.now() - t0;
+  const latencyMs = Date.now() - t0
 
   if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    let providerMessage = text;
-    try { providerMessage = JSON.parse(text).error?.message ?? text; } catch { /* */ }
+    const text = await resp.text().catch(() => '')
+    let providerMessage = text
+    try {
+      providerMessage = JSON.parse(text).error?.message ?? text
+    } catch {
+      /* */
+    }
     throw err(statusToCode(resp.status), `anthropic ${resp.status}: ${providerMessage}`, {
-      httpStatus: resp.status, providerMessage,
-    });
+      httpStatus: resp.status,
+      providerMessage
+    })
   }
 
-  const json = await resp.json() as {
-    model?: string;
-    content?: Array<{ type: string; text?: string }>;
-    usage?: { input_tokens: number; output_tokens: number };
-  };
-  const text = (json.content ?? []).filter(c => c.type === 'text').map(c => c.text ?? '').join('');
+  const json = (await resp.json()) as {
+    model?: string
+    content?: Array<{ type: string; text?: string }>
+    usage?: { input_tokens: number; output_tokens: number }
+  }
+  const text = (json.content ?? [])
+    .filter((c) => c.type === 'text')
+    .map((c) => c.text ?? '')
+    .join('')
   return {
     text,
     model: json.model ?? model,
     latencyMs,
-    usage: json.usage ? {
-      promptTokens: json.usage.input_tokens,
-      completionTokens: json.usage.output_tokens,
-      totalTokens: json.usage.input_tokens + json.usage.output_tokens,
-    } : undefined,
-  };
+    usage: json.usage
+      ? {
+          promptTokens: json.usage.input_tokens,
+          completionTokens: json.usage.output_tokens,
+          totalTokens: json.usage.input_tokens + json.usage.output_tokens
+        }
+      : undefined
+  }
 }
 ```
 
@@ -944,9 +1031,11 @@ git commit -m "feat(phase-15): anthropic provider — system extraction + conten
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 7: `electron/ai/providers/ollama.ts` — Ollama provider
 
 **Files:**
+
 - Create: `electron/ai/providers/ollama.ts`
 - Create: `electron/ai/providers/ollama.test.ts`
 
@@ -954,64 +1043,78 @@ git commit -m "feat(phase-15): anthropic provider — system extraction + conten
 
 ```ts
 // electron/ai/providers/ollama.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './ollama';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { callProvider } from './ollama'
 
-const fetchMock = vi.fn();
+const fetchMock = vi.fn()
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.stubGlobal('fetch', fetchMock);
-});
+  vi.resetAllMocks()
+  vi.stubGlobal('fetch', fetchMock)
+})
 
 const baseProfile = {
-  id: 'p-local', provider: 'ollama' as const, model: 'llama3',
-  baseUrl: undefined, apiKey: null,
-};
+  id: 'p-local',
+  provider: 'ollama' as const,
+  model: 'llama3',
+  baseUrl: undefined,
+  apiKey: null
+}
 
 describe('ollama provider', () => {
   it('posts to localhost:11434/api/chat with stream:false', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'llama3',
         message: { content: 'hi' },
-        prompt_eval_count: 12, eval_count: 8,
-      }),
-    });
+        prompt_eval_count: 12,
+        eval_count: 8
+      })
+    })
     const r = await callProvider({
       profile: baseProfile,
-      messages: [{ role: 'user', content: 'x' }],
-    });
-    expect(r.text).toBe('hi');
-    expect(r.usage).toMatchObject({ promptTokens: 12, completionTokens: 8, totalTokens: 20 });
+      messages: [{ role: 'user', content: 'x' }]
+    })
+    expect(r.text).toBe('hi')
+    expect(r.usage).toMatchObject({ promptTokens: 12, completionTokens: 8, totalTokens: 20 })
 
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://localhost:11434/api/chat');
-    expect((init.headers as any).Authorization).toBeUndefined();
-    const body = JSON.parse(init.body);
-    expect(body.stream).toBe(false);
-    expect(body.options.num_predict).toBeGreaterThan(0);
-  });
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('http://localhost:11434/api/chat')
+    expect((init.headers as any).Authorization).toBeUndefined()
+    const body = JSON.parse(init.body)
+    expect(body.stream).toBe(false)
+    expect(body.options.num_predict).toBeGreaterThan(0)
+  })
 
   it('adds format:"json" when jsonMode=true', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
-      json: async () => ({ message: { content: '{}' } }),
-    });
-    await callProvider({ profile: baseProfile, messages: [{ role: 'user', content: 'x' }], jsonMode: true });
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.format).toBe('json');
-  });
+      ok: true,
+      status: 200,
+      json: async () => ({ message: { content: '{}' } })
+    })
+    await callProvider({
+      profile: baseProfile,
+      messages: [{ role: 'user', content: 'x' }],
+      jsonMode: true
+    })
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.format).toBe('json')
+  })
 
   it('honors profile.baseUrl override', async () => {
-    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ message: { content: '' } }) });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ message: { content: '' } })
+    })
     await callProvider({
       profile: { ...baseProfile, baseUrl: 'http://10.0.0.1:11434' },
-      messages: [{ role: 'user', content: 'x' }],
-    });
-    expect(fetchMock.mock.calls[0][0]).toBe('http://10.0.0.1:11434/api/chat');
-  });
-});
+      messages: [{ role: 'user', content: 'x' }]
+    })
+    expect(fetchMock.mock.calls[0][0]).toBe('http://10.0.0.1:11434/api/chat')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -1023,36 +1126,43 @@ Expected: FAIL.
 
 ```ts
 // electron/ai/providers/ollama.ts
-import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types';
+import type { LlmMessage, ChatTextResult, LlmError, LlmErrorCode } from '@shared/ai-types'
 
 interface ProviderRequest {
-  profile: { id: string; model: string; baseUrl?: string; apiKey: string | null; temperature?: number; maxTokens?: number };
-  messages: LlmMessage[];
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
-  jsonMode?: boolean;
+  profile: {
+    id: string
+    model: string
+    baseUrl?: string
+    apiKey: string | null
+    temperature?: number
+    maxTokens?: number
+  }
+  messages: LlmMessage[]
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  signal?: AbortSignal
+  jsonMode?: boolean
 }
 
 function err(code: LlmErrorCode, message: string, extra: Partial<LlmError> = {}): LlmError & Error {
-  const e = new Error(message) as LlmError & Error;
-  (e as any).code = code;
-  Object.assign(e, extra);
-  return e;
+  const e = new Error(message) as LlmError & Error
+  ;(e as any).code = code
+  Object.assign(e, extra)
+  return e
 }
 
 function statusToCode(status: number): LlmErrorCode {
-  if (status === 401 || status === 403) return 'E_AUTH';
-  if (status === 429) return 'E_RATE';
-  if (status >= 500) return 'E_SERVER';
-  return 'E_UNKNOWN';
+  if (status === 401 || status === 403) return 'E_AUTH'
+  if (status === 429) return 'E_RATE'
+  if (status >= 500) return 'E_SERVER'
+  return 'E_UNKNOWN'
 }
 
 export async function callProvider(req: ProviderRequest): Promise<ChatTextResult> {
-  const baseUrl = req.profile.baseUrl ?? 'http://localhost:11434';
-  const url = baseUrl.replace(/\/$/, '') + '/api/chat';
-  const model = req.model ?? req.profile.model;
+  const baseUrl = req.profile.baseUrl ?? 'http://localhost:11434'
+  const url = baseUrl.replace(/\/$/, '') + '/api/chat'
+  const model = req.model ?? req.profile.model
 
   const body: Record<string, unknown> = {
     model,
@@ -1060,48 +1170,54 @@ export async function callProvider(req: ProviderRequest): Promise<ChatTextResult
     stream: false,
     options: {
       temperature: req.temperature ?? req.profile.temperature ?? 0.3,
-      num_predict: req.maxTokens ?? req.profile.maxTokens ?? 800,
-    },
-  };
-  if (req.jsonMode) body.format = 'json';
+      num_predict: req.maxTokens ?? req.profile.maxTokens ?? 800
+    }
+  }
+  if (req.jsonMode) body.format = 'json'
 
-  const t0 = Date.now();
-  let resp: Response;
+  const t0 = Date.now()
+  let resp: Response
   try {
     resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: req.signal,
-    });
+      signal: req.signal
+    })
   } catch (e) {
-    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout');
-    throw err('E_NETWORK', (e as Error).message);
+    if ((e as Error).name === 'AbortError') throw err('E_NETWORK', 'timeout')
+    throw err('E_NETWORK', (e as Error).message)
   }
-  const latencyMs = Date.now() - t0;
+  const latencyMs = Date.now() - t0
 
   if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw err(statusToCode(resp.status), `ollama ${resp.status}: ${text}`, { httpStatus: resp.status, providerMessage: text });
+    const text = await resp.text().catch(() => '')
+    throw err(statusToCode(resp.status), `ollama ${resp.status}: ${text}`, {
+      httpStatus: resp.status,
+      providerMessage: text
+    })
   }
 
-  const json = await resp.json() as {
-    model?: string;
-    message?: { content?: string };
-    prompt_eval_count?: number;
-    eval_count?: number;
-  };
-  const text = json.message?.content ?? '';
+  const json = (await resp.json()) as {
+    model?: string
+    message?: { content?: string }
+    prompt_eval_count?: number
+    eval_count?: number
+  }
+  const text = json.message?.content ?? ''
   return {
     text,
     model: json.model ?? model,
     latencyMs,
-    usage: (json.prompt_eval_count != null || json.eval_count != null) ? {
-      promptTokens: json.prompt_eval_count ?? 0,
-      completionTokens: json.eval_count ?? 0,
-      totalTokens: (json.prompt_eval_count ?? 0) + (json.eval_count ?? 0),
-    } : undefined,
-  };
+    usage:
+      json.prompt_eval_count != null || json.eval_count != null
+        ? {
+            promptTokens: json.prompt_eval_count ?? 0,
+            completionTokens: json.eval_count ?? 0,
+            totalTokens: (json.prompt_eval_count ?? 0) + (json.eval_count ?? 0)
+          }
+        : undefined
+  }
 }
 ```
 
@@ -1120,9 +1236,11 @@ git commit -m "feat(phase-15): ollama provider — /api/chat + format:json"
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 8: `electron/ai/providers/openai-compatible.ts`
 
 **Files:**
+
 - Create: `electron/ai/providers/openai-compatible.ts`
 - Create: `electron/ai/providers/openai-compatible.test.ts`
 
@@ -1132,37 +1250,50 @@ The implementation reuses OpenAI's call shape but **requires** `profile.baseUrl`
 
 ```ts
 // electron/ai/providers/openai-compatible.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { callProvider } from './openai-compatible';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { callProvider } from './openai-compatible'
 
-const fetchMock = vi.fn();
+const fetchMock = vi.fn()
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.stubGlobal('fetch', fetchMock);
-});
+  vi.resetAllMocks()
+  vi.stubGlobal('fetch', fetchMock)
+})
 
 describe('openai-compatible provider', () => {
   it('uses profile.baseUrl + /v1/chat/completions', async () => {
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
-      json: async () => ({ model: 'm', choices: [{ message: { content: 'ok' } }] }),
-    });
+      ok: true,
+      status: 200,
+      json: async () => ({ model: 'm', choices: [{ message: { content: 'ok' } }] })
+    })
     await callProvider({
-      profile: { id: 'p', provider: 'openai-compatible', model: 'm', baseUrl: 'https://api.groq.com/openai', apiKey: 'k' },
-      messages: [{ role: 'user', content: 'x' }],
-    });
-    expect(fetchMock.mock.calls[0][0]).toBe('https://api.groq.com/openai/v1/chat/completions');
-  });
+      profile: {
+        id: 'p',
+        provider: 'openai-compatible',
+        model: 'm',
+        baseUrl: 'https://api.groq.com/openai',
+        apiKey: 'k'
+      },
+      messages: [{ role: 'user', content: 'x' }]
+    })
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.groq.com/openai/v1/chat/completions')
+  })
 
   it('throws E_CONFIG if baseUrl missing', async () => {
     await expect(
       callProvider({
-        profile: { id: 'p', provider: 'openai-compatible', model: 'm', baseUrl: undefined as any, apiKey: 'k' },
-        messages: [{ role: 'user', content: 'x' }],
-      }),
-    ).rejects.toMatchObject({ code: 'E_CONFIG' });
-  });
-});
+        profile: {
+          id: 'p',
+          provider: 'openai-compatible',
+          model: 'm',
+          baseUrl: undefined as any,
+          apiKey: 'k'
+        },
+        messages: [{ role: 'user', content: 'x' }]
+      })
+    ).rejects.toMatchObject({ code: 'E_CONFIG' })
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -1174,20 +1305,20 @@ Expected: FAIL.
 
 ```ts
 // electron/ai/providers/openai-compatible.ts
-import type { LlmError, LlmErrorCode } from '@shared/ai-types';
-import { callProvider as callOpenai } from './openai';
+import type { LlmError, LlmErrorCode } from '@shared/ai-types'
+import { callProvider as callOpenai } from './openai'
 
 function err(code: LlmErrorCode, message: string): LlmError & Error {
-  const e = new Error(message) as LlmError & Error;
-  (e as any).code = code;
-  return e;
+  const e = new Error(message) as LlmError & Error
+  ;(e as any).code = code
+  return e
 }
 
 export async function callProvider(req: Parameters<typeof callOpenai>[0]) {
   if (!req.profile.baseUrl) {
-    throw err('E_CONFIG', 'openai-compatible requires profile.baseUrl');
+    throw err('E_CONFIG', 'openai-compatible requires profile.baseUrl')
   }
-  return callOpenai(req);
+  return callOpenai(req)
 }
 ```
 
@@ -1206,74 +1337,80 @@ git commit -m "feat(phase-15): openai-compatible provider — reuse openai impl 
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 9: `parse-json.ts` — four-layer JSON parser + Ajv validation
 
 **Files:**
+
 - Create: `electron/ai/parse-json.ts`
 - Create: `electron/ai/parse-json.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
-```ts
+````ts
 // electron/ai/parse-json.test.ts
-import { describe, it, expect } from 'vitest';
-import { parseAndValidate, stripCodeFence, extractFirstJsonObject } from './parse-json';
+import { describe, it, expect } from 'vitest'
+import { parseAndValidate, stripCodeFence, extractFirstJsonObject } from './parse-json'
 
 const schema = {
   type: 'object',
   required: ['a'],
   properties: { a: { type: 'number' } },
-  additionalProperties: false,
-};
+  additionalProperties: false
+}
 
 describe('parseAndValidate', () => {
   it('parses raw JSON', () => {
-    expect(parseAndValidate('{"a":1}', schema)).toEqual({ a: 1 });
-  });
+    expect(parseAndValidate('{"a":1}', schema)).toEqual({ a: 1 })
+  })
 
   it('strips ```json fence', () => {
-    const text = '```json\n{"a":2}\n```';
-    expect(parseAndValidate(text, schema)).toEqual({ a: 2 });
-  });
+    const text = '```json\n{"a":2}\n```'
+    expect(parseAndValidate(text, schema)).toEqual({ a: 2 })
+  })
 
   it('strips bare ``` fence', () => {
-    expect(parseAndValidate('```\n{"a":3}\n```', schema)).toEqual({ a: 3 });
-  });
+    expect(parseAndValidate('```\n{"a":3}\n```', schema)).toEqual({ a: 3 })
+  })
 
   it('extracts JSON when surrounded by text', () => {
-    expect(parseAndValidate('Here is the result:\n{"a":4}\nThanks', schema)).toEqual({ a: 4 });
-  });
+    expect(parseAndValidate('Here is the result:\n{"a":4}\nThanks', schema)).toEqual({ a: 4 })
+  })
 
   it('throws E_RESPONSE on schema mismatch', () => {
     expect(() => parseAndValidate('{"b":5}', schema)).toThrowError(
-      expect.objectContaining({ code: 'E_RESPONSE' }),
-    );
-  });
+      expect.objectContaining({ code: 'E_RESPONSE' })
+    )
+  })
 
   it('throws E_RESPONSE when no JSON object can be located', () => {
     expect(() => parseAndValidate('totally not json', schema)).toThrowError(
-      expect.objectContaining({ code: 'E_RESPONSE' }),
-    );
-  });
+      expect.objectContaining({ code: 'E_RESPONSE' })
+    )
+  })
 
   it('handles balanced-braces inner objects', () => {
-    expect(parseAndValidate('prelude {"a": 6, "nested": {"x": 1}} extra', {
-      type: 'object', required: ['a'], properties: { a: { type: 'number' }, nested: { type: 'object' } },
-    })).toMatchObject({ a: 6 });
-  });
-});
+    expect(
+      parseAndValidate('prelude {"a": 6, "nested": {"x": 1}} extra', {
+        type: 'object',
+        required: ['a'],
+        properties: { a: { type: 'number' }, nested: { type: 'object' } }
+      })
+    ).toMatchObject({ a: 6 })
+  })
+})
 
 describe('helpers', () => {
   it('stripCodeFence removes ```json wrappers', () => {
-    expect(stripCodeFence('```json\n{}\n```')).toBe('{}');
-  });
+    expect(stripCodeFence('```json\n{}\n```')).toBe('{}')
+  })
   it('extractFirstJsonObject finds balanced braces', () => {
-    expect(extractFirstJsonObject('text {"a":1} tail')).toBe('{"a":1}');
-    expect(extractFirstJsonObject('text {"a": {"b":2}} tail')).toBe('{"a": {"b":2}}');
-    expect(extractFirstJsonObject('no braces')).toBeNull();
-  });
-});
-```
+    expect(extractFirstJsonObject('text {"a":1} tail')).toBe('{"a":1}')
+    expect(extractFirstJsonObject('text {"a": {"b":2}} tail')).toBe('{"a": {"b":2}}')
+    expect(extractFirstJsonObject('no braces')).toBeNull()
+  })
+})
+````
 
 - [ ] **Step 2: Run — fails**
 
@@ -1282,80 +1419,96 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implement**
 
-```ts
+````ts
 // electron/ai/parse-json.ts
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import type { LlmError } from '@shared/ai-types';
+import Ajv from 'ajv'
+import addFormats from 'ajv-formats'
+import type { LlmError } from '@shared/ai-types'
 
-const ajv = new Ajv({ allErrors: true, strict: false });
-addFormats(ajv);
+const ajv = new Ajv({ allErrors: true, strict: false })
+addFormats(ajv)
 
 function err(message: string, providerMessage?: string): LlmError & Error {
-  const e = new Error(message) as LlmError & Error;
-  (e as any).code = 'E_RESPONSE';
-  if (providerMessage) (e as any).providerMessage = providerMessage;
-  return e;
+  const e = new Error(message) as LlmError & Error
+  ;(e as any).code = 'E_RESPONSE'
+  if (providerMessage) (e as any).providerMessage = providerMessage
+  return e
 }
 
 export function stripCodeFence(input: string): string {
-  let s = input.trim();
+  let s = input.trim()
   // ```json\n...\n``` or ```\n...\n```
-  const fenceRe = /^```(?:json|JSON)?\s*\n([\s\S]*?)\n```$/m;
-  const m = s.match(fenceRe);
-  if (m) return m[1].trim();
-  return s;
+  const fenceRe = /^```(?:json|JSON)?\s*\n([\s\S]*?)\n```$/m
+  const m = s.match(fenceRe)
+  if (m) return m[1].trim()
+  return s
 }
 
 export function extractFirstJsonObject(input: string): string | null {
-  let depth = 0;
-  let start = -1;
-  let inString = false;
-  let escape = false;
+  let depth = 0
+  let start = -1
+  let inString = false
+  let escape = false
   for (let i = 0; i < input.length; i++) {
-    const c = input[i];
+    const c = input[i]
     if (inString) {
-      if (escape) { escape = false; continue; }
-      if (c === '\\') { escape = true; continue; }
-      if (c === '"') inString = false;
-      continue;
+      if (escape) {
+        escape = false
+        continue
+      }
+      if (c === '\\') {
+        escape = true
+        continue
+      }
+      if (c === '"') inString = false
+      continue
     }
-    if (c === '"') { inString = true; continue; }
+    if (c === '"') {
+      inString = true
+      continue
+    }
     if (c === '{') {
-      if (depth === 0) start = i;
-      depth++;
+      if (depth === 0) start = i
+      depth++
     } else if (c === '}') {
-      depth--;
-      if (depth === 0 && start >= 0) return input.slice(start, i + 1);
+      depth--
+      if (depth === 0 && start >= 0) return input.slice(start, i + 1)
     }
   }
-  return null;
+  return null
 }
 
 export function parseAndValidate<T = unknown>(rawText: string, schema: object): T {
-  const stripped = stripCodeFence(rawText);
+  const stripped = stripCodeFence(rawText)
 
   const tryParse = (s: string): unknown | undefined => {
-    try { return JSON.parse(s); } catch { return undefined; }
-  };
-
-  let obj = tryParse(stripped);
-  if (obj === undefined) {
-    const extracted = extractFirstJsonObject(stripped);
-    if (extracted) obj = tryParse(extracted);
-  }
-  if (obj === undefined) {
-    throw err('invalid JSON from LLM: no parseable object found', rawText.slice(0, 500));
+    try {
+      return JSON.parse(s)
+    } catch {
+      return undefined
+    }
   }
 
-  const validate = ajv.compile(schema);
+  let obj = tryParse(stripped)
+  if (obj === undefined) {
+    const extracted = extractFirstJsonObject(stripped)
+    if (extracted) obj = tryParse(extracted)
+  }
+  if (obj === undefined) {
+    throw err('invalid JSON from LLM: no parseable object found', rawText.slice(0, 500))
+  }
+
+  const validate = ajv.compile(schema)
   if (!validate(obj)) {
-    const msg = (validate.errors ?? []).map(e => `${e.instancePath} ${e.message}`).join('; ');
-    throw err(`invalid JSON from LLM: schema validation failed — ${msg}`, JSON.stringify(obj).slice(0, 500));
+    const msg = (validate.errors ?? []).map((e) => `${e.instancePath} ${e.message}`).join('; ')
+    throw err(
+      `invalid JSON from LLM: schema validation failed — ${msg}`,
+      JSON.stringify(obj).slice(0, 500)
+    )
   }
-  return obj as T;
+  return obj as T
 }
-```
+````
 
 - [ ] **Step 4: Run — passes**
 
@@ -1372,11 +1525,13 @@ git commit -m "feat(phase-15): chatJson parsing — code-fence strip + brace ext
 ---
 
 <!-- openspec-task: 2.7 -->
+
 ### Task 10: 60s `AbortController` timeout + integration test
 
 The provider modules already accept `signal`; this task wires a default 60s timeout in `client.ts` and adds an integration test that verifies the wiring.
 
 **Files:**
+
 - Modify: `electron/ai/client.ts`
 - Modify: `electron/ai/client.test.ts`
 
@@ -1387,49 +1542,55 @@ Add to `electron/ai/client.test.ts`:
 ```ts
 describe('llmClient.chat — default timeout', () => {
   it('passes an AbortSignal to the provider that aborts after the configured timeout', async () => {
-    (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
-    (profilesStore.get as any).mockReturnValue({
-      id: 'p1', provider: 'openai', model: 'gpt-4o-mini', baseUrl: undefined,
-    });
-    (getProfileDecryptedKey as any).mockReturnValue('k');
+    ;(settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' })
+    ;(profilesStore.get as any).mockReturnValue({
+      id: 'p1',
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      baseUrl: undefined
+    })
+    ;(getProfileDecryptedKey as any).mockReturnValue('k')
 
-    let receivedSignal: AbortSignal | undefined;
+    let receivedSignal: AbortSignal | undefined
     vi.doMock('./providers/openai', () => ({
       callProvider: vi.fn(async (req: any) => {
-        receivedSignal = req.signal;
-        return { text: 'ok', model: 'm', latencyMs: 1 };
-      }),
-    }));
+        receivedSignal = req.signal
+        return { text: 'ok', model: 'm', latencyMs: 1 }
+      })
+    }))
 
     // Re-import to pick up the mock
-    const { llmClient: freshClient } = await import('./client');
-    await freshClient.chat({ messages: [{ role: 'user', content: 'x' }] });
+    const { llmClient: freshClient } = await import('./client')
+    await freshClient.chat({ messages: [{ role: 'user', content: 'x' }] })
 
-    expect(receivedSignal).toBeInstanceOf(AbortSignal);
-    expect(receivedSignal!.aborted).toBe(false);
-  });
+    expect(receivedSignal).toBeInstanceOf(AbortSignal)
+    expect(receivedSignal!.aborted).toBe(false)
+  })
 
   it('uses caller-provided signal when given (no default timeout layered on top)', async () => {
-    (settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' });
-    (profilesStore.get as any).mockReturnValue({
-      id: 'p1', provider: 'openai', model: 'gpt-4o-mini', baseUrl: undefined,
-    });
-    (getProfileDecryptedKey as any).mockReturnValue('k');
+    ;(settingsStore.get as any).mockReturnValue({ defaultProfileId: 'p1' })
+    ;(profilesStore.get as any).mockReturnValue({
+      id: 'p1',
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      baseUrl: undefined
+    })
+    ;(getProfileDecryptedKey as any).mockReturnValue('k')
 
-    const ac = new AbortController();
-    let receivedSignal: AbortSignal | undefined;
+    const ac = new AbortController()
+    let receivedSignal: AbortSignal | undefined
     vi.doMock('./providers/openai', () => ({
       callProvider: vi.fn(async (req: any) => {
-        receivedSignal = req.signal;
-        return { text: 'ok', model: 'm', latencyMs: 1 };
-      }),
-    }));
+        receivedSignal = req.signal
+        return { text: 'ok', model: 'm', latencyMs: 1 }
+      })
+    }))
 
-    const { llmClient: freshClient } = await import('./client');
-    await freshClient.chat({ messages: [{ role: 'user', content: 'x' }], signal: ac.signal });
-    expect(receivedSignal).toBe(ac.signal);
-  });
-});
+    const { llmClient: freshClient } = await import('./client')
+    await freshClient.chat({ messages: [{ role: 'user', content: 'x' }], signal: ac.signal })
+    expect(receivedSignal).toBe(ac.signal)
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails (default signal not yet attached)**
@@ -1442,40 +1603,48 @@ Expected: at least one of the new tests fails because `llmClient.chat` does not 
 In `electron/ai/client.ts`, replace the body of `chat` and `chatJson` to layer in a default timeout when no signal is supplied:
 
 ```ts
-const DEFAULT_TIMEOUT_MS = 60_000;
+const DEFAULT_TIMEOUT_MS = 60_000
 
-function withTimeout(signal: AbortSignal | undefined, timeoutMs: number): { signal: AbortSignal; cleanup: () => void } {
-  if (signal) return { signal, cleanup: () => {} };
-  const ac = new AbortController();
-  const id = setTimeout(() => ac.abort(), timeoutMs);
-  return { signal: ac.signal, cleanup: () => clearTimeout(id) };
+function withTimeout(
+  signal: AbortSignal | undefined,
+  timeoutMs: number
+): { signal: AbortSignal; cleanup: () => void } {
+  if (signal) return { signal, cleanup: () => {} }
+  const ac = new AbortController()
+  const id = setTimeout(() => ac.abort(), timeoutMs)
+  return { signal: ac.signal, cleanup: () => clearTimeout(id) }
 }
 
 export const llmClient = {
   async chat(opts: ChatOptions): Promise<ChatTextResult> {
-    const profile = resolveProfile(opts.profileId);
-    const { callProvider } = await loadProvider(profile.provider);
-    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS);
+    const profile = resolveProfile(opts.profileId)
+    const { callProvider } = await loadProvider(profile.provider)
+    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS)
     try {
-      return await callProvider({ profile, ...opts, signal });
+      return await callProvider({ profile, ...opts, signal })
     } finally {
-      cleanup();
+      cleanup()
     }
   },
   async chatJson<T = unknown>(opts: ChatJsonOptions): Promise<ChatJsonResult<T>> {
-    const profile = resolveProfile(opts.profileId);
-    const { callProvider } = await loadProvider(profile.provider);
-    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS);
+    const profile = resolveProfile(opts.profileId)
+    const { callProvider } = await loadProvider(profile.provider)
+    const { signal, cleanup } = withTimeout(opts.signal, DEFAULT_TIMEOUT_MS)
     try {
-      const { text, model, usage, latencyMs } = await callProvider({ profile, ...opts, signal, jsonMode: true });
-      const { parseAndValidate } = await import('./parse-json');
-      const data = parseAndValidate<T>(text, opts.schema);
-      return { data, rawText: text, model, usage, latencyMs };
+      const { text, model, usage, latencyMs } = await callProvider({
+        profile,
+        ...opts,
+        signal,
+        jsonMode: true
+      })
+      const { parseAndValidate } = await import('./parse-json')
+      const data = parseAndValidate<T>(text, opts.schema)
+      return { data, rawText: text, model, usage, latencyMs }
     } finally {
-      cleanup();
+      cleanup()
     }
-  },
-};
+  }
+}
 ```
 
 - [ ] **Step 4: Run — passes**

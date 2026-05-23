@@ -15,8 +15,8 @@ A catalog is a JSON Schema file defining which component types an agent can use 
 For local/custom catalogs, use the `local://` URI convention and register before mounting:
 
 ```typescript
-import { registerCatalog } from '@ant-design/x-card';
-import type { Catalog } from '@ant-design/x-card';
+import { registerCatalog } from '@ant-design/x-card'
+import type { Catalog } from '@ant-design/x-card'
 
 const myCatalog: Catalog = {
   catalogId: 'local://my_catalog.json',
@@ -25,9 +25,9 @@ const myCatalog: Catalog = {
       type: 'object',
       properties: {
         text: { type: 'string' },
-        variant: { type: 'string', enum: ['h1', 'h2', 'body', 'caption'] },
+        variant: { type: 'string', enum: ['h1', 'h2', 'body', 'caption'] }
       },
-      required: ['text'],
+      required: ['text']
     },
     Button: {
       type: 'object',
@@ -35,9 +35,9 @@ const myCatalog: Catalog = {
         text: { type: 'string' },
         variant: { type: 'string', enum: ['primary', 'borderless'] },
         action: {},
-        checks: {},
+        checks: {}
       },
-      required: ['text'],
+      required: ['text']
     },
     TextField: {
       type: 'object',
@@ -45,28 +45,28 @@ const myCatalog: Catalog = {
         label: { type: 'string' },
         value: {}, // Supports { path: string } binding
         checks: {},
-        variant: { type: 'string', enum: ['shortText'] },
+        variant: { type: 'string', enum: ['shortText'] }
       },
-      required: ['label'],
+      required: ['label']
     },
     Column: {
       type: 'object',
       properties: {
-        children: {}, // string[] | ChildListTemplate
-      },
+        children: {} // string[] | ChildListTemplate
+      }
     },
     Card: {
       type: 'object',
       properties: {
         child: { type: 'string' },
-        children: {},
-      },
-    },
-  },
-};
+        children: {}
+      }
+    }
+  }
+}
 
 // Register BEFORE the React tree mounts
-registerCatalog(myCatalog);
+registerCatalog(myCatalog)
 ```
 
 Then reference in `createSurface`:

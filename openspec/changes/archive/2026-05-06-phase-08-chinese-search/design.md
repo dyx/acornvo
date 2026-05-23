@@ -1,12 +1,14 @@
 ## Context
 
 前置：
+
 - phase 3：`migrations/NNN_*.sql`、`better-sqlite3`、PRAGMA user_version
 - phase 5：`file-indexer` 在一次事务内 upsert files/tags；已预留 FTS tokenizer 注入点；`content_hash = sha256(body)`
 - phase 6：`FileSummary` DTO + Library UI；搜索只做 LIKE
 - phase 7：`/editor/:encodedPath` 已可用
 
 PRD 约定：
+
 - `Cmd/Ctrl+P`：QuickSwitcher（按标题 / 路径）
 - `Cmd/Ctrl+Shift+F`：全文搜索
 - 中文必须分词（jieba），英文按空格 + 连字符
@@ -14,12 +16,14 @@ PRD 约定：
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 中文查询"注意力机制"可以命中 body 含"注意力 机制"或"注意力机制"的文件
 - `Cmd+P` 30ms 内出候选；`Cmd+Shift+F` 10K 文件 body 查询 < 300ms
 - 不破坏 phase 5 的 indexer 事务语义（FTS 写入同一事务）
 - 升级用户（phase 5 → phase 8）自动 rebuild FTS，无需手动重建
 
 **Non-Goals:**
+
 - 不做语义搜索 / embedding（backlog）
 - 不做"搜索历史"持久化（只在内存保留最近 10 条）
 - 不做正则搜索（全文面板只支持 FTS 语法 + 隐式 AND）
@@ -57,9 +61,11 @@ CREATE VIRTUAL TABLE files_fts USING fts5(
 - 用 `tokenizer('acornvo_jieba', jiebaTokenize)` 注册 —— 需要 `better-sqlite3` 暴露 FTS tokenizer 注册 API；如其未提供，**改用 `trigram` tokenizer 作为备选**（FTS5 内置，3-gram，对中英文都能切，召回率略低，性能相当）
 
 **当前选择 trigram**（稳健）：
+
 ```sql
 tokenize = 'trigram'
 ```
+
 - 优点：FTS5 内置，零 native 代码；中文按 3-gram 切，"注意力机制" → "注意力/意力机/力机制"
 - 缺点：对"的 了 呢"虚词无法过滤；索引约 3x body 大小
 - 英文：trigram 对英文也按 3-gram，会降低英文精度，但用户查中文为主
@@ -86,6 +92,7 @@ tokenize = 'trigram'
 ### D4: indexer 同步 FTS
 
 phase 5 MODIFIED：
+
 - `upsertFile(row)`：在同一 transaction 内
   - `INSERT OR REPLACE INTO files ...`
   - `INSERT OR REPLACE INTO files_fts (rowid, path, title, body) VALUES (?, ?, ?, ?)`（external content 下仍 insert 行）

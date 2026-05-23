@@ -8,22 +8,22 @@
 
 1. **Remove**: `SessionState.streamingBuffer: string` and `SessionState.flushedLength: number`; also remove from `emptySession()` and from `sendUserMessage` reducer. Public store action shapes do NOT change.
 2. **Add**: `ChatMessage.status?: 'pending' | 'streaming' | 'done' | 'error'` (Plan 2 added it as a soft field; this task makes it official). `toChatMessage(m)` from DB-loaded messages sets `status: 'done'`.
-3. **token reducer (rewritten)**: 
+3. **token reducer (rewritten)**:
    - If the last message is `role==='assistant' && status==='streaming'`, append `event.text` to its `.text`.
    - Else push a fresh `{ id: nextMsgId(), role: 'assistant', text: event.text, status: 'streaming', createdAt: Date.now() }`.
    - Also flip `cur.status` to `'streaming'`.
-4. **message.appended reducer (rewritten)**: 
+4. **message.appended reducer (rewritten)**:
    - If `event.message.role === 'assistant'` AND the last store message is the streaming assistant placeholder (status='streaming'), **merge**: keep `text` (already accumulated), set new `id = event.message.id`, set `toolCalls = event.message.toolCalls`, and mark `status: 'done'` IF event implies completion (the actual final-status flip happens on the `done` event, not here — keep `status: 'streaming'` until then unless event indicates otherwise).
    - Else push as a new message via `toChatMessage(event.message)`.
-5. **done reducer (rewritten)**: 
-   - Set the latest assistant message's `status = 'done'`. 
+5. **done reducer (rewritten)**:
+   - Set the latest assistant message's `status = 'done'`.
    - Flip `cur.status` to `'awaiting-approval'` if `pendingApprovals.length > 0`, else `'idle'`.
    - Delete the old `streamingBuffer → push new message` logic entirely.
-6. **tool.start reducer**: 
+6. **tool.start reducer**:
    - Consume `event.callId` (Plan 1 verified phase-19 K1 has it). Push tool message with `toolCallId = event.callId`.
    - Additionally, if the last assistant message has `toolCalls` and one of them has `id === event.callId` already, do nothing extra. If not (translator wrote tool.start before assistant message.appended landed; uncommon under phase-19 but defensive), defer — selector handles fallback.
 7. **tool.result reducer**: Consume `event.callId`; push tool message with `toolCallId = event.callId` and JSON-serialize the result for storage; the existing `E_APPROVAL_TIMEOUT` branch stays.
-8. **Token batching**: 
+8. **Token batching**:
    - Introduce a module-private `pendingTokenBuckets: Map<sessionId, string>`.
    - Introduce a 16ms timer keyed per session (`setTimeout(flush, 16)` if not already scheduled).
    - `flush(sid)` runs the actual `setState` that appends the bucket content to the streaming message.
@@ -38,9 +38,11 @@
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Remove streamingBuffer & flushedLength from SessionState
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Edit the SessionState interface**
@@ -48,8 +50,8 @@
 Open `/Users/aaa/develop/workspace-ai/acornvo/src/stores/chat.ts`. Locate the `SessionState` interface (around line 35–47) and delete the two lines:
 
 ```ts
-  streamingBuffer: string
-  flushedLength: number
+streamingBuffer: string
+flushedLength: number
 ```
 
 The interface becomes:
@@ -109,9 +111,11 @@ The token / done / tool.start / tool.result reducers still reference `streamingB
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Formalize ChatMessage.status field
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Add the status field**
@@ -147,7 +151,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
     toolCalls: m.toolCalls,
     toolCallId: m.toolCallId,
     createdAt: new Date(m.createdAt).getTime(),
-    status: 'done',
+    status: 'done'
   }
 }
 ```
@@ -157,9 +161,11 @@ function toChatMessage(m: SessionMessage): ChatMessage {
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: Rewrite the token reducer for lazy streaming assistant + batching prep
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Add the batching infrastructure (above the subscribe function)**
@@ -192,13 +198,10 @@ function applyToken(sid: string, txt: string): void {
     const cur = s.bySession[sid] ?? emptySession()
     const lastIdx = cur.messages.length - 1
     const last = cur.messages[lastIdx]
-    const isStreamingAssistant =
-      last && last.role === 'assistant' && last.status === 'streaming'
+    const isStreamingAssistant = last && last.role === 'assistant' && last.status === 'streaming'
     let nextMessages: ChatMessage[]
     if (isStreamingAssistant) {
-      nextMessages = cur.messages.map((m, i) =>
-        i === lastIdx ? { ...m, text: m.text + txt } : m,
-      )
+      nextMessages = cur.messages.map((m, i) => (i === lastIdx ? { ...m, text: m.text + txt } : m))
     } else {
       nextMessages = [
         ...cur.messages,
@@ -207,15 +210,15 @@ function applyToken(sid: string, txt: string): void {
           role: 'assistant' as const,
           text: txt,
           status: 'streaming' as const,
-          createdAt: Date.now(),
-        },
+          createdAt: Date.now()
+        }
       ]
     }
     return {
       bySession: {
         ...s.bySession,
-        [sid]: { ...cur, messages: nextMessages, status: 'streaming' },
-      },
+        [sid]: { ...cur, messages: nextMessages, status: 'streaming' }
+      }
     }
   })
 }
@@ -250,9 +253,11 @@ Note: returning `s` unchanged is correct because `enqueueToken` triggers its own
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 4: Rewrite message.appended reducer to merge with streaming placeholder
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Replace the case 'message.appended' branch**
@@ -309,9 +314,11 @@ In `subscribeSessionStream`, locate `case 'message.appended':` (around line 485)
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 5: Rewrite done reducer (no more streamingBuffer→message push)
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Replace the case 'done' branch**
@@ -353,9 +360,11 @@ Note: the old code constructed a brand-new assistant message from `streamingBuff
 ---
 
 <!-- openspec-task: 6.6 -->
+
 ### Task 6: Rewrite tool.start reducer to consume event.callId
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Replace the case 'tool.start' branch**
@@ -417,9 +426,11 @@ In `subscribeSessionStream`, locate `case 'tool.start':` (around line 433). Repl
 ---
 
 <!-- openspec-task: 6.7 -->
+
 ### Task 7: Rewrite tool.result reducer to consume event.callId
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 
 - [x] **Step 1: Replace the case 'tool.result' branch**
@@ -472,9 +483,11 @@ Note: tool message `text` now stores the full `{ok, data}` or `error: ...` form.
 ---
 
 <!-- openspec-task: 6.8 -->
+
 ### Task 8: Verify token batching wires through and typecheck the store
 
 **Files:**
+
 - No file change in this task — validation pass.
 
 - [x] **Step 1: Run typecheck**
@@ -483,6 +496,7 @@ Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npm run typecheck:web 2>&1 |
 Expected: pass. If errors point to leftover `streamingBuffer`/`flushedLength` references in other modules, list them — Task 11 cleans them up; but if the store itself fails to compile, fix it now.
 
 Common pitfalls:
+
 - `ChatMessage.status === 'streaming'` requires `status` field present on the type (Task 2).
 - The case branches all return either `s` unchanged or a new state shape — keep TypeScript narrowing happy by NOT mixing return shapes within a switch arm.
 
@@ -496,9 +510,11 @@ Expected: many failures referencing `streamingBuffer` / `flushedLength` / messag
 ---
 
 <!-- openspec-task: 6.9 -->
+
 ### Task 9: Rewrite src/stores/chat.test.ts for the new reducers
 
 **Files:**
+
 - Modify: `src/stores/chat.test.ts`
 
 - [x] **Step 1: Open the file and identify legacy assertions**
@@ -530,9 +546,9 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
           status: 'idle',
           error: null,
           lastUserText: '',
-          lastUserAttachments: [],
-        },
-      },
+          lastUserAttachments: []
+        }
+      }
     } as any)
     __setChatTokenBatching(false) // synchronous path for assertion determinism
   })
@@ -555,7 +571,7 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
     expect(slot.messages[0]).toMatchObject({
       role: 'assistant',
       text: 'he',
-      status: 'streaming',
+      status: 'streaming'
     })
     expect(slot.status).toBe('streaming')
   })
@@ -577,8 +593,8 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
         role: 'assistant',
         content: 'hello',
         toolCalls: [{ id: 'A', name: 'fa', args: {} }],
-        createdAt: new Date().toISOString(),
-      },
+        createdAt: new Date().toISOString()
+      }
     })
     const slot = useChatStore.getState().bySession.s1
     expect(slot.messages).toHaveLength(1)
@@ -587,7 +603,7 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
       role: 'assistant',
       text: 'hello',
       status: 'streaming',
-      toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+      toolCalls: [{ id: 'A', name: 'fa', args: {} }]
     })
   })
 
@@ -606,11 +622,9 @@ describe('store streaming reducers (Plan 4 rewrite)', () => {
         ...s.bySession,
         s1: {
           ...s.bySession.s1,
-          pendingApprovals: [
-            { callId: 'A', toolName: 'fa', args: {}, reason: '', receivedAt: 0 },
-          ],
-        },
-      },
+          pendingApprovals: [{ callId: 'A', toolName: 'fa', args: {}, reason: '', receivedAt: 0 }]
+        }
+      }
     }))
     emit({ type: 'done' })
     expect(useChatStore.getState().bySession.s1.status).toBe('awaiting-approval')
@@ -671,9 +685,11 @@ git commit -m "refactor(chat-store): lazy streaming assistant + status field + c
 ---
 
 <!-- openspec-task: 6.10 -->
+
 ### Task 10: Delete src/hooks/useStreamingText.ts and useStreamingText.test.ts
 
 **Files:**
+
 - Delete: `src/hooks/useStreamingText.ts`
 - Delete: `src/hooks/useStreamingText.test.ts`
 
@@ -706,9 +722,11 @@ git commit -m "chore(chat-store): delete useStreamingText hook + test (replaced 
 ---
 
 <!-- openspec-task: 6.11 -->
+
 ### Task 11: Grep and clean any lingering useStreamingText / streamingBuffer / flushedLength references
 
 **Files:**
+
 - Modify: any source files still referencing the removed identifiers (expected: none after Task 10).
 
 - [x] **Step 1: Final grep sweep**
@@ -724,6 +742,7 @@ grep -rn "flushedLength" /Users/aaa/develop/workspace-ai/acornvo/src /Users/aaa/
 - [x] **Step 2: If grep returns results, clean each one**
 
 Likely candidates:
+
 - `src/__acceptance__/chat-acceptance.test.tsx` — its `mkSlot()` helper probably still seeds the two fields. Plan 5 Task 7 (`tasks 7.7`) rewrites this file fully — defer cleanup there if it shows up.
 - Any leftover comment block in `chat.ts`.
 

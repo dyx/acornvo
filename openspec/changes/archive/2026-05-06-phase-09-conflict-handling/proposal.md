@@ -22,11 +22,13 @@ phase 4 已预留 mtime 乐观锁；phase 7 的编辑器在保存失败时只 to
 ## Capabilities
 
 ### New Capabilities
+
 - `conflict-detection`: 外部修改感知的规则（visibility-based：编辑器前台 + watcher 事件驱动）、editor.conflictState 状态机
 - `conflict-resolution-ui`: `ConflictDialog` 三选项、`externalModified` banner 的 UI 规格
 - `conflict-history-store`: `.acornvo/conflicts/` 目录 layout、`conflict.list/read/delete` IPC、保留策略（默认 30 天 / 上限 100 条）
 
 ### Modified Capabilities
+
 - `md-file-io`: `file.write` 新增 `force` 选项；mtime-mismatch 路径明确返回 `E_MTIME_MISMATCH` 并附 `remoteMtimeMs`
 - `editor-autosave`: `E_MTIME_MISMATCH` 不再只 toast，MUST 打开 ConflictDialog；dirty 态收到 `index:fileChanged` MUST 显示 banner；ConflictDialog 期间暂停自动保存
 

@@ -34,17 +34,17 @@ Land the renderer foundation for "松语" chat: extend `shared/agent-types.ts` w
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/agent-types.ts` | Modify (add `Attachment`, extend `RunAgentArgs`) | 1.1 |
-| `shared/agent-types.test.ts` | Modify (add type-test for `Attachment`) | 1.1 |
-| `src/stores/chat.ts` | Create | 1.2, 1.3, 1.4 |
-| `src/stores/chat.test.ts` | Create | 1.2, 1.3, 1.4 |
-| `src/pages/Chat.tsx` | Create | 2.1, 2.2, 2.4 |
-| `src/pages/Chat.test.tsx` | Create | 2.1, 2.2, 2.4 |
-| `src/main.tsx` | Modify (route swap) | 2.3 |
-| `src/i18n/locales/zh-CN.json` | Modify (add `chat.*` minimal keys for this plan) | 2.2, 2.4 |
-| `src/i18n/locales/en-US.json` | Modify (parity) | 2.2, 2.4 |
+| Path                          | Action                                           | Owner task    |
+| ----------------------------- | ------------------------------------------------ | ------------- |
+| `shared/agent-types.ts`       | Modify (add `Attachment`, extend `RunAgentArgs`) | 1.1           |
+| `shared/agent-types.test.ts`  | Modify (add type-test for `Attachment`)          | 1.1           |
+| `src/stores/chat.ts`          | Create                                           | 1.2, 1.3, 1.4 |
+| `src/stores/chat.test.ts`     | Create                                           | 1.2, 1.3, 1.4 |
+| `src/pages/Chat.tsx`          | Create                                           | 2.1, 2.2, 2.4 |
+| `src/pages/Chat.test.tsx`     | Create                                           | 2.1, 2.2, 2.4 |
+| `src/main.tsx`                | Modify (route swap)                              | 2.3           |
+| `src/i18n/locales/zh-CN.json` | Modify (add `chat.*` minimal keys for this plan) | 2.2, 2.4      |
+| `src/i18n/locales/en-US.json` | Modify (parity)                                  | 2.2, 2.4      |
 
 ## Pre-flight
 
@@ -59,9 +59,11 @@ Land the renderer foundation for "松语" chat: extend `shared/agent-types.ts` w
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Extend `shared/agent-types.ts` — `Attachment` union + `RunAgentArgs.attachments`
 
 **Files:**
+
 - Modify: `shared/agent-types.ts`
 - Modify: `shared/agent-types.test.ts`
 
@@ -78,40 +80,40 @@ Expected: file exists; exports include `AgentEvent`, `ToolCall`, `MessageRole`, 
 Append to `shared/agent-types.test.ts`:
 
 ```ts
-import { describe, it, expectTypeOf } from 'vitest';
-import type { Attachment, RunAgentArgs } from './agent-types';
+import { describe, it, expectTypeOf } from 'vitest'
+import type { Attachment, RunAgentArgs } from './agent-types'
 
 describe('Attachment', () => {
   it('accepts file shape', () => {
-    const a: Attachment = { type: 'file', path: 'notes/a.md', title: 'A' };
-    expectTypeOf(a).toEqualTypeOf<Attachment>();
-  });
+    const a: Attachment = { type: 'file', path: 'notes/a.md', title: 'A' }
+    expectTypeOf(a).toEqualTypeOf<Attachment>()
+  })
 
   it('accepts clip shape', () => {
-    const a: Attachment = { type: 'clip', clipId: 12, url: 'https://x.com', title: 'X' };
-    expectTypeOf(a).toEqualTypeOf<Attachment>();
-  });
+    const a: Attachment = { type: 'clip', clipId: 12, url: 'https://x.com', title: 'X' }
+    expectTypeOf(a).toEqualTypeOf<Attachment>()
+  })
 
   it('rejects unknown type at compile time', () => {
     // @ts-expect-error unknown discriminator
-    const a: Attachment = { type: 'web', url: 'https://x.com' };
-    void a;
-  });
+    const a: Attachment = { type: 'web', url: 'https://x.com' }
+    void a
+  })
 
   it('RunAgentArgs accepts optional attachments', () => {
     const a: RunAgentArgs = {
       sessionId: 's1',
       userText: 'hi',
       attachments: [{ type: 'file', path: 'a.md', title: 'A' }]
-    } as RunAgentArgs;
-    expectTypeOf(a.attachments).toEqualTypeOf<Attachment[] | undefined>();
-  });
+    } as RunAgentArgs
+    expectTypeOf(a.attachments).toEqualTypeOf<Attachment[] | undefined>()
+  })
 
   it('RunAgentArgs without attachments still typechecks', () => {
-    const a: RunAgentArgs = { sessionId: 's1', userText: 'hi' } as RunAgentArgs;
-    void a;
-  });
-});
+    const a: RunAgentArgs = { sessionId: 's1', userText: 'hi' } as RunAgentArgs
+    void a
+  })
+})
 ```
 
 - [ ] **Step 3: Run the test to verify it fails**
@@ -129,16 +131,16 @@ Add near the top (after existing type imports), before `RunAgentArgs`:
 ```ts
 export type Attachment =
   | { type: 'file'; path: string; title: string }
-  | { type: 'clip'; clipId: number; url: string; title: string };
+  | { type: 'clip'; clipId: number; url: string; title: string }
 ```
 
 Locate the existing `RunAgentArgs` type/interface and add `attachments?: Attachment[]`:
 
 ```ts
 export interface RunAgentArgs {
-  sessionId: string;
-  userText: string;
-  attachments?: Attachment[];
+  sessionId: string
+  userText: string
+  attachments?: Attachment[]
   // ...existing fields (streamWriter, cancel, etc.) preserved
 }
 ```
@@ -149,11 +151,11 @@ If `RunAgentArgs` is a `type` alias (not interface) in phase-16, intersect it in
 // e.g. if phase-16 wrote: export type RunAgentArgs = { ... }
 // modify in place:
 export type RunAgentArgs = {
-  sessionId: string;
-  userText: string;
-  attachments?: Attachment[];
+  sessionId: string
+  userText: string
+  attachments?: Attachment[]
   // ...existing fields preserved
-};
+}
 ```
 
 - [ ] **Step 5: Run the test to verify it passes**
@@ -182,9 +184,11 @@ git commit -m "feat(phase-17): add Attachment type and RunAgentArgs.attachments"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Create `src/stores/chat.ts` — per-session state shape + `loadSessions` / `selectSession`
 
 **Files:**
+
 - Create: `src/stores/chat.ts`
 - Create: `src/stores/chat.test.ts`
 
@@ -194,8 +198,8 @@ Create `src/stores/chat.test.ts`:
 
 ```ts
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useChatStore } from './chat';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { useChatStore } from './chat'
 
 const mockApi = {
   chat: {
@@ -208,49 +212,49 @@ const mockApi = {
     },
     onChatStream: vi.fn(() => () => {})
   }
-};
+}
 
 beforeEach(() => {
   // @ts-expect-error injected for test
-  globalThis.window = globalThis.window ?? {};
+  globalThis.window = globalThis.window ?? {}
   // @ts-expect-error
-  globalThis.window.api = mockApi;
+  globalThis.window.api = mockApi
   useChatStore.setState({
     sessions: [],
     activeSessionId: null,
     bySession: {}
-  });
-  vi.clearAllMocks();
-});
+  })
+  vi.clearAllMocks()
+})
 
 describe('chat store — sessions', () => {
   it('loadSessions populates sessions list and selects first by default', async () => {
-    await useChatStore.getState().loadSessions();
-    const s = useChatStore.getState();
-    expect(s.sessions).toHaveLength(2);
-    expect(s.activeSessionId).toBe('s1');
-    expect(mockApi.chat.sessions.list).toHaveBeenCalledOnce();
-  });
+    await useChatStore.getState().loadSessions()
+    const s = useChatStore.getState()
+    expect(s.sessions).toHaveLength(2)
+    expect(s.activeSessionId).toBe('s1')
+    expect(mockApi.chat.sessions.list).toHaveBeenCalledOnce()
+  })
 
   it('selectSession switches activeSessionId and lazy-loads messages', async () => {
     mockApi.chat.sessions.messages.mockResolvedValueOnce([
       { id: 'm1', role: 'user', text: 'hi', createdAt: 5 }
-    ]);
-    await useChatStore.getState().loadSessions();
-    await useChatStore.getState().selectSession('s2');
-    const s = useChatStore.getState();
-    expect(s.activeSessionId).toBe('s2');
-    expect(s.bySession.s2?.messages).toHaveLength(1);
-    expect(s.bySession.s2?.messages[0].text).toBe('hi');
-  });
+    ])
+    await useChatStore.getState().loadSessions()
+    await useChatStore.getState().selectSession('s2')
+    const s = useChatStore.getState()
+    expect(s.activeSessionId).toBe('s2')
+    expect(s.bySession.s2?.messages).toHaveLength(1)
+    expect(s.bySession.s2?.messages[0].text).toBe('hi')
+  })
 
   it('selectSession is idempotent — re-selecting same id does not refetch', async () => {
-    await useChatStore.getState().loadSessions();
-    await useChatStore.getState().selectSession('s1');
-    await useChatStore.getState().selectSession('s1');
-    expect(mockApi.chat.sessions.messages).toHaveBeenCalledTimes(1);
-  });
-});
+    await useChatStore.getState().loadSessions()
+    await useChatStore.getState().selectSession('s1')
+    await useChatStore.getState().selectSession('s1')
+    expect(mockApi.chat.sessions.messages).toHaveBeenCalledTimes(1)
+  })
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -265,56 +269,56 @@ Expected: FAIL — `Cannot find module './chat'`.
 
 ```ts
 // src/stores/chat.ts
-import { create } from 'zustand';
-import { ipc } from '@/ipc/client';
-import type { Attachment } from '@shared/agent-types';
+import { create } from 'zustand'
+import { ipc } from '@/ipc/client'
+import type { Attachment } from '@shared/agent-types'
 
 export interface ChatSession {
-  id: string;
-  title: string;
-  createdAt: number;
-  updatedAt: number;
-  profileId: string | null;
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  profileId: string | null
 }
 
 export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'tool' | 'system';
-  text: string;
-  toolCalls?: { id: string; name: string; args: unknown }[];
-  toolCallId?: string;
-  attachments?: Attachment[];
-  createdAt: number;
-  error?: string;
+  id: string
+  role: 'user' | 'assistant' | 'tool' | 'system'
+  text: string
+  toolCalls?: { id: string; name: string; args: unknown }[]
+  toolCallId?: string
+  attachments?: Attachment[]
+  createdAt: number
+  error?: string
 }
 
 export interface PendingApproval {
-  callId: string;
-  toolName: string;
-  args: unknown;
-  reason: string;
-  receivedAt: number;
+  callId: string
+  toolName: string
+  args: unknown
+  reason: string
+  receivedAt: number
 }
 
-export type SessionStatus = 'idle' | 'streaming' | 'awaiting-approval' | 'error';
+export type SessionStatus = 'idle' | 'streaming' | 'awaiting-approval' | 'error'
 
 export interface SessionState {
-  loaded: boolean;
-  messages: ChatMessage[];
-  streamingBuffer: string;
-  flushedLength: number;
-  pendingApprovals: PendingApproval[];
-  pendingAttachments: Attachment[];
-  status: SessionStatus;
-  error: string | null;
+  loaded: boolean
+  messages: ChatMessage[]
+  streamingBuffer: string
+  flushedLength: number
+  pendingApprovals: PendingApproval[]
+  pendingAttachments: Attachment[]
+  status: SessionStatus
+  error: string | null
 }
 
 interface ChatStore {
-  sessions: ChatSession[];
-  activeSessionId: string | null;
-  bySession: Record<string, SessionState>;
-  loadSessions: () => Promise<void>;
-  selectSession: (id: string) => Promise<void>;
+  sessions: ChatSession[]
+  activeSessionId: string | null
+  bySession: Record<string, SessionState>
+  loadSessions: () => Promise<void>
+  selectSession: (id: string) => Promise<void>
 }
 
 const emptySession = (): SessionState => ({
@@ -326,7 +330,7 @@ const emptySession = (): SessionState => ({
   pendingAttachments: [],
   status: 'idle',
   error: null
-});
+})
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   sessions: [],
@@ -334,30 +338,30 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   bySession: {},
 
   async loadSessions() {
-    const list = await ipc.chat.sessions.list();
+    const list = await ipc.chat.sessions.list()
     set((s) => ({
       sessions: list,
       activeSessionId: s.activeSessionId ?? list[0]?.id ?? null
-    }));
+    }))
   },
 
   async selectSession(id) {
-    const cur = get();
+    const cur = get()
     if (cur.activeSessionId === id && cur.bySession[id]?.loaded) {
-      return;
+      return
     }
-    set({ activeSessionId: id });
+    set({ activeSessionId: id })
     if (!cur.bySession[id]?.loaded) {
-      const messages = await ipc.chat.sessions.messages(id);
+      const messages = await ipc.chat.sessions.messages(id)
       set((s) => ({
         bySession: {
           ...s.bySession,
           [id]: { ...emptySession(), ...s.bySession[id], messages, loaded: true }
         }
-      }));
+      }))
     }
   }
-}));
+}))
 ```
 
 - [ ] **Step 4: Run the test to verify it passes**
@@ -378,9 +382,11 @@ git commit -m "feat(phase-17): chat store shape + loadSessions / selectSession"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Add CRUD + send / cancel / approval / profile actions to `src/stores/chat.ts`
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 - Modify: `src/stores/chat.test.ts`
 
@@ -393,11 +399,21 @@ describe('chat store — actions', () => {
   beforeEach(async () => {
     Object.assign(mockApi.chat, {
       sessions: {
-        list: vi.fn().mockResolvedValue([
-          { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: null }
-        ]),
+        list: vi
+          .fn()
+          .mockResolvedValue([
+            { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: null }
+          ]),
         messages: vi.fn().mockResolvedValue([]),
-        create: vi.fn().mockResolvedValue({ id: 'snew', title: '未命名对话', createdAt: 100, updatedAt: 100, profileId: null }),
+        create: vi
+          .fn()
+          .mockResolvedValue({
+            id: 'snew',
+            title: '未命名对话',
+            createdAt: 100,
+            updatedAt: 100,
+            profileId: null
+          }),
         rename: vi.fn().mockResolvedValue({ ok: true }),
         delete: vi.fn().mockResolvedValue({ ok: true }),
         updateProfile: vi.fn().mockResolvedValue({ ok: true })
@@ -406,60 +422,70 @@ describe('chat store — actions', () => {
       cancelStream: vi.fn().mockResolvedValue({ ok: true }),
       approveTool: vi.fn().mockResolvedValue({ ok: true }),
       rejectTool: vi.fn().mockResolvedValue({ ok: true })
-    });
-    await useChatStore.getState().loadSessions();
-  });
+    })
+    await useChatStore.getState().loadSessions()
+  })
 
   it('createSession appends + activates', async () => {
-    await useChatStore.getState().createSession();
-    const s = useChatStore.getState();
-    expect(s.sessions[0].id).toBe('snew');
-    expect(s.activeSessionId).toBe('snew');
-  });
+    await useChatStore.getState().createSession()
+    const s = useChatStore.getState()
+    expect(s.sessions[0].id).toBe('snew')
+    expect(s.activeSessionId).toBe('snew')
+  })
 
   it('renameSession updates title locally', async () => {
-    await useChatStore.getState().renameSession('s1', '旅行计划');
-    const s = useChatStore.getState();
-    expect(s.sessions.find((x) => x.id === 's1')?.title).toBe('旅行计划');
-    expect(mockApi.chat.sessions.rename).toHaveBeenCalledWith('s1', '旅行计划');
-  });
+    await useChatStore.getState().renameSession('s1', '旅行计划')
+    const s = useChatStore.getState()
+    expect(s.sessions.find((x) => x.id === 's1')?.title).toBe('旅行计划')
+    expect(mockApi.chat.sessions.rename).toHaveBeenCalledWith('s1', '旅行计划')
+  })
 
   it('deleteSession removes from list and re-selects', async () => {
-    await useChatStore.getState().createSession();
-    await useChatStore.getState().deleteSession('s1');
-    const s = useChatStore.getState();
-    expect(s.sessions.find((x) => x.id === 's1')).toBeUndefined();
-    expect(s.activeSessionId).toBe('snew');
-  });
+    await useChatStore.getState().createSession()
+    await useChatStore.getState().deleteSession('s1')
+    const s = useChatStore.getState()
+    expect(s.sessions.find((x) => x.id === 's1')).toBeUndefined()
+    expect(s.activeSessionId).toBe('snew')
+  })
 
   it('sendUserMessage rejects when session is streaming (E_BUSY)', async () => {
     useChatStore.setState((cur) => ({
       bySession: {
         ...cur.bySession,
-        s1: { ...(cur.bySession.s1 ?? {}), loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], status: 'streaming', error: null }
+        s1: {
+          ...(cur.bySession.s1 ?? {}),
+          loaded: true,
+          messages: [],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          status: 'streaming',
+          error: null
+        }
       }
-    }));
-    await expect(
-      useChatStore.getState().sendUserMessage({ text: 'hi' })
-    ).rejects.toMatchObject({ code: 'E_BUSY' });
-    expect(mockApi.chat.sendUserMessage).not.toHaveBeenCalled();
-  });
+    }))
+    await expect(useChatStore.getState().sendUserMessage({ text: 'hi' })).rejects.toMatchObject({
+      code: 'E_BUSY'
+    })
+    expect(mockApi.chat.sendUserMessage).not.toHaveBeenCalled()
+  })
 
   it('approveTool calls IPC with editedArgs when provided', async () => {
-    await useChatStore.getState().approveTool('s1', 'call_1', { foo: 1 });
+    await useChatStore.getState().approveTool('s1', 'call_1', { foo: 1 })
     expect(mockApi.chat.approveTool).toHaveBeenCalledWith({
       sessionId: 's1',
       callId: 'call_1',
       editedArgs: { foo: 1 }
-    });
-  });
+    })
+  })
 
   it('updateSessionProfile patches sessions and calls IPC', async () => {
-    await useChatStore.getState().updateSessionProfile('s1', 'p2');
-    expect(mockApi.chat.sessions.updateProfile).toHaveBeenCalledWith('s1', 'p2');
-    expect(useChatStore.getState().sessions.find((x) => x.id === 's1')?.profileId).toBe('p2');
-  });
-});
+    await useChatStore.getState().updateSessionProfile('s1', 'p2')
+    expect(mockApi.chat.sessions.updateProfile).toHaveBeenCalledWith('s1', 'p2')
+    expect(useChatStore.getState().sessions.find((x) => x.id === 's1')?.profileId).toBe('p2')
+  })
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -476,26 +502,28 @@ Replace the `ChatStore` interface and store body, keeping `loadSessions` / `sele
 
 ```ts
 interface ChatStore {
-  sessions: ChatSession[];
-  activeSessionId: string | null;
-  bySession: Record<string, SessionState>;
-  loadSessions: () => Promise<void>;
-  selectSession: (id: string) => Promise<void>;
-  createSession: () => Promise<string>;
-  renameSession: (id: string, title: string) => Promise<void>;
-  deleteSession: (id: string) => Promise<void>;
-  sendUserMessage: (args: { text: string; attachments?: Attachment[] }) => Promise<void>;
-  cancelStream: () => Promise<void>;
-  approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>;
-  rejectTool: (sessionId: string, callId: string) => Promise<void>;
-  updateSessionProfile: (id: string, profileId: string | null) => Promise<void>;
-  pushAttachment: (att: Attachment) => void;
-  removeAttachment: (index: number) => void;
+  sessions: ChatSession[]
+  activeSessionId: string | null
+  bySession: Record<string, SessionState>
+  loadSessions: () => Promise<void>
+  selectSession: (id: string) => Promise<void>
+  createSession: () => Promise<string>
+  renameSession: (id: string, title: string) => Promise<void>
+  deleteSession: (id: string) => Promise<void>
+  sendUserMessage: (args: { text: string; attachments?: Attachment[] }) => Promise<void>
+  cancelStream: () => Promise<void>
+  approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>
+  rejectTool: (sessionId: string, callId: string) => Promise<void>
+  updateSessionProfile: (id: string, profileId: string | null) => Promise<void>
+  pushAttachment: (att: Attachment) => void
+  removeAttachment: (index: number) => void
 }
 
 class BusyError extends Error {
-  code = 'E_BUSY' as const;
-  constructor() { super('session is streaming'); }
+  code = 'E_BUSY' as const
+  constructor() {
+    super('session is streaming')
+  }
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -504,60 +532,60 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   bySession: {},
 
   async loadSessions() {
-    const list = await ipc.chat.sessions.list();
+    const list = await ipc.chat.sessions.list()
     set((s) => ({
       sessions: list,
       activeSessionId: s.activeSessionId ?? list[0]?.id ?? null
-    }));
+    }))
   },
 
   async selectSession(id) {
-    const cur = get();
-    if (cur.activeSessionId === id && cur.bySession[id]?.loaded) return;
-    set({ activeSessionId: id });
+    const cur = get()
+    if (cur.activeSessionId === id && cur.bySession[id]?.loaded) return
+    set({ activeSessionId: id })
     if (!cur.bySession[id]?.loaded) {
-      const messages = await ipc.chat.sessions.messages(id);
+      const messages = await ipc.chat.sessions.messages(id)
       set((s) => ({
         bySession: {
           ...s.bySession,
           [id]: { ...emptySession(), ...s.bySession[id], messages, loaded: true }
         }
-      }));
+      }))
     }
   },
 
   async createSession() {
-    const created = await ipc.chat.sessions.create();
+    const created = await ipc.chat.sessions.create()
     set((s) => ({
       sessions: [created, ...s.sessions],
       activeSessionId: created.id,
       bySession: { ...s.bySession, [created.id]: { ...emptySession(), loaded: true } }
-    }));
-    return created.id;
+    }))
+    return created.id
   },
 
   async renameSession(id, title) {
-    await ipc.chat.sessions.rename(id, title);
+    await ipc.chat.sessions.rename(id, title)
     set((s) => ({
       sessions: s.sessions.map((x) => (x.id === id ? { ...x, title } : x))
-    }));
+    }))
   },
 
   async deleteSession(id) {
-    await ipc.chat.sessions.delete(id);
+    await ipc.chat.sessions.delete(id)
     set((s) => {
-      const remaining = s.sessions.filter((x) => x.id !== id);
-      const nextActive = s.activeSessionId === id ? remaining[0]?.id ?? null : s.activeSessionId;
-      const { [id]: _, ...rest } = s.bySession;
-      return { sessions: remaining, activeSessionId: nextActive, bySession: rest };
-    });
+      const remaining = s.sessions.filter((x) => x.id !== id)
+      const nextActive = s.activeSessionId === id ? (remaining[0]?.id ?? null) : s.activeSessionId
+      const { [id]: _, ...rest } = s.bySession
+      return { sessions: remaining, activeSessionId: nextActive, bySession: rest }
+    })
   },
 
   async sendUserMessage({ text, attachments }) {
-    const sid = get().activeSessionId;
-    if (!sid) throw new Error('no active session');
-    const slot = get().bySession[sid];
-    if (slot?.status === 'streaming') throw new BusyError();
+    const sid = get().activeSessionId
+    if (!sid) throw new Error('no active session')
+    const slot = get().bySession[sid]
+    if (slot?.status === 'streaming') throw new BusyError()
     set((s) => ({
       bySession: {
         ...s.bySession,
@@ -570,52 +598,56 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           pendingAttachments: []
         }
       }
-    }));
-    await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments: attachments ?? [] });
+    }))
+    await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments: attachments ?? [] })
   },
 
   async cancelStream() {
-    const sid = get().activeSessionId;
-    if (!sid) return;
-    await ipc.chat.cancelStream({ sessionId: sid });
+    const sid = get().activeSessionId
+    if (!sid) return
+    await ipc.chat.cancelStream({ sessionId: sid })
   },
 
   async approveTool(sessionId, callId, editedArgs) {
-    await ipc.chat.approveTool({ sessionId, callId, editedArgs });
+    await ipc.chat.approveTool({ sessionId, callId, editedArgs })
     set((s) => ({
       bySession: {
         ...s.bySession,
         [sessionId]: {
           ...(s.bySession[sessionId] ?? emptySession()),
-          pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter((a) => a.callId !== callId)
+          pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter(
+            (a) => a.callId !== callId
+          )
         }
       }
-    }));
+    }))
   },
 
   async rejectTool(sessionId, callId) {
-    await ipc.chat.rejectTool({ sessionId, callId });
+    await ipc.chat.rejectTool({ sessionId, callId })
     set((s) => ({
       bySession: {
         ...s.bySession,
         [sessionId]: {
           ...(s.bySession[sessionId] ?? emptySession()),
-          pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter((a) => a.callId !== callId)
+          pendingApprovals: (s.bySession[sessionId]?.pendingApprovals ?? []).filter(
+            (a) => a.callId !== callId
+          )
         }
       }
-    }));
+    }))
   },
 
   async updateSessionProfile(id, profileId) {
-    await ipc.chat.sessions.updateProfile(id, profileId);
+    await ipc.chat.sessions.updateProfile(id, profileId)
     set((s) => ({
       sessions: s.sessions.map((x) => (x.id === id ? { ...x, profileId } : x))
-    }));
+    }))
   },
 
   pushAttachment(att) {
-    const sid = get().activeSessionId;
-    if (!sid) return;
+    const sid = get().activeSessionId
+    if (!sid) return
     set((s) => ({
       bySession: {
         ...s.bySession,
@@ -624,14 +656,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           pendingAttachments: [...(s.bySession[sid]?.pendingAttachments ?? []), att]
         }
       }
-    }));
+    }))
   },
 
   removeAttachment(index) {
-    const sid = get().activeSessionId;
-    if (!sid) return;
+    const sid = get().activeSessionId
+    if (!sid) return
     set((s) => {
-      const cur = s.bySession[sid]?.pendingAttachments ?? [];
+      const cur = s.bySession[sid]?.pendingAttachments ?? []
       return {
         bySession: {
           ...s.bySession,
@@ -640,10 +672,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             pendingAttachments: cur.filter((_, i) => i !== index)
           }
         }
-      };
-    });
+      }
+    })
   }
-}));
+}))
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
@@ -664,9 +696,11 @@ git commit -m "feat(phase-17): chat store CRUD + send/cancel/approval/profile ac
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Subscribe to `chat:stream` events — dispatch to per-session state
 
 **Files:**
+
 - Modify: `src/stores/chat.ts`
 - Modify: `src/stores/chat.test.ts`
 
@@ -675,45 +709,47 @@ git commit -m "feat(phase-17): chat store CRUD + send/cancel/approval/profile ac
 Append to `src/stores/chat.test.ts`:
 
 ```ts
-import { installChatStreamSubscriber } from './chat';
+import { installChatStreamSubscriber } from './chat'
 
 describe('chat stream subscriber', () => {
-  let handler: ((evt: any) => void) | null = null;
+  let handler: ((evt: any) => void) | null = null
 
   beforeEach(async () => {
-    handler = null;
+    handler = null
     mockApi.chat.onChatStream = vi.fn((cb: (evt: any) => void) => {
-      handler = cb;
-      return () => { handler = null; };
-    });
-    await useChatStore.getState().loadSessions();
-    installChatStreamSubscriber();
-  });
+      handler = cb
+      return () => {
+        handler = null
+      }
+    })
+    await useChatStore.getState().loadSessions()
+    installChatStreamSubscriber()
+  })
 
   it('appends streaming token to buffer for the matching session', () => {
-    handler!({ sessionId: 's1', type: 'token', text: '你' });
-    handler!({ sessionId: 's1', type: 'token', text: '好' });
-    expect(useChatStore.getState().bySession.s1.streamingBuffer).toBe('你好');
-  });
+    handler!({ sessionId: 's1', type: 'token', text: '你' })
+    handler!({ sessionId: 's1', type: 'token', text: '好' })
+    expect(useChatStore.getState().bySession.s1.streamingBuffer).toBe('你好')
+  })
 
   it('does not leak token into other session buffer', () => {
-    handler!({ sessionId: 's2', type: 'token', text: 'X' });
-    expect(useChatStore.getState().bySession.s1?.streamingBuffer ?? '').toBe('');
-  });
+    handler!({ sessionId: 's2', type: 'token', text: 'X' })
+    expect(useChatStore.getState().bySession.s1?.streamingBuffer ?? '').toBe('')
+  })
 
   it('on done event commits message and resets buffer + status', () => {
-    handler!({ sessionId: 's1', type: 'token', text: 'hello' });
+    handler!({ sessionId: 's1', type: 'token', text: 'hello' })
     handler!({
       sessionId: 's1',
       type: 'done',
       message: { id: 'm1', role: 'assistant', text: 'hello', createdAt: 99 }
-    });
-    const slot = useChatStore.getState().bySession.s1;
-    expect(slot.streamingBuffer).toBe('');
-    expect(slot.flushedLength).toBe(0);
-    expect(slot.status).toBe('idle');
-    expect(slot.messages.find((m) => m.id === 'm1')).toBeTruthy();
-  });
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot.streamingBuffer).toBe('')
+    expect(slot.flushedLength).toBe(0)
+    expect(slot.status).toBe('idle')
+    expect(slot.messages.find((m) => m.id === 'm1')).toBeTruthy()
+  })
 
   it('approval-needed pushes onto queue and sets status', () => {
     handler!({
@@ -723,20 +759,20 @@ describe('chat stream subscriber', () => {
       toolName: 'update_frontmatter',
       args: { file: 'a.md' },
       reason: '需要批准'
-    });
-    const slot = useChatStore.getState().bySession.s1;
-    expect(slot.pendingApprovals).toHaveLength(1);
-    expect(slot.pendingApprovals[0].callId).toBe('c1');
-    expect(slot.status).toBe('awaiting-approval');
-  });
+    })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot.pendingApprovals).toHaveLength(1)
+    expect(slot.pendingApprovals[0].callId).toBe('c1')
+    expect(slot.status).toBe('awaiting-approval')
+  })
 
   it('error event sets status to error and stores message', () => {
-    handler!({ sessionId: 's1', type: 'error', error: 'E_NETWORK', message: '网络错误' });
-    const slot = useChatStore.getState().bySession.s1;
-    expect(slot.status).toBe('error');
-    expect(slot.error).toBe('E_NETWORK');
-  });
-});
+    handler!({ sessionId: 's1', type: 'error', error: 'E_NETWORK', message: '网络错误' })
+    const slot = useChatStore.getState().bySession.s1
+    expect(slot.status).toBe('error')
+    expect(slot.error).toBe('E_NETWORK')
+  })
+})
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -757,25 +793,36 @@ type StreamEvent =
   | { sessionId: string; type: 'done'; message: ChatMessage }
   | { sessionId: string; type: 'tool.call'; message: ChatMessage }
   | { sessionId: string; type: 'tool.result'; message: ChatMessage }
-  | { sessionId: string; type: 'tool.approval-needed'; callId: string; toolName: string; args: unknown; reason: string }
-  | { sessionId: string; type: 'error'; error: string; message?: string };
+  | {
+      sessionId: string
+      type: 'tool.approval-needed'
+      callId: string
+      toolName: string
+      args: unknown
+      reason: string
+    }
+  | { sessionId: string; type: 'error'; error: string; message?: string }
 
-let unsubscribe: (() => void) | null = null;
+let unsubscribe: (() => void) | null = null
 
 export function installChatStreamSubscriber(): void {
-  if (unsubscribe) unsubscribe();
+  if (unsubscribe) unsubscribe()
   unsubscribe = ipc.chat.onChatStream((evt: StreamEvent) => {
-    const sid = evt.sessionId;
+    const sid = evt.sessionId
     useChatStore.setState((s) => {
-      const cur = s.bySession[sid] ?? emptySession();
+      const cur = s.bySession[sid] ?? emptySession()
       switch (evt.type) {
         case 'token':
           return {
             bySession: {
               ...s.bySession,
-              [sid]: { ...cur, streamingBuffer: cur.streamingBuffer + evt.text, status: 'streaming' }
+              [sid]: {
+                ...cur,
+                streamingBuffer: cur.streamingBuffer + evt.text,
+                status: 'streaming'
+              }
             }
-          };
+          }
         case 'done':
           return {
             bySession: {
@@ -788,7 +835,7 @@ export function installChatStreamSubscriber(): void {
                 messages: [...cur.messages, evt.message]
               }
             }
-          };
+          }
         case 'tool.call':
         case 'tool.result':
           return {
@@ -796,7 +843,7 @@ export function installChatStreamSubscriber(): void {
               ...s.bySession,
               [sid]: { ...cur, messages: [...cur.messages, evt.message] }
             }
-          };
+          }
         case 'tool.approval-needed':
           return {
             bySession: {
@@ -816,25 +863,25 @@ export function installChatStreamSubscriber(): void {
                 ]
               }
             }
-          };
+          }
         case 'error':
           return {
             bySession: {
               ...s.bySession,
               [sid]: { ...cur, status: 'error', error: evt.error }
             }
-          };
+          }
         default:
-          return s;
+          return s
       }
-    });
-  });
+    })
+  })
 }
 
 export function uninstallChatStreamSubscriber(): void {
   if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
+    unsubscribe()
+    unsubscribe = null
   }
 }
 ```
@@ -880,9 +927,11 @@ git commit -m "feat(phase-17): chat:stream subscriber dispatches events to per-s
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: Create `src/pages/Chat.tsx` — three-pane flex layout + window-width auto-collapse
 
 **Files:**
+
 - Create: `src/pages/Chat.tsx`
 - Create: `src/pages/Chat.test.tsx`
 - Modify: `src/i18n/locales/zh-CN.json` (add `chat.untitled`, `chat.newSession`)
@@ -894,59 +943,79 @@ Create `src/pages/Chat.test.tsx`:
 
 ```tsx
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { i18n } from '@/i18n';
-import { Chat } from './Chat';
-import { useChatStore } from '@/stores/chat';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { i18n } from '@/i18n'
+import { Chat } from './Chat'
+import { useChatStore } from '@/stores/chat'
 
 const mockApi = {
   chat: {
     sessions: {
       list: vi.fn().mockResolvedValue([]),
       messages: vi.fn().mockResolvedValue([]),
-      create: vi.fn().mockResolvedValue({ id: 's1', title: '未命名对话', createdAt: 1, updatedAt: 1, profileId: null })
+      create: vi
+        .fn()
+        .mockResolvedValue({
+          id: 's1',
+          title: '未命名对话',
+          createdAt: 1,
+          updatedAt: 1,
+          profileId: null
+        })
     },
     onChatStream: vi.fn(() => () => {})
   }
-};
+}
 
 describe('Chat page', () => {
   beforeAll(async () => {
-    if (!i18n.isInitialized) await i18n.init();
-  });
+    if (!i18n.isInitialized) await i18n.init()
+  })
 
   beforeEach(() => {
     // @ts-expect-error
-    globalThis.window.api = mockApi;
-    useChatStore.setState({ sessions: [], activeSessionId: null, bySession: {} });
-    vi.clearAllMocks();
-  });
+    globalThis.window.api = mockApi
+    useChatStore.setState({ sessions: [], activeSessionId: null, bySession: {} })
+    vi.clearAllMocks()
+  })
 
-  afterEach(() => cleanup());
+  afterEach(() => cleanup())
 
   it('renders three regions: session-list, main, approval', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    expect(await screen.findByTestId('chat-session-list')).toBeTruthy();
-    expect(screen.getByTestId('chat-main')).toBeTruthy();
-    expect(screen.getByTestId('chat-approval')).toBeTruthy();
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    expect(await screen.findByTestId('chat-session-list')).toBeTruthy()
+    expect(screen.getByTestId('chat-main')).toBeTruthy()
+    expect(screen.getByTestId('chat-approval')).toBeTruthy()
+  })
 
   it('auto-creates a session if list is empty', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    await screen.findByTestId('chat-main');
-    expect(mockApi.chat.sessions.create).toHaveBeenCalledOnce();
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    await screen.findByTestId('chat-main')
+    expect(mockApi.chat.sessions.create).toHaveBeenCalledOnce()
+  })
 
   it('session-list collapses below 960px (icon-only)', async () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
-    window.dispatchEvent(new Event('resize'));
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    const left = await screen.findByTestId('chat-session-list');
-    expect(left.getAttribute('data-collapsed')).toBe('true');
-  });
-});
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 })
+    window.dispatchEvent(new Event('resize'))
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    const left = await screen.findByTestId('chat-session-list')
+    expect(left.getAttribute('data-collapsed')).toBe('true')
+  })
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -987,47 +1056,47 @@ Open `src/i18n/locales/en-US.json` and add the parity entries:
 
 ```tsx
 // src/pages/Chat.tsx
-import type { JSX } from 'react';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { HelpCircle } from 'lucide-react';
-import { useChatStore } from '@/stores/chat';
+import type { JSX } from 'react'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { HelpCircle } from 'lucide-react'
+import { useChatStore } from '@/stores/chat'
 
 export function Chat(): JSX.Element {
-  const { t } = useTranslation();
-  const sessions = useChatStore((s) => s.sessions);
-  const activeId = useChatStore((s) => s.activeSessionId);
-  const loadSessions = useChatStore((s) => s.loadSessions);
-  const createSession = useChatStore((s) => s.createSession);
+  const { t } = useTranslation()
+  const sessions = useChatStore((s) => s.sessions)
+  const activeId = useChatStore((s) => s.activeSessionId)
+  const loadSessions = useChatStore((s) => s.loadSessions)
+  const createSession = useChatStore((s) => s.createSession)
 
   const [collapsed, setCollapsed] = useState<boolean>(
     typeof window !== 'undefined' ? window.innerWidth < 960 : false
-  );
+  )
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
     void (async () => {
-      await loadSessions();
-      if (cancelled) return;
-      const after = useChatStore.getState();
+      await loadSessions()
+      if (cancelled) return
+      const after = useChatStore.getState()
       if (after.sessions.length === 0) {
-        await createSession();
+        await createSession()
       }
-    })();
+    })()
     return () => {
-      cancelled = true;
-    };
-  }, [loadSessions, createSession]);
+      cancelled = true
+    }
+  }, [loadSessions, createSession])
 
   useEffect(() => {
     function onResize(): void {
-      setCollapsed(window.innerWidth < 960);
+      setCollapsed(window.innerWidth < 960)
     }
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
-  const activeSession = sessions.find((s) => s.id === activeId) ?? null;
+  const activeSession = sessions.find((s) => s.id === activeId) ?? null
 
   return (
     <div className="flex h-full">
@@ -1041,7 +1110,9 @@ export function Chat(): JSX.Element {
       </aside>
       <main data-testid="chat-main" className="flex flex-1 min-w-0 flex-col">
         <header className="flex h-12 items-center justify-between border-b border-border px-4">
-          <h1 className="truncate text-sm font-medium">{activeSession?.title ?? t('chat.untitled')}</h1>
+          <h1 className="truncate text-sm font-medium">
+            {activeSession?.title ?? t('chat.untitled')}
+          </h1>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -1064,7 +1135,7 @@ export function Chat(): JSX.Element {
         {/* ApprovalPanel placeholder — Plan 3 */}
       </aside>
     </div>
-  );
+  )
 }
 ```
 
@@ -1086,9 +1157,11 @@ git commit -m "feat(phase-17): Chat page three-pane shell + width-based collapse
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: Top bar — session title + profile chip dropdown + ? icon
 
 **Files:**
+
 - Modify: `src/pages/Chat.tsx`
 - Modify: `src/pages/Chat.test.tsx`
 - Modify: `src/i18n/locales/zh-CN.json`
@@ -1099,44 +1172,74 @@ git commit -m "feat(phase-17): Chat page three-pane shell + width-based collapse
 Append to `src/pages/Chat.test.tsx`:
 
 ```tsx
-import userEvent from '@testing-library/user-event';
-import { useProfilesStore } from '@/stores/profiles';
+import userEvent from '@testing-library/user-event'
+import { useProfilesStore } from '@/stores/profiles'
 
 describe('Chat top bar — profile chip', () => {
   beforeEach(() => {
     useProfilesStore.setState({
       profiles: [
-        { id: 'p1', name: 'OpenAI', provider: 'openai', model: 'gpt-4o', baseUrl: null, secretRef: null, default: true },
-        { id: 'p2', name: 'Local', provider: 'ollama', model: 'llama3.1', baseUrl: 'http://localhost:11434', secretRef: null, default: false }
+        {
+          id: 'p1',
+          name: 'OpenAI',
+          provider: 'openai',
+          model: 'gpt-4o',
+          baseUrl: null,
+          secretRef: null,
+          default: true
+        },
+        {
+          id: 'p2',
+          name: 'Local',
+          provider: 'ollama',
+          model: 'llama3.1',
+          baseUrl: 'http://localhost:11434',
+          secretRef: null,
+          default: false
+        }
       ]
-    } as any);
-    mockApi.chat.sessions.list = vi.fn().mockResolvedValue([
-      { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: 'p1' }
-    ]);
-    mockApi.chat.sessions.updateProfile = vi.fn().mockResolvedValue({ ok: true });
-  });
+    } as any)
+    mockApi.chat.sessions.list = vi
+      .fn()
+      .mockResolvedValue([
+        { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: 'p1' }
+      ])
+    mockApi.chat.sessions.updateProfile = vi.fn().mockResolvedValue({ ok: true })
+  })
 
   it('renders profile name + model', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    expect(await screen.findByText(/OpenAI/)).toBeTruthy();
-    expect(screen.getByText(/gpt-4o/)).toBeTruthy();
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    expect(await screen.findByText(/OpenAI/)).toBeTruthy()
+    expect(screen.getByText(/gpt-4o/)).toBeTruthy()
+  })
 
   it('clicking profile chip opens dropdown listing alternatives', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    const chip = await screen.findByTestId('chat-profile-chip');
-    await userEvent.click(chip);
-    expect(screen.getByText(/Local/)).toBeTruthy();
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    const chip = await screen.findByTestId('chat-profile-chip')
+    await userEvent.click(chip)
+    expect(screen.getByText(/Local/)).toBeTruthy()
+  })
 
   it('selecting alt profile calls updateSessionProfile', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    const chip = await screen.findByTestId('chat-profile-chip');
-    await userEvent.click(chip);
-    await userEvent.click(screen.getByRole('menuitem', { name: /Local/ }));
-    expect(mockApi.chat.sessions.updateProfile).toHaveBeenCalledWith('s1', 'p2');
-  });
-});
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    const chip = await screen.findByTestId('chat-profile-chip')
+    await userEvent.click(chip)
+    await userEvent.click(screen.getByRole('menuitem', { name: /Local/ }))
+    expect(mockApi.chat.sessions.updateProfile).toHaveBeenCalledWith('s1', 'p2')
+  })
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1184,24 +1287,24 @@ Open `src/i18n/locales/en-US.json`, extend `chat.topbar`:
 Insert into `src/pages/Chat.tsx` (above the `Chat` component):
 
 ```tsx
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useProfilesStore } from '@/stores/profiles';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { useProfilesStore } from '@/stores/profiles'
 
 interface ProfileChipProps {
-  sessionId: string;
-  profileId: string | null;
+  sessionId: string
+  profileId: string | null
 }
 
 function ProfileChip({ sessionId, profileId }: ProfileChipProps): JSX.Element {
-  const { t } = useTranslation();
-  const profiles = useProfilesStore((s) => s.profiles);
-  const refresh = useProfilesStore((s) => s.refresh);
-  const updateSessionProfile = useChatStore((s) => s.updateSessionProfile);
-  const current = profiles.find((p) => p.id === profileId) ?? null;
+  const { t } = useTranslation()
+  const profiles = useProfilesStore((s) => s.profiles)
+  const refresh = useProfilesStore((s) => s.refresh)
+  const updateSessionProfile = useChatStore((s) => s.updateSessionProfile)
+  const current = profiles.find((p) => p.id === profileId) ?? null
 
   useEffect(() => {
-    if (profiles.length === 0) void refresh();
-  }, [profiles.length, refresh]);
+    if (profiles.length === 0) void refresh()
+  }, [profiles.length, refresh])
 
   return (
     <DropdownMenu.Root>
@@ -1211,7 +1314,10 @@ function ProfileChip({ sessionId, profileId }: ProfileChipProps): JSX.Element {
       >
         {current ? (
           <span>
-            {current.name} <span className="text-muted-foreground">{t('chat.topbar.modelSeparator')} {current.model}</span>
+            {current.name}{' '}
+            <span className="text-muted-foreground">
+              {t('chat.topbar.modelSeparator')} {current.model}
+            </span>
           </span>
         ) : (
           <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
@@ -1235,7 +1341,7 @@ function ProfileChip({ sessionId, profileId }: ProfileChipProps): JSX.Element {
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
-  );
+  )
 }
 ```
 
@@ -1247,7 +1353,9 @@ Replace the `<header>` block:
 <header className="flex h-12 items-center justify-between border-b border-border px-4">
   <h1 className="truncate text-sm font-medium">{activeSession?.title ?? t('chat.untitled')}</h1>
   <div className="flex items-center gap-3">
-    {activeSession && <ProfileChip sessionId={activeSession.id} profileId={activeSession.profileId} />}
+    {activeSession && (
+      <ProfileChip sessionId={activeSession.id} profileId={activeSession.profileId} />
+    )}
     <button
       type="button"
       aria-label={t('chat.topbar.helpAria')}
@@ -1277,9 +1385,11 @@ git commit -m "feat(phase-17): Chat top bar profile chip + dropdown to switch"
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: Activate `/chat` route — swap Placeholder for `Chat`
 
 **Files:**
+
 - Modify: `src/main.tsx`
 
 - [ ] **Step 1: Read current router config**
@@ -1324,6 +1434,7 @@ npm run dev
 ```
 
 In the running app, manually:
+
 - type `chat` into the dev tools URL bar (or click `松语` in AppRail — note: the entry is still `disabled` until Plan 5; you can navigate by editing the URL or by `useNavigate` in dev tools console)
 - verify the three-pane layout renders, top bar shows the title + profile chip, and an empty session is auto-created
 
@@ -1339,9 +1450,11 @@ git commit -m "feat(phase-17): activate /chat route — replace Placeholder with
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: Empty-state — 4 prompt cards visible only when session has no messages
 
 **Files:**
+
 - Modify: `src/pages/Chat.tsx`
 - Modify: `src/pages/Chat.test.tsx`
 - Modify: `src/i18n/locales/zh-CN.json`
@@ -1354,35 +1467,49 @@ Append to `src/pages/Chat.test.tsx`:
 ```tsx
 describe('Chat empty-state', () => {
   beforeEach(() => {
-    mockApi.chat.sessions.list = vi.fn().mockResolvedValue([
-      { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: null }
-    ]);
-    mockApi.chat.sessions.messages = vi.fn().mockResolvedValue([]);
-  });
+    mockApi.chat.sessions.list = vi
+      .fn()
+      .mockResolvedValue([
+        { id: 's1', title: '会话 A', createdAt: 1, updatedAt: 2, profileId: null }
+      ])
+    mockApi.chat.sessions.messages = vi.fn().mockResolvedValue([])
+  })
 
   it('renders 4 onboarding prompt cards when active session has no messages', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    const cards = await screen.findAllByTestId('chat-empty-card');
-    expect(cards).toHaveLength(4);
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    const cards = await screen.findAllByTestId('chat-empty-card')
+    expect(cards).toHaveLength(4)
+  })
 
   it('clicking a card sets pendingPromptText (does not auto-send)', async () => {
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    const cards = await screen.findAllByTestId('chat-empty-card');
-    await userEvent.click(cards[0]);
-    const text = useChatStore.getState().bySession.s1?.pendingPromptText ?? '';
-    expect(text.length).toBeGreaterThan(0);
-  });
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    const cards = await screen.findAllByTestId('chat-empty-card')
+    await userEvent.click(cards[0])
+    const text = useChatStore.getState().bySession.s1?.pendingPromptText ?? ''
+    expect(text.length).toBeGreaterThan(0)
+  })
 
   it('hides empty-state once session has messages', async () => {
-    mockApi.chat.sessions.messages = vi.fn().mockResolvedValue([
-      { id: 'm1', role: 'user', text: 'hi', createdAt: 5 }
-    ]);
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    await screen.findByTestId('chat-main');
-    expect(screen.queryAllByTestId('chat-empty-card')).toHaveLength(0);
-  });
-});
+    mockApi.chat.sessions.messages = vi
+      .fn()
+      .mockResolvedValue([{ id: 'm1', role: 'user', text: 'hi', createdAt: 5 }])
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    await screen.findByTestId('chat-main')
+    expect(screen.queryAllByTestId('chat-empty-card')).toHaveLength(0)
+  })
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1400,7 +1527,7 @@ Modify `src/stores/chat.ts`:
 In `interface SessionState` add:
 
 ```ts
-pendingPromptText: string;
+pendingPromptText: string
 ```
 
 In `emptySession()` add:
@@ -1484,14 +1611,14 @@ Add above `Chat`:
 
 ```tsx
 function EmptyState(): JSX.Element {
-  const { t } = useTranslation();
-  const setPendingPromptText = useChatStore((s) => s.setPendingPromptText);
+  const { t } = useTranslation()
+  const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const cards = [
     t('chat.empty.card1'),
     t('chat.empty.card2'),
     t('chat.empty.card3'),
     t('chat.empty.card4')
-  ];
+  ]
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
       <div className="text-center">
@@ -1512,7 +1639,7 @@ function EmptyState(): JSX.Element {
         ))}
       </div>
     </div>
-  );
+  )
 }
 ```
 
@@ -1523,9 +1650,9 @@ In `Chat.tsx` replace the placeholder `<section>...</section>` with:
 ```tsx
 <section className="flex flex-1 min-h-0 flex-col">
   {(() => {
-    const slot = activeSession ? useChatStore.getState().bySession[activeSession.id] : null;
-    const isEmpty = !slot || slot.messages.length === 0;
-    return isEmpty ? <EmptyState /> : null;
+    const slot = activeSession ? useChatStore.getState().bySession[activeSession.id] : null
+    const isEmpty = !slot || slot.messages.length === 0
+    return isEmpty ? <EmptyState /> : null
   })()}
 </section>
 ```

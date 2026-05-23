@@ -5,17 +5,17 @@
 `components` is the main extension point. Use it to map Markdown or custom HTML tags to React components.
 
 ```tsx
-import { Mermaid, Sources, Think } from '@ant-design/x';
-import { XMarkdown } from '@ant-design/x-markdown';
+import { Mermaid, Sources, Think } from '@ant-design/x'
+import { XMarkdown } from '@ant-design/x-markdown'
 
-<XMarkdown
+;<XMarkdown
   content={content}
   components={{
     mermaid: Mermaid,
     think: Think,
-    sources: Sources,
+    sources: Sources
   }}
-/>;
+/>
 ```
 
 ### Rules for component mappings
@@ -30,14 +30,14 @@ import { XMarkdown } from '@ant-design/x-markdown';
 Built-in plugins are imported from `@ant-design/x-markdown/plugins/...` and wired through `config`.
 
 ```tsx
-import Latex from '@ant-design/x-markdown/plugins/Latex';
+import Latex from '@ant-design/x-markdown/plugins/Latex'
 
-<XMarkdown
+;<XMarkdown
   content={content}
   config={{
-    extensions: Latex(),
+    extensions: Latex()
   }}
-/>;
+/>
 ```
 
 Use a plugin when the syntax extension belongs in parsing, not when it is only a visual replacement of a rendered node.
@@ -47,9 +47,9 @@ Use a plugin when the syntax extension belongs in parsing, not when it is only a
 Start from a built-in theme stylesheet.
 
 ```tsx
-import '@ant-design/x-markdown/themes/light.css';
+import '@ant-design/x-markdown/themes/light.css'
 
-<XMarkdown className="x-markdown-light" content={content} />;
+;<XMarkdown className="x-markdown-light" content={content} />
 ```
 
 For customization:

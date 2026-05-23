@@ -9,9 +9,9 @@ This file covers setup, multi-surface patterns, and streaming progressive render
 Minimum working setup:
 
 ```tsx
-import React, { useState } from 'react';
-import { XCard, registerCatalog } from '@ant-design/x-card';
-import type { XAgentCommand_v0_9, ActionPayload, Catalog } from '@ant-design/x-card';
+import React, { useState } from 'react'
+import { XCard, registerCatalog } from '@ant-design/x-card'
+import type { XAgentCommand_v0_9, ActionPayload, Catalog } from '@ant-design/x-card'
 
 // 1. Define catalog
 const catalog: Catalog = {
@@ -22,11 +22,11 @@ const catalog: Catalog = {
     Button: {
       type: 'object',
       properties: { text: { type: 'string' }, action: {} },
-      required: ['text'],
-    },
-  },
-};
-registerCatalog(catalog);
+      required: ['text']
+    }
+  }
+}
+registerCatalog(catalog)
 
 // 2. Custom component implementations
 const components = {
@@ -36,8 +36,8 @@ const components = {
   ),
   Button: ({ text, onAction, action }: any) => (
     <button onClick={() => onAction?.(action?.event?.context ?? {})}>{text}</button>
-  ),
-};
+  )
+}
 
 // 3. Build initial commands
 const initialCommands: XAgentCommand_v0_9[] = [
@@ -53,32 +53,32 @@ const initialCommands: XAgentCommand_v0_9[] = [
           id: 'btn',
           component: 'Button',
           text: 'Say Hi',
-          action: { event: { name: 'greet', context: {} } },
-        },
-      ],
-    },
+          action: { event: { name: 'greet', context: {} } }
+        }
+      ]
+    }
   },
-  { version: 'v0.9', updateDataModel: { surfaceId: 'main', path: '/name', value: 'Alice' } },
-];
+  { version: 'v0.9', updateDataModel: { surfaceId: 'main', path: '/name', value: 'Alice' } }
+]
 
 // 4. Component
 export default function App() {
-  const [cmds, setCmds] = useState(initialCommands);
+  const [cmds, setCmds] = useState(initialCommands)
 
   const handleAction = (payload: ActionPayload) => {
     if (payload.name === 'greet') {
       setCmds((prev) => [
         ...prev,
-        { version: 'v0.9', updateDataModel: { surfaceId: 'main', path: '/name', value: 'Bob' } },
-      ]);
+        { version: 'v0.9', updateDataModel: { surfaceId: 'main', path: '/name', value: 'Bob' } }
+      ])
     }
-  };
+  }
 
   return (
     <XCard.Box commands={cmds} components={components} onAction={handleAction}>
       <XCard.Card id="main" />
     </XCard.Box>
-  );
+  )
 }
 ```
 
@@ -97,12 +97,12 @@ export default function MultiSurface() {
       version: 'v0.9',
       updateComponents: {
         surfaceId: 'profile',
-        components: [{ id: 'root', component: 'Text', text: { path: '/user/name' } }],
-      },
+        components: [{ id: 'root', component: 'Text', text: { path: '/user/name' } }]
+      }
     },
     {
       version: 'v0.9',
-      updateDataModel: { surfaceId: 'profile', path: '/user/name', value: 'Alice' },
+      updateDataModel: { surfaceId: 'profile', path: '/user/name', value: 'Alice' }
     },
 
     // Surface 2
@@ -111,11 +111,11 @@ export default function MultiSurface() {
       version: 'v0.9',
       updateComponents: {
         surfaceId: 'cart',
-        components: [{ id: 'root', component: 'Text', text: { path: '/total' } }],
-      },
+        components: [{ id: 'root', component: 'Text', text: { path: '/total' } }]
+      }
     },
-    { version: 'v0.9', updateDataModel: { surfaceId: 'cart', path: '/total', value: '$42.00' } },
-  ]);
+    { version: 'v0.9', updateDataModel: { surfaceId: 'cart', path: '/total', value: '$42.00' } }
+  ])
 
   return (
     <XCard.Box commands={cmds} components={components}>
@@ -124,7 +124,7 @@ export default function MultiSurface() {
         <XCard.Card id="cart" />
       </div>
     </XCard.Box>
-  );
+  )
 }
 ```
 
@@ -136,7 +136,7 @@ Append commands incrementally as the agent streams responses:
 
 ```tsx
 export default function StreamingDemo() {
-  const [cmds, setCmds] = useState<XAgentCommand_v0_9[]>([]);
+  const [cmds, setCmds] = useState<XAgentCommand_v0_9[]>([])
 
   const startStream = async () => {
     // Step 1: Create surface immediately
@@ -152,24 +152,24 @@ export default function StreamingDemo() {
             {
               id: 'list',
               component: 'List',
-              children: { path: '/items', componentId: 'item_tmpl' },
+              children: { path: '/items', componentId: 'item_tmpl' }
             },
-            { id: 'item_tmpl', component: 'Text', text: { path: 'name' } },
-          ],
-        },
+            { id: 'item_tmpl', component: 'Text', text: { path: 'name' } }
+          ]
+        }
       },
       {
         version: 'v0.9',
         updateDataModel: {
           surfaceId: 'results',
-          value: { ui: { status: 'Loading...' }, items: [] },
-        },
-      },
-    ]);
+          value: { ui: { status: 'Loading...' }, items: [] }
+        }
+      }
+    ])
 
     // Step 2: Stream data in progressively
     for (let i = 0; i < 5; i++) {
-      await delay(500);
+      await delay(500)
       setCmds((prev) => [
         ...prev,
         {
@@ -177,10 +177,10 @@ export default function StreamingDemo() {
           updateDataModel: {
             surfaceId: 'results',
             path: `/items/${i}`,
-            value: { name: `Item ${i + 1}` },
-          },
-        },
-      ]);
+            value: { name: `Item ${i + 1}` }
+          }
+        }
+      ])
     }
 
     // Step 3: Done
@@ -188,10 +188,10 @@ export default function StreamingDemo() {
       ...prev,
       {
         version: 'v0.9',
-        updateDataModel: { surfaceId: 'results', path: '/ui/status', value: 'Complete!' },
-      },
-    ]);
-  };
+        updateDataModel: { surfaceId: 'results', path: '/ui/status', value: 'Complete!' }
+      }
+    ])
+  }
 
   return (
     <div>
@@ -200,10 +200,10 @@ export default function StreamingDemo() {
         <XCard.Card id="results" />
       </XCard.Box>
     </div>
-  );
+  )
 }
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 ```
 
 ---
@@ -231,6 +231,6 @@ When done, send `deleteSurface` to clean up:
 
 ```tsx
 const teardown = () => {
-  setCmds((prev) => [...prev, { version: 'v0.9', deleteSurface: { surfaceId: 'main' } }]);
-};
+  setCmds((prev) => [...prev, { version: 'v0.9', deleteSurface: { surfaceId: 'main' } }])
+}
 ```

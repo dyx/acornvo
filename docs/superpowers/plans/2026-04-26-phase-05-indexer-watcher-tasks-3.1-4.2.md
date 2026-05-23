@@ -18,7 +18,7 @@ Build the **indexer**: state machine, file walker, full scan with hash-based ski
 
 - **`indexer.ts` is a singleton service** (module-scoped state). The `IndexState` machine `idle → scanning → ready → watching → (error)` is exposed via a `state()` getter and a Node `EventEmitter` for `stateChange`. Phase-04's lifecycle code (Plan 4) drives transitions.
 - **The walker is an `async generator`** so cancellation is just "break the loop". It descends from `groveRoot`, skips a hard-coded `skipSet` (`.acornvo`, `.obsidian`, `.git`, `node_modules`, `.trash`), and refuses to follow symlinks (`fs.lstat` check). Yields `{ absPath, relPath }`.
-- **`startScan(groveRoot)`** flows: pre-count *.md (cheap readdir-based) → loop walker, for each file compute `sha256(body)` → call `upsertFile`/`syncTags`/`upsertFts` → push `index:progress` every 50 files or 2s → after walk, diff `listAllPaths` minus `seen` → `deleteFile` for the missing → state → `ready` → fire `index:done`. (Watcher startup happens in Plan 4 lifecycle wiring; here we stop at `ready`.)
+- **`startScan(groveRoot)`** flows: pre-count \*.md (cheap readdir-based) → loop walker, for each file compute `sha256(body)` → call `upsertFile`/`syncTags`/`upsertFts` → push `index:progress` every 50 files or 2s → after walk, diff `listAllPaths` minus `seen` → `deleteFile` for the missing → state → `ready` → fire `index:done`. (Watcher startup happens in Plan 4 lifecycle wiring; here we stop at `ready`.)
 - **`cancelScan()`** sets a module-scoped `abort` flag. The walker checks it before each file. Already-written rows stay; the state goes back to `idle`.
 - **`tokenizer` injection point** is a module-scoped `let` in `index-queries` exposed via `setTokenizer()`. Phase-08 will call this at boot to install jieba; default is identity.
 - **Watcher self-write filter (Tasks 4.1, 4.2)** is the smallest possible piece: a `Map<absPath, { mtimeMs, expiresAt }>` plus `registerSelfWrite()` / `shouldIgnore()` / a 30s GC timer. We carve this out now because phase-04's `file.write` and the indexer (when it writes during scan) both need to register, and Plan 3's chokidar handlers need to consume it. Doing it standalone in this plan keeps Plan 3 focused on chokidar + flush logic.
@@ -32,15 +32,15 @@ Build the **indexer**: state machine, file walker, full scan with hash-based ski
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/index-queries.ts` | Modify (add `setTokenizer` getter) | 3.6 |
-| `electron/services/indexer.ts` | Replace stub → full impl | 3.1–3.5 |
-| `electron/services/indexer.test.ts` | Create | 3.1–3.5 |
-| `electron/services/walker.ts` | Create (extracted helper) | 3.2 |
-| `electron/services/walker.test.ts` | Create | 3.2 |
-| `electron/services/watcher.ts` | Modify stub → add selfWrites map | 4.1, 4.2 |
-| `electron/services/watcher.test.ts` | Create | 4.1, 4.2 |
+| Path                                 | Action                             | Owner task |
+| ------------------------------------ | ---------------------------------- | ---------- |
+| `electron/services/index-queries.ts` | Modify (add `setTokenizer` getter) | 3.6        |
+| `electron/services/indexer.ts`       | Replace stub → full impl           | 3.1–3.5    |
+| `electron/services/indexer.test.ts`  | Create                             | 3.1–3.5    |
+| `electron/services/walker.ts`        | Create (extracted helper)          | 3.2        |
+| `electron/services/walker.test.ts`   | Create                             | 3.2        |
+| `electron/services/watcher.ts`       | Modify stub → add selfWrites map   | 4.1, 4.2   |
+| `electron/services/watcher.test.ts`  | Create                             | 4.1, 4.2   |
 
 ## Pre-flight
 
@@ -54,9 +54,11 @@ This plan assumes Plan 1 has merged and these helpers are available:
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: `IndexState` state machine + `stateChange` emitter + `state()` getter
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Create: `electron/services/indexer.test.ts`
 
@@ -68,7 +70,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { state, _resetForTest, _setStateForTest, onStateChange } from './indexer'
 
 describe('IndexState machine', () => {
-  beforeEach(() => { _resetForTest() })
+  beforeEach(() => {
+    _resetForTest()
+  })
 
   it('starts in idle', () => {
     expect(state()).toEqual({ state: 'idle', total: 0, scanned: 0 })
@@ -180,11 +184,13 @@ git commit -m "feat(phase-05): IndexState machine with stateChange emitter"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: `walk(groveRoot, skipSet)` async generator
 
 Extract the file-walker into its own module so it can be unit-tested independently (the indexer's `startScan` will compose it).
 
 **Files:**
+
 - Create: `electron/services/walker.ts`
 - Create: `electron/services/walker.test.ts`
 
@@ -214,7 +220,9 @@ describe('walk', () => {
     mkdirSync(join(root, 'node_modules', 'pkg'), { recursive: true })
     writeFileSync(join(root, 'node_modules', 'pkg', 'inner.md'), '# inner')
   })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }) })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
 
   it('yields only *.md files, recursively', async () => {
     const found: string[] = []
@@ -271,17 +279,11 @@ Expected: FAIL — `walker` not defined.
 import { readdir, lstat } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
-export const DEFAULT_SKIP_SET = new Set([
-  '.acornvo',
-  '.obsidian',
-  '.git',
-  'node_modules',
-  '.trash'
-])
+export const DEFAULT_SKIP_SET = new Set(['.acornvo', '.obsidian', '.git', 'node_modules', '.trash'])
 
 export interface WalkEntry {
   absPath: string
-  relPath: string  // posix-style, relative to groveRoot
+  relPath: string // posix-style, relative to groveRoot
 }
 
 export async function* walk(
@@ -337,11 +339,13 @@ git commit -m "feat(phase-05): walk() async generator with skipSet + symlink gua
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: `startScan(groveRoot)` — pre-count, walk, hash, upsert, diff-delete, progress
 
 This is the meaty one. Sub-tasks 3.3.1–3.3.8 from `tasks.md` are folded into a single Superpowers task with multiple steps.
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Modify: `electron/services/indexer.test.ts`
 
@@ -382,7 +386,10 @@ describe('startScan', () => {
     _injectDbForTest(db)
     root = mkdtempSync(join(tmpdir(), 'scan-'))
   })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }); db.close() })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('inserts every md file into files + files_fts', async () => {
     writeFileSync(join(root, 'a.md'), '---\ntitle: A\ntags: [x]\n---\nbody A')
@@ -416,7 +423,7 @@ describe('startScan', () => {
     const before = db.prepare('SELECT updated_at FROM files WHERE path=?').get('a.md') as {
       updated_at: number
     }
-    await startScan(root)  // no disk change
+    await startScan(root) // no disk change
     const after = db.prepare('SELECT updated_at FROM files WHERE path=?').get('a.md') as {
       updated_at: number
     }
@@ -438,7 +445,9 @@ describe('startScan', () => {
   it('emits index:done when scan finishes', async () => {
     writeFileSync(join(root, 'a.md'), '# A')
     let doneFired = false
-    onDone(() => { doneFired = true })
+    onDone(() => {
+      doneFired = true
+    })
     await startScan(root)
     expect(doneFired).toBe(true)
   })
@@ -478,19 +487,23 @@ import {
   deleteFile,
   type FileRow
 } from './index-queries'
-import { parseFile } from './frontmatter'  // phase-04
+import { parseFile } from './frontmatter' // phase-04
 
 let _abort = false
 let _db: Database.Database | null = null
 
-export function _injectDbForTest(db: Database.Database): void { _db = db }
+export function _injectDbForTest(db: Database.Database): void {
+  _db = db
+}
 
 function getDb(): Database.Database {
   if (!_db) throw new Error('indexer: db not injected (phase-04 should call setDb on grove open)')
   return _db
 }
 
-export function setDb(db: Database.Database | null): void { _db = db }
+export function setDb(db: Database.Database | null): void {
+  _db = db
+}
 
 const PROGRESS_FILE_INTERVAL = 50
 const PROGRESS_TIME_INTERVAL_MS = 2000
@@ -516,8 +529,11 @@ async function preCount(root: string, skipSet = DEFAULT_SKIP_SET): Promise<numbe
   let n = 0
   async function visit(dir: string): Promise<void> {
     let entries
-    try { entries = await readdir(dir, { withFileTypes: true }) }
-    catch { return }
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
     for (const e of entries) {
       if (skipSet.has(e.name)) continue
       if (e.isSymbolicLink()) continue
@@ -563,7 +579,8 @@ export async function startScan(groveRoot: string): Promise<void> {
         mtime_ms: stat.mtimeMs,
         size_bytes: stat.size,
         frontmatter_json: JSON.stringify(frontmatter),
-        created_at: typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
+        created_at:
+          typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
         updated_at: Date.now()
       }
 
@@ -574,7 +591,9 @@ export async function startScan(groveRoot: string): Promise<void> {
           : []
         syncTags(db, row.path, tags)
         // For FTS rowid, use `files`'s implicit rowid lookup
-        const ftsRowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
+        const ftsRowid = (
+          db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+        ).rowid
         upsertFts(db, {
           rowid: ftsRowid,
           path: row.path,
@@ -629,9 +648,11 @@ git commit -m "feat(phase-05): startScan does precount, walk, hash-skip, upsert,
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: `cancelScan()` — abort flag, state back to idle, partial data preserved
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Modify: `electron/services/indexer.test.ts`
 
@@ -652,7 +673,10 @@ describe('cancelScan', () => {
     _injectDbForTest(db)
     root = mkdtempSync(join(tmpdir(), 'cancel-'))
   })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }); db.close() })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('stops scanning early and returns state to idle', async () => {
     for (let i = 0; i < 100; i++) writeFileSync(join(root, `f${i}.md`), `# ${i}`)
@@ -669,11 +693,11 @@ describe('cancelScan', () => {
     for (let i = 0; i < 50; i++) writeFileSync(join(root, `f${i}.md`), `# ${i}`)
 
     const scanPromise = startScan(root)
-    setTimeout(() => cancelScan(), 1)  // cancel mid-flight
+    setTimeout(() => cancelScan(), 1) // cancel mid-flight
     await scanPromise
 
     const count = (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n
-    expect(count).toBeGreaterThanOrEqual(0)  // partial data is fine
+    expect(count).toBeGreaterThanOrEqual(0) // partial data is fine
     expect(count).toBeLessThanOrEqual(50)
   })
 })
@@ -717,11 +741,13 @@ git commit -m "feat(phase-05): cancelScan flips abort flag; partial data preserv
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 5: `status()` returns `{ state, total, scanned, error? }`
 
 This was already exported as `state()` in Task 1. Add the alias `status()` so the IPC layer (Plan 4) can match the OpenSpec naming and add tests proving the shape.
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Modify: `electron/services/indexer.test.ts`
 
@@ -733,7 +759,9 @@ Append:
 import { status } from './indexer'
 
 describe('status()', () => {
-  beforeEach(() => { _resetForTest() })
+  beforeEach(() => {
+    _resetForTest()
+  })
 
   it('returns the same shape as state()', () => {
     expect(status()).toEqual({ state: 'idle', total: 0, scanned: 0 })
@@ -767,7 +795,7 @@ Expected: FAIL — `status` not exported.
 Append to `electron/services/indexer.ts`:
 
 ```ts
-export const status = state  // alias
+export const status = state // alias
 ```
 
 - [ ] **Step 4: Run tests**
@@ -788,11 +816,13 @@ git commit -m "feat(phase-05): export status() alias for IPC consumption"
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 6: Tokenizer injection point in `index-queries`
 
 The `upsertFts` helper from Plan 1 already accepts a `tokenizer` arg. To let phase-08 swap the default without touching every callsite, expose a module-scoped `getTokenizer()` / `setTokenizer()` and have the indexer call `upsertFts(db, row, getTokenizer())`.
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 - Modify: `electron/services/indexer.ts`
@@ -812,7 +842,7 @@ describe('tokenizer injection', () => {
   it('setTokenizer swaps the active tokenizer', () => {
     setTokenizer((t) => `[[${t}]]`)
     expect(getTokenizer()('hello')).toBe('[[hello]]')
-    setTokenizer((t) => t)  // restore
+    setTokenizer((t) => t) // restore
   })
 })
 ```
@@ -831,8 +861,12 @@ Append:
 
 ```ts
 let _activeTokenizer: Tokenizer = identityTokenizer
-export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
-export function getTokenizer(): Tokenizer { return _activeTokenizer }
+export function setTokenizer(t: Tokenizer): void {
+  _activeTokenizer = t
+}
+export function getTokenizer(): Tokenizer {
+  return _activeTokenizer
+}
 ```
 
 - [ ] **Step 4: Update indexer to use `getTokenizer()`**
@@ -840,19 +874,31 @@ export function getTokenizer(): Tokenizer { return _activeTokenizer }
 In `electron/services/indexer.ts`, change the `upsertFts` call inside `startScan`:
 
 ```ts
-upsertFts(db, {
-  rowid: ftsRowid,
-  path: row.path,
-  title: row.title ?? '',
-  summary: row.summary ?? '',
-  content: body
-}, getTokenizer())
+upsertFts(
+  db,
+  {
+    rowid: ftsRowid,
+    path: row.path,
+    title: row.title ?? '',
+    summary: row.summary ?? '',
+    content: body
+  },
+  getTokenizer()
+)
 ```
 
 Add the import at the top:
 
 ```ts
-import { upsertFile, syncTags, upsertFts, listAllPaths, deleteFile, getTokenizer, type FileRow } from './index-queries'
+import {
+  upsertFile,
+  syncTags,
+  upsertFts,
+  listAllPaths,
+  deleteFile,
+  getTokenizer,
+  type FileRow
+} from './index-queries'
 ```
 
 - [ ] **Step 5: Run tests**
@@ -873,9 +919,11 @@ git commit -m "feat(phase-05): tokenizer registry (default identity; phase-08 wi
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 7: `selfWrites` map + `registerSelfWrite` / `shouldIgnore` exports
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Create: `electron/services/watcher.test.ts`
 
@@ -887,7 +935,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { registerSelfWrite, shouldIgnore, _resetSelfWritesForTest } from './watcher'
 
 describe('selfWrites map', () => {
-  beforeEach(() => { _resetSelfWritesForTest() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+  })
 
   it('returns false when path was never registered', () => {
     expect(shouldIgnore('/some/path.md', 1000)).toBe(false)
@@ -908,7 +958,7 @@ describe('selfWrites map', () => {
   it('removes the entry after a successful match (one-shot)', () => {
     registerSelfWrite('/p.md', 1000)
     expect(shouldIgnore('/p.md', 1000)).toBe(true)
-    expect(shouldIgnore('/p.md', 1000)).toBe(false)  // already consumed
+    expect(shouldIgnore('/p.md', 1000)).toBe(false) // already consumed
   })
 
   it('expires entries after 3s TTL', () => {
@@ -938,10 +988,17 @@ Replace stub at `electron/services/watcher.ts`:
 const SELF_WRITE_TTL_MS = 3000
 const MTIME_TOLERANCE_MS = 50
 
-interface SelfWriteEntry { mtimeMs: number; expiresAt: number }
+interface SelfWriteEntry {
+  mtimeMs: number
+  expiresAt: number
+}
 const selfWrites = new Map<string, SelfWriteEntry>()
 
-export function registerSelfWrite(absPath: string, mtimeMs: number, now: number = Date.now()): void {
+export function registerSelfWrite(
+  absPath: string,
+  mtimeMs: number,
+  now: number = Date.now()
+): void {
   selfWrites.set(absPath, { mtimeMs, expiresAt: now + SELF_WRITE_TTL_MS })
 }
 
@@ -980,9 +1037,11 @@ git commit -m "feat(phase-05): selfWrites map with 3s TTL + 50ms mtime tolerance
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 8: 30s GC timer for expired selfWrites entries
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -994,12 +1053,14 @@ Append:
 import { _gcSelfWrites, _selfWritesSizeForTest } from './watcher'
 
 describe('selfWrites GC', () => {
-  beforeEach(() => { _resetSelfWritesForTest() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+  })
 
   it('removes entries past their expiresAt', () => {
     const now = Date.now()
-    registerSelfWrite('/a.md', 1, now - 4000)  // already expired
-    registerSelfWrite('/b.md', 1, now)         // fresh
+    registerSelfWrite('/a.md', 1, now - 4000) // already expired
+    registerSelfWrite('/b.md', 1, now) // fresh
     expect(_selfWritesSizeForTest()).toBe(2)
     _gcSelfWrites(now)
     expect(_selfWritesSizeForTest()).toBe(1)
@@ -1026,7 +1087,9 @@ export function _gcSelfWrites(now: number = Date.now()): void {
   }
 }
 
-export function _selfWritesSizeForTest(): number { return selfWrites.size }
+export function _selfWritesSizeForTest(): number {
+  return selfWrites.size
+}
 
 let _gcTimer: NodeJS.Timeout | null = null
 

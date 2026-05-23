@@ -20,6 +20,7 @@ Acornvo 的真实数据源是本地 markdown 文件。从索引器到编辑器�
 ## Capabilities
 
 ### New Capabilities
+
 - `md-file-io`: 树林内 md 文件的原子读写、stat、list、rename；编码/BOM/LF 规范化；写后校验
 - `frontmatter-codec`: gray-matter + Zod 的 frontmatter 解析、序列化、字段校验、未知字段保留
 - `path-safety`: `safeResolve(groveRoot, p)` 路径校验工具，所有面向磁盘的 IPC / tool 调用必经

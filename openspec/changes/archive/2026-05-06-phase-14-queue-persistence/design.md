@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 3：SQLite + migrations
 - phase 5：索引失败的散点重试（chokidar 错误 + upsert 错误的 setTimeout fallback）
 - phase 10：`ops_log` 表，已经记录"动作"但不记录"待办"
@@ -12,11 +13,13 @@ PRD S-10：长耗时任务必须可见、可取消、崩溃后自动续作。
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 剪藏后 AI review / 索引失败补偿 走统一队列，失败可重试、崩溃可恢复
 - UI 可见进度、失败原因、一键重试
 - 对用户无感：正常情况下 runner 在后台静默完成
 
 **Non-Goals:**
+
 - 不做跨进程分布式队列（单 Electron 主进程处理即可）
 - 不做延时定时任务 scheduler（job 只做"立即 + 重试 backoff"；真正的 cron 在 phase 18）
 - 不做 job 依赖 DAG（每个 job 独立；ai-review-clip 内部如果要拆多步骤，由 handler 自己切分成多个 job 或串行 await）
@@ -49,26 +52,28 @@ CREATE INDEX idx_jobs_kind_status ON jobs(kind, status);
 ### D2: Runner loop
 
 单 `setInterval(250ms)` tick：
+
 - 取 **每个 kind 的并发窗口剩余数**
 - `SELECT id FROM jobs WHERE status='pending' AND next_run_at <= ? AND kind = ? ORDER BY next_run_at LIMIT ?`
 - 把选中的 job status 置 running，并行调 handler
 
 启动时额外逻辑：
+
 - `UPDATE jobs SET status='pending', updated_at=? WHERE status='running'`（崩溃恢复）
 
 ### D3: Handler 契约
 
 ```ts
 type JobHandler<P> = (ctx: {
-  job: Job;
-  payload: P;
-  log: (level, msg) => void;
-  cancel: AbortSignal;
+  job: Job
+  payload: P
+  log: (level, msg) => void
+  cancel: AbortSignal
 }) => Promise<
   | { kind: 'ok' }
   | { kind: 'retry'; delayMs: number; reason: string }
-  | { kind: 'fail'; error: string }       // 不再重试
->;
+  | { kind: 'fail'; error: string } // 不再重试
+>
 ```
 
 - runner 捕获未 catch 的异常 → 等同 `retry(policy.next(attempts), errMsg)`（即抛错默认走重试策略）
@@ -79,9 +84,10 @@ type JobHandler<P> = (ctx: {
 
 ```ts
 function nextDelay(attempts: number): number {
-  return [1_000, 5_000, 30_000, 120_000, 900_000][attempts] ?? null;
+  return [1_000, 5_000, 30_000, 120_000, 900_000][attempts] ?? null
 }
 ```
+
 - attempts ≥ 5 且 handler 返回 retry → 转 `fail`
 - `retry.delayMs` 传入值覆盖默认（handler 可以要求短一点或长一点）
 - 所有 fail 写入 `ops_log` `op='job.failed'`
@@ -91,17 +97,18 @@ function nextDelay(attempts: number): number {
 ```ts
 queueRunner.register({
   kind: 'ai-review-clip',
-  concurrency: 2,          // 同时最多 2 个 ai review
-  minGapMs: 500,           // rate limit：连续两个任务间至少 500ms
+  concurrency: 2, // 同时最多 2 个 ai review
+  minGapMs: 500, // rate limit：连续两个任务间至少 500ms
   handler: aiReviewClipHandler
-});
+})
 queueRunner.register({
   kind: 'index-retry',
   concurrency: 4,
   minGapMs: 0,
   handler: indexRetryHandler
-});
+})
 ```
+
 - 并发控制：runner 维护 `Map<kind, Set<runningId>>`；size >= concurrency 时本 tick 跳过该 kind
 - minGapMs：维护 `Map<kind, lastPickedAt>`；距离上次 pick 不足 minGapMs 时跳过
 
@@ -110,6 +117,7 @@ queueRunner.register({
 ```ts
 jobs.enqueue(kind, payload, opts?: { delayMs?, dedupeKey? }) → { id }
 ```
+
 - `dedupeKey` 可选：相同 (kind, dedupeKey) 已在 pending/running 中存在时 → 返回已有 id，不重复 enqueue
   - 例如 `ai-review-clip` 用 `dedupeKey = 'clip:' + clipId`；phase 12 重复保存同 clip 不重跑 AI
 - `delayMs`：`next_run_at = now + delayMs`
@@ -126,6 +134,7 @@ jobs.enqueue(kind, payload, opts?: { delayMs?, dedupeKey? }) → { id }
 phase 10 设计了 3 tab（变更 / 剪藏 / 冲突）；本阶段把它扩成 4 tab：变更 / 剪藏 / 冲突 / **任务**。
 
 "任务" tab：
+
 - 顶部 filter：kind (all / ai-review-clip / index-retry) / status (all / running / pending / failed / done)
 - 列表：行高 48px，显示 kind、payload 摘要（clipId / path）、status badge、attempts、next_run_at、last_error（failed 时红底）
 - 每行右侧按钮：running → "取消"；pending → "取消"；failed → "重试"
@@ -139,27 +148,30 @@ phase 10 设计了 3 tab（变更 / 剪藏 / 冲突）；本阶段把它扩成 4
 
 ```ts
 // phase 12 原本
-clipQueue.enqueue({ clipId, url, path });
+clipQueue.enqueue({ clipId, url, path })
 
 // phase 14 改为
-jobs.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: `clip:${clipId}` });
+jobs.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: `clip:${clipId}` })
 ```
+
 phase 12 的 `clipQueue` 模块改名为 `clipReviewEnqueue` 或直接删除，pipeline 直接调 `jobs.enqueue`。
 
 ### D10: phase 5 index-retry 改造
 
 phase 5 里的索引 `upsert` 失败分支：
+
 - 原来：`setTimeout(() => retry(), 1000)` × 3
 - 现在：`jobs.enqueue('index-retry', { path, reason: err.message }, { dedupeKey: 'idx:' + path })`
 
 handler:
+
 ```ts
 async function indexRetryHandler({ payload }) {
   try {
-    await fileIndexer.upsertFromFs(payload.path);
-    return { kind: 'ok' };
+    await fileIndexer.upsertFromFs(payload.path)
+    return { kind: 'ok' }
   } catch (e) {
-    return { kind: 'retry', delayMs: defaultBackoff, reason: e.message };
+    return { kind: 'retry', delayMs: defaultBackoff, reason: e.message }
   }
 }
 ```
@@ -167,6 +179,7 @@ async function indexRetryHandler({ payload }) {
 ### D11: AI review 占位 handler
 
 phase 14 提供一个 `aiReviewClipHandler` **骨架**：
+
 - 读 clip row 与 md 文件
 - 调 `phase15.reviewClip(content)` ← 此阶段该模块抛 `E_NOT_IMPLEMENTED`
 - handler 捕获 `E_NOT_IMPLEMENTED` → `retry(delayMs: 60 * 60_000)`（1 小时后再试；phase 15 实装后就会成功）

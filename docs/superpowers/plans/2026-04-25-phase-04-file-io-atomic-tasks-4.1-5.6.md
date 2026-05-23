@@ -29,7 +29,7 @@ Wrap `gray-matter` + the Plan 1 Zod schema into a `frontmatter` codec, expand `F
   - `readParsed` is `read` + `frontmatter.parseFile(content)`.
   - `write` is `writeWithVerify` (handles atomic + verify + mtime preflight).
   - `writeParsed` = `frontmatter.stringify` → `writeWithVerify`.
-  - `list(dirRel, { recursive, includeHidden })` is a self-implemented walker that uses `fs.lstat` (so symlinks show as `isSymbolicLink` and we *skip* them entirely — neither include nor follow).
+  - `list(dirRel, { recursive, includeHidden })` is a self-implemented walker that uses `fs.lstat` (so symlinks show as `isSymbolicLink` and we _skip_ them entirely — neither include nor follow).
   - `rename(oldRel, newRel)` `safeResolve`s both sides and runs `fs.rename`.
 - **Wiring**: `electron/ipc/handlers.ts` adds one new line: `file: fileHandlers`.
 
@@ -42,25 +42,27 @@ Wrap `gray-matter` + the Plan 1 Zod schema into a `frontmatter` codec, expand `F
 
 ## Files Touched (cumulative for this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/frontmatter.ts` | Replace stubs with full impl | 4.1, 4.2, 5.6 |
-| `electron/services/frontmatter.test.ts` | Create | 4.1, 4.2, 4.4 |
-| `shared/frontmatter-schema.ts` | Replace stub with full schema | 4.3 |
-| `shared/frontmatter-schema.test.ts` | Create | 4.3, 4.4 |
-| `shared/ipc-contract.ts` | Modify (add `file` namespace + verify error codes) | 5.1, 5.2 |
-| `electron/ipc/file.ts` | Create | 5.3, 5.4, 5.5, 5.6 |
-| `electron/ipc/file.test.ts` | Create | 5.3, 5.4, 5.5, 5.6 |
-| `electron/ipc/handlers.ts` | Modify (register `file` namespace) | 5.3 |
+| Path                                    | Action                                             | Owner task         |
+| --------------------------------------- | -------------------------------------------------- | ------------------ |
+| `electron/services/frontmatter.ts`      | Replace stubs with full impl                       | 4.1, 4.2, 5.6      |
+| `electron/services/frontmatter.test.ts` | Create                                             | 4.1, 4.2, 4.4      |
+| `shared/frontmatter-schema.ts`          | Replace stub with full schema                      | 4.3                |
+| `shared/frontmatter-schema.test.ts`     | Create                                             | 4.3, 4.4           |
+| `shared/ipc-contract.ts`                | Modify (add `file` namespace + verify error codes) | 5.1, 5.2           |
+| `electron/ipc/file.ts`                  | Create                                             | 5.3, 5.4, 5.5, 5.6 |
+| `electron/ipc/file.test.ts`             | Create                                             | 5.3, 5.4, 5.5, 5.6 |
+| `electron/ipc/handlers.ts`              | Modify (register `file` namespace)                 | 5.3                |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: `frontmatter.parseFile`
 
 **Files:**
+
 - Modify: `electron/services/frontmatter.ts`
 - Create: `electron/services/frontmatter.test.ts`
 
@@ -158,9 +160,11 @@ git commit -m "feat(phase-04): frontmatter.parseFile (gray-matter + Zod passthro
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: `frontmatter.stringify`
 
 **Files:**
+
 - Modify: `electron/services/frontmatter.ts`
 - Modify: `electron/services/frontmatter.test.ts`
 
@@ -234,9 +238,11 @@ git commit -m "feat(phase-04): frontmatter.stringify (skips wrapper for empty fm
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: Full FrontmatterSchema (design D5)
 
 **Files:**
+
 - Modify: `shared/frontmatter-schema.ts`
 - Create: `shared/frontmatter-schema.test.ts`
 
@@ -375,9 +381,11 @@ git commit -m "feat(phase-04): full FrontmatterSchema per design D5"
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 4: Codec integration tests (full-field roundtrip + edge cases)
 
 **Files:**
+
 - Modify: `electron/services/frontmatter.test.ts`
 
 Cross-cuts the frontmatter spec scenarios "全字段往返", "未知字段保留", "rating 越界报错", "空 frontmatter 不加包裹块". Some are partly covered by Tasks 1-3; this task fills any gap and adds the explicit roundtrip on the full PRD field set.
@@ -459,9 +467,11 @@ git commit -m "test(phase-04): frontmatter codec integration coverage"
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 5: Extend ipc-contract with the `file` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 This task is **type-only** — no runtime code yet. We declare the surface so handlers and renderer-side typings line up. Plan 4 task 7.x exercises the full chain end-to-end.
@@ -571,9 +581,11 @@ git commit -m "feat(phase-04): declare file IPC namespace in shared contract"
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 6: Formalize new IPC error codes
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 Plan 2 already added `'E_ENCODING' | 'E_WRITE_VERIFY' | 'E_MTIME_MISMATCH'` to the `IpcErrorCode` union as their first throw sites landed. This task makes them first-class: a `IPC_ERROR_CODES` constant object so callers can reference them by name without typos, and a tightening `assert` that confirms the union is complete.
@@ -657,9 +669,11 @@ git commit -m "feat(phase-04): IPC_ERROR_CODES constant + completeness check"
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 7: File IPC handler skeleton (`requireGroveRoot` + `safeResolve` template)
 
 **Files:**
+
 - Create: `electron/ipc/file.ts`
 - Modify: `electron/ipc/handlers.ts`
 - Create: `electron/ipc/file.test.ts`
@@ -800,11 +814,7 @@ export const fileHandlers = {
     throw new IpcError('E_INTERNAL', 'readParsed not yet implemented (phase-04 plan 3 task 10)')
   },
 
-  async write(
-    rel: string,
-    content: string,
-    opts: FileWriteOptions = {}
-  ): Promise<FileWriteResult> {
+  async write(rel: string, content: string, opts: FileWriteOptions = {}): Promise<FileWriteResult> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
     return writeWithVerify(abs, content, opts)
@@ -872,8 +882,12 @@ Then add `file: fileHandlers` to the `ipcHandlers` object:
 
 ```ts
 export const ipcHandlers: HandlerMap = {
-  ping: { /* ... existing ... */ },
-  log: { /* ... existing ... */ },
+  ping: {
+    /* ... existing ... */
+  },
+  log: {
+    /* ... existing ... */
+  },
   project: projectHandlers,
   file: fileHandlers
 }
@@ -913,9 +927,11 @@ git commit -m "feat(phase-04): file IPC skeleton (read/write/stat/exists) + safe
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 8: `list` walker (lstat-based, skips symlinks, hidden filter)
 
 **Files:**
+
 - Modify: `electron/ipc/file.ts`
 - Modify: `electron/ipc/file.test.ts`
 
@@ -956,7 +972,10 @@ describe('fileHandlers.list', () => {
     mkdirSync(join(dir, 'sub', 'deeper'))
     writeFileSync(join(dir, 'sub', 'deeper', 'c.md'), 'c')
     const r = await fileHandlers.list('.', { recursive: true })
-    const files = r.filter((e) => e.isFile).map((e) => e.rel).sort()
+    const files = r
+      .filter((e) => e.isFile)
+      .map((e) => e.rel)
+      .sort()
     expect(files).toEqual(['a.md', join('sub', 'b.md'), join('sub', 'deeper', 'c.md')])
   })
 
@@ -1072,9 +1091,11 @@ git commit -m "feat(phase-04): file.list walker (lstat, skip symlinks, hidden fi
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 9: `rename` (both ends safeResolved)
 
 **Files:**
+
 - Modify: `electron/ipc/file.ts`
 - Modify: `electron/ipc/file.test.ts`
 
@@ -1183,9 +1204,11 @@ git commit -m "feat(phase-04): file.rename (both sides safeResolved, mkdir -p)"
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 10: `writeParsed` + `readParsed`
 
 **Files:**
+
 - Modify: `electron/ipc/file.ts`
 - Modify: `electron/ipc/file.test.ts`
 

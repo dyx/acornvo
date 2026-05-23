@@ -34,22 +34,22 @@ Build the React surface of the in-app browser: `Browse.tsx` page composing TabBa
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Browse.tsx` | Implement | 6.1, 6.2 |
-| `src/pages/Browse.test.tsx` | Create | 6.1 |
-| `src/components/browser/TabBar.tsx` | Create | 6.3 |
-| `src/components/browser/TabBar.test.tsx` | Create | 6.3 |
-| `src/components/browser/AddressBar.tsx` | Create | 6.4 |
-| `src/components/browser/AddressBar.test.tsx` | Create | 6.4 |
-| `src/components/browser/dispatchAddress.ts` | Create | 6.4 |
-| `src/components/browser/dispatchAddress.test.ts` | Create | 6.4 |
-| `src/components/browser/BookmarkSidebar.tsx` | Create | 6.5 |
-| `src/components/browser/BookmarkSidebar.test.tsx` | Create | 6.5 |
-| `src/components/browser/BookmarkDialog.tsx` | Create | 6.6 |
-| `src/components/browser/BookmarkDialog.test.tsx` | Create | 6.6 |
-| `src/components/browser/NewTabPage.tsx` | Create | 6.7 |
-| `src/components/browser/NewTabPage.test.tsx` | Create | 6.7 |
+| Path                                              | Action    | Owner task |
+| ------------------------------------------------- | --------- | ---------- |
+| `src/pages/Browse.tsx`                            | Implement | 6.1, 6.2   |
+| `src/pages/Browse.test.tsx`                       | Create    | 6.1        |
+| `src/components/browser/TabBar.tsx`               | Create    | 6.3        |
+| `src/components/browser/TabBar.test.tsx`          | Create    | 6.3        |
+| `src/components/browser/AddressBar.tsx`           | Create    | 6.4        |
+| `src/components/browser/AddressBar.test.tsx`      | Create    | 6.4        |
+| `src/components/browser/dispatchAddress.ts`       | Create    | 6.4        |
+| `src/components/browser/dispatchAddress.test.ts`  | Create    | 6.4        |
+| `src/components/browser/BookmarkSidebar.tsx`      | Create    | 6.5        |
+| `src/components/browser/BookmarkSidebar.test.tsx` | Create    | 6.5        |
+| `src/components/browser/BookmarkDialog.tsx`       | Create    | 6.6        |
+| `src/components/browser/BookmarkDialog.test.tsx`  | Create    | 6.6        |
+| `src/components/browser/NewTabPage.tsx`           | Create    | 6.7        |
+| `src/components/browser/NewTabPage.test.tsx`      | Create    | 6.7        |
 
 ## Pre-flight
 
@@ -71,9 +71,11 @@ Build the React surface of the in-app browser: `Browse.tsx` page composing TabBa
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: `Browse.tsx` — root layout + viewport div
 
 **Files:**
+
 - Modify: `src/pages/Browse.tsx`
 - Create: `src/pages/Browse.test.tsx`
 
@@ -135,7 +137,20 @@ describe('Browse page', () => {
     const port = mockPort()
     setBrowserPort(port)
     useBrowserStore.setState({
-      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank' }],
+      tabs: [
+        {
+          id: 'existing',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'about:blank'
+        }
+      ],
       activeTabId: 'existing'
     })
     render(<Browse />)
@@ -262,12 +277,16 @@ Expected: 3 passed.
 
 ```tsx
 // src/components/browser/TabBar.tsx
-export function TabBar() { return <div data-testid="tabbar-stub" /> }
+export function TabBar() {
+  return <div data-testid="tabbar-stub" />
+}
 ```
 
 ```tsx
 // src/components/browser/AddressBar.tsx
-export function AddressBar() { return <div data-testid="addressbar-stub" /> }
+export function AddressBar() {
+  return <div data-testid="addressbar-stub" />
+}
 ```
 
 ```tsx
@@ -279,7 +298,9 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean }) 
 
 ```tsx
 // src/components/browser/NewTabPage.tsx
-export function NewTabPage() { return <div data-testid="newtab-stub" /> }
+export function NewTabPage() {
+  return <div data-testid="newtab-stub" />
+}
 ```
 
 These stubs are replaced in tasks 6.3–6.7.
@@ -302,11 +323,13 @@ git commit -m "feat(phase-11): Browse page layout — TabBar/AddressBar/Sidebar/
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: ResizeObserver debounce verification
 
 The `setViewport` action in Plan 2 already debounces 16ms before reaching IPC; here we just verify Browse correctly drives it. We also add a regression guard: when the bookmarks sidebar toggles between collapsed/expanded, a fresh viewport is pushed.
 
 **Files:**
+
 - Modify: `src/pages/Browse.test.tsx`
 
 - [ ] **Step 1: Add regression test**
@@ -375,9 +398,11 @@ git commit -m "test(phase-11): Browse pushes viewport on mount and on layout-rel
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: `TabBar.tsx` — favicon, title, close, drag-reorder
 
 **Files:**
+
 - Modify: `src/components/browser/TabBar.tsx`
 - Create: `src/components/browser/TabBar.test.tsx`
 
@@ -408,15 +433,26 @@ function tab(id: string, overrides: Partial<any> = {}) {
 }
 
 function reset(tabs: any[] = [], active: string | null = null) {
-  useBrowserStore.setState({ tabs, activeTabId: active, bookmarksOpen: false, viewport: { x: 0, y: 0, width: 0, height: 0 } })
+  useBrowserStore.setState({
+    tabs,
+    activeTabId: active,
+    bookmarksOpen: false,
+    viewport: { x: 0, y: 0, width: 0, height: 0 }
+  })
 }
 
 const port = {
   createTab: vi.fn(async () => ({ id: 'new', url: 'about:blank' })),
   closeTab: vi.fn(),
   activateTab: vi.fn(),
-  navigate: vi.fn(), reload: vi.fn(), goBack: vi.fn(), goForward: vi.fn(),
-  setReaderMode: vi.fn(), setViewport: vi.fn(), suspendTab: vi.fn(), resumeTab: vi.fn()
+  navigate: vi.fn(),
+  reload: vi.fn(),
+  goBack: vi.fn(),
+  goForward: vi.fn(),
+  setReaderMode: vi.fn(),
+  setViewport: vi.fn(),
+  suspendTab: vi.fn(),
+  resumeTab: vi.fn()
 } as any
 
 describe('TabBar', () => {
@@ -616,11 +652,13 @@ git commit -m "feat(phase-11): TabBar — favicon/spinner/title/close + pointer 
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 4: `AddressBar.tsx` — input, dispatch, navigation buttons, reader, bookmark, paste, clip
 
 This is the biggest single component. We split out `dispatchAddress(input)` as a pure function with its own test file (sub-task 6.4.1).
 
 **Files:**
+
 - Create: `src/components/browser/dispatchAddress.ts`
 - Create: `src/components/browser/dispatchAddress.test.ts`
 - Modify: `src/components/browser/AddressBar.tsx`
@@ -707,9 +745,7 @@ Expected: FAIL.
 
 ```ts
 // src/components/browser/dispatchAddress.ts
-export type AddressDispatch =
-  | { kind: 'url'; url: string }
-  | { kind: 'search'; url: string }
+export type AddressDispatch = { kind: 'url'; url: string } | { kind: 'search'; url: string }
 
 export function dispatchAddress(raw: string): AddressDispatch {
   const trimmed = raw.trim()
@@ -780,7 +816,20 @@ const port = {
 
 function reset(activeUrl = 'about:blank') {
   useBrowserStore.setState({
-    tabs: [{ id: 'a', url: activeUrl, title: '', favicon: null, loading: false, canGoBack: true, canGoForward: false, readerMode: false, suspended: false, savedUrl: activeUrl }],
+    tabs: [
+      {
+        id: 'a',
+        url: activeUrl,
+        title: '',
+        favicon: null,
+        loading: false,
+        canGoBack: true,
+        canGoForward: false,
+        readerMode: false,
+        suspended: false,
+        savedUrl: activeUrl
+      }
+    ],
     activeTabId: 'a',
     bookmarksOpen: false,
     viewport: { x: 0, y: 0, width: 0, height: 0 }
@@ -792,10 +841,26 @@ vi.mock('@/ipc/client', () => ({
   ipc: {
     bookmarks: {
       getByUrl: vi.fn(async () => null),
-      create: vi.fn(async (input: any) => ({ id: 1, url: input.url, title: input.title ?? null, favicon: null, tags: input.tags ?? [], createdAt: '', updatedAt: '' })),
+      create: vi.fn(async (input: any) => ({
+        id: 1,
+        url: input.url,
+        title: input.title ?? null,
+        favicon: null,
+        tags: input.tags ?? [],
+        createdAt: '',
+        updatedAt: ''
+      })),
       delete: vi.fn(async () => ({ ok: true })),
       list: vi.fn(async () => ({ items: [], total: 0 })),
-      update: vi.fn(async () => ({ id: 1, url: '', title: '', favicon: null, tags: [], createdAt: '', updatedAt: '' }))
+      update: vi.fn(async () => ({
+        id: 1,
+        url: '',
+        title: '',
+        favicon: null,
+        tags: [],
+        createdAt: '',
+        updatedAt: ''
+      }))
     },
     on: vi.fn(() => () => {})
   }
@@ -829,7 +894,10 @@ describe('AddressBar', () => {
     const input = screen.getByRole('textbox', { name: /address/i })
     await userEvent.clear(input)
     await userEvent.type(input, 'attention mechanism{Enter}')
-    expect(port.navigate).toHaveBeenCalledWith('a', 'https://www.google.com/search?q=attention%20mechanism')
+    expect(port.navigate).toHaveBeenCalledWith(
+      'a',
+      'https://www.google.com/search?q=attention%20mechanism'
+    )
   })
 
   it('Esc resets the input to tab.url', async () => {
@@ -1121,11 +1189,13 @@ git commit -m "feat(phase-11): AddressBar — URL/search dispatch, nav buttons, 
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 5: `BookmarkSidebar.tsx` — collapsed/expanded, search, tags, virtualized list
 
 For brevity we keep the list non-virtualized at this stage; if `react-window` is already a dep, swap to it. The codebase is small enough that ~500 bookmarks render fine with plain map().
 
 **Files:**
+
 - Modify: `src/components/browser/BookmarkSidebar.tsx`
 - Create: `src/components/browser/BookmarkSidebar.test.tsx`
 
@@ -1141,8 +1211,24 @@ import { useBrowserStore, setBrowserPort } from '@/stores/browser'
 
 const listMock = vi.fn(async (opts: any) => ({
   items: [
-    { id: 1, url: 'https://news.com', title: 'News today', favicon: null, tags: ['news', 'ai'], createdAt: '', updatedAt: '' },
-    { id: 2, url: 'https://cooking.com', title: 'Recipes', favicon: null, tags: ['cooking'], createdAt: '', updatedAt: '' }
+    {
+      id: 1,
+      url: 'https://news.com',
+      title: 'News today',
+      favicon: null,
+      tags: ['news', 'ai'],
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 2,
+      url: 'https://cooking.com',
+      title: 'Recipes',
+      favicon: null,
+      tags: ['cooking'],
+      createdAt: '',
+      updatedAt: ''
+    }
   ],
   total: 2
 }))
@@ -1176,7 +1262,20 @@ const port = {
 
 function reset() {
   useBrowserStore.setState({
-    tabs: [{ id: 'a', url: 'https://x', title: 'A', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x' }],
+    tabs: [
+      {
+        id: 'a',
+        url: 'https://x',
+        title: 'A',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        readerMode: false,
+        suspended: false,
+        savedUrl: 'https://x'
+      }
+    ],
     activeTabId: 'a',
     bookmarksOpen: true,
     viewport: { x: 0, y: 0, width: 0, height: 0 }
@@ -1294,11 +1393,14 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      void ipc.bookmarks
-        .list({ q: q || undefined, tag: tag ?? undefined, limit: 200, offset: 0 })
-        .then((r) => setItems(r.items))
-    }, q || tag ? 200 : 0)
+    timerRef.current = setTimeout(
+      () => {
+        void ipc.bookmarks
+          .list({ q: q || undefined, tag: tag ?? undefined, limit: 200, offset: 0 })
+          .then((r) => setItems(r.items))
+      },
+      q || tag ? 200 : 0
+    )
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
@@ -1373,7 +1475,7 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
       )}
       {items.length === 0 ? (
         <div className="p-4 text-xs text-[color:var(--color-ink-3)]">
-          {t('browser.bookmarks.empty', "还没有书签。浏览时点星号收藏当前页面。")}
+          {t('browser.bookmarks.empty', '还没有书签。浏览时点星号收藏当前页面。')}
         </div>
       ) : (
         <ul className="flex-1 overflow-auto" role="list">
@@ -1430,9 +1532,11 @@ git commit -m "feat(phase-11): BookmarkSidebar — collapsed/expanded, search, t
 ---
 
 <!-- openspec-task: 6.6 -->
+
 ### Task 6: `BookmarkDialog.tsx` — new/edit modal
 
 **Files:**
+
 - Create: `src/components/browser/BookmarkDialog.tsx`
 - Create: `src/components/browser/BookmarkDialog.test.tsx`
 
@@ -1445,13 +1549,33 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BookmarkDialog } from './BookmarkDialog'
 
-const create = vi.fn(async (input: any) => ({ id: 7, url: input.url, title: input.title, favicon: null, tags: input.tags ?? [], createdAt: '', updatedAt: '' }))
-const update = vi.fn(async (id: number, patch: any) => ({ id, url: 'https://x', title: patch.title, favicon: null, tags: patch.tags ?? [], createdAt: '', updatedAt: '' }))
+const create = vi.fn(async (input: any) => ({
+  id: 7,
+  url: input.url,
+  title: input.title,
+  favicon: null,
+  tags: input.tags ?? [],
+  createdAt: '',
+  updatedAt: ''
+}))
+const update = vi.fn(async (id: number, patch: any) => ({
+  id,
+  url: 'https://x',
+  title: patch.title,
+  favicon: null,
+  tags: patch.tags ?? [],
+  createdAt: '',
+  updatedAt: ''
+}))
 const del = vi.fn(async () => ({ ok: true }))
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    bookmarks: { create: (...a: any[]) => create(...a), update: (...a: any[]) => update(...a), delete: (...a: any[]) => del(...a) }
+    bookmarks: {
+      create: (...a: any[]) => create(...a),
+      update: (...a: any[]) => update(...a),
+      delete: (...a: any[]) => del(...a)
+    }
   }
 }))
 
@@ -1492,7 +1616,15 @@ describe('BookmarkDialog', () => {
         open
         onOpenChange={() => {}}
         mode="edit"
-        initial={{ id: 5, url: 'https://x.com', title: 'Old', favicon: null, tags: ['x'], createdAt: '', updatedAt: '' }}
+        initial={{
+          id: 5,
+          url: 'https://x.com',
+          title: 'Old',
+          favicon: null,
+          tags: ['x'],
+          createdAt: '',
+          updatedAt: ''
+        }}
         onSaved={onSaved}
         onDeleted={() => {}}
       />
@@ -1514,7 +1646,15 @@ describe('BookmarkDialog', () => {
         open
         onOpenChange={() => {}}
         mode="edit"
-        initial={{ id: 5, url: 'https://x.com', title: 'Old', favicon: null, tags: [], createdAt: '', updatedAt: '' }}
+        initial={{
+          id: 5,
+          url: 'https://x.com',
+          title: 'Old',
+          favicon: null,
+          tags: [],
+          createdAt: '',
+          updatedAt: ''
+        }}
         onSaved={() => {}}
         onDeleted={onDeleted}
       />
@@ -1633,7 +1773,11 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
         <div className="grid gap-3">
           <label className="grid gap-1 text-xs">
             URL
-            <Input value={url} disabled={props.mode === 'edit'} onChange={(e) => setUrl(e.target.value)} />
+            <Input
+              value={url}
+              disabled={props.mode === 'edit'}
+              onChange={(e) => setUrl(e.target.value)}
+            />
           </label>
           <label className="grid gap-1 text-xs">
             Title
@@ -1650,9 +1794,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
               {t('browser.bookmark.delete', 'Delete')}
             </Button>
           )}
-          <Button onClick={() => void save()}>
-            {t('common.save', 'Save')}
-          </Button>
+          <Button onClick={() => void save()}>{t('common.save', 'Save')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1680,9 +1822,11 @@ git commit -m "feat(phase-11): BookmarkDialog — new/edit + delete with confirm
 ---
 
 <!-- openspec-task: 6.7 -->
+
 ### Task 7: `NewTabPage.tsx` — welcome + recent 6 bookmarks
 
 **Files:**
+
 - Modify: `src/components/browser/NewTabPage.tsx`
 - Create: `src/components/browser/NewTabPage.test.tsx`
 
@@ -1718,9 +1862,13 @@ const port = {
   closeTab: vi.fn(),
   activateTab: vi.fn(),
   navigate: vi.fn(),
-  reload: vi.fn(), goBack: vi.fn(), goForward: vi.fn(),
-  setReaderMode: vi.fn(), setViewport: vi.fn(),
-  suspendTab: vi.fn(), resumeTab: vi.fn()
+  reload: vi.fn(),
+  goBack: vi.fn(),
+  goForward: vi.fn(),
+  setReaderMode: vi.fn(),
+  setViewport: vi.fn(),
+  suspendTab: vi.fn(),
+  resumeTab: vi.fn()
 } as any
 
 describe('NewTabPage', () => {
@@ -1728,7 +1876,20 @@ describe('NewTabPage', () => {
     vi.clearAllMocks()
     setBrowserPort(port)
     useBrowserStore.setState({
-      tabs: [{ id: 'a', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'about:blank' }],
+      tabs: [
+        {
+          id: 'a',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'about:blank'
+        }
+      ],
       activeTabId: 'a',
       bookmarksOpen: false,
       viewport: { x: 0, y: 0, width: 0, height: 0 }
@@ -1782,9 +1943,7 @@ export function NewTabPage(): JSX.Element {
   const [recent, setRecent] = useState<Bookmark[]>([])
 
   useEffect(() => {
-    void ipc.bookmarks
-      .list({ limit: 6, offset: 0 })
-      .then((r) => setRecent(r.items))
+    void ipc.bookmarks.list({ limit: 6, offset: 0 }).then((r) => setRecent(r.items))
   }, [])
 
   return (

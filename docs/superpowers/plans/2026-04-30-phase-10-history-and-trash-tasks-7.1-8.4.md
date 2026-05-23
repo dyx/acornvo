@@ -27,32 +27,37 @@ Anchor the i18n work to the actual repo layout (do this **first** in Task 1 belo
 ls /Users/aaa/develop/workspace-ai/acornvo/src/i18n/
 ls /Users/aaa/develop/workspace-ai/acornvo/src/i18n/locales/
 ```
+
 Expected (as of 2026-04-30):
+
 ```
 src/i18n/index.ts
 src/i18n/locales/zh-CN.json
 ```
+
 There is **no** en-US JSON and **no** namespace split — every key in this plan goes into the single flat object in `src/i18n/locales/zh-CN.json`. The init code already enables `interpolation.escapeValue: false`, so `{{path}}` placeholders work directly with `t('...', { path })`.
 
 Verify the test bar is green at HEAD before starting:
+
 ```bash
 npm test
 ```
+
 Expected: all PASS (or document any pre-existing failure before proceeding).
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/i18n/locales/zh-CN.json` | Modify (add keys 7.1–7.6) | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
-| `src/i18n/phase-10.test.ts` | Create (assertion bundle for all 7.x keys) | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
-| `src/components/history/HistoryTabs.tsx` | Modify (replace hardcoded labels with `t('history.tabs.*')`) | 7.1 |
-| `src/components/library/TrashConfirmDialog.tsx` | Modify (use `t('trash.*')` keys) | 7.2 |
-| `src/components/history/TrashTab.tsx` | Modify (use `t('history.trash.notice')`) | 7.3 |
-| `src/components/history/ConflictsTab.tsx` | Modify (use `t('history.conflicts.clear_all*')`) | 7.4 |
-| `src/components/history/ConflictDetailPanel.tsx` | Modify (use `t('diff.view.*')`) | 7.5 |
-| `src/components/history/OpsRow.tsx` | Modify (use `t('ops.op.*', { path, ... })`) | 7.6 |
-| `src/integration/phase-10-trash.test.tsx` | Create | 8.1, 8.2, 8.3, 8.4 |
+| Path                                             | Action                                                       | Owner task                   |
+| ------------------------------------------------ | ------------------------------------------------------------ | ---------------------------- |
+| `src/i18n/locales/zh-CN.json`                    | Modify (add keys 7.1–7.6)                                    | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
+| `src/i18n/phase-10.test.ts`                      | Create (assertion bundle for all 7.x keys)                   | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
+| `src/components/history/HistoryTabs.tsx`         | Modify (replace hardcoded labels with `t('history.tabs.*')`) | 7.1                          |
+| `src/components/library/TrashConfirmDialog.tsx`  | Modify (use `t('trash.*')` keys)                             | 7.2                          |
+| `src/components/history/TrashTab.tsx`            | Modify (use `t('history.trash.notice')`)                     | 7.3                          |
+| `src/components/history/ConflictsTab.tsx`        | Modify (use `t('history.conflicts.clear_all*')`)             | 7.4                          |
+| `src/components/history/ConflictDetailPanel.tsx` | Modify (use `t('diff.view.*')`)                              | 7.5                          |
+| `src/components/history/OpsRow.tsx`              | Modify (use `t('ops.op.*', { path, ... })`)                  | 7.6                          |
+| `src/integration/phase-10-trash.test.tsx`        | Create                                                       | 8.1, 8.2, 8.3, 8.4           |
 
 ## Conventions reused
 
@@ -74,9 +79,11 @@ Expected: all PASS (or document any pre-existing failure before proceeding).
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 1: i18n keys for `history.tabs.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Create: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/history/HistoryTabs.tsx`
@@ -87,6 +94,7 @@ Expected: all PASS (or document any pre-existing failure before proceeding).
 ls /Users/aaa/develop/workspace-ai/acornvo/src/i18n/
 ls /Users/aaa/develop/workspace-ai/acornvo/src/i18n/locales/
 ```
+
 Expected output: `index.ts` and `locales/`; inside `locales/` exactly `zh-CN.json`. If the layout has changed (extra namespace files, en-US added), pause and update each "**Files**" line in this plan before continuing.
 
 - [ ] **Step 1: Add the keys to `zh-CN.json`**
@@ -143,9 +151,11 @@ import { useTranslation } from 'react-i18next'
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "history.tabs"
 ```
+
 Expected: 3 PASS.
 
 Manual smoke (3 lines, the human gate):
+
 1. `npm run dev`; navigate to `/history`.
 2. Confirm the three tab labels read 废纸篓 / 冲突 / 操作.
 3. Switch to a fresh language via DevTools (`i18n.changeLanguage('zh-CN')` is the only registered locale — labels must persist).
@@ -160,9 +170,11 @@ git commit -m "feat(i18n): history.tabs keys + HistoryTabs wired (phase-10 7.1)"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 2: i18n keys for `trash.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Modify: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/library/TrashConfirmDialog.tsx`
@@ -188,8 +200,9 @@ describe('phase-10 i18n: trash', () => {
     expect(i18n.t('trash.confirm_title')).toBe('移到废纸篓？')
   })
   it('trash.confirm_body interpolates {{path}}', () => {
-    expect(i18n.t('trash.confirm_body', { path: 'notes/a.md' }))
-      .toBe('notes/a.md 将被移至系统回收站。可在系统回收站中找回。')
+    expect(i18n.t('trash.confirm_body', { path: 'notes/a.md' })).toBe(
+      'notes/a.md 将被移至系统回收站。可在系统回收站中找回。'
+    )
   })
   it('trash.fallback_title', () => {
     expect(i18n.t('trash.fallback_title')).toBe('无法移到系统回收站')
@@ -203,6 +216,7 @@ describe('phase-10 i18n: trash', () => {
 - [ ] **Step 3: Wire `TrashConfirmDialog.tsx` to the keys**
 
 Open `src/components/library/TrashConfirmDialog.tsx` (created in Plan 2). Replace hardcoded literals:
+
 - Title text → `t('trash.confirm_title')`
 - Body text (currently rendering the path inline) → `t('trash.confirm_body', { path })`
 - Fallback-mode title → `t('trash.fallback_title')`
@@ -215,9 +229,11 @@ Add `const { t } = useTranslation()` at the top.
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "trash"
 ```
+
 Expected: 4 PASS.
 
 Manual smoke:
+
 1. `npm run dev`; in `/library`, right-click a file → "移到废纸篓".
 2. Confirm dialog title reads 移到废纸篓？ and body shows the relative path + 将被移至系统回收站….
 3. Press Esc; dialog closes; nothing changes on disk.
@@ -230,9 +246,11 @@ git commit -m "feat(i18n): trash dialog keys + TrashConfirmDialog wired (phase-1
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 3: i18n key for `history.trash.notice`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Modify: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/history/TrashTab.tsx`
@@ -248,6 +266,7 @@ Inside the existing `"history"` object (created in Task 1), add a `"trash"` sibl
 ```
 
 After this task the `"history"` block looks like:
+
 ```json
 "history": {
   "tabs": { "trash": "...", "conflicts": "...", "ops": "..." },
@@ -262,8 +281,9 @@ In `src/i18n/phase-10.test.ts`:
 ```ts
 describe('phase-10 i18n: history.trash.notice', () => {
   it('history.trash.notice', () => {
-    expect(i18n.t('history.trash.notice'))
-      .toBe('Acornvo 不管理系统回收站。请在系统的废纸篓中找回已删除的文件。')
+    expect(i18n.t('history.trash.notice')).toBe(
+      'Acornvo 不管理系统回收站。请在系统的废纸篓中找回已删除的文件。'
+    )
   })
 })
 ```
@@ -277,9 +297,11 @@ Open `src/components/history/TrashTab.tsx`. Render the notice (typically inside 
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "history.trash.notice"
 ```
+
 Expected: PASS.
 
 Manual smoke:
+
 1. `npm run dev`; go to `/history/trash`.
 2. Confirm the explainer banner reads Acornvo 不管理系统回收站….
 3. Confirm there is no "Restore" / "还原" button anywhere on the tab (per design D5).
@@ -292,9 +314,11 @@ git commit -m "feat(i18n): history.trash.notice + TrashTab wired (phase-10 7.3)"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 4: i18n keys for `history.conflicts.clear_all*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Modify: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/history/ConflictsTab.tsx`
@@ -318,8 +342,9 @@ describe('phase-10 i18n: history.conflicts', () => {
     expect(i18n.t('history.conflicts.clear_all')).toBe('清空所有快照')
   })
   it('history.conflicts.clear_all_confirm interpolates {{count}}', () => {
-    expect(i18n.t('history.conflicts.clear_all_confirm', { count: 23 }))
-      .toBe('确认要删除全部 23 条冲突快照？此操作无法撤销。')
+    expect(i18n.t('history.conflicts.clear_all_confirm', { count: 23 })).toBe(
+      '确认要删除全部 23 条冲突快照？此操作无法撤销。'
+    )
   })
 })
 ```
@@ -333,9 +358,11 @@ Open `src/components/history/ConflictsTab.tsx`. The "Clear all" button label and
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "history.conflicts"
 ```
+
 Expected: 2 PASS.
 
 Manual smoke:
+
 1. `npm run dev` with at least 2 conflict snapshots in `.acornvo/conflicts/`.
 2. Go to `/history/conflicts`; click "清空所有快照"; confirm body text shows the live count.
 3. Cancel; verify nothing was deleted (file count under `.acornvo/conflicts/` unchanged).
@@ -348,9 +375,11 @@ git commit -m "feat(i18n): history.conflicts.clear_all keys + ConflictsTab wired
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 5: i18n keys for `diff.view.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Modify: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/history/ConflictDetailPanel.tsx`
@@ -392,9 +421,11 @@ Open `src/components/history/ConflictDetailPanel.tsx`. Replace the three view-to
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "diff.view"
 ```
+
 Expected: 3 PASS.
 
 Manual smoke:
+
 1. `npm run dev` with one conflict snapshot.
 2. Go to `/history/conflicts`; select the row.
 3. Confirm three toggles read 本地 ↔ 远端 / 本地 ↔ 基线 / 远端 ↔ 基线; clicking each updates the diff panel.
@@ -407,9 +438,11 @@ git commit -m "feat(i18n): diff.view toggles + ConflictDetailPanel wired (phase-
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 6: i18n op templates for `ops.op.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Modify: `src/i18n/phase-10.test.ts`
 - Modify: `src/components/history/OpsRow.tsx`
@@ -433,24 +466,23 @@ git commit -m "feat(i18n): diff.view toggles + ConflictDetailPanel wired (phase-
 ```ts
 describe('phase-10 i18n: ops.op templates', () => {
   it('ops.op.trash interpolates path', () => {
-    expect(i18n.t('ops.op.trash', { path: 'a.md' }))
-      .toBe('已移到废纸篓：a.md')
+    expect(i18n.t('ops.op.trash', { path: 'a.md' })).toBe('已移到废纸篓：a.md')
   })
   it('ops.op.hard_delete interpolates path', () => {
-    expect(i18n.t('ops.op.hard_delete', { path: 'b.md' }))
-      .toBe('已永久删除：b.md')
+    expect(i18n.t('ops.op.hard_delete', { path: 'b.md' })).toBe('已永久删除：b.md')
   })
   it('ops.op.conflict_resolve interpolates path + resolved_by', () => {
-    expect(i18n.t('ops.op.conflict_resolve', { path: 'c.md', resolved_by: 'keep_local' }))
-      .toBe('已解决冲突：c.md（keep_local）')
+    expect(i18n.t('ops.op.conflict_resolve', { path: 'c.md', resolved_by: 'keep_local' })).toBe(
+      '已解决冲突：c.md（keep_local）'
+    )
   })
   it('ops.op.conflict_delete interpolates path', () => {
-    expect(i18n.t('ops.op.conflict_delete', { path: 'd.md' }))
-      .toBe('已删除快照：d.md')
+    expect(i18n.t('ops.op.conflict_delete', { path: 'd.md' })).toBe('已删除快照：d.md')
   })
   it('ops.op.rename interpolates path + new_path', () => {
-    expect(i18n.t('ops.op.rename', { path: 'old.md', new_path: 'new.md' }))
-      .toBe('已重命名：old.md → new.md')
+    expect(i18n.t('ops.op.rename', { path: 'old.md', new_path: 'new.md' })).toBe(
+      '已重命名：old.md → new.md'
+    )
   })
 })
 ```
@@ -463,12 +495,18 @@ Open `src/components/history/OpsRow.tsx`. The component already receives an `Ops
 const main = (() => {
   const meta = row.meta_json ? JSON.parse(row.meta_json) : {}
   switch (row.op) {
-    case 'trash':            return t('ops.op.trash', { path: row.path })
-    case 'hard_delete':      return t('ops.op.hard_delete', { path: row.path })
-    case 'conflict_resolve': return t('ops.op.conflict_resolve', { path: row.path, resolved_by: meta.resolved_by ?? '' })
-    case 'conflict_delete':  return t('ops.op.conflict_delete', { path: row.path })
-    case 'rename':           return t('ops.op.rename', { path: row.path, new_path: meta.new_path ?? '' })
-    default:                 return row.op + ' ' + row.path
+    case 'trash':
+      return t('ops.op.trash', { path: row.path })
+    case 'hard_delete':
+      return t('ops.op.hard_delete', { path: row.path })
+    case 'conflict_resolve':
+      return t('ops.op.conflict_resolve', { path: row.path, resolved_by: meta.resolved_by ?? '' })
+    case 'conflict_delete':
+      return t('ops.op.conflict_delete', { path: row.path })
+    case 'rename':
+      return t('ops.op.rename', { path: row.path, new_path: meta.new_path ?? '' })
+    default:
+      return row.op + ' ' + row.path
   }
 })()
 ```
@@ -478,9 +516,11 @@ const main = (() => {
 ```bash
 npx vitest run src/i18n/phase-10.test.ts -t "ops.op templates"
 ```
+
 Expected: 5 PASS.
 
 Manual smoke:
+
 1. `npm run dev`; trigger one trash + one conflict-resolve so `ops_log` has rows.
 2. Go to `/history/ops`; verify row text matches the templates with the actual paths interpolated.
 3. Confirm the conflict-resolve row shows `（keep_local）` (or whichever `resolved_by` was used).
@@ -493,9 +533,11 @@ git commit -m "feat(i18n): ops.op templates + OpsRow wired (phase-10 7.6)"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 7: E2E acceptance — right-click → "移到废纸篓" → file moves to trash + ops_log row
 
 **Files:**
+
 - Create: `src/integration/phase-10-trash.test.tsx`
 
 This is an integration-style acceptance: it does not actually move a file on disk (that is the manual smoke at the end of the task). It proves the wiring: right-click → menu item → confirm dialog → IPC call with the right args → row removed from list. The disk + Electron piece is checked by the human via the smoke step.
@@ -535,9 +577,7 @@ const mockIpc: any = {
 vi.mock('@/ipc/client', () => ({ ipc: mockIpc, useIpc: () => mockIpc }))
 
 // Sample library row used by all 8.x scenarios.
-const SAMPLE_ROWS = [
-  { path: 'notes/a.md', title: 'a', mtimeMs: 100, size: 10, contentHash: 'h1' }
-]
+const SAMPLE_ROWS = [{ path: 'notes/a.md', title: 'a', mtimeMs: 100, size: 10, contentHash: 'h1' }]
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -594,9 +634,11 @@ If `VirtualFileList` is not the right export, replace with the Plan-2 component 
 ```bash
 npx vitest run src/integration/phase-10-trash.test.tsx -t "8.1"
 ```
+
 Expected: PASS.
 
 Manual smoke (the **real** disk gate):
+
 1. `npm run dev` against a grove with `notes/a.md`. Right-click the row → "移到废纸篓" → "移到废纸篓".
 2. Confirm `~/.Trash/a.md` (macOS) or system trash (Win/Linux) now contains the file; `ls` of the grove no longer shows it.
 3. Open `~/Library/Application Support/acornvo/.../grove.db` (or whatever path uses `ops_log`) and confirm a row with `op='trash'`, `path='notes/a.md'`.
@@ -611,9 +653,11 @@ git commit -m "test(phase-10): 8.1 right-click trash flow integration (phase-10 
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 8: E2E acceptance — `Cmd+Backspace` (Library focused) opens the same confirm modal
 
 **Files:**
+
 - Modify: `src/integration/phase-10-trash.test.tsx`
 
 - [ ] **Step 1: Append the 8.2 case to the integration file**
@@ -649,9 +693,11 @@ describe('8.2 Cmd+Backspace in Library → same confirm modal', () => {
 ```bash
 npx vitest run src/integration/phase-10-trash.test.tsx -t "8.2"
 ```
+
 Expected: PASS.
 
 Manual smoke:
+
 1. `npm run dev`; in `/library` click a row to select it.
 2. Press Cmd+Backspace (mac) / Delete (Win/Linux); confirm dialog opens with same wording as right-click flow.
 3. Click "移到废纸篓"; confirm the file actually leaves the grove (same as 8.1 step 2).
@@ -664,9 +710,11 @@ git commit -m "test(phase-10): 8.2 Cmd+Backspace opens trash confirm (phase-10 8
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 9: E2E acceptance — `Cmd+Backspace` in `/editor/:path` does NOT trigger trash
 
 **Files:**
+
 - Modify: `src/integration/phase-10-trash.test.tsx`
 
 The wiring claim under test: the trash shortcut is registered **inside `VirtualFileList`** (or its container), not at app level. When the editor route is mounted (no `VirtualFileList` in the tree), `Cmd+Backspace` falls through to the editor's own delete-line behaviour and never calls `file.trash`.
@@ -681,7 +729,8 @@ describe('8.3 Cmd+Backspace in /editor → does NOT trigger trash', () => {
     const user = userEvent.setup()
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'notes/a.md', mtimeMs: 1 },
-      frontmatter: {}, body: 'hello'
+      frontmatter: {},
+      body: 'hello'
     })
 
     render(
@@ -713,9 +762,11 @@ If `EditorPage` is not the export name on `main`, swap it for whatever Plan 2 / 
 ```bash
 npx vitest run src/integration/phase-10-trash.test.tsx -t "8.3"
 ```
+
 Expected: PASS.
 
 Manual smoke:
+
 1. `npm run dev`; open a file in `/editor/notes%2Fa.md`; place cursor in the body.
 2. Press Cmd+Backspace; verify the editor deletes a line of text (its native behaviour) and **no** trash dialog appears.
 3. `ls` the grove; confirm `notes/a.md` is still there.
@@ -728,9 +779,11 @@ git commit -m "test(phase-10): 8.3 editor bypasses trash shortcut (phase-10 8.3)
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 10: E2E acceptance — `shell.trashItem` fails → fallback modal → "永久删除" → `fs.unlink` + `op='hard_delete'`
 
 **Files:**
+
 - Modify: `src/integration/phase-10-trash.test.tsx`
 
 The IPC contract for the failure path (per Plan 1 + spec): `file.trash` resolves with `{ ok: false, error: { code: 'E_TRASH', message } }` (no thrown `IpcError` — it is a recoverable user-facing failure, not a programmer error). On that response, `TrashConfirmDialog` switches to fallback mode: title becomes 无法移到系统回收站, the primary button changes to 永久删除 and is gated by the 我知道这无法恢复 checkbox. Clicking 永久删除 calls `file.hardDelete(path)`.
@@ -776,7 +829,8 @@ describe('8.4 trashItem fails → fallback → hard delete', () => {
 
   it('未勾选 checkbox 不能触发 hard delete', async () => {
     mockIpc.file.trash.mockResolvedValueOnce({
-      ok: false, error: { code: 'E_TRASH', message: 'x' }
+      ok: false,
+      error: { code: 'E_TRASH', message: 'x' }
     })
     const user = userEvent.setup()
     renderLibrary()
@@ -801,9 +855,11 @@ describe('8.4 trashItem fails → fallback → hard delete', () => {
 ```bash
 npx vitest run src/integration/phase-10-trash.test.tsx -t "8.4"
 ```
+
 Expected: 2 PASS.
 
 Manual smoke (the only realistic way to hit this in production is on a Linux box without XDG; on macOS, simulate by patching `electron/services/trash.ts` to throw):
+
 1. In `electron/services/trash.ts`, temporarily replace `await shell.trashItem(abs)` with `throw new Error('forced')`. `npm run dev`.
 2. Right-click a file → "移到废纸篓"; click confirm. Verify the fallback modal text reads 无法移到系统回收站 and the 永久删除 button is disabled until the checkbox is checked.
 3. Check the box, click 永久删除. Confirm: file is unlinked from disk; `ops_log` shows `op='hard_delete'` for the path. Revert the trash.ts patch.
@@ -824,6 +880,7 @@ grep -E "openspec-task: (7\.[1-6]|8\.[1-4])" \
   /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-10-history-and-trash-tasks-7.1-8.4.md \
   | sort -u
 ```
+
 Expected: 10 unique labels (7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 8.1, 8.2, 8.3, 8.4).
 
 2. **i18n key shape:** All keys use a flat dotted addressing inside one zh-CN.json. No namespace splits — matches the existing repo layout. `escapeValue: false` is already set in `src/i18n/index.ts`, so `↔` and Chinese punctuation render as-is.

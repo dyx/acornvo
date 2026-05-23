@@ -20,13 +20,13 @@ Component (Button click)
 
 ```typescript
 interface ActionPayload {
-  name: string; // from action.event.name
-  surfaceId: string; // which surface triggered this
+  name: string // from action.event.name
+  surfaceId: string // which surface triggered this
   /**
    * Context passed by component, with path references automatically resolved.
    * Path references in action.event.context are converted to { value } format.
    */
-  context: Record<string, any>;
+  context: Record<string, any>
 }
 ```
 
@@ -199,56 +199,56 @@ const formCommands: XAgentCommand_v0_9[] = [
             {
               call: 'required',
               args: { value: { path: '/form/email' } },
-              message: 'Email is required',
+              message: 'Email is required'
             },
             {
               call: 'email',
               args: { value: { path: '/form/email' } },
-              message: 'Invalid email format',
-            },
-          ],
+              message: 'Invalid email format'
+            }
+          ]
         },
         {
           id: 'submit_btn',
           component: 'Button',
           text: 'Submit',
-          action: { event: { name: 'submit', context: { email: { path: '/form/email' } } } },
-        },
-      ],
-    },
+          action: { event: { name: 'submit', context: { email: { path: '/form/email' } } } }
+        }
+      ]
+    }
   },
-  { version: 'v0.9', updateDataModel: { surfaceId: 'form', path: '/form', value: { email: '' } } },
-];
+  { version: 'v0.9', updateDataModel: { surfaceId: 'form', path: '/form', value: { email: '' } } }
+]
 
 // 2. Handle submission
 // Keys using { path } bindings in the config are resolved to { value, ...rest } format.
 // Literal values from the config and runtime values from the component are preserved as-is.
 const handleAction = async (payload: ActionPayload) => {
   if (payload.name === 'submit') {
-    const email = payload.context.email?.value;
+    const email = payload.context.email?.value
     // Show loading
     setCmdQueue((prev) => [
       ...prev,
-      { version: 'v0.9', updateDataModel: { surfaceId: 'form', path: '/ui/loading', value: true } },
-    ]);
+      { version: 'v0.9', updateDataModel: { surfaceId: 'form', path: '/ui/loading', value: true } }
+    ])
     // Process with agent, then show result
-    const result = await callAgent({ email });
+    const result = await callAgent({ email })
     setCmdQueue((prev) => [
       ...prev,
       {
         version: 'v0.9',
-        updateDataModel: { surfaceId: 'form', path: '/ui/loading', value: false },
+        updateDataModel: { surfaceId: 'form', path: '/ui/loading', value: false }
       },
       {
         version: 'v0.9',
         updateComponents: {
           surfaceId: 'form',
-          components: [{ id: 'root', component: 'Text', text: `Done: ${result}` }],
-        },
-      },
-    ]);
+          components: [{ id: 'root', component: 'Text', text: `Done: ${result}` }]
+        }
+      }
+    ])
   }
-};
+}
 ```
 
 ---

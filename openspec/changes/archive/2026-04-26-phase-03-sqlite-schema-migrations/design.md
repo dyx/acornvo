@@ -3,10 +3,12 @@
 PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files` / `tags` / `file_tags` / `files_fts` / `bookmarks` / `chats` / `queue` / `usage`。后续 9 个 change 都会往这个 db 读写。
 
 已确立的前置：
+
 - phase 1：`better-sqlite3` 在主进程运行；主进程已有日志
 - phase 2：每树林 `.acornvo/` 已初始化；打开/切换树林事件已广播（`project:changed`）
 
 关键约束：
+
 - `better-sqlite3` 必须匹配 Electron ABI，需 `electron-rebuild`
 - FTS5 虚拟表需要 SQLite 编译时启用（`better-sqlite3` 默认已启用）
 - WAL 模式在云同步目录下可能被撕裂 → phase 2 的同步目录检测 + `.nosync` 已缓解
@@ -16,6 +18,7 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 可复用的迁移框架（`PRAGMA user_version` + `migrations/NNN_name.sql` 有序执行）
 - 一次把 PRD 数据模型里的全部表 + 索引 + FTS5 虚拟表建出来
 - 损坏检测与重建：启动时 `PRAGMA integrity_check`，异常则保留损坏文件 + 建新空 db
@@ -24,6 +27,7 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 - `better-sqlite3` 的 native 构建在三平台 CI 可跑（本阶段打通开发机即可）
 
 **Non-Goals:**
+
 - 不做**数据**迁移（没有旧数据）；migration 只处理 schema
 - 不做向下迁移（down migration）——版本单调递增，出错只能重建
 - 不做查询层 ORM 抽象（继续写裸 SQL）
@@ -35,6 +39,7 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 ### D1: Migrations 形态
 
 `electron/services/db/migrations/` 目录下：
+
 ```
 001_init.sql
 002_xxx.sql  ← 后续 change 追加
@@ -42,12 +47,14 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 ```
 
 `db.ts` 启动时：
+
 1. 读 `PRAGMA user_version`（新库为 0）
 2. 列出 migrations 目录按数字排序
 3. 逐个比对：若 `user_version < NNN` 则在单事务内 `exec(sqlText)` + `PRAGMA user_version = NNN`
 4. 事务失败 → rollback → 抛错 → 主进程捕获 → 走"损坏重建"分支（保底）
 
 **理由**：
+
 - 单事务保证 schema 变更原子性
 - 文件名带数字前缀避免并发 PR 冲突（前缀按 change 的顺序分配）
 - 不用 JS 代码构建 SQL，纯 .sql 文件便于 review 与 diff
@@ -57,10 +64,12 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 ### D2: 按树林切换 db 句柄
 
 `db.ts` 持单例 `current: Database | null`。订阅 `project:changed`：
+
 - 收到 path → `openForGrove(path)`
 - 收到 null → `closeCurrent()`
 
 `openForGrove(path)`：
+
 1. `closeCurrent()`（若存在）
 2. 创建 `path/.acornvo/` 目录（phase 2 已建，防御性）
 3. `new Database(path/.acornvo/index.db)`
@@ -70,6 +79,7 @@ PRD 定义了完整的 SQLite schema（详见 prd.md 数据模型节）：`files
 7. 登记 current
 
 `closeCurrent()`：
+
 1. `db.pragma('wal_checkpoint(TRUNCATE)')`
 2. `db.close()`
 3. 设 current=null
@@ -87,6 +97,7 @@ PRAGMA mmap_size = 268435456; -- 256MB
 ```
 
 **理由**：
+
 - WAL：读写并发友好
 - `synchronous=NORMAL` + WAL：崩溃最多丢最后一个事务（可接受）；索引丢了能从 md 重建
 - `mmap_size` / `cache_size`：对万级文件库的查询有明显提升
@@ -115,6 +126,7 @@ push IPC 事件 db:rebuilt → renderer 确认（后续阶段由 indexer 触发�
 ### D5: 001_init.sql 内容
 
 完整建表（按 PRD 数据模型节的 DDL 原样落）+ 所有索引 + FTS5 虚拟表。同时一次性加：
+
 - `files.content_hash` 的索引（后续去重要用）
 - `files_fts` 的 `tokenize='simple'`（中文分词由应用层 jieba 做，见 phase 8）
 - `usage.purpose` 的索引（用量聚合查询会用）
@@ -130,6 +142,7 @@ push IPC 事件 db:rebuilt → renderer 确认（后续阶段由 indexer 触发�
 ### D7: 开发构建
 
 `package.json`：
+
 ```json
 "scripts": {
   "postinstall": "electron-rebuild -f -w better-sqlite3"

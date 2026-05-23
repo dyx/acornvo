@@ -27,19 +27,19 @@ The first three must print "OK". The fourth tells you whether to apply Tasks 7 a
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json` / `package-lock.json` | Modify (add `diff` dep) | 1.1 |
-| `electron/services/db/migrations/003_ops_log.sql` | Create | 1.2 |
-| `electron/services/db/migrations.test.ts` | Modify (add `003` assertion) | 1.2 |
-| `shared/ops-types.ts` | Create | 1.3 |
-| `electron/services/ops/log.ts` | Create | 2.1, 2.2, 2.3 |
-| `electron/services/ops/log.test.ts` | Create | 2.1, 2.2, 2.3 |
-| `electron/services/conflicts/store.ts` | Modify (call `opsLog.record` after `writeSnapshot`) | 2.4 |
-| `electron/services/conflicts/store.test.ts` | Modify (assert `ops_log` row written) | 2.4 |
-| `src/stores/editor.ts` (or phase-9 banner-reload entry) | Modify (call `opsLog.record` for `load_remote_banner`) | 2.5 |
-| `electron/services/watcher.ts` | Modify (call `opsLog.record({op:'rename', ...})` in `renamedFromTo` block) | 2.6 |
-| `electron/services/watcher.test.ts` | Modify (assert ops row on rename) | 2.6 |
+| Path                                                    | Action                                                                     | Owner task    |
+| ------------------------------------------------------- | -------------------------------------------------------------------------- | ------------- |
+| `package.json` / `package-lock.json`                    | Modify (add `diff` dep)                                                    | 1.1           |
+| `electron/services/db/migrations/003_ops_log.sql`       | Create                                                                     | 1.2           |
+| `electron/services/db/migrations.test.ts`               | Modify (add `003` assertion)                                               | 1.2           |
+| `shared/ops-types.ts`                                   | Create                                                                     | 1.3           |
+| `electron/services/ops/log.ts`                          | Create                                                                     | 2.1, 2.2, 2.3 |
+| `electron/services/ops/log.test.ts`                     | Create                                                                     | 2.1, 2.2, 2.3 |
+| `electron/services/conflicts/store.ts`                  | Modify (call `opsLog.record` after `writeSnapshot`)                        | 2.4           |
+| `electron/services/conflicts/store.test.ts`             | Modify (assert `ops_log` row written)                                      | 2.4           |
+| `src/stores/editor.ts` (or phase-9 banner-reload entry) | Modify (call `opsLog.record` for `load_remote_banner`)                     | 2.5           |
+| `electron/services/watcher.ts`                          | Modify (call `opsLog.record({op:'rename', ...})` in `renamedFromTo` block) | 2.6           |
+| `electron/services/watcher.test.ts`                     | Modify (assert ops row on rename)                                          | 2.6           |
 
 ## Conventions reused
 
@@ -53,11 +53,13 @@ The first three must print "OK". The fourth tells you whether to apply Tasks 7 a
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: install `diff` (jsdiff) dependency
 
 This is a pure-config task. The `diff` package is the source for line-level diffs in later plans (Plan 4 ships the `conflict.diff` IPC); installing it now keeps Plan 1 self-contained for `package.json` changes.
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Install**
@@ -72,12 +74,14 @@ npm install -D @types/diff
 ```bash
 node -e "console.log(require('diff').diffLines('a\nb', 'a\nc').length)"
 ```
+
 Expected: a small positive integer (e.g. `3`). If `diff` is missing, the require fails.
 
 ```bash
 grep -q '"diff":' /Users/aaa/develop/workspace-ai/acornvo/package.json && echo "diff in deps OK"
 grep -q '"@types/diff":' /Users/aaa/develop/workspace-ai/acornvo/package.json && echo "@types/diff in devDeps OK"
 ```
+
 Both must print "OK".
 
 - [ ] **Step 3: Type-check (catches accidentally broken types)**
@@ -85,6 +89,7 @@ Both must print "OK".
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -97,9 +102,11 @@ git commit -m "chore(deps): add diff (jsdiff) for line-level diffing (phase-10 1
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: migration `003_ops_log.sql` — create `ops_log`, indexes, bump user_version
 
 **Files:**
+
 - Create: `electron/services/db/migrations/003_ops_log.sql`
 - Modify: `electron/services/db/migrations.test.ts`
 
@@ -156,6 +163,7 @@ describe('migration 003 ops_log', () => {
 ```bash
 npx vitest run electron/services/db/migrations.test.ts -t "migration 003"
 ```
+
 Expected: FAIL — `ops_log` does not exist; `user_version` is 1 or 2 depending on whether phase-9's `002` migration is merged.
 
 - [ ] **Step 3: Create the migration file**
@@ -182,6 +190,7 @@ The migrations runner reads files matching `^(\d{3})_.+\.sql$` from this directo
 ```bash
 npx vitest run electron/services/db/migrations.test.ts -t "migration 003"
 ```
+
 Expected: 2 PASS.
 
 Run the whole migrations suite to catch regressions:
@@ -189,6 +198,7 @@ Run the whole migrations suite to catch regressions:
 ```bash
 npx vitest run electron/services/db/migrations.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -201,9 +211,11 @@ git commit -m "feat(db): migration 003 ops_log table + indexes (phase-10 1.2)"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: shared `OpsItem` / `Op` types
 
 **Files:**
+
 - Create: `shared/ops-types.ts`
 
 - [ ] **Step 1: Create the types file**
@@ -215,12 +227,7 @@ Create `shared/ops-types.ts`:
  * Op enum — the set of operations recorded in ops_log.
  * Keep in sync with shared/ipc-contract.ts and migration 003.
  */
-export type Op =
-  | 'trash'
-  | 'hard_delete'
-  | 'conflict_resolve'
-  | 'conflict_delete'
-  | 'rename'
+export type Op = 'trash' | 'hard_delete' | 'conflict_resolve' | 'conflict_delete' | 'rename'
 
 /**
  * One row of ops_log as exposed to the renderer.
@@ -264,6 +271,7 @@ export interface OpsLogListResult {
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS — no other module imports the new types yet, so we're confirming the file itself compiles under both `tsconfig.node.json` (main) and `tsconfig.web.json` (renderer).
 
 - [ ] **Step 3: Commit**
@@ -276,11 +284,13 @@ git commit -m "feat(shared): add OpsItem/Op enum and list types (phase-10 1.3)"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: scaffold `electron/services/ops/log.ts` and implement `record` + internal `prune`
 
 **Note:** Per repo convention this lives at `electron/services/ops/log.ts`, not `src/main/ops/log.ts` (the repo has no `src/main/`).
 
 **Files:**
+
 - Create: `electron/services/ops/log.ts`
 - Create: `electron/services/ops/log.test.ts`
 
@@ -363,6 +373,7 @@ describe('opsLog.record', () => {
 ```bash
 npx vitest run electron/services/ops/log.test.ts -t "opsLog.record"
 ```
+
 Expected: FAIL — module does not exist (`Cannot find module ./log`).
 
 - [ ] **Step 3: Implement `record` + `prune` (single transaction)**
@@ -438,9 +449,9 @@ export function list(opts: OpsLogListOptions): OpsLogListResult {
   const db = getDb()
   const where = opts.op ? `WHERE op = ?` : ``
   const args: unknown[] = opts.op ? [opts.op] : []
-  const totalRow = db
-    .prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`)
-    .get(...args) as { n: number }
+  const totalRow = db.prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`).get(...args) as {
+    n: number
+  }
   const itemRows = db
     .prepare(
       `SELECT id, op, path, ts, meta_json FROM ops_log ${where}
@@ -485,6 +496,7 @@ export const _internals = {
 ```bash
 npx vitest run electron/services/ops/log.test.ts -t "opsLog.record"
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Commit**
@@ -497,11 +509,13 @@ git commit -m "feat(ops): opsLog.record + internal prune in single transaction (
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: prune runs before each `record` in the same transaction
 
 This task is partially done by Task 4's implementation (the `db.transaction` wrapper already groups prune-then-insert). This task adds explicit assertions for the retention behaviour.
 
 **Files:**
+
 - Modify: `electron/services/ops/log.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -523,9 +537,9 @@ describe('opsLog.record prune (90-day age)', () => {
 
     opsLog.record({ op: 'trash', path: 'fresh.md' })
 
-    const rows = db
-      .prepare('SELECT path FROM ops_log ORDER BY ts ASC')
-      .all() as Array<{ path: string }>
+    const rows = db.prepare('SELECT path FROM ops_log ORDER BY ts ASC').all() as Array<{
+      path: string
+    }>
     // The 100-day-old row was pruned; only the fresh one remains
     expect(rows.map((r) => r.path)).toEqual(['fresh.md'])
   })
@@ -534,29 +548,27 @@ describe('opsLog.record prune (90-day age)', () => {
 describe('opsLog.record prune (10000 cap)', () => {
   it('enforces 10000-row cap by ts DESC', () => {
     // Seed 10005 rows with monotonically increasing ts via raw SQL
-    const stmt = db.prepare(
-      'INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, ?, ?)'
-    )
+    const stmt = db.prepare('INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, ?, ?)')
     const base = Date.now() - 60 * 60 * 1000 // 1h ago
     for (let i = 0; i < 10005; i++) {
       const ts = new Date(base + i).toISOString()
       stmt.run('trash', `seed/${i}.md`, ts, null)
     }
-    expect(
-      (db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as { n: number }).n
-    ).toBe(10005)
+    expect((db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as { n: number }).n).toBe(10005)
 
     // Next record() should prune cap to 10000, then insert → final count 10000
     opsLog.record({ op: 'trash', path: 'newest.md' })
 
-    const finalCount = (db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as {
-      n: number
-    }).n
+    const finalCount = (
+      db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as {
+        n: number
+      }
+    ).n
     expect(finalCount).toBe(10000)
     // Newest row is preserved
-    const newest = db
-      .prepare('SELECT path FROM ops_log ORDER BY ts DESC LIMIT 1')
-      .get() as { path: string }
+    const newest = db.prepare('SELECT path FROM ops_log ORDER BY ts DESC LIMIT 1').get() as {
+      path: string
+    }
     expect(newest.path).toBe('newest.md')
   })
 })
@@ -585,6 +597,7 @@ describe('opsLog.record atomicity', () => {
 npx vitest run electron/services/ops/log.test.ts -t "prune"
 npx vitest run electron/services/ops/log.test.ts -t "atomicity"
 ```
+
 Expected: 3 PASS. If any fail, the prune was not actually called inside the transaction in Task 4 — fix `record` so the `db.transaction` body invokes prune first, then insert (NOT prune outside the tx).
 
 - [ ] **Step 3: Run the whole ops/log file to catch regressions**
@@ -592,6 +605,7 @@ Expected: 3 PASS. If any fail, the prune was not actually called inside the tran
 ```bash
 npx vitest run electron/services/ops/log.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 4: Commit**
@@ -604,9 +618,11 @@ git commit -m "test(ops): assert prune-in-transaction for 90-day age + 10000 cap
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: implement `list({ limit, offset, op? })` returning `{ items, total }`
 
 **Files:**
+
 - Modify: `electron/services/ops/log.test.ts`
 
 (Implementation already shipped in Task 4; this task adds the test cases.)
@@ -688,6 +704,7 @@ describe('opsLog.list', () => {
 ```bash
 npx vitest run electron/services/ops/log.test.ts -t "opsLog.list"
 ```
+
 Expected: 5 PASS.
 
 - [ ] **Step 3: Commit**
@@ -700,6 +717,7 @@ git commit -m "test(ops): list with pagination + op filter + parsed meta (phase-
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 7: wire phase-9 `ConflictDialog` three branches into `opsLog.record`
 
 **Skip-if-deferred:** If phase-9 is not yet merged (the pre-flight check showed `shared/conflict-types.ts` missing), STOP this task and return — Plan 2 will pick up the wiring when phase 9 lands.
@@ -707,6 +725,7 @@ git commit -m "test(ops): list with pagination + op filter + parsed meta (phase-
 The wiring point for the three `ConflictDialog` branches (`keep_local` / `load_remote` / `save_as`) is the **main-process** snapshot writer that phase 9 builds: `electron/services/conflicts/store.ts → writeSnapshot()`. Each call to `writeSnapshot` corresponds to exactly one resolved conflict, and `writeSnapshot` already returns `{ id }` and knows `resolved_by` and (for `save_as`) `winner_path`. We add the `opsLog.record` call right after the atomic `Promise.all` writes succeed, before `prune()`.
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -778,6 +797,7 @@ describe('writeSnapshot wires opsLog.record (phase-10 2.4)', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t "phase-10 2.4"
 ```
+
 Expected: 3 FAIL — `recordSpy` never called.
 
 - [ ] **Step 3: Implement — wire `opsLog.record` into `writeSnapshot`**
@@ -791,16 +811,16 @@ import * as opsLog from '../ops/log'
 In the `writeSnapshot` body, immediately after the four-file `Promise.all` resolves and BEFORE the prune block, add:
 
 ```ts
-  // ops_log: record the resolution (id + resolved_by + winner_path?)
-  opsLog.record({
-    op: 'conflict_resolve',
-    path: input.path,
-    meta: {
-      id,
-      resolved_by: input.resolvedBy,
-      ...(input.winnerPath ? { winner_path: input.winnerPath } : {})
-    }
-  })
+// ops_log: record the resolution (id + resolved_by + winner_path?)
+opsLog.record({
+  op: 'conflict_resolve',
+  path: input.path,
+  meta: {
+    id,
+    resolved_by: input.resolvedBy,
+    ...(input.winnerPath ? { winner_path: input.winnerPath } : {})
+  }
+})
 ```
 
 `opsLog.record` is synchronous and never throws (failures are logged), so it is safe to call inline without a try/catch.
@@ -810,6 +830,7 @@ In the `writeSnapshot` body, immediately after the four-file `Promise.all` resol
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t "phase-10 2.4"
 ```
+
 Expected: 3 PASS.
 
 Run the full conflicts store test file to catch regressions:
@@ -817,6 +838,7 @@ Run the full conflicts store test file to catch regressions:
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -829,6 +851,7 @@ git commit -m "feat(conflicts): record conflict_resolve into ops_log (phase-10 2
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 8: wire phase-9 banner-reload (`resolved_by='load_remote_banner'`) into `opsLog.record`
 
 **Skip-if-deferred:** Same as Task 7 — apply only if phase 9 is merged.
@@ -857,6 +880,7 @@ export function recordBannerReload(path: string): void {
 2. Mark a TODO in `src/stores/editor.ts`'s `reloadFromDisk` action (or wherever phase 9 hooks the banner click) so Plan 2 wires the IPC call.
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -883,6 +907,7 @@ describe('recordBannerReload (phase-10 2.5)', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t "phase-10 2.5"
 ```
+
 Expected: FAIL — `store.recordBannerReload` is not exported.
 
 - [ ] **Step 3: Implement**
@@ -894,6 +919,7 @@ Add the helper exported from `electron/services/conflicts/store.ts` exactly as s
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t "phase-10 2.5"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -906,11 +932,13 @@ git commit -m "feat(conflicts): recordBannerReload helper for load_remote_banner
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 9: wire phase-5 watcher rename detection into `opsLog.record`
 
 The watcher pairs `unlink` + `add` events with matching `content_hash` into a rename in `electron/services/watcher.ts`. The pairing populates `renamedFromTo: Map<oldRel, newRel>` and immediately calls `renameFile(_db!, oldRel, newRel)`. We add `opsLog.record` right next to the existing `renameFile` call so rename events become a single audit record.
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -946,6 +974,7 @@ If `watcher.test.ts` does not already have helpers for this, use the same mkdtem
 ```bash
 npx vitest run electron/services/watcher.test.ts -t "phase-10 2.6"
 ```
+
 Expected: FAIL — `recordSpy` never called.
 
 - [ ] **Step 3: Implement — call `opsLog.record` alongside `renameFile`**
@@ -959,24 +988,24 @@ import * as opsLog from './ops/log'
 Find the loop that walks `renamedFromTo` and calls `renameFile` (around the lines that match the pattern `for (const [oldRel, newRel] of renamedFromTo)` immediately followed by `renameFile(_db!, oldRel, newRel)`). Inside the same loop body, append:
 
 ```ts
-      opsLog.record({
-        op: 'rename',
-        path: oldRel,
-        meta: { new_path: newRel }
-      })
+opsLog.record({
+  op: 'rename',
+  path: oldRel,
+  meta: { new_path: newRel }
+})
 ```
 
 The result should look like:
 
 ```ts
-    for (const [oldRel, newRel] of renamedFromTo) {
-      renameFile(_db!, oldRel, newRel)
-      opsLog.record({
-        op: 'rename',
-        path: oldRel,
-        meta: { new_path: newRel }
-      })
-    }
+for (const [oldRel, newRel] of renamedFromTo) {
+  renameFile(_db!, oldRel, newRel)
+  opsLog.record({
+    op: 'rename',
+    path: oldRel,
+    meta: { new_path: newRel }
+  })
+}
 ```
 
 - [ ] **Step 4: Run, confirm pass**
@@ -984,6 +1013,7 @@ The result should look like:
 ```bash
 npx vitest run electron/services/watcher.test.ts -t "phase-10 2.6"
 ```
+
 Expected: PASS.
 
 Run the full watcher suite to catch regressions:
@@ -991,6 +1021,7 @@ Run the full watcher suite to catch regressions:
 ```bash
 npx vitest run electron/services/watcher.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Run the entire test suite**
@@ -998,6 +1029,7 @@ Expected: all PASS.
 ```bash
 npm test
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -1018,6 +1050,7 @@ After all tasks pass:
 ```bash
 grep -E "openspec-task: (1\.[1-3]|2\.[1-6])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-10-history-and-trash-tasks-1.1-2.6.md | sort -u
 ```
+
 Expected: 9 unique labels (1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6).
 
 2. **Prune is invoked inside the same transaction as record (Task 2.2):** look at the implementation in Task 4 — `record` builds `tx = db.transaction((...) => { db.prepare(PRUNE_AGE_SQL).run(); db.prepare(PRUNE_CAP_SQL).run(PRUNE_CAP); db.prepare(INSERT_SQL).run(...) })` and invokes `tx(...)`. The transaction body runs prune-age, prune-cap, then insert as a single atomic unit. Task 5's "atomicity" test asserts both effects (prune of old, insert of new) become visible together.

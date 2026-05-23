@@ -61,15 +61,15 @@ npm ls @ant-design/x-sdk
 ### Simplest Usage
 
 ```typescript
-import { XRequest } from '@ant-design/x-sdk';
+import { XRequest } from '@ant-design/x-sdk'
 
 // Minimal configuration: only need to provide API URL
-const request = XRequest('https://api.example.com/chat');
+const request = XRequest('https://api.example.com/chat')
 
 // For manual control (used in Provider scenarios)
 const providerRequest = XRequest('https://api.example.com/chat', {
-  manual: true, // Usually only this needs explicit configuration
-});
+  manual: true // Usually only this needs explicit configuration
+})
 ```
 
 > 💡 **Tip**: XRequest has built-in reasonable default configurations. In most cases, you only need to provide the API URL to use it.
@@ -92,11 +92,11 @@ graph TD
 
 ## 🔑 Core Concepts
 
-| Concept | Role Positioning | Core Responsibilities | Usage Scenarios |
-| --- | --- | --- | --- |
-| **XRequest** | 🌐 Request Tool | Handle all network communication, authentication, error handling | Unified request management |
-| **Global Config** | ⚙️ Config Center | Configure once, use everywhere | Reduce duplicate code |
-| **Streaming Config** | 🔄 Streaming Processing | Support SSE and JSON response formats | AI conversation scenarios |
+| Concept              | Role Positioning        | Core Responsibilities                                            | Usage Scenarios            |
+| -------------------- | ----------------------- | ---------------------------------------------------------------- | -------------------------- |
+| **XRequest**         | 🌐 Request Tool         | Handle all network communication, authentication, error handling | Unified request management |
+| **Global Config**    | ⚙️ Config Center        | Configure once, use everywhere                                   | Reduce duplicate code      |
+| **Streaming Config** | 🔄 Streaming Processing | Support SSE and JSON response formats                            | AI conversation scenarios  |
 
 # 🔧 Core Configuration Details
 
@@ -108,20 +108,20 @@ Core functionality reference content [CORE.md](reference/CORE.md)
 
 ### 🌍 Security Strategies for Different Environments
 
-| Runtime Environment | Security Level | Configuration Method | Risk Description |
-| --- | --- | --- | --- |
-| **Browser Frontend** | 🔴 High Risk | ❌ Prohibit key configuration | Keys will be directly exposed to users |
-| **Node.js Backend** | 🟢 Safe | ✅ Environment variable configuration | Keys stored on server side |
-| **Proxy Service** | 🟢 Safe | ✅ Same-origin proxy forwarding | Keys managed by proxy service |
+| Runtime Environment  | Security Level | Configuration Method                  | Risk Description                       |
+| -------------------- | -------------- | ------------------------------------- | -------------------------------------- |
+| **Browser Frontend** | 🔴 High Risk   | ❌ Prohibit key configuration         | Keys will be directly exposed to users |
+| **Node.js Backend**  | 🟢 Safe        | ✅ Environment variable configuration | Keys stored on server side             |
+| **Proxy Service**    | 🟢 Safe        | ✅ Same-origin proxy forwarding       | Keys managed by proxy service          |
 
 ### 🔐 Authentication Methods Comparison
 
-| Authentication Method | Applicable Environment | Configuration Example | Security |
-| --- | --- | --- | --- |
-| **Bearer Token** | Node.js | `Bearer ${process.env.API_KEY}` | ✅ Safe |
-| **API Key Header** | Node.js | `X-API-Key: ${process.env.KEY}` | ✅ Safe |
-| **Proxy Forwarding** | Browser | `/api/proxy/service` | ✅ Safe |
-| **Direct Configuration** | Browser | `Bearer sk-xxx` | ❌ Dangerous |
+| Authentication Method    | Applicable Environment | Configuration Example           | Security     |
+| ------------------------ | ---------------------- | ------------------------------- | ------------ |
+| **Bearer Token**         | Node.js                | `Bearer ${process.env.API_KEY}` | ✅ Safe      |
+| **API Key Header**       | Node.js                | `X-API-Key: ${process.env.KEY}` | ✅ Safe      |
+| **Proxy Forwarding**     | Browser                | `/api/proxy/service`            | ✅ Safe      |
+| **Direct Configuration** | Browser                | `Bearer sk-xxx`                 | ❌ Dangerous |
 
 # 🔍 Debugging and Testing
 
@@ -135,10 +135,10 @@ Core functionality reference content [CORE.md](reference/CORE.md)
 // Safe debug configuration (Node.js environment)
 const debugRequest = XRequest('https://your-api.com/chat', {
   headers: {
-    Authorization: `Bearer ${process.env.DEBUG_API_KEY}`,
+    Authorization: `Bearer ${process.env.DEBUG_API_KEY}`
   },
-  params: { query: 'test message' },
-});
+  params: { query: 'test message' }
+})
 ```
 
 **Frontend Debug Configuration**:
@@ -146,8 +146,8 @@ const debugRequest = XRequest('https://your-api.com/chat', {
 ```typescript
 // Safe debug configuration (frontend environment)
 const debugRequest = XRequest('/api/debug/chat', {
-  params: { query: 'test message' },
-});
+  params: { query: 'test message' }
+})
 ```
 
 ## Configuration Validation
@@ -157,25 +157,25 @@ const debugRequest = XRequest('/api/debug/chat', {
 ```typescript
 // Security configuration validation function
 const validateSecurity = (config: any) => {
-  const isBrowser = typeof window !== 'undefined';
-  const hasAuth = config.headers?.Authorization || config.headers?.authorization;
+  const isBrowser = typeof window !== 'undefined'
+  const hasAuth = config.headers?.Authorization || config.headers?.authorization
 
   if (isBrowser && hasAuth) {
     throw new Error(
-      '❌ Frontend environment prohibits Authorization configuration, risk of key leakage!',
-    );
+      '❌ Frontend environment prohibits Authorization configuration, risk of key leakage!'
+    )
   }
 
-  console.log('✅ Security configuration check passed');
-  return true;
-};
+  console.log('✅ Security configuration check passed')
+  return true
+}
 
 // Usage example
 validateSecurity({
   headers: {
     // Do not include Authorization
-  },
-});
+  }
+})
 ```
 
 # 📋 Usage Scenarios
@@ -185,16 +185,16 @@ validateSecurity({
 ### 🎯 Direct Request Initiation
 
 ```typescript
-import { XRequest } from '@ant-design/x-sdk';
+import { XRequest } from '@ant-design/x-sdk'
 
 // Test interface availability
 const testRequest = XRequest('https://httpbin.org/post', {
-  params: { test: 'data' },
-});
+  params: { test: 'data' }
+})
 
 // Send request immediately
-const response = await testRequest();
-console.log(response);
+const response = await testRequest()
+console.log(response)
 ```
 
 ## Integration with Other Skills
@@ -209,12 +209,12 @@ graph TD
     A --> D[Direct Request]
 ```
 
-| Usage Method | Cooperating Skill | Purpose | Example |
-| --- | --- | --- | --- |
-| **Standalone** | None | Direct network request initiation | Test interface availability |
-| **With x-chat-provider** | x-chat-provider | Configure requests for custom Provider | Configure private API |
-| **With use-x-chat** | use-x-chat | Configure requests for built-in Provider | Configure OpenAI API |
-| **Complete AI Application** | x-request → x-chat-provider → use-x-chat | Configure requests for entire system | Complete AI conversation application |
+| Usage Method                | Cooperating Skill                        | Purpose                                  | Example                              |
+| --------------------------- | ---------------------------------------- | ---------------------------------------- | ------------------------------------ |
+| **Standalone**              | None                                     | Direct network request initiation        | Test interface availability          |
+| **With x-chat-provider**    | x-chat-provider                          | Configure requests for custom Provider   | Configure private API                |
+| **With use-x-chat**         | use-x-chat                               | Configure requests for built-in Provider | Configure OpenAI API                 |
+| **Complete AI Application** | x-request → x-chat-provider → use-x-chat | Configure requests for entire system     | Complete AI conversation application |
 
 ### ⚠️ useXChat Integration Security Warning
 
@@ -226,10 +226,10 @@ graph TD
 // Extremely dangerous: keys will be directly exposed to browser
 const unsafeRequest = XRequest('https://api.openai.com/v1/chat/completions', {
   headers: {
-    Authorization: 'Bearer sk-xxxxxxxxxxxxxx', // ❌ Dangerous!
+    Authorization: 'Bearer sk-xxxxxxxxxxxxxx' // ❌ Dangerous!
   },
-  manual: true,
-});
+  manual: true
+})
 ```
 
 **✅ Correct Configuration (Safe)**:
@@ -239,10 +239,10 @@ const unsafeRequest = XRequest('https://api.openai.com/v1/chat/completions', {
 const safeRequest = XRequest('/api/proxy/openai', {
   params: {
     model: 'gpt-3.5-turbo',
-    stream: true,
+    stream: true
   },
-  manual: true,
-});
+  manual: true
+})
 ```
 
 # 🚨 Development Rules
@@ -263,13 +263,13 @@ Before using XRequest, please confirm the following configurations are correctly
 
 ### 🔍 Configuration Checklist
 
-| Check Item | Status | Description |
-| --- | --- | --- |
-| **API URL** | ✅ Must Configure | `XRequest('https://api.xxx.com')` |
-| **Auth Info** | ⚠️ Environment Related | Frontend❌Prohibited, Node.js✅Available |
-| **manual Config** | ✅ Provider Scenario | In Provider needs to be set to `true`, other scenarios need to be set according to actual situation |
-| **Other Config** | ❌ No Need to Configure | Built-in reasonable default values |
-| **Interface Availability** | ✅ Recommended Test | Verify with debug configuration |
+| Check Item                 | Status                  | Description                                                                                         |
+| -------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| **API URL**                | ✅ Must Configure       | `XRequest('https://api.xxx.com')`                                                                   |
+| **Auth Info**              | ⚠️ Environment Related  | Frontend❌Prohibited, Node.js✅Available                                                            |
+| **manual Config**          | ✅ Provider Scenario    | In Provider needs to be set to `true`, other scenarios need to be set according to actual situation |
+| **Other Config**           | ❌ No Need to Configure | Built-in reasonable default values                                                                  |
+| **Interface Availability** | ✅ Recommended Test     | Verify with debug configuration                                                                     |
 
 ### 🛠️ Quick Verification Script
 
@@ -281,26 +281,26 @@ const checkConfig = () => {
       name: 'Global Configuration',
       test: () => {
         // Check if global configuration has been set
-        return true; // Check according to actual situation
-      },
+        return true // Check according to actual situation
+      }
     },
     {
       name: 'Security Configuration',
-      test: () => validateSecurity(globalConfig),
+      test: () => validateSecurity(globalConfig)
     },
     {
       name: 'Type Check',
       test: () => {
         // Run tsc --noEmit
-        return true;
-      },
-    },
-  ];
+        return true
+      }
+    }
+  ]
 
   checks.forEach((check) => {
-    console.log(`${check.name}: ${check.test() ? '✅' : '❌'}`);
-  });
-};
+    console.log(`${check.name}: ${check.test() ? '✅' : '❌'}`)
+  })
+}
 ```
 
 ## 🎯 Skill Collaboration
@@ -314,12 +314,12 @@ graph LR
 
 ### 📊 Skill Usage Comparison Table
 
-| Usage Scenario | Required Skills | Usage Order | Completion Time |
-| --- | --- | --- | --- |
-| **Test Interface** | x-request | Direct Use | 2 minutes |
-| **Private API Adaptation** | x-request → x-chat-provider | Configure request first, then create Provider | 10 minutes |
-| **Standard AI Application** | x-request → use-x-chat | Configure request first, then build interface | 15 minutes |
-| **Complete Customization** | x-request → x-chat-provider → use-x-chat | Complete workflow | 30 minutes |
+| Usage Scenario              | Required Skills                          | Usage Order                                   | Completion Time |
+| --------------------------- | ---------------------------------------- | --------------------------------------------- | --------------- |
+| **Test Interface**          | x-request                                | Direct Use                                    | 2 minutes       |
+| **Private API Adaptation**  | x-request → x-chat-provider              | Configure request first, then create Provider | 10 minutes      |
+| **Standard AI Application** | x-request → use-x-chat                   | Configure request first, then build interface | 15 minutes      |
+| **Complete Customization**  | x-request → x-chat-provider → use-x-chat | Complete workflow                             | 30 minutes      |
 
 # 🔗 Reference Resources
 

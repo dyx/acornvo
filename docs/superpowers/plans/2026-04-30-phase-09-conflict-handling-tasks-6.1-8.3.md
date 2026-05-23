@@ -13,6 +13,7 @@
 ## Pre-flight
 
 Plans 1 + 2 must be merged. Phase 7's editor scaffold (Editor page, EditorBody, TitleBar) must exist. Verify:
+
 ```bash
 test -f /Users/aaa/develop/workspace-ai/acornvo/src/stores/editor.ts && \
   grep -q "conflictState" /Users/aaa/develop/workspace-ai/acornvo/src/stores/editor.ts && echo "plan-2 OK"
@@ -21,19 +22,19 @@ test -d /Users/aaa/develop/workspace-ai/acornvo/src/components/editor && echo "p
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/ipc-contract.ts` | Modify (add `conflict.writeSnapshot` request method) | 6.2 |
-| `electron/ipc/conflicts.ts` | Modify (`writeSnapshot` handler) | 6.2 |
-| `preload/preload.ts` | Modify (forward) | 6.2 |
-| `src/i18n/locales/zh-CN.json` | Modify (`conflict.*` keys) | 8.1, 8.2, 8.3 |
-| `src/components/editor/ExternalModifiedBanner.tsx` | Create | 6.1, 6.2, 6.3 |
-| `src/components/editor/ExternalModifiedBanner.test.tsx` | Create | 6.1, 6.2, 6.3 |
-| `src/components/editor/ConflictDialog.tsx` | Create | 7.1, 7.2, 7.3, 7.4, 7.5 |
-| `src/components/editor/ConflictDialog.test.tsx` | Create | 7.1, 7.2, 7.3, 7.4, 7.5 |
-| `src/stores/editor.ts` | Modify (5 new actions) | 6.2, 6.3, 7.2, 7.3, 7.4, 7.5 |
-| `src/stores/editor.test.ts` | Modify | 6.2, 6.3, 7.2, 7.3, 7.4, 7.5 |
-| `src/pages/Editor.tsx` | Modify (mount banner + dialog above editor body) | 6.1, 7.1 |
+| Path                                                    | Action                                               | Owner task                   |
+| ------------------------------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `shared/ipc-contract.ts`                                | Modify (add `conflict.writeSnapshot` request method) | 6.2                          |
+| `electron/ipc/conflicts.ts`                             | Modify (`writeSnapshot` handler)                     | 6.2                          |
+| `preload/preload.ts`                                    | Modify (forward)                                     | 6.2                          |
+| `src/i18n/locales/zh-CN.json`                           | Modify (`conflict.*` keys)                           | 8.1, 8.2, 8.3                |
+| `src/components/editor/ExternalModifiedBanner.tsx`      | Create                                               | 6.1, 6.2, 6.3                |
+| `src/components/editor/ExternalModifiedBanner.test.tsx` | Create                                               | 6.1, 6.2, 6.3                |
+| `src/components/editor/ConflictDialog.tsx`              | Create                                               | 7.1, 7.2, 7.3, 7.4, 7.5      |
+| `src/components/editor/ConflictDialog.test.tsx`         | Create                                               | 7.1, 7.2, 7.3, 7.4, 7.5      |
+| `src/stores/editor.ts`                                  | Modify (5 new actions)                               | 6.2, 6.3, 7.2, 7.3, 7.4, 7.5 |
+| `src/stores/editor.test.ts`                             | Modify                                               | 6.2, 6.3, 7.2, 7.3, 7.4, 7.5 |
+| `src/pages/Editor.tsx`                                  | Modify (mount banner + dialog above editor body)     | 6.1, 7.1                     |
 
 ## Conventions reused
 
@@ -50,9 +51,11 @@ test -d /Users/aaa/develop/workspace-ai/acornvo/src/components/editor && echo "p
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 22: `ExternalModifiedBanner` skeleton + visibility wiring
 
 **Files:**
+
 - Create: `src/components/editor/ExternalModifiedBanner.tsx`
 - Create: `src/components/editor/ExternalModifiedBanner.test.tsx`
 - Modify: `src/pages/Editor.tsx` (mount banner)
@@ -76,9 +79,18 @@ beforeEach(() => {
 describe('ExternalModifiedBanner visibility', () => {
   it('hidden when conflictState.kind = none', () => {
     useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: '', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false, conflictState: { kind: 'none' }
+      kind: 'ready',
+      path: 'a.md',
+      body: '',
+      savedBody: '',
+      frontmatter: {},
+      savedFrontmatter: {},
+      savedMtimeMs: 1,
+      baseBody: '',
+      baseFrontmatter: {},
+      baseMtimeMs: 1,
+      saving: false,
+      conflictState: { kind: 'none' }
     } as any)
     render(<ExternalModifiedBanner />)
     expect(screen.queryByRole('alert')).toBeNull()
@@ -86,9 +98,17 @@ describe('ExternalModifiedBanner visibility', () => {
 
   it('visible when conflictState.kind = externalModified', () => {
     useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
+      kind: 'ready',
+      path: 'a.md',
+      body: 'x',
+      savedBody: '',
+      frontmatter: {},
+      savedFrontmatter: {},
+      savedMtimeMs: 1,
+      baseBody: '',
+      baseFrontmatter: {},
+      baseMtimeMs: 1,
+      saving: false,
       conflictState: { kind: 'externalModified', remoteMtimeMs: 999 }
     } as any)
     render(<ExternalModifiedBanner />)
@@ -97,12 +117,22 @@ describe('ExternalModifiedBanner visibility', () => {
 
   it('hidden when conflictState.kind = saveConflict (dialog takes over)', () => {
     useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false,
+      kind: 'ready',
+      path: 'a.md',
+      body: 'x',
+      savedBody: '',
+      frontmatter: {},
+      savedFrontmatter: {},
+      savedMtimeMs: 1,
+      baseBody: '',
+      baseFrontmatter: {},
+      baseMtimeMs: 1,
+      saving: false,
       conflictState: {
         kind: 'saveConflict',
-        remoteMtimeMs: 999, remoteBody: '', remoteFrontmatter: {}
+        remoteMtimeMs: 999,
+        remoteBody: '',
+        remoteFrontmatter: {}
       }
     } as any)
     render(<ExternalModifiedBanner />)
@@ -168,6 +198,7 @@ return (
 ```bash
 npx vitest run src/components/editor/ExternalModifiedBanner.test.tsx -t "visibility"
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Commit**
@@ -182,9 +213,11 @@ git commit -m "feat(editor): ExternalModifiedBanner shows when conflictState=ext
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 23: banner "重载" → snapshot + reload (with `conflict.writeSnapshot` IPC)
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add `conflict.writeSnapshot`)
 - Modify: `electron/ipc/conflicts.ts`
 - Modify: `preload/preload.ts`
@@ -263,11 +296,13 @@ describe('editor.reloadFromDisk (phase-09 6.2)', () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 1 },
-        frontmatter: { title: 'old' }, body: 'OLD'
+        frontmatter: { title: 'old' },
+        body: 'OLD'
       })
       .mockResolvedValueOnce({
         summary: { path: 'a.md', mtimeMs: 999 },
-        frontmatter: { title: 'remote' }, body: 'REMOTE'
+        frontmatter: { title: 'remote' },
+        body: 'REMOTE'
       })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('LOCAL')
@@ -301,6 +336,7 @@ describe('editor.reloadFromDisk (phase-09 6.2)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 6.2"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 6: Implement `reloadFromDisk` in editor store**
@@ -322,7 +358,10 @@ reloadFromDisk: async (): Promise<void> => {
   const baseText = stringify(cur.baseFrontmatter, cur.baseBody)
   await ipc.conflict.writeSnapshot({
     path: cur.path,
-    baseText, localText, remoteText, resolvedBy
+    baseText,
+    localText,
+    remoteText,
+    resolvedBy
   })
   set({
     kind: 'ready',
@@ -367,9 +406,17 @@ import { fireEvent } from '@testing-library/react'
 it('clicking 重载 invokes reloadFromDisk', async () => {
   const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
+    kind: 'ready',
+    path: 'a.md',
+    body: 'x',
+    savedBody: '',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: '',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
     conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
     reloadFromDisk
   } as any)
@@ -386,6 +433,7 @@ npx vitest run src/stores/editor.test.ts -t "phase-09 6.2"
 npx vitest run src/components/editor/ExternalModifiedBanner.test.tsx
 npx vitest run electron/ipc/conflicts.test.ts # verify writeSnapshot handler
 ```
+
 Expected: all PASS. (Add a quick test for the new `writeSnapshot` handler in `conflicts.test.ts` if not already covered.)
 
 - [ ] **Step 10: Commit**
@@ -402,9 +450,11 @@ git commit -m "feat(editor): banner 重载 writes load_remote_banner snapshot th
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 24: banner "忽略" → conflictState=none, dirty preserved, save unlocked
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (add `ignoreExternalChange()`)
 - Modify: `src/components/editor/ExternalModifiedBanner.tsx`
 - Modify: `src/components/editor/ExternalModifiedBanner.test.tsx`
@@ -418,7 +468,9 @@ Append to `src/stores/editor.test.ts`:
 describe('editor.ignoreExternalChange (phase-09 6.3)', () => {
   it('flips conflictState to none and preserves dirty', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B0'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B0'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('USER')
@@ -436,7 +488,9 @@ describe('editor.ignoreExternalChange (phase-09 6.3)', () => {
 
   it('after ignore, scheduleSave is no longer locked', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B0'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B0'
     })
     mockIpc.file.write.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
     await useEditorStore.getState().open('a.md')
@@ -457,6 +511,7 @@ describe('editor.ignoreExternalChange (phase-09 6.3)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 6.3"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: Implement**
@@ -494,9 +549,17 @@ Append to `src/components/editor/ExternalModifiedBanner.test.tsx`:
 it('clicking 忽略 invokes ignoreExternalChange', () => {
   const ignoreExternalChange = vi.fn()
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'x', savedBody: '', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
+    kind: 'ready',
+    path: 'a.md',
+    body: 'x',
+    savedBody: '',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: '',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
     conflictState: { kind: 'externalModified', remoteMtimeMs: 999 },
     ignoreExternalChange
   } as any)
@@ -512,6 +575,7 @@ it('clicking 忽略 invokes ignoreExternalChange', () => {
 npx vitest run src/stores/editor.test.ts -t "phase-09 6.3"
 npx vitest run src/components/editor/ExternalModifiedBanner.test.tsx
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -525,9 +589,11 @@ git commit -m "feat(editor): banner 忽略 unlocks save with dirty preserved (ph
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 25: `ConflictDialog` skeleton + visibility + meta rendering
 
 **Files:**
+
 - Create: `src/components/editor/ConflictDialog.tsx`
 - Create: `src/components/editor/ConflictDialog.test.tsx`
 - Modify: `src/pages/Editor.tsx` (already mounts the dialog from Task 22)
@@ -549,9 +615,17 @@ beforeEach(() => {
 
 function setSaveConflict(opts?: { localBody?: string }) {
   useEditorStore.setState({
-    kind: 'ready', path: 'notes/a.md',
-    frontmatter: {}, body: opts?.localBody ?? 'L', savedFrontmatter: {}, savedBody: 'B',
-    savedMtimeMs: 1, baseFrontmatter: {}, baseBody: 'B', baseMtimeMs: 1, saving: false,
+    kind: 'ready',
+    path: 'notes/a.md',
+    frontmatter: {},
+    body: opts?.localBody ?? 'L',
+    savedFrontmatter: {},
+    savedBody: 'B',
+    savedMtimeMs: 1,
+    baseFrontmatter: {},
+    baseBody: 'B',
+    baseMtimeMs: 1,
+    saving: false,
     conflictState: {
       kind: 'saveConflict',
       remoteMtimeMs: 1700000000000,
@@ -564,9 +638,18 @@ function setSaveConflict(opts?: { localBody?: string }) {
 describe('ConflictDialog visibility', () => {
   it('hidden when conflictState.kind != saveConflict', () => {
     useEditorStore.setState({
-      kind: 'ready', path: 'a.md', body: '', savedBody: '', frontmatter: {},
-      savedFrontmatter: {}, savedMtimeMs: 1, baseBody: '', baseFrontmatter: {},
-      baseMtimeMs: 1, saving: false, conflictState: { kind: 'none' }
+      kind: 'ready',
+      path: 'a.md',
+      body: '',
+      savedBody: '',
+      frontmatter: {},
+      savedFrontmatter: {},
+      savedMtimeMs: 1,
+      baseBody: '',
+      baseFrontmatter: {},
+      baseMtimeMs: 1,
+      saving: false,
+      conflictState: { kind: 'none' }
     } as any)
     render(<ConflictDialog />)
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -642,7 +725,9 @@ export function ConflictDialog(): React.JSX.Element | null {
         <div className="space-y-1 text-sm text-muted-foreground">
           <div>{t('conflict.dialog.meta_path', { path: state.path })}</div>
           <div>{t('conflict.dialog.meta_words', { count: Math.abs(localUnsaved) })}</div>
-          <div>{t('conflict.dialog.meta_remote_time', { time: formatRemote(cs.remoteMtimeMs) })}</div>
+          <div>
+            {t('conflict.dialog.meta_remote_time', { time: formatRemote(cs.remoteMtimeMs) })}
+          </div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
           <button
@@ -726,6 +811,7 @@ Open `src/i18n/locales/zh-CN.json` and append a `conflict` block (full content l
 ```bash
 npx vitest run src/components/editor/ConflictDialog.test.tsx
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -740,9 +826,11 @@ git commit -m "feat(editor): ConflictDialog skeleton + meta + 3 buttons + later 
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 26: ConflictDialog 保留本地 → snapshot + force write
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (add `keepLocal()`)
 - Modify: `src/stores/editor.test.ts`
 - Modify: `src/components/editor/ConflictDialog.test.tsx`
@@ -756,7 +844,8 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
   it('writes snapshot then file.write force=true; updates saved* and resets conflictState', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'a.md', mtimeMs: 1 },
-      frontmatter: { title: 't' }, body: 'B'
+      frontmatter: { title: 't' },
+      body: 'B'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('LOCAL')
@@ -781,7 +870,9 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
       expect.objectContaining({ resolvedBy: 'keep_local', path: 'a.md' })
     )
     expect(mockIpc.file.write).toHaveBeenCalledWith(
-      'a.md', expect.any(String), expect.objectContaining({ force: true })
+      'a.md',
+      expect.any(String),
+      expect.objectContaining({ force: true })
     )
     const s = useEditorStore.getState()
     if (s.kind !== 'ready') throw new Error('expected ready')
@@ -797,6 +888,7 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.2"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: Implement**
@@ -813,7 +905,9 @@ keepLocal: async (): Promise<void> => {
   const baseText = stringify(cur.baseFrontmatter, cur.baseBody)
   await ipc.conflict.writeSnapshot({
     path: cur.path,
-    baseText, localText, remoteText,
+    baseText,
+    localText,
+    remoteText,
     resolvedBy: 'keep_local'
   })
   const result = await ipc.file.write(cur.path, localText, { force: true })
@@ -841,10 +935,23 @@ import { fireEvent } from '@testing-library/react'
 it('clicking 保留本地 calls keepLocal()', () => {
   const keepLocal = vi.fn().mockResolvedValue(undefined)
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    },
     keepLocal
   } as any)
   render(<ConflictDialog />)
@@ -859,6 +966,7 @@ it('clicking 保留本地 calls keepLocal()', () => {
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.2"
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "保留本地"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -872,11 +980,13 @@ git commit -m "feat(editor): keepLocal writes snapshot + force-overwrites disk (
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 27: ConflictDialog 重载磁盘 → snapshot + reload
 
 The store action `reloadFromDisk` already supports both banner and dialog branches (Task 23 sets `resolved_by` based on `conflictState.kind`). When called from `saveConflict`, it writes `resolved_by: 'load_remote'`.
 
 **Files:**
+
 - Modify: `src/components/editor/ConflictDialog.test.tsx`
 - Modify: `src/stores/editor.test.ts`
 
@@ -896,10 +1006,14 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
   it('uses resolved_by=load_remote (not load_remote_banner)', async () => {
     mockIpc.files.get
       .mockResolvedValueOnce({
-        summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+        summary: { path: 'a.md', mtimeMs: 1 },
+        frontmatter: {},
+        body: 'B'
       })
       .mockResolvedValueOnce({
-        summary: { path: 'a.md', mtimeMs: 999 }, frontmatter: {}, body: 'R'
+        summary: { path: 'a.md', mtimeMs: 999 },
+        frontmatter: {},
+        body: 'R'
       })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -907,7 +1021,12 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
       if (cur.kind !== 'ready') return cur
       return {
         ...cur,
-        conflictState: { kind: 'saveConflict', remoteMtimeMs: 999, remoteBody: 'R', remoteFrontmatter: {} }
+        conflictState: {
+          kind: 'saveConflict',
+          remoteMtimeMs: 999,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
       }
     })
     mockIpc.conflict.writeSnapshot.mockResolvedValueOnce({ id: 'snap' })
@@ -926,6 +1045,7 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.3"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Add UI test for the dialog button**
@@ -936,10 +1056,23 @@ Append to `src/components/editor/ConflictDialog.test.tsx`:
 it('clicking 重载磁盘 calls reloadFromDisk()', () => {
   const reloadFromDisk = vi.fn().mockResolvedValue(undefined)
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    },
     reloadFromDisk
   } as any)
   render(<ConflictDialog />)
@@ -953,6 +1086,7 @@ it('clicking 重载磁盘 calls reloadFromDisk()', () => {
 ```bash
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "重载磁盘"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -965,9 +1099,11 @@ git commit -m "test(editor): reloadFromDisk from saveConflict uses load_remote (
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 28: ConflictDialog 另存副本 → unique path + snapshot + navigate
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (add `saveAsCopy()`)
 - Modify: `src/stores/editor.test.ts`
 - Modify: `src/components/editor/ConflictDialog.test.tsx`
@@ -985,7 +1121,8 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
   it('builds path notes/a.conflict.<ts>.md and writes + snapshots + navigates', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
       summary: { path: 'notes/a.md', mtimeMs: 1 },
-      frontmatter: { title: 't' }, body: 'B'
+      frontmatter: { title: 't' },
+      body: 'B'
     })
     await useEditorStore.getState().open('notes/a.md')
     useEditorStore.getState().setBody('L')
@@ -993,7 +1130,12 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
       if (cur.kind !== 'ready') return cur
       return {
         ...cur,
-        conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+        conflictState: {
+          kind: 'saveConflict',
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
       }
     })
     mockIpc.file.exists.mockResolvedValue(false) // first slot free
@@ -1016,7 +1158,9 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
 
   it('appends -1 / -2 suffix when target exists', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'notes/a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+      summary: { path: 'notes/a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B'
     })
     await useEditorStore.getState().open('notes/a.md')
     useEditorStore.getState().setBody('L')
@@ -1024,7 +1168,12 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
       if (cur.kind !== 'ready') return cur
       return {
         ...cur,
-        conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+        conflictState: {
+          kind: 'saveConflict',
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
       }
     })
     // First slot taken, second taken, third free
@@ -1048,6 +1197,7 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.4"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: Implement `saveAsCopy`**
@@ -1092,7 +1242,9 @@ saveAsCopy: async (): Promise<void> => {
   await ipc.file.write(newPath, localText)
   await ipc.conflict.writeSnapshot({
     path: cur.path,
-    baseText, localText, remoteText,
+    baseText,
+    localText,
+    remoteText,
     resolvedBy: 'save_as',
     winnerPath: newPath
   })
@@ -1115,7 +1267,7 @@ saveAsCopy: async (): Promise<void> => {
 Add `pendingNavigateTo?: string` to the `ready` variant. In `src/pages/Editor.tsx`, add a `useEffect` that watches it:
 
 ```tsx
-const pendingNav = useEditorStore((s) => s.kind === 'ready' ? s.pendingNavigateTo : undefined)
+const pendingNav = useEditorStore((s) => (s.kind === 'ready' ? s.pendingNavigateTo : undefined))
 const navigate = useNavigate()
 useEffect(() => {
   if (pendingNav) {
@@ -1136,10 +1288,23 @@ Append to `src/components/editor/ConflictDialog.test.tsx`:
 it('clicking 另存副本 calls saveAsCopy()', () => {
   const saveAsCopy = vi.fn().mockResolvedValue(undefined)
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    },
     saveAsCopy
   } as any)
   render(<ConflictDialog />)
@@ -1154,6 +1319,7 @@ it('clicking 另存副本 calls saveAsCopy()', () => {
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.4"
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "另存副本"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1168,9 +1334,11 @@ git commit -m "feat(editor): saveAsCopy with -N suffix dedup + navigate (phase-0
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 29: ConflictDialog 稍后处理 / Esc → externalModified + banner re-shown
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (add `dismissDialog()`)
 - Modify: `src/stores/editor.test.ts`
 - Modify: `src/components/editor/ConflictDialog.test.tsx`
@@ -1183,7 +1351,9 @@ Append to `src/stores/editor.test.ts`:
 describe('editor.dismissDialog (phase-09 7.5)', () => {
   it('saveConflict → externalModified (banner shows; dirty preserved)', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+      summary: { path: 'a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -1191,7 +1361,12 @@ describe('editor.dismissDialog (phase-09 7.5)', () => {
       if (cur.kind !== 'ready') return cur
       return {
         ...cur,
-        conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+        conflictState: {
+          kind: 'saveConflict',
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
       }
     })
     useEditorStore.getState().dismissDialog()
@@ -1209,6 +1384,7 @@ describe('editor.dismissDialog (phase-09 7.5)', () => {
 ```bash
 npx vitest run src/stores/editor.test.ts -t "phase-09 7.5"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: Implement**
@@ -1235,10 +1411,23 @@ Append to `src/components/editor/ConflictDialog.test.tsx`:
 it('clicking 稍后处理 calls dismissDialog()', () => {
   const dismissDialog = vi.fn()
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    },
     dismissDialog
   } as any)
   render(<ConflictDialog />)
@@ -1249,10 +1438,23 @@ it('clicking 稍后处理 calls dismissDialog()', () => {
 it('Esc/onOpenChange(false) also calls dismissDialog()', () => {
   const dismissDialog = vi.fn()
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} },
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    },
     dismissDialog
   } as any)
   render(<ConflictDialog />)
@@ -1268,6 +1470,7 @@ npx vitest run src/stores/editor.test.ts -t "phase-09 7.5"
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "稍后处理"
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "Esc"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1281,9 +1484,11 @@ git commit -m "feat(editor): dismissDialog reverts saveConflict → externalModi
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 30: i18n — dialog meta keys
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Replace stub keys with real text**
@@ -1313,6 +1518,7 @@ Open `src/i18n/locales/zh-CN.json`. Replace the `conflict.dialog` block with:
 ```bash
 npx vitest run src/components/editor/ConflictDialog.test.tsx
 ```
+
 Expected: all PASS (meta_path test now sees "文件：notes/a.md" prefix; if the regex `/notes\/a\.md/` is too narrow it still matches the substring — fine).
 
 - [ ] **Step 3: Commit**
@@ -1325,9 +1531,11 @@ git commit -m "i18n(conflict): dialog meta + button strings (phase-09 8.1)"
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 31: i18n — banner + button副说明 final pass
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Replace banner stubs**
@@ -1347,6 +1555,7 @@ Edit `src/i18n/locales/zh-CN.json`. Replace the `conflict.banner` block with:
 ```bash
 npx vitest run src/components/editor/ExternalModifiedBanner.test.tsx
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 3: Commit**
@@ -1359,11 +1568,13 @@ git commit -m "i18n(conflict): banner copy with risk hints (phase-09 8.2)"
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 32: i18n — later + diff_soon explicit verification
 
 The keys `conflict.dialog.later` ("稍后处理") and `conflict.dialog.diff_soon` ("差异视图将于后续版本提供") were added in Task 30. This task is a coverage verification: assert the diff link is present, disabled-styled, and carries the tooltip.
 
 **Files:**
+
 - Modify: `src/components/editor/ConflictDialog.test.tsx`
 
 - [ ] **Step 1: Add explicit tests**
@@ -1375,10 +1586,23 @@ import { useTranslation } from 'react-i18next'
 
 it('diff link is non-clickable and shows diff_soon tooltip', () => {
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    }
   } as any)
   render(<ConflictDialog />)
   const link = screen.getByTestId('dlg-diff-link')
@@ -1388,10 +1612,23 @@ it('diff link is non-clickable and shows diff_soon tooltip', () => {
 
 it('later button has the 稍后处理 label from i18n', () => {
   useEditorStore.setState({
-    kind: 'ready', path: 'a.md', body: 'L', savedBody: 'B', frontmatter: {},
-    savedFrontmatter: {}, savedMtimeMs: 1, baseBody: 'B', baseFrontmatter: {},
-    baseMtimeMs: 1, saving: false,
-    conflictState: { kind: 'saveConflict', remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} }
+    kind: 'ready',
+    path: 'a.md',
+    body: 'L',
+    savedBody: 'B',
+    frontmatter: {},
+    savedFrontmatter: {},
+    savedMtimeMs: 1,
+    baseBody: 'B',
+    baseFrontmatter: {},
+    baseMtimeMs: 1,
+    saving: false,
+    conflictState: {
+      kind: 'saveConflict',
+      remoteMtimeMs: 9,
+      remoteBody: 'R',
+      remoteFrontmatter: {}
+    }
   } as any)
   render(<ConflictDialog />)
   expect(screen.getByTestId('dlg-later')).toHaveTextContent('稍后处理')
@@ -1404,6 +1641,7 @@ it('later button has the 稍后处理 label from i18n', () => {
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "diff link"
 npx vitest run src/components/editor/ConflictDialog.test.tsx -t "稍后处理"
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Run the entire test suite to catch any regression**
@@ -1411,6 +1649,7 @@ Expected: PASS.
 ```bash
 npm test
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 4: Commit**
@@ -1429,6 +1668,7 @@ git commit -m "test(conflict): later + diff_soon i18n coverage (phase-09 8.3)"
 ```bash
 grep -E "openspec-task: ([678]\.[1-5])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-09-conflict-handling-tasks-6.1-8.3.md | sort -u
 ```
+
 Expected: 11 unique labels.
 
 2. **Type consistency:** all snapshot writes use `resolvedBy` (camelCase) on the IPC boundary, which the main handler converts to `resolved_by` (snake_case) when writing `meta.json` (per Plan 1 Task 8 — `writeSnapshot` builds `meta` with `resolved_by`).

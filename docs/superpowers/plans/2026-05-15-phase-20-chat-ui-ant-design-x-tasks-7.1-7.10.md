@@ -24,9 +24,11 @@
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 1: Replace ChatBanner usages with antd Alert
 
 **Files:**
+
 - Modify: any file currently importing `ChatBanner`
 - Inspect: `src/components/chat/ChatBanner.tsx`
 
@@ -50,9 +52,7 @@ import { useChatStore } from '@/stores/chat'
 
 function ChatErrorBanner() {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const error = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.error : null,
-  )
+  const error = useChatStore((s) => (activeSessionId ? s.bySession[activeSessionId]?.error : null))
   if (!error) return null
   return (
     <Alert
@@ -94,9 +94,11 @@ git commit -m "feat(chat-page): replace ChatBanner with antd Alert"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 2: Replace SessionStatusBadge usages with antd Badge
 
 **Files:**
+
 - Modify: any file currently importing `SessionStatusBadge`
 
 - [x] **Step 1: Find usages**
@@ -129,12 +131,14 @@ If no usages are found (Plan 3 already incorporates background-session red dots 
 - [x] **Step 3: Commit (or no-op)**
 
 If a change was made:
+
 ```bash
 git add <files>
 git commit -m "feat(chat-session-list): replace SessionStatusBadge with antd Badge"
 ```
 
 If no usages remain:
+
 ```bash
 git commit --allow-empty -m "chore(chat): SessionStatusBadge usages already absorbed by ConversationsAdapter"
 ```
@@ -142,9 +146,11 @@ git commit --allow-empty -m "chore(chat): SessionStatusBadge usages already abso
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 3: Replace ShortcutsDialog with antd Modal
 
 **Files:**
+
 - Modify: `src/pages/Chat.tsx` (or wherever the dialog mounts)
 - Inspect: `src/components/chat/ShortcutsDialog.tsx`
 
@@ -177,11 +183,21 @@ function ShortcutsModal() {
       width={480}
     >
       <ul style={{ paddingLeft: 16, margin: 0 }}>
-        <li><kbd>Cmd+Enter</kbd> — {t('chat.shortcuts.send')}</li>
-        <li><kbd>Enter</kbd> — {t('chat.shortcuts.newline')}</li>
-        <li><kbd>Esc</kbd> — {t('chat.shortcuts.cancel')}</li>
-        <li><kbd>Cmd+K</kbd> — {t('chat.shortcuts.quickSwitcher')}</li>
-        <li><kbd>?</kbd> — {t('chat.shortcuts.help')}</li>
+        <li>
+          <kbd>Cmd+Enter</kbd> — {t('chat.shortcuts.send')}
+        </li>
+        <li>
+          <kbd>Enter</kbd> — {t('chat.shortcuts.newline')}
+        </li>
+        <li>
+          <kbd>Esc</kbd> — {t('chat.shortcuts.cancel')}
+        </li>
+        <li>
+          <kbd>Cmd+K</kbd> — {t('chat.shortcuts.quickSwitcher')}
+        </li>
+        <li>
+          <kbd>?</kbd> — {t('chat.shortcuts.help')}
+        </li>
       </ul>
     </Modal>
   )
@@ -230,9 +246,11 @@ git commit -m "feat(chat-page): replace ShortcutsDialog with antd Modal"
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: Delete 16 obsolete chat component files
 
 **Files (delete):**
+
 - `src/components/chat/SessionList.tsx`
 - `src/components/chat/SessionListRow.tsx`
 - `src/components/chat/SessionContextMenu.tsx`
@@ -304,9 +322,11 @@ git commit -m "chore(chat): delete 16 legacy chat component files (replaced by P
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 5: Delete 5 obsolete chat component tests
 
 **Files (delete):**
+
 - `src/components/chat/SessionList.test.tsx`
 - `src/components/chat/MessageList.test.tsx`
 - `src/components/chat/AttachmentChips.test.tsx`
@@ -344,14 +364,17 @@ git commit -m "chore(chat): delete 5 legacy chat component tests (replaced by Pl
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 6: Grep chat-domain Radix dialog/dropdown imports and decide package retention
 
 **Files:**
+
 - Possibly modify: `package.json` (depends on Plan 1 Task 3 inventory)
 
 - [x] **Step 1: Final chat-domain grep**
 
 Run:
+
 ```bash
 grep -rn "from '@radix-ui/react-dialog'" /Users/aaa/develop/workspace-ai/acornvo/src/components/chat /Users/aaa/develop/workspace-ai/acornvo/src/pages/Chat.tsx 2>/dev/null
 grep -rn "from '@radix-ui/react-dropdown-menu'" /Users/aaa/develop/workspace-ai/acornvo/src/components/chat /Users/aaa/develop/workspace-ai/acornvo/src/pages/Chat.tsx 2>/dev/null
@@ -384,6 +407,7 @@ Run: `git log --all --grep="inventory react-markdown" --oneline -n 3` to recover
 Open the commit body. Look at the four count tuples for radix-dialog and radix-dropdown-menu.
 
 Decision rule:
+
 - `@radix-ui/react-dialog` non-chat hits == 0 → remove from `package.json`
 - `@radix-ui/react-dropdown-menu` non-chat hits == 0 → remove from `package.json`
 
@@ -392,6 +416,7 @@ Decision rule:
 If both packages are unused outside chat:
 
 Edit `package.json` and delete:
+
 ```jsonc
 "@radix-ui/react-dialog": "^1.1.15",
 "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -414,14 +439,17 @@ git commit --allow-empty -m "chore(deps): keep @radix-ui/react-{dialog,dropdown-
 ---
 
 <!-- openspec-task: 7.7 -->
-### Task 7: Rewrite src/__acceptance__/chat-acceptance.test.tsx — mkSlot + selectors + streaming assertions
+
+### Task 7: Rewrite src/**acceptance**/chat-acceptance.test.tsx — mkSlot + selectors + streaming assertions
 
 **Files:**
+
 - Modify: `src/__acceptance__/chat-acceptance.test.tsx`
 
 - [x] **Step 1: Read the existing acceptance test thoroughly**
 
 Read `/Users/aaa/develop/workspace-ai/acornvo/src/__acceptance__/chat-acceptance.test.tsx` end-to-end. Make a list of:
+
 - Every `mkSlot()` call site
 - Every `data-testid` selector
 - Every assertion based on DOM `textContent` for streaming output
@@ -448,7 +476,7 @@ function mkSlot(overrides: Partial<SessionState> = {}): SessionState {
     error: null,
     lastUserText: '',
     lastUserAttachments: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -464,18 +492,22 @@ function mkSlot(overrides: Partial<SessionState> = {}): SessionState {
     error: null,
     lastUserText: '',
     lastUserAttachments: [],
-    ...overrides,
+    ...overrides
   }
 }
 
-function mkAssistantMessage(text: string, status: 'streaming' | 'done' = 'done', extra: Partial<ChatMessage> = {}): ChatMessage {
+function mkAssistantMessage(
+  text: string,
+  status: 'streaming' | 'done' = 'done',
+  extra: Partial<ChatMessage> = {}
+): ChatMessage {
   return {
     id: extra.id ?? `msg-${Math.random().toString(36).slice(2, 8)}`,
     role: 'assistant',
     text,
     status,
     createdAt: Date.now(),
-    ...extra,
+    ...extra
   }
 }
 ```
@@ -484,13 +516,13 @@ function mkAssistantMessage(text: string, status: 'streaming' | 'done' = 'done',
 
 Common mappings (apply per occurrence — read each test case and pick the right replacement):
 
-| Old | New |
-|---|---|
-| `getByTestId('chat-session-list')` | `getByRole('list', { name: /会话|sessions/i })` — or use the Conversations container by a known group label like "今日"/"Today" |
-| `getByTestId('chat-empty-card')` | `getByRole('button', { name: /<i18n card1 text>/ })` — match the prompt label |
-| `getByTestId('chat-shortcuts-btn')` | `getByRole('button', { name: /快捷键|Shortcuts/i })` — actually this button is `?` icon; use `getByLabelText(/快捷键/)` |
-| `getByTestId('chat-profile-chip')` | `getByRole('button', { name: /<profile name>|未配置|noProfile/ })` |
-| `getByTestId('chat-main')` | `getByRole('main')` — `Chat.tsx` no longer uses `<main>` directly inside the Flex; if needed, wrap the right column with `role="main"` |
+| Old                                 | New                                                                                                                                    |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------- |
+| `getByTestId('chat-session-list')`  | `getByRole('list', { name: /会话                                                                                                       | sessions/i })` — or use the Conversations container by a known group label like "今日"/"Today" |
+| `getByTestId('chat-empty-card')`    | `getByRole('button', { name: /<i18n card1 text>/ })` — match the prompt label                                                          |
+| `getByTestId('chat-shortcuts-btn')` | `getByRole('button', { name: /快捷键                                                                                                   | Shortcuts/i })`— actually this button is`?`icon; use`getByLabelText(/快捷键/)`                 |
+| `getByTestId('chat-profile-chip')`  | `getByRole('button', { name: /<profile name>                                                                                           | 未配置                                                                                         | noProfile/ })` |
+| `getByTestId('chat-main')`          | `getByRole('main')` — `Chat.tsx` no longer uses `<main>` directly inside the Flex; if needed, wrap the right column with `role="main"` |
 
 Pseudocode example:
 
@@ -550,6 +582,7 @@ beforeEach(() => {
 Run: `cd /Users/aaa/develop/workspace-ai/acornvo && npx vitest run src/__acceptance__/chat-acceptance.test.tsx --reporter=verbose 2>&1 | tail -80`
 
 For each failing test, read the error, fix the selector or assertion, rerun. Common patterns:
+
 - `Unable to find role "..."` → the rendered antd DOM uses a different role; check with `screen.debug()`.
 - `expected ... but got ...` for status — check that the test fires events in the right order. Each token / message.appended / done call requires the same `emit` helper used in `chat.test.ts`.
 
@@ -563,9 +596,11 @@ git commit -m "test(chat-acceptance): rewrite selectors (ARIA + i18n) and stream
 ---
 
 <!-- openspec-task: 7.8 -->
+
 ### Task 8: Verify ProfileFooter.test.tsx still passes
 
 **Files:**
+
 - Inspect: `src/components/chat/ProfileFooter.test.tsx` (no edit unless red)
 
 - [x] **Step 1: Run the test**
@@ -576,6 +611,7 @@ Expected: PASS.
 - [x] **Step 2: If red, identify cause**
 
 Typical reasons:
+
 - ProfileFooter imports `class-variance-authority` or `@radix-ui/react-slot` for styling; antd token migration may have changed expected classes.
 - I18n keys missing.
 
@@ -592,9 +628,11 @@ git commit --allow-empty -m "chore(chat): ProfileFooter.test.tsx unchanged after
 ---
 
 <!-- openspec-task: 7.9 -->
+
 ### Task 9: Verify FrontmatterDiff.test.tsx still passes
 
 **Files:**
+
 - Inspect: `src/components/chat/FrontmatterDiff.test.tsx` (no edit expected)
 
 - [x] **Step 1: Run the test**
@@ -615,9 +653,11 @@ git commit --allow-empty -m "chore(chat): FrontmatterDiff.test.tsx unchanged aft
 ---
 
 <!-- openspec-task: 7.10 -->
+
 ### Task 10: Adapt JsonArgsEditor styling to antd tokens
 
 **Files:**
+
 - Modify: `src/components/chat/JsonArgsEditor.tsx`
 
 - [x] **Step 1: Read the current implementation**

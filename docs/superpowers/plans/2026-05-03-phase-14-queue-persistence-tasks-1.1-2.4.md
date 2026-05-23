@@ -52,24 +52,26 @@ If migration numbering has drifted (e.g., phase-10's `ops_log` ended up at `004_
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/db/migrations/007_jobs.sql` | Create | 1.1 |
-| `electron/services/db/migrations/007_jobs.test.ts` | Create | 1.1 |
-| `shared/job-types.ts` | Create | 1.2 |
-| `shared/job-types.test.ts` | Create | 1.2 |
-| `shared/ipc-contract.ts` | Modify (add `jobs` namespace + `IpcEventContract` entry) | 1.3 |
-| `electron/queue/store.ts` | Create | 2.1, 2.2, 2.3, 2.4 |
-| `electron/queue/store.test.ts` | Create | 2.1, 2.2, 2.3, 2.4 |
+| Path                                               | Action                                                   | Owner task         |
+| -------------------------------------------------- | -------------------------------------------------------- | ------------------ |
+| `electron/services/db/migrations/007_jobs.sql`     | Create                                                   | 1.1                |
+| `electron/services/db/migrations/007_jobs.test.ts` | Create                                                   | 1.1                |
+| `shared/job-types.ts`                              | Create                                                   | 1.2                |
+| `shared/job-types.test.ts`                         | Create                                                   | 1.2                |
+| `shared/ipc-contract.ts`                           | Modify (add `jobs` namespace + `IpcEventContract` entry) | 1.3                |
+| `electron/queue/store.ts`                          | Create                                                   | 2.1, 2.2, 2.3, 2.4 |
+| `electron/queue/store.test.ts`                     | Create                                                   | 2.1, 2.2, 2.3, 2.4 |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Migration 007 — `jobs` table + indexes
 
 **Files:**
+
 - Create: `electron/services/db/migrations/007_jobs.sql`
 - Create: `electron/services/db/migrations/007_jobs.test.ts`
 
@@ -205,9 +207,11 @@ git commit -m "feat(db): migration 007 — jobs table + indexes (phase-14 1.1)"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Shared types — `Job`, `JobKind`, `JobStatus`, handler result, enqueue opts
 
 **Files:**
+
 - Create: `shared/job-types.ts`
 - Create: `shared/job-types.test.ts`
 
@@ -387,9 +391,11 @@ git commit -m "feat(types): job-types shared module (phase-14 1.2)"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: IPC contract — `jobs` namespace + `jobs:changed` event
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 We add the `jobs` request namespace and the `jobs:changed` push event channel. The Plan 2 IPC handlers and Plan 3 renderer subscription both consume these types.
@@ -431,12 +437,12 @@ export type JobsClearDoneResult = { removed: number }
 Inside the `IpcContract` object literal (after `search:` block, before the closing `}`):
 
 ```ts
-  jobs: {
-    list: (filter: JobListFilter) => JobsListResult
-    retry: (id: string) => JobsRetryResult
-    cancel: (id: string) => JobsCancelResult
-    clearDone: () => JobsClearDoneResult
-  }
+jobs: {
+  list: (filter: JobListFilter) => JobsListResult
+  retry: (id: string) => JobsRetryResult
+  cancel: (id: string) => JobsCancelResult
+  clearDone: () => JobsClearDoneResult
+}
 ```
 
 - [ ] **Step 4: Add the `jobs:changed` event channel**
@@ -487,9 +493,11 @@ git commit -m "feat(ipc): add jobs namespace + jobs:changed event (phase-14 1.3)
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: Store core — `enqueue` (no dedupe yet) + `markRunning` / `markDone` / `markRetry` / `markFailed` / `markCanceled` / `list` / `getById`
 
 **Files:**
+
 - Create: `electron/queue/store.ts`
 - Create: `electron/queue/store.test.ts`
 
@@ -553,7 +561,9 @@ describe('createJobStore — enqueue (no dedupe)', () => {
   it('respects opts.delayMs', () => {
     const store = createJobStore(db, { now: () => new Date('2026-05-03T10:00:00.000Z') })
     const { id } = store.enqueue('index-retry', { path: 'a.md' }, { delayMs: 5000 })
-    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as { next_run_at: string }
+    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as {
+      next_run_at: string
+    }
     expect(row.next_run_at).toBe('2026-05-03T10:00:05.000Z')
   })
 })
@@ -731,11 +741,7 @@ export interface JobStoreDeps {
 }
 
 export interface JobStore {
-  enqueue(
-    kind: string,
-    payload: Record<string, unknown>,
-    opts?: EnqueueOpts
-  ): { id: string }
+  enqueue(kind: string, payload: Record<string, unknown>, opts?: EnqueueOpts): { id: string }
   markRunning(id: string): void
   markDone(id: string): void
   markRetry(id: string, delayMs: number, reason: string): void
@@ -852,9 +858,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
       db.prepare(`SELECT COUNT(*) AS n FROM jobs ${whereSql}`).get(...params) as { n: number }
     ).n
     const rows = db
-      .prepare(
-        `SELECT * FROM jobs ${whereSql} ORDER BY ${orderCol} ASC LIMIT ? OFFSET ?`
-      )
+      .prepare(`SELECT * FROM jobs ${whereSql} ORDER BY ${orderCol} ASC LIMIT ? OFFSET ?`)
       .all(...params, filter.limit, filter.offset) as JobsRow[]
     return { items: rows.map(rowToJob), total }
   }
@@ -908,9 +912,11 @@ git commit -m "feat(queue): JobStore CRUD + status mutations + list (phase-14 2.
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: Enqueue dedupe (`__dedupe` injection + `json_extract` query)
 
 **Files:**
+
 - Modify: `electron/queue/store.ts`
 - Modify: `electron/queue/store.test.ts`
 
@@ -985,34 +991,34 @@ Expected: FAIL — the second enqueue inserts a new row instead of returning the
 In `electron/queue/store.ts`, modify the `enqueue` function:
 
 ```ts
-  function enqueue(
-    kind: string,
-    payload: Record<string, unknown>,
-    opts: EnqueueOpts = {}
-  ): { id: string } {
-    if (opts.dedupeKey) {
-      const existing = db
-        .prepare(
-          `SELECT id FROM jobs
+function enqueue(
+  kind: string,
+  payload: Record<string, unknown>,
+  opts: EnqueueOpts = {}
+): { id: string } {
+  if (opts.dedupeKey) {
+    const existing = db
+      .prepare(
+        `SELECT id FROM jobs
            WHERE kind = ?
              AND status IN ('pending','running')
              AND json_extract(payload_json, '$.__dedupe') = ?
            LIMIT 1`
-        )
-        .get(kind, opts.dedupeKey) as { id: string } | undefined
-      if (existing) return { id: existing.id }
-    }
-    const id = uuid()
-    const ts = now().toISOString()
-    const nextRunAt = new Date(now().getTime() + (opts.delayMs ?? 0)).toISOString()
-    const stored: Record<string, unknown> = { ...payload }
-    if (opts.dedupeKey) stored.__dedupe = opts.dedupeKey
-    db.prepare(
-      `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, last_error, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,NULL,?,?)`
-    ).run(id, kind, JSON.stringify(stored), 'pending', 0, nextRunAt, ts, ts)
-    return { id }
+      )
+      .get(kind, opts.dedupeKey) as { id: string } | undefined
+    if (existing) return { id: existing.id }
   }
+  const id = uuid()
+  const ts = now().toISOString()
+  const nextRunAt = new Date(now().getTime() + (opts.delayMs ?? 0)).toISOString()
+  const stored: Record<string, unknown> = { ...payload }
+  if (opts.dedupeKey) stored.__dedupe = opts.dedupeKey
+  db.prepare(
+    `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, last_error, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,NULL,?,?)`
+  ).run(id, kind, JSON.stringify(stored), 'pending', 0, nextRunAt, ts, ts)
+  return { id }
+}
 ```
 
 - [ ] **Step 4: Run the test suite to verify all dedupe cases pass**
@@ -1030,9 +1036,11 @@ git commit -m "feat(queue): enqueue dedupe via __dedupe + json_extract (phase-14
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: Crash recovery sweep — `recoverRunning()` reset on grove open
 
 **Files:**
+
 - Modify: `electron/queue/store.test.ts`
 - Modify: `electron/services/db.ts` (call `createJobStore(db).recoverRunning()` after migrations land)
 
@@ -1061,7 +1069,7 @@ describe('createJobStore — recoverRunning', () => {
     // Simulate crash: just call recoverRunning
     const result = store.recoverRunning()
     expect(result.restored).toBe(2) // a and b
-    const after = db.prepare("SELECT id, status, attempts FROM jobs ORDER BY id").all() as {
+    const after = db.prepare('SELECT id, status, attempts FROM jobs ORDER BY id').all() as {
       id: string
       status: string
       attempts: number
@@ -1080,13 +1088,15 @@ describe('createJobStore — recoverRunning', () => {
     store.markDone(d.id)
     store.markFailed(f.id, 'oops')
     store.markCanceled(c.id)
-    const before = db
-      .prepare('SELECT id, status FROM jobs ORDER BY id')
-      .all() as { id: string; status: string }[]
+    const before = db.prepare('SELECT id, status FROM jobs ORDER BY id').all() as {
+      id: string
+      status: string
+    }[]
     store.recoverRunning()
-    const after = db
-      .prepare('SELECT id, status FROM jobs ORDER BY id')
-      .all() as { id: string; status: string }[]
+    const after = db.prepare('SELECT id, status FROM jobs ORDER BY id').all() as {
+      id: string
+      status: string
+    }[]
     expect(after).toEqual(before)
     expect(p.id && d.id && f.id && c.id).toBeTruthy()
   })
@@ -1105,15 +1115,15 @@ The grove-open path in `electron/services/db.ts:openForGrove` runs migrations, s
 Find the two places where `runMigrations(db, migrationsDir())` is called (corrupt-rebuild branch + normal branch). After **each** of them, add:
 
 ```ts
-  // phase-14: reset jobs left in 'running' status from a previous crash
-  try {
-    const { createJobStore } = require('../queue/store') as typeof import('../queue/store')
-    createJobStore(db).recoverRunning()
-  } catch {
-    /* table may not exist on a fresh corrupt rebuild before its migration runs;
+// phase-14: reset jobs left in 'running' status from a previous crash
+try {
+  const { createJobStore } = require('../queue/store') as typeof import('../queue/store')
+  createJobStore(db).recoverRunning()
+} catch {
+  /* table may not exist on a fresh corrupt rebuild before its migration runs;
        the runMigrations call above guarantees it does, so this catch is purely
        defensive against future ordering changes. */
-  }
+}
 ```
 
 (`require` is intentional — `electron/services/db.ts` already uses `require` for cyclic-dep avoidance with `main.ts`. Stay consistent with the file's idiom.)
@@ -1184,9 +1194,11 @@ git commit -m "feat(queue): crash recovery — reset running→pending on grove 
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 7: `stateChanged` EventEmitter
 
 **Files:**
+
 - Modify: `electron/queue/store.ts`
 - Modify: `electron/queue/store.test.ts`
 
@@ -1305,12 +1317,12 @@ export interface JobStoreEvents {
 Extend the `JobStore` interface to expose `events: JobStoreEvents`. Inside `createJobStore`, instantiate an emitter and emit on every write:
 
 ```ts
-  const emitter = new EventEmitter() as EventEmitter & JobStoreEvents
+const emitter = new EventEmitter() as EventEmitter & JobStoreEvents
 
-  function emitState(reason: StateChangedReason, id: string): void {
-    const job = getById(id)
-    if (job) emitter.emit('stateChanged', { reason, job })
-  }
+function emitState(reason: StateChangedReason, id: string): void {
+  const job = getById(id)
+  if (job) emitter.emit('stateChanged', { reason, job })
+}
 ```
 
 Then update each mutator to call `emitState` after the write:
@@ -1360,20 +1372,20 @@ Then update each mutator to call `emitState` after the write:
 Expose the emitter:
 
 ```ts
-  return {
-    enqueue,
-    markRunning,
-    markDone,
-    markRetry,
-    markFailed,
-    markCanceled,
-    resetForManualRetry,
-    list,
-    getById,
-    clearDone,
-    recoverRunning,
-    events: emitter as unknown as JobStoreEvents
-  }
+return {
+  enqueue,
+  markRunning,
+  markDone,
+  markRetry,
+  markFailed,
+  markCanceled,
+  resetForManualRetry,
+  list,
+  getById,
+  clearDone,
+  recoverRunning,
+  events: emitter as unknown as JobStoreEvents
+}
 ```
 
 `recoverRunning` is intentionally **silent** — it runs once at boot, before any subscriber exists, and the resulting pending rows will be naturally re-emitted when the runner picks them up.

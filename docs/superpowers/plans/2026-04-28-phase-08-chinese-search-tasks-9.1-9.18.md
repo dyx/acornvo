@@ -33,17 +33,17 @@ Walk through every acceptance scenario from `openspec/changes/phase-08-chinese-s
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `tests/acceptance/phase-08/seed.ts` | Create (test-grove builder) | 9.1 |
-| `tests/acceptance/phase-08/fresh-grove.test.ts` | Create | 9.1 |
-| `tests/acceptance/phase-08/upgrade.test.ts` | Create | 9.2 |
-| `tests/acceptance/phase-08/quick-switcher.test.tsx` | Create | 9.3, 9.4, 9.16 |
-| `tests/acceptance/phase-08/full-text.test.tsx` | Create | 9.5, 9.6, 9.7, 9.8, 9.9, 9.10 |
-| `tests/acceptance/phase-08/indexer-fts.test.ts` | Create | 9.11, 9.12, 9.13, 9.14 |
-| `tests/acceptance/phase-08/perf.test.ts` (skipped by default) | Create | 9.15 |
-| `tests/acceptance/phase-08/click-routes.test.tsx` | Create | 9.17 |
-| (no production code) | — | 9.18 (openspec validate) |
+| Path                                                          | Action                      | Owner task                    |
+| ------------------------------------------------------------- | --------------------------- | ----------------------------- |
+| `tests/acceptance/phase-08/seed.ts`                           | Create (test-grove builder) | 9.1                           |
+| `tests/acceptance/phase-08/fresh-grove.test.ts`               | Create                      | 9.1                           |
+| `tests/acceptance/phase-08/upgrade.test.ts`                   | Create                      | 9.2                           |
+| `tests/acceptance/phase-08/quick-switcher.test.tsx`           | Create                      | 9.3, 9.4, 9.16                |
+| `tests/acceptance/phase-08/full-text.test.tsx`                | Create                      | 9.5, 9.6, 9.7, 9.8, 9.9, 9.10 |
+| `tests/acceptance/phase-08/indexer-fts.test.ts`               | Create                      | 9.11, 9.12, 9.13, 9.14        |
+| `tests/acceptance/phase-08/perf.test.ts` (skipped by default) | Create                      | 9.15                          |
+| `tests/acceptance/phase-08/click-routes.test.tsx`             | Create                      | 9.17                          |
+| (no production code)                                          | —                           | 9.18 (openspec validate)      |
 
 ## Pre-flight
 
@@ -63,9 +63,11 @@ Both must pass before starting verification. If either fails, return to the fail
 ## Tasks
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 1: Fresh grove → migration 002 runs; `user_version=2`; `files_fts` exists
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/seed.ts`
 - Create: `tests/acceptance/phase-08/fresh-grove.test.ts`
 
@@ -91,10 +93,10 @@ export const DEFAULT_SEED_FILES: SeedFile[] = [
   { rel: 'notes/attn2.md', title: 'attention 2', body: 'Different attention paper.' },
   { rel: 'notes/attn3.md', title: 'attention is all you need', body: 'foo bar baz' },
   { rel: 'cn/zhuyili.md', title: '注意力机制综述', body: '注意力机制研究是一个重要方向。' },
-  { rel: 'cn/zhuyili2.md', title: '注意力',                   body: '只讨论注意力。' },
-  { rel: 'cn/jizhi.md',    title: '机制',                     body: '只讨论机制。' },
-  { rel: 'cn/zhuyi.md',    title: '注意事项',                 body: '注意安全。' },
-  { rel: 'misc/empty.md',  title: 'empty',                   body: '' },
+  { rel: 'cn/zhuyili2.md', title: '注意力', body: '只讨论注意力。' },
+  { rel: 'cn/jizhi.md', title: '机制', body: '只讨论机制。' },
+  { rel: 'cn/zhuyi.md', title: '注意事项', body: '注意安全。' },
+  { rel: 'misc/empty.md', title: 'empty', body: '' },
   { rel: 'misc/htmlbody.md', title: 'html', body: '<script>alert(1)</script> 注意力 ok' }
 ]
 
@@ -109,7 +111,9 @@ export function makeSeedGrove(files: SeedFile[] = DEFAULT_SEED_FILES): string {
       f.rating !== undefined ? `rating: ${f.rating}` : '',
       '---',
       ''
-    ].filter(Boolean).join('\n')
+    ]
+      .filter(Boolean)
+      .join('\n')
     writeFileSync(abs, fm + '\n' + f.body, 'utf8')
   }
   return grove
@@ -132,10 +136,12 @@ const migrationsDir = join(__dirname, '..', '..', '..', 'electron', 'services', 
 describe('9.1 fresh grove migration', () => {
   const grove = makeSeedGrove()
 
-  afterAll(() => { /* tmp cleanup left to OS */ })
+  afterAll(() => {
+    /* tmp cleanup left to OS */
+  })
 
   it('user_version=2 and files_fts exists with new schema after runMigrations on a fresh DB', () => {
-    const db = new Database(join(grove, '.acornvo', 'index.db'))  // brand-new file
+    const db = new Database(join(grove, '.acornvo', 'index.db')) // brand-new file
     runMigrations(db, migrationsDir)
     expect(db.pragma('user_version', { simple: true })).toBe(2)
 
@@ -163,9 +169,11 @@ git commit -m "test(phase-08): 9.1 fresh-grove migration produces user_version=2
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 2: v1 grove upgrade triggers fts rebuild; banner visible; final `COUNT(files_fts) = COUNT(files)`
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/upgrade.test.ts`
 
 - [ ] **Step 1: Failing test**
@@ -202,12 +210,15 @@ describe('9.2 v1 grove upgrade', () => {
         path UNINDEXED, title, summary, content, tokenize='simple'
       );
     `)
-    const insert = v1.prepare('INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)')
+    const insert = v1.prepare(
+      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)'
+    )
     for (const seed of [
       { p: 'notes/attention.md', t: 'attention' },
       { p: 'cn/zhuyili.md', t: '注意力机制综述' },
       { p: 'cn/zhuyili2.md', t: '注意力' }
-    ]) insert.run(seed.p, seed.t, seed.p)
+    ])
+      insert.run(seed.p, seed.t, seed.p)
     v1.close()
 
     // Stage 2: open with current code → migrations 002 runs (drops + recreates files_fts empty)
@@ -254,11 +265,13 @@ git commit -m "test(phase-08): 9.2 v1→v2 upgrade triggers fts rebuild matching
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 3: Cmd+P → QuickSwitcher; "attention" returns hits in <30ms; Enter opens editor
 
 This is partially live-app (Cmd+P actually opens the modal in the running app) and partially scripted (timing assertions live in a test).
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/quick-switcher.test.tsx`
 - Modify: notes file `tests/acceptance/phase-08/notes.md`
 
@@ -282,7 +295,8 @@ function seedDb(rows: { path: string; title: string }[]): Database.Database {
     'INSERT INTO files (path, title, mtime, content_hash, clipped_at) VALUES (?, ?, 0, ?, ?)'
   )
   let i = 0
-  for (const r of rows) insert.run(r.path, r.title, r.path, `2025-${String(((i++) % 12) + 1).padStart(2, '0')}-01`)
+  for (const r of rows)
+    insert.run(r.path, r.title, r.path, `2025-${String((i++ % 12) + 1).padStart(2, '0')}-01`)
   return db
 }
 
@@ -319,6 +333,7 @@ Capture the observation — create `tests/acceptance/phase-08/notes.md`:
 # Phase 08 Acceptance Notes
 
 ## 9.3 Cmd+P opens QuickSwitcher
+
 - Date observed: 2026-04-28
 - Action: Cmd+P → typed "attention" → Enter
 - Observed: modal opened, hits appeared within ~10ms (perceived), Enter navigated to /editor/<encodedPath>
@@ -335,11 +350,13 @@ git commit -m "test(phase-08): 9.3 quickSwitch perf <30ms on 10K rows + manual n
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 4: QuickSwitcher empty `q` shows recent-opened LRU
 
 The store unit-test in Plan 3 task 1 covered the data path. This task confirms the UI renders it.
 
 **Files:**
+
 - Modify: `tests/acceptance/phase-08/quick-switcher.test.tsx`
 
 - [ ] **Step 1: Test**
@@ -358,7 +375,9 @@ vi.mock('@/ipc/client', () => ({
 }))
 
 describe('9.4 QuickSwitcher empty q shows recent', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('renders the recent list when q is empty and recent is non-empty', () => {
     const s = useSearchStore.getState().quickSwitcher
@@ -366,7 +385,11 @@ describe('9.4 QuickSwitcher empty q shows recent', () => {
     s.pushRecent('b.md')
     s.pushRecent('c.md')
     s.open()
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
     expect(screen.getByText('最近打开')).toBeTruthy()
     expect(screen.getByText('c.md')).toBeTruthy()
     expect(screen.getByText('b.md')).toBeTruthy()
@@ -386,9 +409,11 @@ git commit -m "test(phase-08): 9.4 QuickSwitcher empty-q shows recent LRU"
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 5: Cmd+Shift+F opens `/search`; "注意力" hits files; snippet has `<mark>`
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/full-text.test.tsx`
 
 - [ ] **Step 1: Test**
@@ -410,11 +435,21 @@ function seedFtsDb(items: { path: string; title: string; body: string }[]): Data
   runMigrations(db, migrationsDir)
   for (const it of items) {
     upsertFile(db, {
-      path: it.path, title: it.title, summary: null, category: null, rating: null,
-      content_hash: it.path, mtime_ms: 0, size_bytes: it.body.length, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: it.path,
+      title: it.title,
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: it.path,
+      mtime_ms: 0,
+      size_bytes: it.body.length,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     })
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(it.path) as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get(it.path) as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: it.path, title: it.title, body: it.body })
   }
   return db
@@ -446,6 +481,7 @@ git commit -m "test(phase-08): 9.5 fullText cn hit with <mark> snippet"
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 6: q="注意力 机制" → AND across both terms
 
 - [ ] **Step 1: Test**
@@ -457,8 +493,8 @@ describe('9.6 fullText AND', () => {
   it('returns only files containing both tokens', () => {
     const db = seedFtsDb([
       { path: 'both.md', title: 'B', body: '注意力机制研究' },
-      { path: 'one.md',  title: 'O', body: '只有注意力' },
-      { path: 'two.md',  title: 'T', body: '只有机制' }
+      { path: 'one.md', title: 'O', body: '只有注意力' },
+      { path: 'two.md', title: 'T', body: '只有机制' }
     ])
     const out = fullText(db, '注意力 机制', { limit: 10, offset: 0 })
     expect(out.items.map((i) => i.summary.path)).toEqual(['both.md'])
@@ -478,6 +514,7 @@ git commit -m "test(phase-08): 9.6 fullText AND across two cn tokens"
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 7: q=`"注意力机制"` (quoted) → only consecutive matches
 
 - [ ] **Step 1: Test**
@@ -489,7 +526,7 @@ describe('9.7 fullText phrase', () => {
   it('quoted phrase returns only consecutive matches', () => {
     const db = seedFtsDb([
       { path: 'phrase.md', title: 'P', body: '注意力机制非常重要' },
-      { path: 'split.md',  title: 'S', body: '注意 力 加 机制' }
+      { path: 'split.md', title: 'S', body: '注意 力 加 机制' }
     ])
     const out = fullText(db, '"注意力机制"', { limit: 10, offset: 0 })
     expect(out.items.map((i) => i.summary.path)).toEqual(['phrase.md'])
@@ -509,6 +546,7 @@ git commit -m "test(phase-08): 9.7 quoted phrase passthrough"
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 8: q="的 注意力" → stopword filter equivalent to q="注意力"
 
 - [ ] **Step 1: Test**
@@ -524,7 +562,9 @@ describe('9.8 fullText stopword filter', () => {
     ])
     const withStop = fullText(db, '的 注意力', { limit: 10, offset: 0 })
     const withoutStop = fullText(db, '注意力', { limit: 10, offset: 0 })
-    expect(withStop.items.map((i) => i.summary.path)).toEqual(withoutStop.items.map((i) => i.summary.path))
+    expect(withStop.items.map((i) => i.summary.path)).toEqual(
+      withoutStop.items.map((i) => i.summary.path)
+    )
     db.close()
   })
 })
@@ -541,6 +581,7 @@ git commit -m "test(phase-08): 9.8 stopword filter eliminates particle"
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 9: q="att" → single-token prefix match hits "attention"
 
 - [ ] **Step 1: Test**
@@ -573,6 +614,7 @@ git commit -m "test(phase-08): 9.9 single-token prefix matches attention"
 ---
 
 <!-- openspec-task: 9.10 -->
+
 ### Task 10: q="foo :" → empty result + log warn (no crash, no toast required from JSON path)
 
 - [ ] **Step 1: Test**
@@ -592,7 +634,7 @@ describe('9.10 fullText syntax error fallback', () => {
 })
 ```
 
-> The renderer-side toast is rendered when the IPC layer sets `syntaxError = true` in the store (Plan 4 task 3). This test verifies the *service* layer's defensive behaviour. The Plan 4 unit test for the store covers the renderer path.
+> The renderer-side toast is rendered when the IPC layer sets `syntaxError = true` in the store (Plan 4 task 3). This test verifies the _service_ layer's defensive behaviour. The Plan 4 unit test for the store covers the renderer path.
 
 - [ ] **Step 2: Run + commit**
 
@@ -605,11 +647,13 @@ git commit -m "test(phase-08): 9.10 fts syntax error returns empty result"
 ---
 
 <!-- openspec-task: 9.11 -->
+
 ### Task 11: New md within 1s → search hits (indexer + FTS sync)
 
 This requires running the watcher against a real filesystem. Use the existing `electron/services/watcher.test.ts` pattern.
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/indexer-fts.test.ts`
 
 - [ ] **Step 1: Test**
@@ -676,6 +720,7 @@ git commit -m "test(phase-08): 9.11 new md indexed and searchable within 1s"
 ---
 
 <!-- openspec-task: 9.12 -->
+
 ### Task 12: Delete md → search no longer hits
 
 - [ ] **Step 1: Test**
@@ -733,6 +778,7 @@ git commit -m "test(phase-08): 9.12 delete md removes from FTS"
 ---
 
 <!-- openspec-task: 9.13 -->
+
 ### Task 13: Rename md → FTS path updated; search hits new path
 
 - [ ] **Step 1: Test**
@@ -790,6 +836,7 @@ git commit -m "test(phase-08): 9.13 rename updates FTS path; rowid stable"
 ---
 
 <!-- openspec-task: 9.14 -->
+
 ### Task 14: Frontmatter-only change (rating) does NOT trigger FTS rewrite
 
 - [ ] **Step 1: Test**
@@ -822,24 +869,24 @@ describe('9.14 frontmatter-only change skips FTS', () => {
     await indexer.startScan(grove)
     await watcher.start(grove, db)
 
-    const beforeRow = db.prepare(
-      'SELECT rowid, body FROM files_fts WHERE path=?'
-    ).get('notes/r.md') as { rowid: number; body: string }
+    const beforeRow = db
+      .prepare('SELECT rowid, body FROM files_fts WHERE path=?')
+      .get('notes/r.md') as { rowid: number; body: string }
     expect(beforeRow.body).toContain('注意力机制')
 
     // Same body, only rating changed → content_hash should remain identical
     writeFileSync(file, '---\ntitle: R\nrating: 5\n---\n注意力机制', 'utf8')
     await wait(1500)
 
-    const afterRow = db.prepare(
-      'SELECT rowid, body FROM files_fts WHERE path=?'
-    ).get('notes/r.md') as { rowid: number; body: string }
+    const afterRow = db
+      .prepare('SELECT rowid, body FROM files_fts WHERE path=?')
+      .get('notes/r.md') as { rowid: number; body: string }
     expect(afterRow.rowid).toBe(beforeRow.rowid)
     expect(afterRow.body).toBe(beforeRow.body)
 
-    const filesRow = db.prepare(
-      'SELECT rating FROM files WHERE path=?'
-    ).get('notes/r.md') as { rating: number }
+    const filesRow = db.prepare('SELECT rating FROM files WHERE path=?').get('notes/r.md') as {
+      rating: number
+    }
     expect(filesRow.rating).toBe(5)
   }, 8_000)
 })
@@ -856,11 +903,13 @@ git commit -m "test(phase-08): 9.14 frontmatter-only change skips FTS rewrite"
 ---
 
 <!-- openspec-task: 9.15 -->
+
 ### Task 15: 10K md `search.fullText` P50 < 300ms
 
 This is the only "heavy" perf test. We seed 10K files and time 50 queries.
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/perf.test.ts`
 
 - [ ] **Step 1: Test (skipped by default; run on demand)**
@@ -889,11 +938,21 @@ describeOrSkip('9.15 fullText P50 perf (RUN_PERF=1)', () => {
       for (let i = 0; i < 10_000; i++) {
         const path = `n/${Math.floor(i / 100)}/${i}.md`
         upsertFile(db, {
-          path, title: `T${i}`, summary: null, category: null, rating: null,
-          content_hash: `h${i}`, mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
-          created_at: 0, updated_at: 0
+          path,
+          title: `T${i}`,
+          summary: null,
+          category: null,
+          rating: null,
+          content_hash: `h${i}`,
+          mtime_ms: 0,
+          size_bytes: 0,
+          frontmatter_json: null,
+          created_at: 0,
+          updated_at: 0
         })
-        const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }).rowid
+        const rowid = (
+          db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }
+        ).rowid
         const body = i % 7 === 0 ? `注意力机制${i} 研究` : `attention mechanism ${i}`
         upsertFts(db, { rowid, path, title: `T${i}`, body })
       }
@@ -935,6 +994,7 @@ git commit -m "test(phase-08): 9.15 fullText P50<300ms perf gate (RUN_PERF=1 to 
 ---
 
 <!-- openspec-task: 9.16 -->
+
 ### Task 16: QuickSwitcher Cmd+Enter → `/library?focus=...`
 
 - [ ] **Step 1: Test**
@@ -947,7 +1007,9 @@ Append to `tests/acceptance/phase-08/quick-switcher.test.tsx`:
 import { useNavigate } from 'react-router-dom'
 
 describe('9.16 QuickSwitcher Cmd+Enter → /library', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('navigates to /library?focus=<encodedPath>', () => {
     const navigateMock = vi.fn()
@@ -958,22 +1020,40 @@ describe('9.16 QuickSwitcher Cmd+Enter → /library', () => {
 
     return import('@/components/search/QuickSwitcher').then(({ QuickSwitcher: Fresh }) => {
       const stub = (path: string) => ({
-        path, title: path, category: null, rating: null, clipped_at: null,
-        site: null, has_summary: false, tags: [], is_reviewing: false
+        path,
+        title: path,
+        category: null,
+        rating: null,
+        clipped_at: null,
+        site: null,
+        has_summary: false,
+        tags: [],
+        is_reviewing: false
       })
       useSearchStore.getState().quickSwitcher.open()
       useSearchStore.setState((prev) => ({
         quickSwitcher: { ...prev.quickSwitcher, items: [stub('notes/y.md')], q: 'y' }
       }))
 
-      render(<MemoryRouter><Fresh /></MemoryRouter>)
+      render(
+        <MemoryRouter>
+          <Fresh />
+        </MemoryRouter>
+      )
       const dialog = screen.getByRole('dialog')
       act(() => {
-        dialog.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter', metaKey: true, bubbles: true, cancelable: true
-        }))
+        dialog.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+            bubbles: true,
+            cancelable: true
+          })
+        )
       })
-      expect(navigateMock).toHaveBeenCalledWith('/library?focus=' + encodeURIComponent('notes/y.md'))
+      expect(navigateMock).toHaveBeenCalledWith(
+        '/library?focus=' + encodeURIComponent('notes/y.md')
+      )
     })
   })
 })
@@ -990,9 +1070,11 @@ git commit -m "test(phase-08): 9.16 QuickSwitcher Cmd+Enter navigates /library?f
 ---
 
 <!-- openspec-task: 9.17 -->
+
 ### Task 17: Search result click → `/editor/<encodedPath>#match=<q>`; editor ignores hash
 
 **Files:**
+
 - Create: `tests/acceptance/phase-08/click-routes.test.tsx`
 
 - [ ] **Step 1: Test**
@@ -1008,8 +1090,15 @@ import type React from 'react'
 
 const stub = (path: string, snippet: string) => ({
   summary: {
-    path, title: path, category: null, rating: null, clipped_at: null,
-    site: null, has_summary: false, tags: [], is_reviewing: false
+    path,
+    title: path,
+    category: null,
+    rating: null,
+    clipped_at: null,
+    site: null,
+    has_summary: false,
+    tags: [],
+    is_reviewing: false
   },
   snippet
 })
@@ -1056,6 +1145,7 @@ git commit -m "test(phase-08): 9.17 result click navigates to /editor with #matc
 ---
 
 <!-- openspec-task: 9.18 -->
+
 ### Task 18: `openspec validate phase-08-chinese-search --strict` passes
 
 This is the final gate. No new code — just run the validator.
@@ -1089,6 +1179,7 @@ Append to `tests/acceptance/phase-08/notes.md`:
 
 ```markdown
 ## 9.18 openspec validate
+
 - Date: 2026-04-28
 - Command: `openspec validate phase-08-chinese-search --strict`
 - Result: exit 0

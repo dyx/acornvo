@@ -15,26 +15,28 @@
 This plan assumes phases 4 and 5 are merged on `main` (they are — see archived `phase-04-file-io-atomic` and `phase-05-indexer-watcher`). It does **not** require phase 7 (editor store) to be merged: nothing in this plan touches `src/`.
 
 Verify before starting:
+
 ```bash
 grep -q "expectedMtime" /Users/aaa/develop/workspace-ai/acornvo/electron/services/fs-atomic.ts && echo "phase-04 OK"
 grep -q "registerSelfWrite" /Users/aaa/develop/workspace-ai/acornvo/electron/services/watcher.ts && echo "phase-05 OK"
 ```
+
 Both must print "OK".
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/conflict-types.ts` | Create | 1.2 |
-| `electron/services/grove.ts` | Modify (`initialize` adds `ensureDir(conflicts)`) | 1.1 |
-| `electron/services/paths.ts` | Modify (add `groveConflictsDir(grovePath)` helper) | 1.1 |
-| `electron/services/grove.test.ts` | Modify (assert conflicts dir created) | 1.1 |
-| `electron/services/fs-atomic.ts` | Modify (`writeWithVerify` accepts `force`, ±2ms tolerance, returns `remoteMtimeMs` in error) | 2.1, 2.2.1, 2.2.2, 2.2.3 |
-| `electron/services/fs-atomic.test.ts` | Modify (force / tolerance / concurrency cases) | 2.3 |
-| `electron/ipc/file.ts` | Modify (forward `force` opt) | 2.1 |
-| `shared/ipc-contract.ts` | Modify (`FileWriteOptions.force?: boolean`, error helper for `remoteMtimeMs`) | 2.1 |
-| `electron/services/conflicts/store.ts` | Create (buildId + writeSnapshot + prune + list + read + delete) | 1.3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6 |
-| `electron/services/conflicts/store.test.ts` | Create | 1.3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6 |
+| Path                                        | Action                                                                                       | Owner task                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------- |
+| `shared/conflict-types.ts`                  | Create                                                                                       | 1.2                               |
+| `electron/services/grove.ts`                | Modify (`initialize` adds `ensureDir(conflicts)`)                                            | 1.1                               |
+| `electron/services/paths.ts`                | Modify (add `groveConflictsDir(grovePath)` helper)                                           | 1.1                               |
+| `electron/services/grove.test.ts`           | Modify (assert conflicts dir created)                                                        | 1.1                               |
+| `electron/services/fs-atomic.ts`            | Modify (`writeWithVerify` accepts `force`, ±2ms tolerance, returns `remoteMtimeMs` in error) | 2.1, 2.2.1, 2.2.2, 2.2.3          |
+| `electron/services/fs-atomic.test.ts`       | Modify (force / tolerance / concurrency cases)                                               | 2.3                               |
+| `electron/ipc/file.ts`                      | Modify (forward `force` opt)                                                                 | 2.1                               |
+| `shared/ipc-contract.ts`                    | Modify (`FileWriteOptions.force?: boolean`, error helper for `remoteMtimeMs`)                | 2.1                               |
+| `electron/services/conflicts/store.ts`      | Create (buildId + writeSnapshot + prune + list + read + delete)                              | 1.3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6 |
+| `electron/services/conflicts/store.test.ts` | Create                                                                                       | 1.3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6 |
 
 ## Conventions reused
 
@@ -45,9 +47,11 @@ Both must print "OK".
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: ensure `.acornvo/conflicts/` exists at grove init
 
 **Files:**
+
 - Modify: `electron/services/paths.ts`
 - Modify: `electron/services/grove.ts:87-130` (`initialize`)
 - Modify: `electron/services/grove.test.ts`
@@ -83,6 +87,7 @@ it('initialize creates .acornvo/conflicts/', async () => {
 ```bash
 npx vitest run electron/services/grove.test.ts -t "creates .acornvo/conflicts"
 ```
+
 Expected: FAIL with ENOENT on `.acornvo/conflicts/` (directory not yet created).
 
 - [ ] **Step 4: Implement: add `ensureDir` call inside `initialize`**
@@ -90,7 +95,7 @@ Expected: FAIL with ENOENT on `.acornvo/conflicts/` (directory not yet created).
 Edit `electron/services/grove.ts:87-93`. After the line `await ensureDir(groveAssetsDir(grovePath))`, add:
 
 ```ts
-  await ensureDir(groveConflictsDir(grovePath))
+await ensureDir(groveConflictsDir(grovePath))
 ```
 
 And add the import at the top of the file:
@@ -110,11 +115,13 @@ import {
 ```bash
 npx vitest run electron/services/grove.test.ts -t "creates .acornvo/conflicts"
 ```
+
 Expected: PASS. Then run the entire grove test file to make sure nothing regressed:
 
 ```bash
 npx vitest run electron/services/grove.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -127,9 +134,11 @@ git commit -m "feat(grove): ensure .acornvo/conflicts/ on grove init (phase-09 1
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: shared conflict types
 
 **Files:**
+
 - Create: `shared/conflict-types.ts`
 
 - [ ] **Step 1: Create the types file**
@@ -139,11 +148,7 @@ Create `shared/conflict-types.ts`:
 ```ts
 import type { Frontmatter } from './frontmatter-schema'
 
-export type ConflictResolvedBy =
-  | 'keep_local'
-  | 'load_remote'
-  | 'load_remote_banner'
-  | 'save_as'
+export type ConflictResolvedBy = 'keep_local' | 'load_remote' | 'load_remote_banner' | 'save_as'
 
 export interface ConflictMeta {
   /** rel-path inside the grove (POSIX, no leading slash) */
@@ -184,6 +189,7 @@ export type ConflictState =
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS (no other file imports the new types yet, so we're just making sure the file itself compiles in both `tsconfig.node.json` and `tsconfig.web.json`).
 
 - [ ] **Step 3: Commit**
@@ -196,11 +202,13 @@ git commit -m "feat(shared): add ConflictMeta/Item/State types (phase-09 1.2)"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: scaffold `electron/services/conflicts/store.ts`
 
 This task creates the file with stubs and one passing smoke test. Each subsequent function is filled in by tasks 3.1–3.6 (TDD, one function per task).
 
 **Files:**
+
 - Create: `electron/services/conflicts/store.ts`
 - Create: `electron/services/conflicts/store.test.ts`
 
@@ -216,11 +224,7 @@ import { groveConflictsDir } from '../paths'
 import { safeResolve } from '../path-safety'
 import { writeFileAtomic } from '../fs-atomic'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  ConflictItem,
-  ConflictMeta,
-  ConflictResolvedBy
-} from '@shared/conflict-types'
+import type { ConflictItem, ConflictMeta, ConflictResolvedBy } from '@shared/conflict-types'
 
 const MAX_KEEP = 100
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
@@ -335,6 +339,7 @@ describe('conflicts/store smoke', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts
 ```
+
 Expected: PASS (1 test).
 
 - [ ] **Step 4: Commit**
@@ -347,9 +352,11 @@ git commit -m "feat(conflicts): scaffold conflict snapshot store (phase-09 1.3)"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: extend `FileWriteOptions` with `force` and forward through `file.write`
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `electron/ipc/file.ts:75-86` (`write` handler)
 
@@ -437,6 +444,7 @@ async write(
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS. (`writeWithVerify` accepts the new field via TypeScript structural widening; we extend `WriteWithVerifyOptions` in Task 5.)
 
 - [ ] **Step 5: Commit**
@@ -449,9 +457,11 @@ git commit -m "feat(ipc): add FileWriteOptions.force + IpcError.context (phase-0
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: implement `force` + ±2ms tolerance + `remoteMtimeMs` in `writeWithVerify`
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts:76-79` (`WriteWithVerifyOptions`)
 - Modify: `electron/services/fs-atomic.ts:145-187` (`writeWithVerify`)
 - Modify: `electron/services/logger.ts` (no schema change — we just call `info`)
@@ -490,9 +500,7 @@ describe('writeWithVerify (phase-09 2.2)', () => {
     await writeFile(abs, 'x')
     const real = (await stat(abs)).mtimeMs
     // expectedMtime within 1ms of real → must succeed
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 1 })
-    ).resolves.toBeTruthy()
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 1 })).resolves.toBeTruthy()
   })
 
   it('mtime mismatch >2ms throws E_MTIME_MISMATCH with remoteMtimeMs in context', async () => {
@@ -529,6 +537,7 @@ describe('writeWithVerify (phase-09 2.2)', () => {
 ```bash
 npx vitest run electron/services/fs-atomic.test.ts -t "phase-09 2.2"
 ```
+
 Expected: 3 of 4 FAIL (force test fails because option not honored; tolerance test fails because exact-equals; mismatch test fails because `context` not populated). The concurrent-writes test may pass already via `withPathLock`, that's fine.
 
 - [ ] **Step 3: Implement — widen `WriteWithVerifyOptions` and rewrite the guard**
@@ -549,40 +558,40 @@ const MTIME_TOLERANCE_MS = 2
 Edit `electron/services/fs-atomic.ts:145-187` (the `writeWithVerify` body) — replace the existing `// 3.7.1 mtime preflight` block (lines 153-169) with:
 
 ```ts
-  // 3.7.1 mtime preflight (force bypasses; otherwise ±2ms tolerance)
-  let preWriteMtime: number | undefined
-  try {
-    preWriteMtime = (await stat(abs)).mtimeMs
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
-  }
+// 3.7.1 mtime preflight (force bypasses; otherwise ±2ms tolerance)
+let preWriteMtime: number | undefined
+try {
+  preWriteMtime = (await stat(abs)).mtimeMs
+} catch (err) {
+  if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+}
 
-  if (opts.force === true) {
-    // Audit log: include both old and stated-expected mtimes so we can
-    // reconstruct the diff if a user complains about lost remote edits.
-    const { logger } = await import('./logger')
-    logger.info('force-write', {
-      path: abs,
-      old_mtime: preWriteMtime ?? null,
-      expected_mtime: opts.expectedMtime ?? null
-    })
-  } else if (opts.expectedMtime !== undefined) {
-    if (preWriteMtime === undefined) {
-      // File vanished between caller's read and our write
-      throw new IpcError(
-        'E_MTIME_MISMATCH',
-        `${abs}: file not found (expected mtime ${opts.expectedMtime})`,
-        { remoteMtimeMs: 0 }
-      )
-    }
-    if (Math.abs(preWriteMtime - opts.expectedMtime) > MTIME_TOLERANCE_MS) {
-      throw new IpcError(
-        'E_MTIME_MISMATCH',
-        `${abs}: mtime is ${preWriteMtime}, expected ${opts.expectedMtime}`,
-        { remoteMtimeMs: preWriteMtime }
-      )
-    }
+if (opts.force === true) {
+  // Audit log: include both old and stated-expected mtimes so we can
+  // reconstruct the diff if a user complains about lost remote edits.
+  const { logger } = await import('./logger')
+  logger.info('force-write', {
+    path: abs,
+    old_mtime: preWriteMtime ?? null,
+    expected_mtime: opts.expectedMtime ?? null
+  })
+} else if (opts.expectedMtime !== undefined) {
+  if (preWriteMtime === undefined) {
+    // File vanished between caller's read and our write
+    throw new IpcError(
+      'E_MTIME_MISMATCH',
+      `${abs}: file not found (expected mtime ${opts.expectedMtime})`,
+      { remoteMtimeMs: 0 }
+    )
   }
+  if (Math.abs(preWriteMtime - opts.expectedMtime) > MTIME_TOLERANCE_MS) {
+    throw new IpcError(
+      'E_MTIME_MISMATCH',
+      `${abs}: mtime is ${preWriteMtime}, expected ${opts.expectedMtime}`,
+      { remoteMtimeMs: preWriteMtime }
+    )
+  }
+}
 ```
 
 - [ ] **Step 4: Run the new tests, confirm pass**
@@ -590,6 +599,7 @@ Edit `electron/services/fs-atomic.ts:145-187` (the `writeWithVerify` body) — r
 ```bash
 npx vitest run electron/services/fs-atomic.test.ts -t "phase-09 2.2"
 ```
+
 Expected: all 4 PASS.
 
 Run the full file to catch regressions in the existing tests:
@@ -597,6 +607,7 @@ Run the full file to catch regressions in the existing tests:
 ```bash
 npx vitest run electron/services/fs-atomic.test.ts
 ```
+
 Expected: all PASS. (Note: any existing test that asserted "exact mtime equality required" needs reading — the new behaviour is "±2ms equality required". Update those tests in this commit.)
 
 - [ ] **Step 5: Verify the existing `selfWrites` registration still happens**
@@ -606,6 +617,7 @@ Quickly grep:
 ```bash
 grep -n "registerSelfWrite" /Users/aaa/develop/workspace-ai/acornvo/electron/ipc/file.ts
 ```
+
 Expected: line `registerSelfWrite(abs, finalStat.mtimeMs)` still present in `file.write` handler. The `force: true` path goes through `writeWithVerify` → `writeFileAtomic` → returns to handler → `registerSelfWrite`. No change needed.
 
 - [ ] **Step 6: Commit**
@@ -618,11 +630,13 @@ git commit -m "feat(fs-atomic): force-write + ±2ms tolerance + remoteMtimeMs in
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: tighten unit tests — boundary cases for tolerance, force ordering, race
 
 The previous task's tests cover the headline cases. This task adds the explicit boundary tests called out in tasks.md 2.3 and 9.16 (we'll re-reference them from Plan 4's acceptance task).
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.test.ts`
 
 - [ ] **Step 1: Add boundary tests**
@@ -640,18 +654,16 @@ describe('writeWithVerify tolerance boundaries (phase-09 2.3)', () => {
     const abs = join(tmp, 'a.md')
     await writeFile(abs, 'x')
     const real = (await stat(abs)).mtimeMs
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 2 })
-    ).resolves.toBeTruthy()
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 2 })).resolves.toBeTruthy()
   })
 
   it('exactly 3ms drift: FAIL with mismatch', async () => {
     const abs = join(tmp, 'b.md')
     await writeFile(abs, 'x')
     const real = (await stat(abs)).mtimeMs
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 3 })
-    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 3 })).rejects.toMatchObject({
+      code: 'E_MTIME_MISMATCH'
+    })
   })
 
   it('force + expectedMtime stale: force wins, audit logs both', async () => {
@@ -672,6 +684,7 @@ describe('writeWithVerify tolerance boundaries (phase-09 2.3)', () => {
 ```bash
 npx vitest run electron/services/fs-atomic.test.ts -t "phase-09 2.3"
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 3: Commit**
@@ -684,9 +697,11 @@ git commit -m "test(fs-atomic): boundary cases for ±2ms tolerance + force (phas
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 7: implement `buildId(path, isoTs)`
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -728,6 +743,7 @@ describe('buildId', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t buildId
 ```
+
 Expected: 4 FAIL ("not implemented").
 
 - [ ] **Step 3: Implement `buildId`**
@@ -755,6 +771,7 @@ export function buildId(path: string, isoTs: string): string {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t buildId
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 5: Commit**
@@ -767,9 +784,11 @@ git commit -m "feat(conflicts): buildId(path, ts) with slug cap and char sanitis
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 8: implement `writeSnapshot`
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -792,9 +811,9 @@ describe('writeSnapshot', () => {
       resolvedBy: 'keep_local'
     })
     const dir = join(_internals.requireConflictsRoot(), id)
-    expect((await readFile(join(dir, 'local.md'), 'utf8'))).toBe('LOCAL')
-    expect((await readFile(join(dir, 'remote.md'), 'utf8'))).toBe('REMOTE')
-    expect((await readFile(join(dir, 'base.md'), 'utf8'))).toBe('BASE')
+    expect(await readFile(join(dir, 'local.md'), 'utf8')).toBe('LOCAL')
+    expect(await readFile(join(dir, 'remote.md'), 'utf8')).toBe('REMOTE')
+    expect(await readFile(join(dir, 'base.md'), 'utf8')).toBe('BASE')
     const meta = JSON.parse(await readFile(join(dir, 'meta.json'), 'utf8'))
     expect(meta).toMatchObject({
       path: 'notes/a.md',
@@ -838,6 +857,7 @@ describe('writeSnapshot', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t writeSnapshot
 ```
+
 Expected: 3 FAIL.
 
 - [ ] **Step 3: Implement `writeSnapshot`**
@@ -885,6 +905,7 @@ export async function writeSnapshot(input: WriteSnapshotInput): Promise<{ id: st
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t writeSnapshot
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Commit**
@@ -897,9 +918,11 @@ git commit -m "feat(conflicts): writeSnapshot writes 4 files atomically (phase-0
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 9: implement `prune` (cap 100, age 30d)
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -973,6 +996,7 @@ describe('prune', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t prune
 ```
+
 Expected: 2 FAIL (and `listSnapshots` may also fail since not implemented — that's fine, we'll fix that in Task 10; for now, the prune FAILs are the signal).
 
 - [ ] **Step 3: Implement `prune`**
@@ -1033,6 +1057,7 @@ The prune-only tests should pass; `listSnapshots`-dependent assertions will stil
 npx vitest run electron/services/conflicts/store.test.ts -t "prune deletes oldest"
 npx vitest run electron/services/conflicts/store.test.ts -t "prune deletes entries older"
 ```
+
 For now, comment out the `listSnapshots` assertion lines (or accept those failures and they'll resolve after Task 10). The cleanest path: convert the `listSnapshots(...).total` check into a direct `readdir` count:
 
 ```ts
@@ -1047,6 +1072,7 @@ Update both prune tests to use `readdir` instead of `listSnapshots`. Re-run:
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t prune
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1059,9 +1085,11 @@ git commit -m "feat(conflicts): prune retention policy (100 newest, 30d cap) (ph
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 10: implement `listSnapshots`
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -1138,6 +1166,7 @@ describe('listSnapshots', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t listSnapshots
 ```
+
 Expected: 3 FAIL.
 
 - [ ] **Step 3: Implement**
@@ -1194,6 +1223,7 @@ export async function listSnapshots(
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t listSnapshots
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1206,9 +1236,11 @@ git commit -m "feat(conflicts): listSnapshots with pagination + corrupt-entry to
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 11: implement `readSnapshot`
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -1255,6 +1287,7 @@ describe('readSnapshot', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t readSnapshot
 ```
+
 Expected: 3 FAIL.
 
 - [ ] **Step 3: Implement**
@@ -1305,6 +1338,7 @@ grep -n "throw" /Users/aaa/develop/workspace-ai/acornvo/electron/services/path-s
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t readSnapshot
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1317,9 +1351,11 @@ git commit -m "feat(conflicts): readSnapshot returns meta + 3 bodies, E_NOT_FOUN
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 12: implement `deleteSnapshot`
 
 **Files:**
+
 - Modify: `electron/services/conflicts/store.ts`
 - Modify: `electron/services/conflicts/store.test.ts`
 
@@ -1362,6 +1398,7 @@ describe('deleteSnapshot', () => {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t deleteSnapshot
 ```
+
 Expected: 3 FAIL.
 
 - [ ] **Step 3: Implement**
@@ -1387,6 +1424,7 @@ export async function deleteSnapshot(id: string): Promise<void> {
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts -t deleteSnapshot
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Run the full conflict store test file**
@@ -1394,6 +1432,7 @@ Expected: 3 PASS.
 ```bash
 npx vitest run electron/services/conflicts/store.test.ts
 ```
+
 Expected: all PASS (smoke + buildId + writeSnapshot + prune + listSnapshots + readSnapshot + deleteSnapshot).
 
 - [ ] **Step 6: Run the full unit suite to catch regressions**
@@ -1401,6 +1440,7 @@ Expected: all PASS (smoke + buildId + writeSnapshot + prune + listSnapshots + re
 ```bash
 npm test
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -1421,6 +1461,7 @@ After all tasks pass:
 ```bash
 grep -E "openspec-task: (1\.[1-3]|2\.[1-3]|3\.[1-6])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-09-conflict-handling-tasks-1.1-3.6.md | sort -u
 ```
+
 Expected: 12 unique labels.
 
 2. **`writeSnapshot` calls `prune` (task 3.2 → 3.3):** look at the implementation in Task 8 — yes, the `try { await prune() }` block is present.

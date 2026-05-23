@@ -10,7 +10,7 @@
 
 **Cross-plan decisions (locked here, referenced by later plans):**
 
-1. **Event channel name = `'settings:changed'`** (colon) — diverges from `spec/settings-store/spec.md:23` which writes `'settings.changed'` (dot). Codebase precedent in `shared/ipc-contract.ts:222-225` is colon-for-events / dot-for-requests, and the spec name would collide with a hypothetical `settings.changed` request channel. The dot-vs-colon decision is *plumbing*, not behaviour, so we follow the codebase convention. Reflect this in the OpenSpec spec when archiving.
+1. **Event channel name = `'settings:changed'`** (colon) — diverges from `spec/settings-store/spec.md:23` which writes `'settings.changed'` (dot). Codebase precedent in `shared/ipc-contract.ts:222-225` is colon-for-events / dot-for-requests, and the spec name would collide with a hypothetical `settings.changed` request channel. The dot-vs-colon decision is _plumbing_, not behaviour, so we follow the codebase convention. Reflect this in the OpenSpec spec when archiving.
 2. **Settings DB scope = per-grove**, following the spec's literal use of `migrations/006`. AI keys are still per-user (encrypted blobs are tied to OS user via `safeStorage`), but the `ai_provider_profiles` rows themselves are per-grove. This matches Obsidian-style "vault settings". If we later want global settings, that's a separate spec.
 3. **Defaults are merged on read, never written** (spec `settings-store/spec.md:52`).
 4. **Secret key naming convention**: `ai.key.<profile-uuid>` for AI profiles (spec `ai-provider-profiles/spec.md:36`).
@@ -18,9 +18,11 @@
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Migration 006 SQL file
 
 **Files:**
+
 - Create: `electron/services/db/migrations/006_settings.sql`
 - Create: `electron/services/db/migrations/006_settings.test.ts`
 
@@ -49,10 +51,15 @@ describe('migration 006 — settings + secrets + ai profiles', () => {
   })
 
   it('creates settings table with composite primary key (ns, key)', () => {
-    const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[])
-      .map((r) => r.name)
+    const tables = (
+      db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]
+    ).map((r) => r.name)
     expect(tables).toContain('settings')
-    const info = db.pragma("table_info('settings')") as { name: string; pk: number; notnull: number }[]
+    const info = db.pragma("table_info('settings')") as {
+      name: string
+      pk: number
+      notnull: number
+    }[]
     expect(info.find((c) => c.name === 'ns')?.pk).toBe(1)
     expect(info.find((c) => c.name === 'key')?.pk).toBe(2)
     expect(info.find((c) => c.name === 'value_json')?.notnull).toBe(1)
@@ -60,17 +67,23 @@ describe('migration 006 — settings + secrets + ai profiles', () => {
   })
 
   it('creates settings_secrets table with key as primary key + BLOB column', () => {
-    const info = db.pragma("table_info('settings_secrets')") as { name: string; pk: number; type: string }[]
+    const info = db.pragma("table_info('settings_secrets')") as {
+      name: string
+      pk: number
+      type: string
+    }[]
     expect(info.find((c) => c.name === 'key')?.pk).toBe(1)
     expect(info.find((c) => c.name === 'encrypted_value')?.type.toUpperCase()).toBe('BLOB')
   })
 
   it('creates ai_provider_profiles with unique index on name', () => {
-    const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[])
-      .map((r) => r.name)
+    const tables = (
+      db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]
+    ).map((r) => r.name)
     expect(tables).toContain('ai_provider_profiles')
-    const indices = (db.prepare("SELECT name FROM sqlite_master WHERE type='index'").all() as { name: string }[])
-      .map((r) => r.name)
+    const indices = (
+      db.prepare("SELECT name FROM sqlite_master WHERE type='index'").all() as { name: string }[]
+    ).map((r) => r.name)
     expect(indices).toContain('idx_ai_profiles_name')
     db.exec(`
       INSERT INTO ai_provider_profiles (id, name, provider, model, created_at, updated_at)
@@ -89,8 +102,9 @@ describe('migration 006 — settings + secrets + ai profiles', () => {
       INSERT INTO ai_provider_profiles (id, name, provider, model, created_at, updated_at)
       VALUES ('a', 'p1', 'openai', 'gpt-4o', '2026-05-03', '2026-05-03')
     `)
-    const row = db.prepare('SELECT temperature, top_p FROM ai_provider_profiles WHERE id=?').get('a') as
-      { temperature: number; top_p: number }
+    const row = db
+      .prepare('SELECT temperature, top_p FROM ai_provider_profiles WHERE id=?')
+      .get('a') as { temperature: number; top_p: number }
     expect(row.temperature).toBe(0.7)
     expect(row.top_p).toBe(1.0)
   })
@@ -163,9 +177,11 @@ git commit -m "feat(phase-13): migration 006 — settings, settings_secrets, ai_
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Shared settings types
 
 **Files:**
+
 - Create: `shared/settings-types.ts`
 - Create: `shared/settings-types.test.ts`
 
@@ -188,7 +204,11 @@ import type {
 describe('settings-types module', () => {
   it('exposes the four namespace types', () => {
     expectTypeOf<GeneralSettings>().toMatchTypeOf<{ locale: string; autoBackup: string }>()
-    expectTypeOf<AppearanceSettings>().toMatchTypeOf<{ theme: string; fontScale: number; editorFont: string }>()
+    expectTypeOf<AppearanceSettings>().toMatchTypeOf<{
+      theme: string
+      fontScale: number
+      editorFont: string
+    }>()
     expectTypeOf<AiSettings>().toMatchTypeOf<{ defaultProfileId: string | null }>()
     expectTypeOf<BrowserSettings>().toMatchTypeOf<{
       blockAds: boolean
@@ -352,9 +372,11 @@ git commit -m "feat(phase-13): shared/settings-types — namespace shapes + prof
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Defaults module
 
 **Files:**
+
 - Create: `electron/settings/defaults.ts`
 - Create: `electron/settings/defaults.test.ts`
 
@@ -430,7 +452,12 @@ export const DEFAULTS: {
   browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
 }
 
-const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = ['general', 'appearance', 'ai', 'browser']
+const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = [
+  'general',
+  'appearance',
+  'ai',
+  'browser'
+]
 
 export function isKnownNamespace(value: unknown): value is SettingsNamespace {
   return typeof value === 'string' && (KNOWN_NAMESPACES as readonly string[]).includes(value)
@@ -457,9 +484,11 @@ git commit -m "feat(phase-13): electron/settings/defaults — DEFAULTS + isKnown
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: safeStorage availability cache
 
 **Files:**
+
 - Create: `electron/settings/safe-storage-state.ts`
 - Create: `electron/settings/safe-storage-state.test.ts`
 
@@ -476,7 +505,11 @@ vi.mock('electron', () => ({
 }))
 
 import { safeStorage } from 'electron'
-import { initSafeStorageAvailability, isSafeStorageAvailable, __resetForTest } from './safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  isSafeStorageAvailable,
+  __resetForTest
+} from './safe-storage-state'
 
 const mockIsAvailable = safeStorage.isEncryptionAvailable as unknown as ReturnType<typeof vi.fn>
 
@@ -569,7 +602,7 @@ async function bootstrap(): Promise<void> {
   await initLogger()
   await app.whenReady()
   installCsp()
-  initSafeStorageAvailability()  // <-- NEW
+  initSafeStorageAvailability() // <-- NEW
   registerHandlers(ipcHandlers)
   // ...
 }
@@ -590,9 +623,11 @@ git commit -m "feat(phase-13): cache safeStorage.isEncryptionAvailable() at boot
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: Settings store (`get` / `set` / `onChange`)
 
 **Files:**
+
 - Create: `electron/settings/store.ts`
 - Create: `electron/settings/store.test.ts`
 
@@ -606,8 +641,9 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runMigrations } from '../services/db/migrations'
 
-const MIGRATIONS_DIR = dirname(fileURLToPath(import.meta.url) + '/../services/db/migrations/000.sql')
-  .replace(/\/000\.sql$/, '')
+const MIGRATIONS_DIR = dirname(
+  fileURLToPath(import.meta.url) + '/../services/db/migrations/000.sql'
+).replace(/\/000\.sql$/, '')
 
 // Mock dbService.requireCurrent() to return our in-memory DB
 vi.mock('../services/db', () => ({
@@ -653,8 +689,9 @@ describe('settingsStore', () => {
       fontScale: 1.0,
       editorFont: 'system-ui'
     })
-    const row = db.prepare("SELECT value_json FROM settings WHERE ns='appearance' AND key='theme'").get() as
-      { value_json: string }
+    const row = db
+      .prepare("SELECT value_json FROM settings WHERE ns='appearance' AND key='theme'")
+      .get() as { value_json: string }
     expect(JSON.parse(row.value_json)).toBe('dark')
   })
 
@@ -732,8 +769,10 @@ const emitter = new EventEmitter()
 
 function readNamespaceRaw(ns: SettingsNamespace): Record<string, unknown> {
   const db = dbService.requireCurrent()
-  const rows = db.prepare('SELECT key, value_json FROM settings WHERE ns = ?').all(ns) as
-    { key: string; value_json: string }[]
+  const rows = db.prepare('SELECT key, value_json FROM settings WHERE ns = ?').all(ns) as {
+    key: string
+    value_json: string
+  }[]
   const out: Record<string, unknown> = {}
   for (const r of rows) {
     out[r.key] = JSON.parse(r.value_json)
@@ -811,9 +850,11 @@ git commit -m "feat(phase-13): settings store with get/set/onChange + DEFAULTS m
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: Secrets store
 
 **Files:**
+
 - Create: `electron/settings/secrets.ts`
 - Create: `electron/settings/secrets.test.ts`
 
@@ -840,7 +881,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../services/db'
 import { safeStorage } from 'electron'
 import { secretsStore } from './secrets'
-import { __resetForTest as resetSafeStorage, initSafeStorageAvailability } from './safe-storage-state'
+import {
+  __resetForTest as resetSafeStorage,
+  initSafeStorageAvailability
+} from './safe-storage-state'
 
 const requireCurrentMock = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const isEncAvailableMock = safeStorage.isEncryptionAvailable as unknown as ReturnType<typeof vi.fn>
@@ -884,7 +928,9 @@ describe('secretsStore', () => {
     secretsStore.set('k', 'v1')
     secretsStore.set('k', 'v2')
     expect(secretsStore.get('k')).toBe('v2')
-    const count = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key=?').get('k') as { n: number }
+    const count = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key=?').get('k') as {
+      n: number
+    }
     expect(count.n).toBe(1)
   })
 
@@ -937,11 +983,13 @@ function set(key: string, plain: string): void {
   requireKeychain()
   const enc = safeStorage.encryptString(plain)
   const db = dbService.requireCurrent()
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO settings_secrets (key, encrypted_value, updated_at)
     VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET encrypted_value = excluded.encrypted_value, updated_at = excluded.updated_at
-  `).run(key, enc, new Date().toISOString())
+  `
+  ).run(key, enc, new Date().toISOString())
 }
 
 function get(key: string): string | null {
@@ -984,9 +1032,11 @@ git commit -m "feat(phase-13): secrets store with safeStorage encryption + E_KEY
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: AI provider profiles CRUD
 
 **Files:**
+
 - Create: `electron/settings/profiles.ts`
 - Create: `electron/settings/profiles.test.ts`
 
@@ -1033,8 +1083,10 @@ describe('profilesStore', () => {
     const { id } = profilesStore.create({ name: 'p1', provider: 'openai', model: 'gpt-4o' })
     expect(typeof id).toBe('string')
     expect(id.length).toBeGreaterThan(8)
-    const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id=?').get(id) as
-      { name: string; api_key_ref: string | null }
+    const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id=?').get(id) as {
+      name: string
+      api_key_ref: string | null
+    }
     expect(row.name).toBe('p1')
     expect(row.api_key_ref).toBeNull()
   })
@@ -1047,18 +1099,25 @@ describe('profilesStore', () => {
       apiKey: 'sk-abc'
     })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('sk-abc')
-    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as
-      { api_key_ref: string }
+    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as {
+      api_key_ref: string
+    }
     expect(row.api_key_ref).toBe(`ai.key.${id}`)
   })
 
   it('create with duplicate name throws E_DUPLICATE_NAME; no row, no secret', () => {
     profilesStore.create({ name: 'dup', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-1' })
     expect(() =>
-      profilesStore.create({ name: 'dup', provider: 'anthropic', model: 'claude-4', apiKey: 'sk-2' })
+      profilesStore.create({
+        name: 'dup',
+        provider: 'anthropic',
+        model: 'claude-4',
+        apiKey: 'sk-2'
+      })
     ).toThrow(/E_DUPLICATE_NAME/)
-    const count = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE name=?').get('dup') as
-      { n: number }
+    const count = db
+      .prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE name=?')
+      .get('dup') as { n: number }
     expect(count.n).toBe(1)
   })
 
@@ -1074,30 +1133,50 @@ describe('profilesStore', () => {
   })
 
   it('update with apiKey="newkey" overwrites secret, leaves other fields unchanged', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'old' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'old'
+    })
     profilesStore.update(id, { apiKey: 'new' })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('new')
-    const row = db.prepare('SELECT name FROM ai_provider_profiles WHERE id=?').get(id) as { name: string }
+    const row = db.prepare('SELECT name FROM ai_provider_profiles WHERE id=?').get(id) as {
+      name: string
+    }
     expect(row.name).toBe('p')
   })
 
   it('update with apiKey="" deletes the secret and sets api_key_ref=NULL', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
+    })
     profilesStore.update(id, { apiKey: '' })
     expect(secretsStore.get(`ai.key.${id}`)).toBeNull()
-    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as
-      { api_key_ref: string | null }
+    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as {
+      api_key_ref: string | null
+    }
     expect(row.api_key_ref).toBeNull()
   })
 
   it('update with apiKey=undefined leaves secret untouched', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'keep' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'keep'
+    })
     profilesStore.update(id, { name: 'p2' })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('keep')
   })
 
   it('update on missing id throws E_PROFILE_NOT_FOUND', () => {
-    expect(() => profilesStore.update('does-not-exist', { name: 'x' })).toThrow(/E_PROFILE_NOT_FOUND/)
+    expect(() => profilesStore.update('does-not-exist', { name: 'x' })).toThrow(
+      /E_PROFILE_NOT_FOUND/
+    )
   })
 
   it('update name conflict throws E_DUPLICATE_NAME', () => {
@@ -1107,9 +1186,16 @@ describe('profilesStore', () => {
   })
 
   it('delete cascades to secret in a single transaction', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
+    })
     profilesStore.delete(id)
-    expect(db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE id=?').get(id)).toMatchObject({ n: 0 })
+    expect(
+      db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE id=?').get(id)
+    ).toMatchObject({ n: 0 })
     expect(secretsStore.get(`ai.key.${id}`)).toBeNull()
   })
 
@@ -1186,7 +1272,9 @@ function rowToProfile(row: ProfileRow): AiProviderProfile {
 
 function list(): AiProviderProfile[] {
   const db = dbService.requireCurrent()
-  const rows = db.prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC').all() as ProfileRow[]
+  const rows = db
+    .prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC')
+    .all() as ProfileRow[]
   return rows.map(rowToProfile)
 }
 
@@ -1206,11 +1294,13 @@ function create(input: ProfileCreateInput): { id: string } {
   }
 
   try {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO ai_provider_profiles
         (id, name, provider, base_url, model, temperature, top_p, max_tokens, api_key_ref, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       id,
       input.name,
       input.provider,
@@ -1232,11 +1322,15 @@ function create(input: ProfileCreateInput): { id: string } {
 
 function update(id: string, patch: ProfileUpdateInput): void {
   const db = dbService.requireCurrent()
-  const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as ProfileRow | undefined
+  const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as
+    | ProfileRow
+    | undefined
   if (!row) throw new IpcError('E_PROFILE_NOT_FOUND', `profile ${id} not found`)
 
   if (patch.name !== undefined && patch.name !== row.name) {
-    const conflict = db.prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ? AND id != ?').get(patch.name, id)
+    const conflict = db
+      .prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ? AND id != ?')
+      .get(patch.name, id)
     if (conflict) throw new IpcError('E_DUPLICATE_NAME', `name "${patch.name}" is already in use`)
   }
 
@@ -1254,7 +1348,8 @@ function update(id: string, patch: ProfileUpdateInput): void {
   }
 
   const now = new Date().toISOString()
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE ai_provider_profiles SET
       name = COALESCE(?, name),
       provider = COALESCE(?, provider),
@@ -1266,7 +1361,8 @@ function update(id: string, patch: ProfileUpdateInput): void {
       api_key_ref = ?,
       updated_at = ?
     WHERE id = ?
-  `).run(
+  `
+  ).run(
     patch.name ?? null,
     patch.provider ?? null,
     patch.baseUrl ?? null,
@@ -1302,9 +1398,9 @@ function deleteProfile(id: string): void {
   // If this was the default profile, fall back to the first remaining or null
   const ai = settingsStore.get('ai')
   if (ai.defaultProfileId === id) {
-    const next = db.prepare('SELECT id FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1').get() as
-      | { id: string }
-      | undefined
+    const next = db
+      .prepare('SELECT id FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1')
+      .get() as { id: string } | undefined
     settingsStore.set('ai', { defaultProfileId: next?.id ?? null })
   }
 }
@@ -1372,9 +1468,11 @@ git commit -m "feat(phase-13): ai_provider_profiles CRUD with secret cascade + n
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: Main-only `getProfileDecryptedKey`
 
 **Files:**
+
 - Create: `electron/settings/profile-key.ts`
 - Create: `electron/settings/profile-key.test.ts`
 
@@ -1416,7 +1514,12 @@ describe('getProfileDecryptedKey', () => {
   afterEach(() => db.close())
 
   it('returns the decrypted plaintext for a profile that has a key', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-abc' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-abc'
+    })
     expect(getProfileDecryptedKey(id)).toBe('sk-abc')
   })
 
@@ -1489,6 +1592,7 @@ git commit -m "feat(phase-13): main-only getProfileDecryptedKey (not exposed to 
 - [ ] Verify no `E_*` codes were left out of `IPC_ERROR_CODES` (grep `IpcErrorCode` against the const)
 
 If everything is green, this plan's surface area for Plan 2 is:
+
 - `electron/settings/store.ts` exports `settingsStore.{get,set,onChange}`
 - `electron/settings/secrets.ts` exports `secretsStore.{get,set,delete}` (main only)
 - `electron/settings/profiles.ts` exports `profilesStore.{list,create,update,delete}`

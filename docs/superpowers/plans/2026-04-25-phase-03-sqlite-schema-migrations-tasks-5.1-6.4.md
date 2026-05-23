@@ -17,11 +17,11 @@ Wire `dbService` (Plan 3) into the existing grove lifecycle (`services/grove.ts`
 ## Architecture
 
 - **Two integration points for db open/close in grove flow.**
-  1. `services/grove.openGrove`: synchronous, inline call to `dbService.openForGrove(path)` immediately *before* `notifyChange(toSummary(grove))`. This guarantees the renderer never sees `project:changed` with no db ready.
+  1. `services/grove.openGrove`: synchronous, inline call to `dbService.openForGrove(path)` immediately _before_ `notifyChange(toSummary(grove))`. This guarantees the renderer never sees `project:changed` with no db ready.
   2. `electron/main.ts`: a defensive `groveService.onChange` subscriber that calls `dbService.openForGrove` on a non-null path (idempotent: skipped if `dbService.getCurrentGrovePath() === payload.path`) and `dbService.closeCurrent` on null. This catches future code paths that emit `project:changed` outside `openGrove`.
 - **Failure rollback in `openGrove`.** If `dbService.openForGrove` throws, release the lock, do NOT update `last_opened_at` (already written before this point — see note in Task 2), do NOT register `currentGrove`, propagate the error so the IPC layer returns `E_INTERNAL`.
-- **`closeGrove`** calls `dbService.closeCurrent()` *before* `lockfile.release(path)` so the wal_checkpoint runs while the lock is still held (avoids racing with another process that opens the grove during teardown).
-- **`app.on('will-quit')`** in `main.ts` already calls `groveService.closeGrove()` which (after Task 3 here) cascades `dbService.closeCurrent()`. The OpenSpec task 5.4 asks for a *defensive* additional call directly to `dbService.closeCurrent()` — for the case where no grove is open but a stray db handle still exists (shouldn't happen, but the cost of the safety net is one line).
+- **`closeGrove`** calls `dbService.closeCurrent()` _before_ `lockfile.release(path)` so the wal_checkpoint runs while the lock is still held (avoids racing with another process that opens the grove during teardown).
+- **`app.on('will-quit')`** in `main.ts` already calls `groveService.closeGrove()` which (after Task 3 here) cascades `dbService.closeCurrent()`. The OpenSpec task 5.4 asks for a _defensive_ additional call directly to `dbService.closeCurrent()` — for the case where no grove is open but a stray db handle still exists (shouldn't happen, but the cost of the safety net is one line).
 - **IPC.** Add a `db` namespace to `IpcContract` (`version`, `integrityCheck`). Both delegate to `dbService.requireCurrent()` → `IpcError('E_NOT_FOUND')` is auto-converted by `ipc/router.ts` into `{ ok: false, error: { code: 'E_NOT_FOUND', ... } }`. Add event channels `db:rebuilding` and `db:rebuilt` to `IpcEventContract` (already broadcast from `db.ts` Plan 3 task 4.4); the preload `on` API is generic and picks them up automatically.
 
 ## Tech Stack
@@ -30,25 +30,27 @@ Wire `dbService` (Plan 3) into the existing grove lifecycle (`services/grove.ts`
 
 ## Files Touched
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/grove.ts` | Modify (insert dbService calls in openGrove + closeGrove) | 5.1, 5.2, 5.3 |
-| `electron/main.ts` | Modify (defensive will-quit + project:changed subscriber) | 5.4, 5.5 |
-| `shared/ipc-contract.ts` | Modify (add `db` namespace + event channels) | 6.1, 6.2 |
-| `electron/ipc/db.ts` | Create | 6.3 |
-| `electron/ipc/handlers.ts` | Modify (register `db` namespace) | 6.3 |
-| `preload/preload.ts` | Modify (add `db` to request client) | 6.4 |
-| `src/ipc/client.ts` | Modify only if needed (the type-derives from IpcContract should auto-update) | 6.4 |
-| `electron/services/grove.test.ts` (or new) | Create / extend | 5.1, 5.2, 5.3 |
+| Path                                       | Action                                                                       | Owner task    |
+| ------------------------------------------ | ---------------------------------------------------------------------------- | ------------- |
+| `electron/services/grove.ts`               | Modify (insert dbService calls in openGrove + closeGrove)                    | 5.1, 5.2, 5.3 |
+| `electron/main.ts`                         | Modify (defensive will-quit + project:changed subscriber)                    | 5.4, 5.5      |
+| `shared/ipc-contract.ts`                   | Modify (add `db` namespace + event channels)                                 | 6.1, 6.2      |
+| `electron/ipc/db.ts`                       | Create                                                                       | 6.3           |
+| `electron/ipc/handlers.ts`                 | Modify (register `db` namespace)                                             | 6.3           |
+| `preload/preload.ts`                       | Modify (add `db` to request client)                                          | 6.4           |
+| `src/ipc/client.ts`                        | Modify only if needed (the type-derives from IpcContract should auto-update) | 6.4           |
+| `electron/services/grove.test.ts` (or new) | Create / extend                                                              | 5.1, 5.2, 5.3 |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 1: `openGrove` calls `dbService.openForGrove` inline
 
 **Files:**
+
 - Modify: `electron/services/grove.ts` (around line 251, just before `notifyChange`)
 
 - [ ] **Step 1: Read the current `openGrove` implementation**
@@ -105,19 +107,19 @@ npx vitest run electron/services/grove.test.ts
 In `electron/services/grove.ts`, locate the block:
 
 ```ts
-  notifyChange(toSummary(grove))
-  logger.info('grove opened', { grove: path, id: grove.id })
-  return { status: 'opened', grove: toSummary(grove) }
+notifyChange(toSummary(grove))
+logger.info('grove opened', { grove: path, id: grove.id })
+return { status: 'opened', grove: toSummary(grove) }
 ```
 
-Insert *before* `notifyChange`:
+Insert _before_ `notifyChange`:
 
 ```ts
-  // Open the per-grove SQLite db before broadcasting project:changed.
-  const { dbService } = await import('./db')
-  dbService.openForGrove(path)
+// Open the per-grove SQLite db before broadcasting project:changed.
+const { dbService } = await import('./db')
+dbService.openForGrove(path)
 
-  notifyChange(toSummary(grove))
+notifyChange(toSummary(grove))
 ```
 
 (Lazy `await import('./db')` mirrors the existing lazy `recent` import a few lines above and keeps the module load order safe.)
@@ -134,13 +136,15 @@ git commit -m "feat(phase-03): openGrove opens dbService.openForGrove inline bef
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 2: Failure rollback — release lock, no last_opened_at update, return E_INTERNAL
 
 **Files:**
+
 - Modify: `electron/services/grove.ts`
 - Modify: `electron/services/grove.test.ts`
 
-> **Note:** The current `openGrove` updates `last_opened_at` (`atomicWriteJson(...refreshed)`) *before* calling `dbService.openForGrove`. To satisfy "do NOT update last_opened_at on db failure", we need to **reorder**: lock + initialize + db open + (only then) write `last_opened_at` + register currentGrove + recent upsert.
+> **Note:** The current `openGrove` updates `last_opened_at` (`atomicWriteJson(...refreshed)`) _before_ calling `dbService.openForGrove`. To satisfy "do NOT update last_opened_at on db failure", we need to **reorder**: lock + initialize + db open + (only then) write `last_opened_at` + register currentGrove + recent upsert.
 >
 > If db open fails → lock released → `last_opened_at` NOT touched → currentGrove NOT set → recent NOT updated → throw → IPC returns `E_INTERNAL`.
 
@@ -192,7 +196,8 @@ describe('grove.openGrove rollback on db failure', () => {
     const r = await grove.openGrove(dir)
     expect(r.status).toBe('opened')
     const projectFile = join(dir, '.acornvo', 'project.json')
-    const before = JSON.parse(require('node:fs').readFileSync(projectFile, 'utf8')).last_opened_at as string
+    const before = JSON.parse(require('node:fs').readFileSync(projectFile, 'utf8'))
+      .last_opened_at as string
     await grove.closeGrove()
 
     // Mock dbService to throw on next open.
@@ -203,7 +208,8 @@ describe('grove.openGrove rollback on db failure', () => {
 
     await grove.openGrove(dir).catch(() => undefined)
 
-    const after = JSON.parse(require('node:fs').readFileSync(projectFile, 'utf8')).last_opened_at as string
+    const after = JSON.parse(require('node:fs').readFileSync(projectFile, 'utf8'))
+      .last_opened_at as string
     expect(after).toBe(before)
   })
 })
@@ -216,63 +222,63 @@ describe('grove.openGrove rollback on db failure', () => {
 Replace the body of `openGrove` after `lockfile.acquire`:
 
 ```ts
-  const lockResult = await lockfile.acquire(path, { force: opts.force })
-  if (lockResult.status === 'held') {
-    return { status: 'locked', holder: lockResult.holder as LockInfo }
-  }
+const lockResult = await lockfile.acquire(path, { force: opts.force })
+if (lockResult.status === 'held') {
+  return { status: 'locked', holder: lockResult.holder as LockInfo }
+}
 
-  try {
-    const initResult = await initialize(path)
+try {
+  const initResult = await initialize(path)
 
-    // Open db BEFORE bumping last_opened_at — failure rolls back cleanly.
-    const { dbService } = await import('./db')
-    dbService.openForGrove(path)
+  // Open db BEFORE bumping last_opened_at — failure rolls back cleanly.
+  const { dbService } = await import('./db')
+  dbService.openForGrove(path)
 
-    const now = new Date().toISOString()
-    const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
-    await atomicWriteJson(groveProjectFile(path), refreshed)
+  const now = new Date().toISOString()
+  const refreshed: ProjectJson = { ...initResult.project, last_opened_at: now }
+  await atomicWriteJson(groveProjectFile(path), refreshed)
 
-    const grove = toGrove(path, refreshed)
-    currentGrove = grove
+  const grove = toGrove(path, refreshed)
+  currentGrove = grove
 
-    const recent = await import('./recent')
-    await recent.upsertToTop({
-      id: grove.id,
-      path: grove.path,
-      name: grove.name,
-      color: grove.color,
-      pinned: false,
-      last_opened_at: now,
-      files_count: 0
-    })
+  const recent = await import('./recent')
+  await recent.upsertToTop({
+    id: grove.id,
+    path: grove.path,
+    name: grove.name,
+    color: grove.color,
+    pinned: false,
+    last_opened_at: now,
+    files_count: 0
+  })
 
-    if (initResult.syncProvider) {
-      logger.warn('grove on cloud-sync path', {
-        grove: path,
-        provider: initResult.syncProvider
-      })
-    }
-
-    notifyChange(toSummary(grove))
-    logger.info('grove opened', { grove: path, id: grove.id })
-    return { status: 'opened', grove: toSummary(grove) }
-  } catch (err) {
-    // Best-effort cleanup: close any partially-opened db, release lock.
-    try {
-      const { dbService } = await import('./db')
-      dbService.closeCurrent()
-    } catch {
-      /* ignore */
-    }
-    await lockfile.release(path).catch(() => {
-      /* ignore */
-    })
-    logger.error('openGrove failed', {
+  if (initResult.syncProvider) {
+    logger.warn('grove on cloud-sync path', {
       grove: path,
-      message: err instanceof Error ? err.message : String(err)
+      provider: initResult.syncProvider
     })
-    throw err
   }
+
+  notifyChange(toSummary(grove))
+  logger.info('grove opened', { grove: path, id: grove.id })
+  return { status: 'opened', grove: toSummary(grove) }
+} catch (err) {
+  // Best-effort cleanup: close any partially-opened db, release lock.
+  try {
+    const { dbService } = await import('./db')
+    dbService.closeCurrent()
+  } catch {
+    /* ignore */
+  }
+  await lockfile.release(path).catch(() => {
+    /* ignore */
+  })
+  logger.error('openGrove failed', {
+    grove: path,
+    message: err instanceof Error ? err.message : String(err)
+  })
+  throw err
+}
 ```
 
 (Delete the now-duplicated lazy import + inline `dbService.openForGrove` from Task 1 — the new code path consolidates them inside the try/catch.)
@@ -293,9 +299,11 @@ git commit -m "feat(phase-03): openGrove rolls back lock + last_opened_at on db 
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 3: `closeGrove` calls `dbService.closeCurrent` first
 
 **Files:**
+
 - Modify: `electron/services/grove.ts`
 - Modify: `electron/services/grove.test.ts`
 
@@ -368,9 +376,11 @@ git commit -m "feat(phase-03): closeGrove closes db before releasing lock"
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 4: Defensive `dbService.closeCurrent` on `app.on('will-quit')`
 
 **Files:**
+
 - Modify: `electron/main.ts`
 
 - [ ] **Step 1: Read the current will-quit handler**
@@ -386,18 +396,18 @@ Expected: a `groveService.closeGrove()` call already exists.
 In `electron/main.ts`, after the existing `app.on('will-quit', () => { void groveService.closeGrove()... })` block, add:
 
 ```ts
-  app.on('will-quit', () => {
-    try {
-      // Defensive: closeGrove cascades to closeCurrent, but also handle the
-      // "no grove open but stray db handle" edge case.
-      const { dbService } = require('./services/db') as typeof import('./services/db')
-      dbService.closeCurrent()
-    } catch (err) {
-      logger.error('db close on will-quit failed', {
-        message: err instanceof Error ? err.message : String(err)
-      })
-    }
-  })
+app.on('will-quit', () => {
+  try {
+    // Defensive: closeGrove cascades to closeCurrent, but also handle the
+    // "no grove open but stray db handle" edge case.
+    const { dbService } = require('./services/db') as typeof import('./services/db')
+    dbService.closeCurrent()
+  } catch (err) {
+    logger.error('db close on will-quit failed', {
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
+})
 ```
 
 (Using `require` here mirrors the existing late-import pattern — the module is already loaded by then, this is a synchronous lookup.)
@@ -424,9 +434,11 @@ git commit -m "feat(phase-03): defensive dbService.closeCurrent on will-quit"
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 5: Subscribe `project:changed` in `main.ts` for db open/close idempotency
 
 **Files:**
+
 - Modify: `electron/main.ts`
 
 - [ ] **Step 1: Read main.ts bootstrap**
@@ -435,32 +447,32 @@ git commit -m "feat(phase-03): defensive dbService.closeCurrent on will-quit"
 sed -n '62,82p' electron/main.ts
 ```
 
-Note that `installGroveBroadcaster()` already wires `groveService.onChange` → `webContents.send('project:changed', ...)`. We add a *second* subscriber for db lifecycle.
+Note that `installGroveBroadcaster()` already wires `groveService.onChange` → `webContents.send('project:changed', ...)`. We add a _second_ subscriber for db lifecycle.
 
 - [ ] **Step 2: Add the db subscriber inside `bootstrap`**
 
 In `electron/main.ts`, after `const disposeBroadcaster = installGroveBroadcaster()` add:
 
 ```ts
-  const disposeDbSubscriber = groveService.onChange((payload) => {
-    try {
-      // Lazy require to avoid circular import surprises at module load.
-      const { dbService } = require('./services/db') as typeof import('./services/db')
-      if (payload === null) {
-        dbService.closeCurrent()
-      } else if (dbService.getCurrentGrovePath() !== payload.path) {
-        // Idempotent: openGrove (Task 1) already opened the db inline; this is
-        // the catch-all for future code paths that change the project without
-        // going through openGrove.
-        dbService.openForGrove(payload.path)
-      }
-    } catch (err) {
-      logger.error('db subscriber failed on project:changed', {
-        message: err instanceof Error ? err.message : String(err)
-      })
+const disposeDbSubscriber = groveService.onChange((payload) => {
+  try {
+    // Lazy require to avoid circular import surprises at module load.
+    const { dbService } = require('./services/db') as typeof import('./services/db')
+    if (payload === null) {
+      dbService.closeCurrent()
+    } else if (dbService.getCurrentGrovePath() !== payload.path) {
+      // Idempotent: openGrove (Task 1) already opened the db inline; this is
+      // the catch-all for future code paths that change the project without
+      // going through openGrove.
+      dbService.openForGrove(payload.path)
     }
-  })
-  app.on('will-quit', disposeDbSubscriber)
+  } catch (err) {
+    logger.error('db subscriber failed on project:changed', {
+      message: err instanceof Error ? err.message : String(err)
+    })
+  }
+})
+app.on('will-quit', disposeDbSubscriber)
 ```
 
 - [ ] **Step 3: Manual verification**
@@ -481,9 +493,11 @@ git commit -m "feat(phase-03): main.ts subscribes project:changed for idempotent
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 6: Add `db` namespace to `IpcContract`
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 - [ ] **Step 1: Read the current contract**
@@ -503,9 +517,15 @@ export type DbVersionInfo = {
 }
 
 export type IpcContract = {
-  ping: { /* unchanged */ }
-  log: { /* unchanged */ }
-  project: { /* unchanged */ }
+  ping: {
+    /* unchanged */
+  }
+  log: {
+    /* unchanged */
+  }
+  project: {
+    /* unchanged */
+  }
   db: {
     version: () => DbVersionInfo
     integrityCheck: () => string
@@ -535,9 +555,11 @@ git commit -m "feat(phase-03): add db namespace + DbVersionInfo to IpcContract"
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 7: Add `db:rebuilding` / `db:rebuilt` event channels
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 - [ ] **Step 1: Add to `IpcEventContract`**
@@ -581,9 +603,11 @@ git commit -m "feat(phase-03): declare db:rebuilding / db:rebuilt event channels
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 8: `electron/ipc/db.ts` handlers + register
 
 **Files:**
+
 - Create: `electron/ipc/db.ts`
 - Modify: `electron/ipc/handlers.ts`
 
@@ -628,8 +652,12 @@ Edit `electron/ipc/handlers.ts`:
 import { dbHandlers } from './db'
 // ...
 export const ipcHandlers: HandlerMap = {
-  ping: { /* unchanged */ },
-  log: { /* unchanged */ },
+  ping: {
+    /* unchanged */
+  },
+  log: {
+    /* unchanged */
+  },
   project: projectHandlers,
   db: dbHandlers
 }
@@ -653,9 +681,11 @@ git commit -m "feat(phase-03): db.version + db.integrityCheck handlers, register
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 9: Renderer client typings + preload wiring
 
 **Files:**
+
 - Modify: `preload/preload.ts`
 - Modify: `src/ipc/client.ts` (verification only — should compile without changes)
 
@@ -665,9 +695,15 @@ In `preload/preload.ts`, add to the `request` object:
 
 ```ts
 const request: IpcClient<IpcContract> = {
-  ping: { /* unchanged */ },
-  log: { /* unchanged */ },
-  project: { /* unchanged */ },
+  ping: {
+    /* unchanged */
+  },
+  log: {
+    /* unchanged */
+  },
+  project: {
+    /* unchanged */
+  },
   db: {
     version: () => invoke('db.version'),
     integrityCheck: () => invoke('db.integrityCheck')

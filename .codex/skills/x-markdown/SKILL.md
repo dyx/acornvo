@@ -26,23 +26,23 @@ It covers:
 
 # 📦 Package Boundaries
 
-| Layer | Package | Responsibility |
-| --- | --- | --- |
-| **UI layer** | `@ant-design/x` | Chat UI, bubble lists, sender, rich interaction components |
-| **Data layer** | `@ant-design/x-sdk` | Providers, requests, streaming data flow, state management |
+| Layer            | Package                  | Responsibility                                                           |
+| ---------------- | ------------------------ | ------------------------------------------------------------------------ |
+| **UI layer**     | `@ant-design/x`          | Chat UI, bubble lists, sender, rich interaction components               |
+| **Data layer**   | `@ant-design/x-sdk`      | Providers, requests, streaming data flow, state management               |
 | **Render layer** | `@ant-design/x-markdown` | Markdown parsing, streaming rendering, plugins, themes, custom renderers |
 
 > ⚠️ `x-markdown` is not a chat-state tool. Use it to render content after `@ant-design/x` and `@ant-design/x-sdk` have already produced the message data.
 
 # 🚀 Quick Start Decision Guide
 
-| If you need to... | Read first | Typical outcome |
-| --- | --- | --- |
-| Render Markdown with the smallest setup | [CORE.md](reference/CORE.md) | `XMarkdown` renders trusted content with basic styling |
-| Render LLM streaming chunks | [STREAMING.md](reference/STREAMING.md) | Correct `hasNextChunk`, placeholders, tail indicator, loading states |
-| Replace tags with business components | [EXTENSIONS.md](reference/EXTENSIONS.md) | Stable `components` map for custom tags and code blocks |
-| Add plugins or theme overrides | [EXTENSIONS.md](reference/EXTENSIONS.md) | Plugin imports, theme class wiring, minimal CSS overrides |
-| Check prop details and defaults | [API.md](reference/API.md) | Full prop table for `XMarkdown` and streaming options |
+| If you need to...                       | Read first                               | Typical outcome                                                      |
+| --------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| Render Markdown with the smallest setup | [CORE.md](reference/CORE.md)             | `XMarkdown` renders trusted content with basic styling               |
+| Render LLM streaming chunks             | [STREAMING.md](reference/STREAMING.md)   | Correct `hasNextChunk`, placeholders, tail indicator, loading states |
+| Replace tags with business components   | [EXTENSIONS.md](reference/EXTENSIONS.md) | Stable `components` map for custom tags and code blocks              |
+| Add plugins or theme overrides          | [EXTENSIONS.md](reference/EXTENSIONS.md) | Plugin imports, theme class wiring, minimal CSS overrides            |
+| Check prop details and defaults         | [API.md](reference/API.md)               | Full prop table for `XMarkdown` and streaming options                |
 
 # 🛠 Recommended Workflow
 
@@ -54,9 +54,9 @@ It covers:
 ## Minimal Setup Reminder
 
 ```tsx
-import { XMarkdown } from '@ant-design/x-markdown';
+import { XMarkdown } from '@ant-design/x-markdown'
 
-export default () => <XMarkdown content="# Hello" />;
+export default () => <XMarkdown content="# Hello" />
 ```
 
 # 🚨 Development Rules
@@ -70,11 +70,11 @@ export default () => <XMarkdown content="# Hello" />;
 
 # 🤝 Skill Collaboration
 
-| Scenario | Recommended skill combination | Why |
-| --- | --- | --- |
-| Rich assistant replies in chat | `x-chat-provider` → `x-request` → `use-x-chat` → `x-markdown` | Provider and request handle data flow, `x-markdown` handles final rendering |
-| Built-in provider with Markdown replies | `x-request` → `use-x-chat` → `x-markdown` | Keep request config and rendering concerns separate |
-| Standalone Markdown page or docs viewer | `x-markdown` only | No chat data flow needed |
+| Scenario                                | Recommended skill combination                                 | Why                                                                         |
+| --------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Rich assistant replies in chat          | `x-chat-provider` → `x-request` → `use-x-chat` → `x-markdown` | Provider and request handle data flow, `x-markdown` handles final rendering |
+| Built-in provider with Markdown replies | `x-request` → `use-x-chat` → `x-markdown`                     | Keep request config and rendering concerns separate                         |
+| Standalone Markdown page or docs viewer | `x-markdown` only                                             | No chat data flow needed                                                    |
 
 ## Boundary Rules
 

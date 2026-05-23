@@ -16,7 +16,7 @@ Wire chokidar into `electron/services/watcher.ts`: configure ignore patterns, de
 
 ## Architecture
 
-- **Single-flush model:** chokidar fires raw `add` / `change` / `unlink` per file. The watcher's `flush()` runs at most every 500ms (debounce) and applies *all* pending events in **one** SQLite transaction — keeps `git pull`-of-100-files at ~1 transaction.
+- **Single-flush model:** chokidar fires raw `add` / `change` / `unlink` per file. The watcher's `flush()` runs at most every 500ms (debounce) and applies _all_ pending events in **one** SQLite transaction — keeps `git pull`-of-100-files at ~1 transaction.
 - **Rename detection** lives entirely in `flush()`: process `unlink`s first, capture `(deletedPath → contentHash)`. Then for each `add`/`change`, compute fresh `sha256(body)`. If a deleted path had the same hash, treat as rename (`renameFile(...)` instead of delete+insert) and emit `index:fileRenamed`.
 - **Self-write filter** (built in Plan 2): every event handler calls `shouldIgnore(absPath, mtimeMs)` before queuing. Hits are silently dropped — the indexer already wrote the row in the application's own write path.
 - **Error → restart loop**: chokidar's `'error'` event triggers up to 3 restarts (`watcher.close()` then `start()`), each separated by 2s. Failure flips IndexState to `'error'`.
@@ -30,12 +30,12 @@ Wire chokidar into `electron/services/watcher.ts`: configure ignore patterns, de
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/watcher.ts` | Modify (chokidar `start/stop`, batch+flush, rename detection, restart) | 4.3–4.8 |
-| `electron/services/watcher.test.ts` | Modify (integration tests against real chokidar in tmp dir) | 4.3–4.8 |
-| `electron/services/file.ts` | Modify (hook `registerSelfWrite` into `write` / `rename`) | 5.1, 5.2 |
-| `electron/services/file.test.ts` | Modify (verify self-write registration after write/rename) | 5.1, 5.2 |
+| Path                                | Action                                                                 | Owner task |
+| ----------------------------------- | ---------------------------------------------------------------------- | ---------- |
+| `electron/services/watcher.ts`      | Modify (chokidar `start/stop`, batch+flush, rename detection, restart) | 4.3–4.8    |
+| `electron/services/watcher.test.ts` | Modify (integration tests against real chokidar in tmp dir)            | 4.3–4.8    |
+| `electron/services/file.ts`         | Modify (hook `registerSelfWrite` into `write` / `rename`)              | 5.1, 5.2   |
+| `electron/services/file.test.ts`    | Modify (verify self-write registration after write/rename)             | 5.1, 5.2   |
 
 ## Pre-flight
 
@@ -53,9 +53,11 @@ export async function rename(oldRel: string, newRel: string): Promise<void>
 ## Tasks
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 1: `start(groveRoot)` — chokidar config + handler registration
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -88,8 +90,13 @@ function waitFor(predicate: () => boolean, timeoutMs = 5000, intervalMs = 50): P
   return new Promise((resolve, reject) => {
     const start = Date.now()
     const id = setInterval(() => {
-      if (predicate()) { clearInterval(id); resolve() }
-      else if (Date.now() - start > timeoutMs) { clearInterval(id); reject(new Error('timeout')) }
+      if (predicate()) {
+        clearInterval(id)
+        resolve()
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(id)
+        reject(new Error('timeout'))
+      }
     }, intervalMs)
   })
 }
@@ -146,19 +153,36 @@ import { createHash } from 'node:crypto'
 import { relative } from 'node:path'
 import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
-import { upsertFile, syncTags, upsertFts, deleteFile, renameFile, getTokenizer } from './index-queries'
-import { parseFile } from './frontmatter'  // phase-04
+import {
+  upsertFile,
+  syncTags,
+  upsertFts,
+  deleteFile,
+  renameFile,
+  getTokenizer
+} from './index-queries'
+import { parseFile } from './frontmatter' // phase-04
 
 const fileEventEmitter = new EventEmitter()
 
-export function onFileChanged(h: (p: { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }) => void): () => void {
-  fileEventEmitter.on('fileChanged', h); return () => fileEventEmitter.off('fileChanged', h)
+export function onFileChanged(
+  h: (p: {
+    path: string
+    contentHash: string
+    mtime: number
+    frontmatter: Record<string, unknown>
+  }) => void
+): () => void {
+  fileEventEmitter.on('fileChanged', h)
+  return () => fileEventEmitter.off('fileChanged', h)
 }
 export function onFileDeleted(h: (p: { path: string }) => void): () => void {
-  fileEventEmitter.on('fileDeleted', h); return () => fileEventEmitter.off('fileDeleted', h)
+  fileEventEmitter.on('fileDeleted', h)
+  return () => fileEventEmitter.off('fileDeleted', h)
 }
 export function onFileRenamed(h: (p: { oldPath: string; newPath: string }) => void): () => void {
-  fileEventEmitter.on('fileRenamed', h); return () => fileEventEmitter.off('fileRenamed', h)
+  fileEventEmitter.on('fileRenamed', h)
+  return () => fileEventEmitter.off('fileRenamed', h)
 }
 
 let _watcher: FSWatcher | null = null
@@ -173,14 +197,19 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
 
   _watcher = chokidar.watch(groveRoot, {
     ignored: [
-      /(^|[/\\])\../,                    // dotfiles
+      /(^|[/\\])\../, // dotfiles
       /node_modules/,
-      '**/*.tmp', '**/*~', '**/*.swp',
+      '**/*.tmp',
+      '**/*~',
+      '**/*.swp',
       (p) => {
         // ignore non-md files (but allow dirs through so we recurse)
         if (p.endsWith('.md')) return false
-        try { return require('node:fs').statSync(p).isFile() }
-        catch { return false }
+        try {
+          return require('node:fs').statSync(p).isFile()
+        } catch {
+          return false
+        }
       }
     ],
     persistent: true,
@@ -203,7 +232,10 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
 }
 
 export async function stop(): Promise<void> {
-  if (_watcher) { await _watcher.close(); _watcher = null }
+  if (_watcher) {
+    await _watcher.close()
+    _watcher = null
+  }
   _root = null
   _db = null
   selfWrites.clear()
@@ -239,9 +271,11 @@ git commit -m "feat(phase-05): watcher.start/stop + chokidar config (ignores dot
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 2: Event batching with 500ms debounce
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -268,7 +302,9 @@ describe('watcher batching', () => {
   it('inserts a single new md file after debounce', async () => {
     await start(root, db)
     writeFileSync(join(root, 'a.md'), '---\ntitle: A\n---\nbody')
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1)
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1
+    )
     expect(db.prepare('SELECT path, title FROM files').get()).toEqual({ path: 'a.md', title: 'A' })
   })
 
@@ -277,8 +313,12 @@ describe('watcher batching', () => {
     writeFileSync(join(root, 'a.md'), 'v1')
     writeFileSync(join(root, 'a.md'), 'v2')
     writeFileSync(join(root, 'a.md'), 'v3')
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1)
-    const row = db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as { content_hash: string }
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1
+    )
+    const row = db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as {
+      content_hash: string
+    }
     const expected = require('node:crypto').createHash('sha256').update('v3').digest('hex')
     expect(row.content_hash).toBe(expected)
   })
@@ -299,7 +339,11 @@ In `electron/services/watcher.ts`, replace the stub handlers:
 
 ```ts
 type EventKind = 'add' | 'change' | 'unlink'
-interface EventEntry { kind: EventKind; abs: string; rel: string }
+interface EventEntry {
+  kind: EventKind
+  abs: string
+  rel: string
+}
 
 const FLUSH_DEBOUNCE_MS = 500
 const batch: Map<string, EventEntry> = new Map()
@@ -311,9 +355,11 @@ function toRel(abs: string): string {
 }
 
 function queue(entry: EventEntry): void {
-  batch.set(entry.abs, entry)  // last-write-wins per path
+  batch.set(entry.abs, entry) // last-write-wins per path
   if (_flushTimer) clearTimeout(_flushTimer)
-  _flushTimer = setTimeout(() => { void flush() }, FLUSH_DEBOUNCE_MS)
+  _flushTimer = setTimeout(() => {
+    void flush()
+  }, FLUSH_DEBOUNCE_MS)
 }
 
 function onAddOrChange(abs: string, kind: 'add' | 'change'): void {
@@ -323,13 +369,19 @@ function onUnlink(abs: string): void {
   queue({ kind: 'unlink', abs, rel: toRel(abs) })
 }
 function cancelPendingFlush(): void {
-  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null }
+  if (_flushTimer) {
+    clearTimeout(_flushTimer)
+    _flushTimer = null
+  }
   batch.clear()
 }
 
 async function flush(): Promise<void> {
   _flushTimer = null
-  if (!_db) { batch.clear(); return }
+  if (!_db) {
+    batch.clear()
+    return
+  }
   const events = [...batch.values()]
   batch.clear()
   // For now: process add/change only — rename detection comes in Task 4
@@ -340,7 +392,9 @@ async function flush(): Promise<void> {
     try {
       raw = await readFile(ev.abs, 'utf8')
       stat = await fsStat(ev.abs)
-    } catch { continue }
+    } catch {
+      continue
+    }
     if (shouldIgnore(ev.abs, stat.mtimeMs)) continue
     const { body, frontmatter } = parseFile(raw)
     const content_hash = createHash('sha256').update(body).digest('hex')
@@ -362,8 +416,20 @@ async function flush(): Promise<void> {
       ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
       : []
     syncTags(_db, row.path, tags)
-    const ftsRowid = (_db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
-    upsertFts(_db, { rowid: ftsRowid, path: row.path, title: row.title ?? '', summary: row.summary ?? '', content: body }, getTokenizer())
+    const ftsRowid = (
+      _db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+    ).rowid
+    upsertFts(
+      _db,
+      {
+        rowid: ftsRowid,
+        path: row.path,
+        title: row.title ?? '',
+        summary: row.summary ?? '',
+        content: body
+      },
+      getTokenizer()
+    )
   }
 }
 ```
@@ -386,9 +452,11 @@ git commit -m "feat(phase-05): batch chokidar events with 500ms debounce + last-
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 3: Single-transaction flush + unlink-first ordering + rename detection
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -401,18 +469,33 @@ describe('watcher transactional flush + rename', () => {
   let root: string
   let db: Database.Database
 
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'rename-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'rename-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('detects rename when unlink + add of same content_hash within window', async () => {
     writeFileSync(join(root, 'old.md'), 'same body')
     await start(root, db)
     // Seed db with the existing file the way startScan would
     upsertFile(db, {
-      path: 'old.md', title: null, summary: null, category: null, rating: null,
+      path: 'old.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: require('node:crypto').createHash('sha256').update('same body').digest('hex'),
-      mtime_ms: 1, size_bytes: 9, frontmatter_json: '{}',
-      created_at: 1, updated_at: 1
+      mtime_ms: 1,
+      size_bytes: 9,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
 
     rmSync(join(root, 'old.md'))
@@ -430,15 +513,25 @@ describe('watcher transactional flush + rename', () => {
     writeFileSync(join(root, 'a.md'), 'A body')
     await start(root, db)
     upsertFile(db, {
-      path: 'a.md', title: null, summary: null, category: null, rating: null,
+      path: 'a.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: require('node:crypto').createHash('sha256').update('A body').digest('hex'),
-      mtime_ms: 1, size_bytes: 6, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime_ms: 1,
+      size_bytes: 6,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     rmSync(join(root, 'a.md'))
     writeFileSync(join(root, 'b.md'), 'totally different')
 
     await waitFor(() => {
-      const paths = (db.prepare('SELECT path FROM files').all() as { path: string }[]).map((r) => r.path).sort()
+      const paths = (db.prepare('SELECT path FROM files').all() as { path: string }[])
+        .map((r) => r.path)
+        .sort()
       return paths.length === 1 && paths[0] === 'b.md'
     }, 3000)
   })
@@ -460,13 +553,22 @@ Replace the `flush` function body:
 ```ts
 async function flush(): Promise<void> {
   _flushTimer = null
-  if (!_db) { batch.clear(); return }
+  if (!_db) {
+    batch.clear()
+    return
+  }
   const events = [...batch.values()]
   batch.clear()
   if (events.length === 0) return
 
   // Pre-compute fresh hashes for add/change so the rename check + the upsert see the same value.
-  type Hashed = EventEntry & { body?: string; frontmatter?: Record<string, unknown>; content_hash?: string; mtimeMs?: number; size?: number }
+  type Hashed = EventEntry & {
+    body?: string
+    frontmatter?: Record<string, unknown>
+    content_hash?: string
+    mtimeMs?: number
+    size?: number
+  }
   const enriched: Hashed[] = []
   for (const ev of events) {
     if (ev.kind === 'unlink') {
@@ -476,10 +578,17 @@ async function flush(): Promise<void> {
     try {
       const raw = await readFile(ev.abs, 'utf8')
       const stat = await fsStat(ev.abs)
-      if (shouldIgnore(ev.abs, stat.mtimeMs)) continue  // self-write filter
+      if (shouldIgnore(ev.abs, stat.mtimeMs)) continue // self-write filter
       const { body, frontmatter } = parseFile(raw)
       const content_hash = createHash('sha256').update(body).digest('hex')
-      enriched.push({ ...ev, body, frontmatter, content_hash, mtimeMs: stat.mtimeMs, size: stat.size })
+      enriched.push({
+        ...ev,
+        body,
+        frontmatter,
+        content_hash,
+        mtimeMs: stat.mtimeMs,
+        size: stat.size
+      })
     } catch {
       // file vanished between event and read — ignore
     }
@@ -489,11 +598,13 @@ async function flush(): Promise<void> {
   const pendingRenames = new Map<string, string>()
   for (const ev of enriched) {
     if (ev.kind !== 'unlink') continue
-    const row = _db.prepare('SELECT content_hash FROM files WHERE path=?').get(ev.rel) as { content_hash: string } | undefined
+    const row = _db.prepare('SELECT content_hash FROM files WHERE path=?').get(ev.rel) as
+      | { content_hash: string }
+      | undefined
     if (row) pendingRenames.set(ev.rel, row.content_hash)
   }
 
-  const renamedFromTo = new Map<string, string>()  // oldRel -> newRel
+  const renamedFromTo = new Map<string, string>() // oldRel -> newRel
   const renamedNewPaths = new Set<string>()
 
   // Match each add/change against pending renames
@@ -522,8 +633,9 @@ async function flush(): Promise<void> {
     // 3. Apply add/change for files NOT matched as a rename target
     for (const ev of enriched) {
       if (ev.kind === 'unlink') continue
-      if (renamedNewPaths.has(ev.rel)) continue  // already handled via UPDATE
-      if (ev.content_hash === undefined || ev.body === undefined || ev.frontmatter === undefined) continue
+      if (renamedNewPaths.has(ev.rel)) continue // already handled via UPDATE
+      if (ev.content_hash === undefined || ev.body === undefined || ev.frontmatter === undefined)
+        continue
       const row = {
         path: ev.rel,
         title: typeof ev.frontmatter.title === 'string' ? ev.frontmatter.title : null,
@@ -534,7 +646,8 @@ async function flush(): Promise<void> {
         mtime_ms: ev.mtimeMs!,
         size_bytes: ev.size!,
         frontmatter_json: JSON.stringify(ev.frontmatter),
-        created_at: typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),
+        created_at:
+          typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),
         updated_at: Date.now()
       }
       upsertFile(_db!, row)
@@ -542,8 +655,20 @@ async function flush(): Promise<void> {
         ? (ev.frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
         : []
       syncTags(_db!, row.path, tags)
-      const ftsRowid = (_db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
-      upsertFts(_db!, { rowid: ftsRowid, path: row.path, title: row.title ?? '', summary: row.summary ?? '', content: ev.body }, getTokenizer())
+      const ftsRowid = (
+        _db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+      ).rowid
+      upsertFts(
+        _db!,
+        {
+          rowid: ftsRowid,
+          path: row.path,
+          title: row.title ?? '',
+          summary: row.summary ?? '',
+          content: ev.body
+        },
+        getTokenizer()
+      )
     }
   })
   tx()
@@ -554,7 +679,13 @@ async function flush(): Promise<void> {
 }
 
 interface LastFlush {
-  enriched: { kind: EventKind; rel: string; content_hash?: string; mtimeMs?: number; frontmatter?: Record<string, unknown> }[]
+  enriched: {
+    kind: EventKind
+    rel: string
+    content_hash?: string
+    mtimeMs?: number
+    frontmatter?: Record<string, unknown>
+  }[]
   renamedFromTo: Map<string, string>
   deletedPaths: string[]
 }
@@ -579,9 +710,11 @@ git commit -m "feat(phase-05): transactional flush with rename detection (single
 ---
 
 <!-- openspec-task: 4.6 -->
+
 ### Task 4: Emit `index:fileChanged` / `:fileDeleted` / `:fileRenamed`
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -591,9 +724,18 @@ Append:
 
 ```ts
 describe('watcher emits aggregate events', () => {
-  let root: string; let db: Database.Database
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'evt-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  let root: string
+  let db: Database.Database
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'evt-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('emits index:fileChanged on new file', async () => {
     const events: { path: string }[] = []
@@ -608,8 +750,17 @@ describe('watcher emits aggregate events', () => {
     writeFileSync(join(root, 'a.md'), 'body')
     await start(root, db)
     upsertFile(db, {
-      path: 'a.md', title: null, summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 1, size_bytes: 4, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      path: 'a.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime_ms: 1,
+      size_bytes: 4,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     const events: { path: string }[] = []
     onFileDeleted((p) => events.push(p))
@@ -622,9 +773,17 @@ describe('watcher emits aggregate events', () => {
     writeFileSync(join(root, 'old.md'), 'same body')
     await start(root, db)
     upsertFile(db, {
-      path: 'old.md', title: null, summary: null, category: null, rating: null,
+      path: 'old.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: require('node:crypto').createHash('sha256').update('same body').digest('hex'),
-      mtime_ms: 1, size_bytes: 9, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime_ms: 1,
+      size_bytes: 9,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     const events: { oldPath: string; newPath: string }[] = []
     onFileRenamed((p) => events.push(p))
@@ -649,30 +808,34 @@ Expected: FAIL — flush stores `_lastFlush` but never emits.
 In `electron/services/watcher.ts`, immediately after `tx()` and the `_lastFlush = ...` assignment, add:
 
 ```ts
-  // Emit aggregate events
-  for (const oldRel of _lastFlush.deletedPaths) {
-    fileEventEmitter.emit('fileDeleted', { path: oldRel })
+// Emit aggregate events
+for (const oldRel of _lastFlush.deletedPaths) {
+  fileEventEmitter.emit('fileDeleted', { path: oldRel })
+}
+for (const [oldRel, newRel] of _lastFlush.renamedFromTo) {
+  fileEventEmitter.emit('fileRenamed', { oldPath: oldRel, newPath: newRel })
+}
+for (const ev of _lastFlush.enriched) {
+  if (ev.kind === 'unlink') continue
+  if (_lastFlush.renamedFromTo) {
+    // skip if this rel is a rename target
+    let isRenameTarget = false
+    for (const newRel of _lastFlush.renamedFromTo.values())
+      if (newRel === ev.rel) {
+        isRenameTarget = true
+        break
+      }
+    if (isRenameTarget) continue
   }
-  for (const [oldRel, newRel] of _lastFlush.renamedFromTo) {
-    fileEventEmitter.emit('fileRenamed', { oldPath: oldRel, newPath: newRel })
+  if (ev.content_hash && ev.mtimeMs !== undefined && ev.frontmatter) {
+    fileEventEmitter.emit('fileChanged', {
+      path: ev.rel,
+      contentHash: ev.content_hash,
+      mtime: ev.mtimeMs,
+      frontmatter: ev.frontmatter
+    })
   }
-  for (const ev of _lastFlush.enriched) {
-    if (ev.kind === 'unlink') continue
-    if (_lastFlush.renamedFromTo) {
-      // skip if this rel is a rename target
-      let isRenameTarget = false
-      for (const newRel of _lastFlush.renamedFromTo.values()) if (newRel === ev.rel) { isRenameTarget = true; break }
-      if (isRenameTarget) continue
-    }
-    if (ev.content_hash && ev.mtimeMs !== undefined && ev.frontmatter) {
-      fileEventEmitter.emit('fileChanged', {
-        path: ev.rel,
-        contentHash: ev.content_hash,
-        mtime: ev.mtimeMs,
-        frontmatter: ev.frontmatter
-      })
-    }
-  }
+}
 ```
 
 - [ ] **Step 4: Run tests**
@@ -693,9 +856,11 @@ git commit -m "feat(phase-05): emit index:fileChanged/Deleted/Renamed after flus
 ---
 
 <!-- openspec-task: 4.7 -->
+
 ### Task 5: Restart on chokidar `error` (3 attempts, 2s gap → IndexState='error')
 
 **Files:**
+
 - Modify: `electron/services/watcher.ts`
 - Modify: `electron/services/watcher.test.ts`
 
@@ -708,9 +873,18 @@ import { _setStateForTest, state as indexerState } from './indexer'
 import { _simulateWatcherErrorForTest } from './watcher'
 
 describe('watcher restart logic', () => {
-  let root: string; let db: Database.Database
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'err-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  let root: string
+  let db: Database.Database
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'err-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('flips IndexState to error after 3 failed restarts', async () => {
     await start(root, db)
@@ -746,7 +920,11 @@ const RESTART_DELAY_MS = 2000
 
 let _restartInProgress = false
 
-async function tryRestart(intervalMs: number = RESTART_DELAY_MS, attemptsAllowed: number = RESTART_MAX_ATTEMPTS, simulateFailures = 0): Promise<boolean> {
+async function tryRestart(
+  intervalMs: number = RESTART_DELAY_MS,
+  attemptsAllowed: number = RESTART_MAX_ATTEMPTS,
+  simulateFailures = 0
+): Promise<boolean> {
   if (_restartInProgress) return false
   _restartInProgress = true
   try {
@@ -754,9 +932,13 @@ async function tryRestart(intervalMs: number = RESTART_DELAY_MS, attemptsAllowed
     for (let attempt = 1; attempt <= attemptsAllowed; attempt++) {
       await new Promise((r) => setTimeout(r, intervalMs))
       try {
-        if (failuresLeft > 0) { failuresLeft--; throw new Error('simulated restart failure') }
+        if (failuresLeft > 0) {
+          failuresLeft--
+          throw new Error('simulated restart failure')
+        }
         if (!_root || !_db) return false
-        const root = _root, db = _db
+        const root = _root,
+          db = _db
         if (_watcher) await _watcher.close()
         _watcher = null
         await start(root, db)
@@ -778,7 +960,10 @@ function handleWatcherError(_err: unknown): void {
   void tryRestart()
 }
 
-export async function _simulateWatcherErrorForTest(opts: { failRestarts: number; intervalMs?: number }): Promise<void> {
+export async function _simulateWatcherErrorForTest(opts: {
+  failRestarts: number
+  intervalMs?: number
+}): Promise<void> {
   await tryRestart(opts.intervalMs ?? 1, RESTART_MAX_ATTEMPTS, opts.failRestarts)
 }
 ```
@@ -803,11 +988,13 @@ git commit -m "feat(phase-05): watcher restart up to 3x on error; flip to IndexS
 ---
 
 <!-- openspec-task: 4.8 -->
+
 ### Task 6: `stop()` closes watcher + clears selfWrites
 
 This was scaffolded in Task 1 of this plan; verify it explicitly.
 
 **Files:**
+
 - Modify: `electron/services/watcher.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -816,9 +1003,17 @@ Append:
 
 ```ts
 describe('watcher.stop', () => {
-  let root: string; let db: Database.Database
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'stop-')) })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }); db.close() })
+  let root: string
+  let db: Database.Database
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'stop-'))
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('clears selfWrites and stops emitting events', async () => {
     await start(root, db)
@@ -861,9 +1056,11 @@ git commit -m "test(phase-05): verify watcher.stop clears state + halts events"
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 7: phase-04 `file.write` registers self-write after success
 
 **Files:**
+
 - Modify: `electron/services/file.ts`
 - Modify: `electron/services/file.test.ts`
 
@@ -880,12 +1077,19 @@ import { join } from 'node:path'
 
 describe('file.write registers selfWrite', () => {
   let root: string
-  beforeEach(() => { _resetSelfWritesForTest(); root = mkdtempSync(join(tmpdir(), 'fw-')); /* set current grove root using whatever phase-04 helper exists */ })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }) })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    root = mkdtempSync(
+      join(tmpdir(), 'fw-')
+    ) /* set current grove root using whatever phase-04 helper exists */
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
 
   it('registers absolute path + final mtime after a successful write', async () => {
     // Adjust for actual phase-04 API (e.g. setCurrentRoot(root) or similar)
-    setCurrentRootForTest(root)  // <- replace with real phase-04 helper
+    setCurrentRootForTest(root) // <- replace with real phase-04 helper
 
     await fileWrite('a.md', 'hello')
 
@@ -939,9 +1143,11 @@ git commit -m "feat(phase-05): file.write registers selfWrite after successful a
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 8: phase-04 `file.rename` registers self-write for both old and new paths
 
 **Files:**
+
 - Modify: `electron/services/file.ts`
 - Modify: `electron/services/file.test.ts`
 
@@ -954,8 +1160,14 @@ import { rename as fileRename } from './file'
 
 describe('file.rename registers selfWrite for both paths', () => {
   let root: string
-  beforeEach(() => { _resetSelfWritesForTest(); root = mkdtempSync(join(tmpdir(), 'fr-')); setCurrentRootForTest(root) })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }) })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    root = mkdtempSync(join(tmpdir(), 'fr-'))
+    setCurrentRootForTest(root)
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
 
   it('registers oldAbs (mtime 0 — any) + newAbs (real mtime)', async () => {
     await fileWrite('a.md', 'body')
@@ -997,7 +1209,7 @@ import { registerSelfWrite } from './watcher'
 // inside rename(oldRel, newRel)
 // after await fs.rename(oldAbs, newAbs):
 const newStat = await fs.stat(newAbs)
-registerSelfWrite(oldAbs, 0)              // suppress the unlink event (mtime tolerance handles 0)
+registerSelfWrite(oldAbs, 0) // suppress the unlink event (mtime tolerance handles 0)
 registerSelfWrite(newAbs, newStat.mtimeMs) // suppress the add event
 ```
 
@@ -1010,7 +1222,7 @@ In `electron/services/watcher.ts`, in the `unlink`-handling section of `flush()`
 const unlinkSelfWriteHits = new Set<string>()
 for (const ev of events) {
   if (ev.kind === 'unlink' && selfWrites.has(ev.abs)) {
-    selfWrites.delete(ev.abs)  // consume the registration
+    selfWrites.delete(ev.abs) // consume the registration
     unlinkSelfWriteHits.add(ev.abs)
   }
 }

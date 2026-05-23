@@ -12,26 +12,28 @@
 
 ## File Structure Map
 
-| Path | Role |
-|------|------|
-| `electron/services/logger.ts` | Replaces stub with electron-log (this plan) |
-| `src/main.tsx` | React entry — MemoryRouter + error boundary |
-| `src/App.tsx` | Route table with placeholders |
-| `src/pages/Home.tsx` | "Hello Acornvo" landing (this plan: empty; Plan 5 adds ping button) |
-| `src/pages/Placeholder.tsx` | Generic placeholder for unbuilt routes |
-| `src/components/ErrorBoundary.tsx` | Global error boundary |
-| `src/stores/root.ts` | Zustand root store with theme + locale |
-| `src/i18n/index.ts` | i18next init |
-| `src/i18n/locales/zh-CN.json` | zh-CN resource |
-| `src/index.html` | Modify: add React mount + script |
-| `src/index.css` | Minimal base styles (theme-aware) |
+| Path                               | Role                                                                |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `electron/services/logger.ts`      | Replaces stub with electron-log (this plan)                         |
+| `src/main.tsx`                     | React entry — MemoryRouter + error boundary                         |
+| `src/App.tsx`                      | Route table with placeholders                                       |
+| `src/pages/Home.tsx`               | "Hello Acornvo" landing (this plan: empty; Plan 5 adds ping button) |
+| `src/pages/Placeholder.tsx`        | Generic placeholder for unbuilt routes                              |
+| `src/components/ErrorBoundary.tsx` | Global error boundary                                               |
+| `src/stores/root.ts`               | Zustand root store with theme + locale                              |
+| `src/i18n/index.ts`                | i18next init                                                        |
+| `src/i18n/locales/zh-CN.json`      | zh-CN resource                                                      |
+| `src/index.html`                   | Modify: add React mount + script                                    |
+| `src/index.css`                    | Minimal base styles (theme-aware)                                   |
 
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Configure electron-log file path, 10 MB limit, 14-day retention
 
 **Files:**
+
 - Modify: `electron/services/logger.ts` (replace stub with real config)
 
 - [ ] **Step 1: Replace `electron/services/logger.ts` with electron-log configuration**
@@ -62,10 +64,7 @@ function resolveLogDir(): string {
   } catch (err) {
     const fallback = join(app.getPath('userData'), 'logs')
     mkdirSync(fallback, { recursive: true })
-    console.warn(
-      `logger: falling back to ${fallback} because ${primary} could not be created`,
-      err
-    )
+    console.warn(`logger: falling back to ${fallback} because ${primary} could not be created`, err)
     return fallback
   }
 }
@@ -82,10 +81,8 @@ export async function initLogger(): Promise<void> {
 
   log.transports.file.resolvePathFn = () => filePath
   log.transports.file.maxSize = TEN_MB
-  log.transports.file.level =
-    process.env.NODE_ENV === 'development' ? 'debug' : 'info'
-  log.transports.console.level =
-    process.env.NODE_ENV === 'development' ? 'debug' : 'info'
+  log.transports.file.level = process.env.NODE_ENV === 'development' ? 'debug' : 'info'
+  log.transports.console.level = process.env.NODE_ENV === 'development' ? 'debug' : 'info'
 
   log.initialize()
 }
@@ -113,9 +110,11 @@ export const logger: Logger = {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — start the app and confirm a log file is written**
@@ -125,11 +124,13 @@ Run `npm run dev`. Wait for the main window to appear. Then in a separate termin
 ```bash
 ls -la ~/.acornvo/logs/
 ```
+
 Expected: directory exists, contains a `main-YYYY-MM-DD.log` file.
 
 ```bash
 cat ~/.acornvo/logs/main-*.log | head -20
 ```
+
 Expected: at least one line from the startup log sequence (e.g. "app whenReady fired" or "app started").
 
 Quit the app.
@@ -144,9 +145,11 @@ git commit -m "feat(phase-01): electron-log writes to ~/.acornvo/logs/main-YYYY-
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Log level follows NODE_ENV
 
 **Files:**
+
 - Verify: `electron/services/logger.ts` (set in Task 1)
 
 - [ ] **Step 1: Re-read `initLogger` to confirm level selection**
@@ -166,6 +169,7 @@ Expected: main-process log file contains a `[debug]` line with `[renderer] debug
 ```bash
 grep "debug-level test" ~/.acornvo/logs/main-*.log
 ```
+
 Expected: match found.
 
 Quit the app.
@@ -178,11 +182,13 @@ Skip if Plan 3 has not yet produced a buildable app. Otherwise:
 npm run build
 NODE_ENV=production ./out/main/main.js   # or the packaged binary
 ```
+
 Call `window.api.log.debug('should be swallowed')` from DevTools.
 
 ```bash
 grep "should be swallowed" ~/.acornvo/logs/main-*.log
 ```
+
 Expected: no match (debug level is swallowed in prod).
 
 This check is a stretch goal; skip if the production packaging is not yet exercised in Plan 3.
@@ -197,17 +203,21 @@ git commit -m "fix(phase-01): respect NODE_ENV for log level selection"
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: Emit "app started" log line with version/platform/electron
 
 **Files:**
+
 - Verify: `electron/main.ts` already emits this line inside `ready-to-show` (Plan 3 Task 2).
 
 - [ ] **Step 1: Confirm the line is still in place**
 
 Run:
+
 ```bash
 grep -A 5 "ready-to-show" electron/main.ts
 ```
+
 Expected: output shows `logger.info('app started', { version, platform, electron })`. If absent, restore it:
 
 ```typescript
@@ -228,6 +238,7 @@ Run `npm run dev`. After window is visible, quit.
 ```bash
 grep "app started" ~/.acornvo/logs/main-*.log
 ```
+
 Expected: one line containing "app started" plus the version/platform/electron fields.
 
 - [ ] **Step 3: Commit only if a fix was needed**
@@ -240,9 +251,11 @@ git commit -m "fix(phase-01): ensure 'app started' log line emits with version/p
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 4: Clean up log files older than 14 days on startup
 
 **Files:**
+
 - Modify: `electron/services/logger.ts` (extend `initLogger` with cleanup)
 
 - [ ] **Step 1: Add cleanup helper and call it from `initLogger`**
@@ -302,18 +315,22 @@ export async function initLogger(): Promise<void> {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Smoke — seed an old file and confirm cleanup**
 
 Run:
+
 ```bash
 touch -t 202001010000 ~/.acornvo/logs/main-2020-01-01.log
 ls ~/.acornvo/logs/ | grep 2020-01-01
 ```
+
 Expected: old file exists before startup.
 
 Run `npm run dev`. Wait for window to appear. Quit.
@@ -321,6 +338,7 @@ Run `npm run dev`. Wait for window to appear. Quit.
 ```bash
 ls ~/.acornvo/logs/ | grep 2020-01-01 || echo 'deleted'
 ```
+
 Expected: output `deleted` (file is gone).
 
 - [ ] **Step 4: Commit**
@@ -333,17 +351,21 @@ git commit -m "feat(phase-01): cleanup log files older than 14 days on startup"
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 5: Renderer log handler forwards with `[renderer]` prefix
 
 **Files:**
+
 - Verify: `electron/ipc/handlers.ts` (already does this — Plan 2 Task 4)
 
 - [ ] **Step 1: Confirm the handler still prefixes `[renderer]`**
 
 Run:
+
 ```bash
 grep -A 2 "log:" electron/ipc/handlers.ts | grep '\[renderer\]'
 ```
+
 Expected: four matches (debug/info/warn/error all prefix `[renderer]`). If fewer, re-apply the shape from Plan 2 Task 4 Step 1.
 
 - [ ] **Step 2: Smoke — renderer log arrives in the file with prefix**
@@ -359,6 +381,7 @@ Quit. Then:
 ```bash
 grep "\[renderer\] boom" ~/.acornvo/logs/main-*.log
 ```
+
 Expected: one line with `[error]` level, message `[renderer] boom`, plus the `{ where: 'smoke' }` context.
 
 - [ ] **Step 3: Commit only if a fix was needed**
@@ -371,9 +394,11 @@ git commit -m "fix(phase-01): renderer log handler prefixes [renderer]"
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 6: `src/main.tsx` — React root with `<MemoryRouter>` and error boundary
 
 **Files:**
+
 - Create: `src/main.tsx`
 - Create: `src/components/ErrorBoundary.tsx`
 - Create: `src/index.css`
@@ -483,18 +508,20 @@ createRoot(container).render(
 Replace the `<body>` of `src/index.html` with:
 
 ```html
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/main.tsx"></script>
+</body>
 ```
 
 - [ ] **Step 5: Typecheck (may fail temporarily)**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: FAIL with `Cannot find module './App'` / `'./i18n'`. That is expected — subsequent tasks create those files.
 
 - [ ] **Step 6: Commit**
@@ -507,9 +534,11 @@ git commit -m "feat(phase-01): React root mounts with MemoryRouter and ErrorBoun
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 7: `src/App.tsx` — route table with placeholders
 
 **Files:**
+
 - Create: `src/App.tsx`
 - Create: `src/pages/Home.tsx`
 - Create: `src/pages/Placeholder.tsx`
@@ -574,9 +603,11 @@ export function App(): JSX.Element {
 - [ ] **Step 4: Typecheck (still may fail on `./i18n`)**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: FAIL only on `Cannot find module './i18n'` (Task 10 adds it). If other errors appear, fix them before proceeding.
 
 - [ ] **Step 5: Commit**
@@ -589,9 +620,11 @@ git commit -m "feat(phase-01): route table with Home and Placeholder pages"
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 8: Zustand root store with `theme` and `locale`
 
 **Files:**
+
 - Create: `src/stores/root.ts`
 
 - [ ] **Step 1: Create `src/stores/root.ts`**
@@ -624,14 +657,17 @@ export const useRootStore = create<RootState>((set) => ({
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: same as before — still failing on `./i18n` only.
 
 - [ ] **Step 3: Delete `src/stores/.gitkeep`**
 
 Run:
+
 ```bash
 rm -f src/stores/.gitkeep
 ```
@@ -646,9 +682,11 @@ git commit -m "feat(phase-01): root Zustand store with theme and locale"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 9: `setTheme` side-effect — write `data-theme` + subscribe to system scheme
 
 **Files:**
+
 - Modify: `src/stores/root.ts` (extend setters with side effects; expose `applyThemeEffect`)
 
 - [ ] **Step 1: Extend `src/stores/root.ts` with theme effect logic**
@@ -670,9 +708,7 @@ export type RootState = {
 
 function resolveSystemTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 function applyThemeToDocument(theme: Theme): void {
@@ -725,17 +761,20 @@ And call it before `createRoot(...)`:
 ```typescript
 initThemeEffect()
 
-createRoot(container).render(
+createRoot(container)
+  .render
   // ... unchanged
-)
+  ()
 ```
 
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: still failing only on `./i18n` — the next task clears that.
 
 - [ ] **Step 4: Commit**
@@ -748,9 +787,11 @@ git commit -m "feat(phase-01): setTheme writes data-theme and subscribes to pref
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 10: i18next init with `zh-CN`
 
 **Files:**
+
 - Create: `src/i18n/index.ts`
 - Create: `src/i18n/locales/zh-CN.json`
 
@@ -807,6 +848,7 @@ export { i18n }
 - [ ] **Step 3: Ensure `tsconfig.web.json` allows JSON imports**
 
 Run:
+
 ```bash
 grep resolveJsonModule tsconfig.web.json || echo 'needs add'
 ```
@@ -822,20 +864,25 @@ If `needs add`, edit `tsconfig.web.json` and add to `compilerOptions`:
 - [ ] **Step 4: Typecheck — should now fully PASS**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: PASS. All cross-file references resolved.
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS (unchanged).
 
 - [ ] **Step 5: Delete `src/i18n/.gitkeep`**
 
 Run:
+
 ```bash
 rm -f src/i18n/.gitkeep
 ```
@@ -843,6 +890,7 @@ rm -f src/i18n/.gitkeep
 - [ ] **Step 6: Smoke — launch and confirm the renderer boots**
 
 Run `npm run dev`. Expected:
+
 - Main Electron window opens.
 - Shows "Hello Acornvo" in a plain page (no ping button yet — that lands in Plan 5).
 - DevTools console shows no red errors.
@@ -862,6 +910,7 @@ git commit -m "feat(phase-01): i18next initialized with zh-CN resource"
 ## Plan 4 Wrap-up
 
 After Task 10, the repo should have:
+
 - `electron/services/logger.ts` using `electron-log` with rotated files at `~/.acornvo/logs/main-YYYY-MM-DD.log`, 10 MB limit, 14-day cleanup.
 - React renderer mounting: `src/main.tsx`, `src/App.tsx`, route placeholders, `src/components/ErrorBoundary.tsx`.
 - Zustand root store with theme side-effects wired via `initThemeEffect()`.

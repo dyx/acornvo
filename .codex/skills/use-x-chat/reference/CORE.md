@@ -3,7 +3,7 @@
 #### Get Message List
 
 ```ts
-const { messages } = useXChat({ provider });
+const { messages } = useXChat({ provider })
 // messages structure: MessageInfo<ChatMessage>[]
 // Actual message data is in msg.message
 // msg.status: 'local' | 'loading' | 'updating' | 'success' | 'error' | 'abort'
@@ -12,51 +12,51 @@ const { messages } = useXChat({ provider });
 #### Manually Set Messages (no request triggered)
 
 ```ts
-const { setMessages } = useXChat({ provider });
+const { setMessages } = useXChat({ provider })
 
 // Clear messages
-setMessages([]);
+setMessages([])
 
 // Add welcome message
 setMessages([
   {
     id: 'welcome',
     message: { content: 'Welcome to AI Assistant', role: 'assistant' },
-    status: 'success',
-  },
-]);
+    status: 'success'
+  }
+])
 ```
 
 #### Update Single Message
 
 ```ts
-const { setMessage } = useXChat({ provider });
+const { setMessage } = useXChat({ provider })
 
 // Update message content
 setMessage('msg-id', {
-  message: { content: 'New content', role: 'assistant' },
-});
+  message: { content: 'New content', role: 'assistant' }
+})
 
 // Mark as error status
-setMessage('msg-id', { status: 'error' });
+setMessage('msg-id', { status: 'error' })
 
 // Update with extraInfo
 setMessage('msg-id', {
   message: { content: 'Edited', role: 'user' },
-  extraInfo: { edited: true, editedAt: Date.now() },
-});
+  extraInfo: { edited: true, editedAt: Date.now() }
+})
 ```
 
 #### Delete Message
 
 ```ts
-const { removeMessage } = useXChat({ provider });
+const { removeMessage } = useXChat({ provider })
 
 // Delete first message
-removeMessage(messages[0]?.id);
+removeMessage(messages[0]?.id)
 
 // Delete all error-status messages
-messages.filter((m) => m.status === 'error').forEach((m) => removeMessage(m.id));
+messages.filter((m) => m.status === 'error').forEach((m) => removeMessage(m.id))
 ```
 
 ### 2. Request Control
@@ -64,29 +64,29 @@ messages.filter((m) => m.status === 'error').forEach((m) => removeMessage(m.id))
 #### Send Message
 
 ```ts
-const { onRequest } = useXChat({ provider });
+const { onRequest } = useXChat({ provider })
 
 // Basic usage (onRequest param type is Partial<Input>)
-onRequest({ query: 'User question' });
+onRequest({ query: 'User question' })
 
 // With extra metadata (extraInfo is stored in MessageInfo.extraInfo)
-onRequest({ query: 'User question' }, { extraInfo: { sourceId: 'msg-123', isRetry: false } });
+onRequest({ query: 'User question' }, { extraInfo: { sourceId: 'msg-123', isRetry: false } })
 
 // For OpenAIChatProvider, send full message array
 onRequest({
   messages: [{ role: 'user', content: 'Question content' }],
-  temperature: 0.7,
-});
+  temperature: 0.7
+})
 ```
 
 #### Abort Request
 
 ```tsx
-const { abort, isRequesting } = useXChat({ provider });
+const { abort, isRequesting } = useXChat({ provider })
 
-<button onClick={abort} disabled={!isRequesting}>
+;<button onClick={abort} disabled={!isRequesting}>
   Stop generation
-</button>;
+</button>
 // abort triggers requestFallback with error.name === 'AbortError'
 ```
 
@@ -129,24 +129,24 @@ const { messages } = useXChat({
     if (error.name === 'AbortError') {
       return {
         content: messageInfo?.message?.content || 'Reply cancelled',
-        role: 'assistant' as const,
-      };
+        role: 'assistant' as const
+      }
     }
 
     // Timeout error
     if (error.name === 'TimeoutError' || error.name === 'StreamTimeoutError') {
-      return { content: 'Request timed out, please retry later', role: 'assistant' as const };
+      return { content: 'Request timed out, please retry later', role: 'assistant' as const }
     }
 
     // Server-returned error message
     if (errorInfo?.error?.message) {
-      return { content: errorInfo.error.message, role: 'assistant' as const };
+      return { content: errorInfo.error.message, role: 'assistant' as const }
     }
 
     // Network error fallback
-    return { content: 'Network error, please retry later', role: 'assistant' as const };
-  },
-});
+    return { content: 'Network error, please retry later', role: 'assistant' as const }
+  }
+})
 ```
 
 #### Async requestFallback
@@ -175,10 +175,10 @@ const { messages } = useXChat({
     {
       id: '1',
       message: { role: 'assistant', content: 'Hello! I am an AI assistant' },
-      status: 'success',
-    },
-  ],
-});
+      status: 'success'
+    }
+  ]
+})
 ```
 
 #### Async Default Messages (fetch history from server)
@@ -188,18 +188,18 @@ const { messages, isDefaultMessagesRequesting } = useXChat({
   provider,
   conversationKey: activeKey,
   defaultMessages: async ({ conversationKey }) => {
-    const history = await fetchHistory(conversationKey);
+    const history = await fetchHistory(conversationKey)
     return history.map((item, index) => ({
       id: `history_${index}`,
       message: { role: item.role, content: item.content },
-      status: 'success' as const,
-    }));
-  },
-});
+      status: 'success' as const
+    }))
+  }
+})
 
 // isDefaultMessagesRequesting: true while async loading
 if (isDefaultMessagesRequesting) {
-  return <Spin />;
+  return <Spin />
 }
 ```
 
@@ -219,7 +219,7 @@ requestPlaceholder: (requestParams, { messages }) => {
 Use `parser` when `ChatMessage` needs to be split into multiple bubbles (one-to-many):
 
 ```tsx
-import { useXChat } from '@ant-design/x-sdk';
+import { useXChat } from '@ant-design/x-sdk'
 
 // Scenario: one ChatMessage contains reasoning chain + answer, split into two bubbles
 const { parsedMessages } = useXChat({
@@ -228,22 +228,22 @@ const { parsedMessages } = useXChat({
     if (message.reasoning && message.content) {
       return [
         { content: message.reasoning, role: 'assistant', type: 'reasoning' },
-        { content: message.content, role: 'assistant', type: 'answer' },
-      ];
+        { content: message.content, role: 'assistant', type: 'answer' }
+      ]
     }
-    return { content: message.content, role: message.role };
-  },
-});
+    return { content: message.content, role: message.role }
+  }
+})
 
 // Use parsedMessages instead of messages for Bubble.List
-<Bubble.List
+;<Bubble.List
   items={parsedMessages.map(({ id, message, status }) => ({
     key: id,
     role: message.role,
     content: message.content,
-    loading: status === 'loading',
+    loading: status === 'loading'
   }))}
-/>;
+/>
 ```
 
 ### 6. extraInfo: Message Metadata
@@ -285,24 +285,24 @@ const { messages, setMessage } = useXChat({
     {
       id: 'sys',
       message: { role: 'developer', content: 'You are a helpful assistant' },
-      status: 'success',
+      status: 'success'
     },
     { id: '0', message: { role: 'user', content: 'Hello' }, status: 'success' },
-    { id: '1', message: { role: 'assistant', content: 'Hello!' }, status: 'success' },
-  ],
-});
+    { id: '1', message: { role: 'assistant', content: 'Hello!' }, status: 'success' }
+  ]
+})
 
 // Filter out developer/system messages from display
 const chatMessages = messages.filter(
-  (m) => m.message.role !== 'developer' && m.message.role !== 'system',
-);
+  (m) => m.message.role !== 'developer' && m.message.role !== 'system'
+)
 
 // Dynamically update system prompt
 const updateSystemPrompt = (newPrompt: string) => {
   setMessage('sys', {
-    message: { role: 'developer', content: newPrompt },
-  });
-};
+    message: { role: 'developer', content: newPrompt }
+  })
+}
 ```
 
 ### 8. Bubble.List role Configuration

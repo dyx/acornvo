@@ -32,22 +32,22 @@ Finish the Editor store (the success-path counter reset is in plan 1; this plan 
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/stores/editor.ts` | Modify (close cleanup details) | 2.7, 2.8 |
-| `src/stores/editor.test.ts` | Modify | 2.7, 2.8 |
-| `package.json` (devDeps: `@testing-library/*`, `jsdom`) | Modify if missing | 3.1 |
-| `src/pages/Editor.tsx` | Replace stub with real router | 3.1, 4.2 |
-| `src/pages/Editor.test.tsx` | Modify | 3.1 |
-| `src/components/editor/EditorTitleBar.tsx` | Create | 3.2 |
-| `src/components/editor/EditorTitleBar.test.tsx` | Create | 3.2 |
-| `src/components/editor/VditorEditor.tsx` | Create | 3.3 |
-| `src/components/editor/VditorEditor.test.tsx` | Create | 3.3 |
-| `src/components/editor/FrontmatterCard.tsx` | Create | 3.4 |
-| `src/components/editor/FrontmatterCard.test.tsx` | Create | 3.4 |
-| `src/components/editor/EditorErrorState.tsx` | Create | 3.5 |
-| `src/components/editor/EditorErrorState.test.tsx` | Create | 3.5 |
-| `src/i18n/locales/zh-CN.json` | Modify (editor namespace stubs used by these components) | 3.2, 3.3, 3.4, 3.5, 4.1, 4.2 |
+| Path                                                    | Action                                                   | Owner task                   |
+| ------------------------------------------------------- | -------------------------------------------------------- | ---------------------------- |
+| `src/stores/editor.ts`                                  | Modify (close cleanup details)                           | 2.7, 2.8                     |
+| `src/stores/editor.test.ts`                             | Modify                                                   | 2.7, 2.8                     |
+| `package.json` (devDeps: `@testing-library/*`, `jsdom`) | Modify if missing                                        | 3.1                          |
+| `src/pages/Editor.tsx`                                  | Replace stub with real router                            | 3.1, 4.2                     |
+| `src/pages/Editor.test.tsx`                             | Modify                                                   | 3.1                          |
+| `src/components/editor/EditorTitleBar.tsx`              | Create                                                   | 3.2                          |
+| `src/components/editor/EditorTitleBar.test.tsx`         | Create                                                   | 3.2                          |
+| `src/components/editor/VditorEditor.tsx`                | Create                                                   | 3.3                          |
+| `src/components/editor/VditorEditor.test.tsx`           | Create                                                   | 3.3                          |
+| `src/components/editor/FrontmatterCard.tsx`             | Create                                                   | 3.4                          |
+| `src/components/editor/FrontmatterCard.test.tsx`        | Create                                                   | 3.4                          |
+| `src/components/editor/EditorErrorState.tsx`            | Create                                                   | 3.5                          |
+| `src/components/editor/EditorErrorState.test.tsx`       | Create                                                   | 3.5                          |
+| `src/i18n/locales/zh-CN.json`                           | Modify (editor namespace stubs used by these components) | 3.2, 3.3, 3.4, 3.5, 4.1, 4.2 |
 
 ## Pre-flight
 
@@ -60,9 +60,11 @@ If `@testing-library/react` etc. were already installed by phase-06's plans, tas
 ## Tasks
 
 <!-- openspec-task: 2.7 -->
+
 ### Task 1: Save success — clean lastError + reset saveErrorCount + persistentFailure
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -73,72 +75,73 @@ Plan 1's task 7 already cleared `lastError: null`, `saveErrorCount: 0`, `persist
 In `src/stores/editor.test.ts`, find the test that currently reads:
 
 ```ts
-  it('successful save after errors clears the count and the flag (per task 2.7)', async () => {
-    // Coverage skeleton — the actual reset on success is task 2.7.
-    // For now we assert error-only state. The success-clears-count line will
-    // be uncommented in plan 2 task 2.7.
-    expect(true).toBe(true)
-  })
+it('successful save after errors clears the count and the flag (per task 2.7)', async () => {
+  // Coverage skeleton — the actual reset on success is task 2.7.
+  // For now we assert error-only state. The success-clears-count line will
+  // be uncommented in plan 2 task 2.7.
+  expect(true).toBe(true)
+})
 ```
 
 …and replace with:
 
 ```ts
-  it('successful save after errors clears the count and persistentFailure flag', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ;(ipcMock.file as any).writeParsed = vi
-      .fn()
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+it('successful save after errors clears the count and persistentFailure flag', async () => {
+  await openReady('A', 1)
+  useEditorStore.getState().setBody('B')
+  ;(ipcMock.file as any).writeParsed = vi
+    .fn()
+    .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+    .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+    .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+    .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
 
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-    let s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(3)
-    expect(s.persistentFailure).toBe(true)
+  await useEditorStore.getState().save()
+  await useEditorStore.getState().save()
+  await useEditorStore.getState().save()
+  let s = useEditorStore.getState().state
+  if (s.kind !== 'ready') throw new Error('unreachable')
+  expect(s.saveErrorCount).toBe(3)
+  expect(s.persistentFailure).toBe(true)
 
-    // User retries
-    await useEditorStore.getState().save()
+  // User retries
+  await useEditorStore.getState().save()
 
-    s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(0)
-    expect(s.lastError).toBeNull()
-    expect(s.persistentFailure).toBe(false)
-    expect(s.savedBody).toBe('B')
-    expect(s.savedMtimeMs).toBe(2)
-  })
+  s = useEditorStore.getState().state
+  if (s.kind !== 'ready') throw new Error('unreachable')
+  expect(s.saveErrorCount).toBe(0)
+  expect(s.lastError).toBeNull()
+  expect(s.persistentFailure).toBe(false)
+  expect(s.savedBody).toBe('B')
+  expect(s.savedMtimeMs).toBe(2)
+})
 
-  it('conflict-then-success leaves saveErrorCount untouched on the conflict but resets on success', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ;(ipcMock.file as any).writeParsed = vi
-      .fn()
-      .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
-      .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
+it('conflict-then-success leaves saveErrorCount untouched on the conflict but resets on success', async () => {
+  await openReady('A', 1)
+  useEditorStore.getState().setBody('B')
+  ;(ipcMock.file as any).writeParsed = vi
+    .fn()
+    .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
+    .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
 
-    await useEditorStore.getState().save()
-    let s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(0)
-    expect(s.lastError).toBe('conflict')
+  await useEditorStore.getState().save()
+  let s = useEditorStore.getState().state
+  if (s.kind !== 'ready') throw new Error('unreachable')
+  expect(s.saveErrorCount).toBe(0)
+  expect(s.lastError).toBe('conflict')
 
-    await useEditorStore.getState().save()
-    s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.lastError).toBeNull()
-    expect(s.saveErrorCount).toBe(0)
-  })
+  await useEditorStore.getState().save()
+  s = useEditorStore.getState().state
+  if (s.kind !== 'ready') throw new Error('unreachable')
+  expect(s.lastError).toBeNull()
+  expect(s.saveErrorCount).toBe(0)
+})
 ```
 
 - [ ] **Step 2: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'save error branches'
 ```
@@ -155,9 +158,11 @@ git commit -m "test(phase-07): success path clears saveErrorCount + persistentFa
 ---
 
 <!-- openspec-task: 2.8 -->
+
 ### Task 2: `close()` — flush + cancel debounce + return to idle
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -188,16 +193,14 @@ describe('editor store — close()', () => {
   it('flushes pending save before returning to idle', async () => {
     await openReady('A', 1)
     useEditorStore.getState().setBody('B')
-    ;(ipcMock.file as any).writeParsed = vi
-      .fn()
-      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h' })
+    ;(ipcMock.file as any).writeParsed = vi.fn().mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h' })
 
     await useEditorStore.getState().close()
 
     expect((ipcMock.file as any).writeParsed).toHaveBeenCalledTimes(1)
-    expect((ipcMock.file as any).writeParsed).toHaveBeenCalledWith(
-      'a.md', {}, 'B', { expectedMtime: 1 }
-    )
+    expect((ipcMock.file as any).writeParsed).toHaveBeenCalledWith('a.md', {}, 'B', {
+      expectedMtime: 1
+    })
     expect(useEditorStore.getState().state.kind).toBe('idle')
   })
 
@@ -205,9 +208,7 @@ describe('editor store — close()', () => {
     vi.useFakeTimers()
     try {
       await openReady('A', 1)
-      ;(ipcMock.file as any).writeParsed = vi
-        .fn()
-        .mockResolvedValue({ mtimeMs: 2, sha256: 'h' })
+      ;(ipcMock.file as any).writeParsed = vi.fn().mockResolvedValue({ mtimeMs: 2, sha256: 'h' })
       useEditorStore.getState().setBody('B') // schedules 1s timer
       await useEditorStore.getState().close()
       vi.advanceTimersByTime(2000) // would re-fire if not cancelled
@@ -228,6 +229,7 @@ describe('editor store — close()', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'close'
 ```
@@ -251,6 +253,7 @@ In `src/stores/editor.ts`, replace the existing `close()` with:
 - [ ] **Step 4: Run the tests**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -267,9 +270,11 @@ git commit -m "feat(phase-07): editor store close() — flushSave + cancel debou
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 3: `Editor.tsx` page — wire route param to store; render loading/ready/error
 
 **Files:**
+
 - Modify: `src/pages/Editor.tsx`
 - Modify: `src/pages/Editor.test.tsx`
 - Modify: `package.json` (devDeps if missing)
@@ -280,6 +285,7 @@ The page is a thin router. It runs `editor.open(path)` once on mount and `editor
 - [ ] **Step 1: Ensure `@testing-library/react` + `jsdom` are installed**
 
 Run:
+
 ```bash
 node -e "const p=require('./package.json');console.log('@testing-library/react?', !!p.devDependencies?.['@testing-library/react']); console.log('jsdom?', !!p.devDependencies?.['jsdom'])"
 ```
@@ -293,6 +299,7 @@ npm install -D @testing-library/react@^16 @testing-library/dom@^10 @testing-libr
 ```
 
 Verify:
+
 ```bash
 npx vitest run --version
 ```
@@ -367,8 +374,15 @@ describe('Editor page', () => {
     expect(screen.getByTestId('editor-loading')).toBeTruthy()
 
     release({
-      content: '# x', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '# x', rawYaml: ''
+      content: '# x',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: '# x',
+      rawYaml: ''
     })
 
     await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
@@ -378,15 +392,20 @@ describe('Editor page', () => {
     const { IpcError } = await import('@shared/ipc-contract')
     ipcMock.file.readParsed.mockRejectedValueOnce(new IpcError('E_NOT_FOUND', 'gone'))
     renderAt(encodeURIComponent('missing.md'))
-    await waitFor(() =>
-      expect(screen.getByTestId('editor-error-state')).toBeTruthy()
-    )
+    await waitFor(() => expect(screen.getByTestId('editor-error-state')).toBeTruthy())
   })
 
   it('decodes the route param before calling open()', async () => {
     ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
+      content: '',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: '',
+      rawYaml: ''
     })
     renderAt(encodeURIComponent('notes/中文 with space.md'))
     await waitFor(() =>
@@ -397,6 +416,7 @@ describe('Editor page', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx
 ```
@@ -475,7 +495,10 @@ export function Editor(): JSX.Element {
 
   if (!path) {
     return (
-      <div data-testid="editor-error-state" className="flex h-full items-center justify-center text-sm">
+      <div
+        data-testid="editor-error-state"
+        className="flex h-full items-center justify-center text-sm"
+      >
         no path
       </div>
     )
@@ -517,6 +540,7 @@ The four child components (`EditorTitleBar`, `VditorEditor`, `FrontmatterCard`, 
 - [ ] **Step 5: Create minimal child stubs**
 
 Create `src/components/editor/EditorTitleBar.tsx`:
+
 ```tsx
 import type { JSX } from 'react'
 export function EditorTitleBar(): JSX.Element {
@@ -525,6 +549,7 @@ export function EditorTitleBar(): JSX.Element {
 ```
 
 Create `src/components/editor/VditorEditor.tsx`:
+
 ```tsx
 import type { JSX } from 'react'
 export function VditorEditor(): JSX.Element {
@@ -533,6 +558,7 @@ export function VditorEditor(): JSX.Element {
 ```
 
 Create `src/components/editor/FrontmatterCard.tsx`:
+
 ```tsx
 import type { JSX } from 'react'
 export function FrontmatterCard(): JSX.Element {
@@ -541,6 +567,7 @@ export function FrontmatterCard(): JSX.Element {
 ```
 
 Create `src/components/editor/EditorErrorState.tsx`:
+
 ```tsx
 import type { JSX } from 'react'
 export function EditorErrorState(): JSX.Element {
@@ -566,13 +593,16 @@ git commit -m "feat(phase-07): Editor page routes loading/ready/error + visibili
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 4: `EditorTitleBar` — back / path / dirty dot / saving pulse / shortcut hint
 
 **Files:**
+
 - Modify: `src/components/editor/EditorTitleBar.tsx`
 - Create: `src/components/editor/EditorTitleBar.test.tsx`
 
 Spec `editor-page#编辑器 TitleBar` requires:
+
 - left "← 返回果仓" button → `flushSave()` then `navigate(-1)`
 - middle: relative path + dirty dot (●) + "保存中…" pulse
 - right: `Cmd+S 保存` (mac) / `Ctrl+S 保存` (win/linux)
@@ -630,7 +660,11 @@ beforeEach(() => {
 
 describe('EditorTitleBar', () => {
   it('renders the relative path and shows no dirty dot when clean', () => {
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByText('notes/a.md')).toBeTruthy()
     expect(screen.queryByTestId('editor-dirty-dot')).toBeNull()
     expect(screen.queryByTestId('editor-saving-pulse')).toBeNull()
@@ -638,19 +672,31 @@ describe('EditorTitleBar', () => {
 
   it('shows dirty dot when state.dirty', () => {
     useEditorStore.setState({ state: readyState({ dirty: true }) })
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByTestId('editor-dirty-dot')).toBeTruthy()
   })
 
   it('shows saving pulse when state.saving', () => {
     useEditorStore.setState({ state: readyState({ saving: true, dirty: true }) })
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByTestId('editor-saving-pulse')).toBeTruthy()
   })
 
   it('back button calls flushSave then navigate(-1)', async () => {
     const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     await userEvent.click(screen.getByRole('button', { name: /返回果仓/ }))
     expect(flushSpy).toHaveBeenCalled()
     expect(navigateSpy).toHaveBeenCalledWith(-1)
@@ -659,6 +705,7 @@ describe('EditorTitleBar', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/EditorTitleBar.test.tsx
 ```
@@ -705,7 +752,9 @@ export function EditorTitleBar(): JSX.Element {
       <div className="flex flex-1 items-center justify-center gap-2 text-[color:var(--color-ink-2)]">
         <span>{ready.path}</span>
         {ready.dirty && (
-          <span data-testid="editor-dirty-dot" className="text-[color:var(--color-accent)]">●</span>
+          <span data-testid="editor-dirty-dot" className="text-[color:var(--color-accent)]">
+            ●
+          </span>
         )}
         {ready.saving && (
           <span
@@ -727,6 +776,7 @@ export function EditorTitleBar(): JSX.Element {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/EditorTitleBar.test.tsx
 ```
@@ -743,13 +793,16 @@ git commit -m "feat(phase-07): EditorTitleBar — back/path/dirty/saving + platf
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 5: `VditorEditor` — mount Vditor in `ir` mode with offline assets and image-paste interception
 
 **Files:**
+
 - Modify: `src/components/editor/VditorEditor.tsx`
 - Create: `src/components/editor/VditorEditor.test.tsx`
 
 Per design D1 + D8:
+
 - mode `ir`
 - `cdn: '/vditor'`
 - `upload: { url: '' }` + custom `paste` to intercept image data
@@ -760,6 +813,7 @@ Per design D1 + D8:
 Vditor's TS types are imported from `'vditor'`. We instantiate inside a ref-bound div.
 
 The render is heavy and pulls DOM APIs. We test it by mocking the `vditor` import and asserting that:
+
 1. The component invokes `new Vditor(el, opts)` with `mode: 'ir'`, `cdn: '/vditor'`, `upload.url = ''`.
 2. The `input` option pipes through to `setBody`.
 3. Unmount calls `destroy()`.
@@ -800,9 +854,18 @@ import { VditorEditor } from './VditorEditor'
 
 function readyState(over: Partial<EditorReadyState> = {}): EditorReadyState {
   return {
-    kind: 'ready', path: 'a.md', frontmatter: {}, body: '# Hello',
-    savedBody: '# Hello', savedMtimeMs: 1, dirty: false, saving: false,
-    lastError: null, saveErrorCount: 0, persistentFailure: false, ...over
+    kind: 'ready',
+    path: 'a.md',
+    frontmatter: {},
+    body: '# Hello',
+    savedBody: '# Hello',
+    savedMtimeMs: 1,
+    dirty: false,
+    saving: false,
+    lastError: null,
+    saveErrorCount: 0,
+    persistentFailure: false,
+    ...over
   }
 }
 
@@ -865,9 +928,10 @@ describe('VditorEditor', () => {
 })
 ```
 
-> Note: testing the *actual* image-paste interception is fiddly under jsdom because Vditor processes clipboard events internally. Spec scenario "粘贴图片被拦截" is verified end-to-end in plan 5 acceptance task 8.7 by manually pasting an image into the running app. The unit test above verifies the configuration that disables Vditor's upload, which is the only renderer-side surface available.
+> Note: testing the _actual_ image-paste interception is fiddly under jsdom because Vditor processes clipboard events internally. Spec scenario "粘贴图片被拦截" is verified end-to-end in plan 5 acceptance task 8.7 by manually pasting an image into the running app. The unit test above verifies the configuration that disables Vditor's upload, which is the only renderer-side surface available.
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/VditorEditor.test.tsx
 ```
@@ -892,9 +956,10 @@ export function VditorEditor(): JSX.Element {
   const vditorRef = useRef<Vditor | null>(null)
   const { t } = useTranslation()
   const { toast } = useToast()
-  const initialBody = useEditorStore.getState().state.kind === 'ready'
-    ? (useEditorStore.getState().state as { body: string }).body
-    : ''
+  const initialBody =
+    useEditorStore.getState().state.kind === 'ready'
+      ? (useEditorStore.getState().state as { body: string }).body
+      : ''
 
   useEffect(() => {
     if (!elRef.current) return
@@ -936,12 +1001,14 @@ export function VditorEditor(): JSX.Element {
 ```
 
 > Note: the test mocks `'vditor'` so the real `index.css` import never resolves at test time. In real runs Vite resolves it from `node_modules/vditor/dist/index.css`. If you see a test-time error from the CSS import, change the import to a runtime-only side-effect:
+>
 > ```ts
 > if (typeof window !== 'undefined' && !window.__vditorCss) {
 >   await import('vditor/dist/index.css')
 >   window.__vditorCss = true
 > }
 > ```
+>
 > But the simpler fix is `vi.mock('vditor/dist/index.css', () => ({}))` at the top of the test.
 
 Update the test mock to include the CSS:
@@ -955,6 +1022,7 @@ vi.mock('vditor/dist/index.css', () => ({}))
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/VditorEditor.test.tsx
 ```
@@ -971,9 +1039,11 @@ git commit -m "feat(phase-07): VditorEditor mounts ir-mode Vditor with offline c
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 6: `FrontmatterCard` — read-only right rail
 
 **Files:**
+
 - Modify: `src/components/editor/FrontmatterCard.tsx`
 - Create: `src/components/editor/FrontmatterCard.test.tsx`
 
@@ -997,9 +1067,17 @@ import { FrontmatterCard } from './FrontmatterCard'
 
 function ready(fm: Record<string, unknown>): EditorReadyState {
   return {
-    kind: 'ready', path: 'a.md', frontmatter: fm,
-    body: '', savedBody: '', savedMtimeMs: 1, dirty: false, saving: false,
-    lastError: null, saveErrorCount: 0, persistentFailure: false
+    kind: 'ready',
+    path: 'a.md',
+    frontmatter: fm,
+    body: '',
+    savedBody: '',
+    savedMtimeMs: 1,
+    dirty: false,
+    saving: false,
+    lastError: null,
+    saveErrorCount: 0,
+    persistentFailure: false
   }
 }
 
@@ -1062,6 +1140,7 @@ describe('FrontmatterCard', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/FrontmatterCard.test.tsx
 ```
@@ -1094,9 +1173,7 @@ function StarRow({ rating }: { rating: number }): JSX.Element {
 }
 
 export function FrontmatterCard(): JSX.Element {
-  const fm = useEditorStore((s) =>
-    s.state.kind === 'ready' ? s.state.frontmatter : null
-  )
+  const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
   const { t } = useTranslation()
 
   if (!fm) return <div className="p-4 text-sm" />
@@ -1140,10 +1217,7 @@ export function FrontmatterCard(): JSX.Element {
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded bg-[color:var(--color-bg-2)] px-2 py-0.5 text-xs"
-            >
+            <span key={tag} className="rounded bg-[color:var(--color-bg-2)] px-2 py-0.5 text-xs">
               {tag}
             </span>
           ))}
@@ -1170,6 +1244,7 @@ export function FrontmatterCard(): JSX.Element {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/FrontmatterCard.test.tsx
 ```
@@ -1186,13 +1261,16 @@ git commit -m "feat(phase-07): FrontmatterCard read-only rail (category/site/rat
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 7: `EditorErrorState` — render code-specific copy + back button
 
 **Files:**
+
 - Modify: `src/components/editor/EditorErrorState.tsx`
 - Create: `src/components/editor/EditorErrorState.test.tsx`
 
 Per design D9 + spec `editor-page#编辑器路由与加载` scenarios:
+
 - `E_NOT_FOUND` → "文件已被移除或重命名"
 - `E_ENCODING` → "无法解析文件编码，请检查文件" + "在系统文本编辑器中打开" button
 - other → generic "无法加载文件" + the error string + retry button
@@ -1226,7 +1304,11 @@ beforeEach(() => {
 
 function renderError(error: string): void {
   useEditorStore.setState({ state: { kind: 'error', path: 'a.md', error } })
-  render(<MemoryRouter><EditorErrorState /></MemoryRouter>)
+  render(
+    <MemoryRouter>
+      <EditorErrorState />
+    </MemoryRouter>
+  )
 }
 
 describe('EditorErrorState', () => {
@@ -1256,6 +1338,7 @@ describe('EditorErrorState', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/EditorErrorState.test.tsx
 ```
@@ -1326,6 +1409,7 @@ export function EditorErrorState(): JSX.Element {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/editor/EditorErrorState.test.tsx
 ```
@@ -1342,9 +1426,11 @@ git commit -m "feat(phase-07): EditorErrorState — code-specific copy + back-to
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 8: `scheduleSave()` debounce 1000ms — verify timing
 
 **Files:**
+
 - Modify: `src/stores/editor.test.ts` (add a timing-focused test)
 
 Plan 1's task 6 already implements the 1000ms debounce. This task is a coverage gate: a fake-timers test that proves "5 setBody calls within 1s coalesce into one save call".
@@ -1360,7 +1446,8 @@ describe('editor store — debounce coalescing', () => {
     try {
       await openReady('A', 1)
       ;(ipcMock.file as any).writeParsed = vi.fn().mockResolvedValueOnce({
-        mtimeMs: 2, sha256: 'h'
+        mtimeMs: 2,
+        sha256: 'h'
       })
 
       for (let i = 0; i < 20; i++) {
@@ -1375,9 +1462,9 @@ describe('editor store — debounce coalescing', () => {
       await vi.runAllTimersAsync?.()
       // Now the debounce timer fired and triggered save().
       expect((ipcMock.file as any).writeParsed).toHaveBeenCalledTimes(1)
-      expect((ipcMock.file as any).writeParsed).toHaveBeenCalledWith(
-        'a.md', {}, 'B19', { expectedMtime: 1 }
-      )
+      expect((ipcMock.file as any).writeParsed).toHaveBeenCalledWith('a.md', {}, 'B19', {
+        expectedMtime: 1
+      })
     } finally {
       vi.useRealTimers()
     }
@@ -1388,6 +1475,7 @@ describe('editor store — debounce coalescing', () => {
 - [ ] **Step 2: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'debounce coalescing'
 ```
@@ -1404,9 +1492,11 @@ git commit -m "test(phase-07): debounce coalescing — 20 keystrokes in <1s = on
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 9: `visibilitychange` autosave wiring — already wired, add coverage
 
 **Files:**
+
 - Modify: `src/pages/Editor.test.tsx`
 
 Plan 2 task 3 step 4 already installed the `visibilitychange` listener inside `Editor.tsx`. This task adds a regression test that flips `document.visibilityState` to `hidden` and asserts `flushSave` is invoked.
@@ -1416,26 +1506,34 @@ Plan 2 task 3 step 4 already installed the `visibilitychange` listener inside `E
 Append to `src/pages/Editor.test.tsx` inside the `describe('Editor page', ...)` block:
 
 ```ts
-  it('flushSave fires on visibilitychange → hidden', async () => {
-    ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
-    })
-    renderAt(encodeURIComponent('a.md'))
-    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
-    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
-
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => 'hidden'
-    })
-    document.dispatchEvent(new Event('visibilitychange'))
-
-    expect(flushSpy).toHaveBeenCalled()
+it('flushSave fires on visibilitychange → hidden', async () => {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: '',
+    eol: 'lf',
+    mtimeMs: 1,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body: '',
+    rawYaml: ''
   })
+  renderAt(encodeURIComponent('a.md'))
+  await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+  const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    get: () => 'hidden'
+  })
+  document.dispatchEvent(new Event('visibilitychange'))
+
+  expect(flushSpy).toHaveBeenCalled()
+})
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx -t 'visibilitychange'
 ```
@@ -1462,6 +1560,7 @@ git commit -m "test(phase-07): visibilitychange=hidden triggers flushSave"
 ## Plan-2 Acceptance
 
 After all 9 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (editor store ≥ 19 cases, page + 4 components ≥ 18 cases combined)
 - [ ] `npm run lint` PASSES

@@ -13,9 +13,11 @@
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 1: Run chat-acceptance test in isolation
 
 **Files:**
+
 - Run only: `src/__acceptance__/chat-acceptance.test.tsx`
 
 - [x] **Step 1: Execute**
@@ -27,12 +29,14 @@ Expected: 100% PASS. Plan 5 Task 7 rewrote the file's selectors and mkSlot; this
 - [x] **Step 2: If RED, root-cause**
 
 For each failure:
+
 - Read the error message + the failing assertion in the test file
 - Trace to which capability spec it covers (the `chat-message-list`, `chat-input`, etc. scenarios)
 - Check whether the corresponding Plan 2/3/4/5 task fully implemented that capability
 - If a Plan task is incomplete, return to that plan and finish it; do NOT mutate the test to make it green
 
 Common patterns:
+
 - "Cannot find role 'button' with name 'Approve'" → likely the i18n key path is wrong in `ApprovalInlineActions`, or the antd Locale is not loaded; check Plan 1 Task 5 (`pickAntdLocale`).
 - "Expected status 'streaming' got 'idle'" → `__setChatTokenBatching(false)` is not being called in `beforeEach`; ensure Plan 5 Task 7 Step 5 is in place.
 - "Cannot read property 'streamingBuffer'" → Plan 4 didn't fully purge the field; revisit Plan 4 Task 11.
@@ -46,9 +50,11 @@ git commit --allow-empty -m "chore(phase-20): chat-acceptance.test.tsx — all g
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 2: Run full vitest suite
 
 **Files:**
+
 - Run: entire test suite
 
 - [x] **Step 1: Execute**
@@ -59,6 +65,7 @@ Expected: 100% PASS across all test files (chat + non-chat).
 - [x] **Step 2: Inspect non-chat suite specifically**
 
 If any non-chat test fails:
+
 - Library / Browse / Editor / History / Search / Settings tests have nothing to do with chat changes. A failure here is a regression introduced by Plan 1 (XProvider wrapping) or Plan 5 (Radix package removal).
 - Read the error carefully. If a Radix component test fails, Plan 5 Task 6 was wrong about non-chat usage of that package. Restore it.
 
@@ -71,9 +78,11 @@ git commit --allow-empty -m "chore(phase-20): full vitest suite — all green"
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 3: Run typecheck
 
 **Files:**
+
 - Run: `tsc --noEmit` (both projects)
 
 - [x] **Step 1: Execute**
@@ -84,6 +93,7 @@ Expected: 0 errors in both `tsconfig.node.json` and `tsconfig.web.json` passes.
 - [x] **Step 2: Read errors closely if any**
 
 Common late-stage errors:
+
 - `Property 'status' does not exist on type 'ChatMessage'` → Plan 4 Task 2 not committed
 - `Cannot find module './SessionList'` → Plan 5 Task 4 deleted a file still imported elsewhere
 - antd type mismatches around `ConfigProvider.theme.token` → tighten the import path in Plan 1's `theme.ts`
@@ -97,9 +107,11 @@ git commit --allow-empty -m "chore(phase-20): typecheck — 0 errors"
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 4: Run lint
 
 **Files:**
+
 - Run: ESLint
 
 - [x] **Step 1: Execute**
@@ -124,9 +136,11 @@ git commit --allow-empty -m "chore(phase-20): lint — 0 errors"
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 5: Manual PRD §13 — 15-item behavior parity walkthrough
 
 **Files:**
+
 - No code. Manual UI exercise in `npm run dev`.
 
 - [ ] **Step 1: Start dev**
@@ -176,9 +190,11 @@ git commit --allow-empty -m "chore(phase-20): PRD §13 15-item parity walkthroug
 ---
 
 <!-- openspec-task: 8.6 -->
+
 ### Task 6: Manual attachments add/remove/send full-chain test
 
 **Files:**
+
 - No code. Manual.
 
 - [ ] **Step 1: Multi-file add**
@@ -192,6 +208,7 @@ Click the close icon on chip 2 (`b.md`). Verify only it disappears; `a.md` and `
 - [ ] **Step 3: Send clears**
 
 Send a message. Verify:
+
 - The attachments are included in the outgoing message (check user bubble shows chips or shows the attachment list)
 - `Sender.Header` unmounts (no longer takes vertical space)
 - `pendingAttachments` in store reads `[]`
@@ -209,14 +226,17 @@ git commit --allow-empty -m "chore(phase-20): manual attachments add/remove/send
 ---
 
 <!-- openspec-task: 8.7 -->
+
 ### Task 7: Manual window-resize collapse-mode test
 
 **Files:**
+
 - No code. Manual.
 
 - [ ] **Step 1: Wide → Narrow**
 
 Start with the dev window at ≥1100px wide. Verify ConversationsAdapter shows full session titles + group headers. Drag the window narrower until <960px. Verify:
+
 - Group headers ("今日" / "本周" / "更早") become hidden or compressed
 - Each session row shows only an icon + truncated title (≤8 chars)
 - "新建" button is still visible (probably as an icon-only button)
@@ -242,9 +262,11 @@ git commit --allow-empty -m "chore(phase-20): manual collapse-mode (≥960 / <96
 ---
 
 <!-- openspec-task: 8.8 -->
+
 ### Task 8: Check bundle-size baseline impact
 
 **Files:**
+
 - Run: `npm run build`; inspect `dist/`.
 
 - [x] **Step 1: Baseline current main build**
@@ -265,6 +287,7 @@ Capture the totals. Compare to the pre-Phase-20 baseline (use `git log --all --g
 - [x] **Step 3: Compare**
 
 If total renderer JS grew by > 200KB gzipped (rule of thumb: antd + antd-x adds ~150–200KB gzipped), evaluate tree-shaking:
+
 - Check `vite.config.ts` / `electron.vite.config.ts` — confirm Vite's default tree-shaking is on (it is).
 - Confirm imports from `antd` use the named import form (`import { Drawer } from 'antd'`) rather than default-import — they should.
 - Consider adding `babel-plugin-import` only if growth exceeds 400KB gzipped.
@@ -280,9 +303,11 @@ git commit --allow-empty -m "chore(phase-20): bundle size delta after antd migra
 ---
 
 <!-- openspec-task: 8.9 -->
+
 ### Task 9: Run openspec validate phase-20
 
 **Files:**
+
 - Run: `openspec validate`
 
 - [x] **Step 1: Execute**
@@ -293,6 +318,7 @@ Expected: validation passes with no errors. Warnings about completed tasks shoul
 - [x] **Step 2: If errors appear**
 
 Most likely error: spec scenario language mismatched implementation. The fix path:
+
 - If a scenario references a behavior we did NOT implement (e.g. "Conversations.creation icon = Plus"), patch the implementation to match
 - If a scenario language is stale (referring to `streamingBuffer`), correct the spec file in `openspec/changes/phase-20-chat-ui-ant-design-x/specs/*.md`
 
@@ -309,9 +335,11 @@ git commit --allow-empty -m "chore(phase-20): openspec validate — clean"
 ---
 
 <!-- openspec-task: 8.10 -->
+
 ### Task 10: Dark mode × i18n combined smoke (run §8.5 twice)
 
 **Files:**
+
 - No code. Manual.
 
 - [ ] **Step 1: Light mode + zh-CN — run §8.5 walkthrough (Items 1–15)**
@@ -321,6 +349,7 @@ Set Settings → Language → 简体中文. Confirm light mode. Run all 15 items
 - [ ] **Step 2: Light mode + en-US — run §8.5 walkthrough**
 
 Switch to English. Confirm light mode. Repeat all 15 items. Watch for:
+
 - English Modal "OK" / "Cancel" buttons (antd locale en_US)
 - All chat strings localized correctly (Welcome heading, Prompts, ApprovalDrawer title etc.)
 - No mixed Chinese/English in antd internals
@@ -328,6 +357,7 @@ Switch to English. Confirm light mode. Repeat all 15 items. Watch for:
 - [ ] **Step 3: Dark mode + zh-CN — run §8.5 walkthrough**
 
 Switch back to 中文. Toggle dark mode. Run all 15 items. Watch for:
+
 - Bubble / Drawer / Modal / Alert backgrounds use dark CSS variables
 - Text contrast acceptable
 - Note any case where derived hover color looks "stuck" on light (Plan 1 known trade-off)

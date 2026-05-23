@@ -5,9 +5,8 @@ license: MIT
 compatibility: Requires openspec CLI and Superpowers skills (subagent-driven-development or executing-plans).
 metadata:
   author: openspec
-  version: "0.1.0"
+  version: '0.1.0'
 ---
-
 
 Execute Superpowers implementation plans for an OpenSpec change, then sync completed tasks back to tasks.md.
 
@@ -25,9 +24,11 @@ Execute Superpowers implementation plans for an OpenSpec change, then sync compl
    Always announce: "Using change: <name>" and how to override.
 
 2. **Check status and load artifacts**
+
    ```bash
    openspec status --change '<name>' --json
    ```
+
    Read the change status and locate the tasks file.
 
 3. **Detect plan files**
@@ -52,6 +53,7 @@ Execute Superpowers implementation plans for an OpenSpec change, then sync compl
 
    For each plan file (in order if multiple):
    - Offer execution choice to user (ask once if multiple plans, with an "apply to all" option):
+
      ```
      Plan: <filename>
      Tasks: N
@@ -62,10 +64,12 @@ Execute Superpowers implementation plans for an OpenSpec change, then sync compl
 
      Which approach? (applies to all remaining plans if multiple)
      ```
+
    - **Subagent-Driven**: invoke `superpowers:subagent-driven-development` with the plan file
    - **Inline Execution**: invoke `superpowers:executing-plans` with the plan file
 
    **If the skill call fails** (Superpowers not installed): stop and display:
+
    > "Superpowers skill not available. Please install Superpowers, or use `/opsx:apply` for direct implementation without plans."
 
 6. **Sync OpenSpec tasks.md**
@@ -73,26 +77,27 @@ Execute Superpowers implementation plans for an OpenSpec change, then sync compl
    After execution completes (or partially completes):
 
    a. **Parse all plan files** for this change. For each `<!-- openspec-task: LABEL -->` annotation followed by a `### Task N:` section, record:
-      - The OpenSpec task label (LABEL)
-      - Whether all steps in that plan task are checked (`[x]`)
+   - The OpenSpec task label (LABEL)
+   - Whether all steps in that plan task are checked (`[x]`)
 
    b. **Aggregate across files**: Group plan tasks by OpenSpec label. A label is "fully complete" only when **all** plan tasks with that label are checked `[x]` across **all** plan files.
 
    c. **Update tasks.md**: For each fully complete label, find the matching line in tasks.md by exact label match (e.g., `- [ ] 1.1 ` — label followed by a space, not prefix matching, so `1.1` does not match `1.10`) and change `- [ ]` to `- [x]`.
 
    d. **Report sync results**:
-      ```
-      ## Task Sync Results
 
-      Synced to tasks.md:
-      - [x] 1.1 Create index.html
-      - [x] 1.2 Write CSS
+   ```
+   ## Task Sync Results
 
-      Still in progress:
-      - [ ] 2.1 Implement data model (3/5 plan tasks complete)
+   Synced to tasks.md:
+   - [x] 1.1 Create index.html
+   - [x] 1.2 Write CSS
 
-      Overall: 2/3 OpenSpec tasks complete
-      ```
+   Still in progress:
+   - [ ] 2.1 Implement data model (3/5 plan tasks complete)
+
+   Overall: 2/3 OpenSpec tasks complete
+   ```
 
    **Partial completion**: If only some plan tasks under a label are complete, do NOT mark the OpenSpec task as done. Report the partial progress.
 
@@ -105,6 +110,7 @@ Execute Superpowers implementation plans for an OpenSpec change, then sync compl
    - If partially done: suggest continuing with `/opsx:executing-plans`
 
 **Guardrails**
+
 - Change names must match `[A-Za-z0-9_-]+` — reject any name with spaces, quotes, or special characters before substituting into shell commands
 - Superpowers is a **hard dependency** for execution — offer `/opsx:apply` as the non-Superpowers alternative
 - Always sync tasks.md after execution, even if execution was partial

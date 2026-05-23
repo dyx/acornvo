@@ -36,19 +36,19 @@ Surface the indexer + watcher to the renderer: extend `shared/ipc-contract.ts` w
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/ipc-contract.ts` | Modify (add `index` namespace + event channels) | 6.1, 6.2 |
-| `electron/ipc/index.ts` | Replace stub → handler module | 6.3 |
-| `electron/ipc/handlers.ts` | Modify (register indexNs) | 6.3 |
-| `electron/services/indexer.ts` | Modify (add `reset()` export) | 7.1 |
-| `electron/main/main.ts` (or current bootstrap file) | Modify (wire `project:changed` + `will-quit`) | 7.1, 7.2 |
-| `electron/services/grove.ts` | Modify (`closeGrove` calls watcher.stop) | 7.3 |
-| `electron/services/grove.test.ts` | Modify | 7.3 |
-| `src/components/IndexProgressOverlay.tsx` | Create | 8.1, 8.3 |
-| `src/components/IndexProgressOverlay.test.tsx` | Create | 8.1, 8.3 |
-| `src/App.tsx` | Modify (mount overlay + subscribe to events) | 8.2 |
-| `src/i18n/locales/zh-CN.json` | Modify (add 4 keys) | 8.4 |
+| Path                                                | Action                                          | Owner task |
+| --------------------------------------------------- | ----------------------------------------------- | ---------- |
+| `shared/ipc-contract.ts`                            | Modify (add `index` namespace + event channels) | 6.1, 6.2   |
+| `electron/ipc/index.ts`                             | Replace stub → handler module                   | 6.3        |
+| `electron/ipc/handlers.ts`                          | Modify (register indexNs)                       | 6.3        |
+| `electron/services/indexer.ts`                      | Modify (add `reset()` export)                   | 7.1        |
+| `electron/main/main.ts` (or current bootstrap file) | Modify (wire `project:changed` + `will-quit`)   | 7.1, 7.2   |
+| `electron/services/grove.ts`                        | Modify (`closeGrove` calls watcher.stop)        | 7.3        |
+| `electron/services/grove.test.ts`                   | Modify                                          | 7.3        |
+| `src/components/IndexProgressOverlay.tsx`           | Create                                          | 8.1, 8.3   |
+| `src/components/IndexProgressOverlay.test.tsx`      | Create                                          | 8.1, 8.3   |
+| `src/App.tsx`                                       | Modify (mount overlay + subscribe to events)    | 8.2        |
+| `src/i18n/locales/zh-CN.json`                       | Modify (add 4 keys)                             | 8.4        |
 
 ## Pre-flight
 
@@ -61,9 +61,11 @@ Surface the indexer + watcher to the renderer: extend `shared/ipc-contract.ts` w
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Extend `IpcContract` with `index` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `shared/ipc-contract.type-test.ts`
 
@@ -146,9 +148,11 @@ git commit -m "feat(phase-05): IpcContract gains index namespace (status/startSc
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Add 7 event channels to `IpcEventContract`
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `shared/ipc-contract.type-test.ts`
 
@@ -160,7 +164,9 @@ Append to `shared/ipc-contract.type-test.ts`:
 import type { IpcEventContract } from './ipc-contract'
 
 const _progress: IpcEventContract['index:progress'] = {} as {
-  scanned: number; total: number; currentPath?: string
+  scanned: number
+  total: number
+  currentPath?: string
 }
 const _done: IpcEventContract['index:done'] = {} as Record<string, never>
 const _error: IpcEventContract['index:error'] = {} as { message: string }
@@ -168,11 +174,15 @@ const _stateChange: IpcEventContract['index:stateChange'] = {} as {
   state: 'idle' | 'scanning' | 'ready' | 'watching' | 'error'
 }
 const _fileChanged: IpcEventContract['index:fileChanged'] = {} as {
-  path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown>
+  path: string
+  contentHash: string
+  mtime: number
+  frontmatter: Record<string, unknown>
 }
 const _fileDeleted: IpcEventContract['index:fileDeleted'] = {} as { path: string }
 const _fileRenamed: IpcEventContract['index:fileRenamed'] = {} as {
-  oldPath: string; newPath: string
+  oldPath: string
+  newPath: string
 }
 ```
 
@@ -191,12 +201,21 @@ In `shared/ipc-contract.ts`:
 ```ts
 export type IpcEventContract = {
   'project:changed': GroveSummary | null
-  'bootstrap:ready': { initialRoute: '/picker' | '/library'; recent: RecentItemView[]; locked?: { path: string; holder: LockInfo } }
+  'bootstrap:ready': {
+    initialRoute: '/picker' | '/library'
+    recent: RecentItemView[]
+    locked?: { path: string; holder: LockInfo }
+  }
   'index:progress': { scanned: number; total: number; currentPath?: string }
   'index:done': Record<string, never>
   'index:error': { message: string }
   'index:stateChange': { state: IndexStateName }
-  'index:fileChanged': { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }
+  'index:fileChanged': {
+    path: string
+    contentHash: string
+    mtime: number
+    frontmatter: Record<string, unknown>
+  }
   'index:fileDeleted': { path: string }
   'index:fileRenamed': { oldPath: string; newPath: string }
 }
@@ -220,9 +239,11 @@ git commit -m "feat(phase-05): add 7 index:* event channels to IpcEventContract"
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: Implement `electron/ipc/index.ts` handlers + event forwarding
 
 **Files:**
+
 - Modify: `electron/ipc/index.ts`
 - Modify: `electron/ipc/handlers.ts`
 - Create: `electron/ipc/index.test.ts`
@@ -236,7 +257,9 @@ import { indexHandlers, attachIndexEventForwarders } from './index'
 import { _resetForTest as resetIndexer, _setStateForTest } from '../services/indexer'
 
 describe('index IPC handlers', () => {
-  beforeEach(() => { resetIndexer() })
+  beforeEach(() => {
+    resetIndexer()
+  })
 
   it('status() returns the indexer status', () => {
     const s = indexHandlers.status()
@@ -298,7 +321,10 @@ import {
   status as indexerStatus,
   startScan as indexerStartScan,
   cancelScan as indexerCancelScan,
-  onProgress, onDone, onError, onStateChange,
+  onProgress,
+  onDone,
+  onError,
+  onStateChange,
   state as indexerState
 } from '../services/indexer'
 import { onFileChanged, onFileDeleted, onFileRenamed } from '../services/watcher'
@@ -312,7 +338,10 @@ export const indexHandlers = {
     }
     // Fire-and-forget; lifecycle layer triggers actual scan with grove root
     // We require lifecycle to have called indexer.setDb + know root, so this is mostly defensive
-    throw new IpcError('E_INVALID_ARGS', 'startScan must be invoked via project lifecycle, not directly')
+    throw new IpcError(
+      'E_INVALID_ARGS',
+      'startScan must be invoked via project lifecycle, not directly'
+    )
   },
   cancelScan: () => {
     indexerCancelScan()
@@ -329,12 +358,22 @@ export function attachIndexEventForwarders(win: BrowserWindow): () => void {
   })
   const offDone = onDone(() => win.webContents.send('index:done', {}))
   const offError = onError((message) => win.webContents.send('index:error', { message }))
-  const offStateChange = onStateChange((s) => win.webContents.send('index:stateChange', { state: s.state }))
+  const offStateChange = onStateChange((s) =>
+    win.webContents.send('index:stateChange', { state: s.state })
+  )
   const offChanged = onFileChanged((p) => win.webContents.send('index:fileChanged', p))
   const offDeleted = onFileDeleted((p) => win.webContents.send('index:fileDeleted', p))
   const offRenamed = onFileRenamed((p) => win.webContents.send('index:fileRenamed', p))
 
-  return () => { offProgress(); offDone(); offError(); offStateChange(); offChanged(); offDeleted(); offRenamed() }
+  return () => {
+    offProgress()
+    offDone()
+    offError()
+    offStateChange()
+    offChanged()
+    offDeleted()
+    offRenamed()
+  }
 }
 ```
 
@@ -371,9 +410,11 @@ git commit -m "feat(phase-05): index IPC handlers + event forwarders to BrowserW
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: Drive lifecycle from `project:changed`
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts` (add `reset()`)
 - Modify: `electron/main/main.ts` (or `electron/main/index.ts` — the existing bootstrap file)
 
@@ -405,7 +446,7 @@ Append to `electron/services/indexer.ts`:
 
 ```ts
 export function reset(): void {
-  _abort = true   // in case a scan is mid-flight
+  _abort = true // in case a scan is mid-flight
   _scanned = 0
   _total = 0
   _currentPath = undefined
@@ -428,7 +469,7 @@ Locate the existing `project:changed` emitter / subscriber in `electron/main/...
 ```ts
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from '../services/indexer'
 import { start as watcherStart, stop as watcherStop } from '../services/watcher'
-import { getCurrentDb } from '../services/db/...'  // phase-03 helper, exact name varies
+import { getCurrentDb } from '../services/db/...' // phase-03 helper, exact name varies
 
 // Existing listener for project:changed (or replicate the existing pattern):
 groveBroadcast.on('project:changed', async (summary) => {
@@ -446,11 +487,12 @@ groveBroadcast.on('project:changed', async (summary) => {
 })
 ```
 
-> If phase-02's `project:changed` is fired *synchronously* and the listener can be `async`, the above is fine. If listeners are sync only, kick off the scan via `void (async () => { ... })()`.
+> If phase-02's `project:changed` is fired _synchronously_ and the listener can be `async`, the above is fine. If listeners are sync only, kick off the scan via `void (async () => { ... })()`.
 
 - [ ] **Step 4: Add an integration test (optional but encouraged)**
 
 If a main-process integration harness exists, add a test that:
+
 1. Emits `project:changed` with a fixture grove summary,
 2. Asserts `indexerState()` transitions to `scanning` then `watching`,
 3. Emits `project:changed` with `null`,
@@ -468,9 +510,11 @@ git commit -m "feat(phase-05): wire project:changed to indexer.startScan + watch
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 5: `app.on('will-quit')` stops watcher cleanly
 
 **Files:**
+
 - Modify: `electron/main/main.ts` (or current bootstrap)
 
 - [ ] **Step 1: Add the will-quit handler**
@@ -483,7 +527,11 @@ import { stop as watcherStop } from '../services/watcher'
 
 app.on('will-quit', async (event) => {
   event.preventDefault()
-  try { await watcherStop() } finally { app.exit(0) }
+  try {
+    await watcherStop()
+  } finally {
+    app.exit(0)
+  }
 })
 ```
 
@@ -510,9 +558,11 @@ git commit -m "feat(phase-05): app.will-quit awaits watcher.stop before exit"
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 6: `closeGrove()` stops watcher before closing db
 
 **Files:**
+
 - Modify: `electron/services/grove.ts`
 - Modify: `electron/services/grove.test.ts`
 
@@ -581,9 +631,11 @@ git commit -m "feat(phase-05): closeGrove stops watcher + resets indexer before 
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 7: `IndexProgressOverlay.tsx` — Radix Dialog with progress bar + cancel button
 
 **Files:**
+
 - Create: `src/components/IndexProgressOverlay.tsx`
 - Create: `src/components/IndexProgressOverlay.test.tsx`
 
@@ -597,14 +649,24 @@ import { IndexProgressOverlay } from './IndexProgressOverlay'
 
 describe('IndexProgressOverlay', () => {
   it('shows progress text "scanned/total" when visible', () => {
-    render(<IndexProgressOverlay visible scanned={34} total={100} currentPath="notes/a.md" onCancel={() => {}} />)
+    render(
+      <IndexProgressOverlay
+        visible
+        scanned={34}
+        total={100}
+        currentPath="notes/a.md"
+        onCancel={() => {}}
+      />
+    )
     expect(screen.getByText(/34/)).toBeInTheDocument()
     expect(screen.getByText(/100/)).toBeInTheDocument()
     expect(screen.getByText(/notes\/a\.md/)).toBeInTheDocument()
   })
 
   it('does not render anything when visible=false', () => {
-    const { container } = render(<IndexProgressOverlay visible={false} scanned={0} total={0} onCancel={() => {}} />)
+    const { container } = render(
+      <IndexProgressOverlay visible={false} scanned={0} total={0} onCancel={() => {}} />
+    )
     expect(container.querySelector('[role="dialog"]')).toBeNull()
   })
 
@@ -673,7 +735,10 @@ export function IndexProgressOverlay(props: IndexProgressOverlayProps): JSX.Elem
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
             </div>
             {truncatedPath && (
-              <div className="text-xs text-zinc-500 truncate mb-4 font-mono" title={props.currentPath}>
+              <div
+                className="text-xs text-zinc-500 truncate mb-4 font-mono"
+                title={props.currentPath}
+              >
                 {truncatedPath}
               </div>
             )}
@@ -710,9 +775,11 @@ git commit -m "feat(phase-05): IndexProgressOverlay component with progress bar 
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 8: Mount overlay in `App.tsx` + subscribe to events
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Read current `App.tsx` to find a safe mount point**
@@ -781,11 +848,13 @@ git commit -m "feat(phase-05): mount IndexProgressOverlay in App + subscribe to 
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 9: Display `scanned/total` + truncated `currentPath` (already covered in Task 7)
 
 This is satisfied by Task 7's component. Add a sanity test that an extreme path truncates correctly:
 
 **Files:**
+
 - Modify: `src/components/IndexProgressOverlay.test.tsx`
 
 - [ ] **Step 1: Add test**
@@ -793,7 +862,15 @@ This is satisfied by Task 7's component. Add a sanity test that an extreme path 
 ```tsx
 it('truncates long currentPath with leading ellipsis', () => {
   const longPath = 'a/'.repeat(40) + 'final.md'
-  render(<IndexProgressOverlay visible scanned={1} total={1} currentPath={longPath} onCancel={() => {}} />)
+  render(
+    <IndexProgressOverlay
+      visible
+      scanned={1}
+      total={1}
+      currentPath={longPath}
+      onCancel={() => {}}
+    />
+  )
   expect(screen.getByText(/^…/)).toBeInTheDocument()
   expect(screen.getByText(/final\.md/)).toBeInTheDocument()
 })
@@ -817,9 +894,11 @@ git commit -m "test(phase-05): verify long currentPath truncates with leading el
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 10: i18n keys in `zh-CN.json`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Read current zh-CN.json**

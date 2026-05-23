@@ -5,7 +5,7 @@
 The standard layout for an AI chat application.
 
 ```tsx
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   XProvider,
   Bubble,
@@ -15,31 +15,31 @@ import {
   Prompts,
   Actions,
   ThoughtChain,
-  Think,
-} from '@ant-design/x';
-import { RobotOutlined, UserOutlined } from '@ant-design/icons';
-import { Avatar, Flex } from 'antd';
+  Think
+} from '@ant-design/x'
+import { RobotOutlined, UserOutlined } from '@ant-design/icons'
+import { Avatar, Flex } from 'antd'
 
 // Role config — keep STABLE (define outside component or useMemo)
 const roles = {
   assistant: {
     placement: 'start' as const,
-    avatar: <Avatar icon={<RobotOutlined />} />,
+    avatar: <Avatar icon={<RobotOutlined />} />
   },
   user: {
     placement: 'end' as const,
-    avatar: <Avatar icon={<UserOutlined />} />,
-  },
-};
+    avatar: <Avatar icon={<UserOutlined />} />
+  }
+}
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([]);
-  const [conversations, setConversations] = useState([]);
-  const [activeKey, setActiveKey] = useState('1');
-  const [value, setSenderValue] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([])
+  const [conversations, setConversations] = useState([])
+  const [activeKey, setActiveKey] = useState('1')
+  const [value, setSenderValue] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const isEmpty = messages.length === 0;
+  const isEmpty = messages.length === 0
 
   return (
     <XProvider>
@@ -67,11 +67,11 @@ export default function ChatPage() {
               <Prompts
                 items={[
                   { key: '1', label: 'Explain quantum computing' },
-                  { key: '2', label: 'Write a Python script' },
+                  { key: '2', label: 'Write a Python script' }
                 ]}
                 wrap
                 onItemClick={(info) => {
-                  setSenderValue(info.data.label as string);
+                  setSenderValue(info.data.label as string)
                 }}
               />
             </Flex>
@@ -91,8 +91,8 @@ export default function ChatPage() {
             loading={loading}
             onChange={setSenderValue}
             onSubmit={(msg) => {
-              setSenderValue('');
-              setLoading(true);
+              setSenderValue('')
+              setLoading(true)
               // dispatch to data layer (use-x-chat or custom)
             }}
             onCancel={() => setLoading(false)}
@@ -100,7 +100,7 @@ export default function ChatPage() {
         </Flex>
       </Flex>
     </XProvider>
-  );
+  )
 }
 ```
 
@@ -115,22 +115,22 @@ Add copy, feedback, and retry below each assistant message.
 const makeActionItems = (content: string, onRetry: () => void) => [
   {
     key: 'copy',
-    actionRender: () => <Actions.Copy text={content} />,
+    actionRender: () => <Actions.Copy text={content} />
   },
   {
     key: 'feedback',
     actionRender: () => {
-      const [val, setVal] = React.useState<'like' | 'dislike' | 'default'>('default');
-      return <Actions.Feedback value={val} onChange={setVal} />;
-    },
+      const [val, setVal] = React.useState<'like' | 'dislike' | 'default'>('default')
+      return <Actions.Feedback value={val} onChange={setVal} />
+    }
   },
   {
     key: 'retry',
     label: 'Retry',
     icon: <RedoOutlined />,
-    onItemClick: onRetry,
-  },
-];
+    onItemClick: onRetry
+  }
+]
 
 // In roles config:
 const roles = {
@@ -142,9 +142,9 @@ const roles = {
         variant="borderless"
         fadeIn
       />
-    ),
-  },
-};
+    )
+  }
+}
 ```
 
 ---
@@ -189,7 +189,7 @@ const roles = {
   assistant: {
     placement: 'start',
     contentRender: (content, info) => {
-      const { reasoning, answer } = content as { reasoning: string; answer: string };
+      const { reasoning, answer } = content as { reasoning: string; answer: string }
       return (
         <>
           {reasoning && (
@@ -204,13 +204,13 @@ const roles = {
           )}
           <div>{answer}</div>
         </>
-      );
-    },
-  },
-};
+      )
+    }
+  }
+}
 
 // Multi-step tool call chain
-<ThoughtChain
+;<ThoughtChain
   items={agentSteps.map((step) => ({
     key: step.id,
     title: step.toolName,
@@ -218,9 +218,9 @@ const roles = {
     status: step.status, // 'loading' | 'success' | 'error'
     content: step.result,
     collapsible: true,
-    blink: step.status === 'loading',
+    blink: step.status === 'loading'
   }))}
-/>;
+/>
 ```
 
 ---
@@ -230,14 +230,14 @@ const roles = {
 Allow users to attach files to their messages.
 
 ```tsx
-import { Sender, Attachments } from '@ant-design/x';
-import { PaperClipOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { Sender, Attachments } from '@ant-design/x'
+import { PaperClipOutlined } from '@ant-design/icons'
+import { useState } from 'react'
 
-const [fileList, setFileList] = useState([]);
-const attachRef = useRef(null);
+const [fileList, setFileList] = useState([])
+const attachRef = useRef(null)
 
-<Sender
+;<Sender
   prefix={<PaperClipOutlined onClick={() => attachRef.current?.select({ multiple: true })} />}
   header={
     fileList.length > 0 && (
@@ -252,11 +252,11 @@ const attachRef = useRef(null);
     )
   }
   onSubmit={(msg) => {
-    const payload = { message: msg, files: fileList };
-    setFileList([]);
-    handleSend(payload);
+    const payload = { message: msg, files: fileList }
+    setFileList([])
+    handleSend(payload)
   }}
-/>;
+/>
 ```
 
 ---
@@ -266,32 +266,32 @@ const attachRef = useRef(null);
 Trigger a suggestion popup when user types `/`.
 
 ```tsx
-import { Suggestion, Sender } from '@ant-design/x';
+import { Suggestion, Sender } from '@ant-design/x'
 
 const commands = [
   { value: '/search', label: '/search — Search the web', icon: <SearchOutlined /> },
   { value: '/summarize', label: '/summarize — Summarize text', icon: <FileOutlined /> },
-  { value: '/code', label: '/code — Generate code', icon: <CodeOutlined /> },
-];
+  { value: '/code', label: '/code — Generate code', icon: <CodeOutlined /> }
+]
 
-<Suggestion items={commands} onSelect={(val) => setValue(val + ' ')}>
+;<Suggestion items={commands} onSelect={(val) => setValue(val + ' ')}>
   {({ onTrigger, onKeyDown }) => (
     <Sender
       value={value}
       onChange={(v) => {
-        setValue(v);
+        setValue(v)
         // Trigger suggestion on '/'
         if (v.endsWith('/')) {
-          onTrigger({});
+          onTrigger({})
         } else {
-          onTrigger(false);
+          onTrigger(false)
         }
       }}
       onKeyDown={onKeyDown}
       onSubmit={handleSubmit}
     />
   )}
-</Suggestion>;
+</Suggestion>
 ```
 
 ---
@@ -305,7 +305,7 @@ const roles = {
   assistant: {
     placement: 'start',
     footer: (content, info) => {
-      if (!info.sources?.length) return null;
+      if (!info.sources?.length) return null
       return (
         <Sources
           title="Sources"
@@ -313,26 +313,26 @@ const roles = {
             key: String(i),
             title: s.title,
             url: s.url,
-            description: s.snippet,
+            description: s.snippet
           }))}
           defaultExpanded={false}
           onClick={(item) => window.open(item.url, '_blank')}
         />
-      );
-    },
-  },
-};
+      )
+    }
+  }
+}
 ```
 
 ---
 
 ## Anti-patterns to Avoid
 
-| Anti-pattern | Why it's wrong | Fix |
-| --- | --- | --- |
-| Mapping `Bubble` in a loop | Loses scroll anchoring, auto-scroll | Use `Bubble.List` |
-| Inline `roles` object in JSX | Re-creates object every render, resets animations | Define outside component or `useMemo` |
-| Leaving `streaming={true}` after stream ends | Incomplete content shown forever | Set `streaming={false}` on final chunk |
-| Putting raw HTML in `content` | XSS risk, no sanitization | Use `contentRender` with `XMarkdown` |
-| Multiple `XProvider` wraps | Theme/locale conflicts | Single root `XProvider` only |
-| Using `onChange` as submit handler | Fires on every keystroke | Use `onSubmit` for send action |
+| Anti-pattern                                 | Why it's wrong                                    | Fix                                    |
+| -------------------------------------------- | ------------------------------------------------- | -------------------------------------- |
+| Mapping `Bubble` in a loop                   | Loses scroll anchoring, auto-scroll               | Use `Bubble.List`                      |
+| Inline `roles` object in JSX                 | Re-creates object every render, resets animations | Define outside component or `useMemo`  |
+| Leaving `streaming={true}` after stream ends | Incomplete content shown forever                  | Set `streaming={false}` on final chunk |
+| Putting raw HTML in `content`                | XSS risk, no sanitization                         | Use `contentRender` with `XMarkdown`   |
+| Multiple `XProvider` wraps                   | Theme/locale conflicts                            | Single root `XProvider` only           |
+| Using `onChange` as submit handler           | Fires on every keystroke                          | Use `onSubmit` for send action         |

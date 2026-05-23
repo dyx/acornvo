@@ -35,21 +35,21 @@ Wire Plan 1's primitives into a complete **clipper pipeline** (`extract → enri
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/clipper/dedupe.ts` | Create | 4.1 |
-| `electron/clipper/dedupe.test.ts` | Create | 4.1 |
-| `electron/clipper/slug.ts` | Create | 4.2 |
-| `electron/clipper/slug.test.ts` | Create | 4.2 |
-| `electron/clipper/pipeline.ts` | Create | 4.3, 4.4 |
-| `electron/clipper/pipeline.test.ts` | Create | 4.3, 4.4 |
-| `electron/clipper/clip-queue.ts` | Create | 4.5 |
-| `electron/clipper/clip-queue.test.ts` | Create | 4.5 |
-| `shared/ipc-contract.ts` | Modify (add `clipper` + `clips` namespaces, error codes) | 5.1, 5.2 |
-| `electron/ipc/clipper.ts` | Create | 5.3 |
-| `electron/ipc/clipper.test.ts` | Create | 5.3 |
-| `electron/ipc/clips.ts` | Create | 5.4 |
-| `electron/ipc/clips.test.ts` | Create | 5.4 |
+| Path                                  | Action                                                   | Owner task |
+| ------------------------------------- | -------------------------------------------------------- | ---------- |
+| `electron/clipper/dedupe.ts`          | Create                                                   | 4.1        |
+| `electron/clipper/dedupe.test.ts`     | Create                                                   | 4.1        |
+| `electron/clipper/slug.ts`            | Create                                                   | 4.2        |
+| `electron/clipper/slug.test.ts`       | Create                                                   | 4.2        |
+| `electron/clipper/pipeline.ts`        | Create                                                   | 4.3, 4.4   |
+| `electron/clipper/pipeline.test.ts`   | Create                                                   | 4.3, 4.4   |
+| `electron/clipper/clip-queue.ts`      | Create                                                   | 4.5        |
+| `electron/clipper/clip-queue.test.ts` | Create                                                   | 4.5        |
+| `shared/ipc-contract.ts`              | Modify (add `clipper` + `clips` namespaces, error codes) | 5.1, 5.2   |
+| `electron/ipc/clipper.ts`             | Create                                                   | 5.3        |
+| `electron/ipc/clipper.test.ts`        | Create                                                   | 5.3        |
+| `electron/ipc/clips.ts`               | Create                                                   | 5.4        |
+| `electron/ipc/clips.test.ts`          | Create                                                   | 5.4        |
 
 ## Pre-flight
 
@@ -75,11 +75,13 @@ Wire Plan 1's primitives into a complete **clipper pipeline** (`extract → enri
 ## Tasks
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: `dedupe.ts` — `clips.getByUrl` wrapper
 
 A thin wrapper over the (yet-to-be-built) `clips` DAO. We define an injectable interface so pipeline.ts can be unit-tested without SQLite. The real DAO lands in task 5.4; here we only declare the seam.
 
 **Files:**
+
 - Create: `electron/clipper/dedupe.ts`
 - Create: `electron/clipper/dedupe.test.ts`
 
@@ -193,9 +195,11 @@ git commit -m "feat(phase-12): dedupe — cleanUrl-then-getByUrl wrapper"
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: `slug.ts` — Chinese (jieba) / English (slugify) + url sha6
 
 **Files:**
+
 - Create: `electron/clipper/slug.ts`
 - Create: `electron/clipper/slug.test.ts`
 
@@ -349,11 +353,13 @@ git commit -m "feat(phase-12): slug — jieba (zh) / slugify (en) + sha6 + date 
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: `pipeline.ts` — orchestrate extract → enrich → transform → preview → save → index → record
 
 The orchestrator. We expose two entry points that map directly to the `clipper.clip` and `clipper.saveClip` IPCs. Everything is dependency-injected so pipeline.test.ts can stub `extract`, `transform`, `dedupe`, `writer`, `clipsDao`, `opsLog`, `clipQueue` independently.
 
 **Files:**
+
 - Create: `electron/clipper/pipeline.ts`
 - Create: `electron/clipper/pipeline.test.ts`
 
@@ -477,7 +483,9 @@ describe('pipeline.clip — happy path', () => {
 
 describe('pipeline.saveClip', () => {
   let deps: PipelineDeps
-  beforeEach(() => { deps = makeDeps() })
+  beforeEach(() => {
+    deps = makeDeps()
+  })
 
   it('writes file + creates clip row + appends ops_log + enqueues', async () => {
     const p = createPipeline(deps)
@@ -511,7 +519,9 @@ describe('pipeline.saveClip', () => {
 
   it('returns E_WRITE_FAILED and does not insert clip when write throws', async () => {
     const deps2 = makeDeps({
-      writeAtomic: vi.fn(async () => { throw new Error('disk full') })
+      writeAtomic: vi.fn(async () => {
+        throw new Error('disk full')
+      })
     })
     const p = createPipeline(deps2)
     const start = await p.clip(fakeWebContents())
@@ -705,7 +715,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     } catch (e: any) {
       return {
         ok: false,
-        error: { code: 'E_TRANSFORM_FAILED', message: e?.message ?? 'transform failed', stage: 'transforming' }
+        error: {
+          code: 'E_TRANSFORM_FAILED',
+          message: e?.message ?? 'transform failed',
+          stage: 'transforming'
+        }
       }
     }
 
@@ -746,7 +760,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     if (!HTTP_RE.test(proto)) {
       return {
         ok: false,
-        error: { code: 'E_UNSUPPORTED_SCHEME', message: 'only http(s) is supported', stage: 'precheck' }
+        error: {
+          code: 'E_UNSUPPORTED_SCHEME',
+          message: 'only http(s) is supported',
+          stage: 'precheck'
+        }
       }
     }
     const existing = await deps.dedupe.findExisting(url)
@@ -779,7 +797,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     if (!state) {
       return {
         ok: false,
-        error: { code: 'E_TRANSFORM_FAILED', message: 'unknown runId; preview expired', stage: 'saving' }
+        error: {
+          code: 'E_TRANSFORM_FAILED',
+          message: 'unknown runId; preview expired',
+          stage: 'saving'
+        }
       }
     }
     const { enriched, body, preview } = state
@@ -806,7 +828,8 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     const MAX_SUFFIX = 50
     let saved = false
     for (let i = 0; i <= MAX_SUFFIX; i++) {
-      const candidate = i === 0 ? preview.suggestedPath : preview.suggestedPath.replace(/\.md$/, `-${i}.md`)
+      const candidate =
+        i === 0 ? preview.suggestedPath : preview.suggestedPath.replace(/\.md$/, `-${i}.md`)
       try {
         await deps.writeAtomic(candidate, { body, frontmatter: fm })
         writtenPath = candidate
@@ -825,7 +848,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     if (!saved) {
       return {
         ok: false,
-        error: { code: 'E_WRITE_FAILED', message: 'could not find non-conflicting path', stage: 'saving' }
+        error: {
+          code: 'E_WRITE_FAILED',
+          message: 'could not find non-conflicting path',
+          stage: 'saving'
+        }
       }
     }
 
@@ -848,7 +875,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
     } catch (e: any) {
       return {
         ok: false,
-        error: { code: 'E_WRITE_FAILED', message: e?.message ?? 'clips insert failed', stage: 'saving' }
+        error: {
+          code: 'E_WRITE_FAILED',
+          message: e?.message ?? 'clips insert failed',
+          stage: 'saving'
+        }
       }
     }
 
@@ -859,7 +890,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
       // E_INDEX_FAILED is non-fatal per spec (phase-05 self-heals).
     }
     try {
-      await deps.opsLog.append({ op: 'clip', path: writtenPath, meta: { url: enriched.url, clipId: dbId } })
+      await deps.opsLog.append({
+        op: 'clip',
+        path: writtenPath,
+        meta: { url: enriched.url, clipId: dbId }
+      })
     } catch {
       // ops_log failure is also non-fatal.
     }
@@ -899,11 +934,13 @@ git commit -m "feat(phase-12): pipeline — clip/saveClip/cancel/reextract orche
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 4: Pipeline error enum surface verification
 
 This task verifies all 7 error codes from the spec (`E_UNSUPPORTED_SCHEME`, `E_ALREADY_CLIPPED`, `E_EXTRACT_TIMEOUT`, `E_EXTRACT_EMPTY`, `E_TRANSFORM_FAILED`, `E_WRITE_FAILED`, `E_INDEX_FAILED`) are reachable through the pipeline by adding the still-missing test cases.
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.test.ts`
 
 - [ ] **Step 1: Append the missing error-surface tests**
@@ -922,7 +959,9 @@ describe('pipeline — full error code surface', () => {
 
   it('E_TRANSFORM_FAILED when transform throws', async () => {
     const deps = makeDeps({
-      transform: vi.fn(() => { throw new Error('boom') })
+      transform: vi.fn(() => {
+        throw new Error('boom')
+      })
     })
     const p = createPipeline(deps)
     const r = await p.clip(fakeWebContents())
@@ -932,7 +971,9 @@ describe('pipeline — full error code surface', () => {
 
   it('E_INDEX_FAILED is swallowed (save still succeeds)', async () => {
     const deps = makeDeps({
-      indexUpsert: vi.fn(async () => { throw new Error('idx') })
+      indexUpsert: vi.fn(async () => {
+        throw new Error('idx')
+      })
     })
     const p = createPipeline(deps)
     const start = await p.clip(fakeWebContents())
@@ -967,11 +1008,13 @@ git commit -m "test(phase-12): pipeline — verify full error code surface (7 co
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 5: `clip-queue.ts` — phase-14 placeholder
 
 A no-op queue with an injectable seam phase 14 will replace. We expose `enqueue` and `getPendingForTest()` so pipeline tests can introspect.
 
 **Files:**
+
 - Create: `electron/clipper/clip-queue.ts`
 - Create: `electron/clipper/clip-queue.test.ts`
 
@@ -1039,8 +1082,12 @@ let singleton: ClipQueue | null = null
 export function getClipQueue(): ClipQueue {
   if (!singleton) {
     singleton = {
-      enqueue(msg) { pending.push(msg) },
-      getPendingForTest() { return [...pending] }
+      enqueue(msg) {
+        pending.push(msg)
+      },
+      getPendingForTest() {
+        return [...pending]
+      }
     }
   }
   return singleton
@@ -1070,11 +1117,13 @@ git commit -m "feat(phase-12): clip-queue — phase-14 no-op placeholder + test 
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 6: `shared/ipc-contract.ts` — `clipper` namespace + ClipErrorCode union
 
 We extend the existing `IpcErrorCode` union with the clipper codes, then declare the `clipper` namespace methods. This task only owns `clipper.*`; task 5.2 owns `clips.*`.
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `shared/ipc-contract.test.ts` (existing — add a smoke assertion)
 
@@ -1116,6 +1165,7 @@ In `shared/ipc-contract.ts`:
    ```
 
    And update `IPC_ERROR_CODES`:
+
    ```ts
    export const IPC_ERROR_CODES = {
      // ... existing entries unchanged ...
@@ -1199,9 +1249,11 @@ git commit -m "feat(phase-12): ipc-contract — clipper namespace + ClipErrorCod
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 7: `shared/ipc-contract.ts` — `clips` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 - [ ] **Step 1: Append the `clips` namespace types**
@@ -1209,12 +1261,7 @@ git commit -m "feat(phase-12): ipc-contract — clipper namespace + ClipErrorCod
 In `shared/ipc-contract.ts`, after the `ClipperContract` block:
 
 ```ts
-import type {
-  Clip,
-  ClipCreateInput,
-  ClipsListOpts,
-  ClipsListResult
-} from './clip-types'
+import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 export interface ClipsContract {
   /**
@@ -1250,11 +1297,13 @@ git commit -m "feat(phase-12): ipc-contract — clips namespace (CRUD + list)"
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 8: `electron/ipc/clipper.ts` — pipeline-backed handlers
 
 We resolve the active tab's `WebContents` via phase-11's manager, hand off to `pipeline`, and serialise responses through the standard envelope.
 
 **Files:**
+
 - Create: `electron/ipc/clipper.ts`
 - Create: `electron/ipc/clipper.test.ts`
 
@@ -1297,14 +1346,16 @@ function makeDeps(over: Partial<ClipperHandlerDeps> = {}): ClipperHandlerDeps {
         }
       }))
     },
-    getWebContentsForTab: vi.fn(() => ({ isDestroyed: () => false } as any)),
+    getWebContentsForTab: vi.fn(() => ({ isDestroyed: () => false }) as any),
     ...over
   }
 }
 
 describe('clipper IPC', () => {
   let deps: ReturnType<typeof makeDeps>
-  beforeEach(() => { deps = makeDeps() })
+  beforeEach(() => {
+    deps = makeDeps()
+  })
 
   it('clip(tabId) calls pipeline.clip with the resolved webContents', async () => {
     const h = createClipperHandlers(deps)
@@ -1417,7 +1468,13 @@ export function createClipperHandlers(deps: ClipperHandlerDeps): ClipperHandlers
             // The standard `IpcErr.error` shape is { code, message } only;
             // we serialise the extras into the message JSON.
             ...(r.error.existingId !== undefined
-              ? { message: JSON.stringify({ message: r.error.message, existingId: r.error.existingId, existingPath: r.error.existingPath }) }
+              ? {
+                  message: JSON.stringify({
+                    message: r.error.message,
+                    existingId: r.error.existingId,
+                    existingPath: r.error.existingPath
+                  })
+                }
               : {})
           } as any
         }
@@ -1520,9 +1577,11 @@ git commit -m "feat(phase-12): ipc/clipper — clip/saveClip/cancel/reextract ha
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 9: `electron/ipc/clips.ts` — SQLite CRUD with prepared statements
 
 **Files:**
+
 - Create: `electron/ipc/clips.ts`
 - Create: `electron/ipc/clips.test.ts`
 
@@ -1546,7 +1605,9 @@ function freshDb() {
 
 describe('clips DAO', () => {
   let db: ReturnType<typeof freshDb>
-  beforeEach(() => { db = freshDb() })
+  beforeEach(() => {
+    db = freshDb()
+  })
 
   it('create + getById round-trips', async () => {
     const dao = createClipsDao(db)
@@ -1620,10 +1681,34 @@ describe('clips DAO', () => {
 
   it('list filters by q against title/url/excerpt (LIKE, ci)', async () => {
     const dao = createClipsDao(db)
-    await dao.create({ url: 'https://x.com/news/1', path: 'p1', title: 'Tech today', excerpt: null, clippedAt: '2026-05-02T00:00:00Z' })
-    await dao.create({ url: 'https://x.com/2', path: 'p2', title: 'NEWS roundup', excerpt: null, clippedAt: '2026-05-02T00:00:01Z' })
-    await dao.create({ url: 'https://x.com/3', path: 'p3', title: 'Other', excerpt: 'today\'s news digest', clippedAt: '2026-05-02T00:00:02Z' })
-    await dao.create({ url: 'https://x.com/4', path: 'p4', title: 'Other', excerpt: 'unrelated', clippedAt: '2026-05-02T00:00:03Z' })
+    await dao.create({
+      url: 'https://x.com/news/1',
+      path: 'p1',
+      title: 'Tech today',
+      excerpt: null,
+      clippedAt: '2026-05-02T00:00:00Z'
+    })
+    await dao.create({
+      url: 'https://x.com/2',
+      path: 'p2',
+      title: 'NEWS roundup',
+      excerpt: null,
+      clippedAt: '2026-05-02T00:00:01Z'
+    })
+    await dao.create({
+      url: 'https://x.com/3',
+      path: 'p3',
+      title: 'Other',
+      excerpt: "today's news digest",
+      clippedAt: '2026-05-02T00:00:02Z'
+    })
+    await dao.create({
+      url: 'https://x.com/4',
+      path: 'p4',
+      title: 'Other',
+      excerpt: 'unrelated',
+      clippedAt: '2026-05-02T00:00:03Z'
+    })
     const r = (await dao.list({ q: 'news', limit: 10, offset: 0 })) as any
     expect(r.ok).toBe(true)
     expect(r.data.total).toBe(3) // url, title, excerpt
@@ -1631,8 +1716,18 @@ describe('clips DAO', () => {
 
   it('list filters by site', async () => {
     const dao = createClipsDao(db)
-    await dao.create({ url: 'https://a.com/1', path: 'p1', site: 'a.com', clippedAt: '2026-05-02T00:00:00Z' })
-    await dao.create({ url: 'https://b.com/1', path: 'p2', site: 'b.com', clippedAt: '2026-05-02T00:00:01Z' })
+    await dao.create({
+      url: 'https://a.com/1',
+      path: 'p1',
+      site: 'a.com',
+      clippedAt: '2026-05-02T00:00:00Z'
+    })
+    await dao.create({
+      url: 'https://b.com/1',
+      path: 'p2',
+      site: 'b.com',
+      clippedAt: '2026-05-02T00:00:01Z'
+    })
     const r = (await dao.list({ site: 'a.com', limit: 10, offset: 0 })) as any
     expect(r.ok).toBe(true)
     expect(r.data.total).toBe(1)
@@ -1641,7 +1736,11 @@ describe('clips DAO', () => {
 
   it('delete removes the row', async () => {
     const dao = createClipsDao(db)
-    const c = (await dao.create({ url: 'https://x.com/a', path: 'p', clippedAt: '2026-05-02T00:00:00Z' })) as any
+    const c = (await dao.create({
+      url: 'https://x.com/a',
+      path: 'p',
+      clippedAt: '2026-05-02T00:00:00Z'
+    })) as any
     const del = (await dao.delete({ id: c.data.id })) as any
     expect(del.ok).toBe(true)
     const got = (await dao.getById({ id: c.data.id })) as any
@@ -1707,7 +1806,9 @@ function toClip(r: Row): Clip {
   }
 }
 
-function ok<T>(data: T): IpcResult<T> { return { ok: true, data } }
+function ok<T>(data: T): IpcResult<T> {
+  return { ok: true, data }
+}
 function err(code: string, message: string): IpcResult<never> {
   return { ok: false, error: { code: code as any, message } }
 }
@@ -1769,7 +1870,9 @@ export function createClipsDao(db: Database.Database): ClipsDao {
       const where: string[] = []
       const params: Record<string, unknown> = {}
       if (opts.q && opts.q.trim().length > 0) {
-        where.push(`(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR excerpt LIKE @q COLLATE NOCASE)`)
+        where.push(
+          `(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR excerpt LIKE @q COLLATE NOCASE)`
+        )
         params.q = `%${opts.q.trim()}%`
       }
       if (opts.site && opts.site.trim().length > 0) {
@@ -1798,10 +1901,7 @@ export function createClipsDao(db: Database.Database): ClipsDao {
 }
 
 /** Register IPC handlers backed by a single shared Database instance. */
-export function registerClipsIpc(
-  ipcMain: Electron.IpcMain,
-  db: Database.Database
-): () => void {
+export function registerClipsIpc(ipcMain: Electron.IpcMain, db: Database.Database): () => void {
   const dao = createClipsDao(db)
   ipcMain.handle('clips:create', (_e, input: ClipCreateInput) => dao.create(input))
   ipcMain.handle('clips:list', (_e, opts: ClipsListOpts) => dao.list(opts))

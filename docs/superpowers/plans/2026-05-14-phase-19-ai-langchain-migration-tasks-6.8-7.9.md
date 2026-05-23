@@ -11,6 +11,7 @@
 **Dependencies on Plan 3:** The runner, stream-translator, and IPC switch are all live. Acceptance test suite (`electron/__acceptance__/*`) exists and exercises chat flows end-to-end.
 
 **LangChain reference:** Heavily consult `mcp__langchain-docs__search_docs_by_lang_chain` for:
+
 - `"SqliteSaver fromConnString fromDb constructor better-sqlite3"`
 - `"humanInTheLoopMiddleware interruptOn allowAccept allowEdit allowReject"`
 - `"Command resume decisions thread_id configurable"`
@@ -19,9 +20,11 @@
 ---
 
 <!-- openspec-task: 6.8 -->
+
 ### Task 1: Acceptance test sweep — confirm runner is K1-compliant
 
 **Files:**
+
 - Inspect: `electron/__acceptance__/**`
 - Modify (if necessary): individual acceptance specs where mocks need adapting
 
@@ -36,6 +39,7 @@ Identify which tests exercise chat / agent flows. Note: `phase-16` directory lik
 Run: `pnpm vitest run electron/__acceptance__/` (without `--coverage` to keep output focused).
 
 Expected: 100% pass. If any chat test fails:
+
 - **Cause A: mock shape changed.** The new runner calls `agent.stream` instead of `llmClient.chatWithTools`. If acceptance mocks the `llmClient`, they need to mock `agent.stream` instead. Update the test setup file to expose `mockAgentStream(entries)` and wire it through the chat handler.
 - **Cause B: `step.warning` event absence.** The legacy `step.warning` is no longer emitted (per design "并行工具调用" decision). If any test asserts on `step.warning`, drop the assertion — it's an event removal documented in OpenSpec.
 - **Cause C: tool ordering differences.** Legacy ran one tool at a time; new path runs in parallel. If tests assert event order across tool calls, relax the assertion to "events for both tool calls appear, in any order".
@@ -66,9 +70,11 @@ git commit --allow-empty -m "test(acceptance): confirm chat suite passes 100% on
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 2: Create migration `002_langgraph_checkpoints.sql`
 
 **Files:**
+
 - Create: `electron/services/db/migrations/002_langgraph_checkpoints.sql`
 
 Note: tasks.md says `electron/db/migrations/` but the real directory is `electron/services/db/migrations/` — use the real path. The migration runner (`electron/services/db/migrations.ts`) reads files matching `^(\d{3})_.*\.sql$` and sets `user_version = 2` after this runs.
@@ -191,9 +197,11 @@ git commit -m "feat(db): add migration 002 for LangGraph checkpointer tables"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 3: Test migration applies cleanly + preserves existing tables
 
 **Files:**
+
 - Modify: `electron/services/db/migrations.test.ts` (extend) or create `electron/services/db/migrations/002_langgraph_checkpoints.test.ts`
 
 - [ ] **Step 1: Update the existing migration test (or add a new one)**
@@ -202,26 +210,36 @@ Edit `electron/services/db/migrations.test.ts`. Add tests:
 
 ```typescript
 it('runs migration 002, creates checkpointer tables, preserves session_messages', () => {
-  const db = new Database(':memory:');
-  runMigrations(db, migrationsDir());
-  expect(db.pragma('user_version', { simple: true })).toBe(2);
+  const db = new Database(':memory:')
+  runMigrations(db, migrationsDir())
+  expect(db.pragma('user_version', { simple: true })).toBe(2)
   // Checkpointer tables exist
-  const checkpointer = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('checkpoints', 'checkpoint_writes', 'checkpoint_blobs')`).all();
-  expect(checkpointer.length).toBe(3);
+  const checkpointer = db
+    .prepare(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name IN ('checkpoints', 'checkpoint_writes', 'checkpoint_blobs')`
+    )
+    .all()
+  expect(checkpointer.length).toBe(3)
   // Existing session tables intact
-  const sessions = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('sessions', 'session_messages', 'tool_calls')`).all();
-  expect(sessions.length).toBe(3);
-});
+  const sessions = db
+    .prepare(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name IN ('sessions', 'session_messages', 'tool_calls')`
+    )
+    .all()
+  expect(sessions.length).toBe(3)
+})
 
 it('migration 002 is idempotent (CREATE IF NOT EXISTS coexists with SqliteSaver bootstrap)', () => {
-  const db = new Database(':memory:');
-  runMigrations(db, migrationsDir());
+  const db = new Database(':memory:')
+  runMigrations(db, migrationsDir())
   // Re-run — should be a no-op even if SqliteSaver later runs CREATE IF NOT EXISTS.
-  db.exec('CREATE TABLE IF NOT EXISTS checkpoints (thread_id TEXT NOT NULL, checkpoint_ns TEXT, checkpoint_id TEXT, PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id))');
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS checkpoints (thread_id TEXT NOT NULL, checkpoint_ns TEXT, checkpoint_id TEXT, PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id))'
+  )
   // Original migration's columns should still be present (no truncation).
-  const cols = db.prepare("PRAGMA table_info(checkpoints)").all() as any[];
-  expect(cols.find((c) => c.name === 'metadata')).toBeTruthy();
-});
+  const cols = db.prepare('PRAGMA table_info(checkpoints)').all() as any[]
+  expect(cols.find((c) => c.name === 'metadata')).toBeTruthy()
+})
 ```
 
 - [ ] **Step 2: Run + commit**
@@ -235,9 +253,11 @@ git commit -m "test(db): verify migration 002 creates checkpointer tables and is
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 4: Instantiate `SqliteSaver` singleton in `agent-singleton.ts`
 
 **Files:**
+
 - Modify: `electron/agent/agent-singleton.ts`
 
 - [ ] **Step 1: Look up `SqliteSaver` constructor options**
@@ -249,8 +269,8 @@ In the JS port the constructor accepts a `better-sqlite3` Database instance or a
 If the port only accepts a connection string, open a parallel handle to the same DB file:
 
 ```typescript
-import Database from 'better-sqlite3';
-const checkpointer = SqliteSaver.fromConnString(dbService.getCurrentDbPath());
+import Database from 'better-sqlite3'
+const checkpointer = SqliteSaver.fromConnString(dbService.getCurrentDbPath())
 ```
 
 Verify with `mcp__langchain-docs__search_docs_by_lang_chain` whether sharing one Database instance is supported. Plan 4 open question #3 in `design.md` asks the same.
@@ -319,9 +339,11 @@ git commit -m "feat(agent): replace MemorySaver with SqliteSaver checkpointer si
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 5: Install `humanInTheLoopMiddleware` for `update_frontmatter`
 
 **Files:**
+
 - Modify: `electron/agent/agent-singleton.ts`
 
 - [ ] **Step 1: Look up the middleware shape**
@@ -329,10 +351,11 @@ git commit -m "feat(agent): replace MemorySaver with SqliteSaver checkpointer si
 Run via MCP: `mcp__langchain-docs__search_docs_by_lang_chain` with `"humanInTheLoopMiddleware interruptOn allowAccept allowEdit allowReject"`.
 
 Verify the v1 export path. Candidates:
+
 ```typescript
-import { humanInTheLoopMiddleware } from 'langchain/middleware';
+import { humanInTheLoopMiddleware } from 'langchain/middleware'
 // or:
-import { humanInTheLoopMiddleware } from '@langchain/langgraph/middleware';
+import { humanInTheLoopMiddleware } from '@langchain/langgraph/middleware'
 ```
 
 - [ ] **Step 2: Add middleware to `createAgent` call**
@@ -380,9 +403,11 @@ git commit -m "feat(agent): wire humanInTheLoopMiddleware for update_frontmatter
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 6: Rewire `approveTool` / `rejectTool` IPC to `Command({ resume })`
 
 **Files:**
+
 - Modify: `electron/ipc/chat.ts`
 - Modify: `electron/agent/runner.ts` (add `resumeAgent` export)
 
@@ -393,14 +418,20 @@ The external IPC signatures don't change. Internally we replace `approvalGate.ap
 Run via MCP: `mcp__langchain-docs__search_docs_by_lang_chain` with `"Command resume decisions accept edit reject HITL"`.
 
 The decision payload is approximately:
+
 ```typescript
 new Command({
   resume: [
-    { type: 'accept' },                             // approve as-is
-    { type: 'edit', args: { /* new args */ } },     // approve with edits
-    { type: 'reject' },                             // reject
-  ],
-});
+    { type: 'accept' }, // approve as-is
+    {
+      type: 'edit',
+      args: {
+        /* new args */
+      }
+    }, // approve with edits
+    { type: 'reject' } // reject
+  ]
+})
 ```
 
 Some versions accept a single `Command({ resume: { decisions: [...] } })` object. Confirm by reading the docs.
@@ -410,17 +441,19 @@ Some versions accept a single `Command({ resume: { decisions: [...] } })` object
 Append to `electron/agent/runner.ts`:
 
 ```typescript
-import { Command } from '@langchain/langgraph';
+import { Command } from '@langchain/langgraph'
 
 export interface ResumeAgentArgs {
-  sessionId: string;
-  agent: RunnerDeps['agent'] & { invoke?: (cmd: any, cfg: any) => AsyncIterable<unknown> | Promise<any> };
-  decisions: Array<{ type: 'accept' } | { type: 'edit'; args: unknown } | { type: 'reject' }>;
-  cancel: AbortSignal;
-  streamWriter: { write: (e: AgentEvent) => void };
-  sessions: RunnerDeps['sessions'];
-  recordUsage: RunnerDeps['recordUsage'];
-  modelName: string;
+  sessionId: string
+  agent: RunnerDeps['agent'] & {
+    invoke?: (cmd: any, cfg: any) => AsyncIterable<unknown> | Promise<any>
+  }
+  decisions: Array<{ type: 'accept' } | { type: 'edit'; args: unknown } | { type: 'reject' }>
+  cancel: AbortSignal
+  streamWriter: { write: (e: AgentEvent) => void }
+  sessions: RunnerDeps['sessions']
+  recordUsage: RunnerDeps['recordUsage']
+  modelName: string
 }
 
 export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
@@ -429,39 +462,43 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
     persist: {
       appendMessage: (m) => args.sessions.appendMessage(args.sessionId, m),
       recordToolCall: (tc, opts) => args.sessions.recordToolCall(args.sessionId, tc, opts),
-      finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields),
+      finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields)
     },
     recordUsage: args.recordUsage,
     seenAiMessageIds: new Set(),
-    toolCallRowIdByCallId: new Map(),
-  };
+    toolCallRowIdByCallId: new Map()
+  }
 
-  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined;
+  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
 
   try {
     // After resume, `agent.stream` continues from the interrupted state.
-    const stream = args.agent.stream(
-      new Command({ resume: args.decisions }) as any,
-      { configurable: { thread_id: args.sessionId }, streamMode: ['updates', 'messages'], signal: args.cancel },
-    );
+    const stream = args.agent.stream(new Command({ resume: args.decisions }) as any, {
+      configurable: { thread_id: args.sessionId },
+      streamMode: ['updates', 'messages'],
+      signal: args.cancel
+    })
     for await (const entry of stream) {
-      if (args.cancel.aborted) { emitCanceled(translatorDeps); return; }
-      await translateStreamEntry(translatorDeps, entry, args.modelName);
-      const [mode, payload] = entry as [string, any];
+      if (args.cancel.aborted) {
+        emitCanceled(translatorDeps)
+        return
+      }
+      await translateStreamEntry(translatorDeps, entry, args.modelName)
+      const [mode, payload] = entry as [string, any]
       if (mode === 'updates' && payload?.model?.messages) {
         for (const m of payload.model.messages) {
-          const u = (m as any)?.usage_metadata;
-          if (u) lastUsage = u;
+          const u = (m as any)?.usage_metadata
+          if (u) lastUsage = u
         }
       }
     }
-    emitDone(translatorDeps, lastUsage, args.modelName);
+    emitDone(translatorDeps, lastUsage, args.modelName)
   } catch (err: any) {
     if (err?.name === 'AbortError' || args.cancel.aborted) {
-      emitCanceled(translatorDeps);
-      return;
+      emitCanceled(translatorDeps)
+      return
     }
-    emitError(translatorDeps, err);
+    emitError(translatorDeps, err)
   }
 }
 ```
@@ -524,6 +561,7 @@ rejectTool: async (callId: string) => {
 ```
 
 Notes:
+
 - `approval.peekSessionId(callId)` needs to be added — or, since `approvalGate` is going away in Plan 6 Task 3, replace with a `pendingApprovals` Map maintained inside `createChatHandlers`. The interrupt → approval-needed emission (Task 7 below) is the natural place to add an entry into that Map.
 - `profileForSession(sessionId)`: look up the session's profileId from `sessions.list()` or the existing `pendingApprovals` Map.
 
@@ -545,9 +583,11 @@ git commit -m "feat(agent): approve/reject IPC drives Command({ resume }) via re
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 7: Map `__interrupt__` → `tool.approval-needed` in stream-translator + runner
 
 **Files:**
+
 - Modify: `electron/agent/runner.ts`
 - Modify: `electron/agent/stream-translator.ts` (only if needed; mostly the helper is already in place from Plan 3 Task 4)
 
@@ -566,15 +606,15 @@ or it's surfaced via the agent's task state. Use whichever LangGraph v1 actually
 Inside `runAgent`'s `for await (const entry of stream)`:
 
 ```typescript
-const [mode, payload] = entry as [string, any];
+const [mode, payload] = entry as [string, any]
 if (mode === 'updates' && Array.isArray(payload?.__interrupt__)) {
   for (const ir of payload.__interrupt__) {
-    emitInterrupt(translatorDeps, ir);
+    emitInterrupt(translatorDeps, ir)
     // Record the pending interrupt for IPC approve/reject lookup.
-    deps.pendingInterrupts?.set(String(ir.id), { sessionId, profileId: _profileId });
+    deps.pendingInterrupts?.set(String(ir.id), { sessionId, profileId: _profileId })
   }
   // Persist state; suspend the loop.
-  return;
+  return
 }
 ```
 
@@ -585,7 +625,7 @@ Add `pendingInterrupts?: Map<string, { sessionId: string; profileId: string }>` 
 In `createChatHandlers`, declare:
 
 ```typescript
-const pendingInterrupts = new Map<string, { sessionId: string; profileId: string }>();
+const pendingInterrupts = new Map<string, { sessionId: string; profileId: string }>()
 ```
 
 Pass it into both `runAgent` and `resumeAgent` call sites. Use it from `approveTool`/`rejectTool` to look up `sessionId` and `profileId` for a `callId`.
@@ -601,9 +641,11 @@ git commit -m "feat(agent): emit tool.approval-needed when runner sees __interru
 ---
 
 <!-- openspec-task: 7.7 -->
+
 ### Task 8: `agent.cancel` — abort + 24h retention metadata
 
 **Files:**
+
 - Modify: `electron/ipc/chat.ts` (cancelStream)
 - Modify: `electron/agent/agent-singleton.ts` (add `markThreadActivity`)
 - Migration: `electron/services/db/migrations/002_langgraph_checkpoints.sql` (add `last_active_at`)
@@ -631,26 +673,30 @@ If migration 002 has already shipped to users, create `003_checkpoint_meta.sql` 
 Edit `electron/agent/agent-singleton.ts`:
 
 ```typescript
-import { dbService } from '../services/db';
+import { dbService } from '../services/db'
 
 export function markThreadActive(threadId: string): void {
-  const db = dbService.requireCurrent();
-  const now = Date.now();
-  db.prepare(`
+  const db = dbService.requireCurrent()
+  const now = Date.now()
+  db.prepare(
+    `
     INSERT INTO checkpoint_meta (thread_id, last_active_at, canceled_at)
     VALUES (?, ?, NULL)
     ON CONFLICT(thread_id) DO UPDATE SET last_active_at = excluded.last_active_at, canceled_at = NULL
-  `).run(threadId, now);
+  `
+  ).run(threadId, now)
 }
 
 export function markThreadCanceled(threadId: string): void {
-  const db = dbService.requireCurrent();
-  const now = Date.now();
-  db.prepare(`
+  const db = dbService.requireCurrent()
+  const now = Date.now()
+  db.prepare(
+    `
     INSERT INTO checkpoint_meta (thread_id, last_active_at, canceled_at)
     VALUES (?, ?, ?)
     ON CONFLICT(thread_id) DO UPDATE SET canceled_at = excluded.canceled_at
-  `).run(threadId, now, now);
+  `
+  ).run(threadId, now, now)
 }
 ```
 
@@ -683,9 +729,11 @@ git commit -m "feat(agent): mark thread activity + cancel timestamp (24h retenti
 ---
 
 <!-- openspec-task: 7.8 -->
+
 ### Task 9: Startup recovery hook — re-emit pending `tool.approval-needed`
 
 **Files:**
+
 - Modify: `electron/app-lifecycle.ts` (or create `electron/agent/startup-recovery.ts`)
 - Modify: wherever the app's main entrypoint initializes services (likely `electron/main.ts`)
 
@@ -700,75 +748,96 @@ Read: `cat electron/app-lifecycle.ts`. The file already has `onBeforeQuit` / `on
 Create `electron/agent/startup-recovery.ts`:
 
 ```typescript
-import { dbService } from '../services/db';
-import { buildChatModel, type ResolvedProfile } from '../ai/model-factory';
-import { getAgentBuilder, getCheckpointerInstance } from './agent-singleton';
-import { getProfileDecryptedKey } from '../settings/profile-key';
-import { createStreamWriter } from './streamWriter';
-import { emitInterrupt } from './stream-translator';
-import type { AgentEvent } from '../../shared/agent-types';
+import { dbService } from '../services/db'
+import { buildChatModel, type ResolvedProfile } from '../ai/model-factory'
+import { getAgentBuilder, getCheckpointerInstance } from './agent-singleton'
+import { getProfileDecryptedKey } from '../settings/profile-key'
+import { createStreamWriter } from './streamWriter'
+import { emitInterrupt } from './stream-translator'
+import type { AgentEvent } from '../../shared/agent-types'
 
 interface RecoveryTargets {
-  getTargets: () => any[];
-  pendingInterrupts: Map<string, { sessionId: string; profileId: string }>;
+  getTargets: () => any[]
+  pendingInterrupts: Map<string, { sessionId: string; profileId: string }>
 }
 
 function listSessionsWithCheckpoints(): Array<{ sessionId: string; profileId: string }> {
-  const db = dbService.requireCurrent();
+  const db = dbService.requireCurrent()
   // Sessions with any checkpoint row.
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT s.id AS session_id, s.profile_id AS profile_id
     FROM sessions s
     WHERE EXISTS (SELECT 1 FROM checkpoints c WHERE c.thread_id = s.id)
-  `).all() as Array<{ session_id: string; profile_id: string | null }>;
+  `
+    )
+    .all() as Array<{ session_id: string; profile_id: string | null }>
   return rows
     .filter((r) => r.profile_id)
-    .map((r) => ({ sessionId: r.session_id, profileId: r.profile_id as string }));
+    .map((r) => ({ sessionId: r.session_id, profileId: r.profile_id as string }))
 }
 
-async function recoverOne(target: RecoveryTargets, { sessionId, profileId }: { sessionId: string; profileId: string }): Promise<void> {
-  const db = dbService.requireCurrent();
-  const p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(profileId) as any;
-  if (!p) return; // Profile was deleted; nothing to recover.
+async function recoverOne(
+  target: RecoveryTargets,
+  { sessionId, profileId }: { sessionId: string; profileId: string }
+): Promise<void> {
+  const db = dbService.requireCurrent()
+  const p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(profileId) as any
+  if (!p) return // Profile was deleted; nothing to recover.
   const profile: ResolvedProfile = {
-    id: p.id, provider: p.provider, model: p.model,
+    id: p.id,
+    provider: p.provider,
+    model: p.model,
     apiKey: p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id),
-    baseUrl: p.base_url ?? undefined, temperature: p.temperature, maxTokens: p.max_tokens ?? undefined,
-  };
-  const agent = getAgentBuilder().buildForProfile(profile);
-  const state: any = await (agent as any).getState({ configurable: { thread_id: sessionId } });
-  if (!state) return;
+    baseUrl: p.base_url ?? undefined,
+    temperature: p.temperature,
+    maxTokens: p.max_tokens ?? undefined
+  }
+  const agent = getAgentBuilder().buildForProfile(profile)
+  const state: any = await (agent as any).getState({ configurable: { thread_id: sessionId } })
+  if (!state) return
 
-  const writer = createStreamWriter(sessionId, target.getTargets);
-  const events: AgentEvent[] = [];
+  const writer = createStreamWriter(sessionId, target.getTargets)
+  const events: AgentEvent[] = []
   const translatorDeps = {
-    emit: (e: AgentEvent) => { events.push(e); writer.write(e); },
-    persist: { appendMessage: async () => ({ id: 0, sessionId, role: 'system', content: '', createdAt: '' }) as any, recordToolCall: async () => '', finishToolCall: async () => {} },
+    emit: (e: AgentEvent) => {
+      events.push(e)
+      writer.write(e)
+    },
+    persist: {
+      appendMessage: async () =>
+        ({ id: 0, sessionId, role: 'system', content: '', createdAt: '' }) as any,
+      recordToolCall: async () => '',
+      finishToolCall: async () => {}
+    },
     recordUsage: () => {},
     seenAiMessageIds: new Set<string>(),
-    toolCallRowIdByCallId: new Map<string, string>(),
-  };
+    toolCallRowIdByCallId: new Map<string, string>()
+  }
 
   for (const task of state.tasks ?? []) {
     for (const ir of task.interrupts ?? []) {
-      emitInterrupt(translatorDeps as any, ir);
-      target.pendingInterrupts.set(String(ir.id), { sessionId, profileId });
+      emitInterrupt(translatorDeps as any, ir)
+      target.pendingInterrupts.set(String(ir.id), { sessionId, profileId })
     }
   }
 }
 
-export async function recoverPendingApprovals(target: RecoveryTargets): Promise<{ recovered: number }> {
-  const candidates = listSessionsWithCheckpoints();
-  let recovered = 0;
+export async function recoverPendingApprovals(
+  target: RecoveryTargets
+): Promise<{ recovered: number }> {
+  const candidates = listSessionsWithCheckpoints()
+  let recovered = 0
   for (const c of candidates) {
     try {
-      await recoverOne(target, c);
-      recovered++;
+      await recoverOne(target, c)
+      recovered++
     } catch (err) {
       // Best-effort — never block startup.
     }
   }
-  return { recovered };
+  return { recovered }
 }
 ```
 
@@ -777,12 +846,12 @@ export async function recoverPendingApprovals(target: RecoveryTargets): Promise<
 Find `electron/main.ts` (the Electron main entrypoint). After the IPC handlers register but before the window is fully visible, add:
 
 ```typescript
-import { recoverPendingApprovals } from './agent/startup-recovery';
+import { recoverPendingApprovals } from './agent/startup-recovery'
 // after ipc handlers + grove + db init:
 await recoverPendingApprovals({
-  getTargets: () => (mainWindow && !mainWindow.isDestroyed()) ? [mainWindow.webContents] : [],
-  pendingInterrupts: chatHandlersPendingInterruptsRef,
-});
+  getTargets: () => (mainWindow && !mainWindow.isDestroyed() ? [mainWindow.webContents] : []),
+  pendingInterrupts: chatHandlersPendingInterruptsRef
+})
 ```
 
 `chatHandlersPendingInterruptsRef` is the Map created inside `createChatHandlers` — expose it as an export from `createChatHandlers` (return alongside the handler functions).
@@ -801,9 +870,11 @@ git commit -m "feat(agent): startup recovery hook re-emits pending tool.approval
 ---
 
 <!-- openspec-task: 7.9 -->
+
 ### Task 10: Cascade-delete checkpointer rows when a session is deleted
 
 **Files:**
+
 - Modify: `electron/agent/sessions.ts` (the `delete` method)
 - Test: `electron/agent/sessions.test.ts`
 
@@ -833,26 +904,38 @@ Add to `electron/agent/sessions.test.ts`:
 
 ```typescript
 it('delete cascades into checkpointer tables', async () => {
-  await sessions.createSession({ profileId: 'p1' });
-  const list = await sessions.list();
-  const sid = list[0].id;
-  db.prepare("INSERT INTO checkpoints (thread_id, checkpoint_ns, checkpoint_id) VALUES (?, '', 'cp-1')").run(sid);
-  db.prepare("INSERT INTO checkpoint_writes (thread_id, checkpoint_ns, checkpoint_id, task_id, idx, channel) VALUES (?, '', 'cp-1', 't', 0, 'c')").run(sid);
-  db.prepare("INSERT INTO checkpoint_blobs (thread_id, checkpoint_ns, channel, version) VALUES (?, '', 'c', 'v1')").run(sid);
+  await sessions.createSession({ profileId: 'p1' })
+  const list = await sessions.list()
+  const sid = list[0].id
+  db.prepare(
+    "INSERT INTO checkpoints (thread_id, checkpoint_ns, checkpoint_id) VALUES (?, '', 'cp-1')"
+  ).run(sid)
+  db.prepare(
+    "INSERT INTO checkpoint_writes (thread_id, checkpoint_ns, checkpoint_id, task_id, idx, channel) VALUES (?, '', 'cp-1', 't', 0, 'c')"
+  ).run(sid)
+  db.prepare(
+    "INSERT INTO checkpoint_blobs (thread_id, checkpoint_ns, channel, version) VALUES (?, '', 'c', 'v1')"
+  ).run(sid)
 
-  await sessions.delete(sid);
+  await sessions.delete(sid)
 
-  expect(db.prepare("SELECT COUNT(*) AS c FROM checkpoints WHERE thread_id = ?").get(sid)).toEqual({ c: 0 });
-  expect(db.prepare("SELECT COUNT(*) AS c FROM checkpoint_writes WHERE thread_id = ?").get(sid)).toEqual({ c: 0 });
-  expect(db.prepare("SELECT COUNT(*) AS c FROM checkpoint_blobs WHERE thread_id = ?").get(sid)).toEqual({ c: 0 });
-});
+  expect(db.prepare('SELECT COUNT(*) AS c FROM checkpoints WHERE thread_id = ?').get(sid)).toEqual({
+    c: 0
+  })
+  expect(
+    db.prepare('SELECT COUNT(*) AS c FROM checkpoint_writes WHERE thread_id = ?').get(sid)
+  ).toEqual({ c: 0 })
+  expect(
+    db.prepare('SELECT COUNT(*) AS c FROM checkpoint_blobs WHERE thread_id = ?').get(sid)
+  ).toEqual({ c: 0 })
+})
 
 it('delete on a session with no checkpointer rows still succeeds (0 affected)', async () => {
-  await sessions.createSession({ profileId: 'p1' });
-  const list = await sessions.list();
-  const sid = list[0].id;
-  await expect(sessions.delete(sid)).resolves.not.toThrow();
-});
+  await sessions.createSession({ profileId: 'p1' })
+  const list = await sessions.list()
+  const sid = list[0].id
+  await expect(sessions.delete(sid)).resolves.not.toThrow()
+})
 ```
 
 Make sure the test setup runs migrations so the checkpointer tables exist.
@@ -876,6 +959,7 @@ After all 10 tasks above:
 ```bash
 pnpm test
 ```
+
 Expected: green. Acceptance tests still pass; `update_frontmatter` HITL now functional.
 
 - [ ] **Typecheck + build**
@@ -887,6 +971,7 @@ pnpm run typecheck && pnpm run build
 - [ ] **Smoke test HITL**
 
 `pnpm dev`. Send a chat message that asks the agent to "tag note X with tag 'todo'". Expect:
+
 1. Agent emits `search_files` → finds note.
 2. Agent emits `update_frontmatter` request → `tool.approval-needed` arrives.
 3. Renderer shows approval UI; user clicks approve.

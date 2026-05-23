@@ -11,89 +11,89 @@ npm install @assistant-ui/react @assistant-ui/react-langgraph
 ## Basic Setup
 
 ```tsx
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
-import { useLangGraphRuntime } from "@assistant-ui/react-langgraph";
+import { AssistantRuntimeProvider } from '@assistant-ui/react'
+import { Thread } from '@/components/assistant-ui/thread'
+import { useLangGraphRuntime } from '@assistant-ui/react-langgraph'
 
 function Chat() {
   const runtime = useLangGraphRuntime({
-    threadId: "my-thread-id",
+    threadId: 'my-thread-id',
     stream: async function* (messages, config) {
-      const response = await fetch("/api/langgraph", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, config }),
-      });
+      const response = await fetch('/api/langgraph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, config })
+      })
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
 
       while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const { done, value } = await reader.read()
+        if (done) break
 
-        const chunk = decoder.decode(value);
+        const chunk = decoder.decode(value)
         // Parse LangGraph events and yield
         for (const event of parseLangGraphEvents(chunk)) {
-          yield event;
+          yield event
         }
       }
-    },
-  });
+    }
+  })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread />
     </AssistantRuntimeProvider>
-  );
+  )
 }
 ```
 
 ## With LangGraph Client SDK
 
 ```tsx
-import { Client } from "@langchain/langgraph-sdk";
-import { useLangGraphRuntime } from "@assistant-ui/react-langgraph";
+import { Client } from '@langchain/langgraph-sdk'
+import { useLangGraphRuntime } from '@assistant-ui/react-langgraph'
 
 const client = new Client({
-  apiUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL || "http://localhost:8123",
-});
+  apiUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL || 'http://localhost:8123'
+})
 
 function Chat() {
-  const [threadId, setThreadId] = useState<string | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null)
 
   const runtime = useLangGraphRuntime({
     threadId,
     stream: async function* (messages, config) {
       // Create thread if needed
-      let currentThreadId = threadId;
+      let currentThreadId = threadId
       if (!currentThreadId) {
-        const thread = await client.threads.create();
-        currentThreadId = thread.thread_id;
-        setThreadId(currentThreadId);
+        const thread = await client.threads.create()
+        currentThreadId = thread.thread_id
+        setThreadId(currentThreadId)
       }
 
       // Stream from LangGraph
       const stream = client.runs.stream(
         currentThreadId,
-        "my-assistant",  // Assistant name in LangGraph
+        'my-assistant', // Assistant name in LangGraph
         {
           input: { messages },
-          config,
+          config
         }
-      );
+      )
 
       for await (const event of stream) {
-        yield event;
+        yield event
       }
-    },
-  });
+    }
+  })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread />
     </AssistantRuntimeProvider>
-  );
+  )
 }
 ```
 
@@ -131,24 +131,26 @@ The stream callback should yield append-only content updates (same shape as `Cha
 ## With Tool UI
 
 ```tsx
-import { makeAssistantToolUI } from "@assistant-ui/react";
+import { makeAssistantToolUI } from '@assistant-ui/react'
 
 // LangGraph tools can have custom UI
 const SearchToolUI = makeAssistantToolUI({
-  toolName: "tavily_search",
+  toolName: 'tavily_search',
   render: ({ args, result, status }) => {
-    if (status === "running") {
-      return <div>Searching for: {args.query}...</div>;
+    if (status === 'running') {
+      return <div>Searching for: {args.query}...</div>
     }
     return (
       <div>
         {result?.results?.map((r: any) => (
-          <a key={r.url} href={r.url}>{r.title}</a>
+          <a key={r.url} href={r.url}>
+            {r.title}
+          </a>
         ))}
       </div>
-    );
-  },
-});
+    )
+  }
+})
 ```
 
 ## Python Backend Example
@@ -181,11 +183,11 @@ LangGraph handles thread persistence server-side. The `threadId` you pass to the
 ```tsx
 // Thread list with LangGraph
 function ThreadSelector() {
-  const [threads, setThreads] = useState([]);
+  const [threads, setThreads] = useState([])
 
   useEffect(() => {
-    client.threads.list().then(setThreads);
-  }, []);
+    client.threads.list().then(setThreads)
+  }, [])
 
   return (
     <select onChange={(e) => setThreadId(e.target.value)}>
@@ -195,7 +197,7 @@ function ThreadSelector() {
         </option>
       ))}
     </select>
-  );
+  )
 }
 ```
 

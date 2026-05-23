@@ -10,13 +10,16 @@
 **Plan branch:** `phase-19-ui-remediation`
 
 **Sources:**
+
 - `openspec/changes/phase-18-observability-and-packaging/tasks.md` (§13)
 - All Plan 1–4 deliverables
 
 **Out of scope:**
+
 - Any new code that isn't already shipped by Plans 1–4. If a verification task uncovers a missing implementation detail, file a follow-up commit on the relevant feature plan rather than expanding scope here.
 
 **Open issues:**
+
 - macOS notarization (13.12) is gated on having Apple Developer credentials available. If running unsigned, document the Gatekeeper warning behavior instead.
 - Tag-push verification (13.15) requires GitHub Actions secrets to be configured. If running locally, verify the workflow file syntax with `actionlint` and skip the live tag push.
 
@@ -34,6 +37,7 @@ If a step fails, **stop** and open an issue / fix on the originating plan. Don't
 ---
 
 <!-- openspec-task: 13.1 -->
+
 ### Task 1: Boot writes a dated log + opening info line
 
 - [ ] **Setup**
@@ -63,6 +67,7 @@ PASS criteria: file exists with today's UTC date; first line is valid JSON; `are
 ---
 
 <!-- openspec-task: 13.2 -->
+
 ### Task 2: Clipper / search / agent operations write JSON Lines per area
 
 - [ ] **Setup**
@@ -103,6 +108,7 @@ PASS: prints `OK` and at least one entry per area.
 ---
 
 <!-- openspec-task: 13.3 -->
+
 ### Task 3: Boot rotate trims to ≤ 40MB and deletes >7-day files
 
 - [ ] **Setup**
@@ -134,6 +140,7 @@ du -sh "$LOG_DIR"
 ```
 
 PASS:
+
 - `app-old.log` is gone (older than 7 days).
 - Total size ≤ 40MB.
 - A new `app-YYYY-MM-DD.log` for today exists.
@@ -141,6 +148,7 @@ PASS:
 ---
 
 <!-- openspec-task: 13.4 -->
+
 ### Task 4: Search query writes `perf_samples` row + observability shows P50/P95
 
 - [ ] **Setup**
@@ -154,6 +162,7 @@ In the search bar, run 10–20 queries with varied terms.
 - [ ] **Assertion**
 
 In `Settings → Observability → Performance`, the row `search.query` shows:
+
 - `count` ≥ 10
 - `p50` and `p95` are non-zero numbers
 - `successRate` is `100%` (assuming no errors)
@@ -171,6 +180,7 @@ PASS: UI numbers match DB row count, both > 0.
 ---
 
 <!-- openspec-task: 13.5 -->
+
 ### Task 5: Renderer crash → next-boot banner → Ignore moves to acked/
 
 - [ ] **Setup**
@@ -200,6 +210,7 @@ EOF
 - [ ] **Assertion**
 
 After app restart:
+
 - The crash banner (`data-testid="crash-banner"`) appears at the top of the window.
 - It says "Acornvo recovered from a crash on the previous run (1 report)." (or similar i18n text).
 
@@ -211,6 +222,7 @@ ls "$HOME/Library/Application Support/acornvo/logs/crashes/acked/"
 ```
 
 PASS:
+
 - The original `renderer-*.log` is no longer in `crashes/` (only `crashes/acked/` and `crashes/minidumps/`).
 - It is now in `crashes/acked/`.
 - The banner disappears.
@@ -218,6 +230,7 @@ PASS:
 ---
 
 <!-- openspec-task: 13.6 -->
+
 ### Task 6: Diagnostic bundle export — Downloads zip, opens Finder/Explorer, secrets redacted
 
 - [ ] **Setup**
@@ -249,6 +262,7 @@ unzip -l "$LATEST" | grep -E '(about\.json|env\.json)'
 ```
 
 PASS:
+
 - `sk-proj-...` does not appear in the zipped log.
 - `[REDACTED:api-key]` does appear.
 - `about.json` and `env.json` are present.
@@ -257,6 +271,7 @@ PASS:
 ---
 
 <!-- openspec-task: 13.7 -->
+
 ### Task 7: Observability AI tab — totals, profile bar, tool counts
 
 - [ ] **Setup**
@@ -282,6 +297,7 @@ PASS: UI counts equal (or exceed when within window) DB counts.
 ---
 
 <!-- openspec-task: 13.8 -->
+
 ### Task 8: Observability Queue tab — failed retry → pending → consumed
 
 - [ ] **Setup**
@@ -303,6 +319,7 @@ sqlite3 "<db-path>" \
 - [ ] **Assertion**
 
 Within 5s (the polling interval):
+
 - The failed row disappears (or moves to running) once the runner picks it up.
 - `pending` or `running` count increments by 1.
 - After the runner consumes it, the row's `status` flips to `succeeded` (or back to `failed` if the underlying handler still fails — that's correct behavior).
@@ -316,6 +333,7 @@ PASS: status changed from `failed` to `pending` → eventually `running`/`succee
 ---
 
 <!-- openspec-task: 13.9 -->
+
 ### Task 9: About page — version / hash / runtime / licenses top 20 + expand
 
 - [ ] **Setup**
@@ -349,6 +367,7 @@ PASS: all four assertions match.
 ---
 
 <!-- openspec-task: 13.10 -->
+
 ### Task 10: Manual update check — offline shows red error; online up-to-date shows green
 
 - [ ] **Setup A — offline**
@@ -380,6 +399,7 @@ PASS: both branches behave as documented; logs reflect the activity.
 ---
 
 <!-- openspec-task: 13.11 -->
+
 ### Task 11: `npm run dist:mac` produces both x64 and arm64 dmg
 
 - [ ] **Setup**
@@ -410,6 +430,7 @@ PASS: exactly two dmg files, one per arch, file sizes > 50MB each.
 ---
 
 <!-- openspec-task: 13.12 -->
+
 ### Task 12: Mac dmg installs and launches without unknown-developer warning (signed + notarized)
 
 - [ ] **Setup**
@@ -429,16 +450,19 @@ Double-click `dist/acornvo-<version>-arm64.dmg` (on Apple Silicon) and drag Acor
 - [ ] **Assertion**
 
 PASS (signed):
+
 - Gatekeeper does NOT warn about an unknown developer.
 - App launches; the dock icon and product name read **Acornvo**.
 
 PASS (unsigned local):
+
 - Gatekeeper warns "unknown developer". After right-click → Open, app launches.
 - Mark this sub-step as a documented limitation in the verification log.
 
 ---
 
 <!-- openspec-task: 13.13 -->
+
 ### Task 13: `npm run dist:win` produces nsis exe; install creates shortcuts
 
 - [ ] **Setup**
@@ -460,6 +484,7 @@ dir dist\*.exe
 ```
 
 Run the installer:
+
 - It installs per-user without requiring admin (per `nsis.perMachine: false` default).
 - Desktop shortcut **Acornvo** appears.
 - Start Menu entry **Acornvo** appears.
@@ -470,6 +495,7 @@ PASS: setup file exists; both shortcuts present; app launches.
 ---
 
 <!-- openspec-task: 13.14 -->
+
 ### Task 14: `npm run dist:linux` produces AppImage; runs after chmod +x
 
 - [ ] **Setup**
@@ -495,6 +521,7 @@ PASS: one AppImage; runs.
 ---
 
 <!-- openspec-task: 13.15 -->
+
 ### Task 15: `git push` tag `v0.1.0` triggers release workflow successfully
 
 - [ ] **Setup**
@@ -525,6 +552,7 @@ If signing secrets are absent the workflow may still ship unsigned artifacts; do
 ---
 
 <!-- openspec-task: 13.16 -->
+
 ### Task 16: Telemetry default off; enable → next-day row appears with matching numbers
 
 - [ ] **Setup**
@@ -559,6 +587,7 @@ sqlite3 "<db-path>" "SELECT day, metric, value FROM telemetry_local;"
 ```
 
 Expected rows for yesterday's date:
+
 - `ai.requests`, `ai.tokens.total`, `clips.created`, `perf.samples`
 
 Cross-check the magnitudes against direct aggregates:
@@ -589,6 +618,7 @@ PASS: count is unchanged (history preserved). Future days will not get new rows.
 ---
 
 <!-- openspec-task: 13.17 -->
+
 ### Task 17: Production build blocks devtools; dev build allows them
 
 - [ ] **Setup A — production**
@@ -631,6 +661,7 @@ PASS: dev build does not enforce the lock.
 ---
 
 <!-- openspec-task: 13.18 -->
+
 ### Task 18: `openspec validate` passes strict for the change
 
 - [ ] **Action**

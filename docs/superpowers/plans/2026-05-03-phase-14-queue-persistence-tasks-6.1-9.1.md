@@ -28,11 +28,11 @@ Add the **Jobs** tab to the existing phase-10 `/history` page (4-tab layout, URL
 
 ## Cross-Plan Decisions (locked here)
 
-1. **Default Jobs filter**: `kind=all`, `status=running|pending|failed` (i.e., hide done & canceled). Implementation: do **three** calls to `jobs.list` (one per status) and merge — simpler than expanding the spec's filter to support arrays. Total/limit handled per-call. *Alternative considered:* extend `JobListFilter.status` to `JobStatus | JobStatus[]`. Rejected for spec consistency — Plan 4's acceptance test 10.1 verifies the existing filter shape.
+1. **Default Jobs filter**: `kind=all`, `status=running|pending|failed` (i.e., hide done & canceled). Implementation: do **three** calls to `jobs.list` (one per status) and merge — simpler than expanding the spec's filter to support arrays. Total/limit handled per-call. _Alternative considered:_ extend `JobListFilter.status` to `JobStatus | JobStatus[]`. Rejected for spec consistency — Plan 4's acceptance test 10.1 verifies the existing filter shape.
 2. **Refresh strategy**: on every `'jobs:changed'` event, debounce 100ms, then re-fetch the current filter. Avoids storms during rapid runner ticks.
 3. **Row height** = 48 px (per spec); virtualizer overscan = 5 rows.
 4. **Tab URL convention**: `/history/trash`, `/history/conflicts`, `/history/ops`, `/history/jobs`. Default `/history` redirects to `/history/trash` (pre-existing phase-10 behaviour); we add the fourth route + label without rearranging existing tabs.
-5. **Pipeline rewire (Task 7.x)**: import the renderer-facing `clipQueue` *only if* phase-12 actually exposed one as a renderer module — review of phase-12 spec shows it lives in the **main** process (`electron/clipper/pipeline.ts`), so the rewire is a main-process change.
+5. **Pipeline rewire (Task 7.x)**: import the renderer-facing `clipQueue` _only if_ phase-12 actually exposed one as a renderer module — review of phase-12 spec shows it lives in the **main** process (`electron/clipper/pipeline.ts`), so the rewire is a main-process change.
 6. **Indexer ENOENT handling**: phase-5 `upsertFromFs` on `ENOENT` MUST delete the row from `files` (and tags, FTS) and **must not** enqueue a retry. The phase-14 spec (file-indexer §"文件不存在") demands this; we use `index-queries.deleteFile(path)` (or whatever phase-5 named it).
 
 ---
@@ -40,6 +40,7 @@ Add the **Jobs** tab to the existing phase-10 `/history` page (4-tab layout, URL
 ## Pre-flight
 
 Plans 1 + 2 must be merged. Specifically:
+
 - `window.api.jobs.list / retry / cancel / clearDone` and `window.api.on('jobs:changed', …)` are reachable from any renderer.
 - `jobs.enqueue('ai-review-clip' | 'index-retry', payload, opts)` is callable from the main process via `getQueueBootstrap()?.store.enqueue(...)` (or the `bootstrapQueueRunner`'s exposed store). If your Plan-2 implementation didn't surface `enqueue` on the bootstrap, expose it here as part of Task 7.1 (one-line change).
 
@@ -49,28 +50,30 @@ This plan also assumes phase-10 has shipped `src/pages/History.tsx` with three t
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/History.tsx` | Modify (add fourth tab + child route) | 6.1 |
-| `src/components/history/JobsTab.tsx` | Create | 6.2 |
-| `src/components/history/JobsTab.test.tsx` | Create | 6.2, 6.4, 6.5 |
-| `src/components/history/JobRow.tsx` | Create | 6.3 |
-| `src/components/history/JobRow.test.tsx` | Create | 6.3 |
-| `electron/clipper/pipeline.ts` | Modify (call jobs.enqueue) | 7.1 |
-| `electron/clipper/clipQueue.ts` (or wherever phase-12 placed it) | Delete | 7.2 |
-| `electron/services/indexer.ts` | Modify (enqueue index-retry on transient errs; delete row on ENOENT) | 8.1 |
-| `electron/services/indexer.test.ts` | Modify (replace setTimeout assertions with jobs.enqueue) | 8.1, 8.2 |
-| `src/i18n/locales/zh-CN.json` | Modify (add `history.jobs.*`, `jobs.status.*`, etc.) | 9.1 |
-| `src/i18n/phase-14.test.ts` | Create (key-presence test) | 9.1 |
+| Path                                                             | Action                                                               | Owner task    |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- | ------------- |
+| `src/pages/History.tsx`                                          | Modify (add fourth tab + child route)                                | 6.1           |
+| `src/components/history/JobsTab.tsx`                             | Create                                                               | 6.2           |
+| `src/components/history/JobsTab.test.tsx`                        | Create                                                               | 6.2, 6.4, 6.5 |
+| `src/components/history/JobRow.tsx`                              | Create                                                               | 6.3           |
+| `src/components/history/JobRow.test.tsx`                         | Create                                                               | 6.3           |
+| `electron/clipper/pipeline.ts`                                   | Modify (call jobs.enqueue)                                           | 7.1           |
+| `electron/clipper/clipQueue.ts` (or wherever phase-12 placed it) | Delete                                                               | 7.2           |
+| `electron/services/indexer.ts`                                   | Modify (enqueue index-retry on transient errs; delete row on ENOENT) | 8.1           |
+| `electron/services/indexer.test.ts`                              | Modify (replace setTimeout assertions with jobs.enqueue)             | 8.1, 8.2      |
+| `src/i18n/locales/zh-CN.json`                                    | Modify (add `history.jobs.*`, `jobs.status.*`, etc.)                 | 9.1           |
+| `src/i18n/phase-14.test.ts`                                      | Create (key-presence test)                                           | 9.1           |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: `History.tsx` 4-tab layout — add Jobs tab + `/history/jobs` route
 
 **Files:**
+
 - Modify: `src/pages/History.tsx`
 - Modify: `src/main.tsx` (route registration — only if phase-10 routes the children there)
 
@@ -173,9 +176,11 @@ git commit -m "feat(history): add Jobs tab + /history/jobs route (phase-14 6.1)"
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: `JobsTab.tsx` — filters + clear-done button + virtualised list
 
 **Files:**
+
 - Modify: `src/components/history/JobsTab.tsx`
 - Create: `src/components/history/JobsTab.test.tsx`
 
@@ -250,7 +255,10 @@ describe('JobsTab — default load', () => {
       if (f.status === 'running')
         return Promise.resolve({ items: [job({ id: 'r', status: 'running' })], total: 1 })
       if (f.status === 'failed')
-        return Promise.resolve({ items: [job({ id: 'f', status: 'failed', lastError: 'EIO' })], total: 1 })
+        return Promise.resolve({
+          items: [job({ id: 'f', status: 'failed', lastError: 'EIO' })],
+          total: 1
+        })
       return Promise.resolve({ items: [], total: 0 })
     })
     renderTab()
@@ -554,9 +562,11 @@ git commit -m "feat(history): JobsTab filters + virtualized list + clearDone (ph
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: `JobRow.tsx` — payload-summary renderer per kind
 
 **Files:**
+
 - Create: `src/components/history/JobRow.tsx`
 - Create: `src/components/history/JobRow.test.tsx`
 
@@ -717,9 +727,7 @@ export function JobRow({ job, onChanged }: Props): JSX.Element {
       className="flex h-12 items-center gap-3 border-b px-3 text-sm"
     >
       <span className="flex-1 truncate">{summary(job, t)}</span>
-      <span className="rounded bg-muted px-2 py-0.5 text-xs">
-        {t(`jobs.status.${job.status}`)}
-      </span>
+      <span className="rounded bg-muted px-2 py-0.5 text-xs">{t(`jobs.status.${job.status}`)}</span>
       <span className="w-8 text-right text-xs text-muted-foreground" title="attempts">
         {job.attempts}
       </span>
@@ -764,9 +772,11 @@ git commit -m "feat(history): JobRow payload-summary + status badge (phase-14 6.
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 4: Row buttons — retry / cancel wired through IPC + jobs:changed refresh
 
 **Files:**
+
 - Modify: `src/components/history/JobRow.test.tsx`
 
 `JobRow.tsx` already calls `ipc.jobs.retry(id)` / `ipc.jobs.cancel(id)` and triggers `onChanged()` — Task 6.2 + 6.3 implemented this. This task is **verification**: add explicit interaction tests proving the wiring.
@@ -848,9 +858,11 @@ git commit -m "test(history): JobRow retry/cancel interaction coverage (phase-14
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 5: Empty state — "没有待办任务" when filter result is 0
 
 **Files:**
+
 - Modify: `src/components/history/JobsTab.test.tsx`
 
 `JobsTab.tsx` already shows the empty text (Task 6.2). This task adds an explicit test that the empty state is consistent across filter changes — to lock the behaviour against regressions in Plan 4.
@@ -890,9 +902,11 @@ git commit -m "test(history): JobsTab empty state coverage (phase-14 6.5)"
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 6: Pipeline rewire — `clipQueue.enqueue` → `jobs.enqueue('ai-review-clip', …, { dedupeKey: 'clip:' + clipId })`
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.ts`
 - Modify: `electron/clipper/pipeline.test.ts`
 
@@ -942,11 +956,7 @@ Replace with:
 ```ts
 const queue = getQueueBootstrap()
 if (queue) {
-  queue.store.enqueue(
-    'ai-review-clip',
-    { clipId, path },
-    { dedupeKey: `clip:${clipId}` }
-  )
+  queue.store.enqueue('ai-review-clip', { clipId, path }, { dedupeKey: `clip:${clipId}` })
 } else {
   // queue not initialised — log and continue; user can manually retry from /history/jobs in phase-18
   logger.warn('queue bootstrap unavailable; ai-review-clip not enqueued', { clipId })
@@ -989,9 +999,11 @@ git commit -m "feat(clipper): pipeline calls jobs.enqueue('ai-review-clip', ...)
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 7: Delete the no-op `clipQueue` placeholder module
 
 **Files:**
+
 - Delete: `electron/clipper/clipQueue.ts` (path may differ; check Task 7.1 grep output)
 - Delete: `electron/clipper/clipQueue.test.ts` (if any)
 
@@ -1028,9 +1040,11 @@ git commit -m "refactor(clipper): drop clipQueue placeholder (phase-14 7.2)"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 8: Indexer rewire — `upsertFromFs` failure → `jobs.enqueue('index-retry', …)`; ENOENT → delete row
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Modify: `electron/services/indexer.test.ts`
 
@@ -1089,37 +1103,34 @@ In `electron/services/indexer.ts`, replace the `setTimeout` retry block with:
 ```ts
 import { getQueueBootstrap } from '../queue'
 
-  try {
-    await upsertCore(path) // existing implementation
-  } catch (e) {
-    const code = (e as NodeJS.ErrnoException)?.code
-    if (code === 'ENOENT') {
-      try {
-        deleteFromIndex(path) // calls index-queries.ts deleteFile / equivalent
-      } catch (delErr) {
-        logger.warn('index: failed to delete row on ENOENT', { path, error: String(delErr) })
-      }
-      return
+try {
+  await upsertCore(path) // existing implementation
+} catch (e) {
+  const code = (e as NodeJS.ErrnoException)?.code
+  if (code === 'ENOENT') {
+    try {
+      deleteFromIndex(path) // calls index-queries.ts deleteFile / equivalent
+    } catch (delErr) {
+      logger.warn('index: failed to delete row on ENOENT', { path, error: String(delErr) })
     }
-    const queue = getQueueBootstrap()
-    const reason = e instanceof Error ? e.message : String(e)
-    if (queue) {
-      try {
-        queue.store.enqueue(
-          'index-retry',
-          { path, reason },
-          { dedupeKey: `idx:${path}` }
-        )
-      } catch (enqErr) {
-        logger.error('index: enqueue index-retry failed', { path, error: String(enqErr) })
-      }
-    } else {
-      logger.warn('index: queue not initialised; dropping retry', { path, reason })
-    }
+    return
   }
+  const queue = getQueueBootstrap()
+  const reason = e instanceof Error ? e.message : String(e)
+  if (queue) {
+    try {
+      queue.store.enqueue('index-retry', { path, reason }, { dedupeKey: `idx:${path}` })
+    } catch (enqErr) {
+      logger.error('index: enqueue index-retry failed', { path, error: String(enqErr) })
+    }
+  } else {
+    logger.warn('index: queue not initialised; dropping retry', { path, reason })
+  }
+}
 ```
 
 > Adapt `deleteFromIndex(path)` to whatever phase-5 exposes (`indexQueries.deleteFile(path)`, `removePath(path)`, etc.). Confirm via:
+>
 > ```bash
 > grep -n "export function delete\|export.*deleteFile\|export.*removePath" electron/services/index-queries.ts
 > ```
@@ -1139,9 +1150,11 @@ git commit -m "feat(indexer): enqueue index-retry on transient errs; delete row 
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 9: Remove scattered `setTimeout` self-retries from the indexer
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts`
 - Modify: `electron/services/indexer.test.ts`
 - Possibly: `electron/services/watcher.ts` (if phase-5 also self-retried there)
@@ -1153,6 +1166,7 @@ grep -n "setTimeout\|retry" electron/services/indexer.ts electron/services/watch
 ```
 
 For each match, decide:
+
 - Is this part of a `chokidar` event-debounce? **Keep.** (phase-5 typically debounces add/change events.)
 - Is this a "wait then call upsertFromFs again on error"? **Remove** — Task 8.1's enqueue replaces it.
 
@@ -1187,9 +1201,11 @@ git commit -m "refactor(indexer): drop setTimeout self-retry (queue handles it n
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 10: i18n keys — `history.jobs.*`, `jobs.status.*`, `jobs.action.*`, `jobs.clearDone`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 - Create: `src/i18n/phase-14.test.ts`
 

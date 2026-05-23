@@ -30,19 +30,20 @@ Harden the IPC layer with consistent error mapping (any SQL exception becomes `E
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/ipc/files.ts` | Modify (wrap SQL errors + empty-grove paths) | 2.7 |
-| `electron/ipc/files.test.ts` | Modify (add error/empty cases) | 2.7 |
-| `src/stores/library.ts` | Replace stub with full slice + actions | 3.1, 3.2, 3.3, 3.4, 3.5 |
-| `src/stores/library.test.ts` | Create | 3.1, 3.2, 3.3, 3.4, 3.5 |
-| `shared/ipc-contract.ts` | Modify (add `index:*` event channels) | 3.4 (if missing) |
+| Path                         | Action                                       | Owner task              |
+| ---------------------------- | -------------------------------------------- | ----------------------- |
+| `electron/ipc/files.ts`      | Modify (wrap SQL errors + empty-grove paths) | 2.7                     |
+| `electron/ipc/files.test.ts` | Modify (add error/empty cases)               | 2.7                     |
+| `src/stores/library.ts`      | Replace stub with full slice + actions       | 3.1, 3.2, 3.3, 3.4, 3.5 |
+| `src/stores/library.test.ts` | Create                                       | 3.1, 3.2, 3.3, 3.4, 3.5 |
+| `shared/ipc-contract.ts`     | Modify (add `index:*` event channels)        | 3.4 (if missing)        |
 
 > Note: `index:fileChanged|Deleted|Renamed` events should already exist after phase-05 lands. Step 3.4 includes a defensive check; if the channels are missing, add them before subscribing.
 
 ## Pre-flight
 
 This plan assumes Plan 1 has landed:
+
 - `shared/file-types.ts` exports the FileSummary/FileFilter/Pagination/CategoryNode/TagCloudItem types
 - `electron/ipc/files.ts` has `list`, `get`, `getCategoryTree`, `getTagCloud`, `revealInFinder` working
 - `src/stores/library.ts` exists as a stub
@@ -55,9 +56,11 @@ If `git log --oneline` does not show all ten commits from Plan 1, **stop and com
 ## Tasks
 
 <!-- openspec-task: 2.7 -->
+
 ### Task 1: Empty-grove + SQL exception fallbacks
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Modify: `electron/ipc/files.test.ts`
 
@@ -81,10 +84,7 @@ describe('fileQueryHandlers — error / empty fallbacks', () => {
   })
 
   it('list: empty grove returns total=0 (not E_*)', async () => {
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
     expect(r).toEqual({ items: [], total: 0 })
   })
 
@@ -120,6 +120,7 @@ describe('fileQueryHandlers — error / empty fallbacks', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'error / empty fallbacks'
 ```
@@ -197,6 +198,7 @@ if (!row) {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts
 ```
@@ -213,9 +215,11 @@ git commit -m "feat(phase-06): wrap SQL exceptions to E_INTERNAL in getCategoryT
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 2: Library store — slice shape and initial state
 
 **Files:**
+
 - Modify: `src/stores/library.ts`
 - Test: `src/stores/library.test.ts`
 
@@ -281,6 +285,7 @@ describe('library store — initial shape', () => {
 Note: `useLibraryStore.getInitialState()` was added in zustand v5 — confirm by running `node -e "const z=require('zustand');console.log(z.create.toString().slice(0,40))"` if unsure. If unavailable, replace with a manual reset in `beforeEach`.
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts
 ```
@@ -378,6 +383,7 @@ export type { FullDetail as LibraryFullDetail }
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts
 ```
@@ -387,6 +393,7 @@ Expected: 2 PASS.
 - [ ] **Step 4: Verify type-check**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -403,9 +410,11 @@ git commit -m "feat(phase-06): library store slice shape with action stubs"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 3: Library store — `setFilter` / `setOrder` / `load` / `loadMore` / `loadCategoryTree` / `loadTagCloud`
 
 **Files:**
+
 - Modify: `src/stores/library.ts`
 - Modify: `src/stores/library.test.ts`
 
@@ -526,6 +535,7 @@ describe('library store — load / loadMore / order / filter', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts
 ```
@@ -610,7 +620,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
 The `pagination.offset` increment in `loadMore` uses `pagination.limit` rather than the count of newly fetched items — this matches the `offset = offset + limit` formula in spec `file-query-api`'s "分页" scenario. The test asserts `offset === 2` after fetching two batches of 2; ensure the `limit` was set to 2 there. The default is 50 and the tests use 50, so the fixture above is consistent. Wait — re-read: the test mocks `mockResolvedValueOnce({ items: 2 rows, total: 4 })` twice. With limit=50, `offset` would jump to 50 after `loadMore`. The test expects 2.
 
-Adjust the test fixture *or* adjust the production code. The OpenSpec spec example uses `offset=0, limit=50` then `offset=50, limit=50`, so the production formula `offset += limit` is correct. **Update the test** to reflect this:
+Adjust the test fixture _or_ adjust the production code. The OpenSpec spec example uses `offset=0, limit=50` then `offset=50, limit=50`, so the production formula `offset += limit` is correct. **Update the test** to reflect this:
 
 In the test `loadMore() appends with bumped offset`, before calling `load()`, set the limit:
 
@@ -625,6 +635,7 @@ Then the assertion `expect(s.pagination.offset).toBe(2)` matches `0 + 2`. The ex
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts
 ```
@@ -641,9 +652,11 @@ git commit -m "feat(phase-06): library store actions setFilter/setOrder/load/loa
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 4: Library store — `select` with `detailsByPath` cache
 
 **Files:**
+
 - Modify: `src/stores/library.ts`
 - Modify: `src/stores/library.test.ts`
 
@@ -698,6 +711,7 @@ describe('library store — select / detailsByPath', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t 'select / detailsByPath'
 ```
@@ -729,6 +743,7 @@ In `src/stores/library.ts`, replace the `select` stub:
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t 'select / detailsByPath'
 ```
@@ -745,9 +760,11 @@ git commit -m "feat(phase-06): library store select(path) with detailsByPath cac
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 5: Library store — index event subscriptions + `refresh`
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (only if `index:*` channels are missing post-phase-05)
 - Modify: `src/stores/library.ts`
 - Modify: `src/stores/library.test.ts`
@@ -755,6 +772,7 @@ git commit -m "feat(phase-06): library store select(path) with detailsByPath cac
 - [ ] **Step 1: Verify `index:*` event channels exist**
 
 Run:
+
 ```bash
 grep -n "index:fileChanged\|index:fileDeleted\|index:fileRenamed" shared/ipc-contract.ts
 ```
@@ -786,10 +804,7 @@ describe('library store — refresh + index event subscriptions', () => {
     vi.clearAllMocks()
     handlers = {}
     ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
-      <K extends IpcEventChannel>(
-        ch: K,
-        h: (p: IpcEventContract[K]) => void
-      ) => {
+      <K extends IpcEventChannel>(ch: K, h: (p: IpcEventContract[K]) => void) => {
         handlers[ch] = h
         return () => {
           delete handlers[ch]
@@ -875,6 +890,7 @@ describe('library store — refresh + index event subscriptions', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t 'refresh \\+ index'
 ```
@@ -948,6 +964,7 @@ export function installLibrarySubscriber(): () => void {
 - [ ] **Step 4: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t 'refresh \\+ index'
 ```
@@ -964,9 +981,11 @@ git commit -m "feat(phase-06): library store refresh + index event subscriptions
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 6: Library store — `project:changed` reset
 
 **Files:**
+
 - Modify: `src/stores/library.ts`
 - Modify: `src/stores/library.test.ts`
 
@@ -987,10 +1006,7 @@ describe('library store — project:changed reset', () => {
     vi.clearAllMocks()
     handlers = {}
     ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
-      <K extends IpcEventChannel>(
-        ch: K,
-        h: (p: IpcEventContract[K]) => void
-      ) => {
+      <K extends IpcEventChannel>(ch: K, h: (p: IpcEventContract[K]) => void) => {
         handlers[ch] = h
         return () => {}
       }
@@ -1058,6 +1074,7 @@ describe('library store — project:changed reset', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t 'project:changed reset'
 ```
@@ -1069,39 +1086,40 @@ Expected: 3 FAIL (no `project:changed` subscription yet).
 In `src/stores/library.ts`, in `installLibrarySubscriber`, add another subscription before the `return`:
 
 ```ts
-  const offProject = ipc.on('project:changed', () => {
-    // Reset state to initial defaults, then reload everything.
-    useLibraryStore.setState({
-      filter: {},
-      orderBy: 'clipped_desc',
-      pagination: DEFAULT_PAGINATION,
-      items: [],
-      total: 0,
-      selectedPath: null,
-      detailsByPath: new Map(),
-      categoryTree: [],
-      tagCloud: [],
-      isLoading: false
-    })
-    void useLibraryStore.getState().refresh()
+const offProject = ipc.on('project:changed', () => {
+  // Reset state to initial defaults, then reload everything.
+  useLibraryStore.setState({
+    filter: {},
+    orderBy: 'clipped_desc',
+    pagination: DEFAULT_PAGINATION,
+    items: [],
+    total: 0,
+    selectedPath: null,
+    detailsByPath: new Map(),
+    categoryTree: [],
+    tagCloud: [],
+    isLoading: false
   })
+  void useLibraryStore.getState().refresh()
+})
 ```
 
 Update the `return`:
 
 ```ts
-  return () => {
-    subscriberInstalled = false
-    offChanged()
-    offDeleted()
-    offRenamed()
-    offProject()
-  }
+return () => {
+  subscriberInstalled = false
+  offChanged()
+  offDeleted()
+  offRenamed()
+  offProject()
+}
 ```
 
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/stores/library.test.ts
 ```
@@ -1111,6 +1129,7 @@ Expected: All cases PASS.
 - [ ] **Step 4: Run the full unit suite**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -1129,6 +1148,7 @@ git commit -m "feat(phase-06): library store resets on project:changed and reloa
 ## Plan-2 Acceptance
 
 After all 6 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES
 - [ ] `npm run lint` PASSES

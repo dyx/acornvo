@@ -12,22 +12,24 @@
 
 ## File Structure Map
 
-| Path | Role |
-|------|------|
-| `electron/ipc/router.ts` | `registerHandlers`, `wrap`, `normalize` |
-| `electron/ipc/handlers.ts` | Concrete `ping` and `log` handler map |
+| Path                          | Role                                                    |
+| ----------------------------- | ------------------------------------------------------- |
+| `electron/ipc/router.ts`      | `registerHandlers`, `wrap`, `normalize`                 |
+| `electron/ipc/handlers.ts`    | Concrete `ping` and `log` handler map                   |
 | `electron/services/logger.ts` | Stub used by `router.ts`; full implementation in Plan 4 |
-| `preload/preload.ts` | `contextBridge.exposeInMainWorld('api', ...)` |
-| `src/global.d.ts` | `Window.api` declaration |
+| `preload/preload.ts`          | `contextBridge.exposeInMainWorld('api', ...)`           |
+| `src/global.d.ts`             | `Window.api` declaration                                |
 
 > The logger import in `router.ts` uses a minimal stub (`console` passthrough) in this plan. Plan 4 (Task 6.x) replaces the stub with real electron-log. The stub preserves the public `logger.{debug,info,warn,error}(msg, ctx?)` API so Plan 4's swap is drop-in.
 
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: Scaffold `registerHandlers` entry point
 
 **Files:**
+
 - Create: `electron/services/logger.ts` (stub; real logger in Plan 4)
 - Create: `electron/ipc/router.ts` (initial skeleton)
 
@@ -70,9 +72,9 @@ import type { IpcContract, IpcResult } from '@shared/ipc-contract'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
-    [M in keyof IpcContract[NS]]: (...args: Parameters<IpcContract[NS][M]>) =>
-      | ReturnType<IpcContract[NS][M]>
-      | Promise<Awaited<ReturnType<IpcContract[NS][M]>>>
+    [M in keyof IpcContract[NS]]: (
+      ...args: Parameters<IpcContract[NS][M]>
+    ) => ReturnType<IpcContract[NS][M]> | Promise<Awaited<ReturnType<IpcContract[NS][M]>>>
   }
 }
 
@@ -99,14 +101,17 @@ function wrap(
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Delete `electron/.gitkeep`, `electron/ipc/.gitkeep`, `electron/services/.gitkeep`**
 
 Run:
+
 ```bash
 rm -f electron/.gitkeep electron/ipc/.gitkeep electron/services/.gitkeep
 ```
@@ -121,9 +126,11 @@ git commit -m "feat(phase-01): scaffold registerHandlers and stub logger"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: Implement `wrap(fn)` with try/catch envelope
 
 **Files:**
+
 - Modify: `electron/ipc/router.ts` (replace `wrap` placeholder)
 
 - [ ] **Step 1: Replace the `wrap` placeholder in `electron/ipc/router.ts`**
@@ -176,9 +183,11 @@ export function normalize(err: unknown): IpcErrorShape {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -191,9 +200,11 @@ git commit -m "feat(phase-01): implement wrap envelope with try/catch and main-s
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: Implement `normalize(e)` with sanitisation
 
 **Files:**
+
 - Modify: `electron/ipc/router.ts` (replace placeholder `normalize`)
 
 - [ ] **Step 1: Replace `normalize` with sanitising implementation**
@@ -210,10 +221,7 @@ const ABSOLUTE_PATH_PATTERNS: RegExp[] = [
 function sanitizeMessage(message: string): string {
   // Keep only the first line (drop stack trace) and scrub absolute paths.
   const firstLine = message.split('\n', 1)[0] ?? message
-  return ABSOLUTE_PATH_PATTERNS.reduce(
-    (acc, pattern) => acc.replace(pattern, '<path>'),
-    firstLine
-  )
+  return ABSOLUTE_PATH_PATTERNS.reduce((acc, pattern) => acc.replace(pattern, '<path>'), firstLine)
 }
 
 export function normalize(err: unknown): IpcErrorShape {
@@ -261,14 +269,17 @@ export const _selfCheck = { _shape, _shape2, _shape3, _accepts } as const
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Verify sanitisation by logic inspection**
 
 Open `electron/ipc/router.ts` and re-read `sanitizeMessage`. Confirm:
+
 - Only first `\n`-delimited segment is returned (drops stacks).
 - All three platform path shapes (`/Users/...`, `/home/...`, `C:\...`) are replaced with `<path>`.
 
@@ -282,9 +293,11 @@ git commit -m "feat(phase-01): sanitize normalised IPC error messages (strip sta
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: Built-in `ping` and `log` handlers
 
 **Files:**
+
 - Create: `electron/ipc/handlers.ts`
 
 - [ ] **Step 1: Create `electron/ipc/handlers.ts`**
@@ -329,9 +342,11 @@ export const ipcHandlers: HandlerMap = {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS. The `HandlerMap` type ensures contract drift is caught.
 
 - [ ] **Step 3: Deliberate drift check — confirm compile fails if a method is missing**
@@ -341,6 +356,7 @@ Temporarily delete the `warn` entry in `ipcHandlers.log`. Save. Run:
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: FAIL with `Property 'warn' is missing` on `ipcHandlers.log`.
 
 Restore the `warn` entry. Re-run typecheck — PASS.
@@ -355,9 +371,11 @@ git commit -m "feat(phase-01): built-in ping and log IPC handlers"
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 5: Generate `window.api` proxy in preload (explicit ping + log)
 
 **Files:**
+
 - Create: `preload/preload.ts`
 
 - [ ] **Step 1: Create `preload/preload.ts` with the `api` object scaffold**
@@ -382,14 +400,10 @@ const api = {
     echo: (input: string) => invoke<string>('ping.echo', input)
   },
   log: {
-    debug: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.debug', msg, ctx),
-    info: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.info', msg, ctx),
-    warn: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.warn', msg, ctx),
-    error: (msg: string, ctx?: Record<string, unknown>) =>
-      invoke<void>('log.error', msg, ctx)
+    debug: (msg: string, ctx?: Record<string, unknown>) => invoke<void>('log.debug', msg, ctx),
+    info: (msg: string, ctx?: Record<string, unknown>) => invoke<void>('log.info', msg, ctx),
+    warn: (msg: string, ctx?: Record<string, unknown>) => invoke<void>('log.warn', msg, ctx),
+    error: (msg: string, ctx?: Record<string, unknown>) => invoke<void>('log.error', msg, ctx)
   }
 } satisfies IpcClient<IpcContract>
 
@@ -401,14 +415,17 @@ export { api }
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS. The `satisfies IpcClient<IpcContract>` assertion enforces contract parity at compile time.
 
 - [ ] **Step 3: Delete `preload/.gitkeep`**
 
 Run:
+
 ```bash
 rm -f preload/.gitkeep
 ```
@@ -423,14 +440,17 @@ git commit -m "feat(phase-01): preload api matches IpcClient<IpcContract> via sa
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 6: Confirm `invoke` unwraps the envelope and throws `IpcError`
 
 **Files:**
+
 - Verify: `preload/preload.ts` (written in Task 5)
 
 - [ ] **Step 1: Re-read `invoke` to confirm the contract**
 
 Open `preload/preload.ts`. Confirm the `invoke` function:
+
 - Calls `ipcRenderer.invoke(channel, ...args)`.
 - Narrows via `IpcResult<T>`.
 - Throws `new IpcError(res.error.code, res.error.message)` when `res.ok === false`.
@@ -441,9 +461,11 @@ If any of these is missing or diverges, edit the file to match Task 5's code exa
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: No commit required** unless Step 1 found divergence; if it did, commit with:
@@ -456,9 +478,11 @@ git commit -m "fix(phase-01): ensure preload invoke throws IpcError on envelope 
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 7: Expose `api` via `contextBridge`; forbid leaking Node primitives
 
 **Files:**
+
 - Modify: `preload/preload.ts` (append expose call + guard)
 
 - [ ] **Step 1: Append `contextBridge` call and Node-primitive guard at the bottom of `preload/preload.ts`**
@@ -481,23 +505,29 @@ contextBridge.exposeInMainWorld('api', api)
 - [ ] **Step 2: Grep the whole file to confirm no accidental leaks**
 
 Run:
+
 ```bash
 grep -E "exposeInMainWorld\s*\(\s*['\"]" preload/preload.ts
 ```
+
 Expected: exactly **one** match — the `exposeInMainWorld('api', api)` line.
 
 Run:
+
 ```bash
 grep -E "exposeInMainWorld.*'(ipcRenderer|process|require|Buffer)'" preload/preload.ts
 ```
+
 Expected: **no matches** (empty output, exit code 1). If matches exist, delete them.
 
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.node.json --composite false
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -510,9 +540,11 @@ git commit -m "feat(phase-01): expose window.api via contextBridge, forbid leaki
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 8: Declare `window.api` type in `src/global.d.ts`
 
 **Files:**
+
 - Create: `src/global.d.ts`
 
 - [ ] **Step 1: Create `src/global.d.ts`**
@@ -536,17 +568,21 @@ export {}
 `tsconfig.web.json` already has `include: ["src/**/*", ...]` from Plan 1 Task 3, so `src/global.d.ts` is auto-included. Confirm:
 
 Run:
+
 ```bash
 grep -E '"src/\*\*/\*"' tsconfig.web.json
 ```
+
 Expected: one match. If missing, re-apply Plan 1 Task 3.
 
 - [ ] **Step 3: Typecheck web project**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.web.json --composite false
 ```
+
 Expected: PASS or `TS18003: No inputs were found` (no `.tsx` files yet — Plan 4 adds them). The `global.d.ts` file counts as input so PASS is expected; if `TS18003` happens, re-check the glob.
 
 - [ ] **Step 4: Commit**
@@ -561,6 +597,7 @@ git commit -m "feat(phase-01): declare window.api type in src/global.d.ts"
 ## Plan 2 Wrap-up
 
 After Task 8, the repo should have:
+
 - `electron/ipc/router.ts` — `registerHandlers`, `wrap`, `normalize`, `sanitizeMessage`
 - `electron/ipc/router.type-check.ts` — compile-time contract guard
 - `electron/ipc/handlers.ts` — built-in `ping` + `log` handlers

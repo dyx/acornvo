@@ -19,12 +19,14 @@
 ## Capabilities
 
 ### New Capabilities
+
 - `soft-delete`: `shell.trashItem` 集成、`Cmd/Ctrl+Backspace` 快捷键、确认弹窗、ops_log 记录
 - `ops-log`: SQLite `ops_log` 表、`ops.list` IPC、90 天循环保留
 - `history-panel`: `/history` 三 tab 路由页的 UI 与导航
 - `conflict-diff-view`: 三路 diff 视图（base/local/remote 两两切换）
 
 ### Modified Capabilities
+
 - `library-view`: 右键菜单新增"移到废纸篓"项；快捷键 `Cmd/Ctrl+Backspace`；行选中后该快捷键等价右键菜单
 
 > 备注：`md-file-io` 新增 `file.trash` / `file.hardDelete` IPC、`conflict-history-store` 新增 `conflict.diff` / `conflict.deleteAll` IPC，均以 ADDED 方式扩展既有 capability（不修改现有 requirement）。

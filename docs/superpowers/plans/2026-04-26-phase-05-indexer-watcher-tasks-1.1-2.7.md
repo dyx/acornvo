@@ -32,14 +32,14 @@ Install `chokidar`, scaffold the four new service modules under `electron/servic
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json`, `package-lock.json` | Modify (add chokidar) | 1.1 |
-| `electron/services/indexer.ts` | Create stub | 1.2 |
-| `electron/services/watcher.ts` | Create stub | 1.2 |
-| `electron/services/index-queries.ts` | Create stub → implement | 1.2, 2.1–2.7 |
-| `electron/services/index-queries.test.ts` | Create | 2.1–2.7 |
-| `electron/ipc/index.ts` | Create stub | 1.2 |
+| Path                                      | Action                  | Owner task   |
+| ----------------------------------------- | ----------------------- | ------------ |
+| `package.json`, `package-lock.json`       | Modify (add chokidar)   | 1.1          |
+| `electron/services/indexer.ts`            | Create stub             | 1.2          |
+| `electron/services/watcher.ts`            | Create stub             | 1.2          |
+| `electron/services/index-queries.ts`      | Create stub → implement | 1.2, 2.1–2.7 |
+| `electron/services/index-queries.test.ts` | Create                  | 2.1–2.7      |
+| `electron/ipc/index.ts`                   | Create stub             | 1.2          |
 
 ## Pre-flight
 
@@ -69,9 +69,11 @@ If the actual phase-03 schema differs in column names, **stop and reconcile** be
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install chokidar
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm chokidar is not already a dep**
@@ -108,11 +110,13 @@ git commit -m "feat(phase-05): add chokidar dep for file watcher"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Scaffold service + IPC stubs
 
 Create empty placeholder modules so subsequent tasks can import without merge churn. Each stub exports a token so `tsc` will verify the import path; later tasks replace the body.
 
 **Files:**
+
 - Create: `electron/services/indexer.ts`
 - Create: `electron/services/watcher.ts`
 - Create: `electron/services/index-queries.ts`
@@ -164,9 +168,11 @@ git commit -m "feat(phase-05): scaffold indexer/watcher/index-queries/index-ipc 
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 3: `upsertFile(db, row)` returns `'inserted' | 'updated' | 'unchanged'`
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Create: `electron/services/index-queries.test.ts`
 
@@ -223,7 +229,9 @@ const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
 
 describe('upsertFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('inserts a new row', () => {
     const result = upsertFile(db, baseRow())
@@ -242,13 +250,18 @@ describe('upsertFile', () => {
     upsertFile(db, baseRow())
     const result = upsertFile(db, baseRow({ content_hash: 'h2', updated_at: 200 }))
     expect(result).toBe('updated')
-    const row = db.prepare('SELECT content_hash, updated_at FROM files WHERE path=?').get('notes/a.md')
+    const row = db
+      .prepare('SELECT content_hash, updated_at FROM files WHERE path=?')
+      .get('notes/a.md')
     expect(row).toEqual({ content_hash: 'h2', updated_at: 200 })
   })
 
   it('returns "updated" when only frontmatter (rating) changes', () => {
     upsertFile(db, baseRow())
-    const result = upsertFile(db, baseRow({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 200 }))
+    const result = upsertFile(
+      db,
+      baseRow({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 200 })
+    )
     expect(result).toBe('updated')
   })
 })
@@ -290,7 +303,11 @@ export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
     .prepare('SELECT content_hash, mtime_ms FROM files WHERE path=?')
     .get(row.path) as { content_hash: string; mtime_ms: number } | undefined
 
-  if (existing && existing.content_hash === row.content_hash && existing.mtime_ms === row.mtime_ms) {
+  if (
+    existing &&
+    existing.content_hash === row.content_hash &&
+    existing.mtime_ms === row.mtime_ms
+  ) {
     return 'unchanged'
   }
 
@@ -322,9 +339,11 @@ git commit -m "feat(phase-05): upsertFile returns inserted/updated/unchanged"
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 4: `deleteFile(db, path)` cascades to file_tags + files_fts
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -337,12 +356,16 @@ import { deleteFile } from './index-queries'
 
 describe('deleteFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('removes the row from files, file_tags, and files_fts', () => {
     upsertFile(db, baseRow())
     db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run('notes/a.md', 'foo')
-    db.prepare("INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1, 'notes/a.md', 'A', '', 'body')").run()
+    db.prepare(
+      "INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1, 'notes/a.md', 'A', '', 'body')"
+    ).run()
 
     deleteFile(db, 'notes/a.md')
 
@@ -395,9 +418,11 @@ git commit -m "feat(phase-05): deleteFile cascades to file_tags + files_fts"
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 5: `renameFile(db, oldPath, newPath)` updates path in three tables (transactional)
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -410,12 +435,16 @@ import { renameFile } from './index-queries'
 
 describe('renameFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('updates path across files, file_tags, files_fts in one transaction', () => {
     upsertFile(db, baseRow({ path: 'old.md' }))
     db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run('old.md', 'foo')
-    db.prepare("INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1,'old.md','','','')").run()
+    db.prepare(
+      "INSERT INTO files_fts(rowid, path, title, summary, content) VALUES (1,'old.md','','','')"
+    ).run()
 
     renameFile(db, 'old.md', 'new.md')
 
@@ -472,9 +501,11 @@ git commit -m "feat(phase-05): renameFile transactionally updates path in 3 tabl
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 6: `syncTags(db, path, tags)` diffs old/new and updates `tags.usage_count`
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -487,7 +518,10 @@ import { syncTags } from './index-queries'
 
 describe('syncTags', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb(); upsertFile(db, baseRow()) })
+  beforeEach(() => {
+    db = makeDb()
+    upsertFile(db, baseRow())
+  })
 
   it('inserts new tag rows and bumps usage_count from 0', () => {
     syncTags(db, 'notes/a.md', ['attention', 'transformer'])
@@ -500,7 +534,7 @@ describe('syncTags', () => {
 
   it('decrements usage_count for removed tags and increments for added ones', () => {
     syncTags(db, 'notes/a.md', ['x', 'y'])
-    syncTags(db, 'notes/a.md', ['y', 'z'])  // remove x, keep y, add z
+    syncTags(db, 'notes/a.md', ['y', 'z']) // remove x, keep y, add z
 
     expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
       { name: 'x', usage_count: 0 },
@@ -512,7 +546,9 @@ describe('syncTags', () => {
   it('is idempotent when tags do not change', () => {
     syncTags(db, 'notes/a.md', ['x'])
     syncTags(db, 'notes/a.md', ['x'])
-    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({ usage_count: 1 })
+    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({
+      usage_count: 1
+    })
   })
 
   it('handles deduplication of input tags', () => {
@@ -579,9 +615,11 @@ git commit -m "feat(phase-05): syncTags diffs old/new tags + updates usage_count
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 7: `upsertFts(db, row, tokenizer)` rewrites FTS row via delete-then-insert
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -594,12 +632,16 @@ import { upsertFts } from './index-queries'
 
 describe('upsertFts', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('inserts a new row using identity tokenizer by default', () => {
     upsertFts(db, { rowid: 1, path: 'a.md', title: 'A', summary: '', content: 'hello world' })
     expect(db.prepare('SELECT path, title, content FROM files_fts').get()).toEqual({
-      path: 'a.md', title: 'A', content: 'hello world'
+      path: 'a.md',
+      title: 'A',
+      content: 'hello world'
     })
   })
 
@@ -682,9 +724,11 @@ git commit -m "feat(phase-05): upsertFts delete-then-insert with tokenizer injec
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 8: `listAllPaths(db)` returns Set of every files.path
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -697,7 +741,9 @@ import { listAllPaths } from './index-queries'
 
 describe('listAllPaths', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('returns empty Set on empty table', () => {
     expect(listAllPaths(db)).toEqual(new Set<string>())
@@ -748,9 +794,11 @@ git commit -m "feat(phase-05): listAllPaths returns Set of files.path"
 ---
 
 <!-- openspec-task: 2.7 -->
+
 ### Task 9: `queryBy(db, opts)` paginated read for phase-06 library view
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 
@@ -818,7 +866,7 @@ Append to `electron/services/index-queries.ts`:
 export interface QueryOptions {
   category?: string
   tag?: string
-  rating?: number  // minimum rating
+  rating?: number // minimum rating
   limit: number
   offset: number
   orderBy: 'updated_at_desc' | 'updated_at_asc' | 'created_at_desc' | 'created_at_asc'

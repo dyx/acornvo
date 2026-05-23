@@ -39,34 +39,34 @@ npm install @ant-design/x-sdk@latest @ant-design/x@latest
 Handled by the x-chat-provider skill. Note `XRequest` must pass `manual: true`:
 
 ```ts
-import { MyChatProvider } from './MyChatProvider';
-import { XRequest } from '@ant-design/x-sdk';
+import { MyChatProvider } from './MyChatProvider'
+import { XRequest } from '@ant-design/x-sdk'
 
 // ⚠️ manual: true is required
 const provider = new MyChatProvider({
-  request: XRequest('https://your-api.com/chat', { manual: true }),
-});
+  request: XRequest('https://your-api.com/chat', { manual: true })
+})
 ```
 
 ### Step 2: Basic Usage
 
 ```tsx
-import { useXChat } from '@ant-design/x-sdk';
+import { useXChat } from '@ant-design/x-sdk'
 
 const ChatComponent = () => {
   const { messages, onRequest, isRequesting } = useXChat({
     provider,
     requestPlaceholder: (_, { messages }) => ({
       content: 'Thinking...',
-      role: 'assistant',
+      role: 'assistant'
     }),
     requestFallback: (_, { error, messageInfo }) => {
       if (error.name === 'AbortError') {
-        return { content: messageInfo?.message?.content || 'Reply cancelled', role: 'assistant' };
+        return { content: messageInfo?.message?.content || 'Reply cancelled', role: 'assistant' }
       }
-      return { content: 'Network error, please try again later', role: 'assistant' };
-    },
-  });
+      return { content: 'Network error, please try again later', role: 'assistant' }
+    }
+  })
 
   return (
     <div>
@@ -77,8 +77,8 @@ const ChatComponent = () => {
       ))}
       <button onClick={() => onRequest({ query: 'Hello' })}>Send</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 ### Step 3: UI Integration
@@ -86,10 +86,10 @@ const ChatComponent = () => {
 > ⚠️ `messages` is `MessageInfo<ChatMessage>[]` and cannot be passed directly to `Bubble.List`. It must be mapped to `{ key, role, content, loading }` format. **`Bubble.List` uses the `role` prop** (not `roles`) to configure role styles.
 
 ```tsx
-import { Bubble, Sender } from '@ant-design/x';
+import { Bubble, Sender } from '@ant-design/x'
 
 const ChatUI = () => {
-  const { messages, onRequest, isRequesting, abort } = useXChat({ provider });
+  const { messages, onRequest, isRequesting, abort } = useXChat({ provider })
 
   return (
     <div style={{ height: 600 }}>
@@ -97,13 +97,13 @@ const ChatUI = () => {
         // ✅ Correct: use role (not roles)
         role={{
           user: { placement: 'end' },
-          assistant: { placement: 'start' },
+          assistant: { placement: 'start' }
         }}
         items={messages.map(({ id, message, status }) => ({
           key: id,
           role: message.role, // matches role config key
           content: message.content, // message content
-          loading: status === 'loading', // loading animation
+          loading: status === 'loading' // loading animation
         }))}
       />
       <Sender
@@ -112,8 +112,8 @@ const ChatUI = () => {
         onCancel={abort}
       />
     </div>
-  );
-};
+  )
+}
 ```
 
 #### When ChatMessage is an object type (not string)
@@ -134,21 +134,21 @@ When `ChatMessage` is a complex object (e.g., with `content`, `attachments` fiel
               <FileCard key={a.url} name={a.name} />
             ))}
           </div>
-        );
-      },
+        )
+      }
     },
     user: {
       placement: 'end',
       contentRender(content: MyMessage) {
-        return content.content;
-      },
-    },
+        return content.content
+      }
+    }
   }}
   items={messages.map(({ id, message, status }) => ({
     key: id,
     role: message.role,
     content: message, // ⚠️ Pass the entire message object; contentRender handles rendering
-    loading: status === 'loading',
+    loading: status === 'loading'
   }))}
 />
 ```
@@ -161,13 +161,13 @@ When `ChatMessage` is a complex object (e.g., with `content`, `attachments` fiel
 
 ```ts
 interface MessageInfo<ChatMessage> {
-  id: number | string; // Message unique identifier
-  message: ChatMessage; // Actual message content (your ChatMessage type)
-  status: MessageStatus; // Message status
-  extraInfo?: AnyObject; // Extended info (note: extraInfo, not extra)
+  id: number | string // Message unique identifier
+  message: ChatMessage // Actual message content (your ChatMessage type)
+  status: MessageStatus // Message status
+  extraInfo?: AnyObject // Extended info (note: extraInfo, not extra)
 }
 
-type MessageStatus = 'local' | 'loading' | 'updating' | 'success' | 'error' | 'abort';
+type MessageStatus = 'local' | 'loading' | 'updating' | 'success' | 'error' | 'abort'
 // local: locally sent user message
 // loading: AI reply placeholder (corresponds to requestPlaceholder)
 // updating: AI streaming output in progress
@@ -178,32 +178,32 @@ type MessageStatus = 'local' | 'loading' | 'updating' | 'success' | 'error' | 'a
 
 ## useXChat Configuration Options
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `provider` | `AbstractChatProvider<ChatMessage, Input, Output>` | **Required**, Provider instance |
-| `conversationKey` | `string` | Conversation unique identifier, required for multi-conversation |
-| `defaultMessages` | `DefaultMessageInfo[] \| () => ... \| async () => ...` | Default display messages, supports async loading |
-| `requestPlaceholder` | `ChatMessage \| (requestParams, { messages }) => ChatMessage` | Placeholder message during request |
-| `requestFallback` | `ChatMessage \| (requestParams, { error, errorInfo, messages, messageInfo }) => ChatMessage \| Promise<ChatMessage>` | Fallback message on request failure/abort |
-| `parser` | `(message: ChatMessage) => BubbleMessage \| BubbleMessage[]` | Convert ChatMessage to component-consumable format, supports one-to-many |
+| Option               | Type                                                                                                                 | Description                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `provider`           | `AbstractChatProvider<ChatMessage, Input, Output>`                                                                   | **Required**, Provider instance                                          |
+| `conversationKey`    | `string`                                                                                                             | Conversation unique identifier, required for multi-conversation          |
+| `defaultMessages`    | `DefaultMessageInfo[] \| () => ... \| async () => ...`                                                               | Default display messages, supports async loading                         |
+| `requestPlaceholder` | `ChatMessage \| (requestParams, { messages }) => ChatMessage`                                                        | Placeholder message during request                                       |
+| `requestFallback`    | `ChatMessage \| (requestParams, { error, errorInfo, messages, messageInfo }) => ChatMessage \| Promise<ChatMessage>` | Fallback message on request failure/abort                                |
+| `parser`             | `(message: ChatMessage) => BubbleMessage \| BubbleMessage[]`                                                         | Convert ChatMessage to component-consumable format, supports one-to-many |
 
 > `requestFallback`'s `messageInfo` type is `MessageInfo<ChatMessage>`, the message being updated when the request fails. `requestFallback` handles both network errors (`error`) and user abort (`error.name === 'AbortError'`).
 
 ## useXChat Return Values
 
-| Return Value | Type | Description |
-| --- | --- | --- |
-| `messages` | `MessageInfo<ChatMessage>[]` | Message list; must be mapped before passing to `Bubble.List` |
-| `parsedMessages` | `MessageInfo<ParsedMessage>[]` | Message list after `parser` transform (use this when parser is set) |
-| `onRequest` | `(params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void` | Add message and trigger request |
-| `isRequesting` | `boolean` | Whether request is in progress |
-| `abort` | `() => void` | Abort current request |
-| `setMessages` | `(messages: Partial<MessageInfo<ChatMessage>>[]) => void` | Directly modify message list, no request triggered |
-| `setMessage` | `(id: string \| number, info: Partial<MessageInfo<ChatMessage>>) => void` | Modify single message, no request triggered |
-| `removeMessage` | `(id: string \| number) => boolean` | Delete a message, returns whether deletion was successful |
-| `onReload` | `(id: string \| number, params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void` | Regenerate an AI reply |
-| `queueRequest` | `(conversationKey: string \| symbol, params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void` | Queue request, sent after conversation initializes |
-| `isDefaultMessagesRequesting` | `boolean` | Whether default messages are async loading |
+| Return Value                  | Type                                                                                                   | Description                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `messages`                    | `MessageInfo<ChatMessage>[]`                                                                           | Message list; must be mapped before passing to `Bubble.List`        |
+| `parsedMessages`              | `MessageInfo<ParsedMessage>[]`                                                                         | Message list after `parser` transform (use this when parser is set) |
+| `onRequest`                   | `(params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void`                                    | Add message and trigger request                                     |
+| `isRequesting`                | `boolean`                                                                                              | Whether request is in progress                                      |
+| `abort`                       | `() => void`                                                                                           | Abort current request                                               |
+| `setMessages`                 | `(messages: Partial<MessageInfo<ChatMessage>>[]) => void`                                              | Directly modify message list, no request triggered                  |
+| `setMessage`                  | `(id: string \| number, info: Partial<MessageInfo<ChatMessage>>) => void`                              | Modify single message, no request triggered                         |
+| `removeMessage`               | `(id: string \| number) => boolean`                                                                    | Delete a message, returns whether deletion was successful           |
+| `onReload`                    | `(id: string \| number, params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void`              | Regenerate an AI reply                                              |
+| `queueRequest`                | `(conversationKey: string \| symbol, params: Partial<Input>, opts?: { extraInfo: AnyObject }) => void` | Queue request, sent after conversation initializes                  |
+| `isDefaultMessagesRequesting` | `boolean`                                                                                              | Whether default messages are async loading                          |
 
 # 🔧 Core Function Details
 
@@ -216,8 +216,8 @@ Core functionality reference: [CORE.md](reference/CORE.md)
 `useXConversations` is a conversation list management Hook provided by `@ant-design/x-sdk`, used together with `useXChat` for multi-conversation:
 
 ```ts
-import { useXConversations } from '@ant-design/x-sdk';
-import type { ConversationData } from '@ant-design/x-sdk';
+import { useXConversations } from '@ant-design/x-sdk'
+import type { ConversationData } from '@ant-design/x-sdk'
 
 const {
   conversations, // ConversationData[]: conversation list
@@ -228,47 +228,47 @@ const {
   setConversation, // (key: string,  ConversationData) => boolean
   getConversation, // (key: string) => ConversationData | undefined
   setConversations, // (list: ConversationData[]) => void
-  getMessages, // (key: string) => MessageInfo[] | undefined (read messages across components)
+  getMessages // (key: string) => MessageInfo[] | undefined (read messages across components)
 } = useXConversations({
   defaultConversations: [
     { key: 'conv-1', label: 'Conversation 1' },
-    { key: 'conv-2', label: 'Conversation 2' },
+    { key: 'conv-2', label: 'Conversation 2' }
   ],
-  defaultActiveConversationKey: 'conv-1',
-});
+  defaultActiveConversationKey: 'conv-1'
+})
 ```
 
 ### Multi-conversation Full Pattern
 
 ```tsx
-import { useXChat, useXConversations } from '@ant-design/x-sdk';
-import { OpenAIChatProvider, XRequest } from '@ant-design/x-sdk';
-import { Bubble, Conversations, Sender } from '@ant-design/x';
-import React, { useEffect, useRef } from 'react';
+import { useXChat, useXConversations } from '@ant-design/x-sdk'
+import { OpenAIChatProvider, XRequest } from '@ant-design/x-sdk'
+import { Bubble, Conversations, Sender } from '@ant-design/x'
+import React, { useEffect, useRef } from 'react'
 
 // ⚠️ Each conversation must have its own Provider instance, otherwise state mixes
-const providerCache = new Map<string, OpenAIChatProvider>();
+const providerCache = new Map<string, OpenAIChatProvider>()
 
 function getProvider(key: string): OpenAIChatProvider {
   if (!providerCache.has(key)) {
     providerCache.set(
       key,
       new OpenAIChatProvider({
-        request: XRequest(BASE_URL, { manual: true, params: { model: 'gpt-4o', stream: true } }),
-      }),
-    );
+        request: XRequest(BASE_URL, { manual: true, params: { model: 'gpt-4o', stream: true } })
+      })
+    )
   }
-  return providerCache.get(key)!;
+  return providerCache.get(key)!
 }
 
 const App = () => {
-  const senderRef = useRef<any>(null);
+  const senderRef = useRef<any>(null)
 
   const { conversations, activeConversationKey, setActiveConversationKey, addConversation } =
     useXConversations({
       defaultConversations: [{ key: 'conv-1', label: 'New Conversation' }],
-      defaultActiveConversationKey: 'conv-1',
-    });
+      defaultActiveConversationKey: 'conv-1'
+    })
 
   const { messages, onRequest, isRequesting, abort, queueRequest } = useXChat({
     provider: getProvider(activeConversationKey),
@@ -276,26 +276,26 @@ const App = () => {
     // Async load default messages
     defaultMessages: async ({ conversationKey }) => {
       // Load history from server based on conversationKey
-      return [];
+      return []
     },
     requestFallback: (_, { error, messageInfo }) => {
       if (error.name === 'AbortError') {
-        return { content: messageInfo?.message?.content || 'Cancelled', role: 'assistant' };
+        return { content: messageInfo?.message?.content || 'Cancelled', role: 'assistant' }
       }
-      return { content: 'Request failed', role: 'assistant' };
-    },
-  });
+      return { content: 'Request failed', role: 'assistant' }
+    }
+  })
 
   // Clear input on conversation switch
   useEffect(() => {
-    senderRef.current?.clear?.();
-  }, [activeConversationKey]);
+    senderRef.current?.clear?.()
+  }, [activeConversationKey])
 
   const handleNewConversation = () => {
-    const newKey = `conv-${Date.now()}`;
-    addConversation({ key: newKey, label: `New Conversation ${conversations.length + 1}` });
-    setActiveConversationKey(newKey);
-  };
+    const newKey = `conv-${Date.now()}`
+    addConversation({ key: newKey, label: `New Conversation ${conversations.length + 1}` })
+    setActiveConversationKey(newKey)
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -312,7 +312,7 @@ const App = () => {
             key: id,
             role: message.role,
             content: message.content,
-            loading: status === 'loading',
+            loading: status === 'loading'
           }))}
         />
         <Sender
@@ -320,13 +320,13 @@ const App = () => {
           loading={isRequesting}
           onCancel={abort}
           onSubmit={(val) => {
-            onRequest({ messages: [{ role: 'user', content: val }] });
+            onRequest({ messages: [{ role: 'user', content: val }] })
           }}
         />
       </div>
     </div>
-  );
-};
+  )
+}
 ```
 
 ### queueRequest: Delayed Send After Conversation Switch
@@ -336,24 +336,24 @@ const App = () => {
 // queueRequest waits for defaultMessages async loading to complete, then sends the request
 
 const handleNewConversationWithFirstMessage = () => {
-  const newKey = `conv-${Date.now()}`;
-  addConversation({ key: newKey, label: 'New Conversation' });
-  setActiveConversationKey(newKey);
+  const newKey = `conv-${Date.now()}`
+  addConversation({ key: newKey, label: 'New Conversation' })
+  setActiveConversationKey(newKey)
 
   // Queue the message; sent automatically after newKey conversation's defaultMessages finish loading
   queueRequest(newKey, {
-    messages: [{ role: 'user', content: 'Hello! Please introduce yourself.' }],
-  });
-};
+    messages: [{ role: 'user', content: 'Hello! Please introduce yourself.' }]
+  })
+}
 ```
 
 # 📋 Prerequisites and Dependencies
 
-| Usage Scenario | Required Skill/Provider | Order |
-| --- | --- | --- |
-| **Private API Adaptation** | x-chat-provider → use-x-chat | Create Provider first |
-| **Standard API** | Built-in Provider + use-x-chat | Direct use |
-| **Multi-conversation** | Provider factory + useXConversations + useXChat | Use together |
+| Usage Scenario             | Required Skill/Provider                         | Order                 |
+| -------------------------- | ----------------------------------------------- | --------------------- |
+| **Private API Adaptation** | x-chat-provider → use-x-chat                    | Create Provider first |
+| **Standard API**           | Built-in Provider + use-x-chat                  | Direct use            |
+| **Multi-conversation**     | Provider factory + useXConversations + useXChat | Use together          |
 
 # 🚨 Development Rules
 

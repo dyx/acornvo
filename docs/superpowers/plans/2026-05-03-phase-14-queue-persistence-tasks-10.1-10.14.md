@@ -18,6 +18,7 @@ Run the end-to-end acceptance suite that proves every behavior listed in `tasks.
 ## Architecture
 
 This plan adds **no production code**; every task is either:
+
 1. A new `*.test.ts` (or modification of an existing one) that exercises a real DB + real runner + real handlers (no mocks of `electron/queue/`),
 2. A short manual smoke that the implementer runs and pastes output into the commit message,
 3. The final `openspec validate --strict` gate (Task 10.14).
@@ -52,22 +53,24 @@ If running on macOS with the watcher active, set `CHOKIDAR_USEPOLLING=1` for any
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/queue/integration.queue.test.ts` | Create | 10.2, 10.3, 10.4, 10.5, 10.7, 10.8, 10.12 |
-| `electron/queue/integration.crash.test.ts` | Create | 10.9, 10.10 |
-| `electron/queue/integration.opslog.test.ts` | Create | 10.11 |
-| `src/integration/phase-14-jobs-tab.test.tsx` | Create | 10.1, 10.6, 10.13 |
-| (no production code touched) | — | — |
+| Path                                         | Action | Owner task                                |
+| -------------------------------------------- | ------ | ----------------------------------------- |
+| `electron/queue/integration.queue.test.ts`   | Create | 10.2, 10.3, 10.4, 10.5, 10.7, 10.8, 10.12 |
+| `electron/queue/integration.crash.test.ts`   | Create | 10.9, 10.10                               |
+| `electron/queue/integration.opslog.test.ts`  | Create | 10.11                                     |
+| `src/integration/phase-14-jobs-tab.test.tsx` | Create | 10.1, 10.6, 10.13                         |
+| (no production code touched)                 | —      | —                                         |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 10.1 -->
+
 ### Task 1: `/history/jobs` route exists + default filter is running+pending+failed
 
 **Files:**
+
 - Create: `src/integration/phase-14-jobs-tab.test.tsx`
 
 - [ ] **Step 1: Write the test**
@@ -144,9 +147,11 @@ git commit -m "test(phase-14): 10.1 /history/jobs default filter (phase-14 10.1)
 ---
 
 <!-- openspec-task: 10.2 -->
+
 ### Task 2: Pipeline → jobs row appears `kind='ai-review-clip'`, `status='pending'`
 
 **Files:**
+
 - Create: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Write the test (set up shared helper)**
@@ -188,7 +193,7 @@ describe('Acceptance 10.2 — clip → ai-review-clip enqueued', () => {
       { clipId: 1, path: 'inbox/202604/a.md' },
       { dedupeKey: 'clip:1' }
     )
-    const row = db.prepare("SELECT kind, status FROM jobs LIMIT 1").get() as {
+    const row = db.prepare('SELECT kind, status FROM jobs LIMIT 1').get() as {
       kind: string
       status: string
     }
@@ -213,9 +218,11 @@ git commit -m "test(phase-14): 10.2 ai-review-clip enqueue lands in jobs table (
 ---
 
 <!-- openspec-task: 10.3 -->
+
 ### Task 3: Runner → `E_NOT_IMPLEMENTED` → 1h retry, attempts=1
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -283,9 +290,11 @@ git commit -m "test(phase-14): 10.3 ai-review-clip retries 1h on E_NOT_IMPLEMENT
 ---
 
 <!-- openspec-task: 10.4 -->
+
 ### Task 4: Re-clip same id → dedupeKey hits, row count unchanged
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -327,9 +336,11 @@ git commit -m "test(phase-14): 10.4 ai-review-clip dedupe idempotency (phase-14 
 ---
 
 <!-- openspec-task: 10.5 -->
+
 ### Task 5: Index-retry transient failure → backoff retry → succeeds within 3 attempts
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -390,9 +401,11 @@ git commit -m "test(phase-14): 10.5 index-retry backoff to success (phase-14 10.
 ---
 
 <!-- openspec-task: 10.6 -->
+
 ### Task 6: `jobs.cancel` pending → status=canceled; UI hides by default
 
 **Files:**
+
 - Modify: `src/integration/phase-14-jobs-tab.test.tsx`
 
 - [ ] **Step 1: Append the test**
@@ -417,8 +430,7 @@ describe('Acceptance 10.6 — cancel pending hides from default view', () => {
     let cancelCalled = false
     mockApi.jobs.list.mockImplementation((f: { status?: string }) => {
       if (cancelCalled) return Promise.resolve({ items: [], total: 0 })
-      if (f.status === 'pending')
-        return Promise.resolve({ items: [pendingJob], total: 1 })
+      if (f.status === 'pending') return Promise.resolve({ items: [pendingJob], total: 1 })
       return Promise.resolve({ items: [], total: 0 })
     })
     mockApi.jobs.cancel.mockImplementation(async (id: string) => {
@@ -457,9 +469,11 @@ git commit -m "test(phase-14): 10.6 cancel pending hides from default view (phas
 ---
 
 <!-- openspec-task: 10.7 -->
+
 ### Task 7: `jobs.retry` failed → status=pending, attempts reset to 0, next_run_at=now
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -518,9 +532,11 @@ git commit -m "test(phase-14): 10.7 jobs.retry resets attempts (phase-14 10.7)"
 ---
 
 <!-- openspec-task: 10.8 -->
+
 ### Task 8: `jobs.clearDone` → all done deleted, failed kept, returns count
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -545,7 +561,7 @@ describe('Acceptance 10.8 — clearDone removes done, preserves failed', () => {
     const r = await handlers.clearDone()
     expect(r).toEqual({ removed: 3 })
 
-    const remaining = (db.prepare('SELECT id, status FROM jobs').all()) as {
+    const remaining = db.prepare('SELECT id, status FROM jobs').all() as {
       id: string
       status: string
     }[]
@@ -570,9 +586,11 @@ git commit -m "test(phase-14): 10.8 clearDone removes done, preserves failed (ph
 ---
 
 <!-- openspec-task: 10.9 -->
+
 ### Task 9: Crash recovery — `running` → `pending` on next open
 
 **Files:**
+
 - Create: `electron/queue/integration.crash.test.ts`
 
 We can't kill a real Node process inside Vitest. We simulate crash by closing the DB without a clean drain, then reopening and asserting `recoverRunning` fired (the production wiring lives in `electron/services/db.ts:openForGrove`).
@@ -585,12 +603,7 @@ import { describe, it, expect, afterEach, beforeEach } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import {
-  __resetForTest,
-  closeCurrent,
-  openForGrove,
-  requireCurrent
-} from '../services/db'
+import { __resetForTest, closeCurrent, openForGrove, requireCurrent } from '../services/db'
 
 describe('Acceptance 10.9 — crash recovery resets running → pending', () => {
   let dir: string
@@ -666,9 +679,11 @@ EOF
 ---
 
 <!-- openspec-task: 10.10 -->
+
 ### Task 10: Graceful quit — `before-quit` drains, no data loss
 
 **Files:**
+
 - Modify: `electron/queue/integration.crash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -692,7 +707,10 @@ describe('Acceptance 10.10 — before-quit drains running handlers', () => {
       kind: 'ai-review-clip',
       concurrency: 1,
       minGapMs: 0,
-      handler: () => new Promise<{ kind: 'ok' }>((r) => { resolveHandler = r })
+      handler: () =>
+        new Promise<{ kind: 'ok' }>((r) => {
+          resolveHandler = r
+        })
     })
     const { id: running } = store.enqueue('ai-review-clip', { clipId: 1, path: 'a.md' })
     const { id: pending } = store.enqueue('ai-review-clip', { clipId: 2, path: 'b.md' })
@@ -730,9 +748,11 @@ git commit -m "test(phase-14): 10.10 before-quit drain preserves pending (phase-
 ---
 
 <!-- openspec-task: 10.11 -->
+
 ### Task 11: `ops_log` queryable for `op='job.succeeded' / 'job.failed'` etc.
 
 **Files:**
+
 - Create: `electron/queue/integration.opslog.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -851,9 +871,11 @@ git commit -m "test(phase-14): 10.11 ops_log records every job state change (pha
 ---
 
 <!-- openspec-task: 10.12 -->
+
 ### Task 12: Concurrency cap — 5 enqueued ai-review-clip → max 2 running
 
 **Files:**
+
 - Modify: `electron/queue/integration.queue.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -901,9 +923,11 @@ describe('Acceptance 10.12 — concurrency cap = 2 for ai-review-clip', () => {
       await vi.advanceTimersByTimeAsync(150)
     }
     expect(maxInFlight).toBe(2)
-    const done = (db.prepare("SELECT COUNT(*) AS n FROM jobs WHERE status='done'").get() as {
-      n: number
-    }).n
+    const done = (
+      db.prepare("SELECT COUNT(*) AS n FROM jobs WHERE status='done'").get() as {
+        n: number
+      }
+    ).n
     expect(done).toBe(5)
     db.close()
   })
@@ -925,9 +949,11 @@ git commit -m "test(phase-14): 10.12 concurrency cap = 2 for ai-review-clip (pha
 ---
 
 <!-- openspec-task: 10.13 -->
+
 ### Task 13: UI live update — `jobs:changed` event reflects in the list
 
 **Files:**
+
 - Modify: `src/integration/phase-14-jobs-tab.test.tsx`
 
 - [ ] **Step 1: Append the test**
@@ -999,9 +1025,11 @@ git commit -m "test(phase-14): 10.13 jobs:changed live refresh (phase-14 10.13)"
 ---
 
 <!-- openspec-task: 10.14 -->
+
 ### Task 14: `openspec validate phase-14-queue-persistence --strict`
 
 **Files:**
+
 - (no file changes; CLI invocation)
 
 - [ ] **Step 1: Run the validator**

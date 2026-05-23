@@ -10,6 +10,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. Wait for the editor's Vditor host to appear; stop recording.
 
 **Pass:**
+
 - URL changes to `/editor/<encoded>`.
 - Vditor host (`[data-testid=vditor-host]`) is visible within 300ms of the click (read off the Performance flame chart's "Frames" track).
 - No 4xx/5xx in DevTools Network tab.
@@ -27,6 +28,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
    ```
 
 **Pass:**
+
 - The file's body ends with `hello\n`.
 - The dirty dot disappears in the TitleBar after the save lands.
 - `stat -f %m path/to/grove/inbox/sample.md` reports a newer mtime than before the edit.
@@ -41,6 +43,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. In Chromium DevTools → Network tab, filter by "ipc" or expand the renderer-side log.
 
 **Pass:**
+
 - After ~1s of stillness, exactly **one** `file.writeParsed` IPC call fires (not 20).
 - Final disk content contains all 20 characters in order.
 
@@ -52,6 +55,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 2. Hit `Cmd+S` (mac) / `Ctrl+S` (win/linux).
 
 **Pass:**
+
 - Within ~50ms the saving pulse appears, then the dirty dot disappears.
 - File on disk reflects the 5 new characters.
 - The browser's default "save page" dialog does NOT appear.
@@ -66,6 +70,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 4. Click "打开编辑器" on the SAME file again.
 
 **Pass:**
+
 - Editor reopens with the 3 characters present in the body (verifies round-trip read after write).
 - DevTools "Memory" tab → "Detached DOM" count does NOT show the previous Vditor instance leaking (snapshot before/after).
 
@@ -78,6 +83,7 @@ Run `npm run dev` and execute each scenario. Each step has an explicit pass crit
 3. Inspect file on disk via `tail -c 100 …`.
 
 **Pass:**
+
 - Even though debounce did NOT fire, the file already reflects the 2 characters because `visibilitychange=hidden` triggered `flushSave()`.
 - (On linux/win: minimise the window or switch desktop — same expectation.)
 

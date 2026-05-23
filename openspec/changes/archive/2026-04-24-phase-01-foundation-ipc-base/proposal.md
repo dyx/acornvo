@@ -16,11 +16,13 @@ Acornvo 当前仅有 electron-vite 脚手架，缺少可承载后续所有功能
 ## Capabilities
 
 ### New Capabilities
+
 - `app-shell`: Electron 三进程骨架、窗口与生命周期管理、基础 UI 壳与路由
 - `ipc-router`: 类型安全的 IPC 注册与调用约定、统一错误形状、contextBridge 白名单
 - `app-logging`: 基于 electron-log 的主进程与 renderer 日志采集与文件轮转
 
 ### Modified Capabilities
+
 （无 — 本阶段为首批 capability）
 
 ## Impact

@@ -19,9 +19,10 @@
 **Tech Stack:** `@ant-design/x` (Bubble, ThoughtChain, Actions, Welcome, Prompts, Sender), `@ant-design/x-markdown` (XMarkdown), `antd` (Drawer, message, Tag, Button, Alert, Flex), `@ant-design/icons`, Zustand store, `vitest`, `@testing-library/react`.
 
 **Ant Design X reference:**
+
 - `x-components` skill — Bubble.List + roles, ThoughtChain step shape, Actions item shape, Welcome / Prompts props.
 - `x-markdown` skill — XMarkdown streaming behavior, `components` mapping for custom anchor.
-- `x-chat-provider` skill — *NOT used*; phase-20 explicitly rejects `useXChat` / `AbstractChatProvider` (see design.md §B-S6).
+- `x-chat-provider` skill — _NOT used_; phase-20 explicitly rejects `useXChat` / `AbstractChatProvider` (see design.md §B-S6).
 
 **Carried-over types** (from Plan 2):
 
@@ -45,9 +46,11 @@ type BubbleItem = {
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: Implement BubbleListAdapter consuming deriveBubbleItems + chatRoles
 
 **Files:**
+
 - Create: `src/components/chat/BubbleListAdapter.tsx`
 
 - [x] **Step 1: Implement the adapter**
@@ -65,15 +68,15 @@ import { ScrollToBottomButton } from './ScrollToBottomButton'
 export function BubbleListAdapter() {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.messages ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
   )
   const pendingApprovals = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingApprovals ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingApprovals ?? []) : []
   )
 
   const items = useMemo(
     () => deriveBubbleItems(messages, pendingApprovals),
-    [messages, pendingApprovals],
+    [messages, pendingApprovals]
   )
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -82,14 +85,20 @@ export function BubbleListAdapter() {
     <div
       ref={containerRef}
       data-testid="bubble-list-container"
-      style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minHeight: 0
+      }}
     >
       <Bubble.List
         items={items.map((b) => ({
           key: b.key,
           role: b.role,
           content: b.content,
-          loading: b.loading,
+          loading: b.loading
           // pass through; Bubble's `streaming` prop is handled by the role config
         }))}
         roles={chatRoles}
@@ -111,9 +120,11 @@ Skip typecheck until Task 5 lands the helper. Do NOT commit yet.
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: Upgrade chatRoles.assistant.contentRender to render ThoughtChain
 
 **Files:**
+
 - Modify: `src/components/chat/chatRoles.tsx`
 
 - [x] **Step 1: Inspect ThoughtChain API**
@@ -134,7 +145,7 @@ import {
   LoadingOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ToolOutlined,
+  ToolOutlined
 } from '@ant-design/icons'
 import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { ExternalLinkAnchor } from './ExternalLinkAnchor'
@@ -174,7 +185,7 @@ function renderToolSteps(steps: ToolStep[]) {
                 {
                   key: 'args',
                   label: 'args',
-                  children: <pre style={{ margin: 0 }}>{JSON.stringify(s.call.args, null, 2)}</pre>,
+                  children: <pre style={{ margin: 0 }}>{JSON.stringify(s.call.args, null, 2)}</pre>
                 },
                 ...(s.result
                   ? [
@@ -187,17 +198,17 @@ function renderToolSteps(steps: ToolStep[]) {
                               ? JSON.stringify(s.result.data, null, 2)
                               : `error: ${s.result.error}`}
                           </pre>
-                        ),
-                      },
+                        )
+                      }
                     ]
-                  : []),
+                  : [])
               ]}
             />
             {s.pendingApproval && (
               <ApprovalInlineActions approval={s.pendingApproval} callId={s.call.id} />
             )}
           </div>
-        ),
+        )
       }))}
     />
   )
@@ -206,29 +217,25 @@ function renderToolSteps(steps: ToolStep[]) {
 export const chatRoles: RolesMap = {
   user: {
     placement: 'end',
-    avatar: <Avatar icon={<UserOutlined />} />,
+    avatar: <Avatar icon={<UserOutlined />} />
   },
   assistant: {
     placement: 'start',
     avatar: <Avatar icon={<RobotOutlined />} />,
     contentRender: (content) => {
       if (typeof content === 'string') {
-        return (
-          <XMarkdown components={{ a: ExternalLinkAnchor as any }}>{content}</XMarkdown>
-        )
+        return <XMarkdown components={{ a: ExternalLinkAnchor as any }}>{content}</XMarkdown>
       }
       const c = content as { text: string; toolSteps: ToolStep[] }
       return (
         <div>
           {c.toolSteps.length > 0 && renderToolSteps(c.toolSteps)}
-          {c.text && (
-            <XMarkdown components={{ a: ExternalLinkAnchor as any }}>{c.text}</XMarkdown>
-          )}
+          {c.text && <XMarkdown components={{ a: ExternalLinkAnchor as any }}>{c.text}</XMarkdown>}
         </div>
       )
-    },
+    }
     // footer set in Task 6 below
-  },
+  }
 }
 ```
 
@@ -239,9 +246,11 @@ Skip typecheck for now — `ApprovalInlineActions` and `ScrollToBottomButton` do
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: XMarkdown integration is already in Task 2 — verify and document
 
 **Files:**
+
 - No file change. Verification of Task 2 content.
 
 - [x] **Step 1: Confirm XMarkdown is imported and used in chatRoles.tsx**
@@ -262,9 +271,11 @@ No commit in this task; the integration is part of Task 2's diff and lands after
 
 <!-- openspec-task: 5.1 -->
 <!-- openspec-task: 5.4 -->
+
 ### Task 4: Implement ApprovalInlineActions
 
 **Files:**
+
 - Create: `src/components/chat/ApprovalInlineActions.tsx`
 
 - [x] **Step 1: Inspect Actions API**
@@ -285,7 +296,7 @@ import { ApprovalDrawer } from './ApprovalDrawer'
 
 export function ApprovalInlineActions({
   approval,
-  callId,
+  callId
 }: {
   approval: PendingApproval
   callId: string
@@ -306,20 +317,20 @@ export function ApprovalInlineActions({
             key: 'approve',
             icon: <CheckOutlined />,
             label: t('approval.approve'),
-            onClick: () => approveTool(activeSessionId, callId),
+            onClick: () => approveTool(activeSessionId, callId)
           },
           {
             key: 'reject',
             icon: <CloseOutlined />,
             label: t('approval.reject'),
-            onClick: () => rejectTool(activeSessionId, callId),
+            onClick: () => rejectTool(activeSessionId, callId)
           },
           {
             key: 'edit',
             icon: <EditOutlined />,
             label: t('approval.edit'),
-            onClick: () => setDrawerOpen(true),
-          },
+            onClick: () => setDrawerOpen(true)
+          }
         ]}
       />
       <ApprovalDrawer
@@ -360,9 +371,11 @@ Mirror in `en.json`.
 
 <!-- openspec-task: 5.2 -->
 <!-- openspec-task: 5.3 -->
+
 ### Task 5: Implement ApprovalDrawer
 
 **Files:**
+
 - Create: `src/components/chat/ApprovalDrawer.tsx`
 
 - [x] **Step 1: Inspect existing JsonArgsEditor + FrontmatterDiff**
@@ -370,6 +383,7 @@ Mirror in `en.json`.
 Run: `grep -n "export " /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/JsonArgsEditor.tsx /Users/aaa/develop/workspace-ai/acornvo/src/components/chat/FrontmatterDiff.tsx`
 
 Note the exported component names and their props. Most likely:
+
 - `JsonArgsEditor` — props `value: unknown` + `onChange(parsed: unknown | null)` (null on parse error)
 - `FrontmatterDiff` — props `before: string` + `after: string` (or `args` containing both)
 
@@ -473,9 +487,11 @@ Note: if `JsonArgsEditor`'s `onChange` signature differs (e.g. fires only on val
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 6: Implement ScrollToBottomButton (the "new messages ↓" floating button)
 
 **Files:**
+
 - Create: `src/components/chat/ScrollToBottomButton.tsx`
 
 - [x] **Step 1: Implement detection + smooth scroll**
@@ -490,7 +506,7 @@ import { useTranslation } from 'react-i18next'
 
 export function ScrollToBottomButton({
   containerRef,
-  threshold = 80,
+  threshold = 80
 }: {
   containerRef: RefObject<HTMLDivElement | null>
   threshold?: number
@@ -531,7 +547,7 @@ export function ScrollToBottomButton({
         position: 'absolute',
         right: 16,
         bottom: 16,
-        zIndex: 2,
+        zIndex: 2
       }}
     >
       {t('chat.message.newMessages')}
@@ -572,9 +588,11 @@ git commit -m "feat(chat-message-list,chat-approval-panel): BubbleListAdapter + 
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 7: Add Actions footer (Copy + Retry + Quote) to chatRoles.assistant
 
 **Files:**
+
 - Modify: `src/components/chat/chatRoles.tsx`
 
 - [x] **Step 1: Extract a stateful AssistantFooter sub-component**
@@ -592,13 +610,14 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.messages ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
   )
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
 
   const me = messages.find((m) => m.id === messageKey)
-  const isLastAssistant = messages[messages.length - 1]?.id === messageKey && me?.role === 'assistant'
+  const isLastAssistant =
+    messages[messages.length - 1]?.id === messageKey && me?.role === 'assistant'
   const isErrorTail = isLastAssistant && (me?.error || me?.status === 'error')
 
   return (
@@ -611,7 +630,7 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
           onClick: async () => {
             await navigator.clipboard.writeText(me?.text ?? '')
             antdMessage.success(t('chat.message.copied'))
-          },
+          }
         },
         ...(isErrorTail
           ? [
@@ -626,8 +645,8 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
                   if (prior) {
                     sendUserMessage({ text: prior.text, attachments: prior.attachments })
                   }
-                },
-              },
+                }
+              }
             ]
           : []),
         {
@@ -640,8 +659,8 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
               .map((l) => `> ${l}`)
               .join('\n')
             setPendingPromptText(`${quoted}\n\n`)
-          },
-        },
+          }
+        }
       ]}
     />
   )
@@ -684,16 +703,18 @@ git commit -m "feat(chat-message-list): Actions footer (Copy / Retry / Quote) on
 ---
 
 <!-- openspec-task: 4.6 -->
+
 ### Task 8: Write streaming-markdown smoke test (unclosed fence, half-row table, unclosed bold)
 
 **Files:**
+
 - Create: `src/components/chat/streaming-markdown.smoke.test.tsx`
 
 - [x] **Step 1: Write the smoke test**
 
 Create `/Users/aaa/develop/workspace-ai/acornvo/src/components/chat/streaming-markdown.smoke.test.tsx`:
 
-```tsx
+````tsx
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { XMarkdown } from '@ant-design/x'
@@ -704,9 +725,7 @@ describe('XMarkdown streaming smoke', () => {
   })
 
   it('does not throw on a half-row table', () => {
-    expect(() =>
-      render(<XMarkdown>{'| col1 | col2 |\n| --- |'}</XMarkdown>),
-    ).not.toThrow()
+    expect(() => render(<XMarkdown>{'| col1 | col2 |\n| --- |'}</XMarkdown>)).not.toThrow()
   })
 
   it('does not throw on an unclosed bold marker', () => {
@@ -717,7 +736,7 @@ describe('XMarkdown streaming smoke', () => {
     const { container } = render(
       <XMarkdown>
         {'hello **world** with a [link](https://example.com) and `inline code`'}
-      </XMarkdown>,
+      </XMarkdown>
     )
     expect(container.querySelector('strong')?.textContent).toBe('world')
     expect(container.querySelector('a')?.getAttribute('href')).toBe('https://example.com')
@@ -734,7 +753,7 @@ describe('XMarkdown streaming smoke', () => {
     expect(lastContainer?.querySelector('strong')?.textContent).toBe('world')
   })
 })
-```
+````
 
 - [x] **Step 2: Run test to verify it passes**
 
@@ -753,9 +772,11 @@ git commit -m "test(chat-message-list): streaming-markdown smoke (unclosed fence
 ---
 
 <!-- openspec-task: 4.7 -->
+
 ### Task 9: Write BubbleListAdapter integration test (10 scenarios from chat-message-list spec)
 
 **Files:**
+
 - Create: `src/components/chat/BubbleListAdapter.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -791,14 +812,14 @@ const seedMessages = (messages: any[], pendingApprovals: any[] = []) => {
         status: 'idle',
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      } as any,
-    },
+        lastUserAttachments: []
+      } as any
+    }
   } as any)
 }
 
 vi.mock('@/ipc/client', () => ({
-  ipc: { file: { openExternal: vi.fn() } },
+  ipc: { file: { openExternal: vi.fn() } }
 }))
 import { ipc } from '@/ipc/client'
 
@@ -807,7 +828,11 @@ describe('BubbleListAdapter', () => {
 
   it('renders user message at end placement', () => {
     seedMessages([{ id: 'u', role: 'user', text: 'hi', createdAt: 0, status: 'done' }])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     expect(screen.getByText('hi')).toBeTruthy()
   })
 
@@ -819,11 +844,15 @@ describe('BubbleListAdapter', () => {
         text: 'done',
         status: 'done',
         toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }],
-        createdAt: 0,
+        createdAt: 0
       },
-      { id: 't', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":[1]}', createdAt: 0 },
+      { id: 't', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":[1]}', createdAt: 0 }
     ])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     // ThoughtChain step label
     expect(screen.getByText('search')).toBeTruthy()
     // assistant final text rendered below the chain
@@ -838,11 +867,15 @@ describe('BubbleListAdapter', () => {
         text: '',
         status: 'done',
         toolCalls: [{ id: 'A', name: 'fa', args: {} }],
-        createdAt: 0,
+        createdAt: 0
       },
-      { id: 't', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":null}', createdAt: 0 },
+      { id: 't', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":null}', createdAt: 0 }
     ])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     // No bubble with role=tool — count distinct Bubble.Item rendered
     const allTextNodes = screen.queryAllByText(/null/i)
     // The "null" appears in the result collapse but no standalone bubble carries it
@@ -851,7 +884,11 @@ describe('BubbleListAdapter', () => {
 
   it('streaming state shows loading indicator (empty text + status streaming)', () => {
     seedMessages([{ id: 'a', role: 'assistant', text: '', status: 'streaming', createdAt: 0 }])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     // Bubble.loading=true should render a typing/loading indicator.
     // Look for the antd Bubble loading dots or its role=status node.
     expect(document.querySelector('[class*="loading"]')).toBeTruthy()
@@ -859,7 +896,11 @@ describe('BubbleListAdapter', () => {
 
   it('done status removes loading indicator', () => {
     seedMessages([{ id: 'a', role: 'assistant', text: 'hello', status: 'done', createdAt: 0 }])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     expect(screen.getByText('hello')).toBeTruthy()
   })
 
@@ -870,10 +911,14 @@ describe('BubbleListAdapter', () => {
         role: 'assistant',
         text: '**bold** and `code`',
         status: 'done',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     expect(document.querySelector('strong')?.textContent).toBe('bold')
     expect(document.querySelector('code')?.textContent).toBe('code')
   })
@@ -885,10 +930,14 @@ describe('BubbleListAdapter', () => {
         role: 'assistant',
         text: '[link](https://example.com)',
         status: 'done',
-        createdAt: 0,
-      },
+        createdAt: 0
+      }
     ])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     await userEvent.click(screen.getByText('link'))
     expect(ipc.file.openExternal).toHaveBeenCalledWith('https://example.com')
   })
@@ -897,7 +946,11 @@ describe('BubbleListAdapter', () => {
     const writeText = vi.fn()
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     seedMessages([{ id: 'a', role: 'assistant', text: 'hello', status: 'done', createdAt: 0 }])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     // hover/Focus to reveal footer; userEvent.hover on the bubble
     const bubble = screen.getByText('hello').closest('div')!
     await userEvent.hover(bubble)
@@ -910,10 +963,14 @@ describe('BubbleListAdapter', () => {
     const sendUserMessage = vi.fn()
     seedMessages([
       { id: 'u', role: 'user', text: 'please run', createdAt: 0, status: 'done' },
-      { id: 'a', role: 'assistant', text: 'failed', status: 'error', error: 'boom', createdAt: 0 },
+      { id: 'a', role: 'assistant', text: 'failed', status: 'error', error: 'boom', createdAt: 0 }
     ])
     useChatStore.setState({ sendUserMessage } as any)
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     const bubble = screen.getByText('failed').closest('div')!
     await userEvent.hover(bubble)
     const retry = await screen.findByRole('button', { name: /重试|Retry/ })
@@ -923,7 +980,11 @@ describe('BubbleListAdapter', () => {
 
   it('autoScroll is enabled on Bubble.List', () => {
     seedMessages([{ id: 'a', role: 'assistant', text: 'hi', status: 'done', createdAt: 0 }])
-    render(<Wrap><BubbleListAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <BubbleListAdapter />
+      </Wrap>
+    )
     // assert by looking at the container — easiest path is to confirm autoScroll prop renders the
     // "new messages" button absent when scroll position is at bottom (it is initially).
     expect(screen.queryByText(/新消息|New messages/)).toBeNull()
@@ -946,9 +1007,11 @@ git commit -m "test(chat-message-list): 10-scenario coverage for BubbleListAdapt
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 10: Write ApprovalInlineActions test (6 scenarios)
 
 **Files:**
+
 - Create: `src/components/chat/ApprovalInlineActions.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -973,7 +1036,7 @@ const approval = {
   toolName: 'write_file',
   args: { path: 'a.md' },
   reason: 'destructive',
-  receivedAt: 0,
+  receivedAt: 0
 }
 
 const seedActive = (sid = 's1') => {
@@ -992,9 +1055,9 @@ const seedActive = (sid = 's1') => {
         status: 'awaiting-approval',
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      } as any,
-    },
+        lastUserAttachments: []
+      } as any
+    }
   } as any)
 }
 
@@ -1002,7 +1065,11 @@ describe('ApprovalInlineActions', () => {
   beforeEach(() => seedActive())
 
   it('renders Approve / Reject / Edit buttons', () => {
-    render(<Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>)
+    render(
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
+    )
     expect(screen.getByRole('button', { name: /同意|Approve/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^拒绝$|^Reject$/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^编辑$|^Edit$/ })).toBeTruthy()
@@ -1011,7 +1078,11 @@ describe('ApprovalInlineActions', () => {
   it('Approve click calls approveTool with sessionId+callId, no editedArgs', async () => {
     const approveTool = vi.fn()
     useChatStore.setState({ approveTool } as any)
-    render(<Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>)
+    render(
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
+    )
     await userEvent.click(screen.getByRole('button', { name: /同意|Approve/ }))
     expect(approveTool).toHaveBeenCalledWith('s1', 'A')
   })
@@ -1019,13 +1090,21 @@ describe('ApprovalInlineActions', () => {
   it('Reject click calls rejectTool', async () => {
     const rejectTool = vi.fn()
     useChatStore.setState({ rejectTool } as any)
-    render(<Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>)
+    render(
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
+    )
     await userEvent.click(screen.getByRole('button', { name: /^拒绝$|^Reject$/ }))
     expect(rejectTool).toHaveBeenCalledWith('s1', 'A')
   })
 
   it('Edit click opens ApprovalDrawer', async () => {
-    render(<Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>)
+    render(
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
+    )
     await userEvent.click(screen.getByRole('button', { name: /^编辑$|^Edit$/ }))
     expect(await screen.findByText(/审批工具调用|Approve tool/)).toBeTruthy()
   })
@@ -1033,7 +1112,9 @@ describe('ApprovalInlineActions', () => {
   it('returns null when there is no active session', () => {
     useChatStore.setState({ activeSessionId: null } as any)
     const { container } = render(
-      <Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>,
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
     )
     expect(container.textContent).toBe('')
   })
@@ -1043,7 +1124,11 @@ describe('ApprovalInlineActions', () => {
     // The parent (chatRoles assistant contentRender) sources from `step.pendingApproval`,
     // which is undefined once store removes the approval.
     // For unit-level coverage, simply unmount and remount with a fresh seed:
-    const { unmount } = render(<Wrap><ApprovalInlineActions approval={approval} callId="A" /></Wrap>)
+    const { unmount } = render(
+      <Wrap>
+        <ApprovalInlineActions approval={approval} callId="A" />
+      </Wrap>
+    )
     unmount()
     seedActive('s2') // pretend a different session is now active
     expect(true).toBe(true) // sanity
@@ -1066,9 +1151,11 @@ git commit -m "test(chat-approval-panel): 6-scenario coverage for ApprovalInline
 ---
 
 <!-- openspec-task: 5.7 -->
+
 ### Task 11: Write ApprovalDrawer test (4 scenarios)
 
 **Files:**
+
 - Create: `src/components/chat/ApprovalDrawer.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -1093,7 +1180,7 @@ const updateFrontmatterApproval = {
   toolName: 'update_frontmatter',
   args: { before: 'tags: [a]', after: 'tags: [a, b]' },
   reason: 'edit frontmatter',
-  receivedAt: 0,
+  receivedAt: 0
 }
 
 const writeFileApproval = {
@@ -1101,7 +1188,7 @@ const writeFileApproval = {
   toolName: 'write_file',
   args: { path: 'x.md', content: 'hello' },
   reason: 'create file',
-  receivedAt: 0,
+  receivedAt: 0
 }
 
 const seed = () => {
@@ -1120,9 +1207,9 @@ const seed = () => {
         status: 'awaiting-approval',
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      } as any,
-    },
+        lastUserAttachments: []
+      } as any
+    }
   } as any)
 }
 
@@ -1134,13 +1221,8 @@ describe('ApprovalDrawer', () => {
   it('renders FrontmatterDiff when toolName is update_frontmatter', () => {
     render(
       <Wrap>
-        <ApprovalDrawer
-          open
-          onClose={() => {}}
-          approval={updateFrontmatterApproval}
-          callId="C1"
-        />
-      </Wrap>,
+        <ApprovalDrawer open onClose={() => {}} approval={updateFrontmatterApproval} callId="C1" />
+      </Wrap>
     )
     expect(screen.getByText(/tags: \[a\]/)).toBeTruthy()
     expect(screen.getByText(/tags: \[a, b\]/)).toBeTruthy()
@@ -1153,7 +1235,7 @@ describe('ApprovalDrawer', () => {
     render(
       <Wrap>
         <ApprovalDrawer open onClose={onClose} approval={writeFileApproval} callId="C2" />
-      </Wrap>,
+      </Wrap>
     )
     // Approval drawer's JsonArgsEditor should pre-populate with writeFileApproval.args.
     // For this test, simply click the submit button without modifying args.
@@ -1168,7 +1250,7 @@ describe('ApprovalDrawer', () => {
     render(
       <Wrap>
         <ApprovalDrawer open onClose={() => {}} approval={writeFileApproval} callId="C2" />
-      </Wrap>,
+      </Wrap>
     )
     // Type invalid JSON in the JsonArgsEditor — selector depends on its implementation.
     const editor = screen.getByRole('textbox') as HTMLTextAreaElement
@@ -1186,7 +1268,7 @@ describe('ApprovalDrawer', () => {
     render(
       <Wrap>
         <ApprovalDrawer open onClose={onClose} approval={writeFileApproval} callId="C2" />
-      </Wrap>,
+      </Wrap>
     )
     await userEvent.click(screen.getByRole('button', { name: /^取消$|^Cancel$/i }))
     expect(approveTool).not.toHaveBeenCalled()
@@ -1210,9 +1292,11 @@ git commit -m "test(chat-approval-panel): 4-scenario coverage for ApprovalDrawer
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 12: Rewrite src/pages/Chat.tsx to two-column layout consuming new adapters
 
 **Files:**
+
 - Modify: `src/pages/Chat.tsx`
 
 - [x] **Step 1: Inspect Welcome + Prompts API**
@@ -1264,7 +1348,7 @@ export function Chat() {
     { key: 'p1', label: t('chat.empty.card1') },
     { key: 'p2', label: t('chat.empty.card2') },
     { key: 'p3', label: t('chat.empty.card3') },
-    { key: 'p4', label: t('chat.empty.card4') },
+    { key: 'p4', label: t('chat.empty.card4') }
   ]
 
   return (
@@ -1274,12 +1358,7 @@ export function Chat() {
       </aside>
       <Flex vertical style={{ flex: 1, minWidth: 0, height: '100%' }}>
         {isEmpty ? (
-          <Flex
-            vertical
-            align="center"
-            justify="center"
-            style={{ flex: 1, padding: 32 }}
-          >
+          <Flex vertical align="center" justify="center" style={{ flex: 1, padding: 32 }}>
             <Welcome
               title={t('chat.welcome.heading')}
               description={t('chat.welcome.subheading')}
@@ -1327,6 +1406,7 @@ Expected: pass. If `ProfileFooter` props mismatch (no longer needs session info 
 - [x] **Step 5: Manual smoke**
 
 Run: `npm run dev`. Open chat page. Verify:
+
 - Two columns visible (sessions left, message area right).
 - Empty session shows Welcome + 4 Prompts cards.
 - Clicking a Prompts card fills Sender + focuses input.

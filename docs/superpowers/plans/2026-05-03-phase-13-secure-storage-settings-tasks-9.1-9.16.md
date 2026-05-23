@@ -4,7 +4,7 @@
 
 **Goal:** Walk every acceptance criterion in `openspec/changes/phase-13-secure-storage-settings/tasks.md` section 9, gather direct evidence (test output, DB queries, screenshots) and only then mark the item complete. Most criteria pair an automated assertion with a manual UI walkthrough — both must pass.
 
-**Architecture:** Each task is an audit. We don't *implement* anything new here — we *verify* that Plans 1-4 satisfy the spec. New tests added in this plan are **acceptance** tests that exercise the wired-up app, not unit tests.
+**Architecture:** Each task is an audit. We don't _implement_ anything new here — we _verify_ that Plans 1-4 satisfy the spec. New tests added in this plan are **acceptance** tests that exercise the wired-up app, not unit tests.
 
 **Tech Stack:** Vitest + jsdom for renderer assertions, better-sqlite3 for direct DB inspection, manual `npm run dev` walkthrough for UI checks.
 
@@ -13,9 +13,11 @@
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 1: `/settings` route, double-pane layout, default general tab
 
 **Files:**
+
 - Run-only: dev app + the `Settings.test.tsx` from Plan 2
 
 - [ ] **Step 1: Run the existing Settings test**
@@ -30,6 +32,7 @@ npm run dev
 ```
 
 In the app:
+
 1. Open a grove (or create one).
 2. Click the bottom gear in AppRail.
 3. Verify the URL is `/settings/general`.
@@ -48,9 +51,11 @@ No code change required. If you edited any plan note files, skip the commit. Oth
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 2: Switching to dark applies `data-theme=dark` and survives reload
 
 **Files:**
+
 - Create: `src/__acceptance__/theme-persistence.test.ts`
 
 - [ ] **Step 1: Write an automated test that verifies the persistence path**
@@ -152,9 +157,11 @@ git commit -m "test(phase-13): acceptance 9.2 — theme persists across reload"
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 3: Locale en-US switches all text
 
 **Files:**
+
 - Create: `src/__acceptance__/locale-switch.test.tsx`
 
 - [ ] **Step 1: Write the automated test**
@@ -220,6 +227,7 @@ Expected: PASS.
 - [ ] **Step 3: Manual walkthrough**
 
 `npm run dev`. Open settings → General → switch language to en-US. Verify:
+
 - The settings rail tab labels switch from `通用 / 外观 / AI / 浏览器` to `General / Appearance / AI / Browser`.
 - AppRail entries switch from `果仓 / 拾果 / 松语 / 设置` to `Library / Browser / Chat / Settings`.
 
@@ -233,9 +241,11 @@ git commit -m "test(phase-13): acceptance 9.3 — locale switching applies en-US
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 4: Font scale slider sets `--font-scale` immediately
 
 **Files:**
+
 - (no new file — covered by `AppearanceTab.test.tsx` from Plan 2 + `settings-effects.test.ts` from Plan 3)
 
 - [ ] **Step 1: Confirm the unit tests cover this**
@@ -260,9 +270,11 @@ Quit + relaunch. Slider stays at 1.2; CSS var still 1.2.
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 5: Add openai profile with key → row + encrypted BLOB
 
 **Files:**
+
 - Create: `electron/__acceptance__/profile-create.test.ts`
 
 - [ ] **Step 1: Write the automated test**
@@ -285,7 +297,10 @@ vi.mock('electron', () => ({
 
 import { dbService } from '../services/db'
 import { profilesStore } from '../settings/profiles'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -363,9 +378,11 @@ git commit -m "test(phase-13): acceptance 9.5 — create profile persists row + 
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 6: Editing without entering apiKey preserves the original key
 
 **Files:**
+
 - Create: `electron/__acceptance__/profile-edit-keep.test.ts`
 
 - [ ] **Step 1: Write the automated test**
@@ -390,7 +407,10 @@ import { dbService } from '../services/db'
 import { profilesStore } from '../settings/profiles'
 import { secretsStore } from '../settings/secrets'
 import { getProfileDecryptedKey } from '../settings/profile-key'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -407,7 +427,12 @@ describe('acceptance 9.6 — edit without apiKey preserves original', () => {
   afterEach(() => db.close())
 
   it('update with apiKey=undefined leaves the secret + ref intact', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-orig' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-orig'
+    })
     expect(getProfileDecryptedKey(id)).toBe('sk-orig')
 
     profilesStore.update(id, { name: 'p-renamed' /* no apiKey field */ })
@@ -438,9 +463,11 @@ git commit -m "test(phase-13): acceptance 9.6 — edit without apiKey preserves 
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 7: Editing with empty-string apiKey deletes the secret
 
 **Files:**
+
 - Modify: `electron/__acceptance__/profile-edit-keep.test.ts` (add a new `describe`)
 
 - [ ] **Step 1: Write the automated test**
@@ -461,15 +488,21 @@ describe('acceptance 9.7 — edit with apiKey="" clears the secret', () => {
   afterEach(() => db.close())
 
   it('update with apiKey="" removes the secret row AND nulls api_key_ref', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-orig' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-orig'
+    })
     const ref = `ai.key.${id}`
     expect(secretsStore.get(ref)).toBe('sk-orig')
 
     profilesStore.update(id, { apiKey: '' })
 
     expect(secretsStore.get(ref)).toBeNull()
-    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as
-      { api_key_ref: string | null }
+    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as {
+      api_key_ref: string | null
+    }
     expect(row.api_key_ref).toBeNull()
   })
 })
@@ -488,20 +521,22 @@ Modify `src/components/settings/ProfileDialog.tsx`. Add a button next to the api
 
 ```tsx
 // inside the apiKey field, when profile !== null
-{profile && profile.apiKeyRef && (
-  <button
-    type="button"
-    className="ml-2 rounded border border-destructive px-2 py-1 text-xs text-destructive"
-    onClick={async () => {
-      if (window.confirm(t('settings.ai.confirmClearKey'))) {
-        await update(profile.id, { apiKey: '' })
-        onClose()
-      }
-    }}
-  >
-    {t('settings.ai.clearKey')}
-  </button>
-)}
+{
+  profile && profile.apiKeyRef && (
+    <button
+      type="button"
+      className="ml-2 rounded border border-destructive px-2 py-1 text-xs text-destructive"
+      onClick={async () => {
+        if (window.confirm(t('settings.ai.confirmClearKey'))) {
+          await update(profile.id, { apiKey: '' })
+          onClose()
+        }
+      }}
+    >
+      {t('settings.ai.clearKey')}
+    </button>
+  )
+}
 ```
 
 Add the i18n keys:
@@ -511,6 +546,7 @@ Add the i18n keys:
 "clearKey": "清除密钥",
 "confirmClearKey": "确认清除当前 API key？"
 ```
+
 ```json
 // en-US.json — settings.ai
 "clearKey": "Clear key",
@@ -533,15 +569,18 @@ git commit -m "test(phase-13): acceptance 9.7 — clear-key flow + UI button"
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 8: Delete profile cascades + reassigns default
 
 **Files:**
+
 - (no new file — covered by `electron/settings/profiles.test.ts` audit cases from Plan 4 task 7 + the existing default-reassign tests in Plan 1 task 7)
 
 - [ ] **Step 1: Confirm the unit + audit tests cover this**
 
 Run: `npx vitest run electron/settings/profiles.test.ts`
 Expected: PASS — including:
+
 - `delete cascades to secret in a single transaction`
 - `delete on default profile reassigns defaultProfileId to first remaining`
 - `delete on default profile (last one) sets defaultProfileId=null`
@@ -551,6 +590,7 @@ Expected: PASS — including:
 
 `npm run dev`. Create profile A with key. Set A as default. Create profile B. Delete A.
 Verify:
+
 - A's card is gone.
 - B is now marked as default (the badge moved).
 - Inspect DB: `settings_secrets` no longer has `ai.key.<A.id>`.
@@ -569,9 +609,11 @@ Expected: `null` (or no row, which falls back to the default).
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 9: Name conflict shows UI error "已被占用"
 
 **Files:**
+
 - (no new file — covered by `ProfileDialog.test.tsx` from Plan 3)
 
 - [ ] **Step 1: Confirm the existing test covers this**
@@ -589,9 +631,11 @@ Expected: A red error message "名称已被占用" (or "Name already in use" on 
 ---
 
 <!-- openspec-task: 9.10 -->
+
 ### Task 10: Disabling block-ads lets googletagmanager.com through
 
 **Files:**
+
 - Create: `electron/__acceptance__/ad-block-toggle.test.ts`
 
 - [ ] **Step 1: Write the automated test**
@@ -603,7 +647,9 @@ import Database from 'better-sqlite3'
 import { resolve } from 'node:path'
 import { runMigrations } from '../services/db/migrations'
 
-let registeredListener: ((details: { url: string }, cb: (r: { cancel: boolean }) => void) => void) | null = null
+let registeredListener:
+  | ((details: { url: string }, cb: (r: { cancel: boolean }) => void) => void)
+  | null = null
 
 vi.mock('electron', () => ({
   session: {
@@ -667,10 +713,9 @@ describe('acceptance 9.10 — disabling blockAds removes the listener', () => {
     initAdBlock({ initialEnabled: true })
     expect(registeredListener).not.toBeNull()
     let result: { cancel: boolean } | null = null
-    registeredListener!(
-      { url: 'https://www.googletagmanager.com/gtm.js' },
-      (r) => { result = r }
-    )
+    registeredListener!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => {
+      result = r
+    })
     expect(result).toEqual({ cancel: true })
   })
 
@@ -706,30 +751,31 @@ git commit -m "test(phase-13): acceptance 9.10 — disabling blockAds removes th
 ---
 
 <!-- openspec-task: 9.11 -->
+
 ### Task 11: Re-enabling block-ads re-registers the listener
 
 **Files:**
+
 - Modify: `electron/__acceptance__/ad-block-toggle.test.ts` (append)
 
 - [ ] **Step 1: Append the test case**
 
 ```ts
 // electron/__acceptance__/ad-block-toggle.test.ts (append the it block)
-  it('toggling back to true re-registers the listener', () => {
-    initAdBlock({ initialEnabled: true })
-    settingsStore.set('browser', { blockAds: false })
-    expect(registeredListener).toBeNull()
+it('toggling back to true re-registers the listener', () => {
+  initAdBlock({ initialEnabled: true })
+  settingsStore.set('browser', { blockAds: false })
+  expect(registeredListener).toBeNull()
 
-    settingsStore.set('browser', { blockAds: true })
-    expect(registeredListener).not.toBeNull()
+  settingsStore.set('browser', { blockAds: true })
+  expect(registeredListener).not.toBeNull()
 
-    let result: { cancel: boolean } | null = null
-    registeredListener!(
-      { url: 'https://www.googletagmanager.com/gtm.js' },
-      (r) => { result = r }
-    )
-    expect(result).toEqual({ cancel: true })
+  let result: { cancel: boolean } | null = null
+  registeredListener!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => {
+    result = r
   })
+  expect(result).toEqual({ cancel: true })
+})
 ```
 
 - [ ] **Step 2: Run the test**
@@ -747,9 +793,11 @@ git commit -m "test(phase-13): acceptance 9.11 — re-enabling blockAds re-regis
 ---
 
 <!-- openspec-task: 9.12 -->
+
 ### Task 12: Clear cookies invalidates browser session login
 
 **Files:**
+
 - Create: `electron/__acceptance__/clear-cookies.test.ts`
 
 - [ ] **Step 1: Write the automated test**
@@ -806,9 +854,11 @@ git commit -m "test(phase-13): acceptance 9.12 — clearCookies hits persist:bro
 ---
 
 <!-- openspec-task: 9.13 -->
+
 ### Task 13: Keychain unavailable → banner + add fails
 
 **Files:**
+
 - Create: `electron/__acceptance__/keychain-unavailable.test.ts`
 - Create: `src/__acceptance__/keychain-banner.test.tsx`
 
@@ -833,7 +883,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../services/db'
 import { profilesStore } from '../settings/profiles'
 import { settingsHandlers } from '../ipc/settings'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -926,15 +979,18 @@ git commit -m "test(phase-13): acceptance 9.13 — keychain unavailable shows ba
 ---
 
 <!-- openspec-task: 9.14 -->
+
 ### Task 14: DevTools probe — `window.api.settings.secret` is undefined
 
 **Files:**
+
 - (no new file — already covered by `preload/preload.test.ts` security-audit cases from Plan 4)
 
 - [ ] **Step 1: Confirm the existing test covers this**
 
 Run: `npx vitest run preload/preload.test.ts`
 Expected: PASS — including:
+
 - `does not expose any property whose name suggests secret or decrypt`
 - `exposes settings without nested secret object`
 
@@ -961,9 +1017,11 @@ Expected: `['get', 'set', 'aiProfilesList', 'aiProfilesCreate', 'aiProfilesUpdat
 ---
 
 <!-- openspec-task: 9.15 -->
+
 ### Task 15: `Cmd+,` opens settings from any page
 
 **Files:**
+
 - (no new file — already covered by `useGlobalHotkeys.test.tsx` from Plan 4)
 
 - [ ] **Step 1: Confirm the existing test covers this**
@@ -984,9 +1042,11 @@ While focused inside an `<input>` (e.g. the Quick Switcher), `Cmd+,` should stil
 ---
 
 <!-- openspec-task: 9.16 -->
+
 ### Task 16: `openspec validate phase-13-secure-storage-settings --strict` passes
 
 **Files:**
+
 - Possibly: `openspec/changes/phase-13-secure-storage-settings/specs/*.md` (if validation surfaces issues)
 
 - [ ] **Step 1: Run validation**
@@ -997,6 +1057,7 @@ Expected output (rough): zero errors. The output should list the validated specs
 - [ ] **Step 2: If validation fails**
 
 Read the error. Common cases and fixes:
+
 - Missing requirement: add it to the corresponding `specs/*.md`.
 - Stale scenario: align scenarios with implementation reality (e.g., the colon-vs-dot event name decision in Plan 1 — update the spec text from `'settings.changed'` to `'settings:changed'` in `specs/settings-store/spec.md` and `specs/settings-ipc/spec.md`).
 - Missing capability declaration: ensure `proposal.md` includes the capability under New/Modified.

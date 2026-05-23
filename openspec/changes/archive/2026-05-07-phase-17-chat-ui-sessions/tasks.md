@@ -74,7 +74,7 @@
 
 ## 10. i18n
 
-- [x] 10.1 新增 `chat.*` keys：newSession / untitled / input.placeholder / send / stop / attach.file / attach.remove / approval.* / error.* / toolCall.folded / toolResult.folded / session.rename / session.delete / session.confirmDelete
+- [x] 10.1 新增 `chat.*` keys：newSession / untitled / input.placeholder / send / stop / attach.file / attach.remove / approval._ / error._ / toolCall.folded / toolResult.folded / session.rename / session.delete / session.confirmDelete
 - [x] 10.2 中英文对照（zh-CN 必需，en 同步）
 
 ## 11. 验收

@@ -35,7 +35,7 @@ The runner is a single `setInterval(250ms)` tick loop that scans for due jobs pe
    ```
    where `HandlerCtx = { job, payload, log, cancel }`. Handler results are the discriminated union from `shared/job-types.ts`.
 3. **`{ kind: 'retry' }` delayMs semantics**: positive integer overrides policy; `0`, negative, or non-finite values fall back to `nextDelay(attempts)`. Handler-supplied delays do **not** count toward the 5-attempt cap (they're explicit), but `attempts` still increments.
-4. **Fatal on `attempts >= 5`** for *unhandled* errors only — handler-supplied `{ kind: 'retry', delayMs }` never auto-fails. Rationale: design D4 + retry-policy spec — the cap is a "give up" net for code that doesn't know better.
+4. **Fatal on `attempts >= 5`** for _unhandled_ errors only — handler-supplied `{ kind: 'retry', delayMs }` never auto-fails. Rationale: design D4 + retry-policy spec — the cap is a "give up" net for code that doesn't know better.
 5. **Cancellation rules** (locked by spec scenarios):
    - `pending` → immediate `markCanceled(id)`; runner skips it next tick (status filter excludes 'canceled').
    - `running` → fire AbortSignal; **wait for handler to return** (no hard kill); `markCanceled(id)` regardless of the handler's return value (its result is discarded).
@@ -49,6 +49,7 @@ The runner is a single `setInterval(250ms)` tick loop that scans for due jobs pe
 ## Pre-flight
 
 This plan assumes Plan 1 is merged:
+
 - `electron/queue/store.ts` exists with `createJobStore` returning the full interface (CRUD + events).
 - `shared/job-types.ts` exports `Job`, `JobHandlerResult`, `JobKind`, `EnqueueOpts`, `JobListFilter`.
 - `shared/ipc-contract.ts` declares the `jobs` namespace and `'jobs:changed'` event.
@@ -60,31 +61,33 @@ It also assumes phase-10 has shipped `electron/services/ops-log.ts` with `opsLog
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/queue/policy.ts` | Create | 3.1 |
-| `electron/queue/policy.test.ts` | Create | 3.1 |
-| `electron/queue/runner.ts` | Create | 3.2, 3.3, 3.4, 4.1 |
-| `electron/queue/runner.test.ts` | Create | 3.2, 3.3, 3.4, 4.1 |
-| `electron/queue/handlers/index-retry.ts` | Create | 3.5 |
-| `electron/queue/handlers/index-retry.test.ts` | Create | 3.5 |
-| `electron/queue/handlers/ai-review-clip.ts` | Create | 3.6 |
-| `electron/queue/handlers/ai-review-clip.test.ts` | Create | 3.6 |
-| `electron/queue/index.ts` | Create (barrel + main-process bootstrap) | 3.5, 3.6, 4.1 |
-| `electron/ipc/jobs.ts` | Create | 5.1 |
-| `electron/ipc/jobs.test.ts` | Create | 5.1 |
-| `electron/ipc/handlers.ts` | Modify (register `jobs` namespace) | 5.1 |
-| `preload/preload.ts` | Modify (bind `jobs.*`) | 5.2 |
-| `electron/main.ts` | Modify (instantiate runner; wire ops_log; broadcast; before-quit) | 3.4, 4.1, 5.3 |
+| Path                                             | Action                                                            | Owner task         |
+| ------------------------------------------------ | ----------------------------------------------------------------- | ------------------ |
+| `electron/queue/policy.ts`                       | Create                                                            | 3.1                |
+| `electron/queue/policy.test.ts`                  | Create                                                            | 3.1                |
+| `electron/queue/runner.ts`                       | Create                                                            | 3.2, 3.3, 3.4, 4.1 |
+| `electron/queue/runner.test.ts`                  | Create                                                            | 3.2, 3.3, 3.4, 4.1 |
+| `electron/queue/handlers/index-retry.ts`         | Create                                                            | 3.5                |
+| `electron/queue/handlers/index-retry.test.ts`    | Create                                                            | 3.5                |
+| `electron/queue/handlers/ai-review-clip.ts`      | Create                                                            | 3.6                |
+| `electron/queue/handlers/ai-review-clip.test.ts` | Create                                                            | 3.6                |
+| `electron/queue/index.ts`                        | Create (barrel + main-process bootstrap)                          | 3.5, 3.6, 4.1      |
+| `electron/ipc/jobs.ts`                           | Create                                                            | 5.1                |
+| `electron/ipc/jobs.test.ts`                      | Create                                                            | 5.1                |
+| `electron/ipc/handlers.ts`                       | Modify (register `jobs` namespace)                                | 5.1                |
+| `preload/preload.ts`                             | Modify (bind `jobs.*`)                                            | 5.2                |
+| `electron/main.ts`                               | Modify (instantiate runner; wire ops_log; broadcast; before-quit) | 3.4, 4.1, 5.3      |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: Backoff policy — `nextDelay(attempts)`
 
 **Files:**
+
 - Create: `electron/queue/policy.ts`
 - Create: `electron/queue/policy.test.ts`
 
@@ -164,13 +167,15 @@ git commit -m "feat(queue): nextDelay backoff policy (phase-14 3.1)"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: Runner skeleton — tick loop + kind registry + concurrency + minGapMs
 
 **Files:**
+
 - Create: `electron/queue/runner.ts`
 - Create: `electron/queue/runner.test.ts`
 
-This task ships the runner *without* return-value handling, AbortSignal, or before-quit — those are layered in Tasks 3.3, 3.4. It establishes the `register` API and the tick loop's pick logic so we can drive it deterministically with fake timers.
+This task ships the runner _without_ return-value handling, AbortSignal, or before-quit — those are layered in Tasks 3.3, 3.4. It establishes the `register` API and the tick loop's pick logic so we can drive it deterministically with fake timers.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -376,7 +381,11 @@ export interface QueueRunnerDeps {
   /** Optional ops_log writer; runner calls it on every state change. */
   opsLog?: (record: { op: string; path: string; meta?: Record<string, unknown> }) => void
   /** Optional logger. */
-  log?: (level: 'debug' | 'info' | 'warn' | 'error', msg: string, ctx?: Record<string, unknown>) => void
+  log?: (
+    level: 'debug' | 'info' | 'warn' | 'error',
+    msg: string,
+    ctx?: Record<string, unknown>
+  ) => void
 }
 
 interface KindEntry extends RegisterOpts {
@@ -537,9 +546,11 @@ git commit -m "feat(queue): runner tick loop + kind registry + concurrency/minGa
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: Handler return-value handling — three branches + AbortSignal threading + policy fallback
 
 **Files:**
+
 - Modify: `electron/queue/runner.ts`
 - Modify: `electron/queue/runner.test.ts`
 
@@ -688,7 +699,9 @@ describe('createQueueRunner — handler result branches', () => {
     runner.start()
     await vi.advanceTimersByTimeAsync(300)
     runner.stop()
-    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as { next_run_at: string }
+    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as {
+      next_run_at: string
+    }
     const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
     expect(delta).toBeGreaterThanOrEqual(900)
     expect(delta).toBeLessThanOrEqual(1500)
@@ -775,6 +788,7 @@ describe('createQueueRunner — cancel + AbortSignal', () => {
 
 Run: `npm test -- electron/queue/runner.test.ts`
 Expected: most pass (the stub already covers `ok`/`fail`/`retry` happy paths and basic cancel) but two fail:
+
 - "policy returns null" → currently retries with 1000ms instead of failing
 - "delayMs ≤ 0 falls back" → currently writes 0ms
 
@@ -785,39 +799,38 @@ Modify `settle` in `electron/queue/runner.ts`:
 ```ts
 import { nextDelay } from './policy'
 
-  function settle(
-    entry: KindEntry,
-    job: Job,
-    controller: AbortController,
-    result: JobHandlerResult | null,
-    threw: unknown
-  ): void {
-    entry.running.delete(job.id)
-    if (controller.signal.aborted) return
+function settle(
+  entry: KindEntry,
+  job: Job,
+  controller: AbortController,
+  result: JobHandlerResult | null,
+  threw: unknown
+): void {
+  entry.running.delete(job.id)
+  if (controller.signal.aborted) return
 
-    if (threw) {
-      const msg = threw instanceof Error ? threw.message : String(threw)
-      const delay = nextDelay(job.attempts)
-      if (delay === null) deps.store.markFailed(job.id, msg)
-      else deps.store.markRetry(job.id, delay, msg)
-      return
-    }
-    if (!result) return
-    if (result.kind === 'ok') {
-      deps.store.markDone(job.id)
-      return
-    }
-    if (result.kind === 'fail') {
-      deps.store.markFailed(job.id, result.error)
-      return
-    }
-    // retry
-    const supplied =
-      Number.isFinite(result.delayMs) && result.delayMs > 0 ? result.delayMs : null
-    const delay = supplied ?? nextDelay(job.attempts)
-    if (delay === null) deps.store.markFailed(job.id, result.reason)
-    else deps.store.markRetry(job.id, delay, result.reason)
+  if (threw) {
+    const msg = threw instanceof Error ? threw.message : String(threw)
+    const delay = nextDelay(job.attempts)
+    if (delay === null) deps.store.markFailed(job.id, msg)
+    else deps.store.markRetry(job.id, delay, msg)
+    return
   }
+  if (!result) return
+  if (result.kind === 'ok') {
+    deps.store.markDone(job.id)
+    return
+  }
+  if (result.kind === 'fail') {
+    deps.store.markFailed(job.id, result.error)
+    return
+  }
+  // retry
+  const supplied = Number.isFinite(result.delayMs) && result.delayMs > 0 ? result.delayMs : null
+  const delay = supplied ?? nextDelay(job.attempts)
+  if (delay === null) deps.store.markFailed(job.id, result.reason)
+  else deps.store.markRetry(job.id, delay, result.reason)
+}
 ```
 
 - [ ] **Step 4: Run the test suite**
@@ -835,9 +848,11 @@ git commit -m "feat(queue): handler result branches + AbortSignal threading (pha
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: Safe-exit hook — `before-quit` stops the loop and waits up to 5s
 
 **Files:**
+
 - Modify: `electron/queue/runner.test.ts`
 - Modify: `electron/main.ts`
 
@@ -886,7 +901,10 @@ describe('createQueueRunner — drainOnQuit', () => {
       kind: 'ai-review-clip',
       concurrency: 1,
       minGapMs: 0,
-      handler: () => new Promise<{ kind: 'ok' }>((r) => { resolveHandler = r })
+      handler: () =>
+        new Promise<{ kind: 'ok' }>((r) => {
+          resolveHandler = r
+        })
     })
     store.enqueue('ai-review-clip', { clipId: 1 })
     runner.start()
@@ -942,10 +960,10 @@ let queueRunner: QueueRunner | null = null
 Inside the function that runs after `dbService.openForGrove(...)` succeeds (i.e., where the indexer + watcher are started — search for `setIndexerDb` to find the right block), add:
 
 ```ts
-  // phase-14: start the queue runner
-  const { bootstrapQueueRunner } = await import('./queue')
-  queueRunner = bootstrapQueueRunner(dbService.requireCurrent())
-  queueRunner.start()
+// phase-14: start the queue runner
+const { bootstrapQueueRunner } = await import('./queue')
+queueRunner = bootstrapQueueRunner(dbService.requireCurrent())
+queueRunner.start()
 ```
 
 (The `electron/queue/index.ts` barrel that exports `bootstrapQueueRunner` is created in Task 3.5.)
@@ -985,9 +1003,11 @@ git commit -m "feat(queue): before-quit drain hook (5s) (phase-14 3.4)"
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 5: `index-retry` handler
 
 **Files:**
+
 - Create: `electron/queue/handlers/index-retry.ts`
 - Create: `electron/queue/handlers/index-retry.test.ts`
 - Create: `electron/queue/index.ts` (initial barrel — registration only; no ai-review yet)
@@ -1181,9 +1201,11 @@ git commit -m "feat(queue): index-retry handler + queue bootstrap (phase-14 3.5)
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 6: `ai-review-clip` placeholder handler — retry 1h on `E_NOT_IMPLEMENTED`
 
 **Files:**
+
 - Create: `electron/queue/handlers/ai-review-clip.ts`
 - Create: `electron/queue/handlers/ai-review-clip.test.ts`
 - Modify: `electron/queue/index.ts` (register the handler)
@@ -1216,9 +1238,11 @@ const fakeCtx = {
 
 describe('createAiReviewClipHandler', () => {
   it('returns retry 1h when reviewClip throws E_NOT_IMPLEMENTED', async () => {
-    const reviewClip = vi.fn().mockRejectedValue(
-      Object.assign(new Error('phase-15 not yet implemented'), { code: 'E_NOT_IMPLEMENTED' })
-    )
+    const reviewClip = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error('phase-15 not yet implemented'), { code: 'E_NOT_IMPLEMENTED' })
+      )
     const handler = createAiReviewClipHandler({
       reviewClip,
       readClipRow: vi.fn().mockReturnValue({ id: 1, title: 't', path: 'inbox/a.md' }),
@@ -1338,31 +1362,33 @@ import { readClipRow } from '../services/clips' // phase-12 module
 import { readParsedMdFile } from '../services/file-io' // phase-04 module — adapt name
 
 // inside bootstrapQueueRunner, after the index-retry register:
-  runner.register({
-    kind: 'ai-review-clip',
-    concurrency: 2,
-    minGapMs: 500,
-    handler: createAiReviewClipHandler({
-      readClipRow: (id) => readClipRow(db, id),
-      readMdFile: async (path) => {
-        const parsed = await readParsedMdFile(path)
-        return { frontmatter: parsed.frontmatter, body: parsed.body }
-      },
-      reviewClip: async () => {
-        const err = new Error('phase-15 ai reviewer not yet implemented') as Error & {
-          code: string
-        }
-        err.code = 'E_NOT_IMPLEMENTED'
-        throw err
+runner.register({
+  kind: 'ai-review-clip',
+  concurrency: 2,
+  minGapMs: 500,
+  handler: createAiReviewClipHandler({
+    readClipRow: (id) => readClipRow(db, id),
+    readMdFile: async (path) => {
+      const parsed = await readParsedMdFile(path)
+      return { frontmatter: parsed.frontmatter, body: parsed.body }
+    },
+    reviewClip: async () => {
+      const err = new Error('phase-15 ai reviewer not yet implemented') as Error & {
+        code: string
       }
-    })
+      err.code = 'E_NOT_IMPLEMENTED'
+      throw err
+    }
   })
+})
 ```
 
 > **Note on imports:** the names `readClipRow` and `readParsedMdFile` are placeholders aligning with phase-12/phase-04. Verify with:
+>
 > ```bash
 > grep -n "export.*function read" electron/services/clips.ts electron/services/file-io.ts 2>/dev/null
 > ```
+>
 > If phase-12 hasn't shipped a `clips.ts`, fall back to a direct prepared query inside the bootstrap and leave a TODO. **Do not invent new exports** in phase-12's module.
 
 - [ ] **Step 5: Run the test**
@@ -1380,9 +1406,11 @@ git commit -m "feat(queue): ai-review-clip placeholder handler (1h retry on E_NO
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 7: `ops_log` integration — write `job.*` events on every state change
 
 **Files:**
+
 - Modify: `electron/queue/runner.ts`
 - Modify: `electron/queue/runner.test.ts`
 - Modify: `electron/queue/index.ts`
@@ -1537,10 +1565,10 @@ In `electron/main.ts`, when calling `bootstrapQueueRunner`, pass the phase-10 `o
 ```ts
 import { opsLog } from './services/ops-log' // phase-10 module
 
-  // (where the runner is created)
-  queueRunner = bootstrapQueueRunner(dbService.requireCurrent(), {
-    opsLog: (r) => opsLog.record(r)
-  })
+// (where the runner is created)
+queueRunner = bootstrapQueueRunner(dbService.requireCurrent(), {
+  opsLog: (r) => opsLog.record(r)
+})
 ```
 
 > **Note:** if phase-10 named the module differently, fix the import. The functional contract is what matters.
@@ -1555,9 +1583,11 @@ git commit -m "feat(queue): write job.* events to ops_log on every state change 
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 8: IPC handlers — `jobs.list / retry / cancel / clearDone`
 
 **Files:**
+
 - Create: `electron/ipc/jobs.ts`
 - Create: `electron/ipc/jobs.test.ts`
 - Modify: `electron/ipc/handlers.ts`
@@ -1791,9 +1821,11 @@ git commit -m "feat(ipc): jobs.list / retry / cancel / clearDone handlers (phase
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 9: Preload bridge — `window.api.jobs.*`
 
 **Files:**
+
 - Modify: `preload/preload.ts`
 
 The renderer accesses `jobs.*` via the same `IpcClient<IpcContract>` infrastructure as every other namespace. The `'jobs:changed'` event uses the existing `events.on(...)` API.
@@ -1833,9 +1865,11 @@ git commit -m "feat(preload): expose window.api.jobs.* (phase-14 5.2)"
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 10: Main-process broadcast — `stateChanged` → `jobs:changed` to all renderers
 
 **Files:**
+
 - Modify: `electron/queue/index.ts`
 - Modify: `electron/main.ts`
 
@@ -1890,7 +1924,9 @@ describe('bootstrapQueueRunner — renderer fan-out', () => {
     const db = new Database(':memory:')
     runMigrations(db, MIGRATIONS_DIR)
     const sent: Array<[string, unknown]> = []
-    const wc = { send: (ch: string, p: unknown) => sent.push([ch, p]) } as unknown as Electron.WebContents
+    const wc = {
+      send: (ch: string, p: unknown) => sent.push([ch, p])
+    } as unknown as Electron.WebContents
     const { bootstrapQueueRunner } = await import('./index')
     const runner = bootstrapQueueRunner(db, { getRenderers: () => [wc] })
     runner.stop() // we don't need the loop running for this test

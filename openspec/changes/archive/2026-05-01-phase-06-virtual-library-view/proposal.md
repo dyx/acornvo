@@ -25,6 +25,7 @@
 ## Capabilities
 
 ### New Capabilities
+
 - `library-view`: 果仓三栏页的 React 实现（分类侧栏 / 虚拟化列表 / 预览面板 / 空态 / 加载态）
 - `file-query-api`: SQLite `files` 的 IPC 查询入口（分页/筛选/分类树/标签云）
 - `file-summary-dto`: 渲染端视图需要的文件摘要 DTO 形态（标题/路径/rating/clipped_at/有无摘要...），明确定义并供后续模块复用

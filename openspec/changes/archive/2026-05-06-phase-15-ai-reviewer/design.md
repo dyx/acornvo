@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 4：`file.write(path, { body, frontmatter }, expectedMtime)` 原子写
 - phase 7：编辑器页，能展示 frontmatter 右侧卡片
 - phase 9：mtime 乐观锁 + 冲突快照
@@ -11,12 +12,14 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 剪藏后 1-2 分钟内 AI 自动给出 summary / tags / suggestedTitle / keyQuotes，回写 frontmatter
 - 用户在编辑器看到徽章 → 展开抽屉 → 一键接受建议（合并到 title 与 tags）
 - provider 可切换：OpenAI / Anthropic / Ollama / 兼容 endpoint
 - 调用有用量与失败日志
 
 **Non-Goals:**
+
 - 不做 embedding / 向量检索（phase 17 做）
 - 不做 streaming 到 UI（reviewer 是后台任务，无需流式展示）
 - 不做多 profile 并发比较（单次用默认 profile 即可）
@@ -31,8 +34,8 @@
 
 ```ts
 interface LlmProvider {
-  chat(opts: ChatOptions): Promise<{ text: string; usage?: TokenUsage }>;
-  chatJson<T>(opts: ChatOptions & { schema: JSONSchema }): Promise<{ data: T; usage?: TokenUsage }>;
+  chat(opts: ChatOptions): Promise<{ text: string; usage?: TokenUsage }>
+  chatJson<T>(opts: ChatOptions & { schema: JSONSchema }): Promise<{ data: T; usage?: TokenUsage }>
 }
 ```
 
@@ -45,6 +48,7 @@ interface LlmProvider {
 - 无 SDK：拒绝 `openai`/`anthropic` npm 依赖以控包体；用 `fetch`；错误归一化
 
 **错误分类**：
+
 - `E_CONFIG`：profile 缺失 / model 为空 / baseUrl 需但未填
 - `E_AUTH`：401/403
 - `E_RATE`：429 或 provider 特定速率错误
@@ -66,9 +70,12 @@ LLM 生成 JSON 时常见问题：包裹 ` ```json `；文本前后多一句解�
 ### D3: prompt 模板
 
 `electron/ai/prompts/review-clip.ts`：
+
 ```ts
 export const reviewClip = {
-  schema: { /* JSON Schema for AiReviewResult */ },
+  schema: {
+    /* JSON Schema for AiReviewResult */
+  },
   render: ({ title, url, body }: { title: string; url: string; body: string }) => ({
     system: [
       '你是一位博学的中英双语阅读助手。',
@@ -87,10 +94,10 @@ export const reviewClip = {
       '4. `keyQuotes`：最重要的 1-3 句原文引用（保持原文语言）。',
       '',
       'JSON schema（自行遵守，勿输出 schema）：',
-      '{ "summary": string, "suggestedTitle": string, "tags": string[], "keyQuotes": string[] }',
+      '{ "summary": string, "suggestedTitle": string, "tags": string[], "keyQuotes": string[] }'
     ].join('\n')
   })
-};
+}
 ```
 
 body 截首 16K（约 4000-5000 token，够大多数文章；极长文章会被截，acceptable）。
@@ -99,28 +106,28 @@ body 截首 16K（约 4000-5000 token，够大多数文章；极长文章会被�
 
 ```ts
 async function aiReviewClipHandler({ payload, log }) {
-  const { clipId, path } = payload;
+  const { clipId, path } = payload
   // 1. 读 clip + md
-  const clip = await clips.getById(clipId);
-  if (!clip) return { kind: 'fail', error: 'E_CLIP_NOT_FOUND' };
-  const abs = path.join(vault.root, clip.path);
-  const stat = await fs.stat(abs);
-  const raw = await fs.readFile(abs, 'utf8');
-  const { body, frontmatter } = parseFrontmatter(raw);
+  const clip = await clips.getById(clipId)
+  if (!clip) return { kind: 'fail', error: 'E_CLIP_NOT_FOUND' }
+  const abs = path.join(vault.root, clip.path)
+  const stat = await fs.stat(abs)
+  const raw = await fs.readFile(abs, 'utf8')
+  const { body, frontmatter } = parseFrontmatter(raw)
   // 2. 已审读过跳过（幂等）
-  if (frontmatter.ai_reviewed_at) return { kind: 'ok' };
+  if (frontmatter.ai_reviewed_at) return { kind: 'ok' }
   // 3. 取 profile
-  const profileId = settings.get('ai').defaultProfileId;
-  if (!profileId) return { kind: 'fail', error: 'E_MISSING_PROFILE' };
+  const profileId = settings.get('ai').defaultProfileId
+  if (!profileId) return { kind: 'fail', error: 'E_MISSING_PROFILE' }
   // 4. 调 LLM
   const { data, usage } = await llmClient.chatJson({
     profileId,
     ...reviewClip.render({ title: clip.title, url: clip.url, body }),
     schema: reviewClip.schema,
-    maxTokens: 800,
-  });
+    maxTokens: 800
+  })
   // 5. 记录 usage
-  await aiUsage.insert({ job_id, profile_id: profileId, model: profile.model, ...usage });
+  await aiUsage.insert({ job_id, profile_id: profileId, model: profile.model, ...usage })
   // 6. 回写 frontmatter（mtime 乐观锁）
   const nextFrontmatter = {
     ...frontmatter,
@@ -128,22 +135,27 @@ async function aiReviewClipHandler({ payload, log }) {
     ai_suggested_title: data.suggestedTitle,
     ai_tags: data.tags,
     ai_key_quotes: data.keyQuotes,
-    ai_reviewed_at: new Date().toISOString(),
-  };
+    ai_reviewed_at: new Date().toISOString()
+  }
   try {
-    await fileWrite(clip.path, { body, frontmatter: nextFrontmatter }, { expectedMtime: stat.mtimeMs });
+    await fileWrite(
+      clip.path,
+      { body, frontmatter: nextFrontmatter },
+      { expectedMtime: stat.mtimeMs }
+    )
   } catch (e) {
     if (e.code === 'E_MTIME_CONFLICT') {
       // 用户/watcher 已修改 → 退避 10 分钟重试
-      return { kind: 'retry', delayMs: 10 * 60_000, reason: 'E_MTIME_CONFLICT' };
+      return { kind: 'retry', delayMs: 10 * 60_000, reason: 'E_MTIME_CONFLICT' }
     }
-    throw e;
+    throw e
   }
-  return { kind: 'ok' };
+  return { kind: 'ok' }
 }
 ```
 
 失败映射：
+
 - `E_CONFIG` / `E_MISSING_PROFILE` → `fail`（永久）
 - `E_AUTH` → `fail`（永久；重试无意义直到用户改配置）
 - `E_RATE` → `retry(delayMs: 60_000)`
@@ -174,6 +186,7 @@ CREATE INDEX idx_ai_usage_profile ON ai_usage(profile_id);
 ### D6: Frontmatter 字段命名
 
 前缀 `ai_` 避免与用户自己的字段冲突：
+
 - `ai_summary`: string
 - `ai_suggested_title`: string
 - `ai_tags`: string[]

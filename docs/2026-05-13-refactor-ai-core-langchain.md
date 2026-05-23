@@ -38,12 +38,12 @@
 
 ## 2 · 关键架构决策
 
-| 编号 | 议题 | 决策 |
-|---|---|---|
-| **L1** | HITL 实现方式 | 拥抱 LangGraph **interrupt** + **SQLite checkpointer**（`@langchain/langgraph-checkpoint-sqlite`） |
+| 编号   | 议题                                      | 决策                                                                                                                                                    |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **L1** | HITL 实现方式                             | 拥抱 LangGraph **interrupt** + **SQLite checkpointer**（`@langchain/langgraph-checkpoint-sqlite`）                                                      |
 | **S1** | session_messages 表与 checkpointer 的关系 | **双库共存**，`thread_id = session_id`。session_messages 保持为 UI truth source 不变；checkpointer 是 graph 运行时实现细节；agent runner 作桥梁同步两边 |
-| **K1** | IPC 契约（AgentEvent）演进 | **A 保持不变**。Stream-translator 在 runner 内部把 LangGraph 事件翻译回现有 AgentEvent。B 阶段如需新事件类型再扩 IPC |
-| **T1** | 工具迁移路径 | **清白重写** 5 个内置工具为 `tool(fn, { schema: z.object(...) })`。删除 registry 的 schema converter 与 Ajv 校验 |
+| **K1** | IPC 契约（AgentEvent）演进                | **A 保持不变**。Stream-translator 在 runner 内部把 LangGraph 事件翻译回现有 AgentEvent。B 阶段如需新事件类型再扩 IPC                                    |
+| **T1** | 工具迁移路径                              | **清白重写** 5 个内置工具为 `tool(fn, { schema: z.object(...) })`。删除 registry 的 schema converter 与 Ajv 校验                                        |
 
 ---
 
@@ -65,24 +65,24 @@ zod 已有。`eventsource-parser` 移除（不再手写 SSE）。`ajv` 在 AI �
 
 ### 3.2 模块对照
 
-| 当前 | 替换为 | LOC 影响 |
-|---|---|---|
-| `electron/ai/providers/openai.ts` (196) | `new ChatOpenAI({...})` 一次构造，含 `configuration.baseURL` 兼容 openai-compatible | -190 |
-| `electron/ai/providers/anthropic.ts` (203) | `new ChatAnthropic({...})` | -200 |
-| `electron/ai/providers/ollama.ts` (183) | `new ChatOllama({...})` | -180 |
-| `electron/ai/providers/openai-compatible.ts` (18) | 折入 ChatOpenAI | -18 |
-| `electron/ai/parse-json.ts` (70) + `parse-tool-args.ts` (34) | `model.withStructuredOutput(zod)` 自带；Zod schema 自动校验 | -100 |
-| `electron/ai/client.ts` (155) | 拆为 `electron/ai/model-factory.ts`（profile→ChatXxx）+ 删除大部分 dispatch 逻辑 | -100 |
-| `electron/ai/reviewer.ts` (140) | 重写为约 50 行：`buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(...)` | -80 |
-| `electron/agent/loop.ts` (185) | 拆为 `electron/agent/runner.ts`（约 80 行）+ `stream-translator.ts`（约 150 行） | -150 |
-| `electron/agent/approval.ts` (87) | 由 `humanInTheLoopMiddleware` + `Command({ resume })` 替代；前端 approve/reject IPC 入口仍存在但内部走 resume | -80 |
-| `electron/agent/registry.ts` (38) | 删除；工具直接以数组传入 `createAgent({ tools })` | -38 |
-| `electron/agent/tools/*` (187 共 5 个) | 重写为 `tool()` + Zod | ±0 |
-| `electron/agent/sessions.ts` (99) | **保留**——继续作为 UI truth source；agent runner 写入 | 0 |
-| `electron/agent/attachments.ts` (96) | **保留**——pre-user message 组装逻辑不变，输出塞进 `agent.stream({ messages: [...] })` 的 messages 数组 | 0 |
-| `electron/agent/concurrency.ts` (22) | **保留**——单 session 单 in-flight 控制不变 | 0 |
-| `electron/agent/streamWriter.ts` (24) | **保留**——AgentEvent 出口不变 | 0 |
-| `electron/ai/usage.ts` (96) | **保留**——把 LangChain `AIMessage.usage_metadata` 转成 `aiUsage.insert(...)` 行 | 0 |
+| 当前                                                         | 替换为                                                                                                        | LOC 影响 |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | -------- |
+| `electron/ai/providers/openai.ts` (196)                      | `new ChatOpenAI({...})` 一次构造，含 `configuration.baseURL` 兼容 openai-compatible                           | -190     |
+| `electron/ai/providers/anthropic.ts` (203)                   | `new ChatAnthropic({...})`                                                                                    | -200     |
+| `electron/ai/providers/ollama.ts` (183)                      | `new ChatOllama({...})`                                                                                       | -180     |
+| `electron/ai/providers/openai-compatible.ts` (18)            | 折入 ChatOpenAI                                                                                               | -18      |
+| `electron/ai/parse-json.ts` (70) + `parse-tool-args.ts` (34) | `model.withStructuredOutput(zod)` 自带；Zod schema 自动校验                                                   | -100     |
+| `electron/ai/client.ts` (155)                                | 拆为 `electron/ai/model-factory.ts`（profile→ChatXxx）+ 删除大部分 dispatch 逻辑                              | -100     |
+| `electron/ai/reviewer.ts` (140)                              | 重写为约 50 行：`buildChatModel(profile).withStructuredOutput(AiReviewSchema).invoke(...)`                    | -80      |
+| `electron/agent/loop.ts` (185)                               | 拆为 `electron/agent/runner.ts`（约 80 行）+ `stream-translator.ts`（约 150 行）                              | -150     |
+| `electron/agent/approval.ts` (87)                            | 由 `humanInTheLoopMiddleware` + `Command({ resume })` 替代；前端 approve/reject IPC 入口仍存在但内部走 resume | -80      |
+| `electron/agent/registry.ts` (38)                            | 删除；工具直接以数组传入 `createAgent({ tools })`                                                             | -38      |
+| `electron/agent/tools/*` (187 共 5 个)                       | 重写为 `tool()` + Zod                                                                                         | ±0       |
+| `electron/agent/sessions.ts` (99)                            | **保留**——继续作为 UI truth source；agent runner 写入                                                         | 0        |
+| `electron/agent/attachments.ts` (96)                         | **保留**——pre-user message 组装逻辑不变，输出塞进 `agent.stream({ messages: [...] })` 的 messages 数组        | 0        |
+| `electron/agent/concurrency.ts` (22)                         | **保留**——单 session 单 in-flight 控制不变                                                                    | 0        |
+| `electron/agent/streamWriter.ts` (24)                        | **保留**——AgentEvent 出口不变                                                                                 | 0        |
+| `electron/ai/usage.ts` (96)                                  | **保留**——把 LangChain `AIMessage.usage_metadata` 转成 `aiUsage.insert(...)` 行                               | 0        |
 
 粗减约 **1100 LOC**（4 个 provider + parse-json/parse-tool-args + loop + approval + registry + reviewer + 旧 client）；新增约 **360 LOC**（runner ~80 + stream-translator ~150 + model-factory ~80 + normalize-errors ~50）。**净减约 700–800 LOC** + 5 个 provider 文件整体删除。
 
@@ -139,16 +139,16 @@ createAgent({ model, tools, middleware: [HITL], checkpointer })
 
 ### 4.2 Stream Translator 事件映射
 
-| LangGraph 输出 | 翻译为 AgentEvent | 备注 |
-|---|---|---|
-| `["updates", { model: { messages: [AIMessage] } }]` 无 tool_calls | `message.appended`（assistant）+ 写库 | 终止 |
-| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ `tool.start` | 一步可多 tool_calls |
-| `["updates", { tools: { messages: [ToolMessage] } }]` | `tool.result` + 写库（role=tool） | |
-| `["messages", [AIMessageChunk, metadata]]` | `token { text }` | 仅 model 节点的 chunk |
-| `result.__interrupt__` 含 action_requests | `tool.approval-needed { callId, tool, args }` | callId = interrupt id |
-| LangChain 抛非 AbortError 异常 | `error { error: normalize(...) }` | 走 normalize-errors |
-| signal aborted | `canceled` | |
-| 最终消息后聚合 `usage_metadata` | `done { usage }` + `aiUsage.insert(...)` | |
+| LangGraph 输出                                                      | 翻译为 AgentEvent                                         | 备注                  |
+| ------------------------------------------------------------------- | --------------------------------------------------------- | --------------------- |
+| `["updates", { model: { messages: [AIMessage] } }]` 无 tool_calls   | `message.appended`（assistant）+ 写库                     | 终止                  |
+| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ `tool.start` | 一步可多 tool_calls   |
+| `["updates", { tools: { messages: [ToolMessage] } }]`               | `tool.result` + 写库（role=tool）                         |                       |
+| `["messages", [AIMessageChunk, metadata]]`                          | `token { text }`                                          | 仅 model 节点的 chunk |
+| `result.__interrupt__` 含 action_requests                           | `tool.approval-needed { callId, tool, args }`             | callId = interrupt id |
+| LangChain 抛非 AbortError 异常                                      | `error { error: normalize(...) }`                         | 走 normalize-errors   |
+| signal aborted                                                      | `canceled`                                                |                       |
+| 最终消息后聚合 `usage_metadata`                                     | `done { usage }` + `aiUsage.insert(...)`                  |                       |
 
 ### 4.3 调用模式：Stateless invocation
 
@@ -189,21 +189,21 @@ for (const session of sessionsWithPendingInterrupt()) {
 ### 5.1 Middleware 配置
 
 ```ts
-import { humanInTheLoopMiddleware } from "langchain";
+import { humanInTheLoopMiddleware } from 'langchain'
 
 const hitl = humanInTheLoopMiddleware({
   interruptOn: {
     update_frontmatter: {
       allowAccept: true,
-      allowEdit:   true,
+      allowEdit: true,
       allowRespond: false,
       allowReject: true,
-      description: '修改 frontmatter 需用户确认',
-    },
+      description: '修改 frontmatter 需用户确认'
+    }
     // 其余 4 个工具默认 false（不审批）
   },
-  descriptionPrefix: '工具执行待审批',
-});
+  descriptionPrefix: '工具执行待审批'
+})
 ```
 
 ### 5.2 IPC 入口（不变）
@@ -215,6 +215,7 @@ const hitl = humanInTheLoopMiddleware({
 ### 5.3 ApprovalGate 当前 API 的兼容
 
 `electron/agent/approval.ts` 暴露的 `register / await / approve / reject / cancelSession / peek / onRequested` 7 个方法对外消费者只有 IPC 层与 runner。删除该文件后：
+
 - IPC 层 `agent.approve` / `agent.reject` 实现改为直接调 `agent.invoke(Command)`，不再经 gate。
 - runner 不再 register/await —— interrupt 已通过 stream 自然暴露。
 
@@ -255,16 +256,18 @@ const hitl = humanInTheLoopMiddleware({
 
 ```ts
 // electron/ai/model-factory.ts
-interface ResolvedProfile { /* 同现 */ }
+interface ResolvedProfile {
+  /* 同现 */
+}
 
-const cache = new LRU<string, BaseChatModel>({ max: 8 });
+const cache = new LRU<string, BaseChatModel>({ max: 8 })
 
 export function buildChatModel(p: ResolvedProfile): BaseChatModel {
-  const key = `${p.id}::${p.provider}::${p.model}::${p.baseUrl ?? ''}::${apiKeyHash(p.apiKey)}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
+  const key = `${p.id}::${p.provider}::${p.model}::${p.baseUrl ?? ''}::${apiKeyHash(p.apiKey)}`
+  const hit = cache.get(key)
+  if (hit) return hit
 
-  let model: BaseChatModel;
+  let model: BaseChatModel
   switch (p.provider) {
     case 'openai':
     case 'openai-compatible':
@@ -273,28 +276,28 @@ export function buildChatModel(p: ResolvedProfile): BaseChatModel {
         apiKey: p.apiKey ?? '',
         temperature: p.temperature ?? 0.3,
         maxTokens: p.maxTokens ?? 800,
-        configuration: p.baseUrl ? { baseURL: p.baseUrl } : undefined,
-      });
-      break;
+        configuration: p.baseUrl ? { baseURL: p.baseUrl } : undefined
+      })
+      break
     case 'anthropic':
       model = new ChatAnthropic({
         model: p.model,
         apiKey: p.apiKey ?? '',
         temperature: p.temperature ?? 0.3,
-        maxTokens: p.maxTokens ?? 800,
-      });
-      break;
+        maxTokens: p.maxTokens ?? 800
+      })
+      break
     case 'ollama':
       model = new ChatOllama({
         model: p.model,
         baseUrl: p.baseUrl ?? 'http://localhost:11434',
         temperature: p.temperature ?? 0.3,
-        numPredict: p.maxTokens ?? 800,
-      });
-      break;
+        numPredict: p.maxTokens ?? 800
+      })
+      break
   }
-  cache.set(key, model);
-  return model;
+  cache.set(key, model)
+  return model
 }
 ```
 
@@ -322,21 +325,21 @@ export function normalizeLLMError(err: unknown): LlmError & Error {
 
 ## 9 · 测试策略
 
-| 测试 | 行动 |
-|---|---|
-| `electron/ai/providers/*.test.ts`（共 461 行） | **删除** —— provider 层不再是我们的代码 |
-| `electron/ai/parse-json.test.ts`、`parse-tool-args.test.ts` | **删除** |
-| `electron/ai/reviewer.test.ts`（209 行） | **改写** —— mock `BaseChatModel.withStructuredOutput`；行为对等表保留 |
-| `electron/ai/usage.test.ts` | **保留** —— 聚合逻辑仍归我们 |
-| `electron/agent/loop.test.ts`（238 行） | **重写** 为 `runner.test.ts` —— mock `agent.stream` 返回 async iterable；事件顺序断言保留（K1 契约） |
-| `electron/agent/approval.test.ts` | **重写** —— 测 HITL middleware 在 4 个 decision 分支的输出 |
-| `electron/agent/registry.test.ts` | **删除** |
-| `electron/agent/{sessions, attachments, concurrency, bootstrap, streamWriter}.test.ts` | **保留**（业务逻辑不变） |
-| **新增** `electron/agent/stream-translator.test.ts` | 覆盖 §4.2 全部 8 个映射场景 |
-| **新增** `electron/ai/model-factory.test.ts` | profile → ChatXxx 构造正确（含 baseURL、apiKey、temperature 传递、缓存命中） |
-| **新增** `electron/ai/normalize-errors.test.ts` | 各种 LangChain 异常归一化 |
-| **新增** `electron/agent/checkpointer-recovery.test.ts` | app 重启时挂起 interrupt 被重 emit |
-| `electron/__acceptance__/*` chat 相关用例 | **不改 mock 表面，100% 通过** —— K1 的核心契约验证 |
+| 测试                                                                                   | 行动                                                                                                 |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `electron/ai/providers/*.test.ts`（共 461 行）                                         | **删除** —— provider 层不再是我们的代码                                                              |
+| `electron/ai/parse-json.test.ts`、`parse-tool-args.test.ts`                            | **删除**                                                                                             |
+| `electron/ai/reviewer.test.ts`（209 行）                                               | **改写** —— mock `BaseChatModel.withStructuredOutput`；行为对等表保留                                |
+| `electron/ai/usage.test.ts`                                                            | **保留** —— 聚合逻辑仍归我们                                                                         |
+| `electron/agent/loop.test.ts`（238 行）                                                | **重写** 为 `runner.test.ts` —— mock `agent.stream` 返回 async iterable；事件顺序断言保留（K1 契约） |
+| `electron/agent/approval.test.ts`                                                      | **重写** —— 测 HITL middleware 在 4 个 decision 分支的输出                                           |
+| `electron/agent/registry.test.ts`                                                      | **删除**                                                                                             |
+| `electron/agent/{sessions, attachments, concurrency, bootstrap, streamWriter}.test.ts` | **保留**（业务逻辑不变）                                                                             |
+| **新增** `electron/agent/stream-translator.test.ts`                                    | 覆盖 §4.2 全部 8 个映射场景                                                                          |
+| **新增** `electron/ai/model-factory.test.ts`                                           | profile → ChatXxx 构造正确（含 baseURL、apiKey、temperature 传递、缓存命中）                         |
+| **新增** `electron/ai/normalize-errors.test.ts`                                        | 各种 LangChain 异常归一化                                                                            |
+| **新增** `electron/agent/checkpointer-recovery.test.ts`                                | app 重启时挂起 interrupt 被重 emit                                                                   |
+| `electron/__acceptance__/*` chat 相关用例                                              | **不改 mock 表面，100% 通过** —— K1 的核心契约验证                                                   |
 
 ---
 
@@ -349,7 +352,7 @@ export function normalizeLLMError(err: unknown): LlmError & Error {
 3. **工具重写** —— 5 个 tool 改 Zod；删 registry / parse-tool-args
 4. **Agent runner + stream-translator** —— 写新 runner，IPC 入口切到 runner，loop.ts 暂保留作 fallback
 5. **HITL + checkpointer** —— 装 SqliteSaver、写 migration、用 HITL middleware；新增启动恢复
-6. **清理** —— 删 loop.ts / approval.ts / providers/* / parse-json.ts / 旧 client.ts；全套测试通过
+6. **清理** —— 删 loop.ts / approval.ts / providers/\* / parse-json.ts / 旧 client.ts；全套测试通过
 
 每个 block 完成后应保持 IPC 契约稳定，跑完测试都应通过 —— 任意 block 之间可暂停 ship。
 
@@ -361,7 +364,7 @@ export function normalizeLLMError(err: unknown): LlmError & Error {
 
 **ADDED**：`agent-checkpointer` —— 新 capability，描述 SqliteSaver 集成、表结构、启动恢复
 
-**UNCHANGED**：`ai-provider-profiles`、`agent-ipc`（K1 保证）、所有 chat-* 相关
+**UNCHANGED**：`ai-provider-profiles`、`agent-ipc`（K1 保证）、所有 chat-\* 相关
 
 具体 spec.md / delta 写法在 plan 阶段产出。
 

@@ -5,6 +5,7 @@ phase 15 完成了"对剪藏文章做一次性 AI 审读"的后台能力。phase
 PRD P-3 / S-11 要求"松语是树林的智能助手，能读文件、能搜索、能改文件（写前征求用户同意）"。这就是 Agent 层。
 
 本阶段要搭骨架：
+
 - 一个可扩展的 **tool registry**：内置工具列表（phase 16 内实装）：`search-files` / `read-file` / `list-tags` / `update-frontmatter` / `clip-summary`（复用 phase 15 reviewer）
 - 一个 **agent loop** 在 main 进程内执行："LLM 说要调工具 → 我们执行 → 结果塞回 LLM → 继续"，直到 LLM 给最终回复
 - 对有副作用的 tool（`update-frontmatter`）引入 **human-in-the-loop 确认**：agent 暂停，UI 弹 diff 确认，用户同意才执行
@@ -34,6 +35,7 @@ PRD P-3 / S-11 要求"松语是树林的智能助手，能读文件、能搜索�
 ## Capabilities
 
 ### New Capabilities
+
 - `agent-tool-registry`: 工具定义契约与注册中心
 - `agent-loop`: 主 loop（LLM ↔ tool execution）
 - `agent-approval`: 副作用 tool 的人类确认门
@@ -43,13 +45,14 @@ PRD P-3 / S-11 要求"松语是树林的智能助手，能读文件、能搜索�
 - `llm-tool-use`: `llm-client` 的 tool use + 流式能力扩展
 
 ### Modified Capabilities
+
 - `llm-client` (phase 15): 新增 `chatWithTools` / `chatStream` 方法
 
 ## Impact
 
 - `package.json` 保持 fetch 路线，不引 SDK；新增 `eventsource-parser` 用于 SSE 解析
 - `migrations/009_sessions.sql`
-- `electron/agent/`：tools/*、registry、loop、approval、sessions
+- `electron/agent/`：tools/\*、registry、loop、approval、sessions
 - `electron/ai/client.ts` 扩展 tool use
 - `shared/agent-types.ts`：`Tool` / `ToolCall` / `AgentEvent` / `ChatMessage` / `Session`
 - `electron/ipc/chat.ts`

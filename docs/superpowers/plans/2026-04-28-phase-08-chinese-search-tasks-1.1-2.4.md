@@ -18,9 +18,9 @@ Add the dependency chain for Chinese full-text search: install `@node-rs/jieba`,
 ## Architecture
 
 - **Migration 002 drops + recreates `files_fts`.** Phase-05's 001_init.sql defined `files_fts(path UNINDEXED, title, summary, content, tokenize='simple')`. Per design D5, phase-08 needs `(path UNINDEXED, title, body, tokenize='trigram')` with non-external-content (so `body` is stored in the FTS table itself, doubling disk usage but eliminating the need to read disk during rebuild). `DROP VIRTUAL TABLE IF EXISTS files_fts` is safe because phase-05 has not shipped a stable release; even if rows existed, the indexer would have repopulated them on next watcher event — but we kill that risk with the rebuild self-heal.
-- **`maybeRebuildFts(db, groveRoot)` runs once per grove open.** It runs *after* `runMigrations` and *before* `indexer.start()`. The detection rule: if `COUNT(files) > 0 AND COUNT(files_fts) = 0`, kick off `rebuildFts(db, groveRoot)`. Otherwise skip (per spec scenario "正常启动无 rebuild" and "rebuild 中途崩溃"; we never re-rebuild a partially-populated table — the user can use the manual `search.rebuild()` IPC).
+- **`maybeRebuildFts(db, groveRoot)` runs once per grove open.** It runs _after_ `runMigrations` and _before_ `indexer.start()`. The detection rule: if `COUNT(files) > 0 AND COUNT(files_fts) = 0`, kick off `rebuildFts(db, groveRoot)`. Otherwise skip (per spec scenario "正常启动无 rebuild" and "rebuild 中途崩溃"; we never re-rebuild a partially-populated table — the user can use the manual `search.rebuild()` IPC).
 - **`rebuildFts` is async + cancellable + emits progress.** It reads each `files` row, calls `file.read(absPath)` to get the body, and `INSERT`s into `files_fts` in batches of 100 inside one transaction per batch. It emits `index:rebuildProgress { done, total }` every 5% (or every 500 rows, whichever comes first) so `IndexBanner` can render a progress bar. Errors per-row (e.g., file deleted between scan and read) are logged and skipped, never throwing — partial state is the spec'd accepted behaviour.
-- **Tokenizer injection point goes away.** Phase-05's `getTokenizer/setTokenizer` was a placeholder; with FTS5's built-in `trigram`, the renderer never injects a custom tokenizer. We delete the injection plumbing in Plan 2 (task 3.x) — this plan only stops *using* it in the migration; the dead code in `index-queries.ts` is removed in Plan 2 task 3.1 to keep this plan's diff tight.
+- **Tokenizer injection point goes away.** Phase-05's `getTokenizer/setTokenizer` was a placeholder; with FTS5's built-in `trigram`, the renderer never injects a custom tokenizer. We delete the injection plumbing in Plan 2 (task 3.x) — this plan only stops _using_ it in the migration; the dead code in `index-queries.ts` is removed in Plan 2 task 3.1 to keep this plan's diff tight.
 - **`search.fullText` returns `{ items: [], total: 0, pending: true }` while `rebuildFts` runs.** A module-level `_isRebuilding: boolean` flag on the search service is the simplest mechanism (per spec "索引构建中"). Plan 2 wires the actual `search.fullText` handler; this plan only ships the module + flag + a no-op `search.fullText` stub that early-returns `pending: true` whenever the flag is set, so Plan 4's UI integration can develop against a working contract.
 
 ## Tech Stack
@@ -32,22 +32,23 @@ Add the dependency chain for Chinese full-text search: install `@node-rs/jieba`,
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json`, `package-lock.json` | Modify (add `@node-rs/jieba`) | 1.1 |
-| `electron/services/db/migrations/002_fts.sql` | Create | 1.2 |
-| `electron/services/db/migrations.test.ts` | Modify (add 002 test) | 1.2 |
-| `electron/services/search/index.ts` | Create stub | 1.3, 2.1, 2.2, 2.3, 2.4 |
-| `electron/services/search/rebuild.ts` | Create | 2.1, 2.2 |
-| `electron/services/search/rebuild.test.ts` | Create | 2.1, 2.2 |
-| `shared/ipc-contract.ts` | Modify (add `search.rebuild` stub) | 2.3 |
-| `electron/ipc/search.ts` | Create stub | 2.3, 2.4 |
-| `electron/ipc/handlers.ts` | Modify (register search namespace) | 2.3 |
-| `electron/services/db.ts` | Modify (call `maybeRebuildFts` after `runMigrations`) | 2.1 |
+| Path                                          | Action                                                | Owner task              |
+| --------------------------------------------- | ----------------------------------------------------- | ----------------------- |
+| `package.json`, `package-lock.json`           | Modify (add `@node-rs/jieba`)                         | 1.1                     |
+| `electron/services/db/migrations/002_fts.sql` | Create                                                | 1.2                     |
+| `electron/services/db/migrations.test.ts`     | Modify (add 002 test)                                 | 1.2                     |
+| `electron/services/search/index.ts`           | Create stub                                           | 1.3, 2.1, 2.2, 2.3, 2.4 |
+| `electron/services/search/rebuild.ts`         | Create                                                | 2.1, 2.2                |
+| `electron/services/search/rebuild.test.ts`    | Create                                                | 2.1, 2.2                |
+| `shared/ipc-contract.ts`                      | Modify (add `search.rebuild` stub)                    | 2.3                     |
+| `electron/ipc/search.ts`                      | Create stub                                           | 2.3, 2.4                |
+| `electron/ipc/handlers.ts`                    | Modify (register search namespace)                    | 2.3                     |
+| `electron/services/db.ts`                     | Modify (call `maybeRebuildFts` after `runMigrations`) | 2.1                     |
 
 ## Pre-flight
 
 This plan assumes phases 5/6/7 have landed on `main`:
+
 - `electron/services/index-queries.ts` exports `upsertFts`, `deleteFile`, `renameFile`, plus a `getTokenizer/setTokenizer` placeholder pair.
 - `electron/services/db/migrations/001_init.sql` already creates `files_fts` with `(path UNINDEXED, title, summary, content, tokenize='simple')` — this plan **replaces** that schema.
 - `shared/file-types.ts` exports `FileSummary` (phase-06).
@@ -63,14 +64,17 @@ If phase-05 has shipped a different `files_fts` schema (rename, drop a column, e
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install `@node-rs/jieba`
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm not already installed**
 
 Run:
+
 ```bash
 node -e "const p=require('./package.json');console.log(p.dependencies['@node-rs/jieba']||p.devDependencies?.['@node-rs/jieba']||'absent')"
 ```
@@ -80,6 +84,7 @@ Expected: `absent`. If a version prints, skip Step 2.
 - [ ] **Step 2: Install**
 
 Run:
+
 ```bash
 npm install @node-rs/jieba
 ```
@@ -89,6 +94,7 @@ Expected: `package.json` `dependencies` now lists `@node-rs/jieba`. The `postins
 - [ ] **Step 3: Smoke-load jieba**
 
 Run:
+
 ```bash
 node -e "const j=require('@node-rs/jieba'); console.log(j.cut('注意力机制研究'))"
 ```
@@ -105,9 +111,11 @@ git commit -m "chore(phase-08): add @node-rs/jieba for chinese segmentation"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Migration 002 — drop + recreate `files_fts` with `body`/`trigram`
 
 **Files:**
+
 - Create: `electron/services/db/migrations/002_fts.sql`
 - Modify: `electron/services/db/migrations.test.ts`
 
@@ -141,18 +149,21 @@ describe('migration 002 — files_fts trigram', () => {
       INSERT INTO files (path, title, mtime, content_hash) VALUES ('a.md', 'A', 0, 'h1');
     `)
     db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
-      1, 'a.md', 'A', '注意力机制研究'
+      1,
+      'a.md',
+      'A',
+      '注意力机制研究'
     )
-    const hits = db.prepare(
-      "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
-    ).all() as { path: string }[]
+    const hits = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH '注意力'").all() as {
+      path: string
+    }[]
     expect(hits.map((h) => h.path)).toEqual(['a.md'])
   })
 
   it('idempotent: running migrations again is a no-op', () => {
     const db = new Database(':memory:')
     runMigrations(db, dir)
-    const applied = runMigrations(db, dir)  // second run
+    const applied = runMigrations(db, dir) // second run
     expect(applied).toEqual([])
   })
 })
@@ -205,7 +216,7 @@ npm test
 
 Expected: ALL existing migration / db / phase-05 tests continue to pass. If a phase-05 test inserts into `files_fts(rowid, path, title, summary, content)`, those tests will now fail — which is a **separate** concern handled in Plan 2 task 3.1 where we update `upsertFts` to write the new schema. For this plan, expect failures localised to phase-05's `index-queries.test.ts` and `indexer.test.ts` ONLY for tests that exercise FTS columns — note them in the commit message and they get fixed in Plan 2.
 
-If failures appear *outside* the indexer tests (e.g., in unrelated parsers or the file IO layer), stop and reconcile.
+If failures appear _outside_ the indexer tests (e.g., in unrelated parsers or the file IO layer), stop and reconcile.
 
 - [ ] **Step 6: Commit**
 
@@ -217,16 +228,19 @@ git commit -m "feat(phase-08): migration 002 — files_fts(path,title,body) with
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Confirm phase-05 placeholder is overwritten; document the tokenizer-injection deprecation
 
 This task has no code changes — it is a verification + documentation step that locks in the contract for Plan 2.
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts` (add deprecation comment only)
 
 - [ ] **Step 1: Verify the live schema after migrations**
 
 Run a one-off node script:
+
 ```bash
 node -e "
 const Database = require('better-sqlite3');
@@ -242,8 +256,12 @@ Find the block (currently around lines 142-144 of `electron/services/index-queri
 
 ```ts
 let _activeTokenizer: Tokenizer = identityTokenizer
-export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
-export function getTokenizer(): Tokenizer { return _activeTokenizer }
+export function setTokenizer(t: Tokenizer): void {
+  _activeTokenizer = t
+}
+export function getTokenizer(): Tokenizer {
+  return _activeTokenizer
+}
 ```
 
 Replace with:
@@ -256,8 +274,12 @@ Replace with:
 // in this commit; Plan 2 task 3.1 deletes them along with the `tokenizer` parameter
 // of `upsertFts` and switches `upsertFts` to write the new (path, title, body) schema.
 let _activeTokenizer: Tokenizer = identityTokenizer
-export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
-export function getTokenizer(): Tokenizer { return _activeTokenizer }
+export function setTokenizer(t: Tokenizer): void {
+  _activeTokenizer = t
+}
+export function getTokenizer(): Tokenizer {
+  return _activeTokenizer
+}
 ```
 
 - [ ] **Step 3: Typecheck**
@@ -278,9 +300,11 @@ git commit -m "docs(phase-08): deprecate tokenizer injection (replaced by trigra
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 4: `maybeRebuildFts(db, groveRoot)` detector + wiring into `db.openForGrove`
 
 **Files:**
+
 - Create: `electron/services/search/index.ts`
 - Create: `electron/services/search/rebuild.ts`
 - Create: `electron/services/search/rebuild.test.ts`
@@ -360,12 +384,17 @@ describe('maybeRebuildFts (detector)', () => {
 
   it('skips when files_fts already has rows (partial state)', async () => {
     // Simulate a partially-populated FTS (mid-rebuild crash recovery scenario)
-    db.prepare(
-      'INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)'
-    ).run('a.md', 0, 'h1')
-    db.prepare(
-      'INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
-    ).run(1, 'a.md', 'A', 'partial body')
+    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run(
+      'a.md',
+      0,
+      'h1'
+    )
+    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
+      1,
+      'a.md',
+      'A',
+      'partial body'
+    )
 
     await maybeRebuildFts(db, grove)
 
@@ -376,24 +405,23 @@ describe('maybeRebuildFts (detector)', () => {
   it('rebuilds when files has rows but files_fts is empty', async () => {
     // Write a real file so file.read in rebuild can pick it up
     mkdirSync(join(grove, 'notes'), { recursive: true })
-    writeFileSync(
-      join(grove, 'notes', 'x.md'),
-      '---\ntitle: X\n---\n\n注意力机制研究',
-      'utf8'
-    )
+    writeFileSync(join(grove, 'notes', 'x.md'), '---\ntitle: X\n---\n\n注意力机制研究', 'utf8')
 
-    db.prepare(
-      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, ?, ?)'
-    ).run('notes/x.md', 'X', 0, 'h1')
+    db.prepare('INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, ?, ?)').run(
+      'notes/x.md',
+      'X',
+      0,
+      'h1'
+    )
 
     await maybeRebuildFts(db, grove)
 
     const ftsCount = db.prepare('SELECT COUNT(*) AS c FROM files_fts').get() as { c: number }
     expect(ftsCount.c).toBe(1)
 
-    const hit = db.prepare(
-      "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
-    ).get() as { path: string } | undefined
+    const hit = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH '注意力'").get() as
+      | { path: string }
+      | undefined
     expect(hit?.path).toBe('notes/x.md')
   })
 })
@@ -429,8 +457,13 @@ export interface RebuildProgressPayload {
   total: number
 }
 
-interface FilesCountRow { c: number }
-interface FileRow { path: string; title: string | null }
+interface FilesCountRow {
+  c: number
+}
+interface FileRow {
+  path: string
+  title: string | null
+}
 
 /** Returns true if a rebuild was triggered (and completed). */
 export async function maybeRebuildFts(db: Database.Database, groveRoot: string): Promise<boolean> {
@@ -453,7 +486,8 @@ export async function rebuildFts(
   groveRoot: string,
   expectedTotal?: number
 ): Promise<void> {
-  const total = expectedTotal ?? (db.prepare('SELECT COUNT(*) AS c FROM files').get() as FilesCountRow).c
+  const total =
+    expectedTotal ?? (db.prepare('SELECT COUNT(*) AS c FROM files').get() as FilesCountRow).c
   if (total === 0) return
 
   const rows = db.prepare('SELECT path, title FROM files ORDER BY path').all() as FileRow[]
@@ -471,7 +505,11 @@ export async function rebuildFts(
   for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
     const batch = rows.slice(batchStart, batchStart + BATCH_SIZE)
 
-    interface ReadResult { row: FileRow; rowid: number; body: string }
+    interface ReadResult {
+      row: FileRow
+      rowid: number
+      body: string
+    }
     const readResults: ReadResult[] = []
     for (const row of batch) {
       try {
@@ -522,12 +560,12 @@ Expected: PASS — all three test cases.
 
 - [ ] **Step 6: Wire `maybeRebuildFts` into `db.openForGrove`**
 
-Edit `electron/services/db.ts:132-152` (the `openForGrove` function). The function is **synchronous** today (`Database.openForGrove(grovePath: string): void`); per design D5 the rebuild is async and runs in the background while the UI continues to load. Convert `openForGrove` to *fire and forget* the rebuild — do not await it inside `openForGrove`, otherwise the renderer's `bootstrap:ready` event blocks for the whole rebuild duration.
+Edit `electron/services/db.ts:132-152` (the `openForGrove` function). The function is **synchronous** today (`Database.openForGrove(grovePath: string): void`); per design D5 the rebuild is async and runs in the background while the UI continues to load. Convert `openForGrove` to _fire and forget_ the rebuild — do not await it inside `openForGrove`, otherwise the renderer's `bootstrap:ready` event blocks for the whole rebuild duration.
 
 Replace the body of `openForGrove`:
 
 ```ts
-import { maybeRebuildFts } from './search/index'  // add to existing imports at top
+import { maybeRebuildFts } from './search/index' // add to existing imports at top
 
 export function openForGrove(grovePath: string): void {
   closeCurrent()
@@ -588,11 +626,13 @@ git commit -m "feat(phase-08): maybeRebuildFts detector + wire into openForGrove
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 5: `rebuildFts` progress events (5%-or-500-rows cadence) + per-batch transactions
 
 Task 4 already shipped a working `rebuildFts` that emits one `progress` event per batch. This task **hardens** the cadence and adds a dedicated test that the spec'd 5% step is honored.
 
 **Files:**
+
 - Modify: `electron/services/search/rebuild.ts` (refine progress cadence)
 - Modify: `electron/services/search/rebuild.test.ts`
 
@@ -633,14 +673,18 @@ describe('rebuildFts progress events', () => {
     // 250 rows / 100-batch cadence → 3 batches → 3 events. With 5% threshold (12.5 rows),
     // the cadence is dominated by BATCH_SIZE here, so we expect exactly 3 progress events.
     expect(events.length).toBeGreaterThanOrEqual(3)
-    expect(events.length).toBeLessThanOrEqual(20)  // way below 250 — proves cadence not per-row
+    expect(events.length).toBeLessThanOrEqual(20) // way below 250 — proves cadence not per-row
     expect(events[events.length - 1]).toEqual({ done: 250, total: 250 })
   })
 
   it('emits done event with total at the end', async () => {
     mkdirSync(join(grove, 'notes'), { recursive: true })
     writeFileSync(join(grove, 'notes', 'a.md'), 'body a', 'utf8')
-    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run('notes/a.md', 0, 'h')
+    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run(
+      'notes/a.md',
+      0,
+      'h'
+    )
 
     const doneEvents: { total: number }[] = []
     rebuildEvents.on('done', (p: { total: number }) => doneEvents.push(p))
@@ -670,9 +714,11 @@ git commit -m "test(phase-08): rebuildFts emits progress per 5% / per-batch cade
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: `search.rebuild()` IPC stub (manual entry — not exercised by phase-08 acceptance)
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add `search.rebuild` to contract)
 - Create: `electron/ipc/search.ts`
 - Modify: `electron/ipc/handlers.ts` (or wherever the IPC namespaces are registered — see phase-04 pattern in `electron/ipc/handlers.ts`)
@@ -771,6 +817,7 @@ Expected: PASS.
 - [ ] **Step 5: Smoke test the contract type**
 
 Run:
+
 ```bash
 node -e "console.log('ok')"  # placeholder — type validation happens via tsc above
 ```
@@ -787,11 +834,13 @@ git commit -m "feat(phase-08): search namespace + search.rebuild manual IPC"
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 7: `search.fullText` early-returns `pending: true` while rebuild is in flight
 
 This task ships the **stub** of `search.fullText` so Plan 4 (UI) can integrate against a working contract. The full implementation (jieba + FTS5 MATCH) lands in Plan 2 task 4.3.
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add `fullText` placeholder)
 - Modify: `electron/ipc/search.ts` (add `fullText` handler that early-returns pending)
 - Create: `electron/ipc/search.test.ts`
@@ -801,7 +850,7 @@ This task ships the **stub** of `search.fullText` so Plan 4 (UI) can integrate a
 Edit `shared/ipc-contract.ts` to expand `IpcContract.search`:
 
 ```ts
-import type { FileSummary } from './file-types'  // add this import near top with other type imports
+import type { FileSummary } from './file-types' // add this import near top with other type imports
 
 export type IpcContract = {
   // ... unchanged ...

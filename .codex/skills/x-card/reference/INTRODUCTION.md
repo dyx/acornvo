@@ -18,13 +18,13 @@ A2UI is built on three core ideas:
 
 Unlike traditional approaches where AI generates HTML directly, A2UI uses structured data streams with significant advantages:
 
-| Feature | A2UI | AI-generated HTML |
-| --- | --- | --- |
-| **Security** | Only uses predefined component catalog, no code execution risk | May contain malicious scripts, injection risk |
-| **Cross-platform** | One data structure auto-adapts to Web, mobile, and other native components | HTML requires extra adaptation per platform |
-| **Streaming Rendering** | Supports progressive rendering for smooth UX | Requires complete response before rendering |
-| **LLM-friendly** | Flat JSON structure supports incremental generation, reduces AI burden | Requires generating full HTML structure, prone to syntax errors |
-| **Maintenance** | Components managed centrally, updates only require client library changes | Each HTML interface needs individual debugging |
+| Feature                 | A2UI                                                                       | AI-generated HTML                                               |
+| ----------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Security**            | Only uses predefined component catalog, no code execution risk             | May contain malicious scripts, injection risk                   |
+| **Cross-platform**      | One data structure auto-adapts to Web, mobile, and other native components | HTML requires extra adaptation per platform                     |
+| **Streaming Rendering** | Supports progressive rendering for smooth UX                               | Requires complete response before rendering                     |
+| **LLM-friendly**        | Flat JSON structure supports incremental generation, reduces AI burden     | Requires generating full HTML structure, prone to syntax errors |
+| **Maintenance**         | Components managed centrally, updates only require client library changes  | Each HTML interface needs individual debugging                  |
 
 ## Data Flow Architecture
 
@@ -78,13 +78,13 @@ sequenceDiagram
 
 ### Version Comparison
 
-| Feature | v0.8 | v0.9 |
-| --- | --- | --- |
-| **Version field** | No explicit version field | Explicit `version: 'v0.9'` field |
-| **Surface creation** | Implicit (auto-created on first updateComponents) | Explicit `createSurface` command |
-| **Data model update** | Uses `contents` array | Uses `path` and `value` fields |
-| **Component definition** | More complex nested structure | Simpler flat structure |
-| **Recommendation** | Deprecated, compatibility only | **Recommended** |
+| Feature                  | v0.8                                              | v0.9                             |
+| ------------------------ | ------------------------------------------------- | -------------------------------- |
+| **Version field**        | No explicit version field                         | Explicit `version: 'v0.9'` field |
+| **Surface creation**     | Implicit (auto-created on first updateComponents) | Explicit `createSurface` command |
+| **Data model update**    | Uses `contents` array                             | Uses `path` and `value` fields   |
+| **Component definition** | More complex nested structure                     | Simpler flat structure           |
+| **Recommendation**       | Deprecated, compatibility only                    | **Recommended**                  |
 
 ### v0.8 Message Format (Deprecated)
 
@@ -251,7 +251,7 @@ v0.9 supports updating entire objects, reducing message count:
 `@ant-design/x-card` supports both versions simultaneously:
 
 ```tsx
-import type { XAgentCommand_v0_8, XAgentCommand_v0_9 } from '@ant-design/x-card';
+import type { XAgentCommand_v0_8, XAgentCommand_v0_9 } from '@ant-design/x-card'
 
 // Auto-detect version and handle correctly
 const commands: (XAgentCommand_v0_8 | XAgentCommand_v0_9)[] = [
@@ -259,7 +259,7 @@ const commands: (XAgentCommand_v0_8 | XAgentCommand_v0_9)[] = [
   {
     updateComponents: {
       /* ... */
-    },
+    }
   },
 
   // v0.9 message
@@ -267,11 +267,11 @@ const commands: (XAgentCommand_v0_8 | XAgentCommand_v0_9)[] = [
     version: 'v0.9',
     createSurface: {
       /* ... */
-    },
-  },
-];
+    }
+  }
+]
 
-<XCard.Box commands={commands}>{/* ... */}</XCard.Box>;
+;<XCard.Box commands={commands}>{/* ... */}</XCard.Box>
 ```
 
 The component automatically detects the protocol version based on the presence of the `version` field and handles messages correctly.
@@ -476,8 +476,8 @@ import type {
   XAgentCommand_v0_8,
   ActionPayload,
   Catalog,
-  CatalogComponent,
-} from '@ant-design/x-card';
+  CatalogComponent
+} from '@ant-design/x-card'
 ```
 
 ## Installation
@@ -493,8 +493,8 @@ pnpm add @ant-design/x-card
 ## Quick Start
 
 ```tsx
-import { XCard, registerCatalog } from '@ant-design/x-card';
-import type { XAgentCommand_v0_9, Catalog, ActionPayload } from '@ant-design/x-card';
+import { XCard, registerCatalog } from '@ant-design/x-card'
+import type { XAgentCommand_v0_9, Catalog, ActionPayload } from '@ant-design/x-card'
 
 const catalog: Catalog = {
   catalogId: 'my-app-catalog',
@@ -504,11 +504,11 @@ const catalog: Catalog = {
     },
     Button: {
       /* ... */
-    },
-  },
-};
+    }
+  }
+}
 
-registerCatalog(catalog);
+registerCatalog(catalog)
 
 const commands: XAgentCommand_v0_9[] = [
   { version: 'v0.9', createSurface: { surfaceId: 'booking', catalogId: 'my-app-catalog' } },
@@ -518,15 +518,15 @@ const commands: XAgentCommand_v0_9[] = [
       surfaceId: 'booking',
       components: [
         /* ... */
-      ],
-    },
-  },
-];
+      ]
+    }
+  }
+]
 
 function App() {
   const handleAction = (payload: ActionPayload) => {
-    console.log('Action triggered:', payload.name, payload.context);
-  };
+    console.log('Action triggered:', payload.name, payload.context)
+  }
 
   return (
     <XCard.Box
@@ -536,7 +536,7 @@ function App() {
     >
       <XCard.Card id="booking" />
     </XCard.Box>
-  );
+  )
 }
 ```
 

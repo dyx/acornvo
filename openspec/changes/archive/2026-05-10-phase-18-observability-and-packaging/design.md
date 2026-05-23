@@ -1,6 +1,7 @@
 ## Context
 
 phase 1-17 建立了所有功能；phase 18 是"让产品可发布、可运维"的最后一公里。核心挑战：
+
 - 日志量大：AI / 索引 / 队列 / agent 会频繁写；rotate 与总量控制要有纪律
 - 崩溃分两种：renderer 崩（仅该页面挂）与 main 崩（整个 app 挂）；要都捕获到
 - 打包签名：mac 需要 notarization；win 需要 authenticode；Linux AppImage 无签名但要 SHA256
@@ -11,6 +12,7 @@ PRD N-1（稳定） / N-2（可观测） / N-5（可打包交付）对应本阶�
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 统一 logger API；所有现有 console.\* 替换（关键 area）
 - Usage / 队列 / ops_log / perf 一页看全；用户能自查 AI 花销
 - `npm run dist:mac|win|linux` 出可安装包；mac dmg 已签名 + 公证
@@ -18,6 +20,7 @@ PRD N-1（稳定） / N-2（可观测） / N-5（可打包交付）对应本阶�
 - 崩溃时至少留日志；下次启动看到提示
 
 **Non-Goals:**
+
 - 不做远程错误上报（Sentry / Bugsnag）；本地日志为主
 - 不做 Windows 代码签名证书采购（CI 上环境变量占位，用户自配）
 - 不做 Linux 自动更新（AppImage 可手动替换；electron-updater 支持 AppImage 但本阶段不启）
@@ -33,25 +36,26 @@ PRD N-1（稳定） / N-2（可观测） / N-5（可打包交付）对应本阶�
 `electron/obs/logger.ts`:
 
 ```ts
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 interface LogEntry {
-  ts: string;        // ISO8601
-  level: LogLevel;
-  area: string;      // 'indexer' | 'clipper' | 'ai' | 'agent' | 'app' | ...
-  op?: string;       // e.g., 'readability-extract'
-  ok?: boolean;
-  ms?: number;
-  msg?: string;
-  meta?: Record<string, unknown>;
+  ts: string // ISO8601
+  level: LogLevel
+  area: string // 'indexer' | 'clipper' | 'ai' | 'agent' | 'app' | ...
+  op?: string // e.g., 'readability-extract'
+  ok?: boolean
+  ms?: number
+  msg?: string
+  meta?: Record<string, unknown>
 }
 
-logger.info('clipper', { op: 'save', ok: true, ms: 812, meta: { url, chars } });
+logger.info('clipper', { op: 'save', ok: true, ms: 812, meta: { url, chars } })
 ```
 
 输出 JSON Lines 到 `~/Library/Logs/Acornvo/app-YYYY-MM-DD.log`（linux: `~/.config/Acornvo/logs/`; win: `%APPDATA%\Acornvo\logs\`）。
 
 **Rotate 策略：**
+
 - 每日一个文件（按 UTC 日期）
 - 启动时扫描日志目录：删除 7 天前的文件；若总量 > 50MB 从旧到新删到 ≤ 40MB
 - 单文件达 10MB 时分片 `app-YYYY-MM-DD.1.log`、`.2.log`
@@ -65,12 +69,13 @@ logger.info('clipper', { op: 'save', ok: true, ms: 812, meta: { url, chars } });
 `electron/obs/perf.ts`:
 
 ```ts
-const end = perf.start('agent.step', { sessionId });
+const end = perf.start('agent.step', { sessionId })
 // ... work ...
-end({ ok: true, ms: endMs });   // 写 perf_samples 表
+end({ ok: true, ms: endMs }) // 写 perf_samples 表
 ```
 
 `perf_samples` 表：
+
 ```sql
 CREATE TABLE perf_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,6 +91,7 @@ CREATE INDEX idx_perf_area_ts ON perf_samples(area, ts);
 保留最近 10 万行；超时按 ts 滚动删。observability 页面展示每个 area 的 P50/P95/成功率（过去 24h / 7d）。
 
 **key path 埋点：**
+
 - `project.open`
 - `indexer.scan` + `indexer.update`（每文件）
 - `clipper.save`
@@ -108,6 +114,7 @@ CREATE INDEX idx_perf_area_ts ON perf_samples(area, ts);
 ### D4: diagnostic bundle
 
 按钮在 `/settings/observability` 底部 "导出诊断包"：
+
 - 汇总最近 7 天 `.log` + `crashes/` + `app_version.json`（含 electron/chrome/node/git hash）+ `about.json`
 - zip 到 `~/Downloads/Acornvo-Diagnostics-YYYYMMDD.zip`
 - 不包含 user data / notes / clips body；仅日志与版本信息
@@ -150,6 +157,7 @@ CREATE INDEX idx_perf_area_ts ON perf_samples(area, ts);
 `settings.telemetry.enabled: boolean`（默认 false）。
 
 启用后：
+
 - 每日聚合一次：`SELECT count(*), sum(total_tokens) FROM ai_usage WHERE ts >= today`
 - 写入本地 `telemetry_local` 表；当前**不外发**；phase 18 只铺通道和 UI
 - 用户可在 /settings/observability 打开/关闭；关闭时停止聚合且不删历史
@@ -188,6 +196,7 @@ publish:
 - Windows：NSIS 安装器；per-user 安装；快捷方式开始菜单 + 桌面
 
 **CI**：GitHub Actions `release.yml`：
+
 - 触发：push tag `v*.*.*`
 - 矩阵：macos-latest / windows-latest / ubuntu-latest
 - secrets：`APPLE_ID`、`APPLE_APP_SPECIFIC_PASSWORD`、`APPLE_TEAM_ID`、`CSC_LINK`、`CSC_KEY_PASSWORD`（win）
@@ -214,6 +223,7 @@ publish:
 ### D11: 迁移
 
 `migrations/010_perf_samples.sql`：
+
 ```sql
 CREATE TABLE perf_samples (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, area TEXT NOT NULL, ok INTEGER NOT NULL, ms INTEGER NOT NULL, meta TEXT);
 CREATE INDEX idx_perf_area_ts ON perf_samples(area, ts);

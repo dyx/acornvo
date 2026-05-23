@@ -33,23 +33,24 @@ Lay the foundation for the Library view: install `@tanstack/react-virtual`, add 
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json`, `package-lock.json` | Modify (add `@tanstack/react-virtual`) | 1.1 |
-| `src/components/ui/{tooltip,scroll-area,popover,separator}.tsx` | Create (via shadcn) | 1.2 |
-| `src/pages/Library.tsx` | Create stub | 1.3 |
-| `src/components/library/.gitkeep` | Create | 1.3 |
-| `src/stores/library.ts` | Create stub | 1.3 |
-| `electron/ipc/files.ts` | Create stub → implement 5/7 handlers | 1.3, 2.1–2.6 |
-| `shared/file-types.ts` | Create | 1.4 |
-| `shared/file-types.test.ts` | Create | 1.4 |
-| `shared/ipc-contract.ts` | Modify (add `files` namespace) | 2.1 |
-| `electron/ipc/handlers.ts` | Modify (register `fileQueryHandlers`) | 2.1 |
-| `electron/ipc/files.test.ts` | Create | 2.2–2.6 |
+| Path                                                            | Action                                 | Owner task   |
+| --------------------------------------------------------------- | -------------------------------------- | ------------ |
+| `package.json`, `package-lock.json`                             | Modify (add `@tanstack/react-virtual`) | 1.1          |
+| `src/components/ui/{tooltip,scroll-area,popover,separator}.tsx` | Create (via shadcn)                    | 1.2          |
+| `src/pages/Library.tsx`                                         | Create stub                            | 1.3          |
+| `src/components/library/.gitkeep`                               | Create                                 | 1.3          |
+| `src/stores/library.ts`                                         | Create stub                            | 1.3          |
+| `electron/ipc/files.ts`                                         | Create stub → implement 5/7 handlers   | 1.3, 2.1–2.6 |
+| `shared/file-types.ts`                                          | Create                                 | 1.4          |
+| `shared/file-types.test.ts`                                     | Create                                 | 1.4          |
+| `shared/ipc-contract.ts`                                        | Modify (add `files` namespace)         | 2.1          |
+| `electron/ipc/handlers.ts`                                      | Modify (register `fileQueryHandlers`)  | 2.1          |
+| `electron/ipc/files.test.ts`                                    | Create                                 | 2.2–2.6      |
 
 ## Pre-flight
 
 This plan assumes phase-05 has landed on `main` with:
+
 - The `files` / `tags` / `file_tags` schema from `electron/services/db/migrations/001_init.sql` populated by the indexer.
 - `electron/services/indexer.ts` running on grove open and emitting `index:fileChanged` etc. (subscriptions land in Plan 2.)
 
@@ -60,14 +61,17 @@ If phase-05 has not landed, **stop**: the unit tests in tasks 2.2–2.5 hand-rol
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install @tanstack/react-virtual
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm not already installed**
 
 Run:
+
 ```bash
 node -e "const p=require('./package.json');console.log(p.dependencies['@tanstack/react-virtual']||p.devDependencies?.['@tanstack/react-virtual']||'absent')"
 ```
@@ -77,6 +81,7 @@ Expected: `absent`. If a version prints, skip Step 2.
 - [ ] **Step 2: Install**
 
 Run:
+
 ```bash
 npm install @tanstack/react-virtual@^3.10
 ```
@@ -86,6 +91,7 @@ Expected: `package.json` `dependencies` now lists `@tanstack/react-virtual`.
 - [ ] **Step 3: Verify type-check still passes**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -102,14 +108,17 @@ git commit -m "chore(phase-06): add @tanstack/react-virtual dependency"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Add missing shadcn/ui primitives
 
 **Files:**
+
 - Create (via shadcn CLI): `src/components/ui/tooltip.tsx`, `src/components/ui/scroll-area.tsx`, `src/components/ui/popover.tsx`, `src/components/ui/separator.tsx`
 
 - [ ] **Step 1: Inventory existing shadcn primitives**
 
 Run:
+
 ```bash
 ls src/components/ui
 ```
@@ -119,6 +128,7 @@ Expected output includes `button.tsx`, `dialog.tsx`, `dropdown-menu.tsx`, `input
 - [ ] **Step 2: Add the four missing components**
 
 Run:
+
 ```bash
 npx shadcn@latest add tooltip scroll-area popover separator --yes --overwrite
 ```
@@ -128,6 +138,7 @@ Expected: Four new files appear under `src/components/ui/`. The CLI may pull `@r
 - [ ] **Step 3: Verify type-check**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -137,6 +148,7 @@ Expected: PASS. If `tooltip.tsx` uses an import path the codebase doesn't have (
 - [ ] **Step 4: Verify lint**
 
 Run:
+
 ```bash
 npm run lint
 ```
@@ -153,9 +165,11 @@ git commit -m "feat(phase-06): add tooltip / scroll-area / popover / separator s
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Scaffold module directories and stub files
 
 **Files:**
+
 - Create: `src/pages/Library.tsx`, `src/components/library/.gitkeep`, `src/stores/library.ts`, `electron/ipc/files.ts`
 
 - [ ] **Step 1: Write the failing route-render test**
@@ -181,6 +195,7 @@ describe('Library page (stub)', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -198,7 +213,10 @@ import type { JSX } from 'react'
 
 export function Library(): JSX.Element {
   return (
-    <div data-testid="library-stub" className="flex h-full items-center justify-center text-sm text-[color:var(--color-ink-3)]">
+    <div
+      data-testid="library-stub"
+      className="flex h-full items-center justify-center text-sm text-[color:var(--color-ink-3)]"
+    >
       Library page — implementation lands in plans 2–5.
     </div>
   )
@@ -225,6 +243,7 @@ import { Library } from './pages/Library'
 - [ ] **Step 4: Run the page test**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -234,6 +253,7 @@ Expected: PASS.
 - [ ] **Step 5: Create the empty `library/` component dir**
 
 Run:
+
 ```bash
 mkdir -p src/components/library && touch src/components/library/.gitkeep
 ```
@@ -271,6 +291,7 @@ export const fileQueryHandlers = {} as const
 - [ ] **Step 8: Verify type-check and tests**
 
 Run:
+
 ```bash
 npm run typecheck && npx vitest run src/pages/Library.test.tsx
 ```
@@ -287,9 +308,11 @@ git commit -m "feat(phase-06): scaffold Library page / store / handlers stubs an
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Define shared library types
 
 **Files:**
+
 - Create: `shared/file-types.ts`
 - Test: `shared/file-types.test.ts`
 
@@ -299,13 +322,7 @@ Create `shared/file-types.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import type {
-  FileSummary,
-  FileFilter,
-  Pagination,
-  CategoryNode,
-  TagCloudItem
-} from './file-types'
+import type { FileSummary, FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
 
 describe('file-types', () => {
   it('FileSummary has all required fields with correct nullability', () => {
@@ -375,6 +392,7 @@ describe('file-types', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run shared/file-types.test.ts
 ```
@@ -460,6 +478,7 @@ export interface TagCloudItem {
 - [ ] **Step 3: Run the test to confirm it passes**
 
 Run:
+
 ```bash
 npx vitest run shared/file-types.test.ts
 ```
@@ -476,9 +495,11 @@ git commit -m "feat(phase-06): add FileSummary/FileFilter/Pagination/CategoryNod
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: Extend IpcContract with the `files` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `shared/ipc-contract.type-test.ts`
 - Modify: `electron/ipc/handlers.ts`
@@ -500,8 +521,15 @@ void _listOk
 type _GetReturn = ReturnType<IpcContract['files']['get']>
 const _getOk: _GetReturn = {
   summary: {
-    path: 'a.md', title: null, category: null, rating: null,
-    clipped_at: null, site: null, has_summary: false, tags: [], is_reviewing: false
+    path: 'a.md',
+    title: null,
+    category: null,
+    rating: null,
+    clipped_at: null,
+    site: null,
+    has_summary: false,
+    tags: [],
+    is_reviewing: false
   },
   frontmatter: {},
   body: ''
@@ -528,10 +556,14 @@ const _filter: FileFilter = {}
 const _pagination: Pagination = { limit: 50, offset: 0, orderBy: 'clipped_desc' }
 const _node: CategoryNode = { name: 'x', count: 0, children: [] }
 const _tag: TagCloudItem = { name: 'x', usage_count: 0 }
-void _filter; void _pagination; void _node; void _tag
+void _filter
+void _pagination
+void _node
+void _tag
 ```
 
 Run:
+
 ```bash
 npm run typecheck:node
 ```
@@ -582,9 +614,7 @@ Replace the contents of `electron/ipc/files.ts` with:
 import type { IpcContract } from '@shared/ipc-contract'
 
 type FileQueryHandlers = {
-  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (
-    ...args: infer A
-  ) => infer R
+  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (...args: infer A) => infer R
     ? (...args: A) => R | Promise<Awaited<R>>
     : never
 }
@@ -608,18 +638,21 @@ export const fileQueryHandlers: FileQueryHandlers = {
 Modify `electron/ipc/handlers.ts`:
 
 Add the import:
+
 ```ts
 import { fileQueryHandlers } from './files'
 ```
 
 Add to the `ipcHandlers` map (alongside `file: fileHandlers`):
+
 ```ts
-  files: fileQueryHandlers
+files: fileQueryHandlers
 ```
 
 - [ ] **Step 5: Run the type assertions**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -629,11 +662,12 @@ Expected: PASS.
 - [ ] **Step 6: Run the existing IPC contract test to confirm nothing else broke**
 
 Run:
+
 ```bash
 npx vitest run shared/ipc-contract.test.ts
 ```
 
-Expected: PASS (no fail). The stub `notImplemented` throws — but the tests only assert the *shape* of `IpcContract`, not behaviour.
+Expected: PASS (no fail). The stub `notImplemented` throws — but the tests only assert the _shape_ of `IpcContract`, not behaviour.
 
 - [ ] **Step 7: Commit**
 
@@ -645,9 +679,11 @@ git commit -m "feat(phase-06): extend IpcContract with files namespace and regis
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: Implement `files.list` handler
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Test: `electron/ipc/files.test.ts`
 
@@ -752,10 +788,7 @@ describe('fileQueryHandlers.list', () => {
   })
 
   it('returns empty result + total=0 on empty grove', async () => {
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
     expect(r.items).toEqual([])
     expect(r.total).toBe(0)
   })
@@ -763,6 +796,7 @@ describe('fileQueryHandlers.list', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts
 ```
@@ -774,124 +808,121 @@ Expected: FAIL — `notImplemented` throws.
 Append inside the same `describe` block, after the empty-grove test:
 
 ```ts
-  it('basic list orders by clipped_at desc and reports correct total', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', clipped_at: '2026-01-01T00:00:00Z' })
-    insertFile(db, { path: 'b.md', title: 'B', clipped_at: '2026-01-03T00:00:00Z' })
-    insertFile(db, { path: 'c.md', title: 'C', clipped_at: '2026-01-02T00:00:00Z' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(r.items.map((i) => i.path)).toEqual(['b.md', 'c.md', 'a.md'])
-    expect(r.total).toBe(3)
-  })
+it('basic list orders by clipped_at desc and reports correct total', async () => {
+  insertFile(db, { path: 'a.md', title: 'A', clipped_at: '2026-01-01T00:00:00Z' })
+  insertFile(db, { path: 'b.md', title: 'B', clipped_at: '2026-01-03T00:00:00Z' })
+  insertFile(db, { path: 'c.md', title: 'C', clipped_at: '2026-01-02T00:00:00Z' })
+  const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
+  expect(r.items.map((i) => i.path)).toEqual(['b.md', 'c.md', 'a.md'])
+  expect(r.total).toBe(3)
+})
 
-  it('paginates with limit/offset and total stays the full count', async () => {
-    for (let i = 0; i < 5; i++) {
-      insertFile(db, {
-        path: `f${i}.md`,
-        title: `T${i}`,
-        clipped_at: `2026-01-0${i + 1}T00:00:00Z`
-      })
-    }
-    const p1 = await fileQueryHandlers.list({}, { limit: 2, offset: 0, orderBy: 'clipped_desc' })
-    const p2 = await fileQueryHandlers.list({}, { limit: 2, offset: 2, orderBy: 'clipped_desc' })
-    expect(p1.items.length).toBe(2)
-    expect(p2.items.length).toBe(2)
-    expect(p1.total).toBe(5)
-    expect(p2.total).toBe(5)
-    const p1set = new Set(p1.items.map((i) => i.path))
-    const p2set = new Set(p2.items.map((i) => i.path))
-    expect([...p1set].some((p) => p2set.has(p))).toBe(false)
-  })
-
-  it('filters by category prefix (matches "技术" and "技术/深度学习")', async () => {
-    insertFile(db, { path: 't1.md', title: 'T1', category: '技术' })
-    insertFile(db, { path: 't2.md', title: 'T2', category: '技术/深度学习' })
-    insertFile(db, { path: 'p1.md', title: 'P1', category: '产品' })
-    const r = await fileQueryHandlers.list(
-      { category: '技术' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['t1.md', 't2.md']))
-  })
-
-  it('filters by tag', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', tags: ['attention'] })
-    insertFile(db, { path: 'b.md', title: 'B', tags: ['other'] })
-    const r = await fileQueryHandlers.list(
-      { tag: 'attention' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(r.items.map((i) => i.path)).toEqual(['a.md'])
-    expect(r.items[0].tags).toContain('attention')
-  })
-
-  it('filters by rating range', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', rating: 2 })
-    insertFile(db, { path: 'b.md', title: 'B', rating: 4 })
-    insertFile(db, { path: 'c.md', title: 'C', rating: 5 })
-    const r = await fileQueryHandlers.list(
-      { rating: { min: 4 } },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['b.md', 'c.md']))
-  })
-
-  it('filters by q across title and path', async () => {
-    insertFile(db, { path: 'notes/x.md', title: '注意力机制' })
-    insertFile(db, { path: 'misc/zhuyili.md', title: 'Other' })
-    insertFile(db, { path: 'notes/y.md', title: 'Y' })
-    const r = await fileQueryHandlers.list(
-      { q: '注意力' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['notes/x.md']))
-  })
-
-  it('filters by pathPrefix (inbox view)', async () => {
-    insertFile(db, { path: 'inbox/a.md', title: 'A' })
-    insertFile(db, { path: 'inbox/b.md', title: 'B' })
-    insertFile(db, { path: 'notes/c.md', title: 'C' })
-    const r = await fileQueryHandlers.list(
-      { pathPrefix: 'inbox/' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['inbox/a.md', 'inbox/b.md']))
-  })
-
-  it('orders by title_asc when requested', async () => {
-    insertFile(db, { path: 'c.md', title: 'Carrot' })
-    insertFile(db, { path: 'a.md', title: 'Apple' })
-    insertFile(db, { path: 'b.md', title: 'Banana' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'title_asc' }
-    )
-    expect(r.items.map((i) => i.title)).toEqual(['Apple', 'Banana', 'Carrot'])
-  })
-
-  it('returns FileSummary shape with is_reviewing=false and has_summary correct', async () => {
+it('paginates with limit/offset and total stays the full count', async () => {
+  for (let i = 0; i < 5; i++) {
     insertFile(db, {
-      path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x', 'y']
+      path: `f${i}.md`,
+      title: `T${i}`,
+      clipped_at: `2026-01-0${i + 1}T00:00:00Z`
     })
-    insertFile(db, { path: 'b.md', title: 'B' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'title_asc' }
-    )
-    const a = r.items.find((i) => i.path === 'a.md')!
-    const b = r.items.find((i) => i.path === 'b.md')!
-    expect(a.has_summary).toBe(true)
-    expect(b.has_summary).toBe(false)
-    expect(a.site).toBe('example.com')
-    expect(new Set(a.tags)).toEqual(new Set(['x', 'y']))
-    expect(a.is_reviewing).toBe(false)
-    expect(b.is_reviewing).toBe(false)
+  }
+  const p1 = await fileQueryHandlers.list({}, { limit: 2, offset: 0, orderBy: 'clipped_desc' })
+  const p2 = await fileQueryHandlers.list({}, { limit: 2, offset: 2, orderBy: 'clipped_desc' })
+  expect(p1.items.length).toBe(2)
+  expect(p2.items.length).toBe(2)
+  expect(p1.total).toBe(5)
+  expect(p2.total).toBe(5)
+  const p1set = new Set(p1.items.map((i) => i.path))
+  const p2set = new Set(p2.items.map((i) => i.path))
+  expect([...p1set].some((p) => p2set.has(p))).toBe(false)
+})
+
+it('filters by category prefix (matches "技术" and "技术/深度学习")', async () => {
+  insertFile(db, { path: 't1.md', title: 'T1', category: '技术' })
+  insertFile(db, { path: 't2.md', title: 'T2', category: '技术/深度学习' })
+  insertFile(db, { path: 'p1.md', title: 'P1', category: '产品' })
+  const r = await fileQueryHandlers.list(
+    { category: '技术' },
+    { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+  )
+  expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['t1.md', 't2.md']))
+})
+
+it('filters by tag', async () => {
+  insertFile(db, { path: 'a.md', title: 'A', tags: ['attention'] })
+  insertFile(db, { path: 'b.md', title: 'B', tags: ['other'] })
+  const r = await fileQueryHandlers.list(
+    { tag: 'attention' },
+    { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+  )
+  expect(r.items.map((i) => i.path)).toEqual(['a.md'])
+  expect(r.items[0].tags).toContain('attention')
+})
+
+it('filters by rating range', async () => {
+  insertFile(db, { path: 'a.md', title: 'A', rating: 2 })
+  insertFile(db, { path: 'b.md', title: 'B', rating: 4 })
+  insertFile(db, { path: 'c.md', title: 'C', rating: 5 })
+  const r = await fileQueryHandlers.list(
+    { rating: { min: 4 } },
+    { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+  )
+  expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['b.md', 'c.md']))
+})
+
+it('filters by q across title and path', async () => {
+  insertFile(db, { path: 'notes/x.md', title: '注意力机制' })
+  insertFile(db, { path: 'misc/zhuyili.md', title: 'Other' })
+  insertFile(db, { path: 'notes/y.md', title: 'Y' })
+  const r = await fileQueryHandlers.list(
+    { q: '注意力' },
+    { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+  )
+  expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['notes/x.md']))
+})
+
+it('filters by pathPrefix (inbox view)', async () => {
+  insertFile(db, { path: 'inbox/a.md', title: 'A' })
+  insertFile(db, { path: 'inbox/b.md', title: 'B' })
+  insertFile(db, { path: 'notes/c.md', title: 'C' })
+  const r = await fileQueryHandlers.list(
+    { pathPrefix: 'inbox/' },
+    { limit: 50, offset: 0, orderBy: 'clipped_desc' }
+  )
+  expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['inbox/a.md', 'inbox/b.md']))
+})
+
+it('orders by title_asc when requested', async () => {
+  insertFile(db, { path: 'c.md', title: 'Carrot' })
+  insertFile(db, { path: 'a.md', title: 'Apple' })
+  insertFile(db, { path: 'b.md', title: 'Banana' })
+  const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
+  expect(r.items.map((i) => i.title)).toEqual(['Apple', 'Banana', 'Carrot'])
+})
+
+it('returns FileSummary shape with is_reviewing=false and has_summary correct', async () => {
+  insertFile(db, {
+    path: 'a.md',
+    title: 'A',
+    rating: 4,
+    summary: 's',
+    site: 'example.com',
+    tags: ['x', 'y']
   })
+  insertFile(db, { path: 'b.md', title: 'B' })
+  const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
+  const a = r.items.find((i) => i.path === 'a.md')!
+  const b = r.items.find((i) => i.path === 'b.md')!
+  expect(a.has_summary).toBe(true)
+  expect(b.has_summary).toBe(false)
+  expect(a.site).toBe('example.com')
+  expect(new Set(a.tags)).toEqual(new Set(['x', 'y']))
+  expect(a.is_reviewing).toBe(false)
+  expect(b.is_reviewing).toBe(false)
+})
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts
 ```
@@ -905,17 +936,10 @@ Replace `electron/ipc/files.ts` with:
 ```ts
 import { dbService } from '../services/db'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  FileSummary,
-  FileFilter,
-  Pagination,
-  IpcContract
-} from '@shared/ipc-contract'
+import type { FileSummary, FileFilter, Pagination, IpcContract } from '@shared/ipc-contract'
 
 type FileQueryHandlers = {
-  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (
-    ...args: infer A
-  ) => infer R
+  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (...args: infer A) => infer R
     ? (...args: A) => R | Promise<Awaited<R>>
     : never
 }
@@ -1018,6 +1042,7 @@ export const fileQueryHandlers: FileQueryHandlers = {
 - [ ] **Step 4: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts
 ```
@@ -1034,9 +1059,11 @@ git commit -m "feat(phase-06): implement files.list with single-query SQL + tag 
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: Implement `files.get` handler
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Modify: `electron/ipc/files.test.ts`
 
@@ -1069,7 +1096,12 @@ describe('fileQueryHandlers.get', () => {
 
   it('returns summary + frontmatter + body when path exists', async () => {
     insertFile(db, {
-      path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x']
+      path: 'a.md',
+      title: 'A',
+      rating: 4,
+      summary: 's',
+      site: 'example.com',
+      tags: ['x']
     })
     const md = stringify({ title: 'A', rating: 4 }, '# Hello\n\nbody')
     writeFileSync(join(dir, 'a.md'), md)
@@ -1100,6 +1132,7 @@ describe('fileQueryHandlers.get', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'fileQueryHandlers.get'
 ```
@@ -1135,9 +1168,7 @@ async function get(path: string): Promise<{
        WHERE f.path = ?
        GROUP BY f.path`
     )
-    .get(path) as
-    | (Omit<ListRow, 'total'>)
-    | undefined
+    .get(path) as Omit<ListRow, 'total'> | undefined
 
   if (!row) {
     throw new IpcError('E_NOT_FOUND', `files.get: ${path} not in index`)
@@ -1175,6 +1206,7 @@ export const fileQueryHandlers: FileQueryHandlers = {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'fileQueryHandlers.get'
 ```
@@ -1191,9 +1223,11 @@ git commit -m "feat(phase-06): implement files.get returning summary + frontmatt
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: Implement `files.getCategoryTree` handler
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Modify: `electron/ipc/files.test.ts`
 
@@ -1265,6 +1299,7 @@ describe('fileQueryHandlers.getCategoryTree', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'getCategoryTree'
 ```
@@ -1327,6 +1362,7 @@ export const fileQueryHandlers: FileQueryHandlers = {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'getCategoryTree'
 ```
@@ -1343,9 +1379,11 @@ git commit -m "feat(phase-06): implement files.getCategoryTree with rolled-up co
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 9: Implement `files.getTagCloud` handler
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Modify: `electron/ipc/files.test.ts`
 
@@ -1389,6 +1427,7 @@ describe('fileQueryHandlers.getTagCloud', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'getTagCloud'
 ```
@@ -1432,6 +1471,7 @@ export const fileQueryHandlers: FileQueryHandlers = {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'getTagCloud'
 ```
@@ -1448,9 +1488,11 @@ git commit -m "feat(phase-06): implement files.getTagCloud (DESC by usage_count,
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 10: Implement `files.revealInFinder` handler
 
 **Files:**
+
 - Modify: `electron/ipc/files.ts`
 - Modify: `electron/ipc/files.test.ts`
 
@@ -1505,6 +1547,7 @@ describe('fileQueryHandlers.revealInFinder', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts -t 'revealInFinder'
 ```
@@ -1549,6 +1592,7 @@ export const fileQueryHandlers: FileQueryHandlers = {
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/files.test.ts
 ```
@@ -1558,6 +1602,7 @@ Expected: All cases PASS (the `electron` mock now applies to the whole file; if 
 - [ ] **Step 4: Run the full unit suite to confirm nothing else broke**
 
 Run:
+
 ```bash
 npm test
 ```
@@ -1576,6 +1621,7 @@ git commit -m "feat(phase-06): implement files.revealInFinder using safeResolve 
 ## Plan-1 Acceptance
 
 After all 10 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (new file `electron/ipc/files.test.ts` ≥ 23 cases; new file `shared/file-types.test.ts` ≥ 6 cases; new file `src/pages/Library.test.tsx` ≥ 1 case)
 - [ ] `npm run lint` PASSES

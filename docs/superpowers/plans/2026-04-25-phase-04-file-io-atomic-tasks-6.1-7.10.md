@@ -17,7 +17,7 @@ Two-part finish for phase 04: (1) migrate the three phase-2 disk writers (`recen
 
 ## Architecture
 
-- **Migration shape.** Each phase-2 callsite swaps `import { atomicWriteJson } from './atomicWrite'` for `import { writeFileAtomic } from './fs-atomic'` and JSON-stringifies inline. We *don't* delete `atomicWrite.ts` in this phase — leaving the file as an unused shim minimizes the diff blast radius and makes the migration easier to revert if we hit a regression. A separate cleanup change can remove it later.
+- **Migration shape.** Each phase-2 callsite swaps `import { atomicWriteJson } from './atomicWrite'` for `import { writeFileAtomic } from './fs-atomic'` and JSON-stringifies inline. We _don't_ delete `atomicWrite.ts` in this phase — leaving the file as an unused shim minimizes the diff blast radius and makes the migration easier to revert if we hit a regression. A separate cleanup change can remove it later.
 - **The lockfile gets a chmod.** The old `atomicWriteJson` had a `mode` option used by the lockfile (`0o600`). After the swap, we add `await chmod(path, 0o600).catch(() => undefined)` immediately after `writeFileAtomic`. There is a microscopic window (≤1 ms) where the file is `0o644` before the chmod — this is acceptable for a lockfile (it's local-only and contains pid/host metadata, not secrets).
 - **Acceptance tests** live in a new `electron/ipc/file.smoke.test.ts` so they're easy to find as the canonical acceptance battery. They reuse the same `vi.mock('@/electron/services/grove')` pattern from Plan 3 — fast, hermetic, no real IPC bridge.
 - **Power-loss test (7.5)** is a manual procedure with a documented checklist; automating SIGKILL races in CI is brittle and not worth the flake budget. The unit tests in Plan 2 already establish that `writeFileAtomic` cleans `.tmp` on failure and that `rename` is the only step that can leave a partial state.
@@ -31,23 +31,25 @@ Two-part finish for phase 04: (1) migrate the three phase-2 disk writers (`recen
 
 ## Files Touched (cumulative for this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/recent.ts` | Modify (swap import + call) | 6.1 |
-| `electron/services/grove.ts` | Modify (swap project.json writes) | 6.2 |
-| `electron/services/lockfile.ts` | Modify (swap + add chmod) | 6.3 |
-| `electron/ipc/file.smoke.test.ts` | Create | 7.1–7.4, 7.6–7.8 |
-| `docs/runbooks/phase-04-power-loss.md` | Create | 7.5 |
-| (none) | Coverage / validate runs only | 7.9, 7.10 |
+| Path                                   | Action                            | Owner task       |
+| -------------------------------------- | --------------------------------- | ---------------- |
+| `electron/services/recent.ts`          | Modify (swap import + call)       | 6.1              |
+| `electron/services/grove.ts`           | Modify (swap project.json writes) | 6.2              |
+| `electron/services/lockfile.ts`        | Modify (swap + add chmod)         | 6.3              |
+| `electron/ipc/file.smoke.test.ts`      | Create                            | 7.1–7.4, 7.6–7.8 |
+| `docs/runbooks/phase-04-power-loss.md` | Create                            | 7.5              |
+| (none)                                 | Coverage / validate runs only     | 7.9, 7.10        |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Migrate `recent.save` to `writeFileAtomic`
 
 **Files:**
+
 - Modify: `electron/services/recent.ts`
 
 - [ ] **Step 1: Locate the current write path**
@@ -64,7 +66,7 @@ Expected: at least one call (e.g. `await atomicWriteJson(path, value)`).
 npx vitest run electron/services/recent
 ```
 
-Expected: phase-2 tests for recent.ts all pass. Note any flaky tests *before* changing anything; the migration must not introduce new failures.
+Expected: phase-2 tests for recent.ts all pass. Note any flaky tests _before_ changing anything; the migration must not introduce new failures.
 
 - [ ] **Step 3: Swap the import + call**
 
@@ -114,9 +116,11 @@ git commit -m "refactor(phase-04): recent.save uses fs-atomic.writeFileAtomic"
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Migrate `project.json` writes to `writeFileAtomic`
 
 **Files:**
+
 - Modify: `electron/services/grove.ts`
 
 - [ ] **Step 1: Find all callsites**
@@ -174,9 +178,11 @@ git commit -m "refactor(phase-04): grove writes project.json via fs-atomic.write
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: Migrate `.lock` writer (preserve `0o600` mode)
 
 **Files:**
+
 - Modify: `electron/services/lockfile.ts`
 
 - [ ] **Step 1: Find the lock-write callsites**
@@ -281,9 +287,11 @@ git commit -m "refactor(phase-04): lockfile uses fs-atomic.writeFileAtomic + chm
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: Smoke — new md write+read (UTF-8, LF, no BOM)
 
 **Files:**
+
 - Create: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Create the smoke harness**
@@ -351,9 +359,11 @@ git commit -m "test(phase-04): smoke 7.1 — fresh md write+read (LF, no BOM)"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 5: Smoke — read a UTF-8 BOM file → hadBom: true, content stripped
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -401,9 +411,11 @@ git commit -m "test(phase-04): smoke 7.2 — UTF-8 BOM strip on read; no BOM on 
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 6: Smoke — GBK file → originalEncoding 'gbk'; write back as UTF-8
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -450,9 +462,11 @@ git commit -m "test(phase-04): smoke 7.3 — GBK read → UTF-8 round-trip"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 7: Smoke — CRLF file preserved on write
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -501,9 +515,11 @@ git commit -m "test(phase-04): smoke 7.4 — CRLF preserved when caller passes e
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 8: Manual power-loss procedure (runbook)
 
 **Files:**
+
 - Create: `docs/runbooks/phase-04-power-loss.md`
 
 This is a **manual** test that the engineer runs once at the end of the phase. Automating SIGKILL races in CI is brittle and the unit-test layer (Plans 1+2) already establishes the building blocks — `.tmp` cleanup on failure, fsync before rename, `Map<absPath>` lock that releases on error.
@@ -512,7 +528,7 @@ This is a **manual** test that the engineer runs once at the end of the phase. A
 
 Create `docs/runbooks/phase-04-power-loss.md`:
 
-```markdown
+````markdown
 # Phase 04 — Power-loss / kill-9 acceptance check
 
 This runbook verifies that `writeFileAtomic` leaves the on-disk state intact when
@@ -533,6 +549,7 @@ In the DevTools console:
 const payload = '# big\n' + 'lorem ipsum '.repeat(500_000)
 window.api.file.write('big.md', payload).then(() => console.log('done'))
 ```
+````
 
 While the write is running (you can verify by `ls -la /tmp/grove-pwrloss/` from a
 terminal — you should see a `big.md.<uuid>.tmp` file briefly), kill the Electron
@@ -560,7 +577,8 @@ tmp files.
 
 Both bullets above check out across at least one successful kill mid-write run.
 Document the run in the change PR description.
-```
+
+````
 
 - [ ] **Step 2: Run the procedure once and record the outcome in the PR description**
 
@@ -571,14 +589,16 @@ Document the run in the change PR description.
 ```bash
 git add docs/runbooks/phase-04-power-loss.md
 git commit -m "docs(phase-04): runbook for kill-9 power-loss acceptance test"
-```
+````
 
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 9: Smoke — path traversal → E_PERMISSION
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -633,9 +653,11 @@ git commit -m "test(phase-04): smoke 7.6 — path traversal blocked across read/
 ---
 
 <!-- openspec-task: 7.7 -->
+
 ### Task 10: Smoke — mtime optimistic lock → E_MTIME_MISMATCH
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -690,9 +712,11 @@ git commit -m "test(phase-04): smoke 7.7 — mtime optimistic lock E_MTIME_MISMA
 ---
 
 <!-- openspec-task: 7.8 -->
+
 ### Task 11: Smoke — frontmatter full-field roundtrip
 
 **Files:**
+
 - Modify: `electron/ipc/file.smoke.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -764,9 +788,11 @@ git commit -m "test(phase-04): smoke 7.8 — frontmatter full-field roundtrip vi
 ---
 
 <!-- openspec-task: 7.9 -->
+
 ### Task 12: Coverage gate — fs-atomic.ts and path-safety.ts ≥85%
 
 **Files:**
+
 - (no edits — coverage run only)
 
 - [ ] **Step 1: Make sure `@vitest/coverage-v8` is installed**
@@ -820,9 +846,11 @@ git diff --cached --quiet || git commit -m "test(phase-04): close coverage gaps 
 ---
 
 <!-- openspec-task: 7.10 -->
+
 ### Task 13: `openspec validate phase-04-file-io-atomic --strict`
 
 **Files:**
+
 - (no edits expected — validation run only)
 
 - [ ] **Step 1: Run the strict validate**

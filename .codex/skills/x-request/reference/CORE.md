@@ -11,11 +11,11 @@ XRequest has built-in reasonable default configurations, **no additional configu
 
 ## 🔐 Authentication Configuration Comparison
 
-| Environment Type | Configuration Method | Security | Example |
-| --- | --- | --- | --- |
+| Environment Type     | Configuration Method             | Security  | Example                       |
+| -------------------- | -------------------------------- | --------- | ----------------------------- |
 | **Frontend Browser** | ❌ Prohibit direct configuration | Dangerous | Keys will be exposed to users |
-| **Node.js** | ✅ Environment variables | Safe | `process.env.API_KEY` |
-| **Proxy Service** | ✅ Same-origin proxy | Safe | `/api/proxy/chat` |
+| **Node.js**          | ✅ Environment variables         | Safe      | `process.env.API_KEY`         |
+| **Proxy Service**    | ✅ Same-origin proxy             | Safe      | `/api/proxy/chat`             |
 
 ## 🛡️ Security Configuration Templates
 
@@ -25,49 +25,49 @@ XRequest has built-in reasonable default configurations, **no additional configu
 const nodeConfig = {
   baseURL: 'https://api.openai.com/v1',
   headers: {
-    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-  },
-};
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+  }
+}
 ```
 
 **Frontend Environment Security Configuration**:
 
 ```typescript
 const browserConfig = {
-  baseURL: '/api/proxy/openai', // Through same-origin proxy
-};
+  baseURL: '/api/proxy/openai' // Through same-origin proxy
+}
 ```
 
 # 3. Basic Usage
 
 ```typescript
-import { XRequest } from '@ant-design/x-sdk';
+import { XRequest } from '@ant-design/x-sdk'
 
 // ⚠️ Note: The following examples apply to Node.js environment
 // Frontend environments should use proxy services to avoid token leakage
 const request = XRequest('https://your-api.com/chat', {
   headers: {
-    Authorization: 'Bearer your-token', // ⚠️ Only for Node.js environment
+    Authorization: 'Bearer your-token' // ⚠️ Only for Node.js environment
   },
   params: {
-    query: 'Hello',
+    query: 'Hello'
   },
   manual: true, // ⚠️ Must be set to true when used in provider
   callbacks: {
     onSuccess: (messages) => {
-      setStatus('success');
-      console.log('onSuccess', messages);
+      setStatus('success')
+      console.log('onSuccess', messages)
     },
     onError: (error) => {
-      setStatus('error');
-      console.error('onError', error);
+      setStatus('error')
+      console.error('onError', error)
     },
     onUpdate: (msg) => {
-      setLines((pre) => [...pre, msg]);
-      console.log('onUpdate', msg);
-    },
-  },
-});
+      setLines((pre) => [...pre, msg])
+      console.log('onUpdate', msg)
+    }
+  }
+})
 ```
 
 > ⚠️ **Important Reminder**: When XRequest is used in x-chat-provider or use-x-chat provider, `manual: true` is a required configuration, otherwise the request will be sent immediately instead of waiting for invocation.
@@ -96,17 +96,17 @@ const streamConfig = {
   params: {
     stream: true, // Enable streaming response
     model: 'gpt-3.5-turbo',
-    max_tokens: 1000,
+    max_tokens: 1000
   },
-  manual: true, // Manual control of requests
-};
+  manual: true // Manual control of requests
+}
 
 // Non-streaming response configuration (regular API scenarios)
 const jsonConfig = {
   params: {
-    stream: false, // Disable streaming response
-  },
-};
+    stream: false // Disable streaming response
+  }
+}
 ```
 
 # 5. Dynamic Request Headers
@@ -125,12 +125,12 @@ const jsonConfig = {
 // ✅ Safe: Node.js environment uses environment variables
 const request = XRequest('https://your-api.com/chat', {
   headers: {
-    Authorization: `Bearer ${process.env.API_KEY}`, // Safe for Node.js environment
+    Authorization: `Bearer ${process.env.API_KEY}` // Safe for Node.js environment
   },
   params: {
-    messages: [{ role: 'user', content: 'Hello' }],
-  },
-});
+    messages: [{ role: 'user', content: 'Hello' }]
+  }
+})
 
 // ✅ Safe: Frontend uses proxy service
 const request = XRequest('/api/proxy/chat', {
@@ -138,9 +138,9 @@ const request = XRequest('/api/proxy/chat', {
     // No Authorization needed, handled by backend proxy
   },
   params: {
-    messages: [{ role: 'user', content: 'Hello' }],
-  },
-});
+    messages: [{ role: 'user', content: 'Hello' }]
+  }
+})
 ```
 
 # 6. Custom Stream Transformers
@@ -156,21 +156,21 @@ const request = XRequest('https://api.example.com/chat', {
     new TransformStream({
       transform(chunk, controller) {
         // TextDecoder converts binary data to string
-        const text = new TextDecoder().decode(chunk);
-        const lines = text.split('\n');
+        const text = new TextDecoder().decode(chunk)
+        const lines = text.split('\n')
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+            const data = line.slice(6)
             if (data !== '[DONE]') {
               // TextEncoder converts string back to binary
-              controller.enqueue(new TextEncoder().encode(data));
+              controller.enqueue(new TextEncoder().encode(data))
             }
           }
         }
-      },
-    }),
-});
+      }
+    })
+})
 ```
 
 #### Common Transformation Templates
@@ -180,18 +180,18 @@ const request = XRequest('https://api.example.com/chat', {
 const openaiStream = () =>
   new TransformStream({
     transform(chunk, controller) {
-      const text = new TextDecoder().decode(chunk);
-      const data = JSON.parse(text);
-      const content = data.choices?.[0]?.delta?.content || '';
-      controller.enqueue(new TextEncoder().encode(content));
-    },
-  });
+      const text = new TextDecoder().decode(chunk)
+      const data = JSON.parse(text)
+      const content = data.choices?.[0]?.delta?.content || ''
+      controller.enqueue(new TextEncoder().encode(content))
+    }
+  })
 
 // Usage example
 const request = XRequest(url, {
   params: { message: 'Hello' },
-  transformStream: openaiStream,
-});
+  transformStream: openaiStream
+})
 ```
 
 > ⚠️ **Note**: ReadableStream can only be locked by one reader, avoid reusing the same instance.
@@ -213,10 +213,10 @@ transformStream: () =>
   new TransformStream({
     transform(chunk, controller) {
       // Safe approach: check type first
-      const text = typeof chunk === 'string' ? chunk : new TextDecoder().decode(chunk);
+      const text = typeof chunk === 'string' ? chunk : new TextDecoder().decode(chunk)
 
       // Now text is definitely a string
-      controller.enqueue(text);
-    },
-  });
+      controller.enqueue(text)
+    }
+  })
 ```

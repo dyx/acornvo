@@ -30,10 +30,10 @@ Build `electron/services/db.ts`: a module-scoped singleton that owns the per-gro
 
 ## Files Touched
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/db.ts` | Create | 4.1–4.8 |
-| `electron/services/db.test.ts` | Create | 4.2–4.7 |
+| Path                                       | Action | Owner task                                      |
+| ------------------------------------------ | ------ | ----------------------------------------------- |
+| `electron/services/db.ts`                  | Create | 4.1–4.8                                         |
+| `electron/services/db.test.ts`             | Create | 4.2–4.7                                         |
 | `electron/services/db/migrations/index.ts` | Create | 4.5 (helper for migrations dir path resolution) |
 
 ---
@@ -41,9 +41,11 @@ Build `electron/services/db.ts`: a module-scoped singleton that owns the per-gro
 ## Tasks
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: Module skeleton + private state
 
 **Files:**
+
 - Create: `electron/services/db.ts`
 
 - [ ] **Step 1: Create the file with module-scoped state and a stub export**
@@ -96,9 +98,11 @@ git commit -m "feat(phase-03): db.ts skeleton with module-scoped current/current
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: `applyPragmas(db)` — RED then GREEN
 
 **Files:**
+
 - Create: `electron/services/db.test.ts`
 - Modify: `electron/services/db.ts`
 
@@ -177,9 +181,11 @@ git commit -m "feat(phase-03): applyPragmas configures WAL + perf knobs"
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: `integrityCheck(db)` — returns `'ok'` or error string
 
 **Files:**
+
 - Modify: `electron/services/db.ts`
 - Modify: `electron/services/db.test.ts`
 
@@ -242,9 +248,11 @@ git commit -m "feat(phase-03): integrityCheck wraps PRAGMA integrity_check"
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 4: `backupAndRebuild(grovePath)` — rename + emit IPC events
 
 **Files:**
+
 - Modify: `electron/services/db.ts`
 - Modify: `electron/services/db.test.ts`
 
@@ -369,9 +377,11 @@ git commit -m "feat(phase-03): backupCorruptDb renames index.db* + emits db:rebu
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 5: `openForGrove(grovePath)` — full pipeline
 
 **Files:**
+
 - Create: `electron/services/db/migrations/index.ts` (helper to resolve migrations dir from inside the bundled main)
 - Modify: `electron/services/db.ts`
 - Modify: `electron/services/db.test.ts`
@@ -506,6 +516,7 @@ export function openForGrove(grovePath: string): void {
 ```
 
 > **Note:** the import `Database from 'better-sqlite3'` (default import) is what gives us the constructor — the namespaced `import type Database` from Task 1 stays for the type. You may need to consolidate the two:
+>
 > ```ts
 > import Database from 'better-sqlite3'
 > // Database (the default) is the constructor; Database.Database is the instance type.
@@ -529,9 +540,11 @@ git commit -m "feat(phase-03): openForGrove pipeline (pragmas → integrity → 
 ---
 
 <!-- openspec-task: 4.6 -->
+
 ### Task 6: `closeCurrent()` — wal_checkpoint TRUNCATE → PASSIVE → close
 
 **Files:**
+
 - Modify: `electron/services/db.test.ts`
 
 > The `closeCurrent` implementation already landed in Task 5. This task is the **dedicated test** that pins the contract.
@@ -596,9 +609,11 @@ git commit -m "test(phase-03): closeCurrent truncates WAL + clears singleton"
 ---
 
 <!-- openspec-task: 4.7 -->
+
 ### Task 7: `getCurrent()` / `requireCurrent()`
 
 **Files:**
+
 - Modify: `electron/services/db.ts`
 - Modify: `electron/services/db.test.ts`
 
@@ -670,9 +685,11 @@ git commit -m "feat(phase-03): requireCurrent throws E_NOT_FOUND when no grove o
 ---
 
 <!-- openspec-task: 4.8 -->
+
 ### Task 8: Export typed `dbService` singleton
 
 **Files:**
+
 - Modify: `electron/services/db.ts`
 - Modify: `electron/services/db.test.ts`
 

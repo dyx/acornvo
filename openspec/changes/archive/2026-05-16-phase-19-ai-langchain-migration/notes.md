@@ -16,6 +16,7 @@ electron/ai/providers/openai.ts:1:import { createParser } from 'eventsource-pars
 ```
 
 Findings:
+
 - Only two import sites, both inside `electron/ai/providers/**`.
 - These provider files are slated for deletion in Plan 5/6 (tasks 7.10–9.4).
 - Therefore `eventsource-parser` must remain in `package.json` until those providers are removed; cleanup is deferred to Plan 6/6 (tasks 9.5/9.6).
@@ -46,6 +47,7 @@ electron/ai/providers/openai.ts:4:import { parseAndValidate } from '../parse-too
 ```
 
 Findings:
+
 - All `ajv` / `ajv-formats` imports live inside `electron/ai/**`. No `shared/**` or `src/**` consumer was found (e.g. `shared/frontmatter-schema.ts` / `shared/schemas/` do not exist or do not import ajv).
 - `electron/ai/parse-json.ts` is still consumed by `electron/ai/client.ts` (dynamic import) — i.e. by code outside `electron/ai/providers/**`. Its test (`prompts/review-clip.test.ts`) also pulls ajv directly.
 - Therefore `ajv` and `ajv-formats` MUST be retained in `dependencies` for now. Whether they can be removed after the migration depends on whether `parse-json.ts` / `parse-tool-args.ts` survive Plan 5/6 — flag for re-evaluation during that cleanup phase, but do NOT remove during Plan 1/6.

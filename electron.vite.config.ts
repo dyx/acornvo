@@ -7,8 +7,11 @@ import type { Plugin } from 'vite'
 
 function gitHash(): string {
   if (process.env.NODE_ENV !== 'production') return 'dev'
-  try { return execSync('git rev-parse --short HEAD').toString('utf8').trim() }
-  catch { return 'dev' }
+  try {
+    return execSync('git rev-parse --short HEAD').toString('utf8').trim()
+  } catch {
+    return 'dev'
+  }
 }
 const HASH = JSON.stringify(gitHash())
 
@@ -36,7 +39,9 @@ function copyMigrationFiles(): Plugin {
       const dest = outputOptions.dir ?? ''
       if (!existsSync(src)) return
       mkdirSync(dest, { recursive: true })
-      for (const file of readdirSync(src).filter((name) => name.endsWith('.sql')).sort()) {
+      for (const file of readdirSync(src)
+        .filter((name) => name.endsWith('.sql'))
+        .sort()) {
         cpSync(resolve(src, file), join(dest, file))
       }
       console.log('[copy-migration-files] copied SQL files to', dest)

@@ -5,33 +5,33 @@ In-browser chat with custom model adapter.
 ## Basic Usage
 
 ```tsx
-import { useLocalRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useLocalRuntime, AssistantRuntimeProvider } from '@assistant-ui/react'
+import { Thread } from '@/components/assistant-ui/thread'
 
 function App() {
   const runtime = useLocalRuntime({
     model: {
       async run({ messages, abortSignal }) {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages }),
-          signal: abortSignal,
-        });
+          signal: abortSignal
+        })
 
-        const data = await response.json();
+        const data = await response.json()
         return {
-          content: [{ type: "text", text: data.text }],
-        };
-      },
-    },
-  });
+          content: [{ type: 'text', text: data.text }]
+        }
+      }
+    }
+  })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread />
     </AssistantRuntimeProvider>
-  );
+  )
 }
 ```
 
@@ -43,52 +43,52 @@ Use a generator and emit `ChatModelRunResult` chunks (append-only content parts)
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages }),
-        signal: abortSignal,
-      });
+        signal: abortSignal
+      })
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
       while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const { done, value } = await reader.read()
+        if (done) break
 
-        buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true })
 
         // Split on newlines for this plain-text example (not Data Stream)
-        const parts = buffer.split("\n");
-        buffer = parts.pop() ?? "";
+        const parts = buffer.split('\n')
+        buffer = parts.pop() ?? ''
 
         for (const textChunk of parts.filter(Boolean)) {
           yield {
-            content: [{ type: "text", text: textChunk }],
-          };
+            content: [{ type: 'text', text: textChunk }]
+          }
         }
       }
 
       if (buffer) {
-        yield { content: [{ type: "text", text: buffer }] };
+        yield { content: [{ type: 'text', text: buffer }] }
       }
-    },
-  },
-});
+    }
+  }
+})
 ```
 
 ## Options
 
 ```tsx
 interface LocalRuntimeOptions {
-  model: ChatModelAdapter;
-  initialMessages?: ThreadMessage[];
+  model: ChatModelAdapter
+  initialMessages?: ThreadMessage[]
   adapters?: {
-    attachments?: AttachmentAdapter;
-    feedback?: FeedbackAdapter;
-    speech?: SpeechSynthesisAdapter;
-  };
+    attachments?: AttachmentAdapter
+    feedback?: FeedbackAdapter
+    speech?: SpeechSynthesisAdapter
+  }
 }
 ```
 
@@ -96,62 +96,62 @@ interface LocalRuntimeOptions {
 
 ```tsx
 interface ChatModelAdapter {
-  run(options: ChatModelRunOptions): Promise<ChatModelRunResult> | AsyncGenerator<ChatModelRunResult>;
+  run(
+    options: ChatModelRunOptions
+  ): Promise<ChatModelRunResult> | AsyncGenerator<ChatModelRunResult>
 }
 
 interface ChatModelRunOptions {
-  messages: ThreadMessage[];
-  abortSignal: AbortSignal;
-  config?: Record<string, unknown>;
+  messages: ThreadMessage[]
+  abortSignal: AbortSignal
+  config?: Record<string, unknown>
 }
 
-type ChatModelRunResult =
-  | ChatModelRunResultFinal
-  | ChatModelRunResultStream;
+type ChatModelRunResult = ChatModelRunResultFinal | ChatModelRunResultStream
 
 interface ChatModelRunResultFinal {
-  content: MessagePart[];
+  content: MessagePart[]
 }
 
 // Streamed chunks are ChatModelRunResult objects
-type ChatModelRunResultStream = ChatModelRunResult;
+type ChatModelRunResultStream = ChatModelRunResult
 ```
 
 ## With OpenAI Direct
 
 ```tsx
-import OpenAI from "openai";
+import OpenAI from 'openai'
 
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true, // Only for demos
-});
+  dangerouslyAllowBrowser: true // Only for demos
+})
 
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: 'gpt-4o',
         messages: messages.map((m) => ({
           role: m.role,
           content: m.content
-            .filter((p): p is { type: "text"; text: string } => p.type === "text")
+            .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
             .map((p) => p.text)
-            .join(""),
+            .join('')
         })),
-        stream: true,
-      });
+        stream: true
+      })
 
       for await (const chunk of stream) {
-        if (abortSignal.aborted) break;
-        const delta = chunk.choices[0]?.delta?.content;
+        if (abortSignal.aborted) break
+        const delta = chunk.choices[0]?.delta?.content
         if (delta) {
-          yield { content: [{ type: "text", text: delta }] };
+          yield { content: [{ type: 'text', text: delta }] }
         }
       }
-    },
-  },
-});
+    }
+  }
+})
 ```
 
 ## With Tools
@@ -162,41 +162,41 @@ Emit tool calls as message parts (`type: "tool-call"`) and include `argsText` pl
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const toolCallId = "1";
+      const toolCallId = '1'
 
       // Yield tool call with parsed arguments
       yield {
         content: [
           {
-            type: "tool-call",
+            type: 'tool-call',
             toolCallId,
-            toolName: "get_weather",
-            args: { city: "NYC" },
-            argsText: '{"city":"NYC"}',
-          },
-        ],
-      };
+            toolName: 'get_weather',
+            args: { city: 'NYC' },
+            argsText: '{"city":"NYC"}'
+          }
+        ]
+      }
 
       // Execute tool
-      const result = await getWeather({ city: "NYC" });
+      const result = await getWeather({ city: 'NYC' })
 
       // Send result on the same tool-call part
       yield {
         content: [
           {
-            type: "tool-call",
+            type: 'tool-call',
             toolCallId,
-            toolName: "get_weather",
-            args: { city: "NYC" },
+            toolName: 'get_weather',
+            args: { city: 'NYC' },
             argsText: '{"city":"NYC"}',
-            result,
+            result
           },
-          { type: "text", text: `The weather in NYC is ${result.temp}°C` },
-        ],
-      };
-    },
-  },
-});
+          { type: 'text', text: `The weather in NYC is ${result.temp}°C` }
+        ]
+      }
+    }
+  }
+})
 ```
 
 ## With Attachments
@@ -206,38 +206,38 @@ const runtime = useLocalRuntime({
   model: {
     async run({ messages }) {
       // Access attachments from last message
-      const lastMessage = messages[messages.length - 1];
-      const attachments = lastMessage.attachments || [];
+      const lastMessage = messages[messages.length - 1]
+      const attachments = lastMessage.attachments || []
 
       // Process attachments
       for (const attachment of attachments) {
-        if (attachment.type === "image") {
+        if (attachment.type === 'image') {
           // Handle image
         }
       }
 
-      return { content: [{ type: "text", text: "Processed" }] };
-    },
+      return { content: [{ type: 'text', text: 'Processed' }] }
+    }
   },
   adapters: {
     attachments: {
-      accept: "image/*,application/pdf",
+      accept: 'image/*,application/pdf',
       async add({ file }) {
-        const url = URL.createObjectURL(file);
+        const url = URL.createObjectURL(file)
         return {
           id: crypto.randomUUID(),
           name: file.name,
-          type: file.type.startsWith("image/") ? "image" : "file",
-          url,
-        };
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          url
+        }
       },
       async send(attachment) {
-        return attachment;
+        return attachment
       },
-      async remove() {},
-    },
-  },
-});
+      async remove() {}
+    }
+  }
+})
 ```
 
 ## With Initial Messages
@@ -264,25 +264,25 @@ const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
+        const response = await fetch('/api/chat', {
+          method: 'POST',
           body: JSON.stringify({ messages }),
-          signal: abortSignal,
-        });
+          signal: abortSignal
+        })
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`HTTP ${response.status}`)
         }
 
         // ... process response
       } catch (error) {
-        if (error.name === "AbortError") {
+        if (error.name === 'AbortError') {
           // User cancelled - normal, don't throw
-          return;
+          return
         }
-        throw error; // Re-throw to show error in UI
+        throw error // Re-throw to show error in UI
       }
-    },
-  },
-});
+    }
+  }
+})
 ```

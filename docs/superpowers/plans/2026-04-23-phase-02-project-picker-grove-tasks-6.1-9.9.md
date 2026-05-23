@@ -14,24 +14,24 @@
 
 ## File Structure Map
 
-| Path | Role |
-|------|------|
-| `postcss.config.js` | Tailwind 4 PostCSS pipeline |
-| `src/index.css` | Tailwind base + design tokens (oklch palette from mockup) |
-| `components.json` | shadcn/ui config |
-| `src/lib/utils.ts` | `cn(...)` classnames helper used by shadcn |
-| `src/components/ui/button.tsx` | shadcn Button |
-| `src/components/ui/dialog.tsx` | shadcn Dialog |
-| `src/components/ui/input.tsx` | shadcn Input |
-| `src/components/ui/dropdown-menu.tsx` | shadcn DropdownMenu |
-| `src/components/ui/toast.tsx` + `toaster.tsx` + `use-toast.ts` | shadcn Toast |
-| `src/components/AcornLogo.tsx` | Brand SVG |
-| `src/components/ProjectCard.tsx` | Recent-list card (normal / invalid / locked states) |
-| `src/components/GroveSwitcher.tsx` | TitleBar dropdown |
-| `src/components/TakeoverDialog.tsx` | Force-takeover modal |
-| `src/components/TitleBar.tsx` | Wraps window title; slots GroveSwitcher |
-| `src/pages/ProjectPicker.tsx` | Full two-column layout (replaces Plan 1 stub) |
-| `src/i18n/locales/zh-CN.json` | `picker.*` / `switcher.*` / `takeover.*` keys |
+| Path                                                           | Role                                                      |
+| -------------------------------------------------------------- | --------------------------------------------------------- |
+| `postcss.config.js`                                            | Tailwind 4 PostCSS pipeline                               |
+| `src/index.css`                                                | Tailwind base + design tokens (oklch palette from mockup) |
+| `components.json`                                              | shadcn/ui config                                          |
+| `src/lib/utils.ts`                                             | `cn(...)` classnames helper used by shadcn                |
+| `src/components/ui/button.tsx`                                 | shadcn Button                                             |
+| `src/components/ui/dialog.tsx`                                 | shadcn Dialog                                             |
+| `src/components/ui/input.tsx`                                  | shadcn Input                                              |
+| `src/components/ui/dropdown-menu.tsx`                          | shadcn DropdownMenu                                       |
+| `src/components/ui/toast.tsx` + `toaster.tsx` + `use-toast.ts` | shadcn Toast                                              |
+| `src/components/AcornLogo.tsx`                                 | Brand SVG                                                 |
+| `src/components/ProjectCard.tsx`                               | Recent-list card (normal / invalid / locked states)       |
+| `src/components/GroveSwitcher.tsx`                             | TitleBar dropdown                                         |
+| `src/components/TakeoverDialog.tsx`                            | Force-takeover modal                                      |
+| `src/components/TitleBar.tsx`                                  | Wraps window title; slots GroveSwitcher                   |
+| `src/pages/ProjectPicker.tsx`                                  | Full two-column layout (replaces Plan 1 stub)             |
+| `src/i18n/locales/zh-CN.json`                                  | `picker.*` / `switcher.*` / `takeover.*` keys             |
 
 ---
 
@@ -45,9 +45,11 @@
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Set up Tailwind 4 + shadcn/ui foundation
 
 **Files:**
+
 - Modify: `package.json` (tailwind, @tailwindcss/postcss, postcss, autoprefixer, clsx, tailwind-merge, class-variance-authority, lucide-react, tailwindcss-animate, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, @radix-ui/react-toast, @radix-ui/react-slot)
 - Create: `postcss.config.js`
 - Create: `components.json`
@@ -57,6 +59,7 @@
 - [ ] **Step 1: Install dependencies**
 
 Run:
+
 ```bash
 npm install tailwindcss @tailwindcss/postcss postcss autoprefixer \
   clsx tailwind-merge class-variance-authority \
@@ -81,7 +84,7 @@ module.exports = {
 - [ ] **Step 3: Rewrite `src/index.css`**
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* oklch palette lifted from docs/ui/src/project-picker.jsx */
@@ -103,11 +106,11 @@ module.exports = {
   --color-berry-bg: oklch(0.94 0.03 25);
   --color-sky: oklch(0.6 0.1 220);
   --color-sky-bg: oklch(0.95 0.03 220);
-  --font-serif: "Noto Serif SC", "Source Han Serif", ui-serif, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif', ui-serif, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-paper: oklch(0.2 0.015 60);
   --color-paper-2: oklch(0.22 0.018 60);
   --color-paper-3: oklch(0.25 0.02 60);
@@ -128,7 +131,12 @@ body,
 body {
   background-color: var(--color-paper);
   color: var(--color-ink);
-  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -190,10 +198,12 @@ export function cn(...inputs: ClassValue[]): string {
 - [ ] **Step 6: Verify build pipeline**
 
 Run:
+
 ```bash
 npm run typecheck
 npm run dev
 ```
+
 Expected: dev window opens; no Tailwind/PostCSS error in console; existing Placeholder renders.
 
 Kill dev server.
@@ -208,9 +218,11 @@ git commit -m "chore(phase-02): install Tailwind 4 + shadcn/ui foundation"
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 2: Add shadcn primitives (Button, Dialog, Input, DropdownMenu, Toast)
 
 **Files:**
+
 - Create: `src/components/ui/button.tsx`
 - Create: `src/components/ui/dialog.tsx`
 - Create: `src/components/ui/input.tsx`
@@ -237,8 +249,7 @@ const buttonVariants = cva(
           'bg-[color:var(--color-acorn)] text-[color:var(--color-paper)] shadow-sm hover:brightness-105',
         outline:
           'bg-[color:var(--color-paper)] text-[color:var(--color-ink)] border border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper-2)]',
-        ghost:
-          'text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-2)]',
+        ghost: 'text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-2)]',
         destructive:
           'bg-[color:var(--color-berry)] text-[color:var(--color-paper)] hover:brightness-105'
       },
@@ -254,8 +265,7 @@ const buttonVariants = cva(
 )
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 
@@ -263,11 +273,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button'
     return (
-      <Comp
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      />
+      <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
     )
   }
 )
@@ -513,11 +519,7 @@ export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn('text-sm font-medium', className)}
-    {...props}
-  />
+  <ToastPrimitives.Title ref={ref} className={cn('text-sm font-medium', className)} {...props} />
 ))
 ToastTitle.displayName = ToastPrimitives.Title.displayName
 
@@ -626,9 +628,7 @@ import { Toaster } from '@/components/ui/toaster'
 export function App(): JSX.Element {
   return (
     <>
-      <Routes>
-        {/* ... existing routes ... */}
-      </Routes>
+      <Routes>{/* ... existing routes ... */}</Routes>
       <Toaster />
     </>
   )
@@ -638,9 +638,11 @@ export function App(): JSX.Element {
 - [ ] **Step 7: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -653,9 +655,11 @@ git commit -m "feat(phase-02): shadcn primitives (Button, Dialog, Input, Dropdow
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 3: `AcornLogo` SVG component
 
 **Files:**
+
 - Create: `src/components/AcornLogo.tsx`
 
 - [ ] **Step 1: Write the component**
@@ -669,7 +673,11 @@ export type AcornLogoProps = {
   theme?: 'default' | 'mono'
 }
 
-export function AcornLogo({ size = 28, className, theme = 'default' }: AcornLogoProps): JSX.Element {
+export function AcornLogo({
+  size = 28,
+  className,
+  theme = 'default'
+}: AcornLogoProps): JSX.Element {
   const cap = theme === 'mono' ? 'currentColor' : 'var(--color-acorn-2)'
   const body = theme === 'mono' ? 'currentColor' : 'var(--color-acorn)'
   const highlight = theme === 'mono' ? 'currentColor' : 'var(--color-acorn-bg)'
@@ -682,14 +690,8 @@ export function AcornLogo({ size = 28, className, theme = 'default' }: AcornLogo
       role="img"
       className={className}
     >
-      <path
-        d="M5 10 Q5 6 9 6 L19 6 Q23 6 23 10 L23 11 L5 11 Z"
-        fill={cap}
-      />
-      <path
-        d="M6 11 L22 11 Q22 21 14 23 Q6 21 6 11 Z"
-        fill={body}
-      />
+      <path d="M5 10 Q5 6 9 6 L19 6 Q23 6 23 10 L23 11 L5 11 Z" fill={cap} />
+      <path d="M6 11 L22 11 Q22 21 14 23 Q6 21 6 11 Z" fill={body} />
       <path d="M9 14 Q14 17 19 14" stroke={highlight} strokeWidth="1" fill="none" opacity="0.6" />
       <line x1="14" y1="2" x2="14" y2="6" stroke={cap} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
@@ -700,9 +702,11 @@ export function AcornLogo({ size = 28, className, theme = 'default' }: AcornLogo
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -715,9 +719,11 @@ git commit -m "feat(phase-02): AcornLogo SVG component"
 ---
 
 <!-- openspec-task: 6.7 -->
+
 ### Task 4: i18n keys for Picker / Switcher / Takeover
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Add keys**
@@ -793,10 +799,12 @@ Replace the file body with:
 - [ ] **Step 2: Verify i18n still loads**
 
 Run:
+
 ```bash
 npm run typecheck
 npm run dev
 ```
+
 Expected: app loads; no `MISSING_TRANSLATION` warning for the new keys (they just aren't referenced yet). Kill dev server.
 
 - [ ] **Step 3: Commit**
@@ -809,9 +817,11 @@ git commit -m "feat(phase-02): i18n keys for picker/switcher/takeover"
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 5: `ProjectCard` component with normal / invalid / locked states
 
 **Files:**
+
 - Create: `src/components/ProjectCard.tsx`
 
 - [ ] **Step 1: Write the component**
@@ -926,12 +936,7 @@ export function ProjectCard({
       </button>
 
       {invalid ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('common.remove')}
-          onClick={onRemove}
-        >
+        <Button variant="ghost" size="icon" aria-label={t('common.remove')} onClick={onRemove}>
           <X className="h-4 w-4" />
         </Button>
       ) : null}
@@ -949,9 +954,11 @@ export function ProjectCard({
 - [ ] **Step 2: Typecheck + lint**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -964,9 +971,11 @@ git commit -m "feat(phase-02): ProjectCard with normal/invalid/locked states"
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 6: `ProjectPicker` two-column layout skeleton
 
 **Files:**
+
 - Modify: `src/pages/ProjectPicker.tsx` (replace Plan 1 stub with full page)
 
 - [ ] **Step 1: Write the page**
@@ -1039,8 +1048,7 @@ export function ProjectPicker(): JSX.Element {
         <aside
           className="flex w-[420px] shrink-0 flex-col justify-between border-r border-[color:var(--color-line)] px-14 py-12"
           style={{
-            background:
-              'linear-gradient(180deg, transparent 0%, oklch(0.94 0.02 60 / 0.5) 100%)'
+            background: 'linear-gradient(180deg, transparent 0%, oklch(0.94 0.02 60 / 0.5) 100%)'
           }}
         >
           <div>
@@ -1149,15 +1157,17 @@ In `src/App.tsx` replace `<Route path="/picker" element={<Placeholder name="pick
 ```tsx
 import { ProjectPicker } from './pages/ProjectPicker'
 // ...
-<Route path="/picker" element={<ProjectPicker />} />
+;<Route path="/picker" element={<ProjectPicker />} />
 ```
 
 - [ ] **Step 3: Smoke-test**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Expected: window opens at `/picker` showing empty-state message, two action buttons (not wired yet — clicking emits CustomEvent but nothing responds). Left brand column renders with AcornLogo and subtitle.
 
 Kill dev server.
@@ -1172,9 +1182,11 @@ git commit -m "feat(phase-02): ProjectPicker two-column layout + empty state"
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 7: "New grove" flow — directory picker + naming dialog
 
 **Files:**
+
 - Create: `src/components/NewGroveDialog.tsx`
 - Modify: `src/pages/ProjectPicker.tsx` (replace `acorn:picker:new` CustomEvent with real handler + render dialog)
 
@@ -1203,7 +1215,11 @@ export type NewGroveDialogProps = {
   onCreated: (grovePath: string) => void
 }
 
-export function NewGroveDialog({ open, onOpenChange, onCreated }: NewGroveDialogProps): JSX.Element {
+export function NewGroveDialog({
+  open,
+  onOpenChange,
+  onCreated
+}: NewGroveDialogProps): JSX.Element {
   const { t } = useTranslation()
   const [parentDir, setParentDir] = useState<string>('')
   const [name, setName] = useState<string>('')
@@ -1325,28 +1341,29 @@ useEffect(() => {
 Render the dialog at the end of the component:
 
 ```tsx
-<NewGroveDialog
-  open={newOpen}
-  onOpenChange={setNewOpen}
-  onCreated={() => navigate('/library')}
-/>
+<NewGroveDialog open={newOpen} onOpenChange={setNewOpen} onCreated={() => navigate('/library')} />
 ```
 
 - [ ] **Step 3: Smoke-test**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Click `新建树林` → dialog opens. Click `选择父目录…` → native dialog opens (cancel for now). Type a name → `创建` should still be disabled until a parent is chosen. Choose a parent (e.g. `~/Desktop`) → `创建` enables. Click `创建` → dialog closes, window navigates to `/library` placeholder.
 
 Check filesystem:
+
 ```bash
 ls ~/Desktop/<the-name-you-typed>/.acornvo/
 ```
+
 Expected: `project.json`, `.nosync`, `.icloud` exist; `inbox/` and `assets/` exist at the grove root.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/<the-name-you-typed>
 ```
@@ -1363,9 +1380,11 @@ git commit -m "feat(phase-02): new grove flow — parent picker + naming dialog"
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 8: "Open existing directory" flow
 
 **Files:**
+
 - Modify: `src/pages/ProjectPicker.tsx` (wire `acorn:picker:open` handler)
 
 - [ ] **Step 1: Add handler**
@@ -1401,6 +1420,7 @@ useEffect(() => {
 - [ ] **Step 2: Smoke-test**
 
 Run:
+
 ```bash
 npm run dev
 ```
@@ -1414,6 +1434,7 @@ npm run dev
    Expected: `project.json`, `.nosync`, `.icloud`, and the existing `.obsidian/` is untouched.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/vault-test
 ```
@@ -1430,15 +1451,18 @@ git commit -m "feat(phase-02): open-existing flow with Obsidian vault auto-init"
 ---
 
 <!-- openspec-task: 6.6 -->
+
 ### Task 9: Confirm navigation to `/library` on every success path
 
 **Files:**
+
 - Modify: `src/pages/ProjectPicker.tsx` (audit all success paths)
 - Modify: `src/pages/Placeholder.tsx` (brief enhancement to verify navigation)
 
 - [ ] **Step 1: Audit `ProjectPicker.tsx`**
 
 Confirm each success branch calls `navigate('/library')`:
+
 - `handleOpen` on `status === 'opened'`
 - `handleTakeover` on `status === 'opened'`
 - `NewGroveDialog` `onCreated` → already navigates
@@ -1485,9 +1509,11 @@ git commit -m "feat(phase-02): audit navigate('/library') on all picker success 
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 10: `GroveSwitcher` trigger button
 
 **Files:**
+
 - Create: `src/components/GroveSwitcher.tsx`
 
 - [ ] **Step 1: Write the minimal trigger**
@@ -1541,9 +1567,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
           <ChevronDown className="h-3.5 w-3.5 text-[color:var(--color-ink-3)]" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {/* Populated in Task 11 */}
-      </DropdownMenuContent>
+      <DropdownMenuContent align="start">{/* Populated in Task 11 */}</DropdownMenuContent>
     </DropdownMenu>
   )
 }
@@ -1552,9 +1576,11 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1567,9 +1593,11 @@ git commit -m "feat(phase-02): GroveSwitcher trigger button"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 11: `GroveSwitcher` dropdown content (recent 5 + actions)
 
 **Files:**
+
 - Modify: `src/components/GroveSwitcher.tsx`
 
 - [ ] **Step 1: Fill in `DropdownMenuContent`**
@@ -1582,10 +1610,7 @@ import { Plus, FolderOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ipc } from '@/ipc/client'
 import { toast } from '@/hooks/use-toast'
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 ```
 
 Replace the empty `DropdownMenuContent` body with:
@@ -1601,10 +1626,7 @@ Replace the empty `DropdownMenuContent` body with:
         void handleSwitch(item.id)
       }}
     >
-      <span
-        className="h-2 w-2 rounded-sm"
-        style={{ background: dotColor[item.color] }}
-      />
+      <span className="h-2 w-2 rounded-sm" style={{ background: dotColor[item.color] }} />
       <span className="flex-1 truncate">{item.name}</span>
       {!item.valid ? (
         <span className="font-mono text-[10px] text-[color:var(--color-berry)]">
@@ -1685,9 +1707,11 @@ async function handleOpen(): Promise<void> {
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1700,9 +1724,11 @@ git commit -m "feat(phase-02): GroveSwitcher dropdown items — recent 5 + new/o
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 12: Route guard — hide GroveSwitcher on `/picker`
 
 **Files:**
+
 - Modify: `src/components/GroveSwitcher.tsx`
 
 - [ ] **Step 1: Return `null` when on Picker**
@@ -1719,9 +1745,11 @@ if (location.pathname === '/picker') return null
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1734,9 +1762,11 @@ git commit -m "feat(phase-02): hide GroveSwitcher on /picker route"
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 13: `TitleBar` component hosting `GroveSwitcher`
 
 **Files:**
+
 - Create: `src/components/TitleBar.tsx`
 - Modify: `src/App.tsx` (mount TitleBar above Routes, except when full-bleed routes need it hidden — here all routes share it)
 
@@ -1819,9 +1849,11 @@ git commit -m "feat(phase-02): TitleBar with GroveSwitcher slot"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 14: `TakeoverDialog` — render holder info
 
 **Files:**
+
 - Create: `src/components/TakeoverDialog.tsx`
 
 - [ ] **Step 1: Write the component**
@@ -1893,9 +1925,11 @@ export function TakeoverDialog({
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1908,9 +1942,11 @@ git commit -m "feat(phase-02): TakeoverDialog showing lock holder info"
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 15: Wire TakeoverDialog into Picker (cancel / force takeover)
 
 **Files:**
+
 - Modify: `src/pages/ProjectPicker.tsx`
 
 - [ ] **Step 1: Replace the inline "takeover" button flow with the dialog**
@@ -1971,26 +2007,30 @@ Also in the `acorn:picker:open` listener, when the result is `'locked'`:
 Render the dialog at the bottom of the component (after `<NewGroveDialog ... />`):
 
 ```tsx
-{takeover ? (
-  <TakeoverDialog
-    open={!!takeover}
-    onOpenChange={(o) => {
-      if (!o) setTakeover(null)
-    }}
-    grovePath={takeover.path}
-    holder={takeover.holder}
-    onConfirm={() => void confirmTakeover()}
-    pending={takeoverPending}
-  />
-) : null}
+{
+  takeover ? (
+    <TakeoverDialog
+      open={!!takeover}
+      onOpenChange={(o) => {
+        if (!o) setTakeover(null)
+      }}
+      grovePath={takeover.path}
+      holder={takeover.holder}
+      onConfirm={() => void confirmTakeover()}
+      pending={takeoverPending}
+    />
+  ) : null
+}
 ```
 
 - [ ] **Step 2: Typecheck**
 
 Run:
+
 ```bash
 npm run typecheck && npm run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -2003,14 +2043,17 @@ git commit -m "feat(phase-02): TakeoverDialog integrated into Picker with cancel
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 16: Success navigation + toast on takeover failure (audit)
 
 **Files:**
+
 - None — verification-only task
 
 - [ ] **Step 1: Verify behaviour**
 
 Read `confirmTakeover` added in Task 15 and confirm:
+
 - Success → `setTakeover(null)` + `navigate('/library')` ✓
 - Error → toast with variant `destructive` ✓
 - Still-locked → dialog remains open with refreshed holder ✓
@@ -2037,10 +2080,12 @@ ELECTRON_RENDERER_URL=http://localhost:5173 npx electron out/main/main.js
 (Or simply run `npm run dev` in Tab B — electron-vite picks a free port; both processes will hit the same grove when you open it.)
 
 In Tab B's window, try to open the same `~/Desktop/two-lock-test` → the Picker should mark the item as locked, and clicking its `接管` button opens the `TakeoverDialog`. Clicking `强制接管` should:
+
 - Navigate Tab B to `/library` with the grove
 - Tab A keeps its window but its next write will log an error — expected and accepted per the design doc.
 
 Kill both dev servers and clean up:
+
 ```bash
 rm -rf ~/Desktop/two-lock-test
 ```
@@ -2057,6 +2102,7 @@ git commit -m "fix(phase-02): takeover dialog branch audit adjustments"
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 17: Acceptance 9.1 — Fresh launch shows empty Picker
 
 **Files:** None (smoke-only)
@@ -2074,6 +2120,7 @@ npm run dev
 ```
 
 Expected:
+
 - Window opens directly on `/picker`.
 - Right column shows the empty-state card (`还没有任何树林…`).
 - Both action buttons visible; no errors in devtools console.
@@ -2087,6 +2134,7 @@ Edit `openspec/changes/phase-02-project-picker-grove/tasks.md` — change `- [ ]
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 18: Acceptance 9.2 — New grove creates correct directory structure
 
 - [ ] **Step 1: Run app + create a grove**
@@ -2094,6 +2142,7 @@ Edit `openspec/changes/phase-02-project-picker-grove/tasks.md` — change `- [ ]
 ```bash
 npm run dev
 ```
+
 Click `新建树林` → pick `~/Desktop` as parent → name it `test-grove-9.2` → click `创建`.
 
 - [ ] **Step 2: Assert directory layout**
@@ -2103,6 +2152,7 @@ ls -la ~/Desktop/test-grove-9.2 ~/Desktop/test-grove-9.2/.acornvo
 ```
 
 Expected output contains:
+
 - `~/Desktop/test-grove-9.2/.acornvo/project.json` (valid JSON, schema matches `ProjectJsonSchema`)
 - `~/Desktop/test-grove-9.2/.acornvo/.nosync`
 - `~/Desktop/test-grove-9.2/.acornvo/.icloud`
@@ -2110,12 +2160,15 @@ Expected output contains:
 - `~/Desktop/test-grove-9.2/assets/` (directory)
 
 Run:
+
 ```bash
 node -e 'const s = JSON.parse(require("fs").readFileSync(require("os").homedir() + "/Desktop/test-grove-9.2/.acornvo/project.json", "utf8")); console.log(s.id.length === 36, s.name === "test-grove-9.2", s.schema_version === 1)'
 ```
+
 Expected: `true true true`.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/test-grove-9.2
 ```
@@ -2125,6 +2178,7 @@ Kill dev server and tick task 9.2 in `tasks.md`.
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 19: Acceptance 9.3 — Restart auto-opens most recent grove
 
 - [ ] **Step 1: Seed a grove + quit cleanly**
@@ -2132,6 +2186,7 @@ Kill dev server and tick task 9.2 in `tasks.md`.
 ```bash
 npm run dev
 ```
+
 Create `~/Desktop/test-grove-9.3`. Close the window (Cmd+Q on macOS).
 
 - [ ] **Step 2: Launch again**
@@ -2141,11 +2196,13 @@ npm run dev
 ```
 
 Expected:
+
 - Window opens directly on `/library` (not `/picker`).
 - TitleBar shows `test-grove-9.3` with its colour dot.
 - Logs in `~/.acornvo/logs/main-<date>.log` contain a `grove opened` line.
 
 Kill dev server + clean up:
+
 ```bash
 rm -rf ~/Desktop/test-grove-9.3
 rm ~/.acornvo/recent-projects.json
@@ -2156,6 +2213,7 @@ Tick 9.3 in `tasks.md`.
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 20: Acceptance 9.4 — Second instance triggers takeover
 
 - [ ] **Step 1: Seed a grove**
@@ -2163,6 +2221,7 @@ Tick 9.3 in `tasks.md`.
 ```bash
 npm run dev
 ```
+
 Create `~/Desktop/test-grove-9.4`. **Do not** quit — leave the window running.
 
 - [ ] **Step 2: Launch a second instance**
@@ -2177,19 +2236,23 @@ ELECTRON_RENDERER_URL= npx electron out/main/main.js &
 (If running `npm run dev` twice, electron-vite will reject the second instance by default because of a single-instance lock. Build + run from `out/` sidesteps that and mirrors packaged behaviour.)
 
 The second window opens and auto-tries to open `test-grove-9.4` (from recent). Because the first instance holds the lock:
+
 - Second window lands on `/picker` with `test-grove-9.4` marked as 被占用 + `接管` button.
 - Clicking `接管` opens `TakeoverDialog` showing the first instance's pid + hostname.
 - Click `强制接管` → second window navigates to `/library` with the grove.
 
 Verify:
+
 ```bash
 cat ~/Desktop/test-grove-9.4/.acornvo/.lock
 ```
+
 Expected: the `pid` matches the second instance's process (not the first).
 
 Check first instance: if you click any action that would write (none in this phase — the first instance is now zombie-safe). Per design, further IPC writes may fail; acceptable.
 
 Kill both instances + clean up:
+
 ```bash
 rm -rf ~/Desktop/test-grove-9.4
 rm ~/.acornvo/recent-projects.json
@@ -2200,6 +2263,7 @@ Tick 9.4.
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 21: Acceptance 9.5 — Moved directory → invalid + remove
 
 - [ ] **Step 1: Seed a grove, quit, then move it**
@@ -2207,6 +2271,7 @@ Tick 9.4.
 ```bash
 npm run dev
 ```
+
 Create `~/Desktop/test-grove-9.5`. Close app. Then:
 
 ```bash
@@ -2220,16 +2285,19 @@ npm run dev
 ```
 
 Expected:
+
 - Window opens on `/picker` (auto-open failed — directory gone).
 - The recent-list card for `test-grove-9.5` is greyed out, shows `路径已失效`, and has a `×` remove button.
 
 - [ ] **Step 3: Click the `×` button**
 
 Expected:
+
 - Card disappears from the list.
 - `cat ~/.acornvo/recent-projects.json` shows the item gone.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/test-grove-9.5-moved
 rm ~/.acornvo/recent-projects.json
@@ -2240,6 +2308,7 @@ Tick 9.5.
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 22: Acceptance 9.6 — Obsidian vault auto-init
 
 - [ ] **Step 1: Prepare a fake Obsidian vault**
@@ -2254,15 +2323,18 @@ echo "# hello" > ~/Desktop/obsidian-vault/readme.md
 ```bash
 npm run dev
 ```
+
 Click `打开已有目录`, pick `~/Desktop/obsidian-vault`.
 
 Expected:
+
 - Window navigates to `/library`.
 - `ls -la ~/Desktop/obsidian-vault/.acornvo` shows `project.json`, `.nosync`, `.icloud`.
 - `ls ~/Desktop/obsidian-vault/.obsidian` still contains whatever was there (empty dir is fine).
 - `readme.md` unchanged.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/obsidian-vault
 rm ~/.acornvo/recent-projects.json
@@ -2273,6 +2345,7 @@ Tick 9.6.
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 23: Acceptance 9.7 — iCloud path → sync_warning + log
 
 - [ ] **Step 1: Create a grove under iCloud**
@@ -2284,9 +2357,11 @@ mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/acornvo-sync-test
 ```bash
 npm run dev
 ```
+
 Click `打开已有目录`, pick the directory above.
 
 Expected:
+
 - `project.json` contains `"sync_warning": "iCloud"`:
   ```bash
   cat "$HOME/Library/Mobile Documents/com~apple~CloudDocs/acornvo-sync-test/.acornvo/project.json" | grep sync_warning
@@ -2294,6 +2369,7 @@ Expected:
 - `~/.acornvo/logs/main-<date>.log` contains a line with `grove on cloud-sync path` and `"provider":"iCloud"`.
 
 Clean up:
+
 ```bash
 rm -rf "$HOME/Library/Mobile Documents/com~apple~CloudDocs/acornvo-sync-test"
 rm ~/.acornvo/recent-projects.json
@@ -2306,6 +2382,7 @@ Tick 9.7.
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 24: Acceptance 9.8 — Switcher menu + `project:changed`
 
 - [ ] **Step 1: Seed two groves**
@@ -2313,11 +2390,13 @@ Tick 9.7.
 ```bash
 npm run dev
 ```
+
 Create `~/Desktop/grove-A` and `~/Desktop/grove-B` one after another (after creating A, use the TitleBar GroveSwitcher → `新建树林…` to create B; it should return to Picker, create, then go back to `/library`).
 
 - [ ] **Step 2: Switch via TitleBar**
 
 From `/library` showing `grove-B`:
+
 - Open GroveSwitcher dropdown → click `grove-A` → window stays on `/library`, TitleBar title changes to `grove-A`.
 - Devtools console:
   ```javascript
@@ -2326,6 +2405,7 @@ From `/library` showing `grove-B`:
   Then switch back to `grove-B` — one `changed → grove-B` line should print.
 
 Clean up:
+
 ```bash
 rm -rf ~/Desktop/grove-A ~/Desktop/grove-B
 rm ~/.acornvo/recent-projects.json
@@ -2336,9 +2416,11 @@ Tick 9.8.
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 25: Acceptance 9.9 — `openspec validate --strict` passes + final commit
 
 **Files:**
+
 - Modify: `openspec/changes/phase-02-project-picker-grove/tasks.md` (tick all 9.x boxes)
 
 - [ ] **Step 1: Run the validator**
@@ -2350,6 +2432,7 @@ openspec validate phase-02-project-picker-grove --strict
 Expected: exit 0. No `ERROR` or `WARNING` lines.
 
 If the validator complains:
+
 - Missing capability coverage → go back to the task that implements it, add the missing piece.
 - Unreachable scenarios → trace through manually; if a scenario cannot be tested in this phase, document the reason in a follow-up change proposal rather than patching the spec.
 

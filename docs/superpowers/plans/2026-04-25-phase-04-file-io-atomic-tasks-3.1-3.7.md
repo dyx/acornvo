@@ -42,20 +42,22 @@ Build the heart of phase 04: a single `electron/services/fs-atomic.ts` module th
 
 ## Files Touched (cumulative for this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/ipc-contract.ts` | Modify (extend `IpcErrorCode`) | 3.5, 3.7 |
-| `electron/services/fs-atomic.ts` | Replace stub with real implementation | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 |
-| `electron/services/fs-atomic.test.ts` | Create | all |
+| Path                                  | Action                                | Owner task                        |
+| ------------------------------------- | ------------------------------------- | --------------------------------- |
+| `shared/ipc-contract.ts`              | Modify (extend `IpcErrorCode`)        | 3.5, 3.7                          |
+| `electron/services/fs-atomic.ts`      | Replace stub with real implementation | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 |
+| `electron/services/fs-atomic.test.ts` | Create                                | all                               |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: writeFileAtomic core (tmp + fsync + rename)
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts`
 - Create: `electron/services/fs-atomic.test.ts`
 
@@ -165,9 +167,11 @@ git commit -m "feat(phase-04): writeFileAtomic core (tmp + fsync + rename)"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: EXDEV fallback (copyFile + unlink)
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
 
@@ -273,9 +277,11 @@ git commit -m "feat(phase-04): writeFileAtomic EXDEV fallback (copyFile + unlink
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: EPERM / EBUSY retry (Windows AV resilience)
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
 
@@ -363,17 +369,17 @@ async function renameWithAvRetry(tmp: string, abs: string): Promise<void> {
 Then replace the `try { await rename(tmp, abs) }` block in `writeFileAtomic` with:
 
 ```ts
-  try {
-    await renameWithAvRetry(tmp, abs)
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'EXDEV') {
-      await copyFile(tmp, abs)
-      await unlink(tmp)
-      return
-    }
-    await unlink(tmp).catch(() => undefined)
-    throw err
+try {
+  await renameWithAvRetry(tmp, abs)
+} catch (err) {
+  if ((err as NodeJS.ErrnoException).code === 'EXDEV') {
+    await copyFile(tmp, abs)
+    await unlink(tmp)
+    return
   }
+  await unlink(tmp).catch(() => undefined)
+  throw err
+}
 ```
 
 - [ ] **Step 4: Run — all tests pass**
@@ -394,13 +400,15 @@ git commit -m "feat(phase-04): writeFileAtomic retries EPERM/EBUSY 2x at 50ms"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: Per-path serialization lock
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
 
-Two `writeFileAtomic` calls to the same `abs` path must serialize. Two calls to *different* paths must run in parallel.
+Two `writeFileAtomic` calls to the same `abs` path must serialize. Two calls to _different_ paths must run in parallel.
 
 - [ ] **Step 1: Add failing tests for serialization order + parallelism**
 
@@ -542,9 +550,11 @@ git commit -m "feat(phase-04): writeFileAtomic per-path serialization lock"
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 5: readFileDetect (encoding + EOL + BOM + sha256)
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (extend `IpcErrorCode` with `'E_ENCODING'`)
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
@@ -619,7 +629,10 @@ describe('readFileDetect', () => {
 
   it('strips a UTF-8 BOM and reports hadBom=true', async () => {
     const target = join(dir, 'bom.md')
-    writeFileSync(target, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')]))
+    writeFileSync(
+      target,
+      Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')])
+    )
     const r = await readFileDetect(target)
     expect(r.content).toBe('hi')
     expect(r.hadBom).toBe(true)
@@ -661,10 +674,7 @@ describe('readFileDetect', () => {
     // 0xc0 0x80 is a long-form NUL — invalid UTF-8 modified-UTF-8 form,
     // and high-byte sequences interleaved with control chars trigger GBK
     // replacement chars.
-    writeFileSync(
-      target,
-      Buffer.from([0xc0, 0x80, 0xfe, 0xff, 0xff, 0xfe, 0xc0, 0x80, 0xfe, 0xff])
-    )
+    writeFileSync(target, Buffer.from([0xc0, 0x80, 0xfe, 0xff, 0xff, 0xfe, 0xc0, 0x80, 0xfe, 0xff]))
     await expect(readFileDetect(target)).rejects.toBeInstanceOf(IpcError)
     await expect(readFileDetect(target)).rejects.toMatchObject({ code: 'E_ENCODING' })
   })
@@ -784,9 +794,11 @@ git commit -m "feat(phase-04): readFileDetect + E_ENCODING (UTF-8 BOM, GBK, EOL,
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 6: normalizeForDisk (LF → target EOL)
 
 **Files:**
+
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
 
@@ -858,9 +870,11 @@ git commit -m "feat(phase-04): normalizeForDisk LF/CRLF normalization"
 ---
 
 <!-- openspec-task: 3.7 -->
+
 ### Task 7: writeWithVerify (mtime check + sha256 verify + retry)
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (extend `IpcErrorCode` with `'E_WRITE_VERIFY'` and `'E_MTIME_MISMATCH'`)
 - Modify: `electron/services/fs-atomic.ts`
 - Modify: `electron/services/fs-atomic.test.ts`
@@ -1017,7 +1031,10 @@ export async function writeWithVerify(
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
       // File doesn't exist — caller said "I read mtime X" but the file is gone.
       // Treat as mismatch so they re-read and retry.
-      throw new IpcError('E_MTIME_MISMATCH', `${abs}: file not found (expected mtime ${opts.expectedMtime})`)
+      throw new IpcError(
+        'E_MTIME_MISMATCH',
+        `${abs}: file not found (expected mtime ${opts.expectedMtime})`
+      )
     }
     if (currentMtime !== opts.expectedMtime) {
       throw new IpcError(

@@ -5,9 +5,8 @@ license: MIT
 compatibility: Requires openspec CLI and Superpowers writing-plans skill.
 metadata:
   author: openspec
-  version: "0.1.0"
+  version: '0.1.0'
 ---
-
 
 Generate a detailed Superpowers implementation plan from an OpenSpec change's artifacts.
 
@@ -25,14 +24,17 @@ Generate a detailed Superpowers implementation plan from an OpenSpec change's ar
    Always announce: "Using change: <name>" and how to override.
 
 2. **Check status and load artifacts**
+
    ```bash
    openspec status --change '<name>' --json
    ```
+
    Parse the JSON to understand schema and artifact status.
 
    ```bash
    openspec instructions apply --change '<name>' --json
    ```
+
    Read all `contextFiles` (proposal, design, tasks, etc.).
 
    **If tasks artifact is missing or incomplete**: stop and suggest running `/opsx:propose` first.
@@ -66,12 +68,14 @@ Generate a detailed Superpowers implementation plan from an OpenSpec change's ar
    - Example:
      ```markdown
      <!-- openspec-task: 1.1 -->
+
      ### Task 1: Create HTML skeleton
      ```
    - One Superpowers task may map to exactly one OpenSpec task label
    - Multiple Superpowers tasks may share the same OpenSpec task label (when a coarse OpenSpec task maps to multiple fine-grained steps)
 
    **If the skill call fails** (Superpowers not installed): stop and display:
+
    > "Superpowers writing-plans skill not detected. Cannot create plan. Please install Superpowers first."
 
    Do not generate any plan files. Do not fall back to a different approach.
@@ -105,6 +109,7 @@ Generate a detailed Superpowers implementation plan from an OpenSpec change's ar
    **IMPORTANT:** Do NOT offer any other execution method. Do NOT suggest using `superpowers:subagent-driven-development` or `superpowers:executing-plans` directly. The only supported next step is `/opsx:executing-plans`.
 
 **Guardrails**
+
 - Change names must match `[A-Za-z0-9_-]+` — reject any name with spaces, quotes, or special characters before substituting into shell commands
 - Superpowers is a **hard dependency** — do not proceed without it
 - Always load OpenSpec artifacts before calling superpowers:writing-plans

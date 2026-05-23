@@ -13,7 +13,7 @@ type XAgentCommand_v0_9 =
   | { version: 'v0.9'; createSurface: CreateSurfacePayload }
   | { version: 'v0.9'; updateComponents: UpdateComponentsPayload }
   | { version: 'v0.9'; updateDataModel: UpdateDataModelPayload }
-  | { version: 'v0.9'; deleteSurface: DeleteSurfacePayload };
+  | { version: 'v0.9'; deleteSurface: DeleteSurfacePayload }
 ```
 
 ---
@@ -24,14 +24,14 @@ Initializes a new UI surface. Must be sent before any `updateComponents` or `upd
 
 ```typescript
 interface CreateSurfacePayload {
-  surfaceId: string; // Unique surface identifier
-  catalogId: string; // Catalog URI or local:// identifier
+  surfaceId: string // Unique surface identifier
+  catalogId: string // Catalog URI or local:// identifier
   theme?: {
-    primaryColor?: string; // Hex color e.g. "#00BFFF"
-    iconUrl?: string; // Agent logo URL
-    agentDisplayName?: string; // Display name in multi-agent systems
-  };
-  sendDataModel?: boolean; // If true, full data model sent with every action. Default: false
+    primaryColor?: string // Hex color e.g. "#00BFFF"
+    iconUrl?: string // Agent logo URL
+    agentDisplayName?: string // Display name in multi-agent systems
+  }
+  sendDataModel?: boolean // If true, full data model sent with every action. Default: false
 }
 ```
 
@@ -54,22 +54,22 @@ Sends a flat list of components (adjacency list). Can be called multiple times t
 
 ```typescript
 interface UpdateComponentsPayload {
-  surfaceId: string;
-  components: BaseComponent_v0_9[];
+  surfaceId: string
+  components: BaseComponent_v0_9[]
 }
 
 interface BaseComponent_v0_9 {
-  id: string; // Unique component ID within surface
-  component: string; // Component type name (must be in catalog)
-  child?: string; // Single child component ID
-  children?: string[] | ChildListTemplate; // Multiple child IDs or template
-  [key: string]: any | { path: string }; // All props support data binding
+  id: string // Unique component ID within surface
+  component: string // Component type name (must be in catalog)
+  child?: string // Single child component ID
+  children?: string[] | ChildListTemplate // Multiple child IDs or template
+  [key: string]: any | { path: string } // All props support data binding
 }
 
 // Template mode for List components
 interface ChildListTemplate {
-  path: string; // JSON Pointer to array in data model
-  componentId: string; // Template component ID to repeat per item
+  path: string // JSON Pointer to array in data model
+  componentId: string // Template component ID to repeat per item
 }
 ```
 
@@ -117,9 +117,9 @@ Updates a value in the surface's data model at a JSON Pointer path. Uses upsert 
 
 ```typescript
 interface UpdateDataModelPayload {
-  surfaceId: string;
-  path?: string; // JSON Pointer (RFC 6901). Defaults to "/" (full replace)
-  value?: any; // New value. If omitted, removes key at path
+  surfaceId: string
+  path?: string // JSON Pointer (RFC 6901). Defaults to "/" (full replace)
+  value?: any // New value. If omitted, removes key at path
 }
 ```
 
@@ -154,7 +154,7 @@ Removes a surface and all its components and data model.
 
 ```typescript
 interface DeleteSurfacePayload {
-  surfaceId: string;
+  surfaceId: string
 }
 ```
 
@@ -166,14 +166,14 @@ interface DeleteSurfacePayload {
 
 ## v0.8 vs v0.9
 
-| Aspect | v0.8 (deprecated) | v0.9 (recommended) |
-| --- | --- | --- |
-| Version field | None | `"version": "v0.9"` required |
-| Surface creation | Implicit on first `updateComponents` | Explicit `createSurface` |
-| Component structure | Nested `{ "Button": { props } }` | Flat `{ id, component: "Button", ...props }` |
-| Data updates | `dataModelUpdate` with `contents` array | `updateDataModel` with `path` + `value` |
-| Data model init | `contents: [{ key, valueString/valueMap }]` | `updateDataModel` with JSON path |
-| String literals | `{ "literalString": "text" }` | Plain string `"text"` |
+| Aspect              | v0.8 (deprecated)                           | v0.9 (recommended)                           |
+| ------------------- | ------------------------------------------- | -------------------------------------------- |
+| Version field       | None                                        | `"version": "v0.9"` required                 |
+| Surface creation    | Implicit on first `updateComponents`        | Explicit `createSurface`                     |
+| Component structure | Nested `{ "Button": { props } }`            | Flat `{ id, component: "Button", ...props }` |
+| Data updates        | `dataModelUpdate` with `contents` array     | `updateDataModel` with `path` + `value`      |
+| Data model init     | `contents: [{ key, valueString/valueMap }]` | `updateDataModel` with JSON path             |
+| String literals     | `{ "literalString": "text" }`               | Plain string `"text"`                        |
 
 **v0.8 example (do not use for new work):**
 

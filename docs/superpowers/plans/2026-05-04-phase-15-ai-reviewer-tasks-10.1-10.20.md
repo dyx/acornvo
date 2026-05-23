@@ -30,21 +30,23 @@ Verify all 20 acceptance criteria from `tasks.md` section 10. Each task is one c
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `tests/acceptance/phase-15/reviewer.test.ts` | Create | 10.2, 10.3, 10.10–10.15, 10.18 |
-| `tests/acceptance/phase-15/manual-smoke.md` | Create (smoke checklist) | 10.1, 10.4–10.9 |
-| `tests/acceptance/phase-15/no-secret-leak.test.ts` | Create | 10.19 |
-| `tests/acceptance/phase-15/providers.test.ts` | Create (gated) | 10.16, 10.17 |
+| Path                                               | Action                   | Owner task                     |
+| -------------------------------------------------- | ------------------------ | ------------------------------ |
+| `tests/acceptance/phase-15/reviewer.test.ts`       | Create                   | 10.2, 10.3, 10.10–10.15, 10.18 |
+| `tests/acceptance/phase-15/manual-smoke.md`        | Create (smoke checklist) | 10.1, 10.4–10.9                |
+| `tests/acceptance/phase-15/no-secret-leak.test.ts` | Create                   | 10.19                          |
+| `tests/acceptance/phase-15/providers.test.ts`      | Create (gated)           | 10.16, 10.17                   |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 10.1 -->
+
 ### Task 1: Configure OpenAI profile + clip an article (manual smoke)
 
 **Files:**
+
 - Create: `tests/acceptance/phase-15/manual-smoke.md`
 
 - [ ] **Step 1: Author the smoke checklist**
@@ -79,112 +81,129 @@ git commit -m "test(phase-15): manual-smoke checklist 10.1 — profile setup + c
 ---
 
 <!-- openspec-task: 10.2 -->
+
 ### Task 2: Job walks `pending → running → done`; frontmatter gains `ai_*` fields
 
 **Files:**
+
 - Create: `tests/acceptance/phase-15/reviewer.test.ts`
 
 - [ ] **Step 1: Write the integration test**
 
 ```ts
 // tests/acceptance/phase-15/reviewer.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import path from 'node:path';
-import os from 'node:os';
-import fs from 'node:fs';
-import Database from 'better-sqlite3';
-import { runMigrations } from '../../../electron/services/db/migrations';
-import { migrationsDir } from '../../../electron/services/db/migrations/index';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import path from 'node:path'
+import os from 'node:os'
+import fs from 'node:fs'
+import Database from 'better-sqlite3'
+import { runMigrations } from '../../../electron/services/db/migrations'
+import { migrationsDir } from '../../../electron/services/db/migrations/index'
 
-vi.mock('../../../electron/services/db/connection', () => ({ getDb: vi.fn() }));
-vi.mock('../../../electron/services/grove', () => ({ getCurrentVaultRoot: vi.fn() }));
+vi.mock('../../../electron/services/db/connection', () => ({ getDb: vi.fn() }))
+vi.mock('../../../electron/services/grove', () => ({ getCurrentVaultRoot: vi.fn() }))
 vi.mock('../../../electron/settings/store', () => ({
-  settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'p1' })) },
-}));
+  settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'p1' })) }
+}))
 vi.mock('../../../electron/settings/profiles', () => ({
-  profilesStore: { get: vi.fn() },
-}));
+  profilesStore: { get: vi.fn() }
+}))
 vi.mock('../../../electron/settings/profile-key', () => ({
-  getProfileDecryptedKey: vi.fn(() => 'sk-test'),
-}));
+  getProfileDecryptedKey: vi.fn(() => 'sk-test')
+}))
 
-import { getDb } from '../../../electron/services/db/connection';
-import { getCurrentVaultRoot } from '../../../electron/services/grove';
-import { profilesStore } from '../../../electron/settings/profiles';
-import { aiReviewClipHandler } from '../../../electron/queue/handlers/ai-review-clip';
-import { aiUsage } from '../../../electron/ai/usage';
+import { getDb } from '../../../electron/services/db/connection'
+import { getCurrentVaultRoot } from '../../../electron/services/grove'
+import { profilesStore } from '../../../electron/settings/profiles'
+import { aiReviewClipHandler } from '../../../electron/queue/handlers/ai-review-clip'
+import { aiUsage } from '../../../electron/ai/usage'
 
-const TMP = path.join(os.tmpdir(), 'phase15-acc-' + Date.now());
-fs.mkdirSync(TMP, { recursive: true });
+const TMP = path.join(os.tmpdir(), 'phase15-acc-' + Date.now())
+fs.mkdirSync(TMP, { recursive: true })
 
-let db: Database.Database;
-const fetchMock = vi.fn();
+let db: Database.Database
+const fetchMock = vi.fn()
 
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.stubGlobal('fetch', fetchMock);
-  db = new Database(':memory:');
-  runMigrations(db, migrationsDir());
-  (getDb as any).mockReturnValue(db);
-  (getCurrentVaultRoot as any).mockReturnValue(TMP);
-  (profilesStore.get as any).mockReturnValue({
-    id: 'p1', provider: 'openai', model: 'gpt-4o-mini', baseUrl: undefined,
-  });
-});
+  vi.resetAllMocks()
+  vi.stubGlobal('fetch', fetchMock)
+  db = new Database(':memory:')
+  runMigrations(db, migrationsDir())
+  ;(getDb as any).mockReturnValue(db)
+  ;(getCurrentVaultRoot as any).mockReturnValue(TMP)
+  ;(profilesStore.get as any).mockReturnValue({
+    id: 'p1',
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    baseUrl: undefined
+  })
+})
 
 function mockOpenAiSuccess() {
   fetchMock.mockResolvedValue({
-    ok: true, status: 200,
+    ok: true,
+    status: 200,
     json: async () => ({
       model: 'gpt-4o-mini',
-      choices: [{ message: { content: JSON.stringify({
-        summary: 'a short summary',
-        suggestedTitle: 'A Better Title',
-        tags: ['ai-tag-a', 'ai-tag-b', 'ai-tag-c'],
-        keyQuotes: ['the key quote'],
-      }) } }],
-      usage: { prompt_tokens: 200, completion_tokens: 80, total_tokens: 280 },
-    }),
-  });
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              summary: 'a short summary',
+              suggestedTitle: 'A Better Title',
+              tags: ['ai-tag-a', 'ai-tag-b', 'ai-tag-c'],
+              keyQuotes: ['the key quote']
+            })
+          }
+        }
+      ],
+      usage: { prompt_tokens: 200, completion_tokens: 80, total_tokens: 280 }
+    })
+  })
 }
 
 function seedClipAndFile(): { clipPath: string } {
-  const clipPath = 'inbox/ex.md';
-  fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
-  fs.writeFileSync(path.join(TMP, clipPath), `---
+  const clipPath = 'inbox/ex.md'
+  fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true })
+  fs.writeFileSync(
+    path.join(TMP, clipPath),
+    `---
 title: Example
 url: https://example.com/a
 ---
 the original body
-`);
-  db.prepare(`
+`
+  )
+  db.prepare(
+    `
     INSERT INTO clips (id, url, path, title, excerpt, content_length, degraded, clipped_at, created_at)
     VALUES (1, 'https://example.com/a', ?, 'Example', 'ex', 200, 0, '2026-05-04T00:00:00Z', '2026-05-04T00:00:00Z')
-  `).run(clipPath);
-  return { clipPath };
+  `
+  ).run(clipPath)
+  return { clipPath }
 }
 
 describe('10.2 — frontmatter gains ai_* fields after handler runs', () => {
   it('rewrites frontmatter with all five ai_* fields', async () => {
-    const { clipPath } = seedClipAndFile();
-    mockOpenAiSuccess();
+    const { clipPath } = seedClipAndFile()
+    mockOpenAiSuccess()
 
     const r = await aiReviewClipHandler({
       job: { id: 'job-1', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toEqual({ kind: 'ok' });
+      cancel: new AbortController().signal
+    })
+    expect(r).toEqual({ kind: 'ok' })
 
-    const raw = fs.readFileSync(path.join(TMP, clipPath), 'utf8');
-    expect(raw).toContain('ai_summary: a short summary');
-    expect(raw).toContain('ai_suggested_title: A Better Title');
-    expect(raw).toMatch(/ai_tags:[\s\S]*ai-tag-a[\s\S]*ai-tag-b[\s\S]*ai-tag-c/);
-    expect(raw).toMatch(/ai_key_quotes:[\s\S]*the key quote/);
-    expect(raw).toMatch(/ai_reviewed_at: ['"]?\d{4}-\d{2}-\d{2}T/);
-  });
-});
+    const raw = fs.readFileSync(path.join(TMP, clipPath), 'utf8')
+    expect(raw).toContain('ai_summary: a short summary')
+    expect(raw).toContain('ai_suggested_title: A Better Title')
+    expect(raw).toMatch(/ai_tags:[\s\S]*ai-tag-a[\s\S]*ai-tag-b[\s\S]*ai-tag-c/)
+    expect(raw).toMatch(/ai_key_quotes:[\s\S]*the key quote/)
+    expect(raw).toMatch(/ai_reviewed_at: ['"]?\d{4}-\d{2}-\d{2}T/)
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -202,6 +221,7 @@ git commit -m "test(phase-15): acceptance 10.2 — handler writes ai_* frontmatt
 ---
 
 <!-- openspec-task: 10.3 -->
+
 ### Task 3: `ai_usage` row recorded with ok=1, tokens, latency
 
 - [ ] **Step 1: Append test**
@@ -210,23 +230,23 @@ git commit -m "test(phase-15): acceptance 10.2 — handler writes ai_* frontmatt
 // tests/acceptance/phase-15/reviewer.test.ts — append
 describe('10.3 — ai_usage success row', () => {
   it('writes ok=1 with non-null tokens and latency_ms > 0', async () => {
-    const { clipPath } = seedClipAndFile();
-    mockOpenAiSuccess();
+    const { clipPath } = seedClipAndFile()
+    mockOpenAiSuccess()
     await aiReviewClipHandler({
       job: { id: 'job-2', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    const rows = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').all('job-2') as any[];
-    expect(rows).toHaveLength(1);
-    expect(rows[0].ok).toBe(1);
-    expect(rows[0].prompt_tokens).toBeGreaterThan(0);
-    expect(rows[0].completion_tokens).toBeGreaterThan(0);
-    expect(rows[0].latency_ms).toBeGreaterThanOrEqual(0);
-    expect(rows[0].model).toBe('gpt-4o-mini');
-  });
-});
+      cancel: new AbortController().signal
+    })
+    const rows = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').all('job-2') as any[]
+    expect(rows).toHaveLength(1)
+    expect(rows[0].ok).toBe(1)
+    expect(rows[0].prompt_tokens).toBeGreaterThan(0)
+    expect(rows[0].completion_tokens).toBeGreaterThan(0)
+    expect(rows[0].latency_ms).toBeGreaterThanOrEqual(0)
+    expect(rows[0].model).toBe('gpt-4o-mini')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -244,6 +264,7 @@ git commit -m "test(phase-15): acceptance 10.3 — ai_usage success row recorded
 ---
 
 <!-- openspec-task: 10.4 -->
+
 ### Task 4: Editor shows purple AI badge → drawer shows 4 blocks (manual smoke)
 
 - [ ] **Step 1: Append to manual checklist**
@@ -281,6 +302,7 @@ git commit -m "test(phase-15): manual-smoke 10.4 — editor badge + drawer rende
 ---
 
 <!-- openspec-task: 10.5 -->
+
 ### Task 5: "Use as title" replaces title; autosave finishes (manual smoke)
 
 - [ ] **Step 1: Append to manual checklist**
@@ -308,11 +330,12 @@ git commit -m "test(phase-15): manual-smoke 10.5 — Use as title autosaves"
 ---
 
 <!-- openspec-task: 10.6 -->
+
 ### Task 6: "Merge tags" produces union; `content_hash` unchanged (manual smoke + spot check)
 
 - [ ] **Step 1: Append to manual checklist**
 
-```markdown
+````markdown
 ## 10.6 — Merge tags
 
 1. Pre: edit frontmatter (or the upstream clip already has) `tags: [existing-1, existing-2]`.
@@ -322,10 +345,11 @@ git commit -m "test(phase-15): manual-smoke 10.5 — Use as title autosaves"
    ```bash
    sqlite3 <grove>/.acornvo/db.sqlite3 "SELECT path, content_hash FROM files WHERE path LIKE 'inbox/%' ORDER BY updated_at DESC LIMIT 1;"
    ```
-   Note the `content_hash`.
-5. Re-run after the merge save.
-6. Confirm: `content_hash` is **unchanged** (only frontmatter changed; body bytes identical).
-```
+````
+
+Note the `content_hash`. 5. Re-run after the merge save. 6. Confirm: `content_hash` is **unchanged** (only frontmatter changed; body bytes identical).
+
+````
 
 - [ ] **Step 2: Execute and verify**
 
@@ -334,16 +358,17 @@ git commit -m "test(phase-15): manual-smoke 10.5 — Use as title autosaves"
 ```bash
 git add tests/acceptance/phase-15/manual-smoke.md
 git commit -m "test(phase-15): manual-smoke 10.6 — merge tags preserves content_hash"
-```
+````
 
 ---
 
 <!-- openspec-task: 10.7 -->
+
 ### Task 7: "Accept all" sets title/tags/`ai_review_accepted_at`; badge gray (manual smoke)
 
 - [ ] **Step 1: Append**
 
-```markdown
+````markdown
 ## 10.7 — Accept all
 
 1. Open a fresh clip with `ai_*` fields and no `ai_review_accepted_at`.
@@ -354,8 +379,11 @@ git commit -m "test(phase-15): manual-smoke 10.6 — merge tags preserves conten
    ```bash
    head -20 <vault>/inbox/<slug>.md
    ```
-   Expected: `title:` matches `ai_suggested_title`; `tags:` is a superset of original; `ai_review_accepted_at:` is set.
-```
+````
+
+Expected: `title:` matches `ai_suggested_title`; `tags:` is a superset of original; `ai_review_accepted_at:` is set.
+
+````
 
 - [ ] **Step 2: Execute**
 
@@ -364,11 +392,12 @@ git commit -m "test(phase-15): manual-smoke 10.6 — merge tags preserves conten
 ```bash
 git add tests/acceptance/phase-15/manual-smoke.md
 git commit -m "test(phase-15): manual-smoke 10.7 — accept all writes title+tags+accepted_at"
-```
+````
 
 ---
 
 <!-- openspec-task: 10.8 -->
+
 ### Task 8: "Reject" only writes `ai_review_accepted_at`; badge gray (manual smoke)
 
 - [ ] **Step 1: Append**
@@ -376,7 +405,7 @@ git commit -m "test(phase-15): manual-smoke 10.7 — accept all writes title+tag
 ```markdown
 ## 10.8 — Reject
 
-1. Open another fresh clip with ai_* fields and no `ai_review_accepted_at`.
+1. Open another fresh clip with ai\_\* fields and no `ai_review_accepted_at`.
 2. Note the current `title:` and `tags:` in the file.
 3. Click badge → drawer → "拒绝".
 4. Confirm: badge turns gray.
@@ -395,11 +424,12 @@ git commit -m "test(phase-15): manual-smoke 10.8 — reject only sets accepted_a
 ---
 
 <!-- openspec-task: 10.9 -->
+
 ### Task 9: "Rerun" enqueues new job; frontmatter eventually overwritten; ai_usage +1 (manual smoke)
 
 - [ ] **Step 1: Append**
 
-```markdown
+````markdown
 ## 10.9 — Rerun
 
 1. Open a clip with existing `ai_summary` etc. Note the current `ai_summary`.
@@ -412,8 +442,11 @@ git commit -m "test(phase-15): manual-smoke 10.8 — reject only sets accepted_a
    sqlite3 <grove>/.acornvo/db.sqlite3 "SELECT id, kind, state, attempts, payload FROM jobs ORDER BY id DESC LIMIT 5;"
    sqlite3 <grove>/.acornvo/db.sqlite3 "SELECT COUNT(*) FROM ai_usage;"
    ```
-   Expected: a new `ai-review-clip` row reached `done`; `ai_usage` count increased by exactly 1.
-```
+````
+
+Expected: a new `ai-review-clip` row reached `done`; `ai_usage` count increased by exactly 1.
+
+````
 
 - [ ] **Step 2: Execute**
 
@@ -422,35 +455,36 @@ git commit -m "test(phase-15): manual-smoke 10.8 — reject only sets accepted_a
 ```bash
 git add tests/acceptance/phase-15/manual-smoke.md
 git commit -m "test(phase-15): manual-smoke 10.9 — rerun enqueues fresh job"
-```
+````
 
 ---
 
 <!-- openspec-task: 10.10 -->
+
 ### Task 10: Delete default profile → handler returns `fail E_MISSING_PROFILE`
 
 - [ ] **Step 1: Append integration test**
 
 ```ts
 // tests/acceptance/phase-15/reviewer.test.ts — append
-import { settingsStore } from '../../../electron/settings/store';
+import { settingsStore } from '../../../electron/settings/store'
 
 describe('10.10 — missing default profile', () => {
   it('handler returns fail E_MISSING_PROFILE when settings.ai.defaultProfileId is null', async () => {
-    const { clipPath } = seedClipAndFile();
-    (settingsStore.get as any).mockReturnValue({ defaultProfileId: null });
+    const { clipPath } = seedClipAndFile()
+    ;(settingsStore.get as any).mockReturnValue({ defaultProfileId: null })
     const r = await aiReviewClipHandler({
       job: { id: 'job-mp', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toEqual({ kind: 'fail', error: 'E_MISSING_PROFILE' });
-    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-mp') as any;
-    expect(usage.ok).toBe(0);
-    expect(usage.error).toBe('E_MISSING_PROFILE');
-  });
-});
+      cancel: new AbortController().signal
+    })
+    expect(r).toEqual({ kind: 'fail', error: 'E_MISSING_PROFILE' })
+    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-mp') as any
+    expect(usage.ok).toBe(0)
+    expect(usage.error).toBe('E_MISSING_PROFILE')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -468,6 +502,7 @@ git commit -m "test(phase-15): acceptance 10.10 — missing profile fails perman
 ---
 
 <!-- openspec-task: 10.11 -->
+
 ### Task 11: Simulated 401 → handler `fail E_AUTH`; no auto-retry
 
 - [ ] **Step 1: Append test**
@@ -475,23 +510,24 @@ git commit -m "test(phase-15): acceptance 10.10 — missing profile fails perman
 ```ts
 describe('10.11 — 401 fails permanently', () => {
   it('returns fail E_AUTH and writes ai_usage error row', async () => {
-    const { clipPath } = seedClipAndFile();
+    const { clipPath } = seedClipAndFile()
     fetchMock.mockResolvedValue({
-      ok: false, status: 401,
-      text: async () => '{"error":{"message":"invalid api key"}}',
-    });
+      ok: false,
+      status: 401,
+      text: async () => '{"error":{"message":"invalid api key"}}'
+    })
     const r = await aiReviewClipHandler({
       job: { id: 'job-401', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toEqual({ kind: 'fail', error: 'E_AUTH' });
-    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-401') as any;
-    expect(usage.ok).toBe(0);
-    expect(usage.error).toBe('E_AUTH');
-  });
-});
+      cancel: new AbortController().signal
+    })
+    expect(r).toEqual({ kind: 'fail', error: 'E_AUTH' })
+    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-401') as any
+    expect(usage.ok).toBe(0)
+    expect(usage.error).toBe('E_AUTH')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -509,6 +545,7 @@ git commit -m "test(phase-15): acceptance 10.11 — 401 maps to fail E_AUTH"
 ---
 
 <!-- openspec-task: 10.12 -->
+
 ### Task 12: Simulated 429 → handler `retry { delayMs: 60000 }`
 
 - [ ] **Step 1: Append test**
@@ -516,20 +553,21 @@ git commit -m "test(phase-15): acceptance 10.11 — 401 maps to fail E_AUTH"
 ```ts
 describe('10.12 — 429 retry with 60s backoff', () => {
   it('returns retry delayMs=60000', async () => {
-    const { clipPath } = seedClipAndFile();
+    const { clipPath } = seedClipAndFile()
     fetchMock.mockResolvedValue({
-      ok: false, status: 429,
-      text: async () => '{"error":{"message":"rate"}}',
-    });
+      ok: false,
+      status: 429,
+      text: async () => '{"error":{"message":"rate"}}'
+    })
     const r = await aiReviewClipHandler({
       job: { id: 'job-429', kind: 'ai-review-clip', attempts: 1 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toMatchObject({ kind: 'retry', delayMs: 60_000, reason: 'rate-limited' });
-  });
-});
+      cancel: new AbortController().signal
+    })
+    expect(r).toMatchObject({ kind: 'retry', delayMs: 60_000, reason: 'rate-limited' })
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -547,41 +585,50 @@ git commit -m "test(phase-15): acceptance 10.12 — 429 retries with 60s backoff
 ---
 
 <!-- openspec-task: 10.13 -->
+
 ### Task 13: LLM returns ` ```json {"…"} ``` ` → parses successfully
 
 - [ ] **Step 1: Append test**
 
-```ts
+````ts
 describe('10.13 — code-fence wrapped JSON parses', () => {
   it('strips ```json fence and ingests payload', async () => {
-    const { clipPath } = seedClipAndFile();
+    const { clipPath } = seedClipAndFile()
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'gpt-4o-mini',
-        choices: [{ message: { content:
-          '```json\n' + JSON.stringify({
-            summary: 'fenced summary',
-            suggestedTitle: 'fenced title',
-            tags: ['t-a', 't-b', 't-c'],
-            keyQuotes: ['fenced quote'],
-          }) + '\n```',
-        } }],
-        usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 },
-      }),
-    });
+        choices: [
+          {
+            message: {
+              content:
+                '```json\n' +
+                JSON.stringify({
+                  summary: 'fenced summary',
+                  suggestedTitle: 'fenced title',
+                  tags: ['t-a', 't-b', 't-c'],
+                  keyQuotes: ['fenced quote']
+                }) +
+                '\n```'
+            }
+          }
+        ],
+        usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 }
+      })
+    })
     const r = await aiReviewClipHandler({
       job: { id: 'job-fence', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toEqual({ kind: 'ok' });
-    const raw = fs.readFileSync(path.join(TMP, clipPath), 'utf8');
-    expect(raw).toContain('ai_summary: fenced summary');
-  });
-});
-```
+      cancel: new AbortController().signal
+    })
+    expect(r).toEqual({ kind: 'ok' })
+    const raw = fs.readFileSync(path.join(TMP, clipPath), 'utf8')
+    expect(raw).toContain('ai_summary: fenced summary')
+  })
+})
+````
 
 - [ ] **Step 2: Run — passes**
 
@@ -598,6 +645,7 @@ git commit -m "test(phase-15): acceptance 10.13 — code-fence wrapped JSON pars
 ---
 
 <!-- openspec-task: 10.14 -->
+
 ### Task 14: Schema mismatch → `E_RESPONSE`; retry with backoff
 
 - [ ] **Step 1: Append test**
@@ -605,28 +653,29 @@ git commit -m "test(phase-15): acceptance 10.13 — code-fence wrapped JSON pars
 ```ts
 describe('10.14 — schema mismatch retries', () => {
   it('maps E_RESPONSE to retry with backoff', async () => {
-    const { clipPath } = seedClipAndFile();
+    const { clipPath } = seedClipAndFile()
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'gpt-4o-mini',
-        choices: [{ message: { content: '{"unrelated": true}' } }],
-      }),
-    });
+        choices: [{ message: { content: '{"unrelated": true}' } }]
+      })
+    })
     const r = await aiReviewClipHandler({
       job: { id: 'job-bad', kind: 'ai-review-clip', attempts: 1 },
       payload: { clipId: 1, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(r).toMatchObject({ kind: 'retry', reason: 'E_RESPONSE' });
-    expect((r as any).delayMs).toBeGreaterThan(0);
+      cancel: new AbortController().signal
+    })
+    expect(r).toMatchObject({ kind: 'retry', reason: 'E_RESPONSE' })
+    expect((r as any).delayMs).toBeGreaterThan(0)
 
-    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-bad') as any;
-    expect(usage.ok).toBe(0);
-    expect(usage.error).toBe('E_RESPONSE');
-  });
-});
+    const usage = db.prepare('SELECT * FROM ai_usage WHERE job_id = ?').get('job-bad') as any
+    expect(usage.ok).toBe(0)
+    expect(usage.error).toBe('E_RESPONSE')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -644,6 +693,7 @@ git commit -m "test(phase-15): acceptance 10.14 — schema mismatch retries with
 ---
 
 <!-- openspec-task: 10.15 -->
+
 ### Task 15: body > 16000 chars → truncated with `...(内容过长已截断)` marker
 
 - [ ] **Step 1: Append test**
@@ -651,40 +701,54 @@ git commit -m "test(phase-15): acceptance 10.14 — schema mismatch retries with
 ```ts
 describe('10.15 — body truncation', () => {
   it('passes a truncated body with the marker to the LLM prompt', async () => {
-    const longBody = 'X'.repeat(20_000);
-    const clipPath = 'inbox/long.md';
-    fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
-    fs.writeFileSync(path.join(TMP, clipPath), `---\ntitle: Long\nurl: https://e.x/l\n---\n${longBody}\n`);
-    db.prepare(`
+    const longBody = 'X'.repeat(20_000)
+    const clipPath = 'inbox/long.md'
+    fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true })
+    fs.writeFileSync(
+      path.join(TMP, clipPath),
+      `---\ntitle: Long\nurl: https://e.x/l\n---\n${longBody}\n`
+    )
+    db.prepare(
+      `
       INSERT INTO clips (id, url, path, title, excerpt, content_length, degraded, clipped_at, created_at)
       VALUES (2, 'https://e.x/l', ?, 'Long', 'l', 20000, 0, '2026-05-04T00:00:00Z', '2026-05-04T00:00:00Z')
-    `).run(clipPath);
+    `
+    ).run(clipPath)
 
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
+      ok: true,
+      status: 200,
       json: async () => ({
         model: 'gpt-4o-mini',
-        choices: [{ message: { content: JSON.stringify({
-          summary: 's', suggestedTitle: 't',
-          tags: ['a', 'b', 'c'], keyQuotes: ['q'],
-        }) } }],
-        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
-      }),
-    });
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                summary: 's',
+                suggestedTitle: 't',
+                tags: ['a', 'b', 'c'],
+                keyQuotes: ['q']
+              })
+            }
+          }
+        ],
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }
+      })
+    })
     await aiReviewClipHandler({
       job: { id: 'job-long', kind: 'ai-review-clip', attempts: 0 },
       payload: { clipId: 2, path: clipPath, force: false },
       log: () => {},
-      cancel: new AbortController().signal,
-    });
-    expect(fetchMock).toHaveBeenCalled();
-    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-    const userMsg = sentBody.messages.find((m: any) => m.role === 'user').content as string;
-    expect(userMsg).toContain('...(内容过长已截断)');
-    expect(userMsg).not.toContain('X'.repeat(16_001));
-    expect(userMsg).toContain('X'.repeat(16_000));
-  });
-});
+      cancel: new AbortController().signal
+    })
+    expect(fetchMock).toHaveBeenCalled()
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body)
+    const userMsg = sentBody.messages.find((m: any) => m.role === 'user').content as string
+    expect(userMsg).toContain('...(内容过长已截断)')
+    expect(userMsg).not.toContain('X'.repeat(16_001))
+    expect(userMsg).toContain('X'.repeat(16_000))
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -702,53 +766,63 @@ git commit -m "test(phase-15): acceptance 10.15 — long body is truncated to 16
 ---
 
 <!-- openspec-task: 10.16 -->
+
 ### Task 16: Ollama profile (gated) → returns JSON; frontmatter updated
 
 **Files:**
+
 - Create: `tests/acceptance/phase-15/providers.test.ts`
 
 - [ ] **Step 1: Write a gated live test**
 
 ```ts
 // tests/acceptance/phase-15/providers.test.ts
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest'
 
-const ollamaUrl = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-const ollamaModel = process.env.OLLAMA_MODEL ?? 'llama3';
+const ollamaUrl = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'
+const ollamaModel = process.env.OLLAMA_MODEL ?? 'llama3'
 
-const liveOllama = process.env.RUN_LIVE_OLLAMA === '1';
+const liveOllama = process.env.RUN_LIVE_OLLAMA === '1'
 
 describe.skipIf(!liveOllama)('10.16 — Ollama live', () => {
   it('returns parseable JSON for review-clip prompt', async () => {
-    const { llmClient } = await import('../../../electron/ai/client');
-    const { reviewClip } = await import('../../../electron/ai/prompts/review-clip');
+    const { llmClient } = await import('../../../electron/ai/client')
+    const { reviewClip } = await import('../../../electron/ai/prompts/review-clip')
 
     // Stub settings + profile to point at Ollama
-    const fakeProfile = { id: 'p-ollama', provider: 'ollama' as const, model: ollamaModel, baseUrl: ollamaUrl };
-    const { profilesStore } = await import('../../../electron/settings/profiles');
-    const { settingsStore } = await import('../../../electron/settings/store');
-    (settingsStore.get as any) = () => ({ defaultProfileId: 'p-ollama' });
-    (profilesStore.get as any) = () => fakeProfile;
+    const fakeProfile = {
+      id: 'p-ollama',
+      provider: 'ollama' as const,
+      model: ollamaModel,
+      baseUrl: ollamaUrl
+    }
+    const { profilesStore } = await import('../../../electron/settings/profiles')
+    const { settingsStore } = await import('../../../electron/settings/store')
+    ;(settingsStore.get as any) = () => ({ defaultProfileId: 'p-ollama' })
+    ;(profilesStore.get as any) = () => fakeProfile
 
     const { system, user } = reviewClip.render({
       title: 'Hello',
       url: 'https://example.com/hello',
-      body: 'A short article about foxes and quick brown jumps.',
-    });
+      body: 'A short article about foxes and quick brown jumps.'
+    })
     const r = await llmClient.chatJson<{
-      summary: string; suggestedTitle: string; tags: string[]; keyQuotes: string[];
+      summary: string
+      suggestedTitle: string
+      tags: string[]
+      keyQuotes: string[]
     }>({
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: user },
+        { role: 'user', content: user }
       ],
       schema: reviewClip.schema,
-      maxTokens: 500,
-    });
-    expect(r.data.summary).toBeTruthy();
-    expect(r.data.tags.length).toBeGreaterThanOrEqual(3);
-  }, 60_000);
-});
+      maxTokens: 500
+    })
+    expect(r.data.summary).toBeTruthy()
+    expect(r.data.tags.length).toBeGreaterThanOrEqual(3)
+  }, 60_000)
+})
 ```
 
 - [ ] **Step 2: Run — gated**
@@ -772,47 +846,53 @@ git commit -m "test(phase-15): acceptance 10.16 — gated live Ollama provider i
 ---
 
 <!-- openspec-task: 10.17 -->
+
 ### Task 17: Anthropic profile (gated) → returns JSON; frontmatter updated
 
 - [ ] **Step 1: Append gated live test**
 
 ```ts
 // tests/acceptance/phase-15/providers.test.ts — append
-const liveAnthropic = process.env.RUN_LIVE_ANTHROPIC === '1' && !!process.env.ANTHROPIC_API_KEY;
+const liveAnthropic = process.env.RUN_LIVE_ANTHROPIC === '1' && !!process.env.ANTHROPIC_API_KEY
 
 describe.skipIf(!liveAnthropic)('10.17 — Anthropic live', () => {
   it('returns parseable JSON via the four-stage parser', async () => {
-    const { llmClient } = await import('../../../electron/ai/client');
-    const { reviewClip } = await import('../../../electron/ai/prompts/review-clip');
+    const { llmClient } = await import('../../../electron/ai/client')
+    const { reviewClip } = await import('../../../electron/ai/prompts/review-clip')
 
-    const { profilesStore } = await import('../../../electron/settings/profiles');
-    const { settingsStore } = await import('../../../electron/settings/store');
-    const { getProfileDecryptedKey } = await import('../../../electron/settings/profile-key');
-    (settingsStore.get as any) = () => ({ defaultProfileId: 'p-anth' });
-    (profilesStore.get as any) = () => ({
-      id: 'p-anth', provider: 'anthropic', model: 'claude-haiku-3.5',
-    });
-    (getProfileDecryptedKey as any) = () => process.env.ANTHROPIC_API_KEY;
+    const { profilesStore } = await import('../../../electron/settings/profiles')
+    const { settingsStore } = await import('../../../electron/settings/store')
+    const { getProfileDecryptedKey } = await import('../../../electron/settings/profile-key')
+    ;(settingsStore.get as any) = () => ({ defaultProfileId: 'p-anth' })
+    ;(profilesStore.get as any) = () => ({
+      id: 'p-anth',
+      provider: 'anthropic',
+      model: 'claude-haiku-3.5'
+    })
+    ;(getProfileDecryptedKey as any) = () => process.env.ANTHROPIC_API_KEY
 
     const { system, user } = reviewClip.render({
       title: 'Hello',
       url: 'https://example.com/hello',
-      body: 'A short article about cats and quick brown leaps.',
-    });
+      body: 'A short article about cats and quick brown leaps.'
+    })
     const r = await llmClient.chatJson<{
-      summary: string; suggestedTitle: string; tags: string[]; keyQuotes: string[];
+      summary: string
+      suggestedTitle: string
+      tags: string[]
+      keyQuotes: string[]
     }>({
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: user },
+        { role: 'user', content: user }
       ],
       schema: reviewClip.schema,
-      maxTokens: 500,
-    });
-    expect(r.data.summary).toBeTruthy();
-    expect(r.data.tags.length).toBeGreaterThanOrEqual(3);
-  }, 60_000);
-});
+      maxTokens: 500
+    })
+    expect(r.data.summary).toBeTruthy()
+    expect(r.data.tags.length).toBeGreaterThanOrEqual(3)
+  }, 60_000)
+})
 ```
 
 - [ ] **Step 2: Run — gated**
@@ -834,31 +914,68 @@ git commit -m "test(phase-15): acceptance 10.17 — gated live Anthropic provide
 ---
 
 <!-- openspec-task: 10.18 -->
+
 ### Task 18: `ai.usage.summary({ sinceDays: 30 })` returns correct aggregates
 
 - [ ] **Step 1: Append test**
 
 ```ts
 // tests/acceptance/phase-15/reviewer.test.ts — append
-import { aiHandlers } from '../../../electron/ipc/ai';
+import { aiHandlers } from '../../../electron/ipc/ai'
 
 describe('10.18 — usage.summary aggregates', () => {
   it('totals, ok-count, error-rate, byProvider', async () => {
-    seedClipAndFile();
-    aiUsage.insert({ jobId: 'a', profileId: 'p1', model: 'm', promptTokens: 100, completionTokens: 50, latencyMs: 10, ok: 1, error: null });
-    aiUsage.insert({ jobId: 'b', profileId: 'p1', model: 'm', promptTokens: 200, completionTokens: 100, latencyMs: 10, ok: 1, error: null });
-    aiUsage.insert({ jobId: 'c', profileId: 'p1', model: 'm', promptTokens: null, completionTokens: null, latencyMs: 5, ok: 0, error: 'E_AUTH' });
-    aiUsage.insert({ jobId: 'd', profileId: 'p2', model: 'm', promptTokens: 50, completionTokens: 25, latencyMs: 10, ok: 1, error: null });
+    seedClipAndFile()
+    aiUsage.insert({
+      jobId: 'a',
+      profileId: 'p1',
+      model: 'm',
+      promptTokens: 100,
+      completionTokens: 50,
+      latencyMs: 10,
+      ok: 1,
+      error: null
+    })
+    aiUsage.insert({
+      jobId: 'b',
+      profileId: 'p1',
+      model: 'm',
+      promptTokens: 200,
+      completionTokens: 100,
+      latencyMs: 10,
+      ok: 1,
+      error: null
+    })
+    aiUsage.insert({
+      jobId: 'c',
+      profileId: 'p1',
+      model: 'm',
+      promptTokens: null,
+      completionTokens: null,
+      latencyMs: 5,
+      ok: 0,
+      error: 'E_AUTH'
+    })
+    aiUsage.insert({
+      jobId: 'd',
+      profileId: 'p2',
+      model: 'm',
+      promptTokens: 50,
+      completionTokens: 25,
+      latencyMs: 10,
+      ok: 1,
+      error: null
+    })
 
-    const r = await aiHandlers['usage.summary']({ sinceDays: 30 });
-    expect(r.totalCalls).toBe(4);
-    expect(r.okCount).toBe(3);
-    expect(r.errorRate).toBeCloseTo(0.25, 5);
-    expect(r.totalTokens).toBe(100 + 50 + 200 + 100 + 50 + 25);
-    expect(r.byProvider['p1']).toMatchObject({ calls: 3 });
-    expect(r.byProvider['p2']).toMatchObject({ calls: 1 });
-  });
-});
+    const r = await aiHandlers['usage.summary']({ sinceDays: 30 })
+    expect(r.totalCalls).toBe(4)
+    expect(r.okCount).toBe(3)
+    expect(r.errorRate).toBeCloseTo(0.25, 5)
+    expect(r.totalTokens).toBe(100 + 50 + 200 + 100 + 50 + 25)
+    expect(r.byProvider['p1']).toMatchObject({ calls: 3 })
+    expect(r.byProvider['p2']).toMatchObject({ calls: 1 })
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -876,80 +993,85 @@ git commit -m "test(phase-15): acceptance 10.18 — usage.summary aggregates cor
 ---
 
 <!-- openspec-task: 10.19 -->
+
 ### Task 19: No api-key in any IPC payload — static + dynamic check
 
 **Files:**
+
 - Create: `tests/acceptance/phase-15/no-secret-leak.test.ts`
 
 - [ ] **Step 1: Static grep — assert renderer code never imports `getProfileDecryptedKey`**
 
 ```ts
 // tests/acceptance/phase-15/no-secret-leak.test.ts
-import { describe, it, expect } from 'vitest';
-import { execSync } from 'node:child_process';
+import { describe, it, expect } from 'vitest'
+import { execSync } from 'node:child_process'
 
 describe('10.19 — no api-key leaks to renderer', () => {
   it('renderer source does not import getProfileDecryptedKey', () => {
-    let hits = '';
+    let hits = ''
     try {
-      hits = execSync(
-        `grep -rln "getProfileDecryptedKey" src/ 2>/dev/null || true`,
-        { encoding: 'utf8' },
-      );
-    } catch { /* grep returns 1 when nothing found; we treat that as empty */ }
-    expect(hits.trim()).toBe('');
-  });
+      hits = execSync(`grep -rln "getProfileDecryptedKey" src/ 2>/dev/null || true`, {
+        encoding: 'utf8'
+      })
+    } catch {
+      /* grep returns 1 when nothing found; we treat that as empty */
+    }
+    expect(hits.trim()).toBe('')
+  })
 
   it('preload does not re-export getProfileDecryptedKey or its return value', () => {
-    let hits = '';
+    let hits = ''
     try {
       hits = execSync(
         `grep -rn "getProfileDecryptedKey\\|apiKey" electron/preload/ 2>/dev/null || true`,
-        { encoding: 'utf8' },
-      );
-    } catch { /* */ }
+        { encoding: 'utf8' }
+      )
+    } catch {
+      /* */
+    }
     // It's OK for preload to mention 'apiKey' in a TYPE-only context; flag any actual code path
-    const lines = hits.split('\n').filter(Boolean);
-    const codeHits = lines.filter(l => !/\.d\.ts|\/\/|\*/.test(l));
-    expect(codeHits).toEqual([]);
-  });
+    const lines = hits.split('\n').filter(Boolean)
+    const codeHits = lines.filter((l) => !/\.d\.ts|\/\/|\*/.test(l))
+    expect(codeHits).toEqual([])
+  })
 
   it('IPC contract type for ai.* does not declare any apiKey field', async () => {
-    const fs = await import('node:fs');
-    const text = fs.readFileSync('shared/ipc-contract.ts', 'utf8');
+    const fs = await import('node:fs')
+    const text = fs.readFileSync('shared/ipc-contract.ts', 'utf8')
     // Capture the ai namespace block
-    const m = text.match(/ai:\s*\{[\s\S]*?\};/);
-    expect(m).toBeTruthy();
-    expect(m![0].toLowerCase()).not.toContain('apikey');
-    expect(m![0].toLowerCase()).not.toContain('api_key');
-  });
+    const m = text.match(/ai:\s*\{[\s\S]*?\};/)
+    expect(m).toBeTruthy()
+    expect(m![0].toLowerCase()).not.toContain('apikey')
+    expect(m![0].toLowerCase()).not.toContain('api_key')
+  })
 
   it('jobs payloads recorded in DB never contain apiKey', async () => {
     // After Plans 1-3 have run, exercise an enqueue and inspect the row JSON
-    const Database = (await import('better-sqlite3')).default;
-    const { runMigrations } = await import('../../../electron/services/db/migrations');
-    const { migrationsDir } = await import('../../../electron/services/db/migrations/index');
-    const { jobsStore } = await import('../../../electron/queue/store');
-    vi.mocked; // ensure the import is evaluated when this file is run with vitest
+    const Database = (await import('better-sqlite3')).default
+    const { runMigrations } = await import('../../../electron/services/db/migrations')
+    const { migrationsDir } = await import('../../../electron/services/db/migrations/index')
+    const { jobsStore } = await import('../../../electron/queue/store')
+    vi.mocked // ensure the import is evaluated when this file is run with vitest
 
-    const db = new (Database as any)(':memory:');
-    runMigrations(db, migrationsDir());
+    const db = new (Database as any)(':memory:')
+    runMigrations(db, migrationsDir())
 
     // Stub getDb to return our in-memory db (the test file already does this elsewhere; if not,
     // import and override here):
-    const { getDb } = await import('../../../electron/services/db/connection');
-    (getDb as any).mockReturnValue?.(db);
+    const { getDb } = await import('../../../electron/services/db/connection')
+    ;(getDb as any).mockReturnValue?.(db)
 
-    jobsStore.enqueue('ai-review-clip', { clipId: 1, force: true });
-    const rows = db.prepare('SELECT payload FROM jobs').all() as Array<{ payload: string }>;
+    jobsStore.enqueue('ai-review-clip', { clipId: 1, force: true })
+    const rows = db.prepare('SELECT payload FROM jobs').all() as Array<{ payload: string }>
     for (const r of rows) {
-      expect(r.payload.toLowerCase()).not.toContain('apikey');
-      expect(r.payload.toLowerCase()).not.toContain('sk-');
+      expect(r.payload.toLowerCase()).not.toContain('apikey')
+      expect(r.payload.toLowerCase()).not.toContain('sk-')
     }
-  });
-});
+  })
+})
 
-import { vi } from 'vitest';
+import { vi } from 'vitest'
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -961,32 +1083,39 @@ Expected: PASS (4 tests).
 
 Append to `manual-smoke.md`:
 
-```markdown
+````markdown
 ## 10.19 — Devtools IPC trace (dynamic)
 
 1. `npm run dev`.
 2. Open renderer devtools.
 3. In the console:
    ```js
-   const trace = [];
-   const orig = window.api.ai.reviewClip;
-   window.api.ai.reviewClip = (...args) => { trace.push({m:'reviewClip',args}); return orig(...args); };
-   await window.api.ai.reviewClip(1);
-   console.log(JSON.stringify(trace));
+   const trace = []
+   const orig = window.api.ai.reviewClip
+   window.api.ai.reviewClip = (...args) => {
+     trace.push({ m: 'reviewClip', args })
+     return orig(...args)
+   }
+   await window.api.ai.reviewClip(1)
+   console.log(JSON.stringify(trace))
    ```
-4. Confirm: `trace` payload is `[{m:'reviewClip', args:[1]}]` — no apiKey, no Authorization, no sk-* token anywhere.
-```
+````
+
+4. Confirm: `trace` payload is `[{m:'reviewClip', args:[1]}]` — no apiKey, no Authorization, no sk-\* token anywhere.
+
+````
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add tests/acceptance/phase-15/no-secret-leak.test.ts tests/acceptance/phase-15/manual-smoke.md
 git commit -m "test(phase-15): acceptance 10.19 — no api-key leaks to renderer (static + manual)"
-```
+````
 
 ---
 
 <!-- openspec-task: 10.20 -->
+
 ### Task 20: `openspec validate phase-15-ai-reviewer --strict` passes
 
 - [ ] **Step 1: Run validator**
@@ -1000,6 +1129,7 @@ Expected: exit 0, all artifacts validated.
 - [ ] **Step 2: If validation reports issues, fix in OpenSpec artifacts**
 
 Common failures:
+
 - Missing requirement scenarios → add to `specs/<cap>/spec.md`.
 - Drifted task description vs. spec → edit `tasks.md`.
 

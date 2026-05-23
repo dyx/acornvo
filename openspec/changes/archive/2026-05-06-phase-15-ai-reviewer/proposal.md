@@ -3,6 +3,7 @@
 phase 12 把网页剪藏为 md 后进入 `inbox/`；phase 14 已经把入队持久化。但 inbox 只是一堆"待消化"的原始文章，没有结构化信息（摘要、主题标签、建议标题、关键段落）。PRD S-7 / S-8 明确："剪藏后自动让 AI 打摘要与标签；审读结果回写 frontmatter，用户可一键接受或拒绝"。这是拾果把"收集"升级为"消化"的关键一步。
 
 同时本阶段第一次引入**实际的 LLM 调用**，需要打好：
+
 - 统一的 provider 抽象（OpenAI / Anthropic / Ollama / openai-compatible）
 - 流式 / 非流式调用的统一接口
 - 成本与用量记录
@@ -27,6 +28,7 @@ phase 12 把网页剪藏为 md 后进入 `inbox/`；phase 14 已经把入队持�
 ## Capabilities
 
 ### New Capabilities
+
 - `llm-client`: 统一的 LLM provider 抽象（OpenAI/Anthropic/Ollama/兼容）
 - `ai-prompts`: 提示词模板系统 + `review-clip` 模板
 - `ai-reviewer-service`: phase 14 的 `ai-review-clip` 真 handler + 回写 md 逻辑
@@ -34,6 +36,7 @@ phase 12 把网页剪藏为 md 后进入 `inbox/`；phase 14 已经把入队持�
 - `ai-review-ui`: 编辑器右上角徽章 + 抽屉 + 一键接受
 
 ### Modified Capabilities
+
 - `job-queue-runner` (phase 14): `ai-review-clip` kind 的 handler 从占位（退避 1h）替换为真实实现
 
 备注：`editor-page`（phase 7）的 AI 徽章能力以 ADDED 方式扩展（不改动已有 requirement）。

@@ -33,12 +33,12 @@ Each smoke task is implemented as an automated test where possible (vitest + jsd
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/EditorPlaceholder.tsx` | Create | 6.1 |
-| `src/pages/EditorPlaceholder.test.tsx` | Create | 6.1 |
-| `src/App.tsx` | Modify (route uses EditorPlaceholder) | 6.1 |
-| `tests/fixtures/grove-builder.ts` | Create | 7.1 (used by all 7.x) |
+| Path                                    | Action                                                | Owner task                        |
+| --------------------------------------- | ----------------------------------------------------- | --------------------------------- |
+| `src/pages/EditorPlaceholder.tsx`       | Create                                                | 6.1                               |
+| `src/pages/EditorPlaceholder.test.tsx`  | Create                                                | 6.1                               |
+| `src/App.tsx`                           | Modify (route uses EditorPlaceholder)                 | 6.1                               |
+| `tests/fixtures/grove-builder.ts`       | Create                                                | 7.1 (used by all 7.x)             |
 | `src/pages/Library.acceptance.test.tsx` | Create — covers 7.1–7.7 (one `describe` per scenario) | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7 |
 
 ## Pre-flight
@@ -52,9 +52,11 @@ The acceptance tests in this plan exercise the SQL handlers via the renderer's `
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: `/editor/:path` placeholder component
 
 **Files:**
+
 - Create: `src/pages/EditorPlaceholder.tsx`
 - Create: `src/pages/EditorPlaceholder.test.tsx`
 - Modify: `src/App.tsx`
@@ -86,6 +88,7 @@ describe('EditorPlaceholder', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/EditorPlaceholder.test.tsx
 ```
@@ -120,11 +123,13 @@ export function EditorPlaceholder(): JSX.Element {
 Modify `src/App.tsx`:
 
 Replace:
+
 ```tsx
 <Route path="/editor/:path" element={<Placeholder name="editor" />} />
 ```
 
 With:
+
 ```tsx
 <Route path="/editor/:path" element={<EditorPlaceholder />} />
 ```
@@ -138,6 +143,7 @@ import { EditorPlaceholder } from './pages/EditorPlaceholder'
 - [ ] **Step 4: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/pages/EditorPlaceholder.test.tsx && npm run typecheck
 ```
@@ -154,9 +160,11 @@ git commit -m "feat(phase-06): /editor/:path placeholder showing decoded path wi
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 2: Acceptance — 50-file grove renders 50 rows ordered by clipped_at desc
 
 **Files:**
+
 - Create: `tests/fixtures/grove-builder.ts`
 - Create: `src/pages/Library.acceptance.test.tsx`
 
@@ -198,9 +206,7 @@ export function buildSummaries(rows: FixtureFile[]): FileSummary[] {
 }
 
 export function sortByClippedDesc(rows: FileSummary[]): FileSummary[] {
-  return [...rows].sort(
-    (a, b) => (b.clipped_at ?? '').localeCompare(a.clipped_at ?? '')
-  )
+  return [...rows].sort((a, b) => (b.clipped_at ?? '').localeCompare(a.clipped_at ?? ''))
 }
 ```
 
@@ -236,7 +242,14 @@ import { buildSummaries, sortByClippedDesc } from '../../tests/fixtures/grove-bu
 
 beforeEach(() => {
   Element.prototype.getBoundingClientRect = vi.fn(() => ({
-    width: 360, height: 600, top: 0, left: 0, right: 360, bottom: 600, x: 0, y: 0,
+    width: 360,
+    height: 600,
+    top: 0,
+    left: 0,
+    right: 360,
+    bottom: 600,
+    x: 0,
+    y: 0,
     toJSON: () => ({})
   })) as unknown as Element['getBoundingClientRect']
   useLibraryStore.setState(useLibraryStore.getInitialState(), true)
@@ -277,6 +290,7 @@ describe('OpenSpec acceptance 7.1 — 50 md files render in clipped_desc order',
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx
 ```
@@ -286,6 +300,7 @@ Expected: PASS (assuming Plan 3 wired everything correctly).
 - [ ] **Step 3: Manual smoke**
 
 Open `npm run dev` against a grove with 50+ md files. Confirm:
+
 - The list shows ≥ 50 rows
 - The footer says `50 / 50 篇` (or `n / n` for the actual count)
 - Rows appear in newest-first order (latest `clipped_at` at the top)
@@ -300,9 +315,11 @@ git commit -m "test(phase-06): acceptance 7.1 — 50 files render in clipped_des
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 3: Acceptance — clicking 果篮 narrows to inbox files
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -351,6 +368,7 @@ describe('OpenSpec acceptance 7.2 — clicking 果篮 narrows to inbox/* files',
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.2'
 ```
@@ -371,9 +389,11 @@ git commit -m "test(phase-06): acceptance 7.2 — 果篮 view filters to inbox/*
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 4: Acceptance — clicking 技术 includes 技术 + 技术/深度学习
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -430,6 +450,7 @@ describe('OpenSpec acceptance 7.3 — clicking 技术 matches 技术 and 技术/
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.3'
 ```
@@ -450,9 +471,11 @@ git commit -m "test(phase-06): acceptance 7.3 — clicking 技术 matches both �
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 5: Acceptance — clicking #attention narrows the list
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -504,6 +527,7 @@ describe('OpenSpec acceptance 7.4 — clicking #attention narrows by tag', () =>
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.4'
 ```
@@ -520,9 +544,11 @@ git commit -m "test(phase-06): acceptance 7.4 — clicking #attention narrows by
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 6: Acceptance — search box "注意力" + clear restores
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -580,6 +606,7 @@ describe('OpenSpec acceptance 7.5 — search "注意力" narrows; clearing resto
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.5'
 ```
@@ -596,12 +623,14 @@ git commit -m "test(phase-06): acceptance 7.5 — search debounce + clear restor
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 7: Acceptance — 5000-row scroll keeps DOM ≤ 25 rows
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
-We can't measure FPS in jsdom, but we can verify the virtualizer's invariant: at any time, DOM `[data-testid="file-row"]` count ≤ visible-rows + overscan*2 (≤ ~25 with 60px rows in a 600px viewport + 10 overscan each side).
+We can't measure FPS in jsdom, but we can verify the virtualizer's invariant: at any time, DOM `[data-testid="file-row"]` count ≤ visible-rows + overscan\*2 (≤ ~25 with 60px rows in a 600px viewport + 10 overscan each side).
 
 - [ ] **Step 1: Failing test**
 
@@ -638,6 +667,7 @@ describe('OpenSpec acceptance 7.6 — 5000 rows: virtualizer keeps DOM count bou
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.6'
 ```
@@ -667,9 +697,11 @@ git commit -m "test(phase-06): acceptance 7.6 — 5000-row virtualizer keeps DOM
 ---
 
 <!-- openspec-task: 7.7 -->
+
 ### Task 8: Acceptance — selecting a file populates preview + open editor jumps
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -731,6 +763,7 @@ describe('OpenSpec acceptance 7.7 — selecting a file populates the preview + o
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.7'
 ```
@@ -740,6 +773,7 @@ Expected: PASS (the navigation portion is handled by trusting the previous unit-
 - [ ] **Step 2: Manual smoke**
 
 In `npm run dev`:
+
 1. Click any file in the list
 2. Confirm the preview panel shows summary card + tag chips + 5-star rating
 3. Click "打开编辑器" → URL becomes `/editor/<encoded-path>`, the placeholder page renders
@@ -747,6 +781,7 @@ In `npm run dev`:
 - [ ] **Step 3: Run full test suite + lint + typecheck**
 
 Run:
+
 ```bash
 npm test && npm run lint && npm run typecheck
 ```
@@ -765,6 +800,7 @@ git commit -m "test(phase-06): acceptance 7.7 — preview panel populates on cli
 ## Plan-4 Acceptance
 
 After all 8 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (all acceptance scenarios 7.1–7.7 plus EditorPlaceholder)
 - [ ] `npm run lint` PASSES

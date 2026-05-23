@@ -1,6 +1,7 @@
 # Phase 09 Conflict Handling — Manual Smoke Checklist
 
 Run after a fresh `npm run dev`. All scenarios assume:
+
 - A grove is opened at `~/scratch/conflict-test/`
 - A file `notes/a.md` exists with body "BASE"
 
@@ -40,6 +41,6 @@ Run after a fresh `npm run dev`. All scenarios assume:
 
 ## Sign-off
 
-Tester: __________________  Date: __________________
+Tester: ********\_\_******** Date: ********\_\_********
 
 All boxes checked? ☐

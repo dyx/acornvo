@@ -10,12 +10,12 @@
 - [x] 2.1 `electron/clipper/readability-bundle.ts`：import Readability 源码字符串（打包时内联）
 - [x] 2.2 `electron/clipper/extract.ts`：`extract(webContents)` 注入 + 调用 + 5s 超时
 - [x] 2.3 fallback 路径：article=null → 返回 `{ degraded: true, content: body.innerHTML }`
-- [x] 2.4 `electron/clipper/enrich.ts`：URL 清洗（去 hash / utm_ / fbclid 等）、site 规整、author 去前缀、published_at 兜底、lang 回退、excerpt 截取
+- [x] 2.4 `electron/clipper/enrich.ts`：URL 清洗（去 hash / utm\_ / fbclid 等）、site 规整、author 去前缀、published_at 兜底、lang 回退、excerpt 截取
 
 ## 3. main 侧 transformer
 
 - [x] 3.1 `electron/clipper/transform.ts`：turndown 实例 + GFM plugin + 基础选项
-- [x] 3.2 HTML 预清洗：移除 script/style/noscript/comments；strip class/id/data-*/style/srcset
+- [x] 3.2 HTML 预清洗：移除 script/style/noscript/comments；strip class/id/data-\*/style/srcset
 - [x] 3.3 相对链接绝对化（`<a href>` / `<img src>` 基于 article.url）
 - [x] 3.4 空壳节点压缩（空 p/span/div）
 

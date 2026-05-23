@@ -4,18 +4,18 @@ Message input form for sending messages.
 
 ## Parts
 
-| Part | Description |
-|------|-------------|
-| `.Root` | Form container |
-| `.Input` | Text input/textarea |
-| `.Send` | Submit button |
-| `.Cancel` | Cancel generation |
-| `.AddAttachment` | Attach files button |
-| `.Attachments` | Render attachments |
-| `.AttachmentDropzone` | Drag-drop area |
-| `.Dictate` | Start voice input |
-| `.StopDictation` | Stop voice input |
-| `.If` | Conditional rendering (deprecated; prefer `AuiIf`) |
+| Part                  | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `.Root`               | Form container                                     |
+| `.Input`              | Text input/textarea                                |
+| `.Send`               | Submit button                                      |
+| `.Cancel`             | Cancel generation                                  |
+| `.AddAttachment`      | Attach files button                                |
+| `.Attachments`        | Render attachments                                 |
+| `.AttachmentDropzone` | Drag-drop area                                     |
+| `.Dictate`            | Start voice input                                  |
+| `.StopDictation`      | Stop voice input                                   |
+| `.If`                 | Conditional rendering (deprecated; prefer `AuiIf`) |
 
 ## Basic Structure
 
@@ -33,7 +33,7 @@ Form element that handles submission.
 ```tsx
 <ComposerPrimitive.Root
   className="flex gap-2 p-4 border-t"
-  onSubmit={() => console.log("Submitted")}
+  onSubmit={() => console.log('Submitted')}
 >
   {children}
 </ComposerPrimitive.Root>
@@ -65,9 +65,7 @@ Auto-resizing textarea for message input.
 Submit button. Disabled when input is empty or generating.
 
 ```tsx
-<ComposerPrimitive.Send
-  className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
->
+<ComposerPrimitive.Send className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50">
   Send
 </ComposerPrimitive.Send>
 ```
@@ -118,9 +116,7 @@ Prefer `AuiIf` for richer state checks (`thread`, `composer`, etc.).
 ### Add Attachment Button
 
 ```tsx
-<ComposerPrimitive.AddAttachment
-  className="p-2 rounded hover:bg-gray-100"
->
+<ComposerPrimitive.AddAttachment className="p-2 rounded hover:bg-gray-100">
   📎 Attach
 </ComposerPrimitive.AddAttachment>
 ```
@@ -139,9 +135,7 @@ Prefer `AuiIf` for richer state checks (`thread`, `composer`, etc.).
 ### Drag-Drop Zone
 
 ```tsx
-<ComposerPrimitive.AttachmentDropzone
-  className="border-2 border-dashed rounded-lg p-4 text-center"
->
+<ComposerPrimitive.AttachmentDropzone className="border-2 border-dashed rounded-lg p-4 text-center">
   Drop files here
 </ComposerPrimitive.AttachmentDropzone>
 ```
@@ -222,22 +216,22 @@ function CustomComposer() {
         </AuiIf>
       </div>
     </ComposerPrimitive.Root>
-  );
+  )
 }
 ```
 
 ## Accessing Composer State
 
 ```tsx
-import { useComposer, useComposerRuntime } from "@assistant-ui/react";
+import { useComposer, useComposerRuntime } from '@assistant-ui/react'
 
 function ComposerInfo() {
   // Reactive state
-  const { text, attachments, isSubmitting } = useComposer();
+  const { text, attachments, isSubmitting } = useComposer()
 
   // Runtime API
-  const runtime = useComposerRuntime();
-  const handleClear = () => runtime.setText("");
+  const runtime = useComposerRuntime()
+  const handleClear = () => runtime.setText('')
 
   return (
     <div>
@@ -245,6 +239,6 @@ function ComposerInfo() {
       <p>Attachments: {attachments.length}</p>
       <button onClick={handleClear}>Clear</button>
     </div>
-  );
+  )
 }
 ```

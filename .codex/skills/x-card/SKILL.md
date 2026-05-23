@@ -32,11 +32,11 @@ It covers:
 
 # 📦 Package Overview
 
-| Package | Responsibility |
-| --- | --- |
+| Package              | Responsibility                                                             |
+| -------------------- | -------------------------------------------------------------------------- |
 | `@ant-design/x-card` | React renderer for A2UI protocol — `XCard.Box`, `XCard.Card`, catalog APIs |
-| `@ant-design/x` | Chat UI components (Bubble, Sender, etc.) — not covered here |
-| `@ant-design/x-sdk` | Data providers, streaming — not covered here |
+| `@ant-design/x`      | Chat UI components (Bubble, Sender, etc.) — not covered here               |
+| `@ant-design/x-sdk`  | Data providers, streaming — not covered here                               |
 
 ```bash
 npm install @ant-design/x-card
@@ -50,19 +50,19 @@ import {
   registerCatalog,
   loadCatalog,
   validateComponent,
-  clearCatalogCache,
-} from '@ant-design/x-card';
+  clearCatalogCache
+} from '@ant-design/x-card'
 import type {
   XAgentCommand_v0_9,
   XAgentCommand_v0_8,
   ActionPayload,
   Catalog,
-  CatalogComponent,
-} from '@ant-design/x-card';
+  CatalogComponent
+} from '@ant-design/x-card'
 
 // Subcomponents
-XCard.Box; // Container: receives commands, owns catalog maps
-XCard.Card; // Renderer: renders a single surface by id
+XCard.Box // Container: receives commands, owns catalog maps
+XCard.Card // Renderer: renders a single surface by id
 ```
 
 # 🗂️ Component Architecture
@@ -83,11 +83,11 @@ XCard.Box
 
 ```typescript
 interface BoxProps {
-  commands?: (XAgentCommand_v0_9 | XAgentCommand_v0_8)[];
+  commands?: (XAgentCommand_v0_9 | XAgentCommand_v0_8)[]
   /** Component names must start with an uppercase letter (React component convention) */
-  components?: Record<string, React.ComponentType<any>>;
-  onAction?: (payload: ActionPayload) => void;
-  children?: React.ReactNode; // Should contain XCard.Card elements
+  components?: Record<string, React.ComponentType<any>>
+  onAction?: (payload: ActionPayload) => void
+  children?: React.ReactNode // Should contain XCard.Card elements
 }
 ```
 
@@ -95,7 +95,7 @@ interface BoxProps {
 
 ```typescript
 interface CardProps {
-  id: string; // surfaceId to render
+  id: string // surfaceId to render
 }
 ```
 
@@ -103,8 +103,8 @@ interface CardProps {
 
 ```typescript
 interface ActionPayload {
-  name: string; // from action.event.name
-  surfaceId: string; // which surface triggered it
+  name: string // from action.event.name
+  surfaceId: string // which surface triggered it
   /**
    * Context passed by component, with path references automatically resolved.
    *
@@ -118,22 +118,22 @@ interface ActionPayload {
    * Example resolved context:
    *   { username: { value: "张三", label: "用户名" } }
    */
-  context: Record<string, any>;
+  context: Record<string, any>
 }
 ```
 
 # 🚀 Quick Start Decision Guide
 
-| If you need to... | Read first |
-| --- | --- |
-| Set up XCard.Box + XCard.Card | [USAGE.md → Basic Setup](reference/USAGE.md#basic-setup) |
-| Send commands from agent to card | [COMMANDS.md](reference/COMMANDS.md) |
-| Register a custom component catalog | [CATALOG.md → Local Catalog](reference/CATALOG.md#local-catalog) |
-| Bind component props to live data | [DATA_BINDING.md](reference/DATA_BINDING.md) |
-| Handle user interactions / form submit | [ACTIONS.md](reference/ACTIONS.md) |
-| Build a streaming progressive UI | [USAGE.md → Streaming](reference/USAGE.md#streaming) |
-| Migrate from v0.8 to v0.9 | [COMMANDS.md → v0.8 vs v0.9](reference/COMMANDS.md#v08-vs-v09) |
-| Look up full prop types | [API.md](reference/API.md) |
+| If you need to...                      | Read first                                                       |
+| -------------------------------------- | ---------------------------------------------------------------- |
+| Set up XCard.Box + XCard.Card          | [USAGE.md → Basic Setup](reference/USAGE.md#basic-setup)         |
+| Send commands from agent to card       | [COMMANDS.md](reference/COMMANDS.md)                             |
+| Register a custom component catalog    | [CATALOG.md → Local Catalog](reference/CATALOG.md#local-catalog) |
+| Bind component props to live data      | [DATA_BINDING.md](reference/DATA_BINDING.md)                     |
+| Handle user interactions / form submit | [ACTIONS.md](reference/ACTIONS.md)                               |
+| Build a streaming progressive UI       | [USAGE.md → Streaming](reference/USAGE.md#streaming)             |
+| Migrate from v0.8 to v0.9              | [COMMANDS.md → v0.8 vs v0.9](reference/COMMANDS.md#v08-vs-v09)   |
+| Look up full prop types                | [API.md](reference/API.md)                                       |
 
 # 🛠 Recommended Workflow
 
@@ -146,9 +146,9 @@ interface ActionPayload {
 ## Minimal Working Example
 
 ```tsx
-import React, { useState } from 'react';
-import { XCard, registerCatalog } from '@ant-design/x-card';
-import type { XAgentCommand_v0_9, ActionPayload, Catalog } from '@ant-design/x-card';
+import React, { useState } from 'react'
+import { XCard, registerCatalog } from '@ant-design/x-card'
+import type { XAgentCommand_v0_9, ActionPayload, Catalog } from '@ant-design/x-card'
 
 // 1. Define and register local catalog
 const myCatalog: Catalog = {
@@ -157,27 +157,27 @@ const myCatalog: Catalog = {
     Text: {
       type: 'object',
       properties: { text: { type: 'string' }, variant: { type: 'string' } },
-      required: ['text'],
+      required: ['text']
     },
     Button: {
       type: 'object',
       properties: { text: { type: 'string' }, action: {} },
-      required: ['text'],
-    },
-  },
-};
-registerCatalog(myCatalog);
+      required: ['text']
+    }
+  }
+}
+registerCatalog(myCatalog)
 
 // 2. Custom component implementations
 const Text: React.FC<{ text: string; variant?: string }> = ({ text, variant }) => (
   <p className={`text-${variant ?? 'body'}`}>{text}</p>
-);
+)
 
 const Button: React.FC<{ text: string; onAction?: (ctx: any) => void; action?: any }> = ({
   text,
   onAction,
-  action,
-}) => <button onClick={() => onAction?.(action?.event?.context ?? {})}>{text}</button>;
+  action
+}) => <button onClick={() => onAction?.(action?.event?.context ?? {})}>{text}</button>
 
 // 3. Build commands (from agent stream)
 const commands: XAgentCommand_v0_9[] = [
@@ -185,8 +185,8 @@ const commands: XAgentCommand_v0_9[] = [
     version: 'v0.9',
     createSurface: {
       surfaceId: 'welcome',
-      catalogId: 'local://my_catalog.json',
-    },
+      catalogId: 'local://my_catalog.json'
+    }
   },
   {
     version: 'v0.9',
@@ -199,36 +199,36 @@ const commands: XAgentCommand_v0_9[] = [
           id: 'btn',
           component: 'Button',
           text: 'Start',
-          action: { event: { name: 'start', context: {} } },
-        },
-      ],
-    },
+          action: { event: { name: 'start', context: {} } }
+        }
+      ]
+    }
   },
   {
     version: 'v0.9',
     updateDataModel: {
       surfaceId: 'welcome',
       path: '/user/name',
-      value: 'Alice',
-    },
-  },
-];
+      value: 'Alice'
+    }
+  }
+]
 
 // 4. Render
 export default function App() {
-  const [cmdQueue, setCmdQueue] = useState<XAgentCommand_v0_9[]>(commands);
+  const [cmdQueue, setCmdQueue] = useState<XAgentCommand_v0_9[]>(commands)
 
   const handleAction = (payload: ActionPayload) => {
-    console.log('Action:', payload.name, payload.context);
+    console.log('Action:', payload.name, payload.context)
     // Append new commands based on agent response
-    setCmdQueue((prev) => [...prev /* new commands */]);
-  };
+    setCmdQueue((prev) => [...prev /* new commands */])
+  }
 
   return (
     <XCard.Box commands={cmdQueue} components={{ Text, Button }} onAction={handleAction}>
       <XCard.Card id="welcome" />
     </XCard.Box>
-  );
+  )
 }
 ```
 

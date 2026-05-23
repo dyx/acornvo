@@ -1,6 +1,7 @@
 ## Why
 
 前 17 个 phase 覆盖了功能面；但 PRD N-1 / N-2 / N-5 要求产品可**运维、可调优、可发布**：
+
 - 用户端要能查看 AI 开销（累计 token + 费用）、剪藏 / 索引 / 队列的运行健康度，以及排查失败原因；
 - 工程侧要有一致的结构化日志与性能采样，才能在用户汇报问题时定位根因；
 - 产品侧要能一键打包、签名、自动更新，否则无法真正交付桌面应用。
@@ -23,6 +24,7 @@ phase 18 把这些"产品化最后一公里"事情合到一起，作为整个 18
 ## Capabilities
 
 ### New Capabilities
+
 - `observability-logger`: 统一结构化日志与 rotate 文件输出
 - `observability-perf`: key path 性能采样 + 聚合表
 - `observability-page`: `/settings/observability` 页面；usage/队列/ops_log/perf 聚合视图
@@ -34,6 +36,7 @@ phase 18 把这些"产品化最后一公里"事情合到一起，作为整个 18
 - `telemetry-switch`: 用户可控的脱敏 usage 统计开关
 
 ### Modified Capabilities
+
 - `settings-page` (phase 13): 新增 `Observability` 与 `About` 两个子 section
 - `app-shell` (phase 13): 启动时读 crash.log 弹提示；异常上报接线
 

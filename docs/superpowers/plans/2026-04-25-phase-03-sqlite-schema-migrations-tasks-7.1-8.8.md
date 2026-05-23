@@ -18,7 +18,7 @@ Wire the renderer to react to `db:rebuilding` / `db:rebuilt` events with a full-
 
 - **`App.tsx` subscriptions.** A small effect subscribes to `db:rebuilding` / `db:rebuilt`. Local state `isRebuilding: boolean` drives a full-screen overlay (a `<div>` with `fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center text-foreground`). On `db:rebuilt`, drop the overlay and `toast(...)` from the existing `use-toast` hook.
 - **`DbHealthBadge` component.** Reads `window.api.db.version()` on mount via `useEffect`, displays `v{user_version}` + a green dot. Stub for phase 3 (not mounted into TitleBar yet — explicitly deferred per task 7.3).
-- **Acceptance.** Tasks 8.x are *manual smoke checks*, not TDD. They prove the integrated stack works in dev mode. The cross-platform check (8.7) is best-effort: run on whatever platforms the developer has access to, document findings.
+- **Acceptance.** Tasks 8.x are _manual smoke checks_, not TDD. They prove the integrated stack works in dev mode. The cross-platform check (8.7) is best-effort: run on whatever platforms the developer has access to, document findings.
 
 ## Tech Stack
 
@@ -28,20 +28,22 @@ Wire the renderer to react to `db:rebuilding` / `db:rebuilt` events with a full-
 
 ## Files Touched
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/App.tsx` | Modify (subscribe to rebuilding/rebuilt + overlay) | 7.1, 7.2 |
-| `src/components/DbHealthBadge.tsx` | Create (stub component) | 7.3 |
-| (No code) — manual smoke matrix runbook | — | 8.1–8.8 |
+| Path                                    | Action                                             | Owner task |
+| --------------------------------------- | -------------------------------------------------- | ---------- |
+| `src/App.tsx`                           | Modify (subscribe to rebuilding/rebuilt + overlay) | 7.1, 7.2   |
+| `src/components/DbHealthBadge.tsx`      | Create (stub component)                            | 7.3        |
+| (No code) — manual smoke matrix runbook | —                                                  | 8.1–8.8    |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 1: `App.tsx` — subscribe to `db:rebuilding`, show overlay
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Read the current App.tsx**
@@ -155,9 +157,11 @@ git commit -m "feat(phase-03): App.tsx subscribes to db:rebuilding (overlay) and
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 2: Verify the `db:rebuilt` toast (already wired in Task 1)
 
 **Files:**
+
 - (No new file — Task 1 already wired the toast.)
 
 > **Note:** OpenSpec splits 7.1 (rebuilding overlay) and 7.2 (rebuilt toast) into two tasks. The implementation is one effect block that handles both — done in Task 1 above. This task is a verification checkpoint only.
@@ -181,9 +185,11 @@ npm run typecheck
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 3: `DbHealthBadge` stub component (not mounted yet)
 
 **Files:**
+
 - Create: `src/components/DbHealthBadge.tsx`
 
 > **Per OpenSpec task 7.3 — "本阶段可先不挂，留后续接入" — we create the component file but do NOT mount it into TitleBar/StatusBar in phase 3.** A later phase change will decide where it lives.
@@ -282,6 +288,7 @@ git commit -m "feat(phase-03): DbHealthBadge stub component (not mounted yet)"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 4: Verify `index.db` exists with `user_version = 1`
 
 - [ ] **Step 1: Open the test grove via Picker**
@@ -312,6 +319,7 @@ Expected: `1`.
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 5: `window.api.db.version()` returns `{ user_version: 1, migrations_applied: ['001_init.sql'] }`
 
 - [ ] **Step 1: In the running dev app, open DevTools** (View → Toggle Developer Tools)
@@ -333,6 +341,7 @@ Expected:
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 6: `window.api.db.integrityCheck()` returns `'ok'`
 
 - [ ] **Step 1: In DevTools console**
@@ -348,6 +357,7 @@ Expected: `'ok'` (exact string).
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 7: `sqlite_master` contains every required table + index
 
 - [ ] **Step 1: From terminal**
@@ -363,24 +373,24 @@ SQL
 
 Expected (at minimum):
 
-| type | name |
-|---|---|
-| index | idx_files_category |
+| type  | name                   |
+| ----- | ---------------------- |
+| index | idx_files_category     |
 | index | idx_files_content_hash |
-| index | idx_files_rating |
-| index | idx_queue_status |
-| index | idx_usage_model |
-| index | idx_usage_purpose |
-| index | idx_usage_ts |
-| index | uq_queue_active_path |
-| table | bookmarks |
-| table | chats |
-| table | file_tags |
-| table | files |
-| table | files_fts |
-| table | queue |
-| table | tags |
-| table | usage |
+| index | idx_files_rating       |
+| index | idx_queue_status       |
+| index | idx_usage_model        |
+| index | idx_usage_purpose      |
+| index | idx_usage_ts           |
+| index | uq_queue_active_path   |
+| table | bookmarks              |
+| table | chats                  |
+| table | file_tags              |
+| table | files                  |
+| table | files_fts              |
+| table | queue                  |
+| table | tags                   |
+| table | usage                  |
 
 (Some `files_fts_*` shadow tables created by FTS5 will also appear — that's expected.)
 
@@ -389,6 +399,7 @@ Expected (at minimum):
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 8: Manual db corruption → rebuild end-to-end
 
 > This is the most important acceptance gate. It exercises Plan 3 task 4.4, Plan 4 tasks 6.1/6.2, and Plan 5 tasks 7.1/7.2 together.
@@ -450,6 +461,7 @@ rm ~/tmp/grove-phase3/.acornvo/index.db.corrupt-*
 ---
 
 <!-- openspec-task: 8.6 -->
+
 ### Task 9: Switching groves — old WAL truncated, new db opens
 
 - [ ] **Step 1: Create a second test grove**
@@ -491,6 +503,7 @@ Repeat the switcher dance and confirm `db.version()` again returns `user_version
 ---
 
 <!-- openspec-task: 8.7 -->
+
 ### Task 10: Cross-platform postinstall + start (best effort)
 
 - [ ] **Step 1: Run on macOS** (this is your primary dev machine)
@@ -519,6 +532,7 @@ Mark: Windows — pass / fail / not tested.
 - [ ] **Step 4: Document findings**
 
 Note any platform-specific failures in the OpenSpec change tracker. Common pitfalls:
+
 - Windows: `electron-rebuild` may need MSVC build tools; install via `npm install --global windows-build-tools` (older Node) or VS Build Tools 2022 (newer).
 - Linux: `python3` and `make` required.
 - All: Node version must match `@types/node` major (currently `^22`).
@@ -528,6 +542,7 @@ Note any platform-specific failures in the OpenSpec change tracker. Common pitfa
 ---
 
 <!-- openspec-task: 8.8 -->
+
 ### Task 11: `openspec validate phase-03-sqlite-schema-migrations --strict` passes
 
 - [ ] **Step 1: From the repo root**

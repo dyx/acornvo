@@ -33,13 +33,13 @@ Expected: all PASS. Any pre-existing failure must be triaged first; do not start
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/integration/history-and-trash.test.ts` | Create | 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11, 8.13 |
-| `src/main/ops/log.test.ts` | Modify (append 90-day prune scenario) | 8.12 |
-| `src/stores/editor.test.ts` | Modify (append 8.14 save_as → ops cross-wire) | 8.14 |
-| `electron/services/watcher.test.ts` | Modify (append 8.15 rename → ops cross-wire) | 8.15 |
-| `openspec/changes/phase-10-history-and-trash/**` | Touch only if 8.16 strict-mode flags a real spec issue | 8.16 |
+| Path                                             | Action                                                 | Owner task                                |
+| ------------------------------------------------ | ------------------------------------------------------ | ----------------------------------------- |
+| `src/integration/history-and-trash.test.ts`      | Create                                                 | 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11, 8.13 |
+| `src/main/ops/log.test.ts`                       | Modify (append 90-day prune scenario)                  | 8.12                                      |
+| `src/stores/editor.test.ts`                      | Modify (append 8.14 save_as → ops cross-wire)          | 8.14                                      |
+| `electron/services/watcher.test.ts`              | Modify (append 8.15 rename → ops cross-wire)           | 8.15                                      |
+| `openspec/changes/phase-10-history-and-trash/**` | Touch only if 8.16 strict-mode flags a real spec issue | 8.16                                      |
 
 ## Conventions reused
 
@@ -72,9 +72,11 @@ Expected: all PASS. Any pre-existing failure must be triaged first; do not start
 ---
 
 <!-- openspec-task: 8.5 -->
+
 ### Task 50: integration test — `/history/trash` lists trashed files; "打开原目录" jumps to Finder
 
 **Files:**
+
 - Create: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Create the test file with 8.5's scenario**
@@ -145,6 +147,7 @@ If the testid names don't match the actual `TrashTab.tsx` from Plan 3 (Task 5.3)
 ```bash
 npx vitest run src/integration/history-and-trash.test.ts -t "8.5"
 ```
+
 Expected: PASS. If green on first run, briefly comment out the `onClick={() => ipc.file.openContainingDir(...)}` handler in `TrashTab.tsx` and re-run — should FAIL. Revert.
 
 - [ ] **Step 3: Commit**
@@ -157,9 +160,11 @@ git commit -m "test(phase-10): integration 8.5 trash tab open-containing-dir (ph
 ---
 
 <!-- openspec-task: 8.6 -->
+
 ### Task 51: integration test — `/history/conflicts` lists snapshots; click row → side-by-side diff on right
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -183,7 +188,9 @@ describe('8.6 /history/conflicts lists snapshots; click row → side-by-side dif
       ]
     })
 
-    await act(async () => { renderHistoryAt('/history/conflicts') })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts')
+    })
     expect(screen.getAllByTestId(/conflict-row-/)).toHaveLength(2)
 
     await act(async () => {
@@ -202,6 +209,7 @@ describe('8.6 /history/conflicts lists snapshots; click row → side-by-side dif
 ```bash
 npx vitest run src/integration/history-and-trash.test.ts -t "8.6"
 ```
+
 Expected: PASS. If green, comment out the `useEffect` in `ConflictDetailPanel` that triggers `conflict.diff` to confirm test fails. Revert.
 
 - [ ] **Step 3: Commit**
@@ -214,9 +222,11 @@ git commit -m "test(phase-10): 8.6 conflicts list + side-by-side diff render (ph
 ---
 
 <!-- openspec-task: 8.7 -->
+
 ### Task 52: integration test — toggle "local ↔ base" → diff re-renders
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -229,10 +239,12 @@ describe('8.7 toggle local↔base re-renders diff', () => {
       total: 1
     })
     mockIpc.conflict.diff
-      .mockResolvedValueOnce({ left: ['L'], right: ['R'], markers: [] })   // local-remote
-      .mockResolvedValueOnce({ left: ['L'], right: ['B'], markers: [] })   // local-base
+      .mockResolvedValueOnce({ left: ['L'], right: ['R'], markers: [] }) // local-remote
+      .mockResolvedValueOnce({ left: ['L'], right: ['B'], markers: [] }) // local-base
 
-    await act(async () => { renderHistoryAt('/history/conflicts') })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts')
+    })
     await act(async () => {
       fireEvent.click(screen.getByTestId('conflict-row-cid-1'))
     })
@@ -259,9 +271,11 @@ git commit -m "test(phase-10): 8.7 diff toggle local-base re-renders (phase-10 8
 ---
 
 <!-- openspec-task: 8.8 -->
+
 ### Task 53: integration test — "删除此快照" → confirm → row disappears + ops_log gets `conflict_delete`
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -278,26 +292,38 @@ describe('8.8 删除此快照 → confirm → row removed; ops_log conflict_dele
         total: 2
       })
       .mockResolvedValueOnce({
-        items: [
-          { id: 'cid-2', path: 'b.md', ts: '2026-04-29T11:00:00Z', resolved_by: 'save_as' }
-        ],
+        items: [{ id: 'cid-2', path: 'b.md', ts: '2026-04-29T11:00:00Z', resolved_by: 'save_as' }],
         total: 1
       })
     mockIpc.conflict.diff.mockResolvedValue({ left: [], right: [], markers: [] })
     mockIpc.conflict.delete.mockResolvedValueOnce({ ok: true })
     mockIpc.ops.list.mockResolvedValue({
       items: [
-        { id: 9, op: 'conflict_delete', path: 'a.md', ts: '2026-04-29T12:00:00Z', meta: { id: 'cid-1' } }
+        {
+          id: 9,
+          op: 'conflict_delete',
+          path: 'a.md',
+          ts: '2026-04-29T12:00:00Z',
+          meta: { id: 'cid-1' }
+        }
       ],
       total: 1
     })
 
-    await act(async () => { renderHistoryAt('/history/conflicts') })
-    await act(async () => { fireEvent.click(screen.getByTestId('conflict-row-cid-1')) })
-    await act(async () => { fireEvent.click(screen.getByTestId('delete-snapshot')) })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts')
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('conflict-row-cid-1'))
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('delete-snapshot'))
+    })
     // AlertDialog opens
     expect(screen.getByRole('alertdialog')).toBeInTheDocument()
-    await act(async () => { fireEvent.click(screen.getByTestId('delete-snapshot-confirm')) })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('delete-snapshot-confirm'))
+    })
 
     expect(mockIpc.conflict.delete).toHaveBeenCalledWith('cid-1')
     // List refreshed and cid-1 is gone
@@ -320,9 +346,11 @@ git commit -m "test(phase-10): 8.8 delete-snapshot confirm flow (phase-10 8.8)"
 ---
 
 <!-- openspec-task: 8.9 -->
+
 ### Task 54: integration test — `/history/ops` lists by ts DESC; "trash" filter chip narrows
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -333,28 +361,40 @@ describe('8.9 /history/ops lists by ts DESC; trash chip filters', () => {
     mockIpc.ops.list
       .mockResolvedValueOnce({
         items: [
-          { id: 3, op: 'rename', path: 'old.md', ts: '2026-04-29T12:00:00Z', meta: { new_path: 'new.md' } },
-          { id: 2, op: 'conflict_resolve', path: 'a.md', ts: '2026-04-29T11:00:00Z', meta: { id: 'cid-1', resolved_by: 'keep_local' } },
+          {
+            id: 3,
+            op: 'rename',
+            path: 'old.md',
+            ts: '2026-04-29T12:00:00Z',
+            meta: { new_path: 'new.md' }
+          },
+          {
+            id: 2,
+            op: 'conflict_resolve',
+            path: 'a.md',
+            ts: '2026-04-29T11:00:00Z',
+            meta: { id: 'cid-1', resolved_by: 'keep_local' }
+          },
           { id: 1, op: 'trash', path: 'b.md', ts: '2026-04-29T10:00:00Z', meta: {} }
         ],
         total: 3
       })
       .mockResolvedValueOnce({
-        items: [
-          { id: 1, op: 'trash', path: 'b.md', ts: '2026-04-29T10:00:00Z', meta: {} }
-        ],
+        items: [{ id: 1, op: 'trash', path: 'b.md', ts: '2026-04-29T10:00:00Z', meta: {} }],
         total: 1
       })
 
-    await act(async () => { renderHistoryAt('/history/ops') })
+    await act(async () => {
+      renderHistoryAt('/history/ops')
+    })
     expect(screen.getAllByTestId(/ops-row-/)).toHaveLength(3)
     // Top row is the latest (rename)
     expect(screen.getAllByTestId(/ops-row-/)[0]).toHaveAttribute('data-testid', 'ops-row-3')
 
-    await act(async () => { fireEvent.click(screen.getByTestId('ops-filter-trash')) })
-    expect(mockIpc.ops.list).toHaveBeenLastCalledWith(
-      expect.objectContaining({ op: 'trash' })
-    )
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('ops-filter-trash'))
+    })
+    expect(mockIpc.ops.list).toHaveBeenLastCalledWith(expect.objectContaining({ op: 'trash' }))
     expect(screen.getAllByTestId(/ops-row-/)).toHaveLength(1)
   })
 })
@@ -371,9 +411,11 @@ git commit -m "test(phase-10): 8.9 ops list ts-desc + trash chip filter (phase-1
 ---
 
 <!-- openspec-task: 8.10 -->
+
 ### Task 55: integration test — Ops `conflict_resolve` row click → navigates and highlights
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -391,13 +433,26 @@ describe('8.10 click ops conflict_resolve row → /history/conflicts?id=<id> hig
   it('navigates with id query and selects that snapshot', async () => {
     mockIpc.ops.list.mockResolvedValueOnce({
       items: [
-        { id: 7, op: 'conflict_resolve', path: 'a.md', ts: '2026-04-29T12:00:00Z',
-          meta: { id: 'cid-77', resolved_by: 'save_as', winner_path: 'a.conflict.20260429T120000.md' } }
+        {
+          id: 7,
+          op: 'conflict_resolve',
+          path: 'a.md',
+          ts: '2026-04-29T12:00:00Z',
+          meta: {
+            id: 'cid-77',
+            resolved_by: 'save_as',
+            winner_path: 'a.conflict.20260429T120000.md'
+          }
+        }
       ],
       total: 1
     })
-    await act(async () => { renderHistoryAt('/history/ops') })
-    await act(async () => { fireEvent.click(screen.getByTestId('ops-row-7')) })
+    await act(async () => {
+      renderHistoryAt('/history/ops')
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('ops-row-7'))
+    })
     expect(navigate).toHaveBeenCalledWith('/history/conflicts?id=cid-77')
   })
 
@@ -411,7 +466,9 @@ describe('8.10 click ops conflict_resolve row → /history/conflicts?id=<id> hig
     })
     mockIpc.conflict.diff.mockResolvedValue({ left: [], right: [], markers: [] })
 
-    await act(async () => { renderHistoryAt('/history/conflicts?id=cid-77') })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts?id=cid-77')
+    })
     expect(screen.getByTestId('conflict-row-cid-77')).toHaveAttribute('data-selected', 'true')
     expect(mockIpc.conflict.diff).toHaveBeenCalledWith('cid-77', 'local-remote')
   })
@@ -431,9 +488,11 @@ git commit -m "test(phase-10): 8.10 ops→conflict deep link and select (phase-1
 ---
 
 <!-- openspec-task: 8.11 -->
+
 ### Task 56: integration test — `conflict.deleteAll` → list empty + N `conflict_delete` ops rows
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -453,18 +512,27 @@ describe('8.11 conflict.deleteAll → list empty; ops gets N conflict_delete row
     mockIpc.conflict.deleteAll.mockResolvedValueOnce({ ok: true, deleted: 5 })
     mockIpc.ops.list.mockResolvedValue({
       items: fiveItems.map((c, i) => ({
-        id: 100 + i, op: 'conflict_delete', path: c.path,
-        ts: '2026-04-29T20:00:00Z', meta: { id: c.id }
+        id: 100 + i,
+        op: 'conflict_delete',
+        path: c.path,
+        ts: '2026-04-29T20:00:00Z',
+        meta: { id: c.id }
       })),
       total: 5
     })
 
-    await act(async () => { renderHistoryAt('/history/conflicts') })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts')
+    })
     expect(screen.getAllByTestId(/conflict-row-/)).toHaveLength(5)
 
-    await act(async () => { fireEvent.click(screen.getByTestId('clear-all-snapshots')) })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('clear-all-snapshots'))
+    })
     expect(screen.getByRole('alertdialog')).toBeInTheDocument()
-    await act(async () => { fireEvent.click(screen.getByTestId('clear-all-confirm')) })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('clear-all-confirm'))
+    })
 
     expect(mockIpc.conflict.deleteAll).toHaveBeenCalledWith()
     expect(screen.queryAllByTestId(/conflict-row-/)).toHaveLength(0)
@@ -487,9 +555,11 @@ git commit -m "test(phase-10): 8.11 clear-all snapshots empties list (phase-10 8
 ---
 
 <!-- openspec-task: 8.12 -->
+
 ### Task 57: ops_log unit — rows older than 90 days auto-prune on next `record(...)`
 
 **Files:**
+
 - Modify: `src/main/ops/log.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -529,8 +599,9 @@ describe('8.12 90-day retention prunes on next record', () => {
 
   it('row dated 100 days ago is gone after the next record() call', async () => {
     // Manually insert a row dated 100 days ago
-    db.prepare(`INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, datetime('now', '-100 days'), ?)`)
-      .run('trash', 'old.md', '{}')
+    db.prepare(
+      `INSERT INTO ops_log (op, path, ts, meta_json) VALUES (?, ?, datetime('now', '-100 days'), ?)`
+    ).run('trash', 'old.md', '{}')
     const before = db.prepare('SELECT COUNT(*) AS n FROM ops_log').get() as { n: number }
     expect(before.n).toBe(1)
 
@@ -562,9 +633,11 @@ git commit -m "test(ops-log): 8.12 90-day prune drops old rows on next record (p
 ---
 
 <!-- openspec-task: 8.13 -->
+
 ### Task 58: integration test — brand-new grove → all three tabs show friendly empty-state
 
 **Files:**
+
 - Modify: `src/integration/history-and-trash.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -573,17 +646,23 @@ git commit -m "test(ops-log): 8.12 90-day prune drops old rows on next record (p
 describe('8.13 brand-new grove → empty-state on all 3 tabs', () => {
   it('Trash tab empty-state', async () => {
     mockIpc.ops.list.mockResolvedValueOnce({ items: [], total: 0 })
-    await act(async () => { renderHistoryAt('/history/trash') })
+    await act(async () => {
+      renderHistoryAt('/history/trash')
+    })
     expect(screen.getByTestId('trash-empty')).toBeInTheDocument()
   })
   it('Conflicts tab empty-state', async () => {
     mockIpc.conflict.list.mockResolvedValueOnce({ items: [], total: 0 })
-    await act(async () => { renderHistoryAt('/history/conflicts') })
+    await act(async () => {
+      renderHistoryAt('/history/conflicts')
+    })
     expect(screen.getByTestId('conflicts-empty')).toBeInTheDocument()
   })
   it('Ops tab empty-state', async () => {
     mockIpc.ops.list.mockResolvedValueOnce({ items: [], total: 0 })
-    await act(async () => { renderHistoryAt('/history/ops') })
+    await act(async () => {
+      renderHistoryAt('/history/ops')
+    })
     expect(screen.getByTestId('ops-empty')).toBeInTheDocument()
   })
 })
@@ -602,9 +681,11 @@ git commit -m "test(phase-10): 8.13 friendly empty-states on all history tabs (p
 ---
 
 <!-- openspec-task: 8.14 -->
+
 ### Task 59: cross-phase test — phase-9 "另存副本" → ops.list yields conflict_resolve row with correct winner_path
 
 **Files:**
+
 - Modify: `src/stores/editor.test.ts`
 
 This exercises the Plan 1 task 2.4 wire-up: the editor store's `saveAsCopy()` action must call `opsLog.record({ op:'conflict_resolve', path, meta:{ id, resolved_by:'save_as', winner_path } })` after the IPC `conflict.writeSnapshot` resolves.
@@ -615,7 +696,9 @@ This exercises the Plan 1 task 2.4 wire-up: the editor store's `saveAsCopy()` ac
 describe('8.14 phase-9 save_as → ops.list returns conflict_resolve row with winner_path', () => {
   it('records ops_log entry with meta.winner_path = sibling path', async () => {
     mockIpc.files.get.mockResolvedValueOnce({
-      summary: { path: 'notes/a.md', mtimeMs: 1 }, frontmatter: {}, body: 'B'
+      summary: { path: 'notes/a.md', mtimeMs: 1 },
+      frontmatter: {},
+      body: 'B'
     })
     await useEditorStore.getState().open('notes/a.md')
     useEditorStore.getState().setBody('LOCAL')
@@ -625,7 +708,9 @@ describe('8.14 phase-9 save_as → ops.list returns conflict_resolve row with wi
         ...cur,
         conflictState: {
           kind: 'saveConflict',
-          remoteMtimeMs: 9, remoteBody: 'REMOTE', remoteFrontmatter: {}
+          remoteMtimeMs: 9,
+          remoteBody: 'REMOTE',
+          remoteFrontmatter: {}
         }
       }
     })
@@ -664,9 +749,11 @@ git commit -m "test(editor): 8.14 save_as records conflict_resolve ops with winn
 ---
 
 <!-- openspec-task: 8.15 -->
+
 ### Task 60: cross-phase test — watcher rename → `ops.list` shows `op='rename'` with correct `meta.new_path`
 
 **Files:**
+
 - Modify: `electron/services/watcher.test.ts`
 
 Plan 1 task 2.6 wired `opsLog.record({op:'rename', ...})` into the watcher's rename detection path. Phase-5 watcher tests already simulate paired `unlink + add` events for the same content-hash to trigger rename detection; reuse that fixture.
@@ -715,6 +802,7 @@ git commit -m "test(watcher): 8.15 rename detection records ops row (phase-10 8.
 ---
 
 <!-- openspec-task: 8.16 -->
+
 ### Task 61: `openspec validate phase-10-history-and-trash --strict`
 
 **Files:** none under normal conditions. If validation flags a real issue, the offending file under `openspec/changes/phase-10-history-and-trash/**` (or its specs) is patched in this task; this is the only task in this plan permitted to touch openspec files.
@@ -735,6 +823,7 @@ openspec show phase-10-history-and-trash --json | jq '.errors // .'
 ```
 
 Common strict-mode failures and the fix:
+
 - **"Requirement has no scenarios"** → open the offending `specs/<capability>/spec.md`; add at least one `### Scenario:` block under each `### Requirement:` heading.
 - **"MODIFIED Requirements references unknown delta target"** → the parent capability spec is owned by a not-yet-archived phase. Verify the dependency phase is on `main`; if not, coordinate with that phase owner before archive.
 - **"Schema version mismatch"** → compare the change layout to a recently-archived phase (e.g. `openspec/changes/archive/phase-09-conflict-handling/`); align headings and front-matter.
@@ -747,6 +836,7 @@ Apply the minimum spec or tasks.md fix; **do not** introduce new requirements or
 ```bash
 openspec validate phase-10-history-and-trash --strict
 ```
+
 Expected: exit 0.
 
 - [ ] **Step 3: Mark all tasks complete in `tasks.md`**
@@ -756,6 +846,7 @@ This is what `/opsx:executing-plans` does automatically. Only do it manually if 
 ```bash
 openspec mark-complete phase-10-history-and-trash --all
 ```
+
 (or edit `tasks.md` checkboxes by hand — `[ ]` → `[x]`)
 
 - [ ] **Step 4: Final commit**
@@ -778,6 +869,7 @@ grep -E "openspec-task: 8\.(5|6|7|8|9|10|11|12|13|14|15|16)" \
   /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-10-history-and-trash-tasks-8.5-8.16.md \
   | sort -u | wc -l
 ```
+
 Expected: `12`.
 
 2. **Each acceptance asserts both UI and ops_log invariants:**

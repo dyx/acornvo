@@ -1,12 +1,14 @@
 ## Context
 
 前置：
+
 - phase 4：`file.write(path, body, { expectedMtime })` → `E_MTIME_MISMATCH`；`writeFileAtomic` + `safeResolve`
 - phase 5：`selfWrites` Map + `index:fileChanged/Deleted/Renamed` 事件；事件目前 payload 仅 `{ path }`（根据 phase 5 spec），本阶段扩展
 - phase 7：editor store 的 `{ savedMtimeMs, dirty, saving, lastError }`；保存失败目前仅 toast
 - phase 2：`.acornvo/` 目录在 grove 打开时初始化
 
 典型冲突场景：
+
 1. **静态冲突（常见）**：用户 A 打开 md 编辑 → 用户 B 用 Obsidian/另一 App 改同一 md → A 按 Cmd+S
 2. **同步软件冲突**：iCloud / OneDrive 后台下拉远端版本覆盖本地 → A 在编辑
 3. **git 冲突**：用户 `git pull` 在 Acornvo 外部，本地文件 mtime 跳变
@@ -14,12 +16,14 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户永不"偷偷丢失数据"：冲突一定有交互 + 快照
 - 外部修改在编辑器前台能被感知，不等到保存时才爆
 - 三选项语义清晰，快照可回溯（phase 10 接 UI）
 - mtime 比较是唯一 source of truth；不做文本 diff 合并（留 backlog）
 
 **Non-Goals:**
+
 - 不做自动三路合并（太复杂，md 段落级合并需 AST 或 diff3；phase 9 不做）
 - 不做逐段 cherry-pick（需要 diff UI）
 - 不做冲突解决过程中的 AI 辅助（backlog）
@@ -31,6 +35,7 @@
 ### D1: mtime 是唯一冲突信号
 
 判定规则：
+
 - editor 加载时记录 `loadedMtimeMs`
 - 保存时 `file.write(path, body, { expectedMtime: loadedMtimeMs })`
 - main 侧：`stat(absPath).mtimeMs` vs `expectedMtime` 不等 → 返回 `{ error: { code: 'E_MTIME_MISMATCH', remoteMtimeMs, remoteSize } }`
@@ -44,6 +49,7 @@
 事件来源：phase 5 的 `index:fileChanged(path, { mtimeMs })`。
 
 editor store 在 ready 态订阅该事件：
+
 ```
 if (path !== currentPath) return
 if (mtimeMs === savedMtimeMs) return  // 自己写回的回声（虽然 selfWrites 应过滤，但二次防御）
@@ -63,6 +69,7 @@ if (dirty) {
 触发：保存时遇 `E_MTIME_MISMATCH`（**不是**外部修改感知；感知走 banner 而非 dialog）。
 
 Dialog 内容：
+
 - 顶部文案："这个文件在 Acornvo 之外被修改过。你想怎么处理？"
 - 文件路径 + 本地改动字数 + 远端修改时间（`remoteMtimeMs` 格式化）
 - 三个大按钮（纵向排列）：
@@ -77,6 +84,7 @@ Dialog 内容：
 ### D4: 快照写入与目录布局
 
 冲突发生（任一解决动作被确认）时，写入：
+
 ```
 .acornvo/conflicts/
   2026-04-18T12-30-45-notes-a/
@@ -87,6 +95,7 @@ Dialog 内容：
 ```
 
 存储规则：
+
 - 目录名：ISO8601 时间戳（`:` 替换为 `-`，兼容 Windows）+ path 首段（方便肉眼识别）
 - 三份 md 均是完整文件副本（不做 diff），每个 < 1MB，冲突罕见，总容量可控
 - 保留策略：启动时扫 `.acornvo/conflicts/`，按 mtime 排序，超过 30 天或超过 100 条的最旧项删除
@@ -96,6 +105,7 @@ Dialog 内容：
 ### D5: file.write 的 force 选项
 
 MODIFIED `md-file-io`：
+
 ```ts
 file.write(path, body, opts?: {
   expectedMtime?: number,  // 省略 = 不校验（保留 force: true 的语义）
@@ -113,6 +123,7 @@ file.write(path, body, opts?: {
 ### D6: "另存副本"的路径选择
 
 本地修改 → `<basename>.conflict.<ts>.md`，与原文件同目录。
+
 - 例：`notes/a.md` → `notes/a.conflict.2026-04-18T12-30-45.md`
 - 写入后：editor 切换到新路径（`navigate('/editor/' + encodeURIComponent(newPath))`）；磁盘原 `notes/a.md` 保留 remote 版本
 
@@ -123,6 +134,7 @@ file.write(path, body, opts?: {
 ### D7: externalModified Banner
 
 渲染：编辑器 TitleBar 下方一条黄色/橙色 banner
+
 - 文案："这个文件在外部被修改了。"
 - 按钮："重载（丢弃我的修改）" / "忽略（我自己处理）"
 - "重载"：调 files.get + 重置 editor state
@@ -133,6 +145,7 @@ file.write(path, body, opts?: {
 ### D8: baseBody 追踪
 
 editor store 在 `open(path)` 成功后保存：
+
 ```
 baseBody: string      // 文件加载时的 body（frontmatter 不含，与 saved/current 一致）
 baseFrontmatter: Frontmatter

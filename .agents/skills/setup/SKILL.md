@@ -29,16 +29,17 @@ npx assistant-ui@latest create my-app --preset "https://www.assistant-ui.com/pla
 
 Templates:
 
-| Template | Description |
-|-------|-------|
-| `default` | Default template with Vercel AI SDK |
-| `minimal` | Bare-bones starting point |
-| `cloud` | Cloud-backed persistence starter |
+| Template      | Description                          |
+| ------------- | ------------------------------------ |
+| `default`     | Default template with Vercel AI SDK  |
+| `minimal`     | Bare-bones starting point            |
+| `cloud`       | Cloud-backed persistence starter     |
 | `cloud-clerk` | Cloud-backed starter with Clerk auth |
-| `langgraph` | LangGraph starter template |
-| `mcp` | MCP starter template |
+| `langgraph`   | LangGraph starter template           |
+| `mcp`         | MCP starter template                 |
 
 When `-t` is omitted:
+
 - Interactive shell (TTY): an interactive template picker is shown.
 - Non-interactive shell (CI/agent): template defaults to `default`.
 
@@ -77,16 +78,16 @@ When using CLI templates (`npx assistant-ui@latest create`), **never modify gene
 
 For runtimes other than AI SDK or frameworks other than Next.js, consult the reference files:
 
-| Setup | Runtime Hook | Reference |
-|-------|-------------|-----------|
-| AI SDK advanced (tools, cloud, options) | `useChatRuntime` | [references/ai-sdk.md](./references/ai-sdk.md) |
-| Styling and UI customization (shadcn pattern) | — | [references/styling.md](./references/styling.md) |
-| LangGraph agents | `useLangGraphRuntime` | [references/langgraph.md](./references/langgraph.md) |
-| AG-UI protocol | `useAgUiRuntime` | [references/ag-ui.md](./references/ag-ui.md) |
-| A2A protocol | `useA2ARuntime` | [references/a2a.md](./references/a2a.md) |
-| Custom streaming API | `useLocalRuntime` | [references/custom-backend.md](./references/custom-backend.md) |
-| Existing state (Redux/Zustand) | `useExternalStoreRuntime` | [references/custom-backend.md](./references/custom-backend.md) |
-| Vite / TanStack Start | — | [references/tanstack.md](./references/tanstack.md) |
+| Setup                                         | Runtime Hook              | Reference                                                      |
+| --------------------------------------------- | ------------------------- | -------------------------------------------------------------- |
+| AI SDK advanced (tools, cloud, options)       | `useChatRuntime`          | [references/ai-sdk.md](./references/ai-sdk.md)                 |
+| Styling and UI customization (shadcn pattern) | —                         | [references/styling.md](./references/styling.md)               |
+| LangGraph agents                              | `useLangGraphRuntime`     | [references/langgraph.md](./references/langgraph.md)           |
+| AG-UI protocol                                | `useAgUiRuntime`          | [references/ag-ui.md](./references/ag-ui.md)                   |
+| A2A protocol                                  | `useA2ARuntime`           | [references/a2a.md](./references/a2a.md)                       |
+| Custom streaming API                          | `useLocalRuntime`         | [references/custom-backend.md](./references/custom-backend.md) |
+| Existing state (Redux/Zustand)                | `useExternalStoreRuntime` | [references/custom-backend.md](./references/custom-backend.md) |
+| Vite / TanStack Start                         | —                         | [references/tanstack.md](./references/tanstack.md)             |
 
 ---
 

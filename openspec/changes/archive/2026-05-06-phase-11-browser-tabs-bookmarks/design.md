@@ -1,11 +1,13 @@
 ## Context
 
 前置：
+
 - phase 1：AppRail（占位）、Electron 主窗口（BrowserWindow + contextIsolation/sandbox）
 - phase 3：`better-sqlite3` + migrations 机制
 - PRD P-2 / S-6：拾果必须"内置浏览器体验"，不能跳外部浏览器
 
 技术取舍：
+
 - **webview 标签** (Chromium tag)：已被官方标记为 legacy，不推荐
 - **iframe**：隔离弱，无法访问 webContents / session，不能注入脚本
 - **WebContentsView** (Electron 30+)：主进程托管的视图；**采纳**
@@ -13,12 +15,14 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户在 `/browse` 可像普通浏览器一样开多个 tab、输入网址、访问、前进后退、收藏
 - 为 phase 12 的拾果做好宿主：拾果发起时可直接拿到当前 tab 的 webContents + URL + HTML
 - 广告拦截默认开启（保护注意力 + 减少网络）
 - 书签可按 tag 过滤；数据进 SQLite 便于 phase 17 松语做"@网页引用"
 
 **Non-Goals:**
+
 - 不做扩展（AdBlock 插件、Tampermonkey 等）
 - 不做密码管理器 / 表单自动填写
 - 不做隐私模式（默认都走非持久 session 还是持久化？→ **持久化**，用户登录态保留，符合内置浏览器体验）
@@ -57,6 +61,7 @@
 ### D4: 外链策略
 
 `webContents.setWindowOpenHandler(details => ...)`：
+
 - 同源 / http(s) → `{ action: 'allow' }` + renderer 观察到后追加新 tab（`setWindowOpenHandler` 返回 `action:'allow'` 会自动 attach 到我们的父 view）
 - 非 http(s)（`mailto:`、`tel:`、应用自定义 scheme）→ `{ action: 'deny' }` + main 侧 `shell.openExternal(url)`
 
@@ -73,11 +78,29 @@ tab 内链接（`<a href="...">`）通过 `webContents.on('will-navigate')`：�
 ### D6: 阅读模式（最小版）
 
 本阶段的 "reader mode" 只是**注入一段 CSS** 到 WebContents：
+
 ```css
-body { max-width: 720px !important; margin: 0 auto !important;
-       font-family: Georgia, serif; font-size: 18px; line-height: 1.7; color: #222; }
-header, nav, footer, aside, [class*="sidebar"], [class*="banner"], [class*="ad"] { display: none !important; }
-img { max-width: 100% !important; height: auto !important; }
+body {
+  max-width: 720px !important;
+  margin: 0 auto !important;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #222;
+}
+header,
+nav,
+footer,
+aside,
+[class*='sidebar'],
+[class*='banner'],
+[class*='ad'] {
+  display: none !important;
+}
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
 ```
 
 切换按钮：tab 级状态 `readerMode: boolean`；开启时 `webContents.insertCSS(css)` 拿 key，关闭时 `removeInsertedCSS(key)`。
@@ -87,6 +110,7 @@ img { max-width: 100% !important; height: auto !important; }
 ### D7: Bookmarks schema
 
 migration 004：
+
 ```sql
 CREATE TABLE bookmarks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,6 +153,7 @@ TabBar 60px 高 + AddressBar 40px 高 + Bookmarks 侧栏 0/200px；renderer 把�
 ### D11: 导航状态
 
 `webContents` 事件：
+
 - `did-start-loading` / `did-stop-loading` → tab.loading
 - `page-title-updated` → tab.title
 - `page-favicon-updated` → tab.favicon（取首个）

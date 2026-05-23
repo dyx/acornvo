@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 4：`safeResolve`、`file.rename`、原子写
 - phase 5：watcher 监听 `unlink` → indexer 的 `deleteFile`；selfWrites 机制可被 trash 操作复用（trashItem 也是对磁盘的改动）
 - phase 6：Library 右键菜单已有两项（"打开"、"在 Finder 中显示"）
@@ -11,12 +12,14 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户误删任意文件可从系统回收站找回（OS 原生能力，零额外存储）
 - 历史冲突随时可视化回看 + 三路 diff
 - 各种操作（trash / conflict / rename）有统一的审计流
 - 快捷键 + 右键菜单双入口；确认弹窗防误删
 
 **Non-Goals:**
+
 - 不自建"应用内回收站"（会与系统回收站语义冲突）
 - 不做程序化"从回收站还原"（跨平台 API 不稳定；用户去系统 UI 还原）
 - 不做长期版本历史（如 git snapshot）；只保留冲突节点的快照 + ops_log
@@ -28,6 +31,7 @@
 ### D1: 软删除 = `shell.trashItem`
 
 Electron 的 `shell.trashItem(abs)` 跨平台封装：
+
 - macOS：Trash
 - Windows：回收站
 - Linux：XDG Trash（需 `~/.local/share/Trash`）
@@ -40,16 +44,19 @@ Electron 的 `shell.trashItem(abs)` 跨平台封装：
 ### D2: Cmd/Ctrl+Backspace 快捷键
 
 仅在 Library 聚焦（VirtualFileList 容器或 FileRow 有焦点）时触发：
+
 - 弹 confirm modal："移到废纸篓？`<path>`" + "[取消]" + "[移到废纸篓]"
 - 多选留 backlog（本阶段只支持单行）
 
 Windows/Linux 约定：
+
 - `Delete` 键等价
 - `Shift+Delete` 保留为"跳过确认直接 trash"（进阶用户）—— 简化，**不做**；一律弹确认
 
 ### D3: ops_log schema
 
 migration 003：
+
 ```sql
 CREATE TABLE ops_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,6 +76,7 @@ CREATE INDEX idx_ops_log_op_ts ON ops_log(op, ts DESC);
 ### D4: History 路由与 tabs
 
 路由 `/history`：
+
 - `/history/trash`（默认 redirect 到此）
 - `/history/conflicts`
 - `/history/ops`
@@ -78,6 +86,7 @@ Tab 组件用 shadcn `Tabs`；URL query 可传 `?focus=<ops_id>` 或 `?conflict=
 ### D5: Trash tab 不做"还原"
 
 按钮只提供：
+
 - "打开系统回收站"（按平台弹不同文案；不调 API——跨平台打开回收站不稳定）
 - "打开文件原来的目录"（调 `shell.openPath(dirname(absPath))`，前提是该目录还存在）
 
@@ -86,6 +95,7 @@ Tab 组件用 shadcn `Tabs`；URL query 可传 `?focus=<ops_id>` 或 `?conflict=
 ### D6: Conflicts tab + ConflictDetailPanel
 
 Tab 页：
+
 - 左侧列表：`conflict.list()` 的行（id / path / ts / resolved_by badge）
 - 右侧详情：ConflictDetailPanel
   - Header：path / 时间 / resolved_by / winner_path
@@ -106,6 +116,7 @@ Tab 页：
 ### D8: Ops tab 通用事件流
 
 所有 ops_log 行按 ts 倒序，虚拟化列表；每行：
+
 - op 图标（trash = 🗑 / conflict = ⚔ / rename = ✎）—— 本阶段用文字或小 badge 替代，避免 emoji
 - 主文案（按 op 模板）
 - 路径 + 时间 distance
@@ -114,6 +125,7 @@ Tab 页：
 ### D9: Library 右键菜单扩展
 
 phase 6 的 `FileRowContextMenu` 增加一项：
+
 - "移到废纸篓"（分隔线上方：打开 / 在 Finder 中显示；下方：移到废纸篓）
 - 点击 → 复用 `Cmd+Backspace` 的 confirm modal
 

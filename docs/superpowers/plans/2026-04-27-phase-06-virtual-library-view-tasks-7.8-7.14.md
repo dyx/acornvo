@@ -30,10 +30,10 @@ Finish the OpenSpec acceptance suite: 理果中 state for unrated files, right-c
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Library.acceptance.test.tsx` | Modify (append scenarios 7.8–7.13) | 7.8, 7.9, 7.10, 7.11, 7.12, 7.13 |
-| `openspec/changes/phase-06-virtual-library-view/*` | Modify only if `validate --strict` flags issues | 7.14 |
+| Path                                               | Action                                          | Owner task                       |
+| -------------------------------------------------- | ----------------------------------------------- | -------------------------------- |
+| `src/pages/Library.acceptance.test.tsx`            | Modify (append scenarios 7.8–7.13)              | 7.8, 7.9, 7.10, 7.11, 7.12, 7.13 |
+| `openspec/changes/phase-06-virtual-library-view/*` | Modify only if `validate --strict` flags issues | 7.14                             |
 
 ## Pre-flight
 
@@ -50,9 +50,11 @@ If missing, return to Plan 3 task 9 and add it before continuing.
 ## Tasks
 
 <!-- openspec-task: 7.8 -->
+
 ### Task 1: Acceptance — `rating IS NULL` shows "理果中" in row + preview
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -112,6 +114,7 @@ describe('OpenSpec acceptance 7.8 — rating IS NULL shows 理果中 in row and 
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.8'
 ```
@@ -132,9 +135,11 @@ git commit -m "test(phase-06): acceptance 7.8 — rating IS NULL shows 理果中
 ---
 
 <!-- openspec-task: 7.9 -->
+
 ### Task 2: Acceptance — right-click → Reveal in Finder works
 
 **Files:**
+
 - Modify: `src/components/library/VirtualFileList.tsx` (wire context menu hook)
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
@@ -181,6 +186,7 @@ import { fireEvent } from '@testing-library/react'
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.9'
 ```
@@ -222,20 +228,17 @@ Pass `onContextMenu` into `FileRow`:
 At the bottom of the component (sibling to the virtualizer wrapper), render the menu:
 
 ```tsx
-{menu ? (
-  <FileRowContextMenu
-    open
-    x={menu.x}
-    y={menu.y}
-    path={menu.path}
-    onClose={() => setMenu(null)}
-  />
-) : null}
+{
+  menu ? (
+    <FileRowContextMenu open x={menu.x} y={menu.y} path={menu.path} onClose={() => setMenu(null)} />
+  ) : null
+}
 ```
 
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.9'
 ```
@@ -256,9 +259,11 @@ git commit -m "feat(phase-06): wire FileRow context menu in VirtualFileList; acc
 ---
 
 <!-- openspec-task: 7.10 -->
+
 ### Task 3: Acceptance — external new md → list reflects within 1s
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 The store subscribes to `index:fileChanged` and calls `refresh()`. We simulate by capturing the handler and invoking it.
@@ -307,6 +312,7 @@ describe('OpenSpec acceptance 7.10 — external new md → list updates via inde
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.10'
 ```
@@ -327,9 +333,11 @@ git commit -m "test(phase-06): acceptance 7.10 — index:fileChanged refreshes t
 ---
 
 <!-- openspec-task: 7.11 -->
+
 ### Task 4: Acceptance — external delete of selected file → row + preview clear
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -388,6 +396,7 @@ describe('OpenSpec acceptance 7.11 — external delete of selected file clears r
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.11'
 ```
@@ -408,9 +417,11 @@ git commit -m "test(phase-06): acceptance 7.11 — external delete clears select
 ---
 
 <!-- openspec-task: 7.12 -->
+
 ### Task 5: Acceptance — index `scanning` state shows banner
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -453,6 +464,7 @@ describe('OpenSpec acceptance 7.12 — index scanning shows banner', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.12'
 ```
@@ -460,10 +472,13 @@ npx vitest run src/pages/Library.acceptance.test.tsx -t '7.12'
 Expected: PASS.
 
 > Note: depends on `IpcEventContract` having `'index:stateChange'`. Verify with:
+>
 > ```bash
 > grep -n "index:stateChange" shared/ipc-contract.ts
 > ```
+>
 > If missing, add to phase-06's contract — only an additive change to phase-05's existing channel set:
+>
 > ```ts
 > 'index:stateChange': { state: 'idle' | 'scanning' | 'ready' | 'watching' | 'error' }
 > ```
@@ -482,9 +497,11 @@ git commit -m "test(phase-06): acceptance 7.12 — scanning state shows IndexBan
 ---
 
 <!-- openspec-task: 7.13 -->
+
 ### Task 6: Acceptance — switching grove resets and reloads
 
 **Files:**
+
 - Modify: `src/pages/Library.acceptance.test.tsx`
 
 - [ ] **Step 1: Failing test**
@@ -547,6 +564,7 @@ describe('OpenSpec acceptance 7.13 — switching grove resets library state', ()
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.acceptance.test.tsx -t '7.13'
 ```
@@ -560,6 +578,7 @@ In `npm run dev`, use the GroveSwitcher to open a different grove → confirm `/
 - [ ] **Step 3: Run the full test suite + lint + typecheck**
 
 Run:
+
 ```bash
 npm test && npm run lint && npm run typecheck
 ```
@@ -576,14 +595,17 @@ git commit -m "test(phase-06): acceptance 7.13 — project:changed resets librar
 ---
 
 <!-- openspec-task: 7.14 -->
+
 ### Task 7: `openspec validate phase-06-virtual-library-view --strict` passes
 
 **Files:**
+
 - Possibly modify: `openspec/changes/phase-06-virtual-library-view/proposal.md`, `design.md`, `tasks.md`, `specs/**/*.md` — only if the validator reports issues
 
 - [ ] **Step 1: Run strict validate**
 
 Run:
+
 ```bash
 openspec validate phase-06-virtual-library-view --strict
 ```
@@ -591,6 +613,7 @@ openspec validate phase-06-virtual-library-view --strict
 Expected (target state): exits `0` with no warnings.
 
 If it errors:
+
 - Read the message carefully — typical issues are missing `## Why` / `## What Changes` headers, malformed `### Requirement:` blocks, unparseable `#### Scenario:` lists, or non-additive spec changes that should be marked `MODIFIED`.
 - Fix only the flagged file. Do not restructure passing files.
 
@@ -609,6 +632,7 @@ Expected: `{ "total": 41, "complete": 41, "remaining": 0 }`.
 - [ ] **Step 3: Run final validate**
 
 Run:
+
 ```bash
 openspec validate phase-06-virtual-library-view --strict
 ```
@@ -618,6 +642,7 @@ Expected: PASS with exit 0.
 - [ ] **Step 4: Run full project quality gates**
 
 Run:
+
 ```bash
 npm test && npm run lint && npm run typecheck
 ```
@@ -634,6 +659,7 @@ git commit -m "chore(phase-06): sync tasks.md as complete; openspec validate --s
 - [ ] **Step 6: Hand-off**
 
 Phase 06 is complete. Next steps (out-of-scope for this plan):
+
 - `git checkout main && git merge feat/phase-06-virtual-library-view --no-ff`
 - `/opsx:archive phase-06-virtual-library-view` to move the change into `openspec/changes/archive/`
 - Phase 07 (Vditor editor + autosave) builds on the `/editor/:path` placeholder created here
@@ -643,6 +669,7 @@ Phase 06 is complete. Next steps (out-of-scope for this plan):
 ## Plan-5 Acceptance
 
 After all 7 tasks complete:
+
 - [ ] `npm test` PASSES (acceptance scenarios 7.8–7.13 plus EditorPlaceholder + all earlier tests)
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm run lint` PASSES

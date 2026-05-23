@@ -25,6 +25,7 @@ PRD S-10 要求"长耗时任务可见可控"：用户能看到队列进度、重
 ## Capabilities
 
 ### New Capabilities
+
 - `job-queue-store`: SQLite `jobs` 表与持久化 CRUD
 - `job-queue-runner`: 单进程 loop + handler 注册 + 并发/速率控制
 - `job-retry-policy`: 指数退避策略与错误分类
@@ -32,6 +33,7 @@ PRD S-10 要求"长耗时任务可见可控"：用户能看到队列进度、重
 - `queue-ipc`: `jobs.list` / `jobs.retry` / `jobs.cancel` / `jobs.onChanged`
 
 ### Modified Capabilities
+
 - `history-panel` (phase 10): `/history` 路由从 3 tab 扩为 4 tab（新增 Jobs tab）
 - `clipper-pipeline` (phase 12): `clipQueue.enqueue` 占位替换为真实 `jobs.enqueue('ai-review-clip', ...)`
 

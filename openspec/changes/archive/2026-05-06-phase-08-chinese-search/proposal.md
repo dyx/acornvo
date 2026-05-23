@@ -17,12 +17,14 @@ phase 5 已给 FTS5 预留 tokenizer 注入点；phase 6 的果仓只做标题/�
 ## Capabilities
 
 ### New Capabilities
+
 - `search-index-fts5`: FTS5 虚表的 schema、jieba tokenizer 注册、rebuild 流程
 - `search-query-api`: `search.quickSwitch` / `search.fullText` / `search.suggest` / `search.stats` IPC
 - `quick-switcher`: `⌘P` 模态的 UI、键盘导航、模糊排序
 - `full-text-search-panel`: `⌘⇧F` 面板的 UI、结果行、snippet 渲染
 
 ### Modified Capabilities
+
 - `file-indexer`: `upsert` / `delete` / `rename` 在同一事务内同步写 `files_fts`；启动期检测 FTS 版本并按需 rebuild
 
 ## Impact

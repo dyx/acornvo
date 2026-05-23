@@ -3,10 +3,12 @@
 Acornvo 是基于 Electron 32 + React 19 + TypeScript 5 的本地优先桌面应用。`electron-vite` 脚手架已就位但还未定型出**跨进程通信约定**、**renderer 安全边界**、**日志采集**三套最基础的公共设施。后续 17 个 change 全部依赖本阶段产出。
 
 当前状态：
+
 - 仓库中存在 electron-vite 默认产物（未核查具体落地形态）
 - 无 IPC 路由约定；无 contextBridge 白名单规范；无 electron-log；渲染端无路由与状态管理
 
 约束：
+
 - 主进程一律使用 TypeScript；**业务逻辑禁止写在 renderer**（所有文件 I/O、数据库、AI 均 main 侧）
 - renderer 严格启用 `contextIsolation: true` / `nodeIntegration: false` / `sandbox: true`
 - 所有跨进程数据必须可 structured-clone（不传函数、不传 class 实例）
@@ -15,6 +17,7 @@ Acornvo 是基于 Electron 32 + React 19 + TypeScript 5 的本地优先桌面应
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 浇筑一次、后续所有阶段免重造的 IPC 调用约定
 - renderer 拿到类型安全的 `window.api.<ns>.<method>()`，错误以统一形状返回
 - `electron-log` 可用于主进程与 renderer，文件日志落在 `~/.acornvo/logs/`
@@ -23,6 +26,7 @@ Acornvo 是基于 Electron 32 + React 19 + TypeScript 5 的本地优先桌面应
 - 定义好应用生命周期 hooks（quit/resume/等）的**扩展点**，后续 change 往里挂钩
 
 **Non-Goals:**
+
 - 不引入 SQLite（交给 `sqlite-schema-migrations`）
 - 不实现 Project Picker（交给 `project-picker-grove`）
 - 不做文件 I/O、watcher、编辑器、浏览器、AI
@@ -36,6 +40,7 @@ Acornvo 是基于 Electron 32 + React 19 + TypeScript 5 的本地优先桌面应
 **选择**：主进程集中 `electron/ipc/router.ts`，导出 `registerHandlers({ <ns>: { <method>(ctx, input): output } })`。preload 读同一份 TS 类型描述（`shared/ipc-contract.ts`），用 `contextBridge.exposeInMainWorld('api', { <ns>: { <method>: (input) => ipcRenderer.invoke(\`<ns>.<method>\`, input) } })` 生成客户端。
 
 **备选**：
+
 - tRPC-like 自动生成 —— 过度工程，当前规模不需要
 - 单一 `invoke('event', payload)` 字符串通道 —— 无类型、难搜索
 
@@ -76,6 +81,7 @@ renderer 端通过 `window.api.log.<level>(message, ctx?)` 走 IPC 汇到主进�
 ### D6: 安全
 
 WebPreferences 固定：
+
 ```
 {
   contextIsolation: true,
@@ -86,6 +92,7 @@ WebPreferences 固定：
   spellcheck: false
 }
 ```
+
 CSP：主窗口本地资源；**在 response header 注入** `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:` 的基线（unsafe-inline 只为兼容 vditor/tailwind 注入，可在 `vditor-editor-autosave` 阶段收紧）。
 
 外链：拦截 `window.open` 与 `will-navigate`，非本应用白名单的走 `shell.openExternal`。

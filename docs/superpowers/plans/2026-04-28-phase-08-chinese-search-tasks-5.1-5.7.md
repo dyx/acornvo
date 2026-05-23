@@ -23,7 +23,7 @@ Ship the **QuickSwitcher** modal: a top-anchored 600px-wide overlay opened by `C
 - **Modal uses `@radix-ui/react-dialog`** (already a dep). Radix gives us focus trapping + ARIA + Esc-handling for free; we only override the open/close trigger to be hotkey-driven, not click-driven.
 - **Debounce + cancellation.** Each keystroke increments `requestId`. The store's `runQuery()` action awaits `ipc.search.quickSwitch(q, { limit: 10 })` and only commits results when `result.requestId === currentRequestId` at resolution time. This is the simplest "abort previous" without relying on `AbortController` (which the existing IPC client may not surface — confirm via `grep ipc.client.ts`).
 - **Recent LRU is renderer-memory only.** `recent: string[]` (paths). When the editor opens a file (phase-07's `editor` store action), we'll add a `searchStore.pushRecent(path)` call — but for this plan we accept that recent is empty unless the user pre-populates it. We expose a public `pushRecent(path)` action so phase-07's editor / phase-06's library can call it.
-- **Esc closes** via Radix Dialog's built-in handler. We *don't* duplicate the Esc binding in our hotkey hook — that would double-dispatch.
+- **Esc closes** via Radix Dialog's built-in handler. We _don't_ duplicate the Esc binding in our hotkey hook — that would double-dispatch.
 - **`Cmd+Enter` lands the user in `/library` with `selectedPath` pre-set.** That requires phase-06's library store to expose `setSelectedPath(path)`. If unavailable in this codebase, this plan stubs it: navigate to `/library?focus=<encodedPath>` and let the library page handle the query param when phase-06 lands.
 
 ## Tech Stack
@@ -36,20 +36,21 @@ Ship the **QuickSwitcher** modal: a top-anchored 600px-wide overlay opened by `C
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/components/search/QuickSwitcher.tsx` | Create | 5.1, 5.5, 5.7 |
-| `src/components/search/QuickSwitcher.test.tsx` | Create | 5.1, 5.5 |
-| `src/stores/search.ts` | Create | 5.2, 5.4, 5.6 |
-| `src/stores/search.test.ts` | Create | 5.2, 5.4, 5.6 |
-| `src/hooks/useGlobalHotkeys.ts` | Create | 5.3 |
-| `src/hooks/useGlobalHotkeys.test.tsx` | Create | 5.3 |
-| `src/App.tsx` | Modify (mount `<QuickSwitcher />` + register hotkeys) | 5.3 |
-| `vitest.config.ts` | Verify includes `src/**/*.test.{ts,tsx}` (no change if Plan 7-prior phases set it) | 5.1 |
+| Path                                           | Action                                                                             | Owner task    |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- | ------------- |
+| `src/components/search/QuickSwitcher.tsx`      | Create                                                                             | 5.1, 5.5, 5.7 |
+| `src/components/search/QuickSwitcher.test.tsx` | Create                                                                             | 5.1, 5.5      |
+| `src/stores/search.ts`                         | Create                                                                             | 5.2, 5.4, 5.6 |
+| `src/stores/search.test.ts`                    | Create                                                                             | 5.2, 5.4, 5.6 |
+| `src/hooks/useGlobalHotkeys.ts`                | Create                                                                             | 5.3           |
+| `src/hooks/useGlobalHotkeys.test.tsx`          | Create                                                                             | 5.3           |
+| `src/App.tsx`                                  | Modify (mount `<QuickSwitcher />` + register hotkeys)                              | 5.3           |
+| `vitest.config.ts`                             | Verify includes `src/**/*.test.{ts,tsx}` (no change if Plan 7-prior phases set it) | 5.1           |
 
 ## Pre-flight
 
 This plan assumes Plans 1+2 have merged. Required artefacts:
+
 - `ipc.search.quickSwitch(q, opts)` returns `Promise<FileSummary[]>` via `IpcClient<IpcContract>`.
 - `shared/file-types.ts` exports `FileSummary` (phase-06).
 - `@/ipc/client` exposes a typed `ipc` object with `ipc.search.quickSwitch(...)` (phase-01 IPC client wires every namespace from `shared/ipc-contract.ts`).
@@ -69,11 +70,13 @@ If `src/**/*.test.tsx` is missing, add it to `test.include` in the first task's 
 ## Tasks
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 1: `src/stores/search.ts` — Zustand slice for QuickSwitcher state
 
 We start with the store because the component (task 2) consumes it. This inverts OpenSpec's task numbering (5.1 → 5.2) but matches the dependency order: build the data layer, then the UI.
 
 **Files:**
+
 - Create: `src/stores/search.ts`
 - Create: `src/stores/search.test.ts`
 
@@ -96,8 +99,15 @@ vi.mock('@/ipc/client', () => ({
 import { ipc } from '@/ipc/client'
 
 const stub = (path: string) => ({
-  path, title: path, category: null, rating: null, clipped_at: null,
-  site: null, has_summary: false, tags: [], is_reviewing: false
+  path,
+  title: path,
+  category: null,
+  rating: null,
+  clipped_at: null,
+  site: null,
+  has_summary: false,
+  tags: [],
+  is_reviewing: false
 })
 
 describe('useSearchStore.quickSwitcher', () => {
@@ -106,7 +116,9 @@ describe('useSearchStore.quickSwitcher', () => {
     vi.mocked(ipc.search.quickSwitch).mockReset()
   })
 
-  afterEach(() => { vi.useRealTimers() })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
   it('open() flips open=true and clears q', () => {
     useSearchStore.getState().quickSwitcher.open()
@@ -128,13 +140,19 @@ describe('useSearchStore.quickSwitcher', () => {
   it('runQuery commits results when requestId matches', async () => {
     vi.mocked(ipc.search.quickSwitch).mockResolvedValueOnce([stub('a.md'), stub('b.md')])
     await useSearchStore.getState().quickSwitcher.runQuery('attention')
-    expect(useSearchStore.getState().quickSwitcher.items.map((i) => i.path)).toEqual(['a.md', 'b.md'])
+    expect(useSearchStore.getState().quickSwitcher.items.map((i) => i.path)).toEqual([
+      'a.md',
+      'b.md'
+    ])
   })
 
   it('runQuery ignores stale results (cancelled by newer query)', async () => {
-    let firstResolve: ((v: typeof stub.prototype[]) => void) | null = null
+    let firstResolve: ((v: (typeof stub.prototype)[]) => void) | null = null
     vi.mocked(ipc.search.quickSwitch).mockImplementationOnce(
-      () => new Promise((res) => { firstResolve = res })
+      () =>
+        new Promise((res) => {
+          firstResolve = res
+        })
     )
     vi.mocked(ipc.search.quickSwitch).mockResolvedValueOnce([stub('newer.md')])
 
@@ -159,7 +177,7 @@ describe('useSearchStore.quickSwitcher', () => {
     expect(useSearchStore.getState().quickSwitcher.selectedIndex).toBe(1)
     s.moveSelection(1)
     expect(useSearchStore.getState().quickSwitcher.selectedIndex).toBe(2)
-    s.moveSelection(1)  // past end → clamps
+    s.moveSelection(1) // past end → clamps
     expect(useSearchStore.getState().quickSwitcher.selectedIndex).toBe(2)
     s.moveSelection(-99)
     expect(useSearchStore.getState().quickSwitcher.selectedIndex).toBe(0)
@@ -173,7 +191,9 @@ describe('useSearchStore.quickSwitcher', () => {
 
     s.pushRecent('f5.md')
     expect(useSearchStore.getState().quickSwitcher.recent[0]).toBe('f5.md')
-    expect(useSearchStore.getState().quickSwitcher.recent.filter((p) => p === 'f5.md').length).toBe(1)
+    expect(useSearchStore.getState().quickSwitcher.recent.filter((p) => p === 'f5.md').length).toBe(
+      1
+    )
   })
 })
 ```
@@ -226,36 +246,40 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     recent: [],
     requestId: 0,
 
-    open: () => set((prev) => ({
-      quickSwitcher: {
-        ...prev.quickSwitcher,
-        openState: true,
-        q: '',
-        items: [],
-        selectedIndex: 0
-      }
-    })),
+    open: () =>
+      set((prev) => ({
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          openState: true,
+          q: '',
+          items: [],
+          selectedIndex: 0
+        }
+      })),
 
-    close: () => set((prev) => ({
-      quickSwitcher: {
-        ...prev.quickSwitcher,
-        openState: false,
-        q: '',
-        items: [],
-        selectedIndex: 0
-      }
-    })),
+    close: () =>
+      set((prev) => ({
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          openState: false,
+          q: '',
+          items: [],
+          selectedIndex: 0
+        }
+      })),
 
-    setQuery: (q: string) => set((prev) => ({
-      quickSwitcher: { ...prev.quickSwitcher, q, selectedIndex: 0 }
-    })),
+    setQuery: (q: string) =>
+      set((prev) => ({
+        quickSwitcher: { ...prev.quickSwitcher, q, selectedIndex: 0 }
+      })),
 
     runQuery: async (q: string) => {
       const myId = get().quickSwitcher.requestId + 1
       set((prev) => ({ quickSwitcher: { ...prev.quickSwitcher, requestId: myId } }))
-      const items = q.length === 0 ? [] : await ipc.search.quickSwitch(q, { limit: QUICK_SWITCH_LIMIT })
+      const items =
+        q.length === 0 ? [] : await ipc.search.quickSwitch(q, { limit: QUICK_SWITCH_LIMIT })
       const cur = get().quickSwitcher.requestId
-      if (cur !== myId) return  // stale
+      if (cur !== myId) return // stale
       set((prev) => ({
         quickSwitcher: {
           ...prev.quickSwitcher,
@@ -265,20 +289,26 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       }))
     },
 
-    moveSelection: (delta: number) => set((prev) => {
-      const max = Math.max(0, prev.quickSwitcher.items.length - 1)
-      const next = Math.min(max, Math.max(0, prev.quickSwitcher.selectedIndex + delta))
-      return { quickSwitcher: { ...prev.quickSwitcher, selectedIndex: next } }
-    }),
+    moveSelection: (delta: number) =>
+      set((prev) => {
+        const max = Math.max(0, prev.quickSwitcher.items.length - 1)
+        const next = Math.min(max, Math.max(0, prev.quickSwitcher.selectedIndex + delta))
+        return { quickSwitcher: { ...prev.quickSwitcher, selectedIndex: next } }
+      }),
 
-    setSelectedIndex: (i: number) => set((prev) => ({
-      quickSwitcher: { ...prev.quickSwitcher, selectedIndex: i }
-    })),
+    setSelectedIndex: (i: number) =>
+      set((prev) => ({
+        quickSwitcher: { ...prev.quickSwitcher, selectedIndex: i }
+      })),
 
-    pushRecent: (path: string) => set((prev) => {
-      const next = [path, ...prev.quickSwitcher.recent.filter((p) => p !== path)].slice(0, RECENT_MAX)
-      return { quickSwitcher: { ...prev.quickSwitcher, recent: next } }
-    })
+    pushRecent: (path: string) =>
+      set((prev) => {
+        const next = [path, ...prev.quickSwitcher.recent.filter((p) => p !== path)].slice(
+          0,
+          RECENT_MAX
+        )
+        return { quickSwitcher: { ...prev.quickSwitcher, recent: next } }
+      })
   }
 }))
 
@@ -313,11 +343,13 @@ git commit -m "feat(phase-08): search store — quickSwitcher slice with stale-r
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 2: 80ms debounce wired into the store's runQuery flow
 
 The store's `runQuery` is fire-immediately. The debounce lives at the **call site** (the component) — but to keep timing logic testable in isolation, we add `scheduleQuery(q)` to the store that owns the debounce timer.
 
 **Files:**
+
 - Modify: `src/stores/search.ts`
 - Modify: `src/stores/search.test.ts`
 
@@ -332,7 +364,9 @@ describe('quickSwitcher.scheduleQuery debounce', () => {
     vi.useFakeTimers()
     vi.mocked(ipc.search.quickSwitch).mockReset()
   })
-  afterEach(() => { vi.useRealTimers() })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
   it('coalesces three keystrokes into one IPC call', async () => {
     vi.mocked(ipc.search.quickSwitch).mockResolvedValue([])
@@ -380,11 +414,13 @@ scheduleQuery: (q: string) => {
 ```
 
 Add to the `QuickSwitcherSlice` interface:
+
 ```ts
 scheduleQuery: (q: string) => void
 ```
 
 In `_resetSearchStoreForTest`, also clear the timer:
+
 ```ts
 if (_quickSwitcherDebounceTimer) {
   clearTimeout(_quickSwitcherDebounceTimer)
@@ -408,11 +444,13 @@ git commit -m "feat(phase-08): scheduleQuery 80ms debounce coalescing"
 ---
 
 <!-- openspec-task: 5.6 -->
+
 ### Task 3: Recent-LRU is exposed as a public action and wired to a `pushRecent` exporter
 
 The store already has `pushRecent`. This task verifies it remains stable across component lifecycle and re-exports a tiny imperative helper for callers outside the React tree (e.g., the editor's `open(path)` action which lives in another store).
 
 **Files:**
+
 - Modify: `src/stores/search.ts`
 - Modify: `src/stores/search.test.ts`
 
@@ -435,12 +473,14 @@ Append to `src/stores/search.test.ts`:
 import { pushRecentFile } from './search'
 
 describe('pushRecentFile (imperative)', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('forwards to the store action', () => {
     pushRecentFile('a.md')
     pushRecentFile('b.md')
-    pushRecentFile('a.md')  // dedupe
+    pushRecentFile('a.md') // dedupe
     expect(useSearchStore.getState().quickSwitcher.recent).toEqual(['a.md', 'b.md'])
   })
 })
@@ -457,9 +497,11 @@ git commit -m "feat(phase-08): pushRecentFile imperative helper for cross-store 
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 4: `useGlobalHotkeys` hook + register Cmd/Ctrl+P (and Cmd/Ctrl+Shift+F placeholder for Plan 4)
 
 **Files:**
+
 - Create: `src/hooks/useGlobalHotkeys.ts`
 - Create: `src/hooks/useGlobalHotkeys.test.tsx`
 - Modify: `src/App.tsx` (call `useGlobalHotkeys()` + render `<QuickSwitcher />`)
@@ -475,7 +517,9 @@ import { useGlobalHotkeys } from './useGlobalHotkeys'
 import { useSearchStore, _resetSearchStoreForTest } from '@/stores/search'
 
 describe('useGlobalHotkeys', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   function press(opts: KeyboardEventInit): void {
     window.dispatchEvent(new KeyboardEvent('keydown', opts))
@@ -485,7 +529,11 @@ describe('useGlobalHotkeys', () => {
     renderHook(() => useGlobalHotkeys())
     const ev = new KeyboardEvent('keydown', { key: 'p', metaKey: true, cancelable: true })
     let prevented = false
-    Object.defineProperty(ev, 'preventDefault', { value: () => { prevented = true } })
+    Object.defineProperty(ev, 'preventDefault', {
+      value: () => {
+        prevented = true
+      }
+    })
     window.dispatchEvent(ev)
     expect(useSearchStore.getState().quickSwitcher.openState).toBe(true)
     expect(prevented).toBe(true)
@@ -578,17 +626,20 @@ Expected: PASS for all four cases.
 - [ ] **Step 5: Mount the hook + the (yet-empty) QuickSwitcher in App.tsx**
 
 Edit `src/App.tsx`. Add imports:
+
 ```tsx
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { QuickSwitcher } from '@/components/search/QuickSwitcher'
 ```
 
 Inside `App()`, add a hook call near the top (after `useToast()`):
+
 ```tsx
 useGlobalHotkeys()
 ```
 
 Render `<QuickSwitcher />` near `<Toaster />`:
+
 ```tsx
 <DbRebuildOverlay visible={isRebuilding} />
 <QuickSwitcher />
@@ -632,9 +683,11 @@ git commit -m "feat(phase-08): global Cmd/Ctrl+P hotkey opens QuickSwitcher plac
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 5: Flesh out `QuickSwitcher.tsx` UI shell — Radix Dialog, top-anchored 600px modal, input + list scaffolding
 
 **Files:**
+
 - Modify: `src/components/search/QuickSwitcher.tsx`
 - Modify: `src/components/search/QuickSwitcher.test.tsx` (create)
 
@@ -653,7 +706,9 @@ vi.mock('@/ipc/client', () => ({
 }))
 
 describe('QuickSwitcher (UI shell)', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('renders nothing when closed', () => {
     render(<QuickSwitcher />)
@@ -725,17 +780,22 @@ export function QuickSwitcher(): JSX.Element {
   }, [open])
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) close() }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) close()
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay
           className="fixed inset-0 z-50 bg-background/40 backdrop-blur-sm"
           aria-hidden="true"
         />
-        <Dialog.Content
-          className="fixed left-1/2 top-[15vh] z-50 -translate-x-1/2 w-[600px] max-w-[90vw] rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
-        >
+        <Dialog.Content className="fixed left-1/2 top-[15vh] z-50 -translate-x-1/2 w-[600px] max-w-[90vw] rounded-md border border-border bg-popover text-popover-foreground shadow-lg">
           <Dialog.Title className="sr-only">QuickSwitcher</Dialog.Title>
-          <Dialog.Description className="sr-only">{t('search.placeholder_quick')}</Dialog.Description>
+          <Dialog.Description className="sr-only">
+            {t('search.placeholder_quick')}
+          </Dialog.Description>
           <div className="border-b border-border p-3">
             <input
               ref={inputRef}
@@ -751,9 +811,7 @@ export function QuickSwitcher(): JSX.Element {
           <ul className="max-h-[480px] overflow-y-auto" role="listbox" aria-label="results">
             {items.length === 0 && q.length === 0 ? null : null /* row rendering in task 7 */}
             {items.length === 0 && q.length > 0 ? (
-              <li className="px-3 py-2 text-sm text-muted-foreground">
-                {t('search.no_results')}
-              </li>
+              <li className="px-3 py-2 text-sm text-muted-foreground">{t('search.no_results')}</li>
             ) : null}
           </ul>
         </Dialog.Content>
@@ -778,6 +836,7 @@ search: {
 Plan 4 task 8.1 lands the full set; this task only needs `placeholder_quick`, `no_results`, `recent`.
 
 If your i18n is keyed via `react-i18next` with a flat namespace, use:
+
 ```ts
 'search.placeholder_quick': '搜索文件名 / 路径',
 'search.no_results': '无匹配结果',
@@ -808,9 +867,11 @@ git commit -m "feat(phase-08): QuickSwitcher Radix shell + input + empty-state"
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 6: Keyboard navigation — `↑/↓` move; `Enter` opens editor; `Cmd/Ctrl+Enter` library focus
 
 **Files:**
+
 - Modify: `src/components/search/QuickSwitcher.tsx`
 - Modify: `src/components/search/QuickSwitcher.test.tsx`
 
@@ -828,8 +889,15 @@ vi.mock('react-router-dom', async () => {
 })
 
 const stub = (path: string) => ({
-  path, title: path, category: null, rating: null, clipped_at: null,
-  site: null, has_summary: false, tags: [], is_reviewing: false
+  path,
+  title: path,
+  category: null,
+  rating: null,
+  clipped_at: null,
+  site: null,
+  has_summary: false,
+  tags: [],
+  is_reviewing: false
 })
 
 describe('QuickSwitcher keyboard nav', () => {
@@ -839,35 +907,62 @@ describe('QuickSwitcher keyboard nav', () => {
     act(() => {
       useSearchStore.getState().quickSwitcher.open()
       useSearchStore.setState((prev) => ({
-        quickSwitcher: { ...prev.quickSwitcher, items: [stub('a.md'), stub('b.md'), stub('c.md')], q: 'x' }
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          items: [stub('a.md'), stub('b.md'), stub('c.md')],
+          q: 'x'
+        }
       }))
     })
   })
 
   it('Down arrow moves selectedIndex', () => {
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
     const dialog = screen.getByRole('dialog')
     act(() => {
-      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+      dialog.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })
+      )
     })
     expect(useSearchStore.getState().quickSwitcher.selectedIndex).toBe(1)
   })
 
   it('Enter navigates to /editor/<encodedPath> and closes', () => {
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
     const dialog = screen.getByRole('dialog')
     act(() => {
-      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+      dialog.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      )
     })
     expect(navigateMock).toHaveBeenCalledWith('/editor/' + encodeURIComponent('a.md'))
     expect(useSearchStore.getState().quickSwitcher.openState).toBe(false)
   })
 
   it('Cmd+Enter navigates to /library?focus=<path> and closes', () => {
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
     const dialog = screen.getByRole('dialog')
     act(() => {
-      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true, cancelable: true }))
+      dialog.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          metaKey: true,
+          bubbles: true,
+          cancelable: true
+        })
+      )
     })
     expect(navigateMock).toHaveBeenCalledWith('/library?focus=' + encodeURIComponent('a.md'))
   })
@@ -883,11 +978,13 @@ npx vitest run src/components/search/QuickSwitcher.test.tsx -t "keyboard nav"
 - [ ] **Step 3: Implement keyboard handlers**
 
 Edit `src/components/search/QuickSwitcher.tsx`. Add `useNavigate` import:
+
 ```tsx
 import { useNavigate } from 'react-router-dom'
 ```
 
 Add inside the component body:
+
 ```tsx
 const navigate = useNavigate()
 const moveSelection = useSearchStore((s) => s.quickSwitcher.moveSelection)
@@ -896,6 +993,7 @@ const pushRecent = useSearchStore((s) => s.quickSwitcher.pushRecent)
 ```
 
 Add an `onKeyDown` handler on the `<Dialog.Content>` (or the input):
+
 ```tsx
 function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
   const mod = e.metaKey || e.ctrlKey
@@ -921,6 +1019,7 @@ function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
 ```
 
 Wire it on `<Dialog.Content>`:
+
 ```tsx
 <Dialog.Content
   onKeyDown={handleKeyDown}
@@ -946,9 +1045,11 @@ git commit -m "feat(phase-08): QuickSwitcher keyboard nav (↑↓ Enter Cmd+Ente
 ---
 
 <!-- openspec-task: 5.7 -->
+
 ### Task 7: Row rendering — title + path + clipped_at, selected-row visual state
 
 **Files:**
+
 - Modify: `src/components/search/QuickSwitcher.tsx`
 - Modify: `src/components/search/QuickSwitcher.test.tsx`
 
@@ -958,7 +1059,9 @@ Append:
 
 ```tsx
 describe('QuickSwitcher row render', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('renders title, path, clipped_at; highlights selected', () => {
     act(() => {
@@ -968,16 +1071,38 @@ describe('QuickSwitcher row render', () => {
           ...prev.quickSwitcher,
           q: 'x',
           items: [
-            { path: 'a.md', title: 'Title A', category: null, rating: null,
-              clipped_at: '2026-04-01', site: null, has_summary: false, tags: [], is_reviewing: false },
-            { path: 'b.md', title: 'Title B', category: null, rating: null,
-              clipped_at: null, site: null, has_summary: false, tags: [], is_reviewing: false }
+            {
+              path: 'a.md',
+              title: 'Title A',
+              category: null,
+              rating: null,
+              clipped_at: '2026-04-01',
+              site: null,
+              has_summary: false,
+              tags: [],
+              is_reviewing: false
+            },
+            {
+              path: 'b.md',
+              title: 'Title B',
+              category: null,
+              rating: null,
+              clipped_at: null,
+              site: null,
+              has_summary: false,
+              tags: [],
+              is_reviewing: false
+            }
           ],
           selectedIndex: 1
         }
       }))
     })
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
 
     expect(screen.getByText('Title A')).toBeTruthy()
     expect(screen.getByText('Title B')).toBeTruthy()
@@ -997,7 +1122,11 @@ describe('QuickSwitcher row render', () => {
         quickSwitcher: { ...prev.quickSwitcher, recent: ['recent-a.md', 'recent-b.md'] }
       }))
     })
-    render(<MemoryRouter><QuickSwitcher /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <QuickSwitcher />
+      </MemoryRouter>
+    )
 
     expect(screen.getByText('recent-a.md')).toBeTruthy()
     expect(screen.getByText('recent-b.md')).toBeTruthy()
@@ -1032,7 +1161,9 @@ Replace the `<ul>` block in `QuickSwitcher.tsx` with:
             aria-selected={i === selectedIndex ? 'true' : 'false'}
             className={
               'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer ' +
-              (i === selectedIndex ? 'bg-accent text-accent-foreground border-l-2 border-primary' : '')
+              (i === selectedIndex
+                ? 'bg-accent text-accent-foreground border-l-2 border-primary'
+                : '')
             }
             onMouseEnter={() => useSearchStore.getState().quickSwitcher.setSelectedIndex(i)}
             onClick={() => {
@@ -1092,6 +1223,7 @@ npm run dev
 ```
 
 In the running app:
+
 - Press Cmd+P (or Ctrl+P) — modal opens centered, 600px wide, anchored 15vh from top.
 - Type something — input updates; if no grove is open, list shows "无匹配结果".
 - Press Esc — modal closes.

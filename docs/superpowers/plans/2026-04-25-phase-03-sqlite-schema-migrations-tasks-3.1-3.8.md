@@ -31,6 +31,7 @@ Build `electron/services/db/migrations/001_init.sql` containing the **entire** s
 ## DDL Source of Truth
 
 Tables and indices below come from `docs/prd.md:246–328`. Two **additions** beyond the PRD DDL come from `design.md` decision D5:
+
 1. `idx_files_content_hash` on `files(content_hash)` (used by future dedupe logic)
 2. `idx_usage_purpose` on `usage(purpose)` (used by future usage aggregation)
 
@@ -38,10 +39,10 @@ These additions are explicitly required by OpenSpec task `3.7` (mentions `idx_us
 
 ## Files Touched
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/db/migrations/001_init.sql` | Create then extend | 3.1–3.8 |
-| `electron/services/db/migrations/001_init.test.ts` | Create then extend | 3.1–3.8 |
+| Path                                               | Action             | Owner task |
+| -------------------------------------------------- | ------------------ | ---------- |
+| `electron/services/db/migrations/001_init.sql`     | Create then extend | 3.1–3.8    |
+| `electron/services/db/migrations/001_init.test.ts` | Create then extend | 3.1–3.8    |
 
 ---
 
@@ -60,9 +61,11 @@ The test driver will be added inside Task 1's RED step.
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: `files` table + `idx_files_category` + `idx_files_rating` (+ `idx_files_content_hash`)
 
 **Files:**
+
 - Create: `electron/services/db/migrations/001_init.sql`
 - Create: `electron/services/db/migrations/001_init.test.ts`
 
@@ -82,7 +85,9 @@ const MIGRATIONS_DIR = dirname(fileURLToPath(import.meta.url))
 function tableNames(db: Database.Database): string[] {
   return (
     db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
   ).map((r) => r.name)
 }
@@ -90,7 +95,9 @@ function tableNames(db: Database.Database): string[] {
 function indexNames(db: Database.Database): string[] {
   return (
     db
-      .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
   ).map((r) => r.name)
 }
@@ -113,8 +120,17 @@ describe('001_init.sql', () => {
     expect(tableNames(db)).toContain('files')
     const cols = columnNames(db, 'files')
     for (const required of [
-      'path', 'title', 'url', 'category', 'rating', 'summary',
-      'clipped_at', 'reviewed_at', 'mtime', 'content_hash', 'frontmatter_json'
+      'path',
+      'title',
+      'url',
+      'category',
+      'rating',
+      'summary',
+      'clipped_at',
+      'reviewed_at',
+      'mtime',
+      'content_hash',
+      'frontmatter_json'
     ]) {
       expect(cols).toContain(required)
     }
@@ -189,9 +205,11 @@ git commit -m "feat(phase-03): 001_init creates files table + indices"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: `tags` + `file_tags` (composite PK)
 
 **Files:**
+
 - Modify: `electron/services/db/migrations/001_init.sql`
 - Modify: `electron/services/db/migrations/001_init.test.ts`
 
@@ -202,18 +220,18 @@ git commit -m "feat(phase-03): 001_init creates files table + indices"
 Append inside the `describe('001_init.sql', () => { ... })` block:
 
 ```ts
-  it('creates tags + file_tags with composite PK', () => {
-    expect(tableNames(db)).toEqual(expect.arrayContaining(['tags', 'file_tags']))
-    expect(columnNames(db, 'tags')).toEqual(expect.arrayContaining(['name', 'usage_count']))
-    expect(columnNames(db, 'file_tags')).toEqual(expect.arrayContaining(['path', 'tag']))
-    const ftInfo = db.pragma("table_info('file_tags')") as Array<{ name: string; pk: number }>
-    expect(ftInfo.find((c) => c.name === 'path')?.pk).toBeGreaterThan(0)
-    expect(ftInfo.find((c) => c.name === 'tag')?.pk).toBeGreaterThan(0)
-    // composite PK rejects duplicates
-    db.exec("INSERT INTO files (path, mtime) VALUES ('a.md', 0)")
-    db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")
-    expect(() => db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")).toThrow(/UNIQUE/i)
-  })
+it('creates tags + file_tags with composite PK', () => {
+  expect(tableNames(db)).toEqual(expect.arrayContaining(['tags', 'file_tags']))
+  expect(columnNames(db, 'tags')).toEqual(expect.arrayContaining(['name', 'usage_count']))
+  expect(columnNames(db, 'file_tags')).toEqual(expect.arrayContaining(['path', 'tag']))
+  const ftInfo = db.pragma("table_info('file_tags')") as Array<{ name: string; pk: number }>
+  expect(ftInfo.find((c) => c.name === 'path')?.pk).toBeGreaterThan(0)
+  expect(ftInfo.find((c) => c.name === 'tag')?.pk).toBeGreaterThan(0)
+  // composite PK rejects duplicates
+  db.exec("INSERT INTO files (path, mtime) VALUES ('a.md', 0)")
+  db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")
+  expect(() => db.exec("INSERT INTO file_tags (path, tag) VALUES ('a.md', 'x')")).toThrow(/UNIQUE/i)
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -261,21 +279,27 @@ git commit -m "feat(phase-03): 001_init adds tags + file_tags"
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: `files_fts` (FTS5 virtual table, tokenize=simple)
 
 **Files:**
+
 - Modify: `electron/services/db/migrations/001_init.sql`
 - Modify: `electron/services/db/migrations/001_init.test.ts`
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-  it('creates files_fts FTS5 virtual table that supports MATCH', () => {
-    expect(tableNames(db)).toContain('files_fts')
-    db.exec("INSERT INTO files_fts (path, title, summary, content) VALUES ('a.md', 'hello world', 's', 'body')")
-    const rows = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH 'hello'").all() as Array<{ path: string }>
-    expect(rows.map((r) => r.path)).toEqual(['a.md'])
-  })
+it('creates files_fts FTS5 virtual table that supports MATCH', () => {
+  expect(tableNames(db)).toContain('files_fts')
+  db.exec(
+    "INSERT INTO files_fts (path, title, summary, content) VALUES ('a.md', 'hello world', 's', 'body')"
+  )
+  const rows = db
+    .prepare("SELECT path FROM files_fts WHERE files_fts MATCH 'hello'")
+    .all() as Array<{ path: string }>
+  expect(rows.map((r) => r.path)).toEqual(['a.md'])
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -314,19 +338,30 @@ git commit -m "feat(phase-03): 001_init adds files_fts FTS5 virtual table"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: `bookmarks` (with `sort_order`)
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-  it('creates bookmarks with autoincrement id + sort_order', () => {
-    expect(tableNames(db)).toContain('bookmarks')
-    const cols = columnNames(db, 'bookmarks')
-    expect(cols).toEqual(expect.arrayContaining(['id', 'url', 'title', 'favicon', 'created_at', 'sort_order']))
-    const r1 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://x', '2026-01-01') RETURNING id").get() as { id: number }
-    const r2 = db.prepare("INSERT INTO bookmarks (url, created_at) VALUES ('https://y', '2026-01-01') RETURNING id").get() as { id: number }
-    expect(r2.id).toBe(r1.id + 1)
-  })
+it('creates bookmarks with autoincrement id + sort_order', () => {
+  expect(tableNames(db)).toContain('bookmarks')
+  const cols = columnNames(db, 'bookmarks')
+  expect(cols).toEqual(
+    expect.arrayContaining(['id', 'url', 'title', 'favicon', 'created_at', 'sort_order'])
+  )
+  const r1 = db
+    .prepare(
+      "INSERT INTO bookmarks (url, created_at) VALUES ('https://x', '2026-01-01') RETURNING id"
+    )
+    .get() as { id: number }
+  const r2 = db
+    .prepare(
+      "INSERT INTO bookmarks (url, created_at) VALUES ('https://y', '2026-01-01') RETURNING id"
+    )
+    .get() as { id: number }
+  expect(r2.id).toBe(r1.id + 1)
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -358,18 +393,25 @@ git commit -m "feat(phase-03): 001_init adds bookmarks table"
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 5: `chats` (TEXT PK)
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-  it('creates chats with TEXT primary key', () => {
-    expect(tableNames(db)).toContain('chats')
-    const cols = columnNames(db, 'chats')
-    expect(cols).toEqual(expect.arrayContaining(['id', 'title', 'model', 'created_at', 'updated_at']))
-    db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")
-    expect(() => db.exec("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')")).toThrow(/UNIQUE/i)
-  })
+it('creates chats with TEXT primary key', () => {
+  expect(tableNames(db)).toContain('chats')
+  const cols = columnNames(db, 'chats')
+  expect(cols).toEqual(expect.arrayContaining(['id', 'title', 'model', 'created_at', 'updated_at']))
+  db.exec(
+    "INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')"
+  )
+  expect(() =>
+    db.exec(
+      "INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', '2026-01-01', '2026-01-01')"
+    )
+  ).toThrow(/UNIQUE/i)
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -400,33 +442,34 @@ git commit -m "feat(phase-03): 001_init adds chats table"
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 6: `queue` + `idx_queue_status` + partial unique index
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-  it('creates queue with idx_queue_status + partial unique index for active reviews', () => {
-    expect(tableNames(db)).toContain('queue')
-    const idx = indexNames(db)
-    expect(idx).toContain('idx_queue_status')
-    expect(idx).toContain('uq_queue_active_path')
+it('creates queue with idx_queue_status + partial unique index for active reviews', () => {
+  expect(tableNames(db)).toContain('queue')
+  const idx = indexNames(db)
+  expect(idx).toContain('idx_queue_status')
+  expect(idx).toContain('uq_queue_active_path')
 
-    // The partial unique index should reject a second active review for the same path.
-    const insert = db.prepare(
-      "INSERT INTO queue (kind, payload_json, status, created_at, updated_at) VALUES (?, ?, ?, '2026-01-01', '2026-01-01')"
-    )
-    insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')
-    expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')).toThrow(/UNIQUE/i)
+  // The partial unique index should reject a second active review for the same path.
+  const insert = db.prepare(
+    "INSERT INTO queue (kind, payload_json, status, created_at, updated_at) VALUES (?, ?, ?, '2026-01-01', '2026-01-01')"
+  )
+  insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')
+  expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'pending')).toThrow(/UNIQUE/i)
 
-    // But a different path is fine.
-    expect(() => insert.run('review', JSON.stringify({ path: 'b.md' }), 'pending')).not.toThrow()
+  // But a different path is fine.
+  expect(() => insert.run('review', JSON.stringify({ path: 'b.md' }), 'pending')).not.toThrow()
 
-    // And a 'failed' row for the same path is fine (not in the partial set).
-    expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'failed')).not.toThrow()
+  // And a 'failed' row for the same path is fine (not in the partial set).
+  expect(() => insert.run('review', JSON.stringify({ path: 'a.md' }), 'failed')).not.toThrow()
 
-    // And a non-review kind is fine.
-    expect(() => insert.run('reindex', JSON.stringify({ path: 'a.md' }), 'pending')).not.toThrow()
-  })
+  // And a non-review kind is fine.
+  expect(() => insert.run('reindex', JSON.stringify({ path: 'a.md' }), 'pending')).not.toThrow()
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -468,26 +511,34 @@ git commit -m "feat(phase-03): 001_init adds queue + partial unique index for ac
 ---
 
 <!-- openspec-task: 3.7 -->
+
 ### Task 7: `usage` + `idx_usage_ts` + `idx_usage_model` + `idx_usage_purpose`
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-  it('creates usage with ts/model/purpose indices', () => {
-    expect(tableNames(db)).toContain('usage')
-    const cols = columnNames(db, 'usage')
-    expect(cols).toEqual(
-      expect.arrayContaining([
-        'id', 'ts', 'purpose', 'model_id', 'model_name',
-        'input_tokens', 'output_tokens', 'estimated_cost_usd',
-        'file_path', 'chat_id'
-      ])
-    )
-    const idx = indexNames(db)
-    expect(idx).toContain('idx_usage_ts')
-    expect(idx).toContain('idx_usage_model')
-    expect(idx).toContain('idx_usage_purpose')
-  })
+it('creates usage with ts/model/purpose indices', () => {
+  expect(tableNames(db)).toContain('usage')
+  const cols = columnNames(db, 'usage')
+  expect(cols).toEqual(
+    expect.arrayContaining([
+      'id',
+      'ts',
+      'purpose',
+      'model_id',
+      'model_name',
+      'input_tokens',
+      'output_tokens',
+      'estimated_cost_usd',
+      'file_path',
+      'chat_id'
+    ])
+  )
+  const idx = indexNames(db)
+  expect(idx).toContain('idx_usage_ts')
+  expect(idx).toContain('idx_usage_model')
+  expect(idx).toContain('idx_usage_purpose')
+})
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -526,9 +577,11 @@ git commit -m "feat(phase-03): 001_init adds usage table + ts/model/purpose indi
 ---
 
 <!-- openspec-task: 3.8 -->
+
 ### Task 8: Verify `-- migration: 001_init` header + final coverage assertion
 
 **Files:**
+
 - Modify: `electron/services/db/migrations/001_init.sql` (verify header only)
 - Modify: `electron/services/db/migrations/001_init.test.ts` (add umbrella assertion)
 
@@ -543,16 +596,31 @@ Expected: `-- migration: 001_init`. If not, prepend it.
 - [ ] **Step 2: Append the umbrella assertion**
 
 ```ts
-  it('matches the spec scenario "初始 schema 完整" — every required table + index exists', () => {
-    const tables = tableNames(db)
-    for (const t of ['files', 'tags', 'file_tags', 'files_fts', 'bookmarks', 'chats', 'queue', 'usage']) {
-      expect(tables).toContain(t)
-    }
-    const idx = indexNames(db)
-    for (const i of ['idx_files_category', 'idx_files_rating', 'idx_queue_status', 'idx_usage_ts', 'idx_usage_model']) {
-      expect(idx).toContain(i)
-    }
-  })
+it('matches the spec scenario "初始 schema 完整" — every required table + index exists', () => {
+  const tables = tableNames(db)
+  for (const t of [
+    'files',
+    'tags',
+    'file_tags',
+    'files_fts',
+    'bookmarks',
+    'chats',
+    'queue',
+    'usage'
+  ]) {
+    expect(tables).toContain(t)
+  }
+  const idx = indexNames(db)
+  for (const i of [
+    'idx_files_category',
+    'idx_files_rating',
+    'idx_queue_status',
+    'idx_usage_ts',
+    'idx_usage_model'
+  ]) {
+    expect(idx).toContain(i)
+  }
+})
 ```
 
 - [ ] **Step 3: Run — GREEN**

@@ -10,18 +10,21 @@
 **Plan branch:** `phase-19-ui-remediation`
 
 **Sources:**
+
 - `openspec/changes/phase-18-observability-and-packaging/design.md` (D8, D10)
 - `openspec/changes/phase-18-observability-and-packaging/tasks.md` (§10, §11, §12)
 - `openspec/changes/phase-18-observability-and-packaging/specs/app-packaging/spec.md`
 - `openspec/changes/phase-18-observability-and-packaging/specs/app-shell/spec.md`
 
 **Out of scope:**
+
 - Foundation modules (Plan 1)
 - Crash / Diagnostic / Observability page (Plan 2)
 - About / Update / Telemetry feature implementations (Plan 3)
 - Verification (Plan 5)
 
 **Open issues:**
+
 - Existing `electron-builder.yml` exists with `appId: com.electron.app`, `productName: acornvo`, basic NSIS, mac with `notarize: false`, linux with three targets (AppImage/snap/deb), and a placeholder `publish.url`. We **rewrite** the relevant fields per design D8 while preserving existing extendInfo/categories.
 - Existing `build/` already has `entitlements.mac.plist`, `icon.icns`, `icon.ico`, `icon.png`. We verify them, don't replace them.
 - The `build:mac/win/linux` scripts exist; we add `dist:mac/win/linux`, `dist:all`, `notarize:mac`, and re-use Plan 3's `generate:licenses`.
@@ -49,9 +52,11 @@ Make the app installable (mac dmg x64+arm64 / win nsis / linux AppImage), publis
 ---
 
 <!-- openspec-task: 10.1 -->
+
 ### Task 1: Rewrite `electron-builder.yml` for phase 18 targets
 
 **Files:**
+
 - Modify: `electron-builder.yml`
 
 - [ ] **Step 1: Replace the file with phase-18 config**
@@ -134,9 +139,11 @@ git commit -m "build: phase-18 electron-builder config (appId, dual-arch dmg, NS
 ---
 
 <!-- openspec-task: 10.2 -->
+
 ### Task 2: Verify `build/` resources
 
 **Files:**
+
 - Verify: `build/icon.icns`, `build/icon.ico`, `build/icon.png`, `build/entitlements.mac.plist`
 
 - [ ] **Step 1: Confirm files exist and are valid**
@@ -170,9 +177,11 @@ If nothing changed, skip the commit.
 ---
 
 <!-- openspec-task: 10.3 -->
+
 ### Task 3: Add `dist:*` npm scripts
 
 **Files:**
+
 - Modify: `package.json` `scripts`
 
 - [ ] **Step 1: Edit scripts**
@@ -224,9 +233,11 @@ git commit -m "build: add dist:mac/win/linux/all + notarize:mac scripts"
 ---
 
 <!-- openspec-task: 10.4 -->
+
 ### Task 4: GitHub Actions release workflow
 
 **Files:**
+
 - Create: `.github/workflows/release.yml`
 
 - [ ] **Step 1: Write the workflow**
@@ -311,9 +322,11 @@ git commit -m "ci: tag-triggered release workflow (mac/win/linux matrix → GitH
 ---
 
 <!-- openspec-task: 10.5 -->
+
 ### Task 5: README — Install / Update / Troubleshoot + signing guide
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Add the section**
@@ -360,9 +373,11 @@ git commit -m "docs(README): Install / Update / Troubleshoot + signing guide"
 ---
 
 <!-- openspec-task: 11.1 -->
+
 ### Task 6: `app.whenReady()` → `initAutoUpdate()` (gated by settings)
 
 **Files:**
+
 - Modify: `electron/bootstrap.ts` (or wherever `app.whenReady()` chains live)
 
 - [ ] **Step 1: Add the wiring**
@@ -396,9 +411,11 @@ git commit -m "feat(app): start auto-updater on whenReady when settings.update.a
 ---
 
 <!-- openspec-task: 11.2 -->
+
 ### Task 7: `ready-to-show` → `crashReporter.checkLastRun()` → IPC notify renderer
 
 **Files:**
+
 - Modify: `electron/bootstrap.ts` (or wherever `mainWindow` is created)
 - Modify: `shared/ipc-contract.ts` — add event `'crash:detected': { files: string[] }` and IPC `crash.ack(file)` and `crash.openLogsFolder()`
 - Modify: `electron/ipc/crash.ts` (new file)
@@ -470,9 +487,11 @@ git commit -m "feat(app): emit crash:detected on ready-to-show when unacked cras
 ---
 
 <!-- openspec-task: 11.3 -->
+
 ### Task 8: Renderer crash banner — View Logs / Export Diagnostic / Ignore
 
 **Files:**
+
 - Create: `src/components/CrashBanner.tsx`
 - Create: `src/components/CrashBanner.test.tsx`
 - Modify: top-level layout in `src/App.tsx` to mount the banner
@@ -612,9 +631,11 @@ git commit -m "feat(app): renderer crash banner (View Logs / Export Diag / Ignor
 ---
 
 <!-- openspec-task: 11.4 -->
+
 ### Task 9: Production build closes DevTools + logs
 
 **Files:**
+
 - Modify: `electron/bootstrap.ts` (or window-creation module)
 
 - [ ] **Step 1: Write the failing test**
@@ -641,7 +662,9 @@ describe('production devtools lock', () => {
 
     applyDevtoolsLock('production')
     // Find the registered handler:
-    const handler = on.mock.calls.find(([e]) => e === 'devtools-opened')?.[1] as (() => void) | undefined
+    const handler = on.mock.calls.find(([e]) => e === 'devtools-opened')?.[1] as
+      | (() => void)
+      | undefined
     expect(handler).toBeDefined()
     handler?.()
     expect(close).toHaveBeenCalled()
@@ -684,9 +707,11 @@ git commit -m "feat(app): production devtools lock with audit log"
 ---
 
 <!-- openspec-task: 12.1 -->
+
 ### Task 10: Add `obs.* / about.* / crash.* / update.* / telemetry.*` keys
 
 **Files:**
+
 - Modify: `src/i18n/locales/en-US.json`
 - Modify: `src/i18n/locales/zh-CN.json`
 
@@ -813,9 +838,11 @@ git commit -m "feat(i18n): add obs/about/crash/update/telemetry keys (en + zh)"
 ---
 
 <!-- openspec-task: 12.2 -->
+
 ### Task 11: Verify zh-CN ↔ en-US key parity
 
 **Files:**
+
 - Create: `src/i18n/phase-18.test.ts`
 
 - [ ] **Step 1: Write the parity test**
@@ -826,7 +853,15 @@ import { describe, expect, it } from 'vitest'
 import en from './locales/en-US.json'
 import zh from './locales/zh-CN.json'
 
-const PHASE_18_PREFIXES = ['obs.', 'about.', 'crash.', 'update.', 'telemetry.', 'settings.tab.about', 'settings.tab.observability']
+const PHASE_18_PREFIXES = [
+  'obs.',
+  'about.',
+  'crash.',
+  'update.',
+  'telemetry.',
+  'settings.tab.about',
+  'settings.tab.observability'
+]
 
 function flatten(o: unknown, prefix = ''): string[] {
   if (typeof o !== 'object' || o === null) return [prefix.replace(/\.$/, '')]

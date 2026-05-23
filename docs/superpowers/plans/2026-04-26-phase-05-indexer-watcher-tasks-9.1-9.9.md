@@ -28,17 +28,17 @@ Run end-to-end acceptance scenarios against a real grove, exercising the indexer
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `tests/acceptance/phase-05/01-full-scan.test.ts` | Create | 9.1 |
-| `tests/acceptance/phase-05/02-external-add.test.ts` | Create | 9.2 |
-| `tests/acceptance/phase-05/03-external-delete.test.ts` | Create | 9.3 |
-| `tests/acceptance/phase-05/04-external-rename.test.ts` | Create | 9.4 |
-| `tests/acceptance/phase-05/05-self-write-filter.test.ts` | Create | 9.5 |
-| `tests/acceptance/phase-05/06-batch-cp.test.ts` | Create | 9.6 |
-| `tests/acceptance/phase-05/07-frontmatter-only.test.ts` | Create | 9.7 |
-| `tests/acceptance/phase-05/08-cancel-scan.test.ts` | Create | 9.8 |
-| `tests/acceptance/phase-05/_helpers.ts` | Create (shared fixtures) | 9.1 |
+| Path                                                     | Action                   | Owner task |
+| -------------------------------------------------------- | ------------------------ | ---------- |
+| `tests/acceptance/phase-05/01-full-scan.test.ts`         | Create                   | 9.1        |
+| `tests/acceptance/phase-05/02-external-add.test.ts`      | Create                   | 9.2        |
+| `tests/acceptance/phase-05/03-external-delete.test.ts`   | Create                   | 9.3        |
+| `tests/acceptance/phase-05/04-external-rename.test.ts`   | Create                   | 9.4        |
+| `tests/acceptance/phase-05/05-self-write-filter.test.ts` | Create                   | 9.5        |
+| `tests/acceptance/phase-05/06-batch-cp.test.ts`          | Create                   | 9.6        |
+| `tests/acceptance/phase-05/07-frontmatter-only.test.ts`  | Create                   | 9.7        |
+| `tests/acceptance/phase-05/08-cancel-scan.test.ts`       | Create                   | 9.8        |
+| `tests/acceptance/phase-05/_helpers.ts`                  | Create (shared fixtures) | 9.1        |
 
 ## Pre-flight
 
@@ -47,7 +47,9 @@ Verify Plans 1–4 are merged: `electron/services/indexer.ts`, `watcher.ts`, `in
 Verify vitest picks up the new directory. If `vitest.config.ts` restricts `include` to `electron/**` or `src/**`, extend it:
 
 ```ts
-test: { include: ['electron/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts'] }
+test: {
+  include: ['electron/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts']
+}
 ```
 
 (Add this as a Step 0 in Task 1 below if needed.)
@@ -57,9 +59,11 @@ test: { include: ['electron/**/*.test.ts', 'src/**/*.test.{ts,tsx}', 'tests/**/*
 ## Tasks
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 1: Full scan of 50-file grove
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/_helpers.ts`
 - Create: `tests/acceptance/phase-05/01-full-scan.test.ts`
 
@@ -118,12 +122,21 @@ export function cleanup(root: string, db: Database.Database): void {
   db.close()
 }
 
-export function waitFor(predicate: () => boolean, timeoutMs = 5000, intervalMs = 50): Promise<void> {
+export function waitFor(
+  predicate: () => boolean,
+  timeoutMs = 5000,
+  intervalMs = 50
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now()
     const id = setInterval(() => {
-      if (predicate()) { clearInterval(id); resolve() }
-      else if (Date.now() - start > timeoutMs) { clearInterval(id); reject(new Error(`timeout after ${timeoutMs}ms`)) }
+      if (predicate()) {
+        clearInterval(id)
+        resolve()
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(id)
+        reject(new Error(`timeout after ${timeoutMs}ms`))
+      }
     }, intervalMs)
   })
 }
@@ -147,7 +160,9 @@ describe('Acceptance 9.1 — full scan of 50-file grove', () => {
     _injectDbForTest(db)
     root = makeGroveTmp('p5-9.1-')
   })
-  afterEach(() => { cleanup(root, db) })
+  afterEach(() => {
+    cleanup(root, db)
+  })
 
   it('inserts 50 rows after scan', async () => {
     seedMd(root, 50, true)
@@ -164,7 +179,7 @@ describe('Acceptance 9.1 — full scan of 50-file grove', () => {
   })
 
   it('tags.usage_count reflects seeded tag distribution (10 per tag)', async () => {
-    seedMd(root, 50, true)  // tags t0..t4 each appear 10 times
+    seedMd(root, 50, true) // tags t0..t4 each appear 10 times
     await startScan(root)
     const tags = db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()
     expect(tags).toEqual([
@@ -196,9 +211,11 @@ git commit -m "test(phase-05): acceptance 9.1 — full scan of 50-file grove"
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 2: External add → row appears within 1s + `index:fileChanged` emitted
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/02-external-add.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -208,20 +225,31 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, onFileChanged, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  onFileChanged,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup, waitFor } from './_helpers'
 
 describe('Acceptance 9.2 — external add detected within 1s', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.2-')
-    await startScan(root)             // empty initial scan
+    await startScan(root) // empty initial scan
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('inserts the new file within 1s and emits fileChanged', async () => {
     const events: { path: string }[] = []
@@ -230,10 +258,13 @@ describe('Acceptance 9.2 — external add detected within 1s', () => {
     writeFileSync(join(root, 'new.md'), '# x')
 
     const t0 = Date.now()
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1, 2000)
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1,
+      2000
+    )
     const elapsed = Date.now() - t0
 
-    expect(elapsed).toBeLessThan(2000)  // generous: chokidar awaitWriteFinish 200ms + flush 500ms
+    expect(elapsed).toBeLessThan(2000) // generous: chokidar awaitWriteFinish 200ms + flush 500ms
     expect(events.find((e) => e.path === 'new.md')).toBeDefined()
   })
 })
@@ -257,9 +288,11 @@ git commit -m "test(phase-05): acceptance 9.2 — external add reflected in 1s +
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 3: External delete → row removed + `index:fileDeleted`
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/03-external-delete.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -269,21 +302,32 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, onFileDeleted, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  onFileDeleted,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup, waitFor } from './_helpers'
 
 describe('Acceptance 9.3 — external delete', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.3-')
     writeFileSync(join(root, 'gone.md'), '# bye')
     await startScan(root)
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('removes the row and emits fileDeleted', async () => {
     const events: { path: string }[] = []
@@ -291,7 +335,10 @@ describe('Acceptance 9.3 — external delete', () => {
 
     rmSync(join(root, 'gone.md'))
 
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 0, 2000)
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 0,
+      2000
+    )
     expect(events).toEqual([{ path: 'gone.md' }])
   })
 })
@@ -315,9 +362,11 @@ git commit -m "test(phase-05): acceptance 9.3 — external delete removes row + 
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 4: External `mv a.md b.md` → path updated, no delete+insert
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/04-external-rename.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -327,27 +376,42 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, onFileRenamed, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  onFileRenamed,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup, waitFor } from './_helpers'
 
 describe('Acceptance 9.4 — external rename', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.4-')
     writeFileSync(join(root, 'a.md'), 'identical body')
     await startScan(root)
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('updates files.path to b.md and emits fileRenamed (not delete+insert)', async () => {
     const renameEvents: { oldPath: string; newPath: string }[] = []
     onFileRenamed((p) => renameEvents.push(p))
 
-    const beforeHash = (db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as { content_hash: string }).content_hash
+    const beforeHash = (
+      db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as {
+        content_hash: string
+      }
+    ).content_hash
 
     renameSync(join(root, 'a.md'), join(root, 'b.md'))
 
@@ -356,8 +420,12 @@ describe('Acceptance 9.4 — external rename', () => {
       return row?.path === 'b.md'
     }, 2000)
 
-    const afterHash = (db.prepare('SELECT content_hash FROM files WHERE path=?').get('b.md') as { content_hash: string }).content_hash
-    expect(afterHash).toBe(beforeHash)  // same body → same hash → confirms UPDATE not DELETE+INSERT
+    const afterHash = (
+      db.prepare('SELECT content_hash FROM files WHERE path=?').get('b.md') as {
+        content_hash: string
+      }
+    ).content_hash
+    expect(afterHash).toBe(beforeHash) // same body → same hash → confirms UPDATE not DELETE+INSERT
     expect(renameEvents).toEqual([{ oldPath: 'a.md', newPath: 'b.md' }])
   })
 })
@@ -381,9 +449,11 @@ git commit -m "test(phase-05): acceptance 9.4 — external rename updates path (
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 5: Application self-write does NOT trigger `index:fileChanged`
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/05-self-write-filter.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -393,21 +463,33 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, onFileChanged, registerSelfWrite, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  onFileChanged,
+  registerSelfWrite,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup } from './_helpers'
 
 describe('Acceptance 9.5 — self-write is filtered', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.5-')
     writeFileSync(join(root, 'a.md'), 'v1')
     await startScan(root)
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('does not emit fileChanged when the change was registered as a self-write', async () => {
     const events: { path: string }[] = []
@@ -447,9 +529,11 @@ git commit -m "test(phase-05): acceptance 9.5 — self-write filter suppresses f
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 6: Batch `cp -r src dst` (30 md) → single transaction; UI sees data within ~1s
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/06-batch-cp.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -459,34 +543,46 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync, mkdirSync, cpSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup, waitFor } from './_helpers'
 
 describe('Acceptance 9.6 — batch copy of 30 files', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.6-')
     mkdirSync(join(root, 'src'))
     for (let i = 0; i < 30; i++) writeFileSync(join(root, 'src', `${i}.md`), `# ${i}`)
     await startScan(root)
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('inserts 30 dst rows after a single batched flush in ~1s', async () => {
     const t0 = Date.now()
     cpSync(join(root, 'src'), join(root, 'dst'), { recursive: true })
 
     await waitFor(() => {
-      const n = (db.prepare("SELECT COUNT(*) AS n FROM files WHERE path LIKE 'dst/%'").get() as { n: number }).n
+      const n = (
+        db.prepare("SELECT COUNT(*) AS n FROM files WHERE path LIKE 'dst/%'").get() as { n: number }
+      ).n
       return n === 30
     }, 3000)
 
     const elapsed = Date.now() - t0
-    expect(elapsed).toBeLessThan(3000)  // chokidar awaitWriteFinish + debounce + write
+    expect(elapsed).toBeLessThan(3000) // chokidar awaitWriteFinish + debounce + write
   })
 })
 ```
@@ -509,9 +605,11 @@ git commit -m "test(phase-05): acceptance 9.6 — batch cp of 30 files lands in 
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 7: Frontmatter-only change → `content_hash` unchanged, `frontmatter_json` updated
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/07-frontmatter-only.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -521,37 +619,53 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { startScan, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
-import { start as watcherStart, stop as watcherStop, _resetSelfWritesForTest } from '../../../electron/services/watcher'
+import {
+  start as watcherStart,
+  stop as watcherStop,
+  _resetSelfWritesForTest
+} from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, cleanup, waitFor } from './_helpers'
 
 describe('Acceptance 9.7 — frontmatter-only change keeps content_hash', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(async () => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.7-')
     writeFileSync(join(root, 'a.md'), '---\nrating: 3\n---\nstable body')
     await startScan(root)
     await watcherStart(root, db)
   })
-  afterEach(async () => { await watcherStop(); cleanup(root, db) })
+  afterEach(async () => {
+    await watcherStop()
+    cleanup(root, db)
+  })
 
   it('keeps content_hash, updates frontmatter_json + rating', async () => {
-    const before = db.prepare('SELECT content_hash, rating FROM files WHERE path=?').get('a.md') as {
-      content_hash: string; rating: number
+    const before = db
+      .prepare('SELECT content_hash, rating FROM files WHERE path=?')
+      .get('a.md') as {
+      content_hash: string
+      rating: number
     }
     expect(before.rating).toBe(3)
 
     writeFileSync(join(root, 'a.md'), '---\nrating: 4\n---\nstable body')
 
     await waitFor(() => {
-      const row = db.prepare('SELECT rating FROM files WHERE path=?').get('a.md') as { rating: number } | undefined
+      const row = db.prepare('SELECT rating FROM files WHERE path=?').get('a.md') as
+        | { rating: number }
+        | undefined
       return row?.rating === 4
     }, 2000)
 
     const after = db.prepare('SELECT content_hash, rating FROM files WHERE path=?').get('a.md') as {
-      content_hash: string; rating: number
+      content_hash: string
+      rating: number
     }
     expect(after.content_hash).toBe(before.content_hash)
     expect(after.rating).toBe(4)
@@ -577,29 +691,42 @@ git commit -m "test(phase-05): acceptance 9.7 — frontmatter-only change preser
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 8: `cancelScan()` mid-flight → state idle, partial data preserved
 
 **Files:**
+
 - Create: `tests/acceptance/phase-05/08-cancel-scan.test.ts`
 
 - [ ] **Step 1: Write the test**
 
 ```ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { startScan, cancelScan, state, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
+import {
+  startScan,
+  cancelScan,
+  state,
+  _injectDbForTest,
+  _resetForTest
+} from '../../../electron/services/indexer'
 import { _resetSelfWritesForTest } from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, seedMd, cleanup } from './_helpers'
 
 describe('Acceptance 9.8 — cancelScan returns to idle and preserves partial data', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(() => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.8-')
     seedMd(root, 100)
   })
-  afterEach(() => { cleanup(root, db) })
+  afterEach(() => {
+    cleanup(root, db)
+  })
 
   it('flips state back to idle after cancel; some rows are preserved', async () => {
     const scanP = startScan(root)
@@ -633,9 +760,11 @@ git commit -m "test(phase-05): acceptance 9.8 — cancelScan to idle, partial da
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 9: `openspec validate phase-05-indexer-watcher --strict` passes
 
 **Files:**
+
 - (none — CLI invocation only)
 
 - [ ] **Step 1: Run the validator**
@@ -645,6 +774,7 @@ openspec validate phase-05-indexer-watcher --strict
 ```
 
 Expected: exits 0; no `WARN`, no `ERROR` lines. If anything fails:
+
 - A `MissingScenario` ⇒ revisit `specs/*/spec.md` and add the missing scenario block.
 - A `BrokenLink` ⇒ check `proposal.md` references match real spec files.
 - A `MissingTask` ⇒ ensure `tasks.md` covers all `ADDED Requirements`.
@@ -696,6 +826,7 @@ If no changes were needed, skip — but record the validator output in the PR de
 ## End of phase-05-indexer-watcher plan series
 
 After this plan completes, the change is implementation-complete. Proceed to:
+
 1. `openspec validate phase-05-indexer-watcher --strict` (Task 9 above)
 2. PR review against `main`
 3. After merge, archive the change with `/opsx:archive phase-05-indexer-watcher`

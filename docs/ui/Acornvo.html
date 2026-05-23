@@ -1,99 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>Acornvo · 松言果语</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    /* warm editorial palette */
-    --paper: oklch(0.972 0.012 85);
-    --paper-2: oklch(0.955 0.015 82);
-    --paper-3: oklch(0.935 0.018 80);
-    --paper-4: oklch(0.91 0.02 78);
-    --line: oklch(0.86 0.022 75);
-    --line-2: oklch(0.8 0.025 72);
-    --ink: oklch(0.22 0.012 60);
-    --ink-2: oklch(0.4 0.015 62);
-    --ink-3: oklch(0.55 0.018 65);
-    --ink-4: oklch(0.68 0.02 70);
-    --acorn: oklch(0.5 0.09 48);
-    --acorn-2: oklch(0.42 0.1 44);
-    --acorn-bg: oklch(0.94 0.03 55);
-    --leaf: oklch(0.52 0.08 135);
-    --leaf-bg: oklch(0.94 0.025 130);
-    --berry: oklch(0.5 0.14 25);
-    --sky: oklch(0.55 0.06 230);
-    --sky-bg: oklch(0.93 0.02 230);
-    --shadow: 0 1px 0 oklch(1 0 0 / 0.6) inset, 0 1px 2px oklch(0 0 0 / 0.04);
+  <head>
+    <meta charset="UTF-8" />
+    <title>Acornvo · 松言果语</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* warm editorial palette */
+        --paper: oklch(0.972 0.012 85);
+        --paper-2: oklch(0.955 0.015 82);
+        --paper-3: oklch(0.935 0.018 80);
+        --paper-4: oklch(0.91 0.02 78);
+        --line: oklch(0.86 0.022 75);
+        --line-2: oklch(0.8 0.025 72);
+        --ink: oklch(0.22 0.012 60);
+        --ink-2: oklch(0.4 0.015 62);
+        --ink-3: oklch(0.55 0.018 65);
+        --ink-4: oklch(0.68 0.02 70);
+        --acorn: oklch(0.5 0.09 48);
+        --acorn-2: oklch(0.42 0.1 44);
+        --acorn-bg: oklch(0.94 0.03 55);
+        --leaf: oklch(0.52 0.08 135);
+        --leaf-bg: oklch(0.94 0.025 130);
+        --berry: oklch(0.5 0.14 25);
+        --sky: oklch(0.55 0.06 230);
+        --sky-bg: oklch(0.93 0.02 230);
+        --shadow: 0 1px 0 oklch(1 0 0 / 0.6) inset, 0 1px 2px oklch(0 0 0 / 0.04);
 
-    --font-serif: "Noto Serif SC", "Source Han Serif", "Songti SC", Georgia, serif;
-    --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
-    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    height: 100%;
-    font-family: var(--font-sans);
-    color: var(--ink);
-    background:
-      radial-gradient(ellipse at top left, oklch(0.88 0.04 55) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom right, oklch(0.88 0.035 130) 0%, transparent 60%),
-      oklch(0.82 0.03 80);
-    -webkit-font-smoothing: antialiased;
-    overflow: hidden;
-  }
-  #root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        --font-serif: 'Noto Serif SC', 'Source Han Serif', 'Songti SC', Georgia, serif;
+        --font-sans:
+          'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC',
+          sans-serif;
+        --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: var(--font-sans);
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at top left, oklch(0.88 0.04 55) 0%, transparent 60%),
+          radial-gradient(ellipse at bottom right, oklch(0.88 0.035 130) 0%, transparent 60%),
+          oklch(0.82 0.03 80);
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
 
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-thumb { background: oklch(0 0 0 / 0.15); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: oklch(0 0 0 / 0.25); }
-  ::-webkit-scrollbar-track { background: transparent; }
+      /* scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: oklch(0 0 0 / 0.15);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: oklch(0 0 0 / 0.25);
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
 
-  .serif { font-family: var(--font-serif); }
-  .mono { font-family: var(--font-mono); }
+      .serif {
+        font-family: var(--font-serif);
+      }
+      .mono {
+        font-family: var(--font-mono);
+      }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes acornFall {
-    0% { transform: translate(0, -20px) rotate(0deg); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate(var(--dx, 40px), 100vh) rotate(var(--rot, 360deg)); opacity: 0.8; }
-  }
-  @keyframes drawInk {
-    from { stroke-dashoffset: 100; }
-    to { stroke-dashoffset: 0; }
-  }
-  @keyframes streamDot {
-    0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
-    40% { opacity: 1; transform: translateY(-2px); }
-  }
-</style>
-</head>
-<body>
-<div id="root"></div>
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes acornFall {
+        0% {
+          transform: translate(0, -20px) rotate(0deg);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(var(--dx, 40px), 100vh) rotate(var(--rot, 360deg));
+          opacity: 0.8;
+        }
+      }
+      @keyframes drawInk {
+        from {
+          stroke-dashoffset: 100;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes streamDot {
+        0%,
+        80%,
+        100% {
+          opacity: 0.3;
+          transform: translateY(0);
+        }
+        40% {
+          opacity: 1;
+          transform: translateY(-2px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+    <script
+      src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+      integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+      integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+      integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+      crossorigin="anonymous"
+    ></script>
 
-<script type="text/babel" src="./src/data.jsx"></script>
-<script type="text/babel" src="./src/icons.jsx"></script>
-<script type="text/babel" src="./src/chrome.jsx"></script>
-<script type="text/babel" src="./src/project-picker.jsx"></script>
-<script type="text/babel" src="./src/browser.jsx"></script>
-<script type="text/babel" src="./src/library.jsx"></script>
-<script type="text/babel" src="./src/editor.jsx"></script>
-<script type="text/babel" src="./src/chat.jsx"></script>
-<script type="text/babel" src="./src/settings.jsx"></script>
-<script type="text/babel" src="./src/tweaks.jsx"></script>
-<script type="text/babel" src="./src/app.jsx"></script>
-
-</body>
+    <script type="text/babel" src="./src/data.jsx"></script>
+    <script type="text/babel" src="./src/icons.jsx"></script>
+    <script type="text/babel" src="./src/chrome.jsx"></script>
+    <script type="text/babel" src="./src/project-picker.jsx"></script>
+    <script type="text/babel" src="./src/browser.jsx"></script>
+    <script type="text/babel" src="./src/library.jsx"></script>
+    <script type="text/babel" src="./src/editor.jsx"></script>
+    <script type="text/babel" src="./src/chat.jsx"></script>
+    <script type="text/babel" src="./src/settings.jsx"></script>
+    <script type="text/babel" src="./src/tweaks.jsx"></script>
+    <script type="text/babel" src="./src/app.jsx"></script>
+  </body>
 </html>

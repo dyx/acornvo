@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 4：`file.write(path, {body, frontmatter}, expectedMtime?)` 原子写；路径沙箱 `safeResolve`
 - phase 5：`file.upsert` 索引入口；chokidar 的 selfWrites 窗口使剪藏写入不触发外部修改事件
 - phase 10：`ops_log` 表，剪藏落 `op='clip'`
@@ -10,6 +11,7 @@
 PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢失正文**、**不能产出格式凌乱的 md**。
 
 技术取舍：
+
 - **DOM 正文抽取**可选路线：
   - (A) main 侧 `webContents.executeJavaScript(readabilityCode)` 在 tab 内跑 Readability，返回结果对象
   - (B) main 侧拿 `webContents.savePage` 或 `executeJavaScript('document.documentElement.outerHTML')` 再在 Node 里 `jsdom` + Readability
@@ -24,6 +26,7 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户在 phase 11 浏览器打开任意文章 → 点剪藏按钮或 `Cmd+Shift+S` → 预览 modal 显示抽取结果 → 保存到 `inbox/YYYYMM/<slug>.md`
 - frontmatter 包含足够元信息，让 phase 15 AI reviewer / phase 17 松语能识别"这是一篇 Web 剪藏"
 - 去重：对同一 URL 重复剪藏不产生重复文件
@@ -31,6 +34,7 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
 - 转换出的 md 在 phase 7 编辑器能正确渲染（标题层级、代码块、图片、引用、表格、列表）
 
 **Non-Goals:**
+
 - 不做图片本地化下载（远程 URL 引用即可；phase 13 预埋设置项）
 - 不做付费墙 / 登录墙绕过（登录态共享 session，phase 11 已处理）
 - 不做批量 URL 剪藏 / RSS 订阅（本阶段单页为主）
@@ -47,9 +51,9 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
 - `electron/clipper/extract.ts`:
   ```ts
   async function extract(webContents: WebContents): Promise<ExtractResult> {
-    const code = await fs.readFile(readabilityBundlePath, 'utf8');
+    const code = await fs.readFile(readabilityBundlePath, 'utf8')
     // inject readability
-    await webContents.executeJavaScript(code);
+    await webContents.executeJavaScript(code)
     // run
     const result = await webContents.executeJavaScript(`
       (function() {
@@ -73,8 +77,8 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
           return { ok: false, error: e.message };
         }
       })();
-    `);
-    return result;
+    `)
+    return result
   }
   ```
 - Readability bundle 随 App 打包（`node_modules/@mozilla/readability/Readability.js`，无依赖，单文件）
@@ -83,28 +87,32 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
 ### D2: Turndown 配置
 
 - `electron/clipper/transform.ts`:
-  ```ts
-  import TurndownService from 'turndown';
-  import { gfm } from 'turndown-plugin-gfm';
+
+  ````ts
+  import TurndownService from 'turndown'
+  import { gfm } from 'turndown-plugin-gfm'
 
   const td = new TurndownService({
-    headingStyle: 'atx',         // # ## ###
-    codeBlockStyle: 'fenced',    // ```
+    headingStyle: 'atx', // # ## ###
+    codeBlockStyle: 'fenced', // ```
     emDelimiter: '*',
     strongDelimiter: '**',
     bulletListMarker: '-',
     linkStyle: 'inlined',
-    hr: '---',
-  });
-  td.use(gfm); // 表格、删除线、任务列表
+    hr: '---'
+  })
+  td.use(gfm) // 表格、删除线、任务列表
 
   // 清洗规则
-  td.addRule('removeScript', { filter: ['script', 'style', 'noscript'], replacement: () => '' });
-  td.addRule('removeComments', { filter: n => n.nodeType === 8, replacement: () => '' });
-  td.addRule('preserveCodeBlock', { /* 防止 Turndown 把 <pre><code> 双转 */ });
+  td.addRule('removeScript', { filter: ['script', 'style', 'noscript'], replacement: () => '' })
+  td.addRule('removeComments', { filter: (n) => n.nodeType === 8, replacement: () => '' })
+  td.addRule('preserveCodeBlock', {
+    /* 防止 Turndown 把 <pre><code> 双转 */
+  })
   // 图片：保留 alt 和 title；URL 保持原样
   // 链接：相对链接要转为绝对（用 article.url 作为 base）
-  ```
+  ````
+
 - 相对路径绝对化：先用 `new URL(href, baseUrl).href` 规整，再交给 Turndown
 - 清除属性：`<img>` 的 `srcset`/`data-*`/`class` 丢弃（让编辑器渲染干净）
 - 输出 body 字符串，不含 frontmatter（frontmatter 由 pipeline enrich 阶段拼）
@@ -113,18 +121,19 @@ PRD S-7 把剪藏定为拾果核心动作，**不能跳浏览器**、**不能丢
 
 ```yaml
 ---
-title: "..."
-url: "https://..."
-site: "example.com"
-author: "..."
-published_at: "2026-04-19T00:00:00Z"
-clipped_at: "2026-04-19T10:23:11+08:00"
+title: '...'
+url: 'https://...'
+site: 'example.com'
+author: '...'
+published_at: '2026-04-19T00:00:00Z'
+clipped_at: '2026-04-19T10:23:11+08:00'
 source_type: web
 tags: []
-excerpt: "..."
+excerpt: '...'
 lang: zh
 ---
 ```
+
 - `title` 取 Readability 返回的 article.title；空时 fallback webContents.getTitle()
 - `site` = `new URL(url).hostname`
 - `author` = Readability 的 byline；可含"By XXX"前缀，清洗后写入（按 `/^\s*[Bb]y\s+/` 去掉）
@@ -133,6 +142,7 @@ lang: zh
 - `excerpt` 截首 160 字
 
 **slug 规则**：
+
 - 中文标题：先 jieba 取前 3 个词 + sha1(url).slice(0,6)
 - 英文标题：`slugify(title, { lower: true, strict: true }).slice(0, 50)` + `-` + sha1(url).slice(0,6)
 - 全失败：`clip-<yyyymmdd>-<sha6>`
@@ -146,6 +156,7 @@ idle → extracting → previewing → saving → indexing → done
                       canceled
    任一步骤 error → error (可 retry 回到对应阶段)
 ```
+
 - renderer store 持该状态；按钮 UI 按状态变灰 / spinner
 - pipeline 每步打 `ops_log`（`op='clip.extract'` / `op='clip.transform'` / `op='clip'` 表示最终完成）
 
@@ -185,6 +196,7 @@ CREATE INDEX idx_clips_site ON clips(site);
 ```
 
 对应 IPC：
+
 - `clips.list({ q?, site?, limit, offset, orderBy }) → { items, total }`
 - `clips.getByUrl(url) → Clip | null`
 - `clips.getById(id) → Clip | null`
@@ -195,6 +207,7 @@ CREATE INDEX idx_clips_site ON clips(site);
 打开时机：extract 成功 → pipeline 进入 `previewing` 态 → renderer 弹 modal
 
 内容：
+
 - 顶部：title（可编辑）、URL（只读链接 + copy 按钮）
 - 左栏：frontmatter 字段编辑（tags 逗号分隔输入、excerpt、published_at 只读）
 - 右栏：正文 markdown preview（前 2000 字，复用 phase 7 的 Vditor preview 模式）

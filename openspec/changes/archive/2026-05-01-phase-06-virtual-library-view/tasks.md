@@ -23,7 +23,7 @@
 - [x] 3.4 订阅 `index:fileChanged/Deleted/Renamed` → 调 `refresh()`；若删除项 == selectedPath → 清 selectedPath
 - [x] 3.5 订阅 `project:changed` → 清所有 slice，重新 `load()` + `loadCategoryTree()` + `loadTagCloud()`
 
-## 4. 组件（src/components/library/*）
+## 4. 组件（src/components/library/\*）
 
 - [x] 4.1 `CategorySidebar.tsx`：
   - [x] 4.1.1 视图分组：全部 / 果篮 / 待理果

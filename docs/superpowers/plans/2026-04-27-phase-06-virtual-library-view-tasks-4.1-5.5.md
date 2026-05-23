@@ -36,20 +36,20 @@ Ship the entire Library three-pane UI: `CategorySidebar`, `VirtualFileList`, `Fi
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/components/library/CategorySidebar.tsx` | Create | 4.1 |
-| `src/components/library/CategorySidebar.test.tsx` | Create | 4.1 |
-| `src/components/library/VirtualFileList.tsx` | Create | 4.2 |
-| `src/components/library/VirtualFileList.test.tsx` | Create | 4.2 |
-| `src/components/library/FileRow.tsx` | Create | 4.2 |
-| `src/components/library/FilePreviewPanel.tsx` | Create | 4.3 |
-| `src/components/library/FilePreviewPanel.test.tsx` | Create | 4.3 |
-| `src/components/library/IndexBanner.tsx` | Create | 4.4 |
-| `src/components/library/FileRowContextMenu.tsx` | Create | 4.5 |
-| `src/pages/Library.tsx` | Replace stub with full layout | 5.1, 5.2, 5.3, 5.4 |
-| `src/pages/Library.test.tsx` | Replace with full integration test | 5.1, 5.2, 5.3, 5.4 |
-| `src/i18n/locales/zh-CN.json` | Modify (add `library.*` keys) | 5.5 |
+| Path                                               | Action                             | Owner task         |
+| -------------------------------------------------- | ---------------------------------- | ------------------ |
+| `src/components/library/CategorySidebar.tsx`       | Create                             | 4.1                |
+| `src/components/library/CategorySidebar.test.tsx`  | Create                             | 4.1                |
+| `src/components/library/VirtualFileList.tsx`       | Create                             | 4.2                |
+| `src/components/library/VirtualFileList.test.tsx`  | Create                             | 4.2                |
+| `src/components/library/FileRow.tsx`               | Create                             | 4.2                |
+| `src/components/library/FilePreviewPanel.tsx`      | Create                             | 4.3                |
+| `src/components/library/FilePreviewPanel.test.tsx` | Create                             | 4.3                |
+| `src/components/library/IndexBanner.tsx`           | Create                             | 4.4                |
+| `src/components/library/FileRowContextMenu.tsx`    | Create                             | 4.5                |
+| `src/pages/Library.tsx`                            | Replace stub with full layout      | 5.1, 5.2, 5.3, 5.4 |
+| `src/pages/Library.test.tsx`                       | Replace with full integration test | 5.1, 5.2, 5.3, 5.4 |
+| `src/i18n/locales/zh-CN.json`                      | Modify (add `library.*` keys)      | 5.5                |
 
 ## Pre-flight
 
@@ -65,9 +65,11 @@ Ship the entire Library three-pane UI: `CategorySidebar`, `VirtualFileList`, `Fi
 ## Tasks
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 1: `CategorySidebar.tsx`
 
 **Files:**
+
 - Create: `src/components/library/CategorySidebar.tsx`
 - Test: `src/components/library/CategorySidebar.test.tsx`
 
@@ -199,6 +201,7 @@ describe('CategorySidebar', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/library/CategorySidebar.test.tsx
 ```
@@ -223,13 +226,7 @@ function isUnreviewedActive(rating: { min?: number; max?: number } | undefined):
   return rating?.min === 0 && rating?.max === 0
 }
 function isAllActive(filter: ReturnType<typeof useLibraryStore.getState>['filter']): boolean {
-  return (
-    !filter.pathPrefix &&
-    !filter.category &&
-    !filter.tag &&
-    !filter.rating &&
-    !filter.q
-  )
+  return !filter.pathPrefix && !filter.category && !filter.tag && !filter.rating && !filter.q
 }
 
 function ViewButton(props: {
@@ -284,9 +281,7 @@ function CategoryBranch({ node, depth }: { node: CategoryNode; depth: number }):
         }
       />
       {depth < 1 &&
-        node.children.map((c) => (
-          <CategoryBranch key={c.name} node={c} depth={depth + 1} />
-        ))}
+        node.children.map((c) => <CategoryBranch key={c.name} node={c} depth={depth + 1} />)}
     </>
   )
 }
@@ -418,11 +413,12 @@ function SectionLabel({ children }: { children: React.ReactNode }): JSX.Element 
 }
 ```
 
-> Note on the "待理果" sentinel: encoding `rating: { min: 0, max: 0 }` is a quick hack — no real file has rating 0, so this filter yields no rows. The OpenSpec scenario expects "rating IS NULL" rows; the proper fix is a `filter.unreviewed?: boolean` field. **Decision for phase 6:** ship the sentinel for the click wiring and add a follow-up TODO. Plan 4 task 7.8 verifies "理果中" *display*; the clickable filter conformance is covered as a phase-6.1 enhancement (not in OpenSpec scope today).
+> Note on the "待理果" sentinel: encoding `rating: { min: 0, max: 0 }` is a quick hack — no real file has rating 0, so this filter yields no rows. The OpenSpec scenario expects "rating IS NULL" rows; the proper fix is a `filter.unreviewed?: boolean` field. **Decision for phase 6:** ship the sentinel for the click wiring and add a follow-up TODO. Plan 4 task 7.8 verifies "理果中" _display_; the clickable filter conformance is covered as a phase-6.1 enhancement (not in OpenSpec scope today).
 
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library/CategorySidebar.test.tsx
 ```
@@ -439,9 +435,11 @@ git commit -m "feat(phase-06): CategorySidebar with views / category tree / tag 
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 2: `VirtualFileList.tsx` + `FileRow.tsx`
 
 **Files:**
+
 - Create: `src/components/library/VirtualFileList.tsx`
 - Create: `src/components/library/FileRow.tsx`
 - Test: `src/components/library/VirtualFileList.test.tsx`
@@ -586,6 +584,7 @@ describe('VirtualFileList', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/library/VirtualFileList.test.tsx
 ```
@@ -662,9 +661,7 @@ export function FileRow({
                 key={i}
                 className={cn(
                   'h-1.5 w-1.5 rounded-[1px] border-[0.5px] border-[color:var(--line)]',
-                  i < (file.rating ?? 0)
-                    ? 'bg-[color:var(--acorn)]'
-                    : 'bg-[color:var(--paper-3)]'
+                  i < (file.rating ?? 0) ? 'bg-[color:var(--acorn)]' : 'bg-[color:var(--paper-3)]'
                 )}
               />
             ))}
@@ -797,9 +794,7 @@ export function VirtualFileList(): JSX.Element {
                   file={file}
                   active={file.path === selectedPath}
                   onClick={() => void select(file.path)}
-                  onDoubleClick={() =>
-                    navigate(`/editor/${encodeURIComponent(file.path)}`)
-                  }
+                  onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)}
                 />
               </div>
             )
@@ -821,7 +816,14 @@ export function VirtualFileList(): JSX.Element {
 > ```ts
 > beforeEach(() => {
 >   Element.prototype.getBoundingClientRect = vi.fn(() => ({
->     width: 360, height: 600, top: 0, left: 0, right: 360, bottom: 600, x: 0, y: 0,
+>     width: 360,
+>     height: 600,
+>     top: 0,
+>     left: 0,
+>     right: 360,
+>     bottom: 600,
+>     x: 0,
+>     y: 0,
 >     toJSON: () => ({})
 >   })) as unknown as Element['getBoundingClientRect']
 > })
@@ -830,6 +832,7 @@ export function VirtualFileList(): JSX.Element {
 - [ ] **Step 4: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library/VirtualFileList.test.tsx
 ```
@@ -846,9 +849,11 @@ git commit -m "feat(phase-06): VirtualFileList + FileRow with virtualizer / debo
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 3: `FilePreviewPanel.tsx`
 
 **Files:**
+
 - Create: `src/components/library/FilePreviewPanel.tsx`
 - Test: `src/components/library/FilePreviewPanel.test.tsx`
 
@@ -866,7 +871,13 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 vi.mock('@/ipc/client', () => ({
   ipc: {
-    files: { list: vi.fn(), get: vi.fn(), getCategoryTree: vi.fn(), getTagCloud: vi.fn(), revealInFinder: vi.fn() },
+    files: {
+      list: vi.fn(),
+      get: vi.fn(),
+      getCategoryTree: vi.fn(),
+      getTagCloud: vi.fn(),
+      revealInFinder: vi.fn()
+    },
     on: vi.fn(() => () => {})
   }
 }))
@@ -998,6 +1009,7 @@ describe('FilePreviewPanel', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/library/FilePreviewPanel.test.tsx
 ```
@@ -1084,7 +1096,9 @@ export function FilePreviewPanel(): JSX.Element {
             {highlights.length > 0 ? (
               <ul className="mt-3 list-disc pl-5 text-[13px] leading-[1.7] text-[color:var(--ink-2)]">
                 {highlights.map((h, i) => (
-                  <li key={i} className="mb-1">{h}</li>
+                  <li key={i} className="mb-1">
+                    {h}
+                  </li>
                 ))}
               </ul>
             ) : null}
@@ -1127,6 +1141,7 @@ export function FilePreviewPanel(): JSX.Element {
 - [ ] **Step 3: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library/FilePreviewPanel.test.tsx
 ```
@@ -1143,9 +1158,11 @@ git commit -m "feat(phase-06): FilePreviewPanel with header / rating / summary c
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 4: `IndexBanner.tsx`
 
 **Files:**
+
 - Create: `src/components/library/IndexBanner.tsx`
 
 The banner shows scanning/error states from phase-05's `index:stateChange` channel. We don't add a separate test file — Plan 4 task 7.12 covers integration.
@@ -1213,14 +1230,17 @@ export function IndexBanner(): JSX.Element | null {
 ```
 
 > Note: `index:stateChange` is added to `IpcEventContract` by phase 5. If it's missing during this plan (e.g. plan 4 testing surfaces a contract gap), add it:
+>
 > ```ts
 > 'index:stateChange': { state: 'idle' | 'scanning' | 'ready' | 'watching' | 'error' }
 > ```
+>
 > and re-typecheck.
 
 - [ ] **Step 2: Verify type-check**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -1237,9 +1257,11 @@ git commit -m "feat(phase-06): IndexBanner reflecting index:stateChange (scannin
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 5: `FileRowContextMenu.tsx`
 
 **Files:**
+
 - Create: `src/components/library/FileRowContextMenu.tsx`
 - Test: `src/components/library/FileRowContextMenu.test.tsx`
 
@@ -1299,6 +1321,7 @@ describe('FileRowContextMenu', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/components/library/FileRowContextMenu.test.tsx
 ```
@@ -1371,6 +1394,7 @@ export function FileRowContextMenu({
 - [ ] **Step 3: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library/FileRowContextMenu.test.tsx
 ```
@@ -1387,9 +1411,11 @@ git commit -m "feat(phase-06): FileRowContextMenu with open / reveal-in-finder i
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 6: Library page — three-pane shell + TitleBar
 
 **Files:**
+
 - Modify: `src/pages/Library.tsx`
 - Modify: `src/pages/Library.test.tsx`
 
@@ -1452,6 +1478,7 @@ describe('Library page (three-pane)', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -1502,6 +1529,7 @@ export function Library(): JSX.Element {
 - [ ] **Step 3: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -1518,11 +1546,13 @@ git commit -m "feat(phase-06): assemble Library three-pane page with TitleBar sh
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 7: Library page — confirm pane composition
 
 The previous task already wires `<CategorySidebar />` / `<VirtualFileList />` / `<FilePreviewPanel />`. This task is a no-op verification step — we add a regression test asserting all three are present.
 
 **Files:**
+
 - Modify: `src/pages/Library.test.tsx`
 
 - [ ] **Step 1: Add an assertion that all three panes mount**
@@ -1546,6 +1576,7 @@ it('mounts all three panes side-by-side', () => {
 - [ ] **Step 2: Run**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -1562,9 +1593,11 @@ git commit -m "test(phase-06): assert all three Library panes mount"
 ---
 
 <!-- openspec-task: 5.3 -->
+
 ### Task 8: Library page — initial loads on mount
 
 **Files:**
+
 - Modify: `src/pages/Library.test.tsx`
 
 The page already calls `refresh()` which fans out to `load()` + `loadCategoryTree()` + `loadTagCloud()`. This task adds the explicit acceptance test.
@@ -1592,6 +1625,7 @@ it('on mount calls files.list / files.getCategoryTree / files.getTagCloud once e
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -1608,9 +1642,11 @@ git commit -m "test(phase-06): assert Library mount triggers list/categoryTree/t
 ---
 
 <!-- openspec-task: 5.4 -->
+
 ### Task 9: Library page — store-level subscriptions are the only ones
 
 **Files:**
+
 - Modify: `src/pages/Library.test.tsx`
 
 Confirm the page does NOT subscribe to events directly (subscriptions live in `installLibrarySubscriber`, called once on mount). Returning the unsubscribe from `useEffect` ensures cleanup.
@@ -1647,6 +1683,7 @@ it('uses installLibrarySubscriber to install/uninstall index event handlers exac
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Library.test.tsx
 ```
@@ -1666,7 +1703,9 @@ Expected: PASS.
 >
 > ```ts
 > import { __resetSubscriberForTest } from '@/stores/library'
-> beforeEach(() => { __resetSubscriberForTest() })
+> beforeEach(() => {
+>   __resetSubscriberForTest()
+> })
 > ```
 
 - [ ] **Step 2: Commit**
@@ -1679,9 +1718,11 @@ git commit -m "test(phase-06): Library page installs/uninstalls index + project 
 ---
 
 <!-- openspec-task: 5.5 -->
+
 ### Task 10: i18n keys for `library.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Failing test**
@@ -1722,6 +1763,7 @@ describe('i18n library keys', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/i18n/library-keys.test.ts
 ```
@@ -1756,6 +1798,7 @@ Modify `src/i18n/locales/zh-CN.json`. Add a `library` block (alongside `picker`,
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/i18n/library-keys.test.ts
 ```
@@ -1765,6 +1808,7 @@ Expected: PASS.
 - [ ] **Step 4: Run all tests + lint + typecheck**
 
 Run:
+
 ```bash
 npm test && npm run lint && npm run typecheck
 ```
@@ -1783,6 +1827,7 @@ git commit -m "feat(phase-06): add zh-CN i18n keys for library namespace"
 ## Plan-3 Acceptance
 
 After all 10 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (component tests + i18n key test all green)
 - [ ] `npm run lint` PASSES

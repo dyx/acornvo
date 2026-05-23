@@ -19,6 +19,7 @@ phase 16 把"松语" chat agent 的后端（tools + loop + sessions + approval I
 ## Capabilities
 
 ### New Capabilities
+
 - `chat-page`: `/chat` 路由与三栏布局
 - `chat-message-list`: 消息列表 + 流式渲染 + tool 折叠
 - `chat-input`: 多行输入 + Cmd+Enter + @引用
@@ -27,6 +28,7 @@ phase 16 把"松语" chat agent 的后端（tools + loop + sessions + approval I
 - `chat-attachments`: `@` 唤起 QuickSwitcher + attachments 传递
 
 ### Modified Capabilities
+
 - `app-shell` (phase 13): "松语" 入口从 disabled 改为实际导航 `/chat`
 - `agent-loop` (phase 16): `runAgent` 接受 `attachments` 参数，拼入消息上下文
 

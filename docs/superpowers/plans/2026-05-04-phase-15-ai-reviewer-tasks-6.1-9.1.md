@@ -25,21 +25,21 @@ Replace phase 14's placeholder `ai-review-clip` handler with the real reviewer w
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/queue/handlers/ai-review-clip.ts` | Rewrite (was placeholder) | 6.1 |
-| `electron/queue/handlers/ai-review-clip.test.ts` | Create | 6.1, 6.3 |
-| `electron/queue/runner.ts` (or wherever handlers are registered) | Modify (single registration) | 6.2 |
-| `src/components/editor/AiReviewBadge.tsx` | Create | 7.1 |
-| `src/components/editor/AiReviewBadge.test.tsx` | Create | 7.1 |
-| `src/components/editor/AiReviewDrawer.tsx` | Create | 7.2, 7.5 |
-| `src/components/editor/AiReviewDrawer.test.tsx` | Create | 7.2, 7.5 |
-| `src/stores/editor.ts` | Modify (add AI fields + actions) | 7.3, 8.1 |
-| `src/stores/editor.test.ts` | Modify | 7.3, 8.1 |
-| `src/components/editor/FrontmatterCard.tsx` | Modify (add AI row) | 7.4 |
-| `src/components/editor/EditorTitleBar.tsx` | Modify (mount badge) | 7.5 |
-| `electron/preload/preload.ts` | Modify (expose `ai` namespace) | 8.2 |
-| `src/i18n/locales/zh-CN.json` | Modify (add `editor.ai.*` keys) | 9.1 |
+| Path                                                             | Action                           | Owner task |
+| ---------------------------------------------------------------- | -------------------------------- | ---------- |
+| `electron/queue/handlers/ai-review-clip.ts`                      | Rewrite (was placeholder)        | 6.1        |
+| `electron/queue/handlers/ai-review-clip.test.ts`                 | Create                           | 6.1, 6.3   |
+| `electron/queue/runner.ts` (or wherever handlers are registered) | Modify (single registration)     | 6.2        |
+| `src/components/editor/AiReviewBadge.tsx`                        | Create                           | 7.1        |
+| `src/components/editor/AiReviewBadge.test.tsx`                   | Create                           | 7.1        |
+| `src/components/editor/AiReviewDrawer.tsx`                       | Create                           | 7.2, 7.5   |
+| `src/components/editor/AiReviewDrawer.test.tsx`                  | Create                           | 7.2, 7.5   |
+| `src/stores/editor.ts`                                           | Modify (add AI fields + actions) | 7.3, 8.1   |
+| `src/stores/editor.test.ts`                                      | Modify                           | 7.3, 8.1   |
+| `src/components/editor/FrontmatterCard.tsx`                      | Modify (add AI row)              | 7.4        |
+| `src/components/editor/EditorTitleBar.tsx`                       | Modify (mount badge)             | 7.5        |
+| `electron/preload/preload.ts`                                    | Modify (expose `ai` namespace)   | 8.2        |
+| `src/i18n/locales/zh-CN.json`                                    | Modify (add `editor.ai.*` keys)  | 9.1        |
 
 ## Pre-flight
 
@@ -53,9 +53,11 @@ Replace phase 14's placeholder `ai-review-clip` handler with the real reviewer w
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: Rewrite `electron/queue/handlers/ai-review-clip.ts` — real handler
 
 **Files:**
+
 - Modify: `electron/queue/handlers/ai-review-clip.ts`
 - Create: `electron/queue/handlers/ai-review-clip.test.ts`
 
@@ -63,75 +65,83 @@ Replace phase 14's placeholder `ai-review-clip` handler with the real reviewer w
 
 ```ts
 // electron/queue/handlers/ai-review-clip.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-vi.mock('../../ai/reviewer', () => ({ reviewClip: vi.fn() }));
-vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() } }));
+vi.mock('../../ai/reviewer', () => ({ reviewClip: vi.fn() }))
+vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() } }))
 
-import { reviewClip } from '../../ai/reviewer';
-import { aiUsage } from '../../ai/usage';
-import { aiReviewClipHandler } from './ai-review-clip';
+import { reviewClip } from '../../ai/reviewer'
+import { aiUsage } from '../../ai/usage'
+import { aiReviewClipHandler } from './ai-review-clip'
 
 const baseCtx = (override: any = {}) => ({
   job: { id: 'job-1', kind: 'ai-review-clip', attempts: 0, ...override.job },
   payload: { clipId: 7, path: 'inbox/x.md', force: false, ...override.payload },
   log: vi.fn(),
-  cancel: new AbortController().signal,
-});
+  cancel: new AbortController().signal
+})
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => vi.resetAllMocks())
 
 describe('aiReviewClipHandler', () => {
   it('returns ok on success', async () => {
-    (reviewClip as any).mockResolvedValue({
-      result: { summary: 's', suggestedTitle: 't', tags: ['a','b','c'], keyQuotes: ['q'], reviewedAt: 'now' },
+    ;(reviewClip as any).mockResolvedValue({
+      result: {
+        summary: 's',
+        suggestedTitle: 't',
+        tags: ['a', 'b', 'c'],
+        keyQuotes: ['q'],
+        reviewedAt: 'now'
+      },
       cacheHit: false,
-      llmCall: { model: 'gpt-4o-mini', latencyMs: 1200, promptTokens: 100, completionTokens: 50 },
-    });
-    const r = await aiReviewClipHandler(baseCtx());
-    expect(r).toEqual({ kind: 'ok' });
-  });
+      llmCall: { model: 'gpt-4o-mini', latencyMs: 1200, promptTokens: 100, completionTokens: 50 }
+    })
+    const r = await aiReviewClipHandler(baseCtx())
+    expect(r).toEqual({ kind: 'ok' })
+  })
 
   it.each([
     ['E_MISSING_PROFILE', 'fail'],
     ['E_CONFIG', 'fail'],
     ['E_AUTH', 'fail'],
     ['E_CLIP_NOT_FOUND', 'fail'],
-    ['E_FILE_NOT_FOUND', 'fail'],
+    ['E_FILE_NOT_FOUND', 'fail']
   ])('maps %s → fail', async (code, expectedKind) => {
-    const e: any = new Error('x'); e.code = code;
-    (reviewClip as any).mockRejectedValue(e);
-    const r = await aiReviewClipHandler(baseCtx());
-    expect(r).toMatchObject({ kind: 'fail', error: code });
-  });
+    const e: any = new Error('x')
+    e.code = code
+    ;(reviewClip as any).mockRejectedValue(e)
+    const r = await aiReviewClipHandler(baseCtx())
+    expect(r).toMatchObject({ kind: 'fail', error: code })
+  })
 
   it('maps E_RATE → retry 60s', async () => {
-    const e: any = new Error('rate'); e.code = 'E_RATE';
-    (reviewClip as any).mockRejectedValue(e);
-    const r = await aiReviewClipHandler(baseCtx());
-    expect(r).toMatchObject({ kind: 'retry', delayMs: 60_000, reason: 'rate-limited' });
-  });
+    const e: any = new Error('rate')
+    e.code = 'E_RATE'
+    ;(reviewClip as any).mockRejectedValue(e)
+    const r = await aiReviewClipHandler(baseCtx())
+    expect(r).toMatchObject({ kind: 'retry', delayMs: 60_000, reason: 'rate-limited' })
+  })
 
   it('maps E_MTIME_CONFLICT → retry 600s', async () => {
-    const e: any = new Error('mtime'); e.code = 'E_MTIME_CONFLICT';
-    (reviewClip as any).mockRejectedValue(e);
-    const r = await aiReviewClipHandler(baseCtx());
-    expect(r).toMatchObject({ kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' });
-  });
+    const e: any = new Error('mtime')
+    e.code = 'E_MTIME_CONFLICT'
+    ;(reviewClip as any).mockRejectedValue(e)
+    const r = await aiReviewClipHandler(baseCtx())
+    expect(r).toMatchObject({ kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' })
+  })
 
-  it.each([
-    ['E_NETWORK'],
-    ['E_SERVER'],
-    ['E_RESPONSE'],
-    ['E_UNKNOWN'],
-  ])('maps %s → retry with backoff', async (code) => {
-    const e: any = new Error('x'); e.code = code;
-    (reviewClip as any).mockRejectedValue(e);
-    const r = await aiReviewClipHandler(baseCtx({ job: { attempts: 1 } }));
-    expect(r).toMatchObject({ kind: 'retry' });
-    expect((r as any).delayMs).toBeGreaterThan(0);
-  });
-});
+  it.each([['E_NETWORK'], ['E_SERVER'], ['E_RESPONSE'], ['E_UNKNOWN']])(
+    'maps %s → retry with backoff',
+    async (code) => {
+      const e: any = new Error('x')
+      e.code = code
+      ;(reviewClip as any).mockRejectedValue(e)
+      const r = await aiReviewClipHandler(baseCtx({ job: { attempts: 1 } }))
+      expect(r).toMatchObject({ kind: 'retry' })
+      expect((r as any).delayMs).toBeGreaterThan(0)
+    }
+  )
+})
 ```
 
 - [ ] **Step 2: Run — fails (placeholder still in place)**
@@ -143,52 +153,55 @@ Expected: FAIL — current file is the phase-14 placeholder.
 
 ```ts
 // electron/queue/handlers/ai-review-clip.ts
-import { reviewClip } from '../../ai/reviewer';
-import { aiUsage } from '../../ai/usage';
-import { settingsStore } from '../../settings/store';
+import { reviewClip } from '../../ai/reviewer'
+import { aiUsage } from '../../ai/usage'
+import { settingsStore } from '../../settings/store'
 
 interface JobCtx {
-  job: { id: string; kind: string; attempts: number };
-  payload: { clipId: number; path?: string; force?: boolean };
-  log: (level: 'info' | 'warn' | 'error', msg: string) => void;
-  cancel: AbortSignal;
+  job: { id: string; kind: string; attempts: number }
+  payload: { clipId: number; path?: string; force?: boolean }
+  log: (level: 'info' | 'warn' | 'error', msg: string) => void
+  cancel: AbortSignal
 }
 
 type HandlerResult =
   | { kind: 'ok' }
   | { kind: 'retry'; delayMs: number; reason: string }
-  | { kind: 'fail'; error: string };
+  | { kind: 'fail'; error: string }
 
 const FAIL_CODES = new Set([
-  'E_MISSING_PROFILE', 'E_CONFIG', 'E_AUTH',
-  'E_CLIP_NOT_FOUND', 'E_FILE_NOT_FOUND',
-]);
+  'E_MISSING_PROFILE',
+  'E_CONFIG',
+  'E_AUTH',
+  'E_CLIP_NOT_FOUND',
+  'E_FILE_NOT_FOUND'
+])
 
-const BACKOFF_MS = [1_000, 5_000, 30_000, 120_000, 900_000];
+const BACKOFF_MS = [1_000, 5_000, 30_000, 120_000, 900_000]
 function nextDelay(attempts: number): number {
-  return BACKOFF_MS[Math.min(attempts, BACKOFF_MS.length - 1)];
+  return BACKOFF_MS[Math.min(attempts, BACKOFF_MS.length - 1)]
 }
 
 export async function aiReviewClipHandler(ctx: JobCtx): Promise<HandlerResult> {
-  const { job, payload, log } = ctx;
-  const profileId = settingsStore.get('ai').defaultProfileId;
-  const t0 = Date.now();
+  const { job, payload, log } = ctx
+  const profileId = settingsStore.get('ai').defaultProfileId
+  const t0 = Date.now()
   try {
-    const out = await reviewClip(payload.clipId, { force: payload.force });
+    const out = await reviewClip(payload.clipId, { force: payload.force })
     aiUsage.insert({
       jobId: job.id,
       profileId: profileId ?? null,
       model: out.llmCall?.model ?? null,
       promptTokens: out.llmCall?.promptTokens ?? null,
       completionTokens: out.llmCall?.completionTokens ?? null,
-      latencyMs: out.llmCall?.latencyMs ?? (Date.now() - t0),
+      latencyMs: out.llmCall?.latencyMs ?? Date.now() - t0,
       ok: 1,
-      error: null,
-    });
-    log('info', `ai-review-clip ok clipId=${payload.clipId} cacheHit=${out.cacheHit}`);
-    return { kind: 'ok' };
+      error: null
+    })
+    log('info', `ai-review-clip ok clipId=${payload.clipId} cacheHit=${out.cacheHit}`)
+    return { kind: 'ok' }
   } catch (e) {
-    const code = (e as any)?.code ?? 'E_UNKNOWN';
+    const code = (e as any)?.code ?? 'E_UNKNOWN'
     aiUsage.insert({
       jobId: job.id,
       profileId: profileId ?? null,
@@ -197,14 +210,15 @@ export async function aiReviewClipHandler(ctx: JobCtx): Promise<HandlerResult> {
       completionTokens: null,
       latencyMs: Date.now() - t0,
       ok: 0,
-      error: code,
-    });
-    log('warn', `ai-review-clip ${code} clipId=${payload.clipId}`);
+      error: code
+    })
+    log('warn', `ai-review-clip ${code} clipId=${payload.clipId}`)
 
-    if (FAIL_CODES.has(code)) return { kind: 'fail', error: code };
-    if (code === 'E_RATE') return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' };
-    if (code === 'E_MTIME_CONFLICT') return { kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' };
-    return { kind: 'retry', delayMs: nextDelay(job.attempts), reason: code };
+    if (FAIL_CODES.has(code)) return { kind: 'fail', error: code }
+    if (code === 'E_RATE') return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' }
+    if (code === 'E_MTIME_CONFLICT')
+      return { kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' }
+    return { kind: 'retry', delayMs: nextDelay(job.attempts), reason: code }
   }
 }
 ```
@@ -224,9 +238,11 @@ git commit -m "feat(phase-15): real ai-review-clip handler with error mapping + 
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: Runner registration — replace placeholder
 
 **Files:**
+
 - Modify: `electron/queue/runner.ts` (or wherever phase 14 registers handlers)
 
 - [ ] **Step 1: Locate the registration site**
@@ -242,17 +258,17 @@ Expected: one or more results pointing to where `register({ kind: 'ai-review-cli
 If the registration block looks like:
 
 ```ts
-import { aiReviewClipPlaceholder } from './handlers/ai-review-clip';
+import { aiReviewClipPlaceholder } from './handlers/ai-review-clip'
 // ...
-runner.register({ kind: 'ai-review-clip', concurrency: 1, handler: aiReviewClipPlaceholder });
+runner.register({ kind: 'ai-review-clip', concurrency: 1, handler: aiReviewClipPlaceholder })
 ```
 
 Update to:
 
 ```ts
-import { aiReviewClipHandler } from './handlers/ai-review-clip';
+import { aiReviewClipHandler } from './handlers/ai-review-clip'
 // ...
-runner.register({ kind: 'ai-review-clip', concurrency: 2, handler: aiReviewClipHandler });
+runner.register({ kind: 'ai-review-clip', concurrency: 2, handler: aiReviewClipHandler })
 ```
 
 (`concurrency: 2` per design D11. If the file uses a config object pattern, follow that.)
@@ -280,69 +296,78 @@ git commit -m "feat(phase-15): runner registers real ai-review-clip handler with
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: Verify `ai_usage` write on both success and failure paths
 
 This is largely covered by Task 1 tests, but add a focused integration check that exercises both branches with a real DB.
 
 **Files:**
+
 - Modify: `electron/queue/handlers/ai-review-clip.test.ts`
 
 - [ ] **Step 1: Append integration test**
 
 ```ts
 // electron/queue/handlers/ai-review-clip.test.ts — append
-import Database from 'better-sqlite3';
-import { runMigrations } from '../../services/db/migrations';
-import { migrationsDir } from '../../services/db/migrations/index';
+import Database from 'better-sqlite3'
+import { runMigrations } from '../../services/db/migrations'
+import { migrationsDir } from '../../services/db/migrations/index'
 
-vi.mock('../../services/db/connection', () => ({ getDb: vi.fn() }));
+vi.mock('../../services/db/connection', () => ({ getDb: vi.fn() }))
 vi.mock('../../settings/store', () => ({
-  settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'prof-1' })) },
-}));
-import { getDb } from '../../services/db/connection';
+  settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'prof-1' })) }
+}))
+import { getDb } from '../../services/db/connection'
 
 describe('aiReviewClipHandler — ai_usage integration', () => {
-  let db: Database.Database;
+  let db: Database.Database
   beforeEach(() => {
-    vi.resetAllMocks();
-    db = new Database(':memory:');
-    runMigrations(db, migrationsDir());
-    (getDb as any).mockReturnValue(db);
+    vi.resetAllMocks()
+    db = new Database(':memory:')
+    runMigrations(db, migrationsDir())
+    ;(getDb as any).mockReturnValue(db)
     // un-mock aiUsage by re-importing real impl
-    vi.doUnmock('../../ai/usage');
-  });
+    vi.doUnmock('../../ai/usage')
+  })
 
   it('writes ok=1 row on success', async () => {
-    const { aiUsage: realUsage } = await import('../../ai/usage');
-    (reviewClip as any).mockResolvedValue({
-      result: { summary: 's', suggestedTitle: 't', tags: ['a','b','c'], keyQuotes: ['q'], reviewedAt: 'n' },
+    const { aiUsage: realUsage } = await import('../../ai/usage')
+    ;(reviewClip as any).mockResolvedValue({
+      result: {
+        summary: 's',
+        suggestedTitle: 't',
+        tags: ['a', 'b', 'c'],
+        keyQuotes: ['q'],
+        reviewedAt: 'n'
+      },
       cacheHit: false,
-      llmCall: { model: 'm', latencyMs: 1200, promptTokens: 10, completionTokens: 5 },
-    });
+      llmCall: { model: 'm', latencyMs: 1200, promptTokens: 10, completionTokens: 5 }
+    })
     // Replace the mocked aiUsage.insert to call the real one
-    (aiUsage.insert as any).mockImplementation(realUsage.insert);
+    ;(aiUsage.insert as any).mockImplementation(realUsage.insert)
 
-    await aiReviewClipHandler(baseCtx());
-    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[];
-    expect(rows).toHaveLength(1);
-    expect(rows[0].ok).toBe(1);
-    expect(rows[0].model).toBe('m');
-    expect(rows[0].profile_id).toBe('prof-1');
-  });
+    await aiReviewClipHandler(baseCtx())
+    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[]
+    expect(rows).toHaveLength(1)
+    expect(rows[0].ok).toBe(1)
+    expect(rows[0].model).toBe('m')
+    expect(rows[0].profile_id).toBe('prof-1')
+  })
 
   it('writes ok=0 row on E_AUTH', async () => {
-    const { aiUsage: realUsage } = await import('../../ai/usage');
-    const e: any = new Error('x'); e.code = 'E_AUTH';
-    (reviewClip as any).mockRejectedValue(e);
-    (aiUsage.insert as any).mockImplementation(realUsage.insert);
+    const { aiUsage: realUsage } = await import('../../ai/usage')
+    const e: any = new Error('x')
+    e.code = 'E_AUTH'
+    ;(reviewClip as any).mockRejectedValue(e)
+    ;(aiUsage.insert as any).mockImplementation(realUsage.insert)
 
-    await aiReviewClipHandler(baseCtx());
-    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[];
-    expect(rows).toHaveLength(1);
-    expect(rows[0].ok).toBe(0);
-    expect(rows[0].error).toBe('E_AUTH');
-  });
-});
+    await aiReviewClipHandler(baseCtx())
+    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[]
+    expect(rows).toHaveLength(1)
+    expect(rows[0].ok).toBe(0)
+    expect(rows[0].error).toBe('E_AUTH')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — passes**
@@ -360,9 +385,11 @@ git commit -m "test(phase-15): handler integration — ai_usage row written on s
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 4: `AiReviewBadge.tsx` — three states
 
 **Files:**
+
 - Create: `src/components/editor/AiReviewBadge.tsx`
 - Create: `src/components/editor/AiReviewBadge.test.tsx`
 
@@ -370,39 +397,39 @@ git commit -m "test(phase-15): handler integration — ai_usage row written on s
 
 ```tsx
 // src/components/editor/AiReviewBadge.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { AiReviewBadge } from './AiReviewBadge';
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { AiReviewBadge } from './AiReviewBadge'
 
 describe('<AiReviewBadge />', () => {
   it('renders nothing when frontmatter has no ai_reviewed_at', () => {
-    const { container } = render(<AiReviewBadge frontmatter={{}} onClick={() => {}} />);
-    expect(container.firstChild).toBeNull();
-  });
+    const { container } = render(<AiReviewBadge frontmatter={{}} onClick={() => {}} />)
+    expect(container.firstChild).toBeNull()
+  })
 
   it('renders purple state when reviewed but not accepted', () => {
-    const fm = { ai_reviewed_at: '2026-05-04T00:00:00Z' };
-    render(<AiReviewBadge frontmatter={fm} onClick={() => {}} />);
-    const btn = screen.getByRole('button', { name: /AI/ });
-    expect(btn).toHaveAttribute('data-state', 'reviewed');
-  });
+    const fm = { ai_reviewed_at: '2026-05-04T00:00:00Z' }
+    render(<AiReviewBadge frontmatter={fm} onClick={() => {}} />)
+    const btn = screen.getByRole('button', { name: /AI/ })
+    expect(btn).toHaveAttribute('data-state', 'reviewed')
+  })
 
   it('renders gray state when reviewed and accepted', () => {
     const fm = {
       ai_reviewed_at: '2026-05-04T00:00:00Z',
-      ai_review_accepted_at: '2026-05-04T01:00:00Z',
-    };
-    render(<AiReviewBadge frontmatter={fm} onClick={() => {}} />);
-    const btn = screen.getByRole('button', { name: /AI/ });
-    expect(btn).toHaveAttribute('data-state', 'accepted');
-  });
+      ai_review_accepted_at: '2026-05-04T01:00:00Z'
+    }
+    render(<AiReviewBadge frontmatter={fm} onClick={() => {}} />)
+    const btn = screen.getByRole('button', { name: /AI/ })
+    expect(btn).toHaveAttribute('data-state', 'accepted')
+  })
 
   it('renders spinner state when running=true', () => {
-    render(<AiReviewBadge frontmatter={{}} running onClick={() => {}} />);
-    const btn = screen.getByRole('button', { name: /AI/ });
-    expect(btn).toHaveAttribute('data-state', 'running');
-  });
-});
+    render(<AiReviewBadge frontmatter={{}} running onClick={() => {}} />)
+    const btn = screen.getByRole('button', { name: /AI/ })
+    expect(btn).toHaveAttribute('data-state', 'running')
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -414,33 +441,33 @@ Expected: FAIL.
 
 ```tsx
 // src/components/editor/AiReviewBadge.tsx
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 
 export interface AiReviewBadgeProps {
-  frontmatter: Record<string, unknown>;
-  running?: boolean;
-  onClick: () => void;
+  frontmatter: Record<string, unknown>
+  running?: boolean
+  onClick: () => void
 }
 
-type State = 'reviewed' | 'accepted' | 'running' | null;
+type State = 'reviewed' | 'accepted' | 'running' | null
 
 function deriveState(fm: Record<string, unknown>, running: boolean): State {
-  if (running) return 'running';
-  if (!fm.ai_reviewed_at) return null;
-  if (fm.ai_review_accepted_at) return 'accepted';
-  return 'reviewed';
+  if (running) return 'running'
+  if (!fm.ai_reviewed_at) return null
+  if (fm.ai_review_accepted_at) return 'accepted'
+  return 'reviewed'
 }
 
 export function AiReviewBadge({ frontmatter, running = false, onClick }: AiReviewBadgeProps) {
-  const { t } = useTranslation();
-  const state = deriveState(frontmatter, running);
-  if (state === null) return null;
+  const { t } = useTranslation()
+  const state = deriveState(frontmatter, running)
+  if (state === null) return null
 
   const titleByState: Record<NonNullable<State>, string> = {
     reviewed: t('editor.ai.badge.reviewedTooltip'),
     accepted: t('editor.ai.badge.acceptedTooltip'),
-    running: t('editor.ai.badge.runningTooltip'),
-  };
+    running: t('editor.ai.badge.runningTooltip')
+  }
 
   return (
     <button
@@ -453,7 +480,7 @@ export function AiReviewBadge({ frontmatter, running = false, onClick }: AiRevie
     >
       AI
     </button>
-  );
+  )
 }
 ```
 
@@ -464,15 +491,34 @@ Add minimal CSS in `src/components/editor/AiReviewBadge.css` (imported in `src/m
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px; height: 22px;
-  font-size: 11px; font-weight: 600;
-  border-radius: 4px; border: 1px solid transparent;
+  width: 28px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid transparent;
   cursor: pointer;
 }
-.ai-review-badge--reviewed { background: #ede7ff; color: #5b21b6; border-color: #c4b5fd; }
-.ai-review-badge--accepted { background: #f1f1f1; color: #6b7280; border-color: #d1d5db; }
-.ai-review-badge--running  { background: #ede7ff; color: #5b21b6; animation: ai-spin 1.2s linear infinite; }
-@keyframes ai-spin { to { transform: rotate(360deg); } }
+.ai-review-badge--reviewed {
+  background: #ede7ff;
+  color: #5b21b6;
+  border-color: #c4b5fd;
+}
+.ai-review-badge--accepted {
+  background: #f1f1f1;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+.ai-review-badge--running {
+  background: #ede7ff;
+  color: #5b21b6;
+  animation: ai-spin 1.2s linear infinite;
+}
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 ```
 
 - [ ] **Step 4: Run — passes**
@@ -490,9 +536,11 @@ git commit -m "feat(phase-15): AiReviewBadge with reviewed/accepted/running stat
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 5: `AiReviewDrawer.tsx` — four content blocks + footer buttons
 
 **Files:**
+
 - Create: `src/components/editor/AiReviewDrawer.tsx`
 - Create: `src/components/editor/AiReviewDrawer.test.tsx`
 
@@ -500,9 +548,9 @@ git commit -m "feat(phase-15): AiReviewBadge with reviewed/accepted/running stat
 
 ```tsx
 // src/components/editor/AiReviewDrawer.test.tsx
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { AiReviewDrawer } from './AiReviewDrawer';
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { AiReviewDrawer } from './AiReviewDrawer'
 
 const fm = {
   title: 'Original',
@@ -511,58 +559,105 @@ const fm = {
   ai_suggested_title: 'A Better Title',
   ai_tags: ['ai-a', 'ai-b', 'ai-c'],
   ai_key_quotes: ['quote one', 'quote two'],
-  ai_reviewed_at: '2026-05-04T00:00:00Z',
-};
+  ai_reviewed_at: '2026-05-04T00:00:00Z'
+}
 
 describe('<AiReviewDrawer />', () => {
   it('renders four content blocks', () => {
-    render(<AiReviewDrawer frontmatter={fm} clipId={1}
-      onAcceptAll={vi.fn()} onUseTitle={vi.fn()} onMergeTags={vi.fn()}
-      onReject={vi.fn()} onRerun={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByText('A Better Title')).toBeInTheDocument();
-    expect(screen.getByText('a short summary')).toBeInTheDocument();
-    expect(screen.getByText('ai-a')).toBeInTheDocument();
-    expect(screen.getByText('quote one')).toBeInTheDocument();
-  });
+    render(
+      <AiReviewDrawer
+        frontmatter={fm}
+        clipId={1}
+        onAcceptAll={vi.fn()}
+        onUseTitle={vi.fn()}
+        onMergeTags={vi.fn()}
+        onReject={vi.fn()}
+        onRerun={vi.fn()}
+        onClose={vi.fn()}
+      />
+    )
+    expect(screen.getByText('A Better Title')).toBeInTheDocument()
+    expect(screen.getByText('a short summary')).toBeInTheDocument()
+    expect(screen.getByText('ai-a')).toBeInTheDocument()
+    expect(screen.getByText('quote one')).toBeInTheDocument()
+  })
 
   it('triggers onUseTitle when "Use as title" clicked', () => {
-    const onUseTitle = vi.fn();
-    render(<AiReviewDrawer frontmatter={fm} clipId={1}
-      onAcceptAll={vi.fn()} onUseTitle={onUseTitle} onMergeTags={vi.fn()}
-      onReject={vi.fn()} onRerun={vi.fn()} onClose={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /use.*title|用作标题/i }));
-    expect(onUseTitle).toHaveBeenCalledOnce();
-  });
+    const onUseTitle = vi.fn()
+    render(
+      <AiReviewDrawer
+        frontmatter={fm}
+        clipId={1}
+        onAcceptAll={vi.fn()}
+        onUseTitle={onUseTitle}
+        onMergeTags={vi.fn()}
+        onReject={vi.fn()}
+        onRerun={vi.fn()}
+        onClose={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /use.*title|用作标题/i }))
+    expect(onUseTitle).toHaveBeenCalledOnce()
+  })
 
   it('triggers onMergeTags', () => {
-    const onMergeTags = vi.fn();
-    render(<AiReviewDrawer frontmatter={fm} clipId={1}
-      onAcceptAll={vi.fn()} onUseTitle={vi.fn()} onMergeTags={onMergeTags}
-      onReject={vi.fn()} onRerun={vi.fn()} onClose={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /merge.*tag|合并到标签/i }));
-    expect(onMergeTags).toHaveBeenCalledOnce();
-  });
+    const onMergeTags = vi.fn()
+    render(
+      <AiReviewDrawer
+        frontmatter={fm}
+        clipId={1}
+        onAcceptAll={vi.fn()}
+        onUseTitle={vi.fn()}
+        onMergeTags={onMergeTags}
+        onReject={vi.fn()}
+        onRerun={vi.fn()}
+        onClose={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /merge.*tag|合并到标签/i }))
+    expect(onMergeTags).toHaveBeenCalledOnce()
+  })
 
   it('triggers onAcceptAll, onReject, onRerun', () => {
-    const onAcceptAll = vi.fn(), onReject = vi.fn(), onRerun = vi.fn();
-    render(<AiReviewDrawer frontmatter={fm} clipId={1}
-      onAcceptAll={onAcceptAll} onUseTitle={vi.fn()} onMergeTags={vi.fn()}
-      onReject={onReject} onRerun={onRerun} onClose={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /accept.*all|一键接受/i }));
-    fireEvent.click(screen.getByRole('button', { name: /reject|拒绝/i }));
-    fireEvent.click(screen.getByRole('button', { name: /rerun|重新审读/i }));
-    expect(onAcceptAll).toHaveBeenCalledOnce();
-    expect(onReject).toHaveBeenCalledOnce();
-    expect(onRerun).toHaveBeenCalledOnce();
-  });
+    const onAcceptAll = vi.fn(),
+      onReject = vi.fn(),
+      onRerun = vi.fn()
+    render(
+      <AiReviewDrawer
+        frontmatter={fm}
+        clipId={1}
+        onAcceptAll={onAcceptAll}
+        onUseTitle={vi.fn()}
+        onMergeTags={vi.fn()}
+        onReject={onReject}
+        onRerun={onRerun}
+        onClose={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /accept.*all|一键接受/i }))
+    fireEvent.click(screen.getByRole('button', { name: /reject|拒绝/i }))
+    fireEvent.click(screen.getByRole('button', { name: /rerun|重新审读/i }))
+    expect(onAcceptAll).toHaveBeenCalledOnce()
+    expect(onReject).toHaveBeenCalledOnce()
+    expect(onRerun).toHaveBeenCalledOnce()
+  })
 
   it('hides rerun button when clipId is null (non-clip file)', () => {
-    render(<AiReviewDrawer frontmatter={fm} clipId={null}
-      onAcceptAll={vi.fn()} onUseTitle={vi.fn()} onMergeTags={vi.fn()}
-      onReject={vi.fn()} onRerun={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: /rerun|重新审读/i })).toBeNull();
-  });
-});
+    render(
+      <AiReviewDrawer
+        frontmatter={fm}
+        clipId={null}
+        onAcceptAll={vi.fn()}
+        onUseTitle={vi.fn()}
+        onMergeTags={vi.fn()}
+        onReject={vi.fn()}
+        onRerun={vi.fn()}
+        onClose={vi.fn()}
+      />
+    )
+    expect(screen.queryByRole('button', { name: /rerun|重新审读/i })).toBeNull()
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -574,43 +669,47 @@ Expected: FAIL.
 
 ```tsx
 // src/components/editor/AiReviewDrawer.tsx
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 
 export interface AiReviewDrawerProps {
-  frontmatter: Record<string, unknown>;
-  clipId: number | null;
-  onAcceptAll: () => void;
-  onUseTitle: () => void;
-  onMergeTags: () => void;
-  onReject: () => void;
-  onRerun: () => void;
-  onClose: () => void;
+  frontmatter: Record<string, unknown>
+  clipId: number | null
+  onAcceptAll: () => void
+  onUseTitle: () => void
+  onMergeTags: () => void
+  onReject: () => void
+  onRerun: () => void
+  onClose: () => void
 }
 
 function asStringArray(v: unknown): string[] {
-  return Array.isArray(v) ? v.map(String) : [];
+  return Array.isArray(v) ? v.map(String) : []
 }
 
 export function AiReviewDrawer(props: AiReviewDrawerProps) {
-  const { t } = useTranslation();
-  const fm = props.frontmatter;
-  const suggestedTitle = String(fm.ai_suggested_title ?? '');
-  const summary = String(fm.ai_summary ?? '');
-  const tags = asStringArray(fm.ai_tags);
-  const quotes = asStringArray(fm.ai_key_quotes);
-  const reviewedAt = String(fm.ai_reviewed_at ?? '');
+  const { t } = useTranslation()
+  const fm = props.frontmatter
+  const suggestedTitle = String(fm.ai_suggested_title ?? '')
+  const summary = String(fm.ai_summary ?? '')
+  const tags = asStringArray(fm.ai_tags)
+  const quotes = asStringArray(fm.ai_key_quotes)
+  const reviewedAt = String(fm.ai_reviewed_at ?? '')
 
   return (
     <aside className="ai-review-drawer" role="dialog" aria-label={t('editor.ai.drawer.title')}>
       <header className="ai-review-drawer__header">
         <h2>{t('editor.ai.drawer.title')}</h2>
-        <button type="button" onClick={props.onClose} aria-label={t('common.close')}>×</button>
+        <button type="button" onClick={props.onClose} aria-label={t('common.close')}>
+          ×
+        </button>
       </header>
 
       <section className="ai-review-drawer__section">
         <h3>{t('editor.ai.suggestedTitle')}</h3>
         <p className="ai-review-drawer__title">{suggestedTitle}</p>
-        <button type="button" onClick={props.onUseTitle}>{t('editor.ai.useAsTitle')}</button>
+        <button type="button" onClick={props.onUseTitle}>
+          {t('editor.ai.useAsTitle')}
+        </button>
       </section>
 
       <section className="ai-review-drawer__section">
@@ -621,31 +720,47 @@ export function AiReviewDrawer(props: AiReviewDrawerProps) {
       <section className="ai-review-drawer__section">
         <h3>{t('editor.ai.tags')}</h3>
         <ul className="ai-review-drawer__chips">
-          {tags.map(tg => <li key={tg} className="ai-review-drawer__chip">{tg}</li>)}
+          {tags.map((tg) => (
+            <li key={tg} className="ai-review-drawer__chip">
+              {tg}
+            </li>
+          ))}
         </ul>
-        <button type="button" onClick={props.onMergeTags}>{t('editor.ai.mergeTags')}</button>
+        <button type="button" onClick={props.onMergeTags}>
+          {t('editor.ai.mergeTags')}
+        </button>
       </section>
 
       <section className="ai-review-drawer__section">
         <h3>{t('editor.ai.quotes')}</h3>
         <ul className="ai-review-drawer__quotes">
-          {quotes.map((q, i) => <li key={i}>{q}</li>)}
+          {quotes.map((q, i) => (
+            <li key={i}>{q}</li>
+          ))}
         </ul>
       </section>
 
       <footer className="ai-review-drawer__footer">
-        <button type="button" onClick={props.onAcceptAll}>{t('editor.ai.accept')}</button>
-        <button type="button" onClick={props.onReject}>{t('editor.ai.reject')}</button>
+        <button type="button" onClick={props.onAcceptAll}>
+          {t('editor.ai.accept')}
+        </button>
+        <button type="button" onClick={props.onReject}>
+          {t('editor.ai.reject')}
+        </button>
         {props.clipId !== null && (
-          <button type="button" onClick={props.onRerun}>{t('editor.ai.rerun')}</button>
+          <button type="button" onClick={props.onRerun}>
+            {t('editor.ai.rerun')}
+          </button>
         )}
       </footer>
 
       <div className="ai-review-drawer__meta">
-        <span>{t('editor.ai.reviewedAt')}: {reviewedAt}</span>
+        <span>
+          {t('editor.ai.reviewedAt')}: {reviewedAt}
+        </span>
       </div>
     </aside>
-  );
+  )
 }
 ```
 
@@ -666,9 +781,11 @@ git commit -m "feat(phase-15): AiReviewDrawer with four sections + accept/reject
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 6: Drawer ↔ editor store wiring (accept/merge → dirty → autosave)
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 - Modify: `src/components/editor/AiReviewDrawer.tsx` (or create wrapper at `src/components/editor/AiReviewDrawerContainer.tsx`)
@@ -758,34 +875,34 @@ describe('editor store — AI actions', () => {
   it('applyAiSuggestedTitle sets title and marks dirty', () => {
     // arrange a 'ready' state via the store API; details depend on existing test helpers
     // ...
-    useEditorStore.getState().applyAiSuggestedTitle();
-    const s = useEditorStore.getState() as any;
-    expect(s.frontmatter.title).toBe('A Better Title');
-    expect(s.dirty).toBe(true);
-  });
+    useEditorStore.getState().applyAiSuggestedTitle()
+    const s = useEditorStore.getState() as any
+    expect(s.frontmatter.title).toBe('A Better Title')
+    expect(s.dirty).toBe(true)
+  })
 
   it('mergeAiTags unions existing and ai_tags', () => {
     // arrange ready state with frontmatter.tags=['x'], ai_tags=['x','y']
-    useEditorStore.getState().mergeAiTags();
-    expect((useEditorStore.getState() as any).frontmatter.tags).toEqual(['x', 'y']);
-  });
+    useEditorStore.getState().mergeAiTags()
+    expect((useEditorStore.getState() as any).frontmatter.tags).toEqual(['x', 'y'])
+  })
 
   it('acceptAiReview sets title + tags + ai_review_accepted_at', () => {
-    useEditorStore.getState().acceptAiReview();
-    const s = useEditorStore.getState() as any;
-    expect(typeof s.frontmatter.ai_review_accepted_at).toBe('string');
-    expect(s.dirty).toBe(true);
-  });
+    useEditorStore.getState().acceptAiReview()
+    const s = useEditorStore.getState() as any
+    expect(typeof s.frontmatter.ai_review_accepted_at).toBe('string')
+    expect(s.dirty).toBe(true)
+  })
 
   it('rejectAiReview only sets ai_review_accepted_at', () => {
-    const before = useEditorStore.getState() as any;
-    const beforeTitle = before.frontmatter.title;
-    useEditorStore.getState().rejectAiReview();
-    const after = useEditorStore.getState() as any;
-    expect(after.frontmatter.title).toBe(beforeTitle);
-    expect(typeof after.frontmatter.ai_review_accepted_at).toBe('string');
-  });
-});
+    const before = useEditorStore.getState() as any
+    const beforeTitle = before.frontmatter.title
+    useEditorStore.getState().rejectAiReview()
+    const after = useEditorStore.getState() as any
+    expect(after.frontmatter.title).toBe(beforeTitle)
+    expect(typeof after.frontmatter.ai_review_accepted_at).toBe('string')
+  })
+})
 ```
 
 (Adapt the arrange step to whatever helper the existing tests use to put the store in `ready`.)
@@ -800,24 +917,38 @@ Expected: PASS for the four new tests + all existing tests.
 Create `src/components/editor/AiReviewDrawerContainer.tsx`:
 
 ```tsx
-import { useEditorStore } from '../../stores/editor';
-import { AiReviewDrawer } from './AiReviewDrawer';
+import { useEditorStore } from '../../stores/editor'
+import { AiReviewDrawer } from './AiReviewDrawer'
 
-export function AiReviewDrawerContainer({ clipId, onClose }: { clipId: number | null; onClose: () => void }) {
-  const state = useEditorStore();
-  const fm = (state as any).frontmatter ?? {};
+export function AiReviewDrawerContainer({
+  clipId,
+  onClose
+}: {
+  clipId: number | null
+  onClose: () => void
+}) {
+  const state = useEditorStore()
+  const fm = (state as any).frontmatter ?? {}
   return (
     <AiReviewDrawer
       frontmatter={fm}
       clipId={clipId}
-      onAcceptAll={() => { (state as any).acceptAiReview(); onClose(); }}
+      onAcceptAll={() => {
+        ;(state as any).acceptAiReview()
+        onClose()
+      }}
       onUseTitle={() => (state as any).applyAiSuggestedTitle()}
       onMergeTags={() => (state as any).mergeAiTags()}
-      onReject={() => { (state as any).rejectAiReview(); onClose(); }}
-      onRerun={() => { /* wired in Task 8 */ }}
+      onReject={() => {
+        ;(state as any).rejectAiReview()
+        onClose()
+      }}
+      onRerun={() => {
+        /* wired in Task 8 */
+      }}
       onClose={onClose}
     />
-  );
+  )
 }
 ```
 
@@ -831,9 +962,11 @@ git commit -m "feat(phase-15): editor store AI actions + drawer container wired 
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 7: FrontmatterCard — add "AI 审读" row
 
 **Files:**
+
 - Modify: `src/components/editor/FrontmatterCard.tsx`
 - Modify: `src/components/editor/FrontmatterCard.test.tsx` (or create)
 
@@ -841,31 +974,31 @@ git commit -m "feat(phase-15): editor store AI actions + drawer container wired 
 
 ```tsx
 // src/components/editor/FrontmatterCard.test.tsx — add or append
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FrontmatterCard } from './FrontmatterCard';
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { FrontmatterCard } from './FrontmatterCard'
 
 describe('FrontmatterCard — AI row', () => {
   it('shows AI 审读 row with first 80 chars of summary when ai_summary exists', () => {
     const fm = {
       title: 'T',
-      ai_summary: 'A'.repeat(120),
-    };
-    const onExpand = vi.fn();
-    render(<FrontmatterCard frontmatter={fm} onAiExpand={onExpand} />);
-    expect(screen.getByText(/AI 审读|AI Review/i)).toBeInTheDocument();
+      ai_summary: 'A'.repeat(120)
+    }
+    const onExpand = vi.fn()
+    render(<FrontmatterCard frontmatter={fm} onAiExpand={onExpand} />)
+    expect(screen.getByText(/AI 审读|AI Review/i)).toBeInTheDocument()
     // 80 chars + ellipsis
-    expect(screen.getByText(/A{80}…?/)).toBeInTheDocument();
+    expect(screen.getByText(/A{80}…?/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /expand|展开/i }));
-    expect(onExpand).toHaveBeenCalledOnce();
-  });
+    fireEvent.click(screen.getByRole('button', { name: /expand|展开/i }))
+    expect(onExpand).toHaveBeenCalledOnce()
+  })
 
   it('hides AI row when ai_summary missing', () => {
-    render(<FrontmatterCard frontmatter={{ title: 'T' }} onAiExpand={() => {}} />);
-    expect(screen.queryByText(/AI 审读|AI Review/i)).toBeNull();
-  });
-});
+    render(<FrontmatterCard frontmatter={{ title: 'T' }} onAiExpand={() => {}} />)
+    expect(screen.queryByText(/AI 审读|AI Review/i)).toBeNull()
+  })
+})
 ```
 
 - [ ] **Step 2: Run — fails**
@@ -879,17 +1012,17 @@ Add an optional `onAiExpand` prop and a row near the bottom of the card:
 
 ```tsx
 // In FrontmatterCard.tsx
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 
 interface Props {
-  frontmatter: Record<string, unknown>;
-  onAiExpand?: () => void;
+  frontmatter: Record<string, unknown>
+  onAiExpand?: () => void
   // ... existing props
 }
 
 export function FrontmatterCard({ frontmatter, onAiExpand, ...rest }: Props) {
-  const { t } = useTranslation();
-  const aiSummary = typeof frontmatter.ai_summary === 'string' ? frontmatter.ai_summary : null;
+  const { t } = useTranslation()
+  const aiSummary = typeof frontmatter.ai_summary === 'string' ? frontmatter.ai_summary : null
   return (
     <div className="frontmatter-card">
       {/* ... existing rows ... */}
@@ -897,15 +1030,18 @@ export function FrontmatterCard({ frontmatter, onAiExpand, ...rest }: Props) {
         <div className="frontmatter-card__row frontmatter-card__row--ai">
           <span className="frontmatter-card__label">{t('editor.ai.sidecard.label')}</span>
           <span className="frontmatter-card__value">
-            {aiSummary.slice(0, 80)}{aiSummary.length > 80 ? '…' : ''}
+            {aiSummary.slice(0, 80)}
+            {aiSummary.length > 80 ? '…' : ''}
           </span>
           {onAiExpand && (
-            <button type="button" onClick={onAiExpand}>{t('editor.ai.sidecard.expand')}</button>
+            <button type="button" onClick={onAiExpand}>
+              {t('editor.ai.sidecard.expand')}
+            </button>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }
 ```
 
@@ -924,9 +1060,11 @@ git commit -m "feat(phase-15): FrontmatterCard AI row with summary preview + exp
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 8: Rerun button — wire `ai.reviewClip(clipId, { force: true })` + spinner state
 
 **Files:**
+
 - Modify: `src/components/editor/AiReviewDrawerContainer.tsx`
 - Modify: `src/stores/editor.ts` (add `aiRerunInflight` state)
 - Modify: `src/stores/editor.test.ts`
@@ -938,7 +1076,7 @@ In `src/stores/editor.ts` `EditorReadyState`:
 ```ts
 interface EditorReadyState {
   // ...existing fields
-  aiRerunInflight?: boolean;
+  aiRerunInflight?: boolean
 }
 ```
 
@@ -974,13 +1112,13 @@ onRerun={async () => {
 In `src/components/editor/EditorTitleBar.tsx`, mount the badge:
 
 ```tsx
-import { AiReviewBadge } from './AiReviewBadge';
-import { useEditorStore } from '../../stores/editor';
+import { AiReviewBadge } from './AiReviewBadge'
+import { useEditorStore } from '../../stores/editor'
 
 // inside the title bar:
-const state = useEditorStore() as any;
-const fm = state.frontmatter ?? {};
-<AiReviewBadge
+const state = useEditorStore() as any
+const fm = state.frontmatter ?? {}
+;<AiReviewBadge
   frontmatter={fm}
   running={!!state.aiRerunInflight}
   onClick={() => setAiDrawerOpen(true)}
@@ -993,27 +1131,27 @@ const fm = state.frontmatter ?? {};
 
 ```tsx
 // src/components/editor/AiReviewDrawerContainer.test.tsx (new)
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
-import { AiReviewDrawerContainer } from './AiReviewDrawerContainer';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, fireEvent, screen } from '@testing-library/react'
+import { AiReviewDrawerContainer } from './AiReviewDrawerContainer'
 
-const reviewClipMock = vi.fn();
+const reviewClipMock = vi.fn()
 beforeEach(() => {
-  reviewClipMock.mockReset();
-  (globalThis as any).window.api = {
-    ai: { reviewClip: reviewClipMock },
-  };
-});
+  reviewClipMock.mockReset()
+  ;(globalThis as any).window.api = {
+    ai: { reviewClip: reviewClipMock }
+  }
+})
 
 describe('AiReviewDrawerContainer rerun', () => {
   it('calls window.api.ai.reviewClip with { force: true } when rerun clicked', async () => {
-    reviewClipMock.mockResolvedValue({ jobId: 'j1' });
-    render(<AiReviewDrawerContainer clipId={42} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: /rerun|重新审读/i }));
-    await Promise.resolve();
-    expect(reviewClipMock).toHaveBeenCalledWith(42, { force: true });
-  });
-});
+    reviewClipMock.mockResolvedValue({ jobId: 'j1' })
+    render(<AiReviewDrawerContainer clipId={42} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /rerun|重新审读/i }))
+    await Promise.resolve()
+    expect(reviewClipMock).toHaveBeenCalledWith(42, { force: true })
+  })
+})
 ```
 
 (May require seeding the editor store to a `ready` state — adapt to project test helpers.)
@@ -1033,9 +1171,11 @@ git commit -m "feat(phase-15): rerun button calls ai.reviewClip(force) + spinner
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 9: Editor store subscribes to `jobs.changed`
 
 **Files:**
+
 - Modify: `src/stores/editor.ts`
 - Modify: `src/stores/editor.test.ts`
 
@@ -1077,21 +1217,27 @@ close: () => {
 // src/stores/editor.test.ts — append
 describe('editor store — jobs:changed subscription', () => {
   it('reloads from disk when ai-review-clip done event matches open path', async () => {
-    const handlers: Record<string, Function[]> = {};
-    (globalThis as any).window.api = {
+    const handlers: Record<string, Function[]> = {}
+    ;(globalThis as any).window.api = {
       on: (ch: string, h: any) => {
-        (handlers[ch] ??= []).push(h);
-        return () => { handlers[ch] = handlers[ch].filter(x => x !== h); };
-      },
+        ;(handlers[ch] ??= []).push(h)
+        return () => {
+          handlers[ch] = handlers[ch].filter((x) => x !== h)
+        }
+      }
       // ... mock other methods used in open()
-    };
+    }
     // Open a file (use the project's helpers)
     // ...
-    const reloadSpy = vi.spyOn(useEditorStore.getState() as any, 'reloadFromDisk');
-    handlers['jobs:changed']?.[0]?.({ kind: 'ai-review-clip', state: 'done', payload: { path: 'inbox/x.md' } });
-    expect(reloadSpy).toHaveBeenCalled();
-  });
-});
+    const reloadSpy = vi.spyOn(useEditorStore.getState() as any, 'reloadFromDisk')
+    handlers['jobs:changed']?.[0]?.({
+      kind: 'ai-review-clip',
+      state: 'done',
+      payload: { path: 'inbox/x.md' }
+    })
+    expect(reloadSpy).toHaveBeenCalled()
+  })
+})
 ```
 
 - [ ] **Step 3: Run — passes**
@@ -1109,9 +1255,11 @@ git commit -m "feat(phase-15): editor store subscribes to jobs:changed and reloa
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 10: Preload — expose `window.api.ai.*`
 
 **Files:**
+
 - Modify: `electron/preload/preload.ts` (or wherever the main preload bridge lives)
 
 - [ ] **Step 1: Locate the preload bridge**
@@ -1151,21 +1299,30 @@ declare global {
     api: {
       // ...existing
       ai: {
-        reviewClip(clipId: number, opts?: { force?: boolean }): Promise<{ jobId: string }>;
+        reviewClip(clipId: number, opts?: { force?: boolean }): Promise<{ jobId: string }>
         usage: {
           summary(opts?: { sinceDays?: number }): Promise<{
-            totalCalls: number; okCount: number; errorRate: number; totalTokens: number;
-            byProvider: Record<string, { calls: number; tokens: number }>;
-          }>;
-          list(opts: { limit: number; offset: number; profileId?: string; okOnly?: boolean }): Promise<{
-            items: any[]; total: number;
-          }>;
-        };
-      };
-    };
+            totalCalls: number
+            okCount: number
+            errorRate: number
+            totalTokens: number
+            byProvider: Record<string, { calls: number; tokens: number }>
+          }>
+          list(opts: {
+            limit: number
+            offset: number
+            profileId?: string
+            okOnly?: boolean
+          }): Promise<{
+            items: any[]
+            total: number
+          }>
+        }
+      }
+    }
   }
 }
-export {};
+export {}
 ```
 
 - [ ] **Step 4: Smoke-check from devtools**
@@ -1197,9 +1354,11 @@ git commit -m "feat(phase-15): preload exposes window.api.ai (reviewClip + usage
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 11: i18n keys — `editor.ai.*`
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Add the keys**
@@ -1276,7 +1435,7 @@ git commit -m "feat(phase-15): i18n keys for editor.ai.*"
   - `ai-review-ui/spec.md` (AI 徽章 / drawer 内容 / 一键接受拒绝 / 重新审读) → Tasks 4, 5, 6, 8.
   - `editor-page/spec.md` (AI 徽章挂载点 / frontmatter 侧卡扩展 / 接受后自动保存) → Tasks 7, 8.
   - 编辑器订阅 jobs.changed → Task 9.
-  - preload 暴露 window.api.ai.* → Task 10.
+  - preload 暴露 window.api.ai.\* → Task 10.
   - i18n keys → Task 11.
   - `ai-reviewer-service/spec.md` reviewer handler & ai_usage on both paths → Tasks 1, 3.
 - ✅ No placeholders.

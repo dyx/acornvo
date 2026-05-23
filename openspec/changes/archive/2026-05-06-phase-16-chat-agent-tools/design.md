@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 4：`file.write(path, { body, frontmatter }, { expectedMtime })` 原子写
 - phase 5：`files.list` 与 `files.get` 接口 + tags 表
 - phase 8：FTS5 搜索 + quickSwitcher
@@ -12,6 +13,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 明确的 tool 契约：schema-driven，每个 tool 可独立测试
 - 安全门：副作用 tool 必须走用户确认
 - session 持久化：关应用后下次打开同一 session 能接着聊
@@ -19,6 +21,7 @@
 - 可扩展：新增一个 tool 等于加一个文件并 register
 
 **Non-Goals:**
+
 - 不做 RAG / 向量检索（phase 17 如需再加；本阶段 search-files 走 FTS5 就够）
 - 不做多 agent / agent 间通信
 - 不做 function calling 的并行多 tool（一次 step 最多一个工具；避免复杂）
@@ -33,22 +36,23 @@
 
 ```ts
 interface Tool<TArgs = any, TResult = any> {
-  name: string;                // snake_case
-  description: string;         // LLM 看得见
-  parameters: JSONSchema;      // OpenAI function calling 格式
-  sideEffect: boolean;         // true 则走 approval
-  execute(args: TArgs, ctx: ToolCtx): Promise<TResult>;
+  name: string // snake_case
+  description: string // LLM 看得见
+  parameters: JSONSchema // OpenAI function calling 格式
+  sideEffect: boolean // true 则走 approval
+  execute(args: TArgs, ctx: ToolCtx): Promise<TResult>
 }
 
 interface ToolCtx {
-  sessionId: string;
-  vaultRoot: string;
-  log: (level, msg) => void;
-  cancel: AbortSignal;
+  sessionId: string
+  vaultRoot: string
+  log: (level, msg) => void
+  cancel: AbortSignal
 }
 ```
 
 **内置 tools（本阶段）**：
+
 - `search_files({ query, limit? })`：调 phase 8 FTS5 → 返回 `{ items: [{ path, title, snippet }] }`；sideEffect=false
 - `read_file({ path })`：读 md 文件，返回 `{ frontmatter, body }`（path 经 safeResolve）；sideEffect=false
 - `list_tags({ prefix?, limit? })`：读 phase 5 tags 表；sideEffect=false
@@ -67,6 +71,7 @@ read_file 对于不存在的路径返回 `{ ok: false, error: 'E_NOT_FOUND' }`�
   - 若 Ollama 模型本身支持 function calling（如 llama3.1-instruct 的 tool use 格式），也兼容；优先检测结构化字段
 
 **统一表示**：llmClient 把 tool_calls 解析后返回
+
 ```ts
 {
   text?: string;               // assistant 文本内容
@@ -142,6 +147,7 @@ async function runAgent(sessionId, userText, streamWriter) {
 ### D4: approval 门
 
 `electron/agent/approval.ts`：
+
 - `register(sessionId, toolCall) → callId`（UUID）
 - 内部 Map `pending: callId → { resolve, reject, sessionId, toolCall, createdAt }`
 - 事件 `approval.requested` 广播到 renderer
@@ -202,6 +208,7 @@ CREATE INDEX idx_tool_calls_session ON tool_calls(session_id);
 ### D7: 系统提示词
 
 `electron/ai/prompts/chat-agent.ts`：
+
 ```
 你是 Acornvo 的内置助手"松语"。你能读写当前"树林"内的文档。你的原则：
 - 尽量用工具验证事实；不要凭空猜测文件内容。

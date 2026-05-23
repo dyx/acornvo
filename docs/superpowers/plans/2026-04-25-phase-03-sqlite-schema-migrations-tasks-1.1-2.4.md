@@ -32,26 +32,28 @@ Install `better-sqlite3` with a working native rebuild, scaffold the migrations 
 
 ## Files Touched (cumulative for this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json` | Modify (add deps, extend `postinstall`) | 1.1, 1.2 |
-| `electron.vite.config.ts` | Modify (add `external`) | 1.3 |
-| `vitest.config.ts` | Create | 1.5 |
-| `electron/services/db/` | Create dir | 1.5 |
-| `electron/services/db/migrations/` | Create dir | 1.5 |
-| `electron/services/db/migrations/.gitkeep` | Create | 1.5 |
-| `electron/services/db/errors.ts` | Create | 2.3 |
-| `electron/services/db/migrations.ts` | Create | 2.1, 2.2, 2.3, 2.4 |
-| `electron/services/db/migrations.test.ts` | Create | 2.1, 2.2, 2.3, 2.4 |
+| Path                                       | Action                                  | Owner task         |
+| ------------------------------------------ | --------------------------------------- | ------------------ |
+| `package.json`                             | Modify (add deps, extend `postinstall`) | 1.1, 1.2           |
+| `electron.vite.config.ts`                  | Modify (add `external`)                 | 1.3                |
+| `vitest.config.ts`                         | Create                                  | 1.5                |
+| `electron/services/db/`                    | Create dir                              | 1.5                |
+| `electron/services/db/migrations/`         | Create dir                              | 1.5                |
+| `electron/services/db/migrations/.gitkeep` | Create                                  | 1.5                |
+| `electron/services/db/errors.ts`           | Create                                  | 2.3                |
+| `electron/services/db/migrations.ts`       | Create                                  | 2.1, 2.2, 2.3, 2.4 |
+| `electron/services/db/migrations.test.ts`  | Create                                  | 2.1, 2.2, 2.3, 2.4 |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install better-sqlite3 + dev tooling
 
 **Files:**
+
 - Modify: `package.json` (`dependencies`, `devDependencies`)
 
 - [ ] **Step 1: Read current package.json**
@@ -89,9 +91,11 @@ git commit -m "feat(phase-03): install better-sqlite3 + vitest + electron-rebuil
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Chain electron-rebuild into postinstall
 
 **Files:**
+
 - Modify: `package.json` (`scripts.postinstall`)
 
 - [ ] **Step 1: Read current postinstall script**
@@ -141,9 +145,11 @@ git commit -m "feat(phase-03): chain electron-rebuild for better-sqlite3 in post
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Mark better-sqlite3 external in vite main bundle
 
 **Files:**
+
 - Modify: `electron.vite.config.ts` (add `build.rollupOptions.external`)
 
 - [ ] **Step 1: Read the current vite config**
@@ -196,12 +202,14 @@ git commit -m "feat(phase-03): mark better-sqlite3 as vite main external"
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Document the cross-platform rebuild prerequisite
 
 **Files:**
+
 - (No code changes; this task is verification only.)
 
-> **Note:** This project does not currently have CI workflows under `.github/workflows/`. The OpenSpec task 1.4 reads "CI（若有）..." — meaning *if CI exists*. Since it does not yet, this task reduces to a manual cross-platform check. We capture the prerequisite for the future CI change in a code comment now and run the manual checks during Plan 5 (Task 8.7).
+> **Note:** This project does not currently have CI workflows under `.github/workflows/`. The OpenSpec task 1.4 reads "CI（若有）..." — meaning _if CI exists_. Since it does not yet, this task reduces to a manual cross-platform check. We capture the prerequisite for the future CI change in a code comment now and run the manual checks during Plan 5 (Task 8.7).
 
 - [ ] **Step 1: Confirm there is no `.github/workflows/` directory**
 
@@ -222,9 +230,11 @@ Mark this task complete with the note: "No CI yet; cross-platform manual verific
 ---
 
 <!-- openspec-task: 1.5 -->
+
 ### Task 5: Scaffold db service directories + vitest config
 
 **Files:**
+
 - Create: `electron/services/db/` (directory)
 - Create: `electron/services/db/migrations/` (directory)
 - Create: `electron/services/db/migrations/.gitkeep`
@@ -285,9 +295,11 @@ git commit -m "feat(phase-03): scaffold db service dirs + vitest config"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 6: `readMigrations(dir)` — RED then GREEN
 
 **Files:**
+
 - Create: `electron/services/db/migrations.test.ts`
 - Create: `electron/services/db/migrations.ts`
 
@@ -410,9 +422,11 @@ git commit -m "feat(phase-03): readMigrations scans NNN_*.sql in version order"
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 7: `runMigrations(db, dir)` with single-transaction-per-migration
 
 **Files:**
+
 - Modify: `electron/services/db/migrations.ts`
 - Modify: `electron/services/db/migrations.test.ts`
 
@@ -442,7 +456,9 @@ describe('runMigrations', () => {
     runMigrations(db, dir)
     expect(db.pragma('user_version', { simple: true })).toBe(2)
     const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
     expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
   })
@@ -455,7 +471,9 @@ describe('runMigrations', () => {
     runMigrations(db, dir)
     expect(db.pragma('user_version', { simple: true })).toBe(2)
     const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
     expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
   })
@@ -520,9 +538,11 @@ git commit -m "feat(phase-03): runMigrations applies pending NNNs in single tran
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 8: `MigrationError` with version + cause; rollback on failure
 
 **Files:**
+
 - Create: `electron/services/db/errors.ts`
 - Modify: `electron/services/db/migrations.ts`
 - Modify: `electron/services/db/migrations.test.ts`
@@ -631,9 +651,11 @@ git commit -m "feat(phase-03): MigrationError carries version + cause; rollback 
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 9: `listApplied(db, dir)` — what's been run
 
 **Files:**
+
 - Modify: `electron/services/db/migrations.ts`
 - Modify: `electron/services/db/migrations.test.ts`
 

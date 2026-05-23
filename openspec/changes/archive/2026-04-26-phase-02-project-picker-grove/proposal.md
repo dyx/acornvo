@@ -21,10 +21,12 @@ Acornvo 采用多树林（multi-vault）模型：用户先选一片"树林"（�
 ## Capabilities
 
 ### New Capabilities
+
 - `grove-management`: 树林（vault）创建、打开、切换、最近列表、实例锁、同步目录告警
 - `app-bootstrap`: 应用启动时"自动打开最近 / 显示 Picker"的决策流水线
 
 ### Modified Capabilities
+
 - `app-shell`: 主窗口路由从单一 `/` 扩展为 `/picker` 首屏或 `/library` 首屏（视启动决策）；TitleBar 增加"切换树林"菜单
 
 ## Impact

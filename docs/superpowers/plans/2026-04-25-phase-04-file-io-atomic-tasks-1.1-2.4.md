@@ -34,23 +34,25 @@ Install the two new runtime deps (`iconv-lite`, `gray-matter`), scaffold the new
 
 ## Files Touched (cumulative for this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json` | Modify (add 2 deps + 1 devDep) | 1.1, 1.2 |
-| `electron/services/fs-atomic.ts` | Create stub | 1.3 |
-| `electron/services/frontmatter.ts` | Create stub | 1.3 |
-| `electron/services/path-safety.ts` | Create stub → implement | 1.3, 2.1, 2.2, 2.3 |
-| `electron/services/path-safety.test.ts` | Create | 2.1, 2.2, 2.3, 2.4 |
-| `shared/frontmatter-schema.ts` | Create stub | 1.4 |
+| Path                                    | Action                         | Owner task         |
+| --------------------------------------- | ------------------------------ | ------------------ |
+| `package.json`                          | Modify (add 2 deps + 1 devDep) | 1.1, 1.2           |
+| `electron/services/fs-atomic.ts`        | Create stub                    | 1.3                |
+| `electron/services/frontmatter.ts`      | Create stub                    | 1.3                |
+| `electron/services/path-safety.ts`      | Create stub → implement        | 1.3, 2.1, 2.2, 2.3 |
+| `electron/services/path-safety.test.ts` | Create                         | 2.1, 2.2, 2.3, 2.4 |
+| `shared/frontmatter-schema.ts`          | Create stub                    | 1.4                |
 
 ---
 
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Install runtime deps (iconv-lite, gray-matter)
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Confirm current state**
@@ -88,9 +90,11 @@ git commit -m "feat(phase-04): add iconv-lite + gray-matter runtime deps"
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Install @types/gray-matter
 
 **Files:**
+
 - Modify: `package.json`, `package-lock.json`
 
 - [ ] **Step 1: Install dev type package**
@@ -124,9 +128,11 @@ git commit -m "feat(phase-04): add @types/gray-matter for typed frontmatter API"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Scaffold electron/services/{fs-atomic,frontmatter,path-safety}.ts
 
 **Files:**
+
 - Create: `electron/services/fs-atomic.ts`
 - Create: `electron/services/frontmatter.ts`
 - Create: `electron/services/path-safety.ts`
@@ -243,9 +249,11 @@ git commit -m "feat(phase-04): scaffold fs-atomic / frontmatter / path-safety se
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Scaffold shared/frontmatter-schema.ts
 
 **Files:**
+
 - Create: `shared/frontmatter-schema.ts`
 
 Stub now; full schema lands in Plan 3 task 4.3 (per design D5). This file lives at `shared/` root (not `shared/schemas/`) per the OpenSpec tasks.md task 1.4.
@@ -293,9 +301,11 @@ git commit -m "feat(phase-04): scaffold FrontmatterSchema (passthrough stub)"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: Implement safeResolve — basic resolve + prefix check
 
 **Files:**
+
 - Modify: `electron/services/path-safety.ts`
 - Create: `electron/services/path-safety.test.ts`
 
@@ -403,11 +413,7 @@ export interface SafeResolveOptions {
   realpath?: boolean
 }
 
-export function safeResolve(
-  groveRoot: string,
-  p: string,
-  _opts: SafeResolveOptions = {}
-): string {
+export function safeResolve(groveRoot: string, p: string, _opts: SafeResolveOptions = {}): string {
   if (typeof groveRoot !== 'string' || groveRoot.length === 0) {
     throw new IpcError('E_INVALID_ARGS', 'safeResolve: groveRoot must be a non-empty string')
   }
@@ -442,9 +448,11 @@ git commit -m "feat(phase-04): safeResolve resolves+checks grove prefix"
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: Reject `..` segments lexically
 
 **Files:**
+
 - Modify: `electron/services/path-safety.ts`
 - Modify: `electron/services/path-safety.test.ts`
 
@@ -455,45 +463,45 @@ Spec scenario covered: "路径段含 `..`". Even when the resolved path lands in
 Append inside the existing `describe('safeResolve', ...)` block in `path-safety.test.ts`:
 
 ```ts
-  describe('rejects .. segments', () => {
-    it('rejects an input that contains a single .. segment', () => {
-      const root = mkdtempSync(join(tmpdir(), 'grove-'))
-      try {
-        expect(() => safeResolve(root, '../outside.md')).toThrow(/E_PERMISSION/)
-      } finally {
-        rmSync(root, { recursive: true, force: true })
-      }
-    })
-
-    it('rejects an input that contains a .. segment even if it resolves inside the grove', () => {
-      const root = mkdtempSync(join(tmpdir(), 'grove-'))
-      try {
-        // a/../b.md → resolves to <root>/b.md, but we still reject it
-        expect(() => safeResolve(root, 'a/../b.md')).toThrow(/E_PERMISSION/)
-      } finally {
-        rmSync(root, { recursive: true, force: true })
-      }
-    })
-
-    it('rejects backslash-separated .. on any platform (defense in depth)', () => {
-      const root = mkdtempSync(join(tmpdir(), 'grove-'))
-      try {
-        expect(() => safeResolve(root, 'a\\..\\b.md')).toThrow(/E_PERMISSION/)
-      } finally {
-        rmSync(root, { recursive: true, force: true })
-      }
-    })
-
-    it('does NOT confuse "..bar" or "bar.." with the .. segment', () => {
-      const root = mkdtempSync(join(tmpdir(), 'grove-'))
-      try {
-        expect(safeResolve(root, '..bar/x.md')).toBe(join(root, '..bar', 'x.md'))
-        expect(safeResolve(root, 'bar../x.md')).toBe(join(root, 'bar..', 'x.md'))
-      } finally {
-        rmSync(root, { recursive: true, force: true })
-      }
-    })
+describe('rejects .. segments', () => {
+  it('rejects an input that contains a single .. segment', () => {
+    const root = mkdtempSync(join(tmpdir(), 'grove-'))
+    try {
+      expect(() => safeResolve(root, '../outside.md')).toThrow(/E_PERMISSION/)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
+
+  it('rejects an input that contains a .. segment even if it resolves inside the grove', () => {
+    const root = mkdtempSync(join(tmpdir(), 'grove-'))
+    try {
+      // a/../b.md → resolves to <root>/b.md, but we still reject it
+      expect(() => safeResolve(root, 'a/../b.md')).toThrow(/E_PERMISSION/)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects backslash-separated .. on any platform (defense in depth)', () => {
+    const root = mkdtempSync(join(tmpdir(), 'grove-'))
+    try {
+      expect(() => safeResolve(root, 'a\\..\\b.md')).toThrow(/E_PERMISSION/)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('does NOT confuse "..bar" or "bar.." with the .. segment', () => {
+    const root = mkdtempSync(join(tmpdir(), 'grove-'))
+    try {
+      expect(safeResolve(root, '..bar/x.md')).toBe(join(root, '..bar', 'x.md'))
+      expect(safeResolve(root, 'bar../x.md')).toBe(join(root, 'bar..', 'x.md'))
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+})
 ```
 
 - [ ] **Step 2: Run — confirm new tests fail**
@@ -509,11 +517,11 @@ Expected: 3 of the 4 new tests fail (the "..bar" case may already pass). The poi
 Update `safeResolve` in `electron/services/path-safety.ts`. Add this block right after the `typeof p !== 'string'` guard:
 
 ```ts
-  // Reject any literal `..` path segment in the input. Use both / and \ as separators
-  // so we catch Windows-style inputs even on POSIX (defense in depth).
-  if (p.split(/[\\/]/).includes('..')) {
-    throw new IpcError('E_PERMISSION', `safeResolve: path contains .. segment (${p})`)
-  }
+// Reject any literal `..` path segment in the input. Use both / and \ as separators
+// so we catch Windows-style inputs even on POSIX (defense in depth).
+if (p.split(/[\\/]/).includes('..')) {
+  throw new IpcError('E_PERMISSION', `safeResolve: path contains .. segment (${p})`)
+}
 ```
 
 - [ ] **Step 4: Run — all path-safety tests pass**
@@ -534,9 +542,11 @@ git commit -m "feat(phase-04): safeResolve rejects literal .. segments lexically
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: Optional `{ realpath: true }` symlink check
 
 **Files:**
+
 - Modify: `electron/services/path-safety.ts`
 - Modify: `electron/services/path-safety.test.ts`
 
@@ -573,9 +583,9 @@ describe('safeResolve { realpath: true }', () => {
     try {
       writeFileSync(join(outside, 'secret.md'), 'leak')
       symlinkSync(outside, join(realRoot, 'evil'), 'dir')
-      expect(() =>
-        safeResolve(realRoot, 'evil/secret.md', { realpath: true })
-      ).toThrow(/E_PERMISSION/)
+      expect(() => safeResolve(realRoot, 'evil/secret.md', { realpath: true })).toThrow(
+        /E_PERMISSION/
+      )
     } finally {
       rmSync(realRoot, { recursive: true, force: true })
       rmSync(outside, { recursive: true, force: true })
@@ -617,11 +627,7 @@ export interface SafeResolveOptions {
   realpath?: boolean
 }
 
-export function safeResolve(
-  groveRoot: string,
-  p: string,
-  opts: SafeResolveOptions = {}
-): string {
+export function safeResolve(groveRoot: string, p: string, opts: SafeResolveOptions = {}): string {
   if (typeof groveRoot !== 'string' || groveRoot.length === 0) {
     throw new IpcError('E_INVALID_ARGS', 'safeResolve: groveRoot must be a non-empty string')
   }
@@ -689,9 +695,11 @@ git commit -m "feat(phase-04): safeResolve { realpath: true } resolves symlinks"
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: Cross-platform + edge-case unit tests
 
 **Files:**
+
 - Modify: `electron/services/path-safety.test.ts`
 
 Spec coverage check: ensure tests cover Windows `C:\` style and POSIX `/` (we run on macOS/Linux so we simulate Windows by passing already-resolved Windows-style paths and verifying the prefix check doesn't false-positive); and edge cases: empty string, single `.`, grove root with trailing `/`.

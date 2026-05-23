@@ -3,6 +3,7 @@
 本阶段基于 `foundation-ipc-base` 产出。后续所有模块都假定"当前已打开一棵树林"。树林是独立根目录（Obsidian vault 兼容），元数据写 `<grove>/.acornvo/project.json`，用户级最近列表写 `~/.acornvo/recent-projects.json`。
 
 PRD 关键约束：
+
 - S-8 极简引导：无独立 onboarding，直接进 Picker；首页 banner 提示未配置模型（banner 本身的实现留到 `secure-storage-settings`）
 - 多树林互相隔离：切换树林会清空全局 store 的业务 slice（但 theme/locale 等全局偏好保留）
 - 可从任意 Obsidian vault 打开：即使目录里没有 `.acornvo/` 也能打开，初始化动作对用户无感
@@ -11,12 +12,14 @@ PRD 关键约束：
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 提供可视 Picker（对齐 `docs/ui/src/project-picker.jsx` 的视觉）
 - 最近项自动打开、失效项可移除、实例锁、同步目录警告全部就位
 - 清晰的"当前树林" store：路径、元数据、lock 状态；切换时触发全局业务 slice 清空
 - 所有 I/O 封装在 main 侧 service，renderer 仅通过 IPC 调用
 
 **Non-Goals:**
+
 - 不做 Electron 拖拽树林文件夹进 app 打开（后续增强）
 - 不做树林置顶（pin）的持久化（Picker UI 有 pin 图标，但本阶段只读）
 - 不做树林颜色/图标的用户编辑（`project.json` 存默认色，编辑 UI 留到后续）
@@ -48,6 +51,7 @@ firstValid?
 ### D2: `.acornvo/` 初始化是幂等的
 
 `grove.initialize(path)`：
+
 - 若 `.acornvo/` 不存在 → 创建，写 `project.json`、`inbox/`、`assets/`、`.nosync`、`.icloud`
 - 若 `.acornvo/` 已存在但缺某文件 → 按需补齐（例如旧版本没有 `.nosync`）
 - `project.json` schema 校验（Zod）失败 → 备份为 `project.json.bak-<ts>` 后重写默认值
@@ -58,28 +62,29 @@ firstValid?
 
 ```jsonc
 {
-  "id": "<uuid v4>",                // 跨设备仍稳定
+  "id": "<uuid v4>", // 跨设备仍稳定
   "schema_version": 1,
-  "name": "我的树林",                // 显示名（默认取目录名）
-  "color": "acorn",                 // acorn | leaf | berry | sky
+  "name": "我的树林", // 显示名（默认取目录名）
+  "color": "acorn", // acorn | leaf | berry | sky
   "created_at": "<iso>",
   "last_opened_at": "<iso>"
 }
 ```
 
 `recent-projects.json` schema：
+
 ```jsonc
 {
   "schema_version": 1,
   "items": [
     {
-      "id": "<uuid>",                // 来自 project.json（用于跨路径识别）
+      "id": "<uuid>", // 来自 project.json（用于跨路径识别）
       "path": "<absolute>",
       "name": "<cached>",
       "color": "<cached>",
       "pinned": false,
       "last_opened_at": "<iso>",
-      "files_count": 0               // 由 indexer 阶段回写缓存；此阶段默认 0
+      "files_count": 0 // 由 indexer 阶段回写缓存；此阶段默认 0
     }
   ]
 }
@@ -90,6 +95,7 @@ firstValid?
 ### D4: 实例锁
 
 `grove.openGrove(path)` 流程：
+
 1. `safeResolve` 校验路径有效
 2. 读 `<path>/.acornvo/.lock`
 3. 若存在：
@@ -103,6 +109,7 @@ firstValid?
 ### D5: 同步目录检测
 
 `grove.detectSyncDir(absPath)`：
+
 - 正则匹配（大小写不敏感）：`/(iCloud(?:\s|~|Drive)|Dropbox|OneDrive|Google Drive|Nextcloud|pCloud)/`
 - 命中时返回 `syncProvider: string`
 - Picker 打开树林后立即在 renderer banner 区（phase 13 实装；本阶段先 console.warn + 日志 + `project.json.sync_warning` 持久化字段记录过）
@@ -112,6 +119,7 @@ firstValid?
 ### D6: 切换树林的 store 清空
 
 定义 `grove.onChange(handler)` 订阅器：
+
 - phase 1 的 `app-shell` 扩展 TitleBar 切树林菜单
 - 切换时 renderer 订阅者（以后由后续 change 接入）清空 library / editor / chat 等 slice
 - 本阶段只需实现订阅器本身 + `grove` 自己的 slice 切换

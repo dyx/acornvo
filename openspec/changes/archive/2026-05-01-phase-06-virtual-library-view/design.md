@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 5 的 indexer + SQLite `files` / `tags` / `file_tags` 有数据
 - phase 4 的 `file.read` 可获取全文（预览面板无需全文，但 "前 N 字"场景可借助）
 - phase 1 的 `/library` 路由占位 + Zustand 根 store
@@ -8,6 +9,7 @@
 UI 参考：`docs/ui/src/library.jsx` 的三栏布局（实现应对齐其视觉与交互，但代码结构重构为 React + TS + shadcn/ui 而非 prototype 的内联样式）。
 
 PRD 限制：
+
 - 虚拟化必须支撑上万条稳定滚动
 - 预览面板展示 AI 摘要卡片（frontmatter.summary + highlights）；`rating IS NULL` → "理果中"占位
 - 搜索入口 `Cmd/Ctrl+P`（QuickSwitcher）与 `Cmd/Ctrl+Shift+F`（全文）在 phase 8；本阶段果仓顶部搜索条只做"标题/路径 LIKE"
@@ -15,12 +17,14 @@ PRD 限制：
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 果仓可用作用户日常翻阅入口
 - 查询 IPC 稳定可供后续模块复用（phase 8 的 QuickSwitcher 查 files、phase 17 的 @ 文件选择器查 files）
 - 索引变更即时反馈 UI
 - 组件解耦：`CategorySidebar` / `VirtualFileList` / `FilePreviewPanel` 独立，后续松语 @ 选择器复用 VirtualFileList
 
 **Non-Goals:**
+
 - 不做 FTS5 全文（phase 8）
 - 不做"智能文件夹 / 保存的搜索"（backlog）
 - 不做"双击重命名"、"右键菜单完整实现"（右键菜单本阶段只做"打开 / 在 Finder 中显示"两项，删除到 phase 10）
@@ -33,19 +37,20 @@ PRD 限制：
 
 ```ts
 interface FileSummary {
-  path: string              // 相对树林根的 posix 路径
-  title: string | null      // frontmatter.title 或 basename 去 .md
+  path: string // 相对树林根的 posix 路径
+  title: string | null // frontmatter.title 或 basename 去 .md
   category: string | null
-  rating: number | null     // 1-5 或 null（理果未完成）
+  rating: number | null // 1-5 或 null（理果未完成）
   clipped_at: string | null // ISO
   site: string | null
-  has_summary: boolean      // frontmatter.summary 非空
-  tags: string[]            // 本行关联的 tags 数组
-  is_reviewing: boolean     // 通过查询 queue 表 kind='review' status='pending|running' 派生（预留，本阶段恒 false —— 交给 phase 14-15 实装后替换 JOIN）
+  has_summary: boolean // frontmatter.summary 非空
+  tags: string[] // 本行关联的 tags 数组
+  is_reviewing: boolean // 通过查询 queue 表 kind='review' status='pending|running' 派生（预留，本阶段恒 false —— 交给 phase 14-15 实装后替换 JOIN）
 }
 ```
 
 **理由**：
+
 - 列表行需要的字段都在 DTO 里，避免渲染时再 N+1 查询
 - `is_reviewing` 预留字段本阶段恒 false；phase 14 queue 实装后把 SQL 改为 LEFT JOIN queue
 - `tags` 在列表行不展示（视觉参照 UI 仅点阵评分 + 时间），但预览面板要；统一一个 DTO 降低查询条数
@@ -53,6 +58,7 @@ interface FileSummary {
 ### D2: 查询分层
 
 IPC：`files.list(filter, pagination)` → 单一 SQL：
+
 ```sql
 SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
        json_extract(f.frontmatter_json, '$.site') as site,
@@ -83,6 +89,7 @@ LIMIT :limit OFFSET :offset
 ### D3: 虚拟化
 
 `@tanstack/react-virtual` 的 `useVirtualizer`：
+
 - 固定行高估算（约 60px / 行，兼容三行文本）
 - overscan 10 行
 - 容器 `overflow-y: auto`，高度由父容器 flex 决定
@@ -93,6 +100,7 @@ LIMIT :limit OFFSET :offset
 ### D4: 状态管理
 
 `src/stores/library.ts`（Zustand）：
+
 ```
 filter: Filter
 orderBy: 'clipped_desc' | 'title_asc'
@@ -104,22 +112,26 @@ isLoading: boolean
 ```
 
 动作：
+
 - `setFilter(partial)`：merge 后 reset pagination 重新 `load`
 - `load()`：调 IPC，写 items + total
 - `loadMore()`：`offset += limit`；拼接
 - `setSelected(path)` → `files.get(path)` 拉完整 row（含 frontmatter_json）缓存到 `detailsByPath`（预览面板读）
 
 索引事件订阅：
+
 - `index:fileChanged/{Deleted,Renamed}` → 调 `load()` 重拉当前视图（简单粗暴；本阶段列表规模 ≤ 10K 文件，每次查询 < 50ms 可接受；后续可改增量合并）
 
 ### D5: 分类树
 
 `files.getCategoryTree()`：
+
 ```sql
 SELECT category, COUNT(*) as count FROM files WHERE category IS NOT NULL GROUP BY category
 ```
 
 渲染侧按 `/` 拆分聚合成树：
+
 ```
 技术 (3)
   深度学习 (3)
@@ -134,6 +146,7 @@ SELECT category, COUNT(*) as count FROM files WHERE category IS NOT NULL GROUP B
 ### D6: 标签云
 
 `files.getTagCloud({ limit: 30 })`：
+
 ```sql
 SELECT name, usage_count FROM tags WHERE usage_count > 0 ORDER BY usage_count DESC LIMIT :limit
 ```
@@ -143,6 +156,7 @@ SELECT name, usage_count FROM tags WHERE usage_count > 0 ORDER BY usage_count DE
 ### D7: 预览面板设计
 
 `FilePreviewPanel`：
+
 - header: `category · site · word_count 字`
 - title: h1
 - rating: 5 颗星（SVG）
@@ -155,6 +169,7 @@ word_count：从 `frontmatter_json` 里读 `body` 并 `body.length`（字符数�
 ### D8: 右键菜单（本阶段最小）
 
 `onContextMenu` → shadcn Popover / DropdownMenu 二选一：
+
 - 打开（Enter / 双击同义）
 - 在 Finder 中显示（调新 IPC `file.revealInFinder(rel)` → `shell.showItemInFolder(abs)`）
 
@@ -163,6 +178,7 @@ word_count：从 `frontmatter_json` 里读 `body` 并 `body.length`（字符数�
 ### D9: 与索引状态联动
 
 订阅 `index:stateChange`：
+
 - `scanning` / `idle`：列表置灰 + banner "索引进行中，数据可能不完整"；用户仍可浏览已有行
 - `watching` / `ready`：正常
 - `error`：banner 红色 + "查看日志"按钮（链接到 `~/.acornvo/logs/`，调 `shell.openPath`）

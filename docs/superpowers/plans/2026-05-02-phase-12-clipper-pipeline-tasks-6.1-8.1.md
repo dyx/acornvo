@@ -32,23 +32,23 @@ Land the **renderer** half of the clipper: a Zustand state machine, a `did-navig
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/ipc/clipper-port.ts` | Create | 6.1 |
-| `src/ipc/clips-port.ts` | Create | 6.2 |
-| `src/stores/clipper.ts` | Create | 6.1 |
-| `src/stores/clipper.test.ts` | Create | 6.1 |
-| `src/stores/browser.ts` | Modify (add isClipped, did-navigate hook) | 6.2 |
-| `src/stores/browser.test.ts` | Modify (test isClipped) | 6.2 |
-| `src/components/browser/ClipPreviewDialog.tsx` | Create | 6.3 |
-| `src/components/browser/ClipPreviewDialog.test.tsx` | Create | 6.3 |
-| `src/components/browser/AddressBar.tsx` | Modify (scissors button) | 6.4, 6.5 |
-| `src/components/browser/AddressBar.test.tsx` | Modify | 6.4, 6.5 |
-| `src/components/browser/ClipErrorToast.tsx` | Create | 6.6 |
-| `src/components/browser/ClipErrorToast.test.tsx` | Create | 6.6 |
-| `src/hooks/useBrowserHotkeys.ts` | Modify (Cmd+Shift+S) | 7.1, 7.2 |
-| `src/hooks/useBrowserHotkeys.test.ts` | Modify | 7.1, 7.2 |
-| `src/i18n/locales/zh-CN.json` | Modify (add keys) | 8.1 |
+| Path                                                | Action                                    | Owner task |
+| --------------------------------------------------- | ----------------------------------------- | ---------- |
+| `src/ipc/clipper-port.ts`                           | Create                                    | 6.1        |
+| `src/ipc/clips-port.ts`                             | Create                                    | 6.2        |
+| `src/stores/clipper.ts`                             | Create                                    | 6.1        |
+| `src/stores/clipper.test.ts`                        | Create                                    | 6.1        |
+| `src/stores/browser.ts`                             | Modify (add isClipped, did-navigate hook) | 6.2        |
+| `src/stores/browser.test.ts`                        | Modify (test isClipped)                   | 6.2        |
+| `src/components/browser/ClipPreviewDialog.tsx`      | Create                                    | 6.3        |
+| `src/components/browser/ClipPreviewDialog.test.tsx` | Create                                    | 6.3        |
+| `src/components/browser/AddressBar.tsx`             | Modify (scissors button)                  | 6.4, 6.5   |
+| `src/components/browser/AddressBar.test.tsx`        | Modify                                    | 6.4, 6.5   |
+| `src/components/browser/ClipErrorToast.tsx`         | Create                                    | 6.6        |
+| `src/components/browser/ClipErrorToast.test.tsx`    | Create                                    | 6.6        |
+| `src/hooks/useBrowserHotkeys.ts`                    | Modify (Cmd+Shift+S)                      | 7.1, 7.2   |
+| `src/hooks/useBrowserHotkeys.test.ts`               | Modify                                    | 7.1, 7.2   |
+| `src/i18n/locales/zh-CN.json`                       | Modify (add keys)                         | 8.1        |
 
 ## Pre-flight
 
@@ -86,11 +86,13 @@ Land the **renderer** half of the clipper: a Zustand state machine, a `did-navig
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: `clipper-port.ts` + `stores/clipper.ts` state machine
 
 We isolate IPC behind a port (`src/ipc/clipper-port.ts`) so tests can stub the entire surface. The store is a Zustand slice with explicit transitions.
 
 **Files:**
+
 - Create: `src/ipc/clipper-port.ts`
 - Create: `src/stores/clipper.ts`
 - Create: `src/stores/clipper.test.ts`
@@ -99,12 +101,7 @@ We isolate IPC behind a port (`src/ipc/clipper-port.ts`) so tests can stub the e
 
 ```ts
 // src/ipc/clipper-port.ts
-import type {
-  ClipInput,
-  ClipPreview,
-  ClipResult,
-  ClipRunId
-} from '@shared/clipper-types'
+import type { ClipInput, ClipPreview, ClipResult, ClipRunId } from '@shared/clipper-types'
 import type { IpcResult } from '@shared/ipc-contract'
 
 export interface ClipperPort {
@@ -170,7 +167,9 @@ describe('clipper store', () => {
       reextract: vi.fn()
     } as any)
     const stages: string[] = []
-    const unsub = useClipperStore.subscribe((s) => { stages.push(s.stage) })
+    const unsub = useClipperStore.subscribe((s) => {
+      stages.push(s.stage)
+    })
 
     await useClipperStore.getState().start('t1')
 
@@ -199,7 +198,13 @@ describe('clipper store', () => {
       clip: vi.fn(async () => ({ ok: true, data: fakePreview })),
       saveClip: vi.fn(async () => ({
         ok: true,
-        data: { id: 9, path: 'inbox/202605/x.md', url: 'https://x/', title: 'Hello', degraded: false }
+        data: {
+          id: 9,
+          path: 'inbox/202605/x.md',
+          url: 'https://x/',
+          title: 'Hello',
+          degraded: false
+        }
       })),
       cancelClip: vi.fn(),
       reextract: vi.fn()
@@ -269,12 +274,7 @@ Expected: FAIL — module not found.
 // src/stores/clipper.ts
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type {
-  ClipErrorEnvelope,
-  ClipInput,
-  ClipPreview,
-  ClipStage
-} from '@shared/clipper-types'
+import type { ClipErrorEnvelope, ClipInput, ClipPreview, ClipStage } from '@shared/clipper-types'
 import { getClipperPort } from '@/ipc/clipper-port'
 
 interface ClipperState {
@@ -392,11 +392,13 @@ git commit -m "feat(phase-12): clipper port + Zustand state machine (idle..done/
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: `browser.ts` extension — `tab.isClipped` synced from `did-navigate`
 
 Add a port for `clips`, then extend the browser store: each tab gets `isClipped: boolean`, refreshed on did-navigate via `clips.getByUrl(url)`.
 
 **Files:**
+
 - Create: `src/ipc/clips-port.ts`
 - Modify: `src/stores/browser.ts`
 - Modify: `src/stores/browser.test.ts`
@@ -417,7 +419,9 @@ export interface ClipsPort {
 }
 
 let portRef: ClipsPort | null = null
-export function setClipsPort(p: ClipsPort): void { portRef = p }
+export function setClipsPort(p: ClipsPort): void {
+  portRef = p
+}
 export function getClipsPort(): ClipsPort {
   if (portRef) return portRef
   if (typeof window !== 'undefined' && window.api?.clips) return window.api.clips as ClipsPort
@@ -432,6 +436,7 @@ In `src/stores/browser.ts`:
 1. Add `isClipped: boolean` to the `Tab` interface (in `shared/browser-types.ts` if that's where Tab lives, defaulted to `false`):
 
    If `Tab` lives in `shared/`, edit it there:
+
    ```ts
    export interface Tab {
      // ... existing fields
@@ -491,7 +496,21 @@ describe('browser store — isClipped sync on did-navigate', () => {
     })
     // Setup: a tab exists; simulate did-navigate by dispatching the patch.
     useBrowserStore.setState({
-      tabs: [{ id: 't1', url: 'https://old/', title: 't', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://old/', isClipped: false } as any],
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://old/',
+          title: 't',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://old/',
+          isClipped: false
+        } as any
+      ],
       activeTabId: 't1'
     })
     // Simulate the renderer-side patch handler invocation:
@@ -510,7 +529,21 @@ describe('browser store — isClipped sync on did-navigate', () => {
       delete: vi.fn()
     })
     useBrowserStore.setState({
-      tabs: [{ id: 't2', url: 'https://x/', title: 't', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: true } as any],
+      tabs: [
+        {
+          id: 't2',
+          url: 'https://x/',
+          title: 't',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: true
+        } as any
+      ],
       activeTabId: 't2'
     })
     const handler = (window as any).__browserOnPatch as (p: any) => void
@@ -522,12 +555,14 @@ describe('browser store — isClipped sync on did-navigate', () => {
 ```
 
 > The `__browserOnPatch` hook expects browser.ts to expose its patch handler on `window` for testing. If it does not yet, refactor to do so:
+>
 > ```ts
 > // browser.ts (near where patch is applied)
 > if (typeof window !== 'undefined') {
 >   ;(window as any).__browserOnPatch = applyPatch
 > }
 > ```
+>
 > Where `applyPatch` is the function that handles `browser:tabStateChanged` payloads.
 
 - [ ] **Step 4: Run tests**
@@ -556,11 +591,13 @@ git commit -m "feat(phase-12): browser store — isClipped synced from did-navig
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 3: `ClipPreviewDialog.tsx`
 
 A Radix Dialog. Form fields for title (editable), tags (comma-separated input), excerpt (editable), body preview (first 2000 chars rendered as plain `<pre>`-fallback or Vditor preview when available), target path (read-only), and three buttons: 保存 / 取消 / 重新抽取.
 
 **Files:**
+
 - Create: `src/components/browser/ClipPreviewDialog.tsx`
 - Create: `src/components/browser/ClipPreviewDialog.test.tsx`
 
@@ -596,7 +633,16 @@ describe('ClipPreviewDialog', () => {
     useBrowserStore.setState({ activeTabId: 't1', tabs: [] as any })
     setClipperPort({
       clip: vi.fn(),
-      saveClip: vi.fn(async () => ({ ok: true, data: { id: 1, path: previewFixture.suggestedPath, url: previewFixture.url, title: previewFixture.title, degraded: false } })),
+      saveClip: vi.fn(async () => ({
+        ok: true,
+        data: {
+          id: 1,
+          path: previewFixture.suggestedPath,
+          url: previewFixture.url,
+          title: previewFixture.title,
+          degraded: false
+        }
+      })),
       cancelClip: vi.fn(async () => ({ ok: true, data: undefined })),
       reextract: vi.fn()
     } as any)
@@ -721,16 +767,17 @@ export function ClipPreviewDialog(): JSX.Element | null {
   if (!open || !preview) return null
 
   function parseTags(raw: string): string[] {
-    return raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
+    return raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
   }
 
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Dialog.Content
-          className="fixed left-1/2 top-1/2 w-[80vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-[color:var(--color-bg)] p-4 shadow-xl"
-        >
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-[80vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-[color:var(--color-bg)] p-4 shadow-xl">
           <Dialog.Title className="text-base font-semibold">
             {t('browser.clip.preview.title', '剪藏预览')}
           </Dialog.Title>
@@ -748,7 +795,9 @@ export function ClipPreviewDialog(): JSX.Element | null {
               </label>
 
               <div className="text-xs text-[color:var(--color-ink-3)]">
-                <div className="truncate" title={preview.url}>{preview.url}</div>
+                <div className="truncate" title={preview.url}>
+                  {preview.url}
+                </div>
                 <div>{preview.site}</div>
                 {preview.author && <div>{preview.author}</div>}
                 {preview.publishedTime && <div>{preview.publishedTime}</div>}
@@ -845,7 +894,7 @@ In `src/pages/Browse.tsx`, add the import and render the dialog at the end of th
 import { ClipPreviewDialog } from '@/components/browser/ClipPreviewDialog'
 
 // inside Browse():
-<>
+;<>
   {/* existing tree */}
   <ClipPreviewDialog />
 </>
@@ -861,9 +910,11 @@ git commit -m "feat(phase-12): ClipPreviewDialog — title/tags/excerpt + body p
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 4: AddressBar scissors button — 4 visual states + click semantics
 
 **Files:**
+
 - Modify: `src/components/browser/AddressBar.tsx`
 - Modify: `src/components/browser/AddressBar.test.tsx`
 
@@ -880,7 +931,21 @@ describe('AddressBar — scissors clip button', () => {
   it('disabled for about:blank', () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        } as any
+      ]
     })
     render(<AddressBar />)
     expect(screen.getByRole('button', { name: /clip|剪藏/i })).toBeDisabled()
@@ -889,7 +954,21 @@ describe('AddressBar — scissors clip button', () => {
   it('hollow icon when http(s) and not clipped', () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ]
     })
     render(<AddressBar />)
     const btn = screen.getByRole('button', { name: /clip|剪藏/i })
@@ -900,7 +979,21 @@ describe('AddressBar — scissors clip button', () => {
   it('filled+check icon when isClipped=true', () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: true } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: true
+        } as any
+      ]
     })
     render(<AddressBar />)
     const btn = screen.getByRole('button', { name: /clip|剪藏/i })
@@ -910,7 +1003,21 @@ describe('AddressBar — scissors clip button', () => {
   it('spinner when stage=extracting or saving', () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ]
     })
     useClipperStore.setState({ stage: 'extracting' })
     render(<AddressBar />)
@@ -921,7 +1028,21 @@ describe('AddressBar — scissors clip button', () => {
   it('hollow click triggers clipper.start(activeTabId)', async () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ]
     })
     const start = vi.spyOn(useClipperStore.getState(), 'start').mockResolvedValue()
     render(<AddressBar />)
@@ -932,7 +1053,21 @@ describe('AddressBar — scissors clip button', () => {
   it('tooltip mentions Cmd+Shift+S', () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ]
     })
     render(<AddressBar />)
     const btn = screen.getByRole('button', { name: /clip|剪藏/i })
@@ -1024,9 +1159,11 @@ git commit -m "feat(phase-12): AddressBar — scissors button states (disabled/h
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 5: "Already clipped, open it?" confirm + navigate to `/editor/:path`
 
 **Files:**
+
 - Modify: `src/components/browser/AddressBar.tsx`
 - Modify: `src/components/browser/AddressBar.test.tsx`
 
@@ -1040,7 +1177,10 @@ import { MemoryRouter } from 'react-router-dom'
 describe('AddressBar — already-clipped open flow', () => {
   it('clicking the clipped button opens a confirm; confirm navigates to /editor/:path', async () => {
     setClipsPort({
-      getByUrl: vi.fn(async () => ({ ok: true, data: { id: 9, path: 'inbox/202605/x.md' } as any })),
+      getByUrl: vi.fn(async () => ({
+        ok: true,
+        data: { id: 9, path: 'inbox/202605/x.md' } as any
+      })),
       list: vi.fn(),
       create: vi.fn(),
       getById: vi.fn(async () => ({ ok: true, data: { id: 9, path: 'inbox/202605/x.md' } as any })),
@@ -1048,7 +1188,21 @@ describe('AddressBar — already-clipped open flow', () => {
     })
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: true } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: true
+        } as any
+      ]
     })
     const navigateSpy = vi.fn()
     vi.doMock('react-router-dom', async () => {
@@ -1105,7 +1259,9 @@ Append the confirm dialog inside the AddressBar return:
       <Dialog.Title className="text-sm font-semibold">
         {t('browser.clip.exists.title', '已剪藏')}
       </Dialog.Title>
-      <div className="mt-2 text-sm">{t('browser.clip.exists.body', '该页面已剪藏过，是否打开？')}</div>
+      <div className="mt-2 text-sm">
+        {t('browser.clip.exists.body', '该页面已剪藏过，是否打开？')}
+      </div>
       <div className="mt-4 flex justify-end gap-2">
         <button
           type="button"
@@ -1149,9 +1305,11 @@ git commit -m "feat(phase-12): AddressBar — already-clipped confirm → naviga
 ---
 
 <!-- openspec-task: 6.6 -->
+
 ### Task 6: `ClipErrorToast` — error states with inline actions
 
 **Files:**
+
 - Create: `src/components/browser/ClipErrorToast.tsx`
 - Create: `src/components/browser/ClipErrorToast.test.tsx`
 
@@ -1321,7 +1479,7 @@ Expected: 5 passed.
 ```tsx
 import { ClipErrorToast } from '@/components/browser/ClipErrorToast'
 // in the JSX:
-<ClipErrorToast />
+;<ClipErrorToast />
 ```
 
 - [ ] **Step 6: Commit**
@@ -1334,9 +1492,11 @@ git commit -m "feat(phase-12): ClipErrorToast — per-error UI with inline actio
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 7: `Cmd/Ctrl+Shift+S` triggers clip from `/browser`
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -1356,7 +1516,21 @@ describe('useBrowserHotkeys — Cmd+Shift+S clip', () => {
 
   it('Cmd+Shift+S calls clipper.start with the active tabId for an http URL', () => {
     reset(
-      [{ id: 'a', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any],
+      [
+        {
+          id: 'a',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ],
       'a'
     )
     const startSpy = vi.spyOn(useClipperStore.getState(), 'start').mockResolvedValue()
@@ -1367,7 +1541,21 @@ describe('useBrowserHotkeys — Cmd+Shift+S clip', () => {
 
   it('Ctrl+Shift+S also triggers (Linux/Win)', () => {
     reset(
-      [{ id: 'a', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: false } as any],
+      [
+        {
+          id: 'a',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: false
+        } as any
+      ],
       'a'
     )
     const startSpy = vi.spyOn(useClipperStore.getState(), 'start').mockResolvedValue()
@@ -1399,18 +1587,18 @@ const startClip = useClipperStore.getState().start
 Inside `onKeyDown` (after existing handlers):
 
 ```ts
-      if (key === 's' && ev.shiftKey) {
-        ev.preventDefault()
-        if (!activeTabId) return
-        const t = tabs.find((x) => x.id === activeTabId)
-        const url = t?.url ?? ''
-        if (!/^https?:\/\//i.test(url)) {
-          // Task 7.2 surfaces the toast; here we just no-op.
-          return
-        }
-        void useClipperStore.getState().start(activeTabId)
-        return
-      }
+if (key === 's' && ev.shiftKey) {
+  ev.preventDefault()
+  if (!activeTabId) return
+  const t = tabs.find((x) => x.id === activeTabId)
+  const url = t?.url ?? ''
+  if (!/^https?:\/\//i.test(url)) {
+    // Task 7.2 surfaces the toast; here we just no-op.
+    return
+  }
+  void useClipperStore.getState().start(activeTabId)
+  return
+}
 ```
 
 (Note: the spec uses `S`, but `key` is already `.toLowerCase()`-d earlier in the hook — adapt the comparison to match the existing convention.)
@@ -1433,9 +1621,11 @@ git commit -m "feat(phase-12): browser hotkey — Cmd/Ctrl+Shift+S triggers clip
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 8: Unsupported URL → no-op + toast
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -1447,7 +1637,21 @@ Append:
 describe('useBrowserHotkeys — Cmd+Shift+S on unsupported URL', () => {
   it('about:blank → no clipper.start call; sets clipper error to E_UNSUPPORTED_SCHEME', () => {
     reset(
-      [{ id: 'a', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false } as any],
+      [
+        {
+          id: 'a',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        } as any
+      ],
       'a'
     )
     const startSpy = vi.spyOn(useClipperStore.getState(), 'start').mockResolvedValue()
@@ -1460,7 +1664,21 @@ describe('useBrowserHotkeys — Cmd+Shift+S on unsupported URL', () => {
 
   it('acorn://new-tab → no clipper.start; error toast set', () => {
     reset(
-      [{ id: 'a', url: 'acorn://new-tab', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: '', isClipped: false } as any],
+      [
+        {
+          id: 'a',
+          url: 'acorn://new-tab',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        } as any
+      ],
       'a'
     )
     const startSpy = vi.spyOn(useClipperStore.getState(), 'start').mockResolvedValue()
@@ -1485,13 +1703,13 @@ Expected: FAIL.
 In `useBrowserHotkeys.ts`, replace the `// Task 7.2` no-op with:
 
 ```ts
-        if (!/^https?:\/\//i.test(url)) {
-          useClipperStore.setState({
-            stage: 'error',
-            error: { code: 'E_UNSUPPORTED_SCHEME', message: 'unsupported scheme', stage: 'precheck' }
-          })
-          return
-        }
+if (!/^https?:\/\//i.test(url)) {
+  useClipperStore.setState({
+    stage: 'error',
+    error: { code: 'E_UNSUPPORTED_SCHEME', message: 'unsupported scheme', stage: 'precheck' }
+  })
+  return
+}
 ```
 
 (The existing `ClipErrorToast` from task 6.6 already renders the `E_UNSUPPORTED_SCHEME` case as "当前页面不支持剪藏".)
@@ -1518,9 +1736,11 @@ git commit -m "feat(phase-12): browser hotkey — Cmd/Ctrl+Shift+S on non-http s
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 9: zh-CN i18n keys for clipper
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Add the keys under `browser`**
@@ -1589,6 +1809,7 @@ npm run dev
 ```
 
 Open `/browser`, navigate to an article, click the scissors. Verify:
+
 - Tooltip reads "剪藏此页（Cmd+Shift+S）"
 - Modal heading reads "剪藏预览"
 - Buttons read "保存", "取消", "重新抽取"

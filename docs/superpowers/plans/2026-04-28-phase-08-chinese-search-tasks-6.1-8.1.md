@@ -17,7 +17,7 @@ Ship the **`/search` route page** (`Cmd+Shift+F` opens it; URL `?q=...` is the s
 ## Architecture
 
 - **`/search?q=...` is a route page, not a modal.** Per design D7 + spec, the URL `q` parameter is the source of truth; navigating in/out preserves the query. `useSearchParams` from react-router-dom@7 keeps state in URL. Browser back/forward + opening a new window with the URL "just works".
-- **Cmd+Shift+F is a router-aware hotkey.** When the user is *already on `/search`*, the hotkey selects all text in the input (UX: re-issue refined search). Otherwise it `navigate('/search')`. We extend the `useGlobalHotkeys` hook from Plan 3 task 4 to handle this.
+- **Cmd+Shift+F is a router-aware hotkey.** When the user is _already on `/search`_, the hotkey selects all text in the input (UX: re-issue refined search). Otherwise it `navigate('/search')`. We extend the `useGlobalHotkeys` hook from Plan 3 task 4 to handle this.
 - **Snippet HTML is feed via `dangerouslySetInnerHTML`.** Service-side guarantee (Plan 2 task 3.1's `escapeForFts`): `body` content is HTML-entity-escaped at insert time. SQLite's `snippet()` then wraps matched substrings with `<mark>` and `</mark>` (literal — these are the only `<` / `>` characters that survive). Renderer therefore trusts the snippet. We add a defensive smoke test that asserts no `<script>` ever leaks through.
 - **IndexBanner** is a thin component subscribed to a renderer-side store. The main process emits `index:rebuildProgress { done, total }` and `index:rebuildDone { total }` events (Plan 1 task 4 created `rebuildEvents` on the main side; this plan wires them through preload to the renderer via existing `IpcEventContract`). The banner shows "索引构建中 3200 / 8000" and disappears on `done`.
 - **Recent searches are renderer-memory only.** `recentSearches: string[]` in the same `useSearchStore` (Plan 3) — limit 5. Pushed every successful `runFullText` call (where `q` is non-empty and at least one result returned).
@@ -35,28 +35,29 @@ Ship the **`/search` route page** (`Cmd+Shift+F` opens it; URL `?q=...` is the s
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Search.tsx` | Create | 6.1, 6.2, 6.3, 6.6, 6.7 |
-| `src/pages/Search.test.tsx` | Create | 6.1, 6.2, 6.6 |
-| `src/components/search/FullTextResultList.tsx` | Create | 6.3, 6.4 |
-| `src/components/search/FullTextResultList.test.tsx` | Create | 6.3, 6.4 |
-| `src/stores/search.ts` | Modify (add fullText slice + recentSearches) | 6.8, 6.9 |
-| `src/stores/search.test.ts` | Modify | 6.8, 6.9 |
-| `src/hooks/useGlobalHotkeys.ts` | Modify (add Cmd+Shift+F branch) | 6.5 |
-| `src/hooks/useGlobalHotkeys.test.tsx` | Modify | 6.5 |
-| `src/App.tsx` | Modify (add `<Route path="/search" element={<Search/>} />`) | 6.1 |
-| `src/components/IndexBanner.tsx` | Create | 7.1 |
-| `src/components/IndexBanner.test.tsx` | Create | 7.1, 7.2 |
-| `src/stores/indexBanner.ts` | Create | 7.1, 7.2 |
-| `electron/services/search/rebuild.ts` | Modify (broadcast events to renderer) | 7.1 |
-| `shared/ipc-contract.ts` | Modify (add `index:rebuildProgress`, `index:rebuildDone` to `IpcEventContract`) | 7.1 |
-| `electron/preload/index.ts` (or equivalent) | Verify event channel passthrough | 7.1 |
-| `src/i18n/<locale>.ts` (existing locale file) | Modify (add keys) | 8.1 |
+| Path                                                | Action                                                                          | Owner task              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------- |
+| `src/pages/Search.tsx`                              | Create                                                                          | 6.1, 6.2, 6.3, 6.6, 6.7 |
+| `src/pages/Search.test.tsx`                         | Create                                                                          | 6.1, 6.2, 6.6           |
+| `src/components/search/FullTextResultList.tsx`      | Create                                                                          | 6.3, 6.4                |
+| `src/components/search/FullTextResultList.test.tsx` | Create                                                                          | 6.3, 6.4                |
+| `src/stores/search.ts`                              | Modify (add fullText slice + recentSearches)                                    | 6.8, 6.9                |
+| `src/stores/search.test.ts`                         | Modify                                                                          | 6.8, 6.9                |
+| `src/hooks/useGlobalHotkeys.ts`                     | Modify (add Cmd+Shift+F branch)                                                 | 6.5                     |
+| `src/hooks/useGlobalHotkeys.test.tsx`               | Modify                                                                          | 6.5                     |
+| `src/App.tsx`                                       | Modify (add `<Route path="/search" element={<Search/>} />`)                     | 6.1                     |
+| `src/components/IndexBanner.tsx`                    | Create                                                                          | 7.1                     |
+| `src/components/IndexBanner.test.tsx`               | Create                                                                          | 7.1, 7.2                |
+| `src/stores/indexBanner.ts`                         | Create                                                                          | 7.1, 7.2                |
+| `electron/services/search/rebuild.ts`               | Modify (broadcast events to renderer)                                           | 7.1                     |
+| `shared/ipc-contract.ts`                            | Modify (add `index:rebuildProgress`, `index:rebuildDone` to `IpcEventContract`) | 7.1                     |
+| `electron/preload/index.ts` (or equivalent)         | Verify event channel passthrough                                                | 7.1                     |
+| `src/i18n/<locale>.ts` (existing locale file)       | Modify (add keys)                                                               | 8.1                     |
 
 ## Pre-flight
 
 This plan assumes Plans 1+2+3 have merged. Required artefacts:
+
 - `ipc.search.fullText(q, opts)` returns `Promise<{ items, total, pending }>`.
 - `useSearchStore` from Plan 3 with `quickSwitcher` slice; we add a sibling `fullText` slice.
 - `useGlobalHotkeys` from Plan 3; we extend it.
@@ -74,9 +75,11 @@ If preload manually whitelists channels (rather than dynamically forwarding all)
 ## Tasks
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 1: `/search` route + page skeleton
 
 **Files:**
+
 - Create: `src/pages/Search.tsx`
 - Create: `src/pages/Search.test.tsx`
 - Modify: `src/App.tsx`
@@ -102,16 +105,26 @@ vi.mock('@/ipc/client', () => ({
 }))
 
 describe('Search page (skeleton)', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('renders an input and the phrase hint', () => {
-    render(<MemoryRouter initialEntries={['/search']}><Search /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search']}>
+        <Search />
+      </MemoryRouter>
+    )
     expect(screen.getByRole('searchbox')).toBeTruthy()
     expect(screen.getByText(/精确短语/)).toBeTruthy()
   })
 
   it('shows "输入关键词开始搜索" when q is empty', () => {
-    render(<MemoryRouter initialEntries={['/search']}><Search /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search']}>
+        <Search />
+      </MemoryRouter>
+    )
     expect(screen.getByText(/输入关键词开始搜索/)).toBeTruthy()
   })
 })
@@ -167,11 +180,13 @@ export default function Search(): JSX.Element {
 - [ ] **Step 4: Wire the route in `src/App.tsx`**
 
 Add the import:
+
 ```tsx
 import Search from './pages/Search'
 ```
 
 Add the route inside `<Routes>`:
+
 ```tsx
 <Route path="/search" element={<Search />} />
 ```
@@ -194,9 +209,11 @@ git commit -m "feat(phase-08): /search route skeleton with phrase hint"
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 2: URL `q` two-way sync (`useSearchParams`)
 
 **Files:**
+
 - Modify: `src/pages/Search.tsx`
 - Modify: `src/pages/Search.test.tsx`
 
@@ -208,10 +225,16 @@ Append to `src/pages/Search.test.tsx`:
 import { fireEvent, act } from '@testing-library/react'
 
 describe('Search page q sync', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('renders input pre-filled from URL q', () => {
-    render(<MemoryRouter initialEntries={['/search?q=注意力']}><Search /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search?q=注意力']}>
+        <Search />
+      </MemoryRouter>
+    )
     const input = screen.getByRole('searchbox') as HTMLInputElement
     expect(input.value).toBe('注意力')
   })
@@ -226,13 +249,19 @@ describe('Search page q sync', () => {
         </>
       )
     }
-    render(<MemoryRouter initialEntries={['/search']}><TestApp /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search']}>
+        <TestApp />
+      </MemoryRouter>
+    )
     const input = screen.getByRole('searchbox') as HTMLInputElement
     act(() => {
       fireEvent.change(input, { target: { value: '注意力' } })
     })
     // Wait the 200ms debounce
-    await act(async () => { await new Promise((r) => setTimeout(r, 250)) })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 250))
+    })
     expect(screen.getByTestId('url-q').textContent).toBe('注意力')
   })
 })
@@ -332,9 +361,11 @@ git commit -m "feat(phase-08): URL q ↔ Search input two-way sync (200ms deboun
 ---
 
 <!-- openspec-task: 6.9 -->
+
 ### Task 3: `useSearchStore.fullText` slice (request, results, recentSearches, cancellation)
 
 **Files:**
+
 - Modify: `src/stores/search.ts`
 - Modify: `src/stores/search.test.ts`
 
@@ -364,16 +395,26 @@ describe('fullText slice', () => {
   it('runFullText drops stale resolution', async () => {
     let firstResolve: ((v: never) => void) | null = null
     vi.mocked(ipc.search.fullText)
-      .mockImplementationOnce(() => new Promise((res) => { firstResolve = res as never }))
+      .mockImplementationOnce(
+        () =>
+          new Promise((res) => {
+            firstResolve = res as never
+          })
+      )
       .mockResolvedValueOnce({
         items: [{ summary: stub('newer.md'), snippet: '' }],
-        total: 1, pending: false
+        total: 1,
+        pending: false
       })
 
     const slow = useSearchStore.getState().fullText.runFullText('a')
     const fast = useSearchStore.getState().fullText.runFullText('attention')
     await fast
-    firstResolve?.({ items: [{ summary: stub('older.md'), snippet: '' }], total: 1, pending: false } as never)
+    firstResolve?.({
+      items: [{ summary: stub('older.md'), snippet: '' }],
+      total: 1,
+      pending: false
+    } as never)
     await slow
 
     expect(useSearchStore.getState().fullText.items[0].summary.path).toBe('newer.md')
@@ -381,14 +422,16 @@ describe('fullText slice', () => {
 
   it('successful run with results pushes recentSearches (max 5, dedup)', async () => {
     vi.mocked(ipc.search.fullText).mockResolvedValue({
-      items: [{ summary: stub('a.md'), snippet: '' }], total: 1, pending: false
+      items: [{ summary: stub('a.md'), snippet: '' }],
+      total: 1,
+      pending: false
     })
     for (const q of ['a', 'b', 'c', 'd', 'e', 'f', 'a']) {
       await useSearchStore.getState().fullText.runFullText(q)
     }
     const recent = useSearchStore.getState().fullText.recentSearches
     expect(recent.length).toBe(5)
-    expect(recent[0]).toBe('a')   // most recent first
+    expect(recent[0]).toBe('a') // most recent first
     expect(recent.filter((r) => r === 'a').length).toBe(1)
   })
 
@@ -492,10 +535,14 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       }
     },
 
-    pushRecentSearch: (q: string) => set((prev) => {
-      const next = [q, ...prev.fullText.recentSearches.filter((r) => r !== q)].slice(0, RECENT_SEARCHES_MAX)
-      return { fullText: { ...prev.fullText, recentSearches: next } }
-    })
+    pushRecentSearch: (q: string) =>
+      set((prev) => {
+        const next = [q, ...prev.fullText.recentSearches.filter((r) => r !== q)].slice(
+          0,
+          RECENT_SEARCHES_MAX
+        )
+        return { fullText: { ...prev.fullText, recentSearches: next } }
+      })
   }
 }))
 ```
@@ -520,9 +567,11 @@ git commit -m "feat(phase-08): fullText store slice (cancellation + recentSearch
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 4: `FullTextResultList` component — virtualized-friendly result rows
 
 **Files:**
+
 - Create: `src/components/search/FullTextResultList.tsx`
 - Create: `src/components/search/FullTextResultList.test.tsx`
 - Modify: `src/pages/Search.tsx` (consume the list)
@@ -539,8 +588,15 @@ import { FullTextResultList } from './FullTextResultList'
 
 const stub = (path: string, snippet: string) => ({
   summary: {
-    path, title: path, category: null, rating: null, clipped_at: null,
-    site: null, has_summary: false, tags: [], is_reviewing: false
+    path,
+    title: path,
+    category: null,
+    rating: null,
+    clipped_at: null,
+    site: null,
+    has_summary: false,
+    tags: [],
+    is_reviewing: false
   },
   snippet
 })
@@ -553,17 +609,15 @@ describe('FullTextResultList', () => {
       </MemoryRouter>
     )
     expect(screen.getByText('notes/a.md')).toBeTruthy()
-    expect(screen.getByText('notes/a.md').parentElement?.querySelector('mark')?.textContent).toBe('bar')
+    expect(screen.getByText('notes/a.md').parentElement?.querySelector('mark')?.textContent).toBe(
+      'bar'
+    )
   })
 
   it('shows total + pagination footer when total provided', () => {
     render(
       <MemoryRouter>
-        <FullTextResultList
-          items={[stub('a.md', 'snippet')]}
-          q="bar"
-          total={120}
-        />
+        <FullTextResultList items={[stub('a.md', 'snippet')]} q="bar" total={120} />
       </MemoryRouter>
     )
     expect(screen.getByText(/120 条结果/)).toBeTruthy()
@@ -622,15 +676,19 @@ export function FullTextResultList({
                 navigate('/library?focus=' + encodeURIComponent(it.summary.path))
               } else {
                 navigate(
-                  '/editor/' + encodeURIComponent(it.summary.path) +
-                  '#match=' + encodeURIComponent(q)
+                  '/editor/' +
+                    encodeURIComponent(it.summary.path) +
+                    '#match=' +
+                    encodeURIComponent(q)
                 )
               }
             }}
           >
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium truncate">{it.summary.title ?? it.summary.path}</span>
-              <span className="text-xs text-muted-foreground shrink-0">{it.summary.clipped_at ?? ''}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {it.summary.clipped_at ?? ''}
+              </span>
             </div>
             <div className="text-xs text-muted-foreground truncate">{it.summary.path}</div>
             <div
@@ -657,6 +715,7 @@ Expected: PASS.
 - [ ] **Step 5: Wire it into the Search page**
 
 Edit `src/pages/Search.tsx`. Add imports:
+
 ```tsx
 import { useEffect } from 'react'
 import { FullTextResultList } from '@/components/search/FullTextResultList'
@@ -764,9 +823,11 @@ git commit -m "feat(phase-08): FullTextResultList + SearchResults dispatch (load
 ---
 
 <!-- openspec-task: 6.4 -->
+
 ### Task 5: Snippet HTML rendering — verify only `<mark>` tags survive
 
 **Files:**
+
 - Modify: `src/components/search/FullTextResultList.test.tsx`
 
 This is purely a defensive test that locks in the contract: service-side escapes body before insert; SQLite adds `<mark>...</mark>`; renderer trusts that.
@@ -789,7 +850,7 @@ it('does not execute scripts in snippet (HTML escaped server-side)', () => {
   )
   // Verify no <script> element was created in the DOM
   expect(document.querySelector('script')).toBeNull()
-  expect(screen.getByText(/<script>/, { exact: false })).toBeTruthy()  // text rendered as text
+  expect(screen.getByText(/<script>/, { exact: false })).toBeTruthy() // text rendered as text
 })
 ```
 
@@ -804,9 +865,11 @@ git commit -m "test(phase-08): assert snippet HTML cannot inject script (server-
 ---
 
 <!-- openspec-task: 6.5 -->
+
 ### Task 6: Cmd+Shift+F hotkey — navigate to `/search` or `select-all` if already there
 
 **Files:**
+
 - Modify: `src/hooks/useGlobalHotkeys.ts`
 - Modify: `src/hooks/useGlobalHotkeys.test.tsx`
 
@@ -835,9 +898,14 @@ describe('useGlobalHotkeys Cmd+Shift+F', () => {
 
   it('navigates to /search when not already there', () => {
     renderHook(() => useGlobalHotkeys())
-    window.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'f', metaKey: true, shiftKey: true, cancelable: true
-    }))
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'f',
+        metaKey: true,
+        shiftKey: true,
+        cancelable: true
+      })
+    )
     expect(navigateMock).toHaveBeenCalledWith('/search')
   })
 
@@ -849,9 +917,14 @@ describe('useGlobalHotkeys Cmd+Shift+F', () => {
     const selectSpy = vi.spyOn(input, 'select')
 
     renderHook(() => useGlobalHotkeys())
-    window.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'f', metaKey: true, shiftKey: true, cancelable: true
-    }))
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'f',
+        metaKey: true,
+        shiftKey: true,
+        cancelable: true
+      })
+    )
     expect(navigateMock).not.toHaveBeenCalled()
     expect(selectSpy).toHaveBeenCalled()
     input.remove()
@@ -924,11 +997,13 @@ git commit -m "feat(phase-08): Cmd/Ctrl+Shift+F hotkey opens or refocuses /searc
 ---
 
 <!-- openspec-task: 6.6 -->
+
 ### Task 7: Empty / pending / error states — final pass to lock all branches
 
 This task is a **regression-test sweep**. Tasks 1–4 already implement the branches; we add explicit assertions for each.
 
 **Files:**
+
 - Modify: `src/pages/Search.test.tsx`
 
 - [ ] **Step 1: Add comprehensive state tests**
@@ -939,13 +1014,19 @@ Append to `src/pages/Search.test.tsx`:
 import { useSearchStore as Store } from '@/stores/search'
 
 describe('Search page state branches', () => {
-  beforeEach(() => { _resetSearchStoreForTest() })
+  beforeEach(() => {
+    _resetSearchStoreForTest()
+  })
 
   it('shows pending banner state when fullText.pending=true', () => {
     Store.setState((prev) => ({
       fullText: { ...prev.fullText, q: '注意力', pending: true, items: [] }
     }))
-    render(<MemoryRouter initialEntries={['/search?q=%E6%B3%A8%E6%84%8F%E5%8A%9B']}><Search /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search?q=%E6%B3%A8%E6%84%8F%E5%8A%9B']}>
+        <Search />
+      </MemoryRouter>
+    )
     expect(screen.getByText(/索引构建中/)).toBeTruthy()
   })
 
@@ -953,16 +1034,28 @@ describe('Search page state branches', () => {
     Store.setState((prev) => ({
       fullText: { ...prev.fullText, q: 'foo:', syntaxError: true, items: [] }
     }))
-    render(<MemoryRouter initialEntries={['/search?q=foo%3A']}><Search /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/search?q=foo%3A']}>
+        <Search />
+      </MemoryRouter>
+    )
     expect(screen.getByText(/搜索语法错误/)).toBeTruthy()
   })
 
   it('shows zero-results message when items=[] and q is non-empty', async () => {
     vi.mocked((await import('@/ipc/client')).ipc.search.fullText).mockResolvedValueOnce({
-      items: [], total: 0, pending: false
+      items: [],
+      total: 0,
+      pending: false
     })
-    render(<MemoryRouter initialEntries={['/search?q=asdfghjkl']}><Search /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 10)) })
+    render(
+      <MemoryRouter initialEntries={['/search?q=asdfghjkl']}>
+        <Search />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10))
+    })
     expect(screen.getByText(/无匹配结果/)).toBeTruthy()
   })
 })
@@ -979,11 +1072,13 @@ git commit -m "test(phase-08): Search page pending/syntax-error/zero-result stat
 ---
 
 <!-- openspec-task: 6.7 -->
+
 ### Task 8: Click row → navigate `/editor/<encodedPath>#match=<q>`; Cmd+Click → `/library?focus=<path>`
 
 This is already implemented in `FullTextResultList` (task 4). This task adds an explicit test.
 
 **Files:**
+
 - Modify: `src/components/search/FullTextResultList.test.tsx`
 
 - [ ] **Step 1: Test**
@@ -1027,9 +1122,11 @@ git commit -m "test(phase-08): result row click navigates to editor with #match=
 ---
 
 <!-- openspec-task: 6.8 -->
+
 ### Task 9: Recent searches list visible on empty `q` (already implemented; add test)
 
 **Files:**
+
 - Modify: `src/pages/Search.test.tsx`
 
 - [ ] **Step 1: Test**
@@ -1041,7 +1138,11 @@ it('lists recentSearches when q is empty', () => {
   Store.setState((prev) => ({
     fullText: { ...prev.fullText, recentSearches: ['注意力', 'attention'], q: '' }
   }))
-  render(<MemoryRouter initialEntries={['/search']}><Search /></MemoryRouter>)
+  render(
+    <MemoryRouter initialEntries={['/search']}>
+      <Search />
+    </MemoryRouter>
+  )
   expect(screen.getByText('注意力')).toBeTruthy()
   expect(screen.getByText('attention')).toBeTruthy()
 })
@@ -1058,9 +1159,11 @@ git commit -m "test(phase-08): recentSearches surfaces on empty q in /search"
 ---
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 10: IndexBanner — main-side broadcast + renderer-side store + component
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts` (add events)
 - Modify: `electron/services/search/rebuild.ts` (broadcast events)
 - Modify: `electron/preload/index.ts` (or wherever event channels are whitelisted)
@@ -1115,26 +1218,36 @@ import { BrowserWindow } from 'electron'
 
 function broadcastEvent(channel: string, payload: unknown): void {
   for (const win of BrowserWindow.getAllWindows()) {
-    try { win.webContents.send(channel, payload) } catch { /* renderer destroyed */ }
+    try {
+      win.webContents.send(channel, payload)
+    } catch {
+      /* renderer destroyed */
+    }
   }
 }
 ```
 
 In `rebuildFts`, replace:
+
 ```ts
 rebuildEvents.emit('progress', payload)
 ```
+
 with:
+
 ```ts
 rebuildEvents.emit('progress', payload)
 broadcastEvent('index:rebuildProgress', payload)
 ```
 
 And replace:
+
 ```ts
 rebuildEvents.emit('done', { total })
 ```
+
 with:
+
 ```ts
 rebuildEvents.emit('done', { total })
 broadcastEvent('index:rebuildDone', { total })
@@ -1148,9 +1261,17 @@ Replace `import { BrowserWindow } from 'electron'` with:
 function broadcastEvent(channel: string, payload: unknown): void {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const electron = require('electron') as { BrowserWindow: { getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[] } }
+    const electron = require('electron') as {
+      BrowserWindow: {
+        getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[]
+      }
+    }
     for (const win of electron.BrowserWindow.getAllWindows()) {
-      try { win.webContents.send(channel, payload) } catch { /* destroyed */ }
+      try {
+        win.webContents.send(channel, payload)
+      } catch {
+        /* destroyed */
+      }
     }
   } catch {
     // running outside electron (unit tests) — silently no-op
@@ -1193,10 +1314,8 @@ export const useIndexBannerStore = create<IndexBannerStore>((set) => ({
     }
   },
 
-  _setProgressForTest: (done: number, total: number) =>
-    set({ rebuildVisible: true, done, total }),
-  _setHiddenForTest: () =>
-    set({ rebuildVisible: false, done: 0, total: 0 })
+  _setProgressForTest: (done: number, total: number) => set({ rebuildVisible: true, done, total }),
+  _setHiddenForTest: () => set({ rebuildVisible: false, done: 0, total: 0 })
 }))
 ```
 
@@ -1272,11 +1391,12 @@ describe('IndexBanner', () => {
 - [ ] **Step 7: Mount the banner**
 
 Edit `src/App.tsx`. Add import + render:
+
 ```tsx
 import { IndexBanner } from '@/components/IndexBanner'
 
 // inside <main> wrapper, just below TitleBar:
-<IndexBanner />
+;<IndexBanner />
 ```
 
 - [ ] **Step 8: Run all tests + typecheck**
@@ -1298,11 +1418,13 @@ git commit -m "feat(phase-08): IndexBanner subscribes to index:rebuildProgress e
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 11: IndexBanner re-fires search after `index:rebuildDone`
 
 When the rebuild finishes, the user might be sitting on `/search` showing "构建完成后将自动重试". We want the page to automatically re-issue the last `q`.
 
 **Files:**
+
 - Modify: `src/pages/Search.tsx`
 - Modify: `src/pages/Search.test.tsx`
 
@@ -1317,11 +1439,19 @@ it('re-runs fullText query when rebuildDone fires', async () => {
   const ipcModule = await import('@/ipc/client')
   vi.mocked(ipcModule.ipc.search.fullText).mockReset()
   vi.mocked(ipcModule.ipc.search.fullText).mockResolvedValue({
-    items: [], total: 0, pending: false
+    items: [],
+    total: 0,
+    pending: false
   })
 
-  render(<MemoryRouter initialEntries={['/search?q=注意力']}><Search /></MemoryRouter>)
-  await act(async () => { await new Promise((r) => setTimeout(r, 250)) })
+  render(
+    <MemoryRouter initialEntries={['/search?q=注意力']}>
+      <Search />
+    </MemoryRouter>
+  )
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 250))
+  })
 
   vi.mocked(ipcModule.ipc.search.fullText).mockClear()
 
@@ -1332,7 +1462,9 @@ it('re-runs fullText query when rebuildDone fires', async () => {
   act(() => {
     useIndexBannerStore.getState()._setHiddenForTest()
   })
-  await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 50))
+  })
 
   expect(ipcModule.ipc.search.fullText).toHaveBeenCalled()
 })
@@ -1355,6 +1487,7 @@ useEffect(() => {
 ```
 
 Add the imports at the top:
+
 ```tsx
 import { useRef } from 'react'
 import { useIndexBannerStore } from '@/stores/indexBanner'
@@ -1371,9 +1504,11 @@ git commit -m "feat(phase-08): /search auto-retries query when index rebuild com
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 12: i18n keys — full set for QuickSwitcher + Search panel + IndexBanner
 
 **Files:**
+
 - Modify: `src/i18n/<existing-locale-file>.ts`
 
 - [ ] **Step 1: Identify the locale file**
@@ -1431,6 +1566,7 @@ npm run dev
 ```
 
 In the running app:
+
 - Press Cmd+P — input placeholder reads "搜索文件名 / 路径".
 - Press Cmd+Shift+F — page heading and placeholder reflect the keys.
 - Open a brand-new grove with seeded files — the IndexBanner should briefly show "索引构建中 X / Y" during rebuild.

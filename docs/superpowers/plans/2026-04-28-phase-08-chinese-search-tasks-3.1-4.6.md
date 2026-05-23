@@ -22,10 +22,10 @@ Migrate phase-05's `upsertFts/deleteFile/renameFile` to write the new `(rowid, p
   1. Quoted phrases (entire string starts and ends with `"`): pass through as-is.
   2. Single token after segmentation + stopword filter: `"tok"*` (prefix match).
   3. Multiple tokens: `"tok1" AND "tok2" AND ...`.
-  All other input gets fully sanitised — control chars, FTS5 reserved chars (`:`, `^`, `~`, `*` outside our own use, parentheses) are quoted or stripped.
+     All other input gets fully sanitised — control chars, FTS5 reserved chars (`:`, `^`, `~`, `*` outside our own use, parentheses) are quoted or stripped.
 - **`search/jiebaSegment.ts` lazy-loads `@node-rs/jieba`.** First call to `segment(text)` triggers the dictionary load (~6MB); subsequent calls are O(n). Cached in module scope.
-- **`search/stopwords.ts` is a hardcoded `Set<string>`** of ~100 common CJK + English stopwords. Filter happens *after* segmentation, *before* token-count branching. Empty result after filtering is treated as "no meaningful terms" → `{ items: [], total: 0, pending: false }`.
-- **`fullText` SQL uses `snippet()`.** The `<mark>` tags are produced by SQLite itself (`snippet(files_fts, 2, '<mark>', '</mark>', '…', 16)`). Service code never substring-matches in JS; the renderer trusts the snippet HTML and feeds it to `dangerouslySetInnerHTML` (Plan 4 task 6.4 — service-side guarantee: `body` content is HTML-escaped before being concatenated into snippet by SQLite). To prevent body-side XSS we **escape body** before insertion via a tiny helper: replace `<`, `>`, `&` with their entity forms. Snippet wrappers (`<mark>`) are added by SQLite *after* escape, so they survive intact.
+- **`search/stopwords.ts` is a hardcoded `Set<string>`** of ~100 common CJK + English stopwords. Filter happens _after_ segmentation, _before_ token-count branching. Empty result after filtering is treated as "no meaningful terms" → `{ items: [], total: 0, pending: false }`.
+- **`fullText` SQL uses `snippet()`.** The `<mark>` tags are produced by SQLite itself (`snippet(files_fts, 2, '<mark>', '</mark>', '…', 16)`). Service code never substring-matches in JS; the renderer trusts the snippet HTML and feeds it to `dangerouslySetInnerHTML` (Plan 4 task 6.4 — service-side guarantee: `body` content is HTML-escaped before being concatenated into snippet by SQLite). To prevent body-side XSS we **escape body** before insertion via a tiny helper: replace `<`, `>`, `&` with their entity forms. Snippet wrappers (`<mark>`) are added by SQLite _after_ escape, so they survive intact.
 - **JOIN back to `files`** to compose `FileSummary`. Phase-06 ships a helper `composeFileSummary(row, tagsConcat)` in `electron/ipc/files.ts`. We reuse it via `import { composeFileSummary } from '../ipc/files'` to keep the DTO shape identical across `quickSwitch` / `fullText` / phase-06 `files.list`.
 - **`quickSwitch` does not use FTS5.** Per design D6 + tasks.md 4.2 — at 10K rows a `LIKE` scan is sub-20ms and lets us implement the four-tier sort (`title=q > title prefix > title contains > path contains`, then `clipped_at DESC`) in pure SQL. No jieba, no stopwords.
 
@@ -38,27 +38,28 @@ Migrate phase-05's `upsertFts/deleteFile/renameFile` to write the new `(rowid, p
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/services/index-queries.ts` | Modify (`upsertFts` signature change, drop `tokenizer`/`setTokenizer`/`getTokenizer`) | 3.1 |
-| `electron/services/index-queries.test.ts` | Modify | 3.1, 3.4 |
-| `electron/services/indexer.ts` | Modify (call new `upsertFts` shape; pass `body` through) | 3.1, 3.4 |
-| `electron/services/watcher.ts` | Modify (same as indexer; pass body) | 3.1 |
-| `electron/services/index-queries.ts` (delete/rename) | Modify | 3.2, 3.3 |
-| `electron/services/search/jiebaSegment.ts` | Create | 4.3.1 |
-| `electron/services/search/jiebaSegment.test.ts` | Create | 4.3.1 |
-| `electron/services/search/stopwords.ts` | Create | 4.3.2 |
-| `electron/services/search/queryBuilder.ts` | Create | 4.3.3 |
-| `electron/services/search/queryBuilder.test.ts` | Create | 4.3.3 |
-| `electron/services/search/queries.ts` | Create (raw SQL helpers) | 4.2, 4.3.4–4.3.5, 4.4, 4.5 |
-| `electron/services/search/queries.test.ts` | Create | 4.2, 4.3, 4.4, 4.5 |
-| `shared/ipc-contract.ts` | Modify (full `search` namespace) | 4.1 |
-| `electron/ipc/search.ts` | Modify (replace stubs with full handlers) | 4.2, 4.3, 4.4, 4.5, 4.6 |
-| `electron/ipc/search.test.ts` | Modify | 4.2, 4.3, 4.4, 4.5, 4.6 |
+| Path                                                 | Action                                                                                | Owner task                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------- |
+| `electron/services/index-queries.ts`                 | Modify (`upsertFts` signature change, drop `tokenizer`/`setTokenizer`/`getTokenizer`) | 3.1                        |
+| `electron/services/index-queries.test.ts`            | Modify                                                                                | 3.1, 3.4                   |
+| `electron/services/indexer.ts`                       | Modify (call new `upsertFts` shape; pass `body` through)                              | 3.1, 3.4                   |
+| `electron/services/watcher.ts`                       | Modify (same as indexer; pass body)                                                   | 3.1                        |
+| `electron/services/index-queries.ts` (delete/rename) | Modify                                                                                | 3.2, 3.3                   |
+| `electron/services/search/jiebaSegment.ts`           | Create                                                                                | 4.3.1                      |
+| `electron/services/search/jiebaSegment.test.ts`      | Create                                                                                | 4.3.1                      |
+| `electron/services/search/stopwords.ts`              | Create                                                                                | 4.3.2                      |
+| `electron/services/search/queryBuilder.ts`           | Create                                                                                | 4.3.3                      |
+| `electron/services/search/queryBuilder.test.ts`      | Create                                                                                | 4.3.3                      |
+| `electron/services/search/queries.ts`                | Create (raw SQL helpers)                                                              | 4.2, 4.3.4–4.3.5, 4.4, 4.5 |
+| `electron/services/search/queries.test.ts`           | Create                                                                                | 4.2, 4.3, 4.4, 4.5         |
+| `shared/ipc-contract.ts`                             | Modify (full `search` namespace)                                                      | 4.1                        |
+| `electron/ipc/search.ts`                             | Modify (replace stubs with full handlers)                                             | 4.2, 4.3, 4.4, 4.5, 4.6    |
+| `electron/ipc/search.test.ts`                        | Modify                                                                                | 4.2, 4.3, 4.4, 4.5, 4.6    |
 
 ## Pre-flight
 
 This plan assumes Plan 1 has merged. Required artefacts:
+
 - `migrations/002_fts.sql` exists and `files_fts` is `(path UNINDEXED, title, body, tokenize='trigram')`.
 - `electron/services/search/{index,rebuild}.ts` exist with `isRebuilding()` + `_setRebuildingForTest()`.
 - `electron/ipc/search.ts` exists with the `rebuild` and `fullText` (stub) handlers; `registerSearchIpc()` is called from `electron/ipc/handlers.ts`.
@@ -76,9 +77,11 @@ If neither exists, this plan inlines a minimal `composeFileSummary` in `electron
 ## Tasks
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: `upsertFts` writes new (rowid, path, title, body) schema; tokenizer plumbing deleted
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 - Modify: `electron/services/indexer.ts`
@@ -112,10 +115,13 @@ function makeDb(): Database.Database {
 ```
 
 Find every `upsertFts` call in this test file. The current shape is:
+
 ```ts
 upsertFts(db, { rowid: 1, path: 'a.md', title: 'A', summary: 'S', content: 'B' }, identity)
 ```
+
 Replace with the new shape:
+
 ```ts
 upsertFts(db, { rowid: 1, path: 'a.md', title: 'A', body: 'B' })
 ```
@@ -127,13 +133,23 @@ import { upsertFts, upsertFile, deleteFile, renameFile, type FileRow } from './i
 
 describe('upsertFts (phase-08)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   function seedFile(path: string): number {
     const row: FileRow = {
-      path, title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path,
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime_ms: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
     return (db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }).rowid
@@ -197,21 +213,29 @@ function escapeForFts(s: string): string {
 export function upsertFts(db: Database.Database, row: FtsRow): void {
   const tx = db.transaction(() => {
     db.prepare('DELETE FROM files_fts WHERE rowid=?').run(row.rowid)
-    db.prepare(
-      'INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
-    ).run(row.rowid, row.path, row.title, escapeForFts(row.body))
+    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
+      row.rowid,
+      row.path,
+      row.title,
+      escapeForFts(row.body)
+    )
   })
   tx()
 }
 ```
 
 Delete the lines:
+
 ```ts
 export type Tokenizer = (text: string) => string
 const identityTokenizer: Tokenizer = (t) => t
 let _activeTokenizer: Tokenizer = identityTokenizer
-export function setTokenizer(t: Tokenizer): void { _activeTokenizer = t }
-export function getTokenizer(): Tokenizer { return _activeTokenizer }
+export function setTokenizer(t: Tokenizer): void {
+  _activeTokenizer = t
+}
+export function getTokenizer(): Tokenizer {
+  return _activeTokenizer
+}
 ```
 
 Also delete the deprecation comment block above them.
@@ -290,11 +314,13 @@ git commit -m "feat(phase-08): upsertFts writes (path,title,body); drop tokenize
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: `deleteFile` keeps cascading delete; verify FTS row gone after delete
 
 `deleteFile` already deletes from `files_fts` (verified in step 3 above). This task adds an explicit test against the new schema to lock the behaviour against future regressions.
 
 **Files:**
+
 - Modify: `electron/services/index-queries.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -304,16 +330,28 @@ Append to `electron/services/index-queries.test.ts`:
 ```ts
 describe('deleteFile (phase-08 FTS)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('removes both files row and files_fts row in one logical operation', () => {
     const row: FileRow = {
-      path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: 'notes/x.md',
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime_ms: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: 'notes/x.md', title: 'T', body: 'attention' })
 
     deleteFile(db, 'notes/x.md')
@@ -344,11 +382,13 @@ git commit -m "test(phase-08): deleteFile cascades to files_fts on new schema"
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: `renameFile` updates `files_fts.path` in the same transaction
 
 `renameFile` already does this (`electron/services/index-queries.ts:56-63`). Add a test on the new schema.
 
 **Files:**
+
 - Modify: `electron/services/index-queries.test.ts`
 
 - [ ] **Step 1: Add the test**
@@ -358,16 +398,28 @@ Append:
 ```ts
 describe('renameFile (phase-08 FTS)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('updates files_fts.path; rowid stays stable', () => {
     const row: FileRow = {
-      path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: 'notes/x.md',
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime_ms: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: 'notes/x.md', title: 'T', body: '注意力' })
 
     renameFile(db, 'notes/x.md', 'notes/y.md')
@@ -378,9 +430,9 @@ describe('renameFile (phase-08 FTS)', () => {
     expect(ftsRow).toEqual({ rowid, path: 'notes/y.md' })
 
     // FTS still queryable on the new path
-    const hit = db.prepare(
-      "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
-    ).get() as { path: string } | undefined
+    const hit = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH '注意力'").get() as
+      | { path: string }
+      | undefined
     expect(hit?.path).toBe('notes/y.md')
   })
 })
@@ -404,11 +456,13 @@ git commit -m "test(phase-08): renameFile keeps rowid + updates files_fts.path"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: Skip FTS rewrite when only frontmatter changed (`content_hash` unchanged)
 
-The watcher currently calls `upsertFile` then unconditionally calls `upsertFts`. Per spec scenario "仅 frontmatter 改动不影响 body", we must skip `upsertFts` when `upsertFile` returns `'unchanged'` *or* when the new `content_hash` matches the previously-stored row's hash. The simplest contract: `upsertFile` already returns `'unchanged' | 'updated' | 'inserted'`. We add a new helper `upsertFileWithBodyDelta` that returns `{ result, bodyChanged }`.
+The watcher currently calls `upsertFile` then unconditionally calls `upsertFts`. Per spec scenario "仅 frontmatter 改动不影响 body", we must skip `upsertFts` when `upsertFile` returns `'unchanged'` _or_ when the new `content_hash` matches the previously-stored row's hash. The simplest contract: `upsertFile` already returns `'unchanged' | 'updated' | 'inserted'`. We add a new helper `upsertFileWithBodyDelta` that returns `{ result, bodyChanged }`.
 
 **Files:**
+
 - Modify: `electron/services/index-queries.ts`
 - Modify: `electron/services/index-queries.test.ts`
 - Modify: `electron/services/watcher.ts`
@@ -423,12 +477,22 @@ import { upsertFileWithBodyDelta } from './index-queries'
 
 describe('upsertFileWithBodyDelta (phase-08)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   const r = (overrides: Partial<FileRow> = {}): FileRow => ({
-    path: 'notes/a.md', title: 'A', summary: null, category: null, rating: null,
-    content_hash: 'h1', mtime_ms: 0, size_bytes: 0, frontmatter_json: null,
-    created_at: 0, updated_at: 0,
+    path: 'notes/a.md',
+    title: 'A',
+    summary: null,
+    category: null,
+    rating: null,
+    content_hash: 'h1',
+    mtime_ms: 0,
+    size_bytes: 0,
+    frontmatter_json: null,
+    created_at: 0,
+    updated_at: 0,
     ...overrides
   })
 
@@ -439,7 +503,10 @@ describe('upsertFileWithBodyDelta (phase-08)', () => {
 
   it('frontmatter-only change (rating): bodyChanged=false', () => {
     upsertFileWithBodyDelta(db, r())
-    const out = upsertFileWithBodyDelta(db, r({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 100 }))
+    const out = upsertFileWithBodyDelta(
+      db,
+      r({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 100 })
+    )
     expect(out).toEqual({ result: 'updated', bodyChanged: false })
   })
 
@@ -477,9 +544,9 @@ export interface UpsertWithBodyDelta {
 
 /** Like upsertFile but also returns whether the body content changed (content_hash diff). */
 export function upsertFileWithBodyDelta(db: Database.Database, row: FileRow): UpsertWithBodyDelta {
-  const existing = db
-    .prepare('SELECT content_hash FROM files WHERE path=?')
-    .get(row.path) as { content_hash: string } | undefined
+  const existing = db.prepare('SELECT content_hash FROM files WHERE path=?').get(row.path) as
+    | { content_hash: string }
+    | undefined
 
   const bodyChanged = !existing || existing.content_hash !== row.content_hash
   const result = upsertFile(db, row)
@@ -519,9 +586,14 @@ if (bodyChanged) {
 ```
 
 Update the import line at the top to include `upsertFileWithBodyDelta`:
+
 ```ts
 import {
-  upsertFileWithBodyDelta, syncTags, upsertFts, deleteFile, renameFile
+  upsertFileWithBodyDelta,
+  syncTags,
+  upsertFts,
+  deleteFile,
+  renameFile
 } from './index-queries'
 ```
 
@@ -553,9 +625,15 @@ if (result !== 'unchanged') {
 ```
 
 Adjust the import:
+
 ```ts
 import {
-  upsertFileWithBodyDelta, syncTags, upsertFts, listAllPaths, deleteFile, type FileRow
+  upsertFileWithBodyDelta,
+  syncTags,
+  upsertFts,
+  listAllPaths,
+  deleteFile,
+  type FileRow
 } from './index-queries'
 ```
 
@@ -565,7 +643,7 @@ import {
 npm test
 ```
 
-Expected: PASS. The phase-05 indexer/watcher tests still hold because `upsertFileWithBodyDelta` returns the same `result` field as `upsertFile`. If a phase-05 test asserted on the *return value* of `upsertFile` from inside the indexer and now sees a wrapped result, update the assertion to match.
+Expected: PASS. The phase-05 indexer/watcher tests still hold because `upsertFileWithBodyDelta` returns the same `result` field as `upsertFile`. If a phase-05 test asserted on the _return value_ of `upsertFile` from inside the indexer and now sees a wrapped result, update the assertion to match.
 
 - [ ] **Step 8: Commit**
 
@@ -577,9 +655,11 @@ git commit -m "feat(phase-08): skip FTS rewrite when only frontmatter changed"
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 5: Expand `search` namespace in `shared/ipc-contract.ts`
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 - [ ] **Step 1: Edit the contract**
@@ -587,7 +667,7 @@ git commit -m "feat(phase-08): skip FTS rewrite when only frontmatter changed"
 Open `shared/ipc-contract.ts`. Replace the `search` block (added in Plan 1) with:
 
 ```ts
-import type { FileSummary } from './file-types'  // add at top with other imports if not present
+import type { FileSummary } from './file-types' // add at top with other imports if not present
 
 export type IpcContract = {
   // ... unchanged namespaces ...
@@ -648,9 +728,11 @@ git commit -m "feat(phase-08): expand search ipc contract (quickSwitch/suggest/s
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 6: `quickSwitch(q, { limit })` — title/path LIKE with priority sort
 
 **Files:**
+
 - Create: `electron/services/search/queries.ts`
 - Create: `electron/services/search/queries.test.ts`
 - Modify: `electron/ipc/search.ts`
@@ -679,7 +761,10 @@ function makeDb(): Database.Database {
   return db
 }
 
-function seed(db: Database.Database, rows: { path: string; title: string; clipped_at?: string }[]): void {
+function seed(
+  db: Database.Database,
+  rows: { path: string; title: string; clipped_at?: string }[]
+): void {
   const insert = db.prepare(
     'INSERT INTO files (path, title, clipped_at, mtime, content_hash) VALUES (?, ?, ?, 0, ?)'
   )
@@ -688,7 +773,9 @@ function seed(db: Database.Database, rows: { path: string; title: string; clippe
 
 describe('quickSwitch', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('returns [] for empty q', () => {
     seed(db, [{ path: 'a.md', title: 'A' }])
@@ -697,10 +784,10 @@ describe('quickSwitch', () => {
 
   it('priority: title equals q > title prefix > title contains > path contains', () => {
     seed(db, [
-      { path: 'old/x.md', title: 'X', clipped_at: '2025-01-01' },                        // path contains "x"
-      { path: 'a.md', title: 'attention is all you need', clipped_at: '2025-02-01' },    // title contains
-      { path: 'b.md', title: 'attention pattern', clipped_at: '2025-03-01' },            // title prefix
-      { path: 'c.md', title: 'attention', clipped_at: '2025-04-01' }                     // title equals
+      { path: 'old/x.md', title: 'X', clipped_at: '2025-01-01' }, // path contains "x"
+      { path: 'a.md', title: 'attention is all you need', clipped_at: '2025-02-01' }, // title contains
+      { path: 'b.md', title: 'attention pattern', clipped_at: '2025-03-01' }, // title prefix
+      { path: 'c.md', title: 'attention', clipped_at: '2025-04-01' } // title equals
     ])
     const items = quickSwitch(db, 'attention', { limit: 10 })
     expect(items.map((i) => i.path)).toEqual(['c.md', 'b.md', 'a.md', 'old/x.md'])
@@ -731,17 +818,18 @@ describe('quickSwitch', () => {
 > Note the test "priority" case: I included a row whose path matches but whose title does not — under the four-tier priority, only title-matching rows show up for `q='attention'` plus path-only matchers. Since `q='attention'` is absent from `'old/x.md'`, that row is filtered. I'll fix the assertion below.
 
 Replace the priority test's assertion to:
+
 ```ts
 expect(items.map((i) => i.path)).toEqual(['c.md', 'b.md', 'a.md'])
 ```
+
 And drop the `'old/x.md'` row from the seed for that test (or change the title to something that contains "attention").
 
 To exercise the path-contains branch, add a separate test:
+
 ```ts
 it('falls back to path contains', () => {
-  seed(db, [
-    { path: 'projects/attention.md', title: 'unrelated', clipped_at: '2025-04-01' }
-  ])
+  seed(db, [{ path: 'projects/attention.md', title: 'unrelated', clipped_at: '2025-04-01' }])
   const items = quickSwitch(db, 'attention', { limit: 10 })
   expect(items.map((i) => i.path)).toEqual(['projects/attention.md'])
 })
@@ -782,9 +870,15 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
       const fm = JSON.parse(row.frontmatter_json) as { site?: unknown; url?: unknown }
       if (typeof fm.site === 'string') site = fm.site
       else if (typeof fm.url === 'string') {
-        try { site = new URL(fm.url).host } catch { /* ignore */ }
+        try {
+          site = new URL(fm.url).host
+        } catch {
+          /* ignore */
+        }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return {
     path: row.path,
@@ -874,12 +968,14 @@ quickSwitch: async (q: string, opts?: { limit?: number }): Promise<IpcResult<Fil
 ```
 
 Add the import at the top:
+
 ```ts
 import { quickSwitch } from '../services/search/queries'
 import type { FileSummary } from '@shared/file-types'
 ```
 
 Add to `registerSearchIpc()`:
+
 ```ts
 ipcMain.handle('search.quickSwitch', (_e, q: string, opts?: { limit?: number }) =>
   handlers.quickSwitch(q, opts)
@@ -901,8 +997,15 @@ describe('search.quickSwitch handler', () => {
 
   it('delegates to queries.quickSwitch and returns IpcOk', async () => {
     const stub: import('@shared/file-types').FileSummary = {
-      path: 'a.md', title: 'A', category: null, rating: null, clipped_at: null,
-      site: null, has_summary: false, tags: [], is_reviewing: false
+      path: 'a.md',
+      title: 'A',
+      category: null,
+      rating: null,
+      clipped_at: null,
+      site: null,
+      has_summary: false,
+      tags: [],
+      is_reviewing: false
     }
     const spy = vi.spyOn(queries, 'quickSwitch').mockReturnValue([stub])
     const result = await searchHandlers.quickSwitch('attention', { limit: 5 })
@@ -911,7 +1014,9 @@ describe('search.quickSwitch handler', () => {
   })
 
   it('returns E_INTERNAL on thrown error', async () => {
-    vi.spyOn(queries, 'quickSwitch').mockImplementation(() => { throw new Error('boom') })
+    vi.spyOn(queries, 'quickSwitch').mockImplementation(() => {
+      throw new Error('boom')
+    })
     const result = await searchHandlers.quickSwitch('x')
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error.code).toBe('E_INTERNAL')
@@ -937,11 +1042,13 @@ git commit -m "feat(phase-08): search.quickSwitch handler with priority sort"
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 7: `search.fullText` — jieba segmentation, stopwords, query DSL, snippet, JOIN to FileSummary, error fallback
 
 This task wraps OpenSpec sub-tasks 4.3.1–4.3.7. We bundle them into one task with explicit step blocks because they form a single end-to-end feature: each piece is unusable without the others.
 
 **Files:**
+
 - Create: `electron/services/search/jiebaSegment.ts`
 - Create: `electron/services/search/jiebaSegment.test.ts`
 - Create: `electron/services/search/stopwords.ts`
@@ -1000,7 +1107,7 @@ import { cut } from '@node-rs/jieba'
 /** Segment a query string into tokens. Strips whitespace-only tokens. */
 export function segment(q: string): string[] {
   if (q.length === 0) return []
-  const raw = cut(q, false)  // false = HMM off; deterministic for stable test snapshots
+  const raw = cut(q, false) // false = HMM off; deterministic for stable test snapshots
   return raw.map((t) => t.trim()).filter((t) => t.length > 0)
 }
 ```
@@ -1030,17 +1137,120 @@ Create `electron/services/search/stopwords.ts`:
 /** Hardcoded CJK + EN stopwords. Filtered after segmentation, before query-builder dispatch. */
 export const STOPWORDS: ReadonlySet<string> = new Set([
   // Chinese function words / particles
-  '的', '了', '是', '在', '和', '或', '与', '及', '而', '于', '也', '都', '就', '还', '又',
-  '等', '但', '把', '被', '给', '让', '使', '从', '到', '为', '由', '以', '对', '向', '及',
-  '吗', '呢', '吧', '啊', '哦', '哇', '嗯', '哎', '呀',
-  '这', '那', '其', '它', '他', '她', '我', '你', '们', '你们', '我们', '他们',
-  '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+  '的',
+  '了',
+  '是',
+  '在',
+  '和',
+  '或',
+  '与',
+  '及',
+  '而',
+  '于',
+  '也',
+  '都',
+  '就',
+  '还',
+  '又',
+  '等',
+  '但',
+  '把',
+  '被',
+  '给',
+  '让',
+  '使',
+  '从',
+  '到',
+  '为',
+  '由',
+  '以',
+  '对',
+  '向',
+  '及',
+  '吗',
+  '呢',
+  '吧',
+  '啊',
+  '哦',
+  '哇',
+  '嗯',
+  '哎',
+  '呀',
+  '这',
+  '那',
+  '其',
+  '它',
+  '他',
+  '她',
+  '我',
+  '你',
+  '们',
+  '你们',
+  '我们',
+  '他们',
+  '一',
+  '二',
+  '三',
+  '四',
+  '五',
+  '六',
+  '七',
+  '八',
+  '九',
+  '十',
   // English stopwords (subset; non-exhaustive)
-  'a', 'an', 'and', 'or', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-  'to', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'as', 'from',
-  'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their',
-  'i', 'you', 'we', 'he', 'she', 'him', 'her', 'me', 'us',
-  'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would', 'shall', 'should', 'can', 'could'
+  'a',
+  'an',
+  'and',
+  'or',
+  'the',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'being',
+  'to',
+  'of',
+  'in',
+  'on',
+  'at',
+  'by',
+  'for',
+  'with',
+  'as',
+  'from',
+  'this',
+  'that',
+  'these',
+  'those',
+  'it',
+  'its',
+  'they',
+  'them',
+  'their',
+  'i',
+  'you',
+  'we',
+  'he',
+  'she',
+  'him',
+  'her',
+  'me',
+  'us',
+  'do',
+  'does',
+  'did',
+  'have',
+  'has',
+  'had',
+  'will',
+  'would',
+  'shall',
+  'should',
+  'can',
+  'could'
 ])
 
 export function filterStopwords(tokens: readonly string[]): string[] {
@@ -1103,7 +1313,7 @@ describe('buildFtsQuery', () => {
   it('rejects FTS5 reserved colon', () => {
     // Wrap as quoted to neutralise; never produce raw "foo:" which FTS5 parses as colspec
     const out = buildFtsQuery('foo:')
-    expect(out).not.toMatch(/[^"]:/)  // no unquoted colons
+    expect(out).not.toMatch(/[^"]:/) // no unquoted colons
   })
 })
 ```
@@ -1202,14 +1412,18 @@ function seedWithFts(
   )
   for (const r of rows) {
     insertFile.run(r.path, r.title, r.clipped_at ?? null, r.path)
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(r.path) as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get(r.path) as { rowid: number }
+    ).rowid
     insertFts.run(rowid, r.path, r.title, r.body)
   }
 }
 
 describe('fullText', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeFtsDb() })
+  beforeEach(() => {
+    db = makeFtsDb()
+  })
 
   it('AND across two cn tokens', () => {
     seedWithFts(db, [
@@ -1249,7 +1463,9 @@ describe('fullText', () => {
 
   it('returns total + paged items', () => {
     const rows = Array.from({ length: 12 }, (_, i) => ({
-      path: `p/${i}.md`, title: `T${i}`, body: '注意力'
+      path: `p/${i}.md`,
+      title: `T${i}`,
+      body: '注意力'
     }))
     seedWithFts(db, rows)
     const page = fullText(db, '注意力', { limit: 5, offset: 5 })
@@ -1322,19 +1538,21 @@ export function fullText(
   let totalRow: { c: number } | undefined
   let hits: FtsHitRow[] = []
   try {
-    totalRow = db.prepare(
-      'SELECT COUNT(*) AS c FROM files_fts WHERE files_fts MATCH ?'
-    ).get(expr) as { c: number }
+    totalRow = db
+      .prepare('SELECT COUNT(*) AS c FROM files_fts WHERE files_fts MATCH ?')
+      .get(expr) as { c: number }
 
-    hits = db.prepare(
-      `SELECT path,
+    hits = db
+      .prepare(
+        `SELECT path,
               snippet(files_fts, 2, '<mark>', '</mark>', '…', 16) AS snippet,
               rank
        FROM files_fts
        WHERE files_fts MATCH ?
        ORDER BY rank
        LIMIT ? OFFSET ?`
-    ).all(expr, limit, offset) as FtsHitRow[]
+      )
+      .all(expr, limit, offset) as FtsHitRow[]
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     log.warn('[search.fullText] FTS5 syntax error', { q, expr, msg })
@@ -1346,8 +1564,9 @@ export function fullText(
   }
 
   const placeholders = hits.map(() => '?').join(',')
-  const rows = db.prepare(
-    `SELECT
+  const rows = db
+    .prepare(
+      `SELECT
        files.path, files.title, files.category, files.rating, files.clipped_at,
        files.summary, files.frontmatter_json,
        GROUP_CONCAT(file_tags.tag, ',') AS tags_concat
@@ -1355,7 +1574,8 @@ export function fullText(
      LEFT JOIN file_tags ON file_tags.path = files.path
      WHERE files.path IN (${placeholders})
      GROUP BY files.path`
-  ).all(...hits.map((h) => h.path)) as SummaryRow[]
+    )
+    .all(...hits.map((h) => h.path)) as SummaryRow[]
 
   const byPath = new Map(rows.map((r) => [r.path, r]))
   const items = hits
@@ -1395,7 +1615,9 @@ Find the current `fullText` handler (the Plan 1 stub that always returns empty).
 fullText: async (
   q: string,
   opts?: { limit?: number; offset?: number }
-): Promise<IpcResult<{ items: { summary: FileSummary; snippet: string }[]; total: number; pending: boolean }>> => {
+): Promise<
+  IpcResult<{ items: { summary: FileSummary; snippet: string }[]; total: number; pending: boolean }>
+> => {
   try {
     if (isRebuilding()) {
       return ok({ items: [], total: 0, pending: true })
@@ -1412,6 +1634,7 @@ fullText: async (
 ```
 
 Add the import:
+
 ```ts
 import { quickSwitch, fullText } from '../services/search/queries'
 ```
@@ -1452,6 +1675,7 @@ describe('search.fullText handler (real impl)', () => {
 - [ ] **Step 3: Wire the IPC channel**
 
 Add to `registerSearchIpc()`:
+
 ```ts
 ipcMain.handle('search.fullText', (_e, q: string, opts?: { limit?: number; offset?: number }) =>
   handlers.fullText(q, opts)
@@ -1478,9 +1702,11 @@ git commit -m "feat(phase-08): wire search.fullText IPC handler to real impl"
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 8: `search.suggest(q)` — top-5 title-LIKE suggestions
 
 **Files:**
+
 - Modify: `electron/services/search/queries.ts`
 - Modify: `electron/services/search/queries.test.ts`
 - Modify: `electron/ipc/search.ts`
@@ -1495,7 +1721,9 @@ import { suggest } from './queries'
 describe('suggest', () => {
   it('returns up to 5 title matches', () => {
     const db = makeDb()
-    const insert = db.prepare('INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)')
+    const insert = db.prepare(
+      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)'
+    )
     for (let i = 0; i < 8; i++) insert.run(`a${i}.md`, `attention ${i}`, `h${i}`)
     const items = suggest(db, 'attention')
     expect(items.length).toBe(5)
@@ -1553,11 +1781,13 @@ suggest: async (q: string): Promise<IpcResult<FileSummary[]>> => {
 ```
 
 Update import:
+
 ```ts
 import { quickSwitch, fullText, suggest } from '../services/search/queries'
 ```
 
 Register channel:
+
 ```ts
 ipcMain.handle('search.suggest', (_e, q: string) => handlers.suggest(q))
 ```
@@ -1578,11 +1808,13 @@ git commit -m "feat(phase-08): search.suggest top-5 title hints"
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 9: `search.stats()` — `{ fts_rows, last_rebuild_at }`
 
 `last_rebuild_at` requires persisting the timestamp on disk. Per design D10 we use `<groveRoot>/.acornvo/state/fts_last_rebuild.json`.
 
 **Files:**
+
 - Modify: `electron/services/search/rebuild.ts` (write timestamp on rebuild done)
 - Create: `electron/services/search/stats.ts`
 - Create: `electron/services/search/stats.test.ts`
@@ -1602,7 +1834,9 @@ import { stats, writeRebuildTimestamp } from './stats'
 
 function makeDb(): Database.Database {
   const db = new Database(':memory:')
-  db.exec(`CREATE VIRTUAL TABLE files_fts USING fts5(path UNINDEXED, title, body, tokenize='trigram');`)
+  db.exec(
+    `CREATE VIRTUAL TABLE files_fts USING fts5(path UNINDEXED, title, body, tokenize='trigram');`
+  )
   return db
 }
 
@@ -1620,13 +1854,21 @@ describe('stats', () => {
   })
 
   it('returns row count', () => {
-    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(1, 'a.md', 'A', 'B')
+    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
+      1,
+      'a.md',
+      'A',
+      'B'
+    )
     expect(stats(db, grove).fts_rows).toBe(1)
   })
 
   it('reads last_rebuild_at from state file when present', () => {
     mkdirSync(join(grove, '.acornvo', 'state'), { recursive: true })
-    writeFileSync(join(grove, '.acornvo', 'state', 'fts_last_rebuild.json'), JSON.stringify({ at: '2026-04-28T12:00:00.000Z' }))
+    writeFileSync(
+      join(grove, '.acornvo', 'state', 'fts_last_rebuild.json'),
+      JSON.stringify({ at: '2026-04-28T12:00:00.000Z' })
+    )
     expect(stats(db, grove).last_rebuild_at).toBe('2026-04-28T12:00:00.000Z')
   })
 
@@ -1661,7 +1903,10 @@ function statePath(groveRoot: string): string {
   return join(groveRoot, '.acornvo', 'state', 'fts_last_rebuild.json')
 }
 
-export function writeRebuildTimestamp(groveRoot: string, at: string = new Date().toISOString()): void {
+export function writeRebuildTimestamp(
+  groveRoot: string,
+  at: string = new Date().toISOString()
+): void {
   const dir = join(groveRoot, '.acornvo', 'state')
   mkdirSync(dir, { recursive: true })
   writeFileSync(statePath(groveRoot), JSON.stringify({ at }))
@@ -1722,6 +1967,7 @@ stats: async (): Promise<IpcResult<{ fts_rows: number; last_rebuild_at: string |
 ```
 
 Register:
+
 ```ts
 ipcMain.handle('search.stats', () => handlers.stats())
 ```
@@ -1744,11 +1990,13 @@ git commit -m "feat(phase-08): search.stats with persisted last_rebuild_at"
 ---
 
 <!-- openspec-task: 4.6 -->
+
 ### Task 10: Restore `satisfies` typecheck on the handlers map; final guard against missing methods
 
 The Plan 1 stub used `satisfies Record<keyof SearchContract, ...>` to ensure every method in the contract had a handler. We removed it in task 5 to keep typecheck green during the migration. With all five methods (`rebuild`, `fullText`, `quickSwitch`, `suggest`, `stats`) now implemented, restore the constraint.
 
 **Files:**
+
 - Modify: `electron/ipc/search.ts`
 
 - [ ] **Step 1: Re-add the satisfies clause**
@@ -1782,6 +2030,7 @@ grep "ipcMain.handle.*search\." electron/ipc/search.ts
 ```
 
 Expected: five lines:
+
 ```
 ipcMain.handle('search.rebuild', ...)
 ipcMain.handle('search.fullText', ...)

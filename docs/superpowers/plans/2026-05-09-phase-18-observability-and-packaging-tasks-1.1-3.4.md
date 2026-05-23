@@ -10,6 +10,7 @@
 **Plan branch:** `phase-19-ui-remediation` (Phase 18 work continues on this branch per current setup)
 
 **Sources:**
+
 - `openspec/changes/phase-18-observability-and-packaging/proposal.md`
 - `openspec/changes/phase-18-observability-and-packaging/design.md` (D1, D2, D11)
 - `openspec/changes/phase-18-observability-and-packaging/tasks.md` (§1, §2, §3)
@@ -17,6 +18,7 @@
 - `openspec/changes/phase-18-observability-and-packaging/specs/observability-perf/spec.md`
 
 **Out of scope:**
+
 - Crash reporter, diagnostic bundle (Plan 2)
 - Observability UI page (Plan 2)
 - About / Update / Telemetry (Plan 3)
@@ -24,6 +26,7 @@
 - Verification (Plan 5)
 
 **Open issues:**
+
 - The OpenSpec doc says `010_perf_samples.sql`, but slot `010` is taken by Phase 16's `010_sessions.sql`. We use `011_perf_samples.sql` with `user_version = 11`. The OpenSpec spec text remains authoritative for behavior; only the version number diverges. Capture this in the migration's header comment so anyone reading later spots it.
 
 ---
@@ -49,9 +52,11 @@ Establish the foundation for Phase 18 observability: a new SQLite migration (per
 ---
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Add migration 011_perf_samples.sql
 
 **Files:**
+
 - Create: `electron/services/db/migrations/011_perf_samples.sql`
 - Create: `electron/services/db/migrations/011_perf_samples.test.ts`
 
@@ -155,9 +160,11 @@ git commit -m "feat(db): migration 011 perf_samples + telemetry_local + ops_log 
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Add license-checker dev dependency
 
 **Files:**
+
 - Modify: `package.json` (devDependencies)
 - Modify: `package-lock.json` (auto-generated)
 
@@ -183,9 +190,11 @@ git commit -m "chore(deps): add license-checker for build-time license report"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 3: Implement `electron/obs/logger.ts` (JSON Lines)
 
 **Files:**
+
 - Create: `electron/obs/logger.ts`
 - Create: `electron/obs/logger.test.ts`
 
@@ -221,7 +230,9 @@ describe('obs logger (JSON Lines)', () => {
     expect(files).toHaveLength(1)
     expect(files[0]).toMatch(/^app-2026-05-09\.log$/)
 
-    const lines = readFileSync(join(tempBase, 'logs', files[0]), 'utf8').trim().split('\n')
+    const lines = readFileSync(join(tempBase, 'logs', files[0]), 'utf8')
+      .trim()
+      .split('\n')
     expect(lines).toHaveLength(2)
     const r0 = JSON.parse(lines[0])
     expect(r0).toMatchObject({
@@ -366,9 +377,11 @@ git commit -m "feat(obs): JSON Lines logger with daily files and 10MB shard rota
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 4: Implement boot-time rotate (7-day + 50MB → 40MB)
 
 **Files:**
+
 - Modify: `electron/obs/logger.ts` (add `rotateOnBoot()` export)
 - Create: `electron/obs/logger.rotate.test.ts`
 
@@ -493,9 +506,11 @@ git commit -m "feat(obs): boot rotate (7-day expiry + 50MB→40MB cap)"
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 5: Replace `console.*` in key areas with structured logger
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts` (replace `console.warn/error` with `logger.warn/error('indexer', ...)`)
 - Modify: `electron/clipper/*.ts` (top-level — search for `console.`)
 - Modify: `electron/ai/**/*.ts`
@@ -563,7 +578,12 @@ Replace each direct `console.warn(...)` / `console.error(...)` with:
 ```ts
 import { logger } from '@/obs/logger'
 // ...
-logger().error('queue', { op: 'run', ok: false, msg: err instanceof Error ? err.message : String(err), meta: { jobId: job.id, kind: job.kind } })
+logger().error('queue', {
+  op: 'run',
+  ok: false,
+  msg: err instanceof Error ? err.message : String(err),
+  meta: { jobId: job.id, kind: job.kind }
+})
 ```
 
 Apply the same pattern to: `electron/services/indexer.ts` (`area: 'indexer'`), `electron/clipper/*.ts` (`'clipper'`), `electron/ai/**/*.ts` (`'ai'`), `electron/agent/**/*.ts` (`'agent'`), `electron/queue/store.ts` (`'queue'`), `electron/main.ts` / `electron/bootstrap.ts` (`'app'`).
@@ -590,9 +610,11 @@ git commit -m "refactor(obs): replace console.* with structured logger in key ar
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 6: Mirror to stdout in dev, file-only in prod
 
 **Files:**
+
 - Modify: `electron/obs/logger.ts` (already wired via `mirrorConsole` option in Task 3 — verify gating)
 - Modify: `electron/main.ts` or `electron/bootstrap.ts` to call `rotateOnBoot()` and seed `logger()` early
 
@@ -664,9 +686,11 @@ git commit -m "feat(obs): boot logger init + dev-only console mirror"
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 7: Implement `electron/obs/perf.ts` with start/end + DB write
 
 **Files:**
+
 - Create: `electron/obs/perf.ts`
 - Create: `electron/obs/perf.test.ts`
 
@@ -794,9 +818,11 @@ git commit -m "feat(obs): perf.start/end with perf_samples writer"
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 8: Instrument key paths with perf
 
 **Files:**
+
 - Modify: `electron/services/indexer.ts` (`indexer.scan`, `indexer.update`)
 - Modify: `electron/clipper/*` save path (`clipper.save`)
 - Modify: `electron/clipper/*` AI review path (`clipper.ai-review`)
@@ -841,7 +867,9 @@ Pattern to apply at every site:
 ```ts
 import { perf } from '@/obs/perf'
 
-const end = perf().start('search.query', { /* contextual meta */ })
+const end = perf().start('search.query', {
+  /* contextual meta */
+})
 try {
   const result = doWork()
   end({ ok: true, meta: { count: result.length } })
@@ -874,9 +902,11 @@ git commit -m "feat(obs): instrument key paths (project.open / indexer / clipper
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 9: Implement perf_samples roll-cleanup (>100k → 80k)
 
 **Files:**
+
 - Modify: `electron/obs/perf.ts` (add `trimPerfSamples()`)
 - Create: `electron/obs/perf.trim.test.ts`
 - Modify: `electron/bootstrap.ts` to call `trimPerfSamples()` once on boot
@@ -972,9 +1002,11 @@ git commit -m "feat(obs): trim perf_samples to 80k on boot when above 100k"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 10: Implement `getAggregates(area, window)` (P50 / P95 / successRate / count)
 
 **Files:**
+
 - Modify: `electron/obs/perf.ts` (add `getAggregates`)
 - Create: `electron/obs/perf.agg.test.ts`
 

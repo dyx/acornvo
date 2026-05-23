@@ -8,6 +8,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 2. With a `.md` open in editor, place the cursor at the end of body and `Cmd/Ctrl+V`.
 
 **Pass:**
+
 - A toast appears with the text "尚未支持图片粘贴，将在拾果阶段接入".
 - The body does NOT receive a `data:image/...` URL or any image markup.
 - Vditor doesn't fire an upload request (DevTools Network tab → no POST).
@@ -30,6 +31,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
    ```
 
 **Pass:**
+
 - `diff` shows the hashes are identical, OR if they differ, `git diff path/to/grove/notes/sample.md` shows ONLY trailing-LF changes.
 - Mixed `*` and `_` italics survive.
 - Code fences, lists, headings preserved exactly.
@@ -47,6 +49,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Wait 1s for debounce + save attempt.
 
 **Pass:**
+
 - A toast appears: "文件在外部被修改，请先刷新".
 - The dirty dot stays visible (the body was NOT overwritten on disk).
 - Subsequent `cat path/to/grove/notes/sample.md` shows it does NOT contain the new character.
@@ -61,6 +64,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Switch back to Library briefly.
 
 **Pass:**
+
 - Library list does NOT re-render or flicker during the typing.
 - DevTools React Profiler shows zero re-renders of `<VirtualFileList>` rows triggered by the editor's writes.
 
@@ -74,6 +78,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Open any file in editor.
 
 **Pass:**
+
 - Vditor renders icons.
 - DevTools Network tab shows zero failed requests for `vditor` assets — every asset comes from `/vditor/...`.
 - `npm run build && ls out/renderer/vditor` confirms assets in build output.
@@ -87,6 +92,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 3. Click the "在系统文本编辑器中打开" button.
 
 **Pass:**
+
 - Rail shows all fields correctly.
 - Click → OS opens the file in the user's default text editor.
 
@@ -100,6 +106,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Type a single character in the editor.
 
 **Pass:**
+
 - The store transitions to `{ kind: 'error', error: 'E_NOT_FOUND' }` on the next save attempt.
 - The error view appears with "文件已被移除或重命名".
 
@@ -108,11 +115,13 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 ## 8.14 `openspec validate phase-07-vditor-editor-autosave --strict`
 
 Run:
+
 ```bash
 openspec validate phase-07-vditor-editor-autosave --strict
 ```
 
 **Pass:**
+
 - Exit code 0, "OK" or equivalent.
 
 **Result (run on YYYY-MM-DD):** PENDING

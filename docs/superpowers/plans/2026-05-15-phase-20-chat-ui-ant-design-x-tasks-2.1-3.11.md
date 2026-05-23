@@ -9,6 +9,7 @@
 **Tech Stack:** TypeScript 5, React 18, `antd` (^5.22.0), `@ant-design/x` (^2.7.0), `@ant-design/icons` (^5.5.2), `dayjs` (^1.11.13), Zustand store from `@/stores/chat`, `vitest`, `@testing-library/react`, `@testing-library/user-event`.
 
 **Ant Design X reference:**
+
 - `x-components` skill — Bubble / Conversations / Sender / Attachments / Welcome / Prompts / Actions / ThoughtChain props, slots, theming. Invoke before guessing prop names.
 - `x-markdown` skill — XMarkdown component config, custom components mapping (`components={{ a: ... }}`).
 
@@ -33,6 +34,7 @@ export type ToolStep = {
 Note: `ChatMessage.status` field is added by Plan 4 (Store slimming). For now Plan 2 assumes `status` is optional and selector treats `undefined` as `'done'` for compatibility with the not-yet-changed store.
 
 **Repo conventions:**
+
 - `@/components/chat/*` for chat-domain files.
 - Co-located tests, vitest + RTL.
 - Conventional Commits.
@@ -40,9 +42,11 @@ Note: `ChatMessage.status` field is added by Plan 4 (Store slimming). For now Pl
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 1: Write failing tests for deriveBubbleItems (positional fallback + status fields)
 
 **Files:**
+
 - Create: `src/components/chat/bubbleSelectors.test.ts`
 - Test: `src/components/chat/bubbleSelectors.test.ts`
 
@@ -58,7 +62,7 @@ import type { ChatMessage, PendingApproval } from '@/stores/chat'
 const mkMsg = (m: Partial<ChatMessage> & Pick<ChatMessage, 'id' | 'role'>): ChatMessage => ({
   text: '',
   createdAt: 0,
-  ...m,
+  ...m
 })
 
 describe('deriveBubbleItems', () => {
@@ -70,10 +74,10 @@ describe('deriveBubbleItems', () => {
   it('renders plain assistant message (done)', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'm2', role: 'assistant', text: 'hello', status: 'done' as const })],
-      [],
+      []
     )
     expect(out).toEqual([
-      { key: 'm2', role: 'assistant', content: 'hello', streaming: false, loading: false },
+      { key: 'm2', role: 'assistant', content: 'hello', streaming: false, loading: false }
     ])
   })
 
@@ -86,16 +90,16 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: 'ok',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }],
+          toolCalls: [{ id: 'A', name: 'search', args: { q: 'x' } }]
         }),
         mkMsg({
           id: 't',
           role: 'tool',
           toolCallId: 'A',
-          text: '{"ok":true,"data":[1]}',
-        }),
+          text: '{"ok":true,"data":[1]}'
+        })
       ],
-      [],
+      []
     )
     expect(out).toHaveLength(2)
     expect(out[1]).toMatchObject({
@@ -106,10 +110,10 @@ describe('deriveBubbleItems', () => {
         toolSteps: [
           {
             call: { id: 'A', name: 'search', args: { q: 'x' } },
-            result: { ok: true, data: [1] },
-          },
-        ],
-      },
+            result: { ok: true, data: [1] }
+          }
+        ]
+      }
     })
   })
 
@@ -123,21 +127,21 @@ describe('deriveBubbleItems', () => {
           status: 'done' as const,
           toolCalls: [
             { id: 'A', name: 'fA', args: {} },
-            { id: 'B', name: 'fB', args: {} },
-          ],
+            { id: 'B', name: 'fB', args: {} }
+          ]
         }),
         mkMsg({ id: 't1', role: 'tool', toolCallId: 'B', text: '{"ok":true,"data":"b"}' }),
-        mkMsg({ id: 't2', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":"a"}' }),
+        mkMsg({ id: 't2', role: 'tool', toolCallId: 'A', text: '{"ok":true,"data":"a"}' })
       ],
-      [],
+      []
     )
     expect(out).toHaveLength(1)
     const a = out[0]
     expect(a.content).toMatchObject({
       toolSteps: [
         { call: { id: 'A', name: 'fA', args: {} }, result: { ok: true, data: 'a' } },
-        { call: { id: 'B', name: 'fB', args: {} }, result: { ok: true, data: 'b' } },
-      ],
+        { call: { id: 'B', name: 'fB', args: {} }, result: { ok: true, data: 'b' } }
+      ]
     })
   })
 
@@ -149,10 +153,10 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'streaming' as const,
-          toolCalls: [{ id: 'A', name: 'fA', args: {} }],
-        }),
+          toolCalls: [{ id: 'A', name: 'fA', args: {} }]
+        })
       ],
-      [],
+      []
     )
     const c = out[0].content as { toolSteps: ToolStep[] }
     expect(c.toolSteps[0].result).toBeUndefined()
@@ -164,7 +168,7 @@ describe('deriveBubbleItems', () => {
       toolName: 'write_file',
       args: { path: 'x.md' },
       reason: 'destructive',
-      receivedAt: 100,
+      receivedAt: 100
     }
     const out = deriveBubbleItems(
       [
@@ -173,10 +177,10 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'write_file', args: { path: 'x.md' } }],
-        }),
+          toolCalls: [{ id: 'A', name: 'write_file', args: { path: 'x.md' } }]
+        })
       ],
-      [approval],
+      [approval]
     )
     const c = out[0].content as { toolSteps: ToolStep[] }
     expect(c.toolSteps[0].pendingApproval).toEqual(approval)
@@ -194,11 +198,11 @@ describe('deriveBubbleItems', () => {
           status: 'done' as const,
           toolCalls: [
             { id: 'A', name: 'fa', args: {} },
-            { id: 'B', name: 'fb', args: {} },
-          ],
-        }),
+            { id: 'B', name: 'fb', args: {} }
+          ]
+        })
       ],
-      [pA, pB],
+      [pA, pB]
     )
     const steps = (out[0].content as { toolSteps: ToolStep[] }).toolSteps
     expect(steps[0].pendingApproval).toEqual(pA)
@@ -208,7 +212,7 @@ describe('deriveBubbleItems', () => {
   it('marks streaming=true loading=false when assistant has token text', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'a', role: 'assistant', text: 'hel', status: 'streaming' as const })],
-      [],
+      []
     )
     expect(out[0]).toMatchObject({ streaming: true, loading: false })
   })
@@ -216,16 +220,13 @@ describe('deriveBubbleItems', () => {
   it('marks streaming=true loading=true when assistant has empty text and no toolCalls', () => {
     const out = deriveBubbleItems(
       [mkMsg({ id: 'a', role: 'assistant', text: '', status: 'streaming' as const })],
-      [],
+      []
     )
     expect(out[0]).toMatchObject({ streaming: true, loading: true })
   })
 
   it('treats missing status as done', () => {
-    const out = deriveBubbleItems(
-      [mkMsg({ id: 'a', role: 'assistant', text: 'historical' })],
-      [],
-    )
+    const out = deriveBubbleItems([mkMsg({ id: 'a', role: 'assistant', text: 'historical' })], [])
     expect(out[0]).toMatchObject({ streaming: false, loading: false })
   })
 
@@ -238,11 +239,11 @@ describe('deriveBubbleItems', () => {
           role: 'assistant',
           text: '',
           status: 'done' as const,
-          toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+          toolCalls: [{ id: 'A', name: 'fa', args: {} }]
         }),
-        mkMsg({ id: 't', role: 'tool', text: '{"ok":true,"data":[]}' }),
+        mkMsg({ id: 't', role: 'tool', text: '{"ok":true,"data":[]}' })
       ],
-      [],
+      []
     )
     const steps = (out[0].content as { toolSteps: ToolStep[] }).toolSteps
     expect(steps[0].result).toEqual({ ok: true, data: [] })
@@ -264,9 +265,11 @@ Expected: FAIL with "Cannot find module './bubbleSelectors'".
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 2: Implement bubbleSelectors.ts
 
 **Files:**
+
 - Create: `src/components/chat/bubbleSelectors.ts`
 
 - [x] **Step 1: Write the minimal implementation**
@@ -306,7 +309,7 @@ function parseToolResultText(text: string): ToolStep['result'] {
 
 export function deriveBubbleItems(
   messages: ChatMessage[],
-  pendingApprovals: PendingApproval[],
+  pendingApprovals: PendingApproval[]
 ): BubbleItem[] {
   const items: BubbleItem[] = []
   const stepsByAssistantKey = new Map<string, ToolStep[]>()
@@ -334,7 +337,7 @@ export function deriveBubbleItems(
           role: 'assistant',
           content: { text: m.text, toolSteps },
           streaming,
-          loading,
+          loading
         })
       } else {
         items.push({ key: m.id, role: 'assistant', content: m.text, streaming, loading })
@@ -418,9 +421,11 @@ git commit -m "feat(chat-derive-bubble): deriveBubbleItems folds tool messages b
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 3: Add 11 scenarios coverage check (no new code)
 
 **Files:**
+
 - No code change. This task confirms Task 1 has all 11 scenarios from `chat-derive-bubble` spec.
 
 - [x] **Step 1: Count test cases in `bubbleSelectors.test.ts`**
@@ -429,6 +434,7 @@ Run: `grep -c "^  it(" /Users/aaa/develop/workspace-ai/acornvo/src/components/ch
 Expected: `11`.
 
 If count is < 11, re-read `openspec/changes/phase-20-chat-ui-ant-design-x/specs/chat-derive-bubble/spec.md` scenarios and add the missing tests:
+
 - 纯文本 user 消息 ✓
 - 纯文本 assistant 消息 ✓
 - 单工具按 callId 折叠 ✓
@@ -450,9 +456,11 @@ git commit --allow-empty -m "test(chat-derive-bubble): confirmed 11/11 scenarios
 ---
 
 <!-- openspec-task: 2.6 -->
+
 ### Task 4: Write failing tests for ExternalLinkAnchor
 
 **Files:**
+
 - Create: `src/components/chat/ExternalLinkAnchor.test.tsx`
 
 - [x] **Step 1: Inspect ipc client to know the openExternal call signature**
@@ -473,9 +481,9 @@ import { ExternalLinkAnchor } from './ExternalLinkAnchor'
 vi.mock('@/ipc/client', () => ({
   ipc: {
     file: {
-      openExternal: vi.fn(),
-    },
-  },
+      openExternal: vi.fn()
+    }
+  }
 }))
 
 import { ipc } from '@/ipc/client'
@@ -500,7 +508,7 @@ describe('ExternalLinkAnchor', () => {
     render(
       <div onClick={onClickSpy}>
         <ExternalLinkAnchor href="https://example.com">x</ExternalLinkAnchor>
-      </div>,
+      </div>
     )
     await userEvent.click(screen.getByText('x'))
     expect(onClickSpy).toHaveBeenCalled()
@@ -522,9 +530,11 @@ Expected: FAIL with "Cannot find module './ExternalLinkAnchor'".
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 5: Implement ExternalLinkAnchor.tsx
 
 **Files:**
+
 - Create: `src/components/chat/ExternalLinkAnchor.tsx`
 
 - [x] **Step 1: Write the implementation**
@@ -566,9 +576,11 @@ git commit -m "feat(chat-message-list): ExternalLinkAnchor for IPC-routed extern
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 6: Implement chatRoles.tsx (stub assistant contentRender, full body in Plan 3)
 
 **Files:**
+
 - Create: `src/components/chat/chatRoles.tsx`
 
 - [x] **Step 1: Write minimal implementation with stable role config**
@@ -586,7 +598,7 @@ type RolesMap = Record<'user' | 'assistant', Partial<BubbleProps>>
 export const chatRoles: RolesMap = {
   user: {
     placement: 'end',
-    avatar: <Avatar icon={<UserOutlined />} />,
+    avatar: <Avatar icon={<UserOutlined />} />
   },
   assistant: {
     placement: 'start',
@@ -604,8 +616,8 @@ export const chatRoles: RolesMap = {
           {c.text && <span>{c.text}</span>}
         </div>
       )
-    },
-  },
+    }
+  }
 }
 ```
 
@@ -624,9 +636,11 @@ git commit -m "feat(chat-message-list): chatRoles stub (user/assistant placement
 ---
 
 <!-- openspec-task: 2.5 -->
+
 ### Task 7: Write chatRoles snapshot tests for three render shapes
 
 **Files:**
+
 - Create: `src/components/chat/chatRoles.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -659,9 +673,9 @@ describe('chatRoles', () => {
     const node = chatRoles.assistant.contentRender!(
       {
         text: 'I called a tool',
-        toolSteps: [{ call: { id: 'A', name: 'search', args: {} } }],
+        toolSteps: [{ call: { id: 'A', name: 'search', args: {} } }]
       } as any,
-      {} as any,
+      {} as any
     )
     const { container, getByTestId } = render(<>{node}</>)
     expect(getByTestId('thought-chain-placeholder').textContent).toContain('1 tool step')
@@ -671,7 +685,7 @@ describe('chatRoles', () => {
   it('assistant contentRender omits placeholder when toolSteps is empty', () => {
     const node = chatRoles.assistant.contentRender!(
       { text: 'no tools', toolSteps: [] } as any,
-      {} as any,
+      {} as any
     )
     const { queryByTestId, container } = render(<>{node}</>)
     expect(queryByTestId('thought-chain-placeholder')).toBeNull()
@@ -695,9 +709,11 @@ git commit -m "test(chat-message-list): chatRoles role config + stubbed contentR
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 8: Add groupSession helper to src/lib/date-utils.ts with TDD
 
 **Files:**
+
 - Create: `src/lib/date-utils.ts`
 - Create: `src/lib/date-utils.test.ts`
 
@@ -792,9 +808,11 @@ git commit -m "feat(chat-session-list): groupSession(updatedAt) → today | this
 <!-- openspec-task: 3.3 -->
 <!-- openspec-task: 3.4 -->
 <!-- openspec-task: 3.5 -->
+
 ### Task 9: Implement ConversationsAdapter (groups + menu + collapse + red dot)
 
 **Files:**
+
 - Create: `src/components/chat/ConversationsAdapter.tsx`
 
 - [x] **Step 1: Inspect Conversations API surface**
@@ -845,8 +863,7 @@ export function ConversationsAdapter() {
     () =>
       sessions.map((s) => {
         const hasBackgroundApproval =
-          s.id !== activeSessionId &&
-          (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
+          s.id !== activeSessionId && (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
         const baseLabel = s.title || t('chat.untitled')
         const label =
           editingId === s.id ? (
@@ -890,7 +907,7 @@ export function ConversationsAdapter() {
                 onClick: () => {
                   setEditingId(s.id)
                   setEditingTitle(baseLabel)
-                },
+                }
               },
               {
                 key: 'delete',
@@ -904,12 +921,12 @@ export function ConversationsAdapter() {
                     okText: t('common.delete'),
                     okType: 'danger',
                     cancelText: t('common.cancel'),
-                    onOk: () => deleteSession(s.id),
+                    onOk: () => deleteSession(s.id)
                   })
-                },
-              },
-            ],
-          },
+                }
+              }
+            ]
+          }
         }
       }),
     [
@@ -921,8 +938,8 @@ export function ConversationsAdapter() {
       narrow,
       t,
       renameSession,
-      deleteSession,
-    ],
+      deleteSession
+    ]
   )
 
   return (
@@ -934,7 +951,7 @@ export function ConversationsAdapter() {
       creation={{
         label: t('chat.new'),
         icon: <PlusOutlined />,
-        onClick: () => createSession(),
+        onClick: () => createSession()
       }}
       style={{ width: narrow ? 48 : 280 }}
     />
@@ -978,9 +995,11 @@ git commit -m "feat(chat-session-list): ConversationsAdapter (groups, menu, narr
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 10: Write 12 scenarios test for ConversationsAdapter
 
 **Files:**
+
 - Create: `src/components/chat/ConversationsAdapter.test.tsx`
 
 - [x] **Step 1: Write tests covering all chat-session-list scenarios**
@@ -1009,7 +1028,7 @@ function seed(state: Partial<ReturnType<typeof useChatStore.getState>>) {
     sessionsError: null,
     focusInputBump: 0,
     showShortcutsBump: 0,
-    ...state,
+    ...state
   } as any)
 }
 
@@ -1021,23 +1040,31 @@ describe('ConversationsAdapter', () => {
   beforeEach(() => {
     seed({
       sessions: [
-        { id: 's1', title: 'Today A', createdAt: today, updatedAt: today, profileId: null },
+        { id: 's1', title: 'Today A', createdAt: today, updatedAt: today, profileId: null }
       ],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
   })
 
   it('renders session title when non-empty', () => {
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     expect(screen.getByText('Today A')).toBeTruthy()
   })
 
   it('renders untitled placeholder when title is empty', () => {
     seed({
       sessions: [{ id: 's1', title: '', createdAt: today, updatedAt: today, profileId: null }],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     expect(screen.getByText(/未命名|Untitled/)).toBeTruthy()
   })
 
@@ -1046,12 +1073,16 @@ describe('ConversationsAdapter', () => {
     seed({
       sessions: [
         { id: 's1', title: 'A', createdAt: today, updatedAt: today, profileId: null },
-        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null },
+        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null }
       ],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
     useChatStore.setState({ selectSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     await userEvent.click(screen.getByText('B'))
     expect(selectSession).toHaveBeenCalledWith('s2')
   })
@@ -1061,11 +1092,15 @@ describe('ConversationsAdapter', () => {
       sessions: [
         { id: '1', title: 'Now', createdAt: today, updatedAt: today, profileId: null },
         { id: '2', title: 'Yest', createdAt: yesterday, updatedAt: yesterday, profileId: null },
-        { id: '3', title: 'Old', createdAt: longAgo, updatedAt: longAgo, profileId: null },
+        { id: '3', title: 'Old', createdAt: longAgo, updatedAt: longAgo, profileId: null }
       ],
-      activeSessionId: '1',
+      activeSessionId: '1'
     })
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     // Conversations renders group headers internally; verify all three items render.
     expect(screen.getByText('Now')).toBeTruthy()
     expect(screen.getByText('Yest')).toBeTruthy()
@@ -1075,7 +1110,11 @@ describe('ConversationsAdapter', () => {
   it('rename menu enters inline edit; Enter commits via renameSession', async () => {
     const renameSession = vi.fn()
     useChatStore.setState({ renameSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     // Open menu by hovering then clicking "重命名"; antd Menu may need hover-trigger
     await userEvent.hover(screen.getByText('Today A'))
     const rename = await screen.findByText(/重命名|Rename/)
@@ -1089,7 +1128,11 @@ describe('ConversationsAdapter', () => {
   it('rename Esc aborts without calling renameSession', async () => {
     const renameSession = vi.fn()
     useChatStore.setState({ renameSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     await userEvent.hover(screen.getByText('Today A'))
     const rename = await screen.findByText(/重命名|Rename/)
     await userEvent.click(rename)
@@ -1101,7 +1144,11 @@ describe('ConversationsAdapter', () => {
   it('delete menu opens Modal.confirm; OK invokes deleteSession', async () => {
     const deleteSession = vi.fn()
     useChatStore.setState({ deleteSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     await userEvent.hover(screen.getByText('Today A'))
     const del = await screen.findByText(/^删除$|^Delete$/)
     await userEvent.click(del)
@@ -1113,7 +1160,11 @@ describe('ConversationsAdapter', () => {
   it('creation entry invokes createSession on click', async () => {
     const createSession = vi.fn()
     useChatStore.setState({ createSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     await userEvent.click(screen.getByRole('button', { name: /新建|New/ }))
     expect(createSession).toHaveBeenCalled()
   })
@@ -1123,10 +1174,16 @@ describe('ConversationsAdapter', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 })
     window.dispatchEvent(new Event('resize'))
     seed({
-      sessions: [{ id: 's1', title: 'ABCDEFGHIJ', createdAt: today, updatedAt: today, profileId: null }],
-      activeSessionId: 's1',
+      sessions: [
+        { id: 's1', title: 'ABCDEFGHIJ', createdAt: today, updatedAt: today, profileId: null }
+      ],
+      activeSessionId: 's1'
     })
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     // 8-char truncation
     expect(screen.getByText('ABCDEFGH')).toBeTruthy()
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: original })
@@ -1140,12 +1197,16 @@ describe('ConversationsAdapter', () => {
     seed({
       sessions: [
         { id: 's1', title: 'SessionOne', createdAt: today, updatedAt: today, profileId: null },
-        { id: 's2', title: 'SessionTwo', createdAt: today, updatedAt: today, profileId: null },
+        { id: 's2', title: 'SessionTwo', createdAt: today, updatedAt: today, profileId: null }
       ],
-      activeSessionId: 's1',
+      activeSessionId: 's1'
     })
     useChatStore.setState({ selectSession } as any)
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     await userEvent.click(screen.getByText('SessionTw'))
     expect(selectSession).toHaveBeenCalledWith('s2')
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: original })
@@ -1155,7 +1216,7 @@ describe('ConversationsAdapter', () => {
     seed({
       sessions: [
         { id: 's1', title: 'A', createdAt: today, updatedAt: today, profileId: null },
-        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null },
+        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null }
       ],
       activeSessionId: 's1',
       bySession: {
@@ -1164,19 +1225,21 @@ describe('ConversationsAdapter', () => {
           messages: [],
           streamingBuffer: '',
           flushedLength: 0,
-          pendingApprovals: [
-            { callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 },
-          ],
+          pendingApprovals: [{ callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 }],
           pendingAttachments: [],
           pendingPromptText: '',
           status: 'awaiting-approval',
           error: null,
           lastUserText: '',
-          lastUserAttachments: [],
-        } as any,
-      } as any,
+          lastUserAttachments: []
+        } as any
+      } as any
     })
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     const labelB = screen.getByText('B').closest('span')
     expect(within(labelB!).getByLabelText(/有待审批|approval/i)).toBeTruthy()
   })
@@ -1185,7 +1248,7 @@ describe('ConversationsAdapter', () => {
     seed({
       sessions: [
         { id: 's1', title: 'A', createdAt: today, updatedAt: today, profileId: null },
-        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null },
+        { id: 's2', title: 'B', createdAt: today, updatedAt: today, profileId: null }
       ],
       activeSessionId: 's2', // B is now active
       bySession: {
@@ -1194,19 +1257,21 @@ describe('ConversationsAdapter', () => {
           messages: [],
           streamingBuffer: '',
           flushedLength: 0,
-          pendingApprovals: [
-            { callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 },
-          ],
+          pendingApprovals: [{ callId: 'A', toolName: 'x', args: {}, reason: '', receivedAt: 0 }],
           pendingAttachments: [],
           pendingPromptText: '',
           status: 'awaiting-approval',
           error: null,
           lastUserText: '',
-          lastUserAttachments: [],
-        } as any,
-      } as any,
+          lastUserAttachments: []
+        } as any
+      } as any
     })
-    render(<Wrap><ConversationsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <ConversationsAdapter />
+      </Wrap>
+    )
     const labelB = screen.getByText('B').closest('span')!
     expect(within(labelB).queryByLabelText(/有待审批|approval/i)).toBeNull()
   })
@@ -1229,9 +1294,11 @@ git commit -m "test(chat-session-list): 12-scenario coverage for ConversationsAd
 
 <!-- openspec-task: 3.7 -->
 <!-- openspec-task: 3.9 -->
+
 ### Task 11: Implement ChatInputArea (Sender + onSubmit/onCancel + Esc + focus bump)
 
 **Files:**
+
 - Create: `src/components/chat/ChatInputArea.tsx`
 
 - [x] **Step 1: Inspect Sender API surface**
@@ -1254,12 +1321,14 @@ import { AttachmentsAdapter } from './AttachmentsAdapter'
 export function ChatInputArea() {
   const { t } = useTranslation()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const status = useChatStore((s) => (activeSessionId ? s.bySession[activeSessionId]?.status : 'idle'))
+  const status = useChatStore((s) =>
+    activeSessionId ? s.bySession[activeSessionId]?.status : 'idle'
+  )
   const pendingAttachments = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingAttachments ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
   )
   const pendingPromptText = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingPromptText ?? '' : '',
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingPromptText ?? '') : ''
   )
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
@@ -1360,9 +1429,11 @@ git commit -m "feat(chat-input): ChatInputArea — Sender + Esc cancel + papercl
 ---
 
 <!-- openspec-task: 3.8 -->
+
 ### Task 12: Implement AttachmentsAdapter with forwardRef select() exposure
 
 **Files:**
+
 - Create: `src/components/chat/AttachmentsAdapter.tsx`
 
 - [x] **Step 1: Inspect Attachments API surface**
@@ -1389,7 +1460,7 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) 
   const innerRef = useRef<AttachmentsRef | null>(null)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const pendingAttachments = useChatStore((s) =>
-    activeSessionId ? s.bySession[activeSessionId]?.pendingAttachments ?? [] : [],
+    activeSessionId ? (s.bySession[activeSessionId]?.pendingAttachments ?? []) : []
   )
   const pushAttachment = useChatStore((s) => s.pushAttachment)
   const removeAttachment = useChatStore((s) => s.removeAttachment)
@@ -1404,7 +1475,7 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) 
         const att: Attachment = { type: 'file', path: p, title: name } as Attachment
         pushAttachment(att)
       }
-    },
+    }
   }))
 
   return (
@@ -1413,7 +1484,7 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle>((_, ref) 
       overflow="scrollX"
       items={pendingAttachments.map((a, i) => ({
         uid: String(i),
-        name: a.title,
+        name: a.title
         // Map to antd UploadFile-like shape; Attachments tolerates partial fields.
       }))}
       onItemRemove={(item) => {
@@ -1445,9 +1516,11 @@ git commit -m "feat(chat-attachments): AttachmentsAdapter with imperative select
 ---
 
 <!-- openspec-task: 3.10 -->
+
 ### Task 13: Write 8-scenario test for ChatInputArea
 
 **Files:**
+
 - Create: `src/components/chat/ChatInputArea.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -1484,10 +1557,10 @@ const seedSession = (overrides: Record<string, any> = {}) => {
         error: null,
         lastUserText: '',
         lastUserAttachments: [],
-        ...overrides,
-      } as any,
+        ...overrides
+      } as any
     },
-    focusInputBump: 0,
+    focusInputBump: 0
   } as any)
 }
 
@@ -1495,14 +1568,22 @@ describe('ChatInputArea', () => {
   beforeEach(() => seedSession())
 
   it('single-line input shows minimal height (no overflow scroll)', () => {
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     expect(screen.getByPlaceholderText(/输入消息|Enter message/)).toBeTruthy()
   })
 
   it('Enter inserts newline (does not submit)', async () => {
     const sendUserMessage = vi.fn()
     useChatStore.setState({ sendUserMessage } as any)
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const ta = screen.getByPlaceholderText(/输入消息|Enter message/) as HTMLTextAreaElement
     await userEvent.click(ta)
     await userEvent.type(ta, 'a{enter}b')
@@ -1513,7 +1594,11 @@ describe('ChatInputArea', () => {
   it('Cmd+Enter submits with non-empty text', async () => {
     const sendUserMessage = vi.fn(async () => {})
     useChatStore.setState({ sendUserMessage } as any)
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const ta = screen.getByPlaceholderText(/输入消息|Enter message/) as HTMLTextAreaElement
     await userEvent.click(ta)
     await userEvent.type(ta, 'hello')
@@ -1524,7 +1609,11 @@ describe('ChatInputArea', () => {
   it('empty text + empty attachments — no submit', async () => {
     const sendUserMessage = vi.fn()
     useChatStore.setState({ sendUserMessage } as any)
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const ta = screen.getByPlaceholderText(/输入消息|Enter message/) as HTMLTextAreaElement
     await userEvent.click(ta)
     await userEvent.keyboard('{Meta>}{Enter}{/Meta}')
@@ -1535,7 +1624,11 @@ describe('ChatInputArea', () => {
     const cancelStream = vi.fn()
     useChatStore.setState({ cancelStream } as any)
     seedSession({ status: 'streaming' })
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const ta = screen.getByPlaceholderText(/输入消息|Enter message/) as HTMLTextAreaElement
     await userEvent.click(ta)
     await userEvent.keyboard('{Escape}')
@@ -1544,14 +1637,22 @@ describe('ChatInputArea', () => {
 
   it('streaming status flips Sender into loading mode', () => {
     seedSession({ status: 'streaming' })
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     // Sender renders a cancel/stop button when loading=true; assert by aria-label or icon
     const stopBtn = screen.queryByRole('button', { name: /stop|cancel|停止|取消/i })
     expect(stopBtn).toBeTruthy()
   })
 
   it('focusInputBump triggers textarea focus', async () => {
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const ta = screen.getByPlaceholderText(/输入消息|Enter message/) as HTMLTextAreaElement
     expect(document.activeElement).not.toBe(ta)
     useChatStore.setState({ focusInputBump: 1 } as any)
@@ -1561,7 +1662,11 @@ describe('ChatInputArea', () => {
   })
 
   it('paperclip button calls AttachmentsAdapter.select via ref', async () => {
-    render(<Wrap><ChatInputArea /></Wrap>)
+    render(
+      <Wrap>
+        <ChatInputArea />
+      </Wrap>
+    )
     const btn = screen.getByLabelText(/添加附件|attach/i)
     expect(btn).toBeTruthy()
     // Click does not throw even if no IPC handler returns paths
@@ -1585,9 +1690,11 @@ git commit -m "test(chat-input): 8-scenario coverage for ChatInputArea"
 ---
 
 <!-- openspec-task: 3.11 -->
+
 ### Task 14: Write 5-scenario test for AttachmentsAdapter
 
 **Files:**
+
 - Create: `src/components/chat/AttachmentsAdapter.test.tsx`
 
 - [x] **Step 1: Write tests**
@@ -1611,9 +1718,9 @@ const Wrap = ({ children }: { children: React.ReactNode }) => (
 vi.mock('@/ipc/client', () => ({
   ipc: {
     file: {
-      openDialog: vi.fn(),
-    },
-  },
+      openDialog: vi.fn()
+    }
+  }
 }))
 import { ipc } from '@/ipc/client'
 
@@ -1633,9 +1740,9 @@ function seed(atts: any[] = []) {
         status: 'idle',
         error: null,
         lastUserText: '',
-        lastUserAttachments: [],
-      } as any,
-    },
+        lastUserAttachments: []
+      } as any
+    }
   } as any)
 }
 
@@ -1646,7 +1753,11 @@ describe('AttachmentsAdapter', () => {
 
   it('renders nothing-visible when pendingAttachments is empty', () => {
     seed([])
-    render(<Wrap><AttachmentsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     // Empty list — no file items in DOM
     expect(screen.queryByRole('listitem')).toBeNull()
   })
@@ -1654,9 +1765,13 @@ describe('AttachmentsAdapter', () => {
   it('renders each attachment with its title', () => {
     seed([
       { type: 'file', path: '/tmp/a.md', title: 'a.md' },
-      { type: 'file', path: '/tmp/b.md', title: 'b.md' },
+      { type: 'file', path: '/tmp/b.md', title: 'b.md' }
     ])
-    render(<Wrap><AttachmentsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(screen.getByText('a.md')).toBeTruthy()
     expect(screen.getByText('b.md')).toBeTruthy()
   })
@@ -1667,13 +1782,17 @@ describe('AttachmentsAdapter', () => {
     useChatStore.setState({ pushAttachment } as any)
     seed([])
     const ref = createRef<AttachmentsAdapterHandle>()
-    render(<Wrap><AttachmentsAdapter ref={ref} /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter ref={ref} />
+      </Wrap>
+    )
     await ref.current!.select({ multiple: true })
     expect(pushAttachment).toHaveBeenCalledTimes(2)
     expect(pushAttachment).toHaveBeenNthCalledWith(1, {
       type: 'file',
       path: '/tmp/x.md',
-      title: 'x.md',
+      title: 'x.md'
     })
   })
 
@@ -1682,9 +1801,13 @@ describe('AttachmentsAdapter', () => {
     useChatStore.setState({ removeAttachment } as any)
     seed([
       { type: 'file', path: '/tmp/a.md', title: 'a.md' },
-      { type: 'file', path: '/tmp/b.md', title: 'b.md' },
+      { type: 'file', path: '/tmp/b.md', title: 'b.md' }
     ])
-    render(<Wrap><AttachmentsAdapter /></Wrap>)
+    render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     // Find the 2nd item's close button (Attachments renders an X / close icon per item)
     const closeButtons = screen.getAllByRole('button', { name: /remove|close|删除|关闭/i })
     expect(closeButtons.length).toBeGreaterThanOrEqual(2)
@@ -1694,10 +1817,18 @@ describe('AttachmentsAdapter', () => {
 
   it('after store clears pendingAttachments, list re-renders empty', () => {
     seed([{ type: 'file', path: '/tmp/a.md', title: 'a.md' }])
-    const { rerender } = render(<Wrap><AttachmentsAdapter /></Wrap>)
+    const { rerender } = render(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(screen.getByText('a.md')).toBeTruthy()
     seed([])
-    rerender(<Wrap><AttachmentsAdapter /></Wrap>)
+    rerender(
+      <Wrap>
+        <AttachmentsAdapter />
+      </Wrap>
+    )
     expect(screen.queryByText('a.md')).toBeNull()
   })
 })

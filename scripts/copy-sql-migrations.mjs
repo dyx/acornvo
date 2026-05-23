@@ -20,7 +20,9 @@ if (!existsSync(src)) {
 }
 
 mkdirSync(dest, { recursive: true })
-for (const file of readdirSync(src).filter((name) => name.endsWith('.sql')).sort()) {
+for (const file of readdirSync(src)
+  .filter((name) => name.endsWith('.sql'))
+  .sort()) {
   cpSync(join(src, file), join(dest, file))
 }
 console.log(`[copy-sql-migrations] copied SQL files to ${dest}`)

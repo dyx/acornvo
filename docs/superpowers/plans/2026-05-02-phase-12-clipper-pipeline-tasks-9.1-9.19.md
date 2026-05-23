@@ -31,12 +31,12 @@ Cover every behaviour from the OpenSpec acceptance section. Each task is a discr
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Browse.clipper.acceptance.test.tsx` | Create + extend | 9.1 .. 9.18 |
-| `electron/clipper/pipeline.acceptance.test.ts` | Create + extend | 9.6, 9.7, 9.8, 9.17, 9.18 |
-| `docs/runbooks/phase-12-acceptance.md` | Create + extend | 9.1 .. 9.18 |
-| `openspec/changes/phase-12-clipper-pipeline/tasks.md` | Modify (mark all complete) | 9.19 |
+| Path                                                  | Action                     | Owner task                |
+| ----------------------------------------------------- | -------------------------- | ------------------------- |
+| `src/pages/Browse.clipper.acceptance.test.tsx`        | Create + extend            | 9.1 .. 9.18               |
+| `electron/clipper/pipeline.acceptance.test.ts`        | Create + extend            | 9.6, 9.7, 9.8, 9.17, 9.18 |
+| `docs/runbooks/phase-12-acceptance.md`                | Create + extend            | 9.1 .. 9.18               |
+| `openspec/changes/phase-12-clipper-pipeline/tasks.md` | Modify (mark all complete) | 9.19                      |
 
 ## Pre-flight
 
@@ -56,9 +56,11 @@ Cover every behaviour from the OpenSpec acceptance section. Each task is a discr
 ## Tasks
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 1: 剪藏触发 → Modal 弹出，title / body preview 正确
 
 **Files:**
+
 - Create: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Create: `docs/runbooks/phase-12-acceptance.md`
 
@@ -92,19 +94,21 @@ const samplePreview = {
 function setupActiveTab(url = 'https://example.com/article') {
   useBrowserStore.setState({
     activeTabId: 't1',
-    tabs: [{
-      id: 't1',
-      url,
-      title: 'tab',
-      favicon: null,
-      loading: false,
-      canGoBack: false,
-      canGoForward: false,
-      readerMode: false,
-      suspended: false,
-      savedUrl: url,
-      isClipped: false
-    } as any]
+    tabs: [
+      {
+        id: 't1',
+        url,
+        title: 'tab',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        readerMode: false,
+        suspended: false,
+        savedUrl: url,
+        isClipped: false
+      } as any
+    ]
   })
 }
 
@@ -113,7 +117,13 @@ function defaultClipperPort() {
     clip: vi.fn(async () => ({ ok: true, data: samplePreview })),
     saveClip: vi.fn(async () => ({
       ok: true,
-      data: { id: 1, path: samplePreview.suggestedPath, url: samplePreview.url, title: samplePreview.title, degraded: false }
+      data: {
+        id: 1,
+        path: samplePreview.suggestedPath,
+        url: samplePreview.url,
+        title: samplePreview.title,
+        degraded: false
+      }
     })),
     cancelClip: vi.fn(async () => ({ ok: true, data: undefined })),
     reextract: vi.fn(async () => ({ ok: true, data: samplePreview }))
@@ -160,6 +170,7 @@ describe('OpenSpec 9.1 — clip triggers modal', () => {
 
 ```markdown
 <!-- docs/runbooks/phase-12-acceptance.md -->
+
 # Phase 12 — Clipper Acceptance Runbook
 
 Manual smoke procedures. Mark each step `[x]` when done.
@@ -171,6 +182,7 @@ Manual smoke procedures. Mark each step `[x]` when done.
 3. Open `/browser`, point a tab at the URL listed in each step.
 
 ## 9.1 — clip triggers modal
+
 - [ ] Open `https://example.com` (or a public-domain article URL).
 - [ ] Click the scissors button in the AddressBar.
 - [ ] Observe: ClipPreviewDialog appears within ~3 s with the correct title and a body preview (≥ a few hundred chars).
@@ -194,9 +206,11 @@ git commit -m "test(phase-12): acceptance 9.1 — clip triggers modal with title
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 2: Modal 填 tags → 保存 → 文件出现，frontmatter 完整，clips 表新增
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -233,6 +247,7 @@ Append to `docs/runbooks/phase-12-acceptance.md`:
 
 ```markdown
 ## 9.2 — save writes frontmatter + clip row
+
 - [ ] Continuing from 9.1: type tags `ai,news` in the modal.
 - [ ] Click 保存. Observe: toast shows 已剪藏; modal closes.
 - [ ] Verify file: `cat /tmp/acornvo-smoke/inbox/202605/<slug>.md` includes a YAML block with `tags: [ai, news]`, `url:`, `site:`, `source_type: web`, `clipped_at:`.
@@ -250,9 +265,11 @@ git commit -m "test(phase-12): acceptance 9.2 — save with tags writes frontmat
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 3: 同一 URL 再点剪藏 → "已剪藏，是否打开？" 确认 → 打开 `/editor/:path`
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -289,6 +306,7 @@ describe('OpenSpec 9.3 — already-clipped click opens editor', () => {
 
 ```markdown
 ## 9.3 — re-clip prompts open
+
 - [ ] Reload `/browser` and re-open the same URL from 9.2.
 - [ ] Click the scissors. Observe: "已剪藏" confirm modal.
 - [ ] Click 打开. Observe: app navigates to `/editor/inbox/.../<slug>.md`.
@@ -305,9 +323,11 @@ git commit -m "test(phase-12): acceptance 9.3 — already-clipped → confirm �
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 4: 剪藏后切回该 tab → 按钮变实心 + 对勾
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -319,16 +339,44 @@ describe('OpenSpec 9.4 — switching back to a clipped tab shows filled icon', (
     useBrowserStore.setState({
       activeTabId: 't1',
       tabs: [
-        { id: 't1', url: 'https://x/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://x/', isClipped: true } as any,
-        { id: 't2', url: 'https://y/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://y/', isClipped: false } as any
+        {
+          id: 't1',
+          url: 'https://x/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://x/',
+          isClipped: true
+        } as any,
+        {
+          id: 't2',
+          url: 'https://y/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://y/',
+          isClipped: false
+        } as any
       ]
     })
     renderBrowse()
-    expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe('clipped')
+    expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe(
+      'clipped'
+    )
 
     useBrowserStore.setState({ activeTabId: 't2' })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe('hollow')
+      expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe(
+        'hollow'
+      )
     })
   })
 })
@@ -338,6 +386,7 @@ describe('OpenSpec 9.4 — switching back to a clipped tab shows filled icon', (
 
 ```markdown
 ## 9.4 — switch tabs reflects isClipped
+
 - [ ] In the dev session: open the previously-clipped URL in a new tab; switch back.
 - [ ] Observe: scissors icon shows the filled style + small ✓.
 ```
@@ -353,9 +402,11 @@ git commit -m "test(phase-12): acceptance 9.4 — clipped tab shows filled sciss
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 5: 剪藏后另一 tab 打开新 URL → 按钮回空心
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -366,7 +417,21 @@ describe('OpenSpec 9.5 — new URL → hollow icon', () => {
   it('navigating an existing tab to a fresh URL flips isClipped to false', async () => {
     useBrowserStore.setState({
       activeTabId: 't1',
-      tabs: [{ id: 't1', url: 'https://old/', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, readerMode: false, suspended: false, savedUrl: 'https://old/', isClipped: true } as any]
+      tabs: [
+        {
+          id: 't1',
+          url: 'https://old/',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          readerMode: false,
+          suspended: false,
+          savedUrl: 'https://old/',
+          isClipped: true
+        } as any
+      ]
     })
     setClipsPort({
       ...defaultClipsPort(),
@@ -377,7 +442,9 @@ describe('OpenSpec 9.5 — new URL → hollow icon', () => {
     const handler = (window as any).__browserOnPatch as (p: any) => void
     handler?.({ tabId: 't1', patch: { url: 'https://new/' } })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe('hollow')
+      expect(screen.getByRole('button', { name: /clip|剪藏/i }).getAttribute('data-state')).toBe(
+        'hollow'
+      )
     })
   })
 })
@@ -387,6 +454,7 @@ describe('OpenSpec 9.5 — new URL → hollow icon', () => {
 
 ```markdown
 ## 9.5 — new URL → hollow
+
 - [ ] In the same tab, navigate to a brand-new URL not in clips.
 - [ ] Observe: scissors icon flips to hollow within ~200 ms.
 ```
@@ -402,9 +470,11 @@ git commit -m "test(phase-12): acceptance 9.5 — fresh URL → hollow scissors"
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 6: 中文 slug 含 jieba 分词；英文 slug 为 slugify 结果
 
 **Files:**
+
 - Create: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -439,9 +509,11 @@ git commit -m "test(phase-12): acceptance 9.6 — slug rules (jieba + slugify)"
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 7: extract 超时（5.1s）→ 错误 UI + "强制保存整页" → degraded 流程成功
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
@@ -490,7 +562,11 @@ describe('OpenSpec 9.7 — extract timeout returns E_EXTRACT_TIMEOUT', () => {
       nowDate: () => new Date('2026-05-02T02:00:00Z'),
       extractTimeoutMs: 5000
     } as any)
-    const r = await p.clip({ isDestroyed: () => false, getURL: () => 'https://x/', getTitle: () => 't' } as any)
+    const r = await p.clip({
+      isDestroyed: () => false,
+      getURL: () => 'https://x/',
+      getTitle: () => 't'
+    } as any)
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.error.code).toBe('E_EXTRACT_TIMEOUT')
   })
@@ -501,6 +577,7 @@ describe('OpenSpec 9.7 — extract timeout returns E_EXTRACT_TIMEOUT', () => {
 
 ```markdown
 ## 9.7 — extract timeout
+
 - [ ] Open a contrived slow page (e.g. a local script that does `while(true){}`) in a tab.
 - [ ] Click scissors. Observe: after ~5 s the "无法抽取正文" toast appears with "强制保存整页" button.
 - [ ] Click 强制保存整页. Observe: file written under inbox with `degraded: true` in the clips row.
@@ -517,9 +594,11 @@ git commit -m "test(phase-12): acceptance 9.7 — extract timeout UI + pipeline 
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 8: Readability null → degraded=true; clips.degraded=1; UI 提示
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -548,6 +627,7 @@ describe('OpenSpec 9.8 — degraded preview shows notice', () => {
 
 ```markdown
 ## 9.8 — degraded mode
+
 - [ ] Open a low-signal page (e.g. a JSON viewer or a content-less landing page).
 - [ ] Click scissors. Observe: modal opens with the "部分抽取" yellow notice.
 - [ ] Save. Verify clips DB row: `degraded` column = 1.
@@ -564,9 +644,11 @@ git commit -m "test(phase-12): acceptance 9.8 — degraded preview shows notice"
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 9: 相对链接 `<a href="/x">` → markdown 中为绝对 URL
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -593,9 +675,11 @@ git commit -m "test(phase-12): acceptance 9.9 — relative link → absolute URL
 ---
 
 <!-- openspec-task: 9.10 -->
+
 ### Task 10: `<img srcset=...>` → markdown 只保留 alt + src；无 srcset
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -624,14 +708,16 @@ git commit -m "test(phase-12): acceptance 9.10 — img srcset stripped, alt + sr
 ---
 
 <!-- openspec-task: 9.11 -->
+
 ### Task 11: 代码块 `<pre><code class="language-ts">` → markdown 围栏
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Append the test**
 
-```ts
+````ts
 describe('OpenSpec 9.11 — fenced code block with language', () => {
   it('language-ts → ```ts fence', () => {
     const md = transformHtmlToMarkdown(
@@ -642,7 +728,7 @@ describe('OpenSpec 9.11 — fenced code block with language', () => {
     expect(md).toContain('const a = 1;')
   })
 })
-```
+````
 
 - [ ] **Step 2: Run + commit**
 
@@ -655,9 +741,11 @@ git commit -m "test(phase-12): acceptance 9.11 — code block language preserved
 ---
 
 <!-- openspec-task: 9.12 -->
+
 ### Task 12: GFM 表格 HTML → markdown 表格保真
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -687,9 +775,11 @@ git commit -m "test(phase-12): acceptance 9.12 — GFM table fidelity"
 ---
 
 <!-- openspec-task: 9.13 -->
+
 ### Task 13: about:blank / acorn://new-tab → 按钮 disabled；快捷键 no-op + toast
 
 **Files:**
+
 - Modify: `src/pages/Browse.clipper.acceptance.test.tsx`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -720,6 +810,7 @@ describe('OpenSpec 9.13 — non-http URL', () => {
 
 ```markdown
 ## 9.13 — unsupported URL
+
 - [ ] Open a fresh new-tab page (`acorn://new-tab`).
 - [ ] Observe: scissors button is greyed out / disabled.
 - [ ] Press `Cmd+Shift+S`. Observe: toast "当前页面不支持剪藏" appears; no modal opens.
@@ -736,9 +827,11 @@ git commit -m "test(phase-12): acceptance 9.13 — unsupported URL disables butt
 ---
 
 <!-- openspec-task: 9.14 -->
+
 ### Task 14: `clips.list({ q: 'news' })` 命中 title/url/excerpt 含 news
 
 **Files:**
+
 - Modify: `electron/ipc/clips.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -748,10 +841,32 @@ describe('OpenSpec 9.14 — clips.list q matches title/url/excerpt', () => {
   it('q=news returns rows where any of the three columns contains "news" (CI)', async () => {
     const db = freshDb()
     const dao = createClipsDao(db)
-    await dao.create({ url: 'https://x/news/1', path: 'p1', title: 'Tech', clippedAt: '2026-05-02T00:00:00Z' })
-    await dao.create({ url: 'https://x/2', path: 'p2', title: 'NEWS roundup', clippedAt: '2026-05-02T00:00:01Z' })
-    await dao.create({ url: 'https://x/3', path: 'p3', title: 'Other', excerpt: 'today\'s news digest', clippedAt: '2026-05-02T00:00:02Z' })
-    await dao.create({ url: 'https://x/4', path: 'p4', title: 'Other', excerpt: 'unrelated', clippedAt: '2026-05-02T00:00:03Z' })
+    await dao.create({
+      url: 'https://x/news/1',
+      path: 'p1',
+      title: 'Tech',
+      clippedAt: '2026-05-02T00:00:00Z'
+    })
+    await dao.create({
+      url: 'https://x/2',
+      path: 'p2',
+      title: 'NEWS roundup',
+      clippedAt: '2026-05-02T00:00:01Z'
+    })
+    await dao.create({
+      url: 'https://x/3',
+      path: 'p3',
+      title: 'Other',
+      excerpt: "today's news digest",
+      clippedAt: '2026-05-02T00:00:02Z'
+    })
+    await dao.create({
+      url: 'https://x/4',
+      path: 'p4',
+      title: 'Other',
+      excerpt: 'unrelated',
+      clippedAt: '2026-05-02T00:00:03Z'
+    })
     const r = (await dao.list({ q: 'news', limit: 10, offset: 0 })) as any
     expect(r.ok).toBe(true)
     expect(r.data.total).toBe(3)
@@ -770,9 +885,11 @@ git commit -m "test(phase-12): acceptance 9.14 — clips.list q matches title/ur
 ---
 
 <!-- openspec-task: 9.15 -->
+
 ### Task 15: `clips.list({ site: 'example.com' })` 命中 site 行
 
 **Files:**
+
 - Modify: `electron/ipc/clips.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -782,9 +899,24 @@ describe('OpenSpec 9.15 — clips.list filters by site', () => {
   it('site=example.com returns only matching rows', async () => {
     const db = freshDb()
     const dao = createClipsDao(db)
-    await dao.create({ url: 'https://example.com/a', site: 'example.com', path: 'pa', clippedAt: '2026-05-02T00:00:00Z' })
-    await dao.create({ url: 'https://other.com/b', site: 'other.com', path: 'pb', clippedAt: '2026-05-02T00:00:01Z' })
-    await dao.create({ url: 'https://example.com/c', site: 'example.com', path: 'pc', clippedAt: '2026-05-02T00:00:02Z' })
+    await dao.create({
+      url: 'https://example.com/a',
+      site: 'example.com',
+      path: 'pa',
+      clippedAt: '2026-05-02T00:00:00Z'
+    })
+    await dao.create({
+      url: 'https://other.com/b',
+      site: 'other.com',
+      path: 'pb',
+      clippedAt: '2026-05-02T00:00:01Z'
+    })
+    await dao.create({
+      url: 'https://example.com/c',
+      site: 'example.com',
+      path: 'pc',
+      clippedAt: '2026-05-02T00:00:02Z'
+    })
     const r = (await dao.list({ site: 'example.com', limit: 10, offset: 0 })) as any
     expect(r.ok).toBe(true)
     expect(r.data.total).toBe(2)
@@ -804,9 +936,11 @@ git commit -m "test(phase-12): acceptance 9.15 — clips.list site filter"
 ---
 
 <!-- openspec-task: 9.16 -->
+
 ### Task 16: `clips.delete(id)` 只删 DB 行；md 文件仍在
 
 **Files:**
+
 - Modify: `electron/ipc/clips.test.ts`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -817,7 +951,11 @@ describe('OpenSpec 9.16 — clips.delete only removes DB row', () => {
   it('delete removes the row but does not touch the filesystem', async () => {
     const db = freshDb()
     const dao = createClipsDao(db)
-    const c = (await dao.create({ url: 'https://x/', path: 'inbox/202605/x.md', clippedAt: '2026-05-02T00:00:00Z' })) as any
+    const c = (await dao.create({
+      url: 'https://x/',
+      path: 'inbox/202605/x.md',
+      clippedAt: '2026-05-02T00:00:00Z'
+    })) as any
     const del = (await dao.delete({ id: c.data.id })) as any
     expect(del.ok).toBe(true)
     const got = (await dao.getById({ id: c.data.id })) as any
@@ -831,6 +969,7 @@ describe('OpenSpec 9.16 — clips.delete only removes DB row', () => {
 
 ```markdown
 ## 9.16 — clips.delete preserves the file
+
 - [ ] Pick a clipped row id (e.g. via the SQL above).
 - [ ] In the dev console: `await window.api.clips.delete({ id: <id> })`.
 - [ ] Verify: `cat /tmp/acornvo-smoke/inbox/202605/<slug>.md` still prints; the row is gone from the table.
@@ -847,9 +986,11 @@ git commit -m "test(phase-12): acceptance 9.16 — clips.delete removes row only
 ---
 
 <!-- openspec-task: 9.17 -->
+
 ### Task 17: 写入失败模拟 → clips 表无插入；pipeline 进入 error；允许重试
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 - Modify: `docs/runbooks/phase-12-acceptance.md`
 
@@ -858,7 +999,9 @@ git commit -m "test(phase-12): acceptance 9.16 — clips.delete removes row only
 ```ts
 describe('OpenSpec 9.17 — write failure does not insert clip row; allows retry', () => {
   it('writeAtomic throws → no clipsDao.create call; error envelope returned', async () => {
-    const writeAtomic = vi.fn(async () => { throw Object.assign(new Error('disk full'), { code: 'ENOSPC' }) })
+    const writeAtomic = vi.fn(async () => {
+      throw Object.assign(new Error('disk full'), { code: 'ENOSPC' })
+    })
     const create = vi.fn()
     const p = createPipeline({
       extract: vi.fn(async () => ({
@@ -879,7 +1022,11 @@ describe('OpenSpec 9.17 — write failure does not insert clip row; allows retry
       nowDate: () => new Date('2026-05-02T02:00:00Z'),
       extractTimeoutMs: 5000
     } as any)
-    const start = await p.clip({ isDestroyed: () => false, getURL: () => 'https://x/', getTitle: () => 'X' } as any)
+    const start = await p.clip({
+      isDestroyed: () => false,
+      getURL: () => 'https://x/',
+      getTitle: () => 'X'
+    } as any)
     if (!start.ok) throw new Error('precondition: start should succeed')
     const r = await p.saveClip({ runId: start.preview.runId, title: 'X', tags: [] })
     expect(r.ok).toBe(false)
@@ -893,6 +1040,7 @@ describe('OpenSpec 9.17 — write failure does not insert clip row; allows retry
 
 ```markdown
 ## 9.17 — write failure
+
 - [ ] (manual) Set the vault dir read-only: `chmod -R 555 /tmp/acornvo-smoke/inbox`.
 - [ ] Click clip on any URL → save in modal.
 - [ ] Observe: error toast "保存失败" with 重试 button.
@@ -911,9 +1059,11 @@ git commit -m "test(phase-12): acceptance 9.17 — write failure → no clip row
 ---
 
 <!-- openspec-task: 9.18 -->
+
 ### Task 18: 剪藏成功后 ops_log 新增 `op='clip'`；clipQueue.enqueue 被调
 
 **Files:**
+
 - Modify: `electron/clipper/pipeline.acceptance.test.ts`
 
 - [ ] **Step 1: Append the test**
@@ -942,7 +1092,11 @@ describe('OpenSpec 9.18 — success writes ops_log + enqueues clip', () => {
       nowDate: () => new Date('2026-05-02T02:00:00Z'),
       extractTimeoutMs: 5000
     } as any)
-    const start = await p.clip({ isDestroyed: () => false, getURL: () => 'https://x/', getTitle: () => 'X' } as any)
+    const start = await p.clip({
+      isDestroyed: () => false,
+      getURL: () => 'https://x/',
+      getTitle: () => 'X'
+    } as any)
     if (!start.ok) throw new Error('precondition')
     const r = await p.saveClip({ runId: start.preview.runId, title: 'X', tags: [] })
     expect(r.ok).toBe(true)
@@ -963,9 +1117,11 @@ git commit -m "test(phase-12): acceptance 9.18 — success writes ops_log + enqu
 ---
 
 <!-- openspec-task: 9.19 -->
+
 ### Task 19: `openspec validate phase-12-clipper-pipeline --strict` + mark all OpenSpec tasks complete
 
 **Files:**
+
 - Modify: `openspec/changes/phase-12-clipper-pipeline/tasks.md`
 
 - [ ] **Step 1: Run the full clipper test suite once**

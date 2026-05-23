@@ -15,12 +15,14 @@
 ## File Structure
 
 **New files:**
+
 - `electron/window/title-bar-theme.ts` — overlay color constants and `getOverlayForTheme()` helper, imported by both main and IPC handler
 - `electron/ipc/window.ts` — IPC handler namespace for window-related operations (`themeApplied`)
 - `src/components/TitleBar.test.tsx` — replaces / adds vitest coverage for new TitleBar
 - `src/components/GroveSwitcher.test.tsx` — vitest coverage for the rewritten switcher
 
 **Modified files:**
+
 - `electron/main.ts` — `createMainWindow()` config + `nativeTheme.on('updated')` listener
 - `electron/ipc/handlers.ts` — register `windowHandlers`
 - `shared/ipc-contract.ts` — add `window` namespace to `IpcContract`
@@ -35,6 +37,7 @@
 - `src/i18n/locales/en-US.json` — add `switcher.selectGrove`
 
 **Deleted files:**
+
 - `src/stores/title.ts`
 
 `src/ipc/client.ts` requires no changes: it exposes `ipc` typed as `IpcClient<IpcContract>`, so the new `window` namespace flows in automatically once added to `IpcContract` and `preload.ts`.
@@ -44,6 +47,7 @@
 ## Task 1: Extract title-bar overlay theme module
 
 **Files:**
+
 - Create: `electron/window/title-bar-theme.ts`
 
 This module owns the hex constants that must stay in sync with `--color-paper-2` / `--color-ink-2` in `src/index.css`. Centralizing avoids drift between `main.ts` and the IPC handler.
@@ -93,6 +97,7 @@ git commit -m "feat(window): add title-bar overlay theme constants module"
 ## Task 2: Configure BrowserWindow for frameless title bar
 
 **Files:**
+
 - Modify: `electron/main.ts:1-83`
 
 Apply `titleBarStyle: 'hiddenInset'` on Mac and `titleBarOverlay` on Windows. Register `nativeTheme.on('updated')` so the Windows overlay retints when the OS toggles dark mode. Bookkeeping: detach the listener when the window closes.
@@ -126,9 +131,7 @@ function createMainWindow(): BrowserWindow {
     center: true,
     show: false,
     titleBarStyle: 'hiddenInset',
-    ...(process.platform === 'win32'
-      ? { titleBarOverlay: getOverlayForTheme() }
-      : {}),
+    ...(process.platform === 'win32' ? { titleBarOverlay: getOverlayForTheme() } : {}),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -194,6 +197,7 @@ Expected: passes. If `Electron.TitleBarOverlay` type complaints appear, the spre
 
 Run: `npm run dev`
 Expected:
+
 - Mac: window opens with red/yellow/green traffic lights at top-left, but the area to the right is empty (the old `TitleBar` 38px bar still appears below — that gets fixed in Task 6)
 - Window dragging still works (drag anywhere in the now-empty top area)
 
@@ -211,6 +215,7 @@ git commit -m "feat(window): hide native title bar on mac/win, listen for theme 
 ## Task 3: Add `window` namespace to IPC contract
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 Add the new namespace alongside the existing ones in `IpcContract`. Use the existing search pattern: find the `IpcContract` type definition and add an entry.
@@ -225,9 +230,9 @@ This locates the `IpcContract` type. Open the file and scroll to that line.
 Inside the `IpcContract` type, alongside other namespaces (e.g. next to `shell: {...}` or `crash: {...}`), add:
 
 ```ts
-  window: {
-    themeApplied: (effective: 'light' | 'dark') => Promise<void>
-  }
+window: {
+  themeApplied: (effective: 'light' | 'dark') => Promise<void>
+}
 ```
 
 - [ ] **Step 3: Typecheck**
@@ -247,6 +252,7 @@ git commit -m "feat(ipc): add window namespace with themeApplied channel"
 ## Task 4: Implement IPC handler
 
 **Files:**
+
 - Create: `electron/ipc/window.ts`
 - Modify: `electron/ipc/handlers.ts`
 
@@ -261,9 +267,7 @@ export const windowHandlers = {
   async themeApplied(effective: 'light' | 'dark') {
     if (process.platform !== 'win32') return
     if (!mainWindow || mainWindow.isDestroyed()) return
-    mainWindow.setTitleBarOverlay(
-      effective === 'dark' ? OVERLAY_DARK : OVERLAY_LIGHT
-    )
+    mainWindow.setTitleBarOverlay(effective === 'dark' ? OVERLAY_DARK : OVERLAY_LIGHT)
   }
 }
 ```
@@ -304,6 +308,7 @@ git commit -m "feat(ipc): handle window.themeApplied by retinting win overlay"
 ## Task 5: Expose `window.themeApplied` in preload
 
 **Files:**
+
 - Modify: `preload/preload.ts:19-185` (the `request` object)
 
 - [ ] **Step 1: Add to the `request` object**
@@ -311,9 +316,9 @@ git commit -m "feat(ipc): handle window.themeApplied by retinting win overlay"
 In `preload/preload.ts`, locate the `request: IpcClient<IpcContract>` object (starts at line 19). Add a `window` namespace entry alongside the others (e.g. after `crash: {...}` around line 183, before the closing brace of `request`):
 
 ```ts
-  window: {
-    themeApplied: (effective) => invoke<void>('window.themeApplied', effective)
-  }
+window: {
+  themeApplied: (effective) => invoke<void>('window.themeApplied', effective)
+}
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -338,6 +343,7 @@ git commit -m "feat(preload): expose window.themeApplied via context bridge"
 ## Task 6: Notify main on theme change from settings-effects
 
 **Files:**
+
 - Modify: `src/stores/settings-effects.ts:11-15` (the `applyTheme` function)
 
 - [ ] **Step 1: Add import at top of file**
@@ -371,7 +377,9 @@ Expected: PASS. If a test fails because `ipc.window` is undefined in jsdom, add 
 If a test failure surfaces because the existing test mock lacks `window`, modify the mock to include it. Look for `window.api = ...` or `vi.mock('@/ipc/client', ...)` in the test file. The minimal addition is:
 
 ```ts
-window: { themeApplied: vi.fn().mockResolvedValue(undefined) }
+window: {
+  themeApplied: vi.fn().mockResolvedValue(undefined)
+}
 ```
 
 - [ ] **Step 4: Commit**
@@ -386,6 +394,7 @@ git commit -m "feat(theme): notify main process when effective theme changes"
 ## Task 7: Add `switcher.selectGrove` i18n keys
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json:54-59` (switcher block)
 - Modify: `src/i18n/locales/en-US.json:53-58` (switcher block)
 
@@ -453,6 +462,7 @@ git commit -m "i18n(switcher): add selectGrove key, align Chinese label to 果�
 ## Task 8: Rewrite `GroveSwitcher` for title-bar use
 
 **Files:**
+
 - Create: `src/components/GroveSwitcher.test.tsx`
 - Modify: `src/components/GroveSwitcher.tsx` (full rewrite of the trigger button + remove `/picker` early-return + export `dotColor`)
 
@@ -639,9 +649,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
               <span className="font-serif">{current.name}</span>
             </>
           ) : (
-            <span className="text-[color:var(--color-ink-3)]">
-              {t('switcher.selectGrove')}
-            </span>
+            <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
           )}
           <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
         </button>
@@ -656,10 +664,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
               void handleSwitch(item.id)
             }}
           >
-            <span
-              className="h-2 w-2 rounded-sm"
-              style={{ background: dotColor[item.color] }}
-            />
+            <span className="h-2 w-2 rounded-sm" style={{ background: dotColor[item.color] }} />
             <span className="flex-1 truncate">{item.name}</span>
             {!item.valid ? (
               <span className="font-mono text-[10px] text-[color:var(--color-berry)]">
@@ -694,6 +699,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
 ```
 
 Key differences from the original:
+
 - `dotColor` is now `export`ed
 - Removed `useLocation` import and the `/picker` early-return — component renders on all routes
 - Return type narrowed from `JSX.Element | null` to `JSX.Element`
@@ -721,6 +727,7 @@ git commit -m "feat(switcher): compact title-bar variant + render on all routes"
 ## Task 9: Rewrite `TitleBar` to 28px + centered switcher
 
 **Files:**
+
 - Create: `src/components/TitleBar.test.tsx`
 - Modify: `src/components/TitleBar.tsx` (full rewrite)
 
@@ -813,6 +820,7 @@ export function TitleBar(): JSX.Element {
 ```
 
 Removed from the previous version:
+
 - `useTranslation` import (no rendered text)
 - `useTitleStore` import (store gets deleted later)
 - `useLocation` import + `borderless on /picker` branch (border is always present now)
@@ -836,6 +844,7 @@ git commit -m "feat(titlebar): 28px themed bar hosting GroveSwitcher"
 ## Task 10: Tint AppRail 🌰 button with active grove color
 
 **Files:**
+
 - Modify: `src/components/AppRail.tsx:33-42` (the 🌰 button)
 
 - [ ] **Step 1: Add import for `dotColor`**
@@ -851,24 +860,25 @@ import { dotColor } from './GroveSwitcher'
 Replace lines 33-42 (the `<button>` element wrapping the 🌰) with:
 
 ```tsx
-      <button
-        onClick={() => {
-          navigate('/picker')
-        }}
-        title={current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
-        className="mb-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity"
-        style={
-          current
-            ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
-            : undefined
-        }
-      >
-        {/* Placeholder Acorn Logo */}
-        <span className="text-[24px]">🌰</span>
-      </button>
+<button
+  onClick={() => {
+    navigate('/picker')
+  }}
+  title={current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
+  className="mb-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity"
+  style={
+    current
+      ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
+      : undefined
+  }
+>
+  {/* Placeholder Acorn Logo */}
+  <span className="text-[24px]">🌰</span>
+</button>
 ```
 
 Changes:
+
 - `title` now uses `t('switcher.ariaLabel')` for i18n consistency (previously hard-coded `'切换树林'`)
 - Inline `style.background` overrides the `bg-[color:var(--color-acorn-bg)]` class when a grove is active, using `color-mix` for a 20% tint of the grove's oklch color
 - When no grove is active, falls back to the original acorn-bg color
@@ -890,6 +900,7 @@ git commit -m "feat(rail): tint acorn button with active grove color"
 ## Task 11: Remove `setTitle` from Library page
 
 **Files:**
+
 - Modify: `src/pages/Library.tsx`
 
 - [ ] **Step 1: Edit Library.tsx**
@@ -946,6 +957,7 @@ git commit -m "refactor(library): drop title-store dependency"
 ## Task 12: Remove `setTitle` from HistoryLayout
 
 **Files:**
+
 - Modify: `src/components/history/HistoryLayout.tsx:1-36`
 
 - [ ] **Step 1: Remove the title-store import**
@@ -961,18 +973,18 @@ import { useTitleStore } from '@/stores/title'
 Delete line 28:
 
 ```ts
-  const setTitle = useTitleStore((s) => s.setTitle)
+const setTitle = useTitleStore((s) => s.setTitle)
 ```
 
 Delete lines 31-36 (the title-setting `useEffect`):
 
 ```ts
-  useEffect(() => {
-    setTitle(TAB_TITLES[tab])
-    return () => {
-      setTitle('')
-    }
-  }, [tab, setTitle])
+useEffect(() => {
+  setTitle(TAB_TITLES[tab])
+  return () => {
+    setTitle('')
+  }
+}, [tab, setTitle])
 ```
 
 - [ ] **Step 3: Also remove the now-unused `TAB_TITLES` constant**
@@ -1012,6 +1024,7 @@ git commit -m "refactor(history): drop title-store dependency and dead TAB_TITLE
 ## Task 13: Delete `src/stores/title.ts`
 
 **Files:**
+
 - Delete: `src/stores/title.ts`
 
 - [ ] **Step 1: Verify no remaining references**
@@ -1053,6 +1066,7 @@ Run: `npm run dev`
 - [ ] **Step 2: Visual checks (Mac)**
 
 Confirm:
+
 - Single title bar at the top, ~28px tall, paper-2 background
 - Red/yellow/green traffic lights inset on the left (OS-drawn)
 - Centered: either "选择果仓 ▾" (if no grove) or "[dot] 我的笔记 ▾" (if a grove was previously opened)
@@ -1071,12 +1085,14 @@ Open a file in the editor. Confirm: global TitleBar (28px) on top, then `EditorT
 - [ ] **Step 5: Theme toggle**
 
 Open Settings → Appearance → toggle Light/Dark/System. Confirm:
+
 - The TitleBar background changes immediately (CSS var driven)
 - The text/dot colors remain readable
 
 - [ ] **Step 6: (If on Windows) Native overlay check**
 
 If a Windows machine is available, verify:
+
 - Top-right corner shows native min/max/close buttons
 - Their background matches the paper-2 hex; symbol color matches ink-2 hex
 - Toggling theme retints the buttons (might require briefly hovering the window edge to repaint)
@@ -1091,28 +1107,29 @@ Stop the dev server. No commit for this task — purely manual verification.
 
 **Spec coverage:**
 
-| Spec section | Implemented in |
-|---|---|
-| Architecture diagram (hiddenInset / overlay) | Task 2 |
-| Cross-platform table (Mac / Win / Linux) | Task 2 (Mac + Win), Linux falls through automatically |
-| `TitleBar.tsx` rewrite | Task 9 |
-| `GroveSwitcher.tsx` rewrite (compact + dotColor export + remove /picker early-return) | Task 8 |
-| `AppRail.tsx` tint | Task 10 |
-| New IPC contract `window:themeApplied` | Tasks 3, 4, 5 |
-| Renderer notifying main on theme change | Task 6 |
-| Overlay constants centralized (sync with index.css) | Task 1 |
-| i18n `switcher.selectGrove` key | Task 7 |
-| Delete `src/stores/title.ts` | Task 13 |
-| Remove setTitle from Library | Task 11 |
-| Remove setTitle from HistoryLayout | Task 12 |
-| Test coverage (TitleBar, GroveSwitcher) | Tasks 8, 9 |
-| Manual acceptance | Task 14 |
+| Spec section                                                                          | Implemented in                                        |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Architecture diagram (hiddenInset / overlay)                                          | Task 2                                                |
+| Cross-platform table (Mac / Win / Linux)                                              | Task 2 (Mac + Win), Linux falls through automatically |
+| `TitleBar.tsx` rewrite                                                                | Task 9                                                |
+| `GroveSwitcher.tsx` rewrite (compact + dotColor export + remove /picker early-return) | Task 8                                                |
+| `AppRail.tsx` tint                                                                    | Task 10                                               |
+| New IPC contract `window:themeApplied`                                                | Tasks 3, 4, 5                                         |
+| Renderer notifying main on theme change                                               | Task 6                                                |
+| Overlay constants centralized (sync with index.css)                                   | Task 1                                                |
+| i18n `switcher.selectGrove` key                                                       | Task 7                                                |
+| Delete `src/stores/title.ts`                                                          | Task 13                                               |
+| Remove setTitle from Library                                                          | Task 11                                               |
+| Remove setTitle from HistoryLayout                                                    | Task 12                                               |
+| Test coverage (TitleBar, GroveSwitcher)                                               | Tasks 8, 9                                            |
+| Manual acceptance                                                                     | Task 14                                               |
 
 No gaps detected.
 
 **Placeholder scan:** No "TBD", "TODO", or "implement later" remain in steps. Each code block is complete.
 
 **Type consistency:**
+
 - `dotColor` exported from `GroveSwitcher.tsx` (Task 8) and imported by `AppRail.tsx` (Task 10) — names match
 - `themeApplied: (effective: 'light' | 'dark') => Promise<void>` — same signature in Tasks 3, 4, 5, 6
 - `OVERLAY_LIGHT` / `OVERLAY_DARK` named identically across Tasks 1 and 4

@@ -18,6 +18,7 @@ PRD 的"拾果"模块把**阅读** + **剪藏**合为一个整体入口。要让
 ## Capabilities
 
 ### New Capabilities
+
 - `browser-shell`: `/browse` 路由、TabBar、AddressBar、WebContentsView 生命周期
 - `browser-tabs`: 多 tab 管理（create / close / switch / reorder / history）
 - `browser-navigation`: 导航拦截、外链策略、广告域名拦截、reader-mode 切换
@@ -25,6 +26,7 @@ PRD 的"拾果"模块把**阅读** + **剪藏**合为一个整体入口。要让
 - `bookmarks-ui`: 书签侧栏 / "加入书签"按钮 / 搜索与标签过滤
 
 ### Modified Capabilities
+
 - `app-shell`: AppRail 正式加入"拾果"tab；主布局新增 `/browse` 路由并兼容 WebContentsView 的子视图定位
 
 ## Impact

@@ -13,6 +13,7 @@
 ## Pre-flight
 
 This plan assumes Plan 1 of phase-10 (tasks 1.1–2.6) is merged on `main`:
+
 - `migrations/003_ops_log.sql` applied; `db.version().user_version === 3`
 - `src/main/ops/log.ts` exports `record({ op, path, meta? })` and `list({ limit, offset, op? })`
 - `shared/ops-types.ts` exports `Op` and `OpsItem`
@@ -21,6 +22,7 @@ This plan assumes Plan 1 of phase-10 (tasks 1.1–2.6) is merged on `main`:
 It also depends on phase-9 (Plan 2 of phase-09, tasks 4.1–5.6 — `electron/ipc/conflicts.ts` exists with `conflict.list/read/delete`) and phase-6 (`src/components/library/FileRowContextMenu.tsx` and `src/components/library/VirtualFileList.tsx` exist; `src/stores/library.ts` exposes `items`, `selectedPath`, `removeItem`, `setSelectedPath`).
 
 Verify before starting:
+
 ```bash
 grep -q "user_version=3\|user_version = 3\|003_ops_log" /Users/aaa/develop/workspace-ai/acornvo/migrations/003_ops_log.sql && echo "migration 003 OK"
 grep -q "export function record" /Users/aaa/develop/workspace-ai/acornvo/src/main/ops/log.ts && echo "opsLog OK"
@@ -29,30 +31,31 @@ test -f /Users/aaa/develop/workspace-ai/acornvo/src/components/library/FileRowCo
 test -f /Users/aaa/develop/workspace-ai/acornvo/src/stores/library.ts && echo "library store OK"
 node -e "require('diff')" && echo "diff (jsdiff) OK"
 ```
+
 All six lines must print "OK".
 
 ## File Structure
 
-| Path | Action | Owner task |
-|---|---|---|
-| `shared/ipc-contract.ts` | Modify (add 5 new request methods, add `E_TRASH`, add `DiffResult` types) | 3.1 |
-| `electron/ipc/trash.ts` | Create (`file.trash` + `file.hardDelete`) | 3.2 |
-| `electron/ipc/trash.test.ts` | Create | 3.2 |
-| `electron/ipc/ops.ts` | Create (`ops.list`) | 3.3 |
-| `electron/ipc/ops.test.ts` | Create | 3.3 |
-| `electron/ipc/conflicts.ts` | Modify (add `diff` + `deleteAll`; wrap `delete` for ops_log) | 3.4, 3.5, 3.6 |
-| `electron/ipc/conflicts.test.ts` | Modify | 3.4, 3.5, 3.6 |
-| `electron/services/conflicts/diff.ts` | Create (jsdiff → `DiffResult` adapter) | 3.5 |
-| `electron/services/conflicts/diff.test.ts` | Create | 3.5 |
-| `electron/ipc/index.ts` | Modify (register `trash` + `ops` namespaces; conflict module already wired in phase-9) | 3.2, 3.3 |
-| `src/components/library/FileRowContextMenu.tsx` | Modify (add "移到废纸篓" item + separator) | 4.1 |
-| `src/components/library/FileRowContextMenu.test.tsx` | Modify | 4.1 |
-| `src/components/library/TrashConfirmDialog.tsx` | Create (confirm + fallback modes) | 4.2 |
-| `src/components/library/TrashConfirmDialog.test.tsx` | Create | 4.2 |
-| `src/components/library/VirtualFileList.tsx` | Modify (`onKeyDown` → open `TrashConfirmDialog`) | 4.3 |
-| `src/components/library/VirtualFileList.test.tsx` | Modify | 4.3 |
-| `src/stores/library.ts` | Modify (`removeItem` exists from phase-6; ensure `selectedPath` cleared when deleted path matches) — only modify if needed | 4.4 |
-| (no new file for 4.5) | Modify `TrashConfirmDialog.tsx` to call `file.hardDelete` on the fallback button; reuse the same library-store cleanup as 4.4 | 4.5 |
+| Path                                                 | Action                                                                                                                        | Owner task    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `shared/ipc-contract.ts`                             | Modify (add 5 new request methods, add `E_TRASH`, add `DiffResult` types)                                                     | 3.1           |
+| `electron/ipc/trash.ts`                              | Create (`file.trash` + `file.hardDelete`)                                                                                     | 3.2           |
+| `electron/ipc/trash.test.ts`                         | Create                                                                                                                        | 3.2           |
+| `electron/ipc/ops.ts`                                | Create (`ops.list`)                                                                                                           | 3.3           |
+| `electron/ipc/ops.test.ts`                           | Create                                                                                                                        | 3.3           |
+| `electron/ipc/conflicts.ts`                          | Modify (add `diff` + `deleteAll`; wrap `delete` for ops_log)                                                                  | 3.4, 3.5, 3.6 |
+| `electron/ipc/conflicts.test.ts`                     | Modify                                                                                                                        | 3.4, 3.5, 3.6 |
+| `electron/services/conflicts/diff.ts`                | Create (jsdiff → `DiffResult` adapter)                                                                                        | 3.5           |
+| `electron/services/conflicts/diff.test.ts`           | Create                                                                                                                        | 3.5           |
+| `electron/ipc/index.ts`                              | Modify (register `trash` + `ops` namespaces; conflict module already wired in phase-9)                                        | 3.2, 3.3      |
+| `src/components/library/FileRowContextMenu.tsx`      | Modify (add "移到废纸篓" item + separator)                                                                                    | 4.1           |
+| `src/components/library/FileRowContextMenu.test.tsx` | Modify                                                                                                                        | 4.1           |
+| `src/components/library/TrashConfirmDialog.tsx`      | Create (confirm + fallback modes)                                                                                             | 4.2           |
+| `src/components/library/TrashConfirmDialog.test.tsx` | Create                                                                                                                        | 4.2           |
+| `src/components/library/VirtualFileList.tsx`         | Modify (`onKeyDown` → open `TrashConfirmDialog`)                                                                              | 4.3           |
+| `src/components/library/VirtualFileList.test.tsx`    | Modify                                                                                                                        | 4.3           |
+| `src/stores/library.ts`                              | Modify (`removeItem` exists from phase-6; ensure `selectedPath` cleared when deleted path matches) — only modify if needed    | 4.4           |
+| (no new file for 4.5)                                | Modify `TrashConfirmDialog.tsx` to call `file.hardDelete` on the fallback button; reuse the same library-store cleanup as 4.4 | 4.5           |
 
 ## Conventions reused
 
@@ -66,9 +69,11 @@ All six lines must print "OK".
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: extend `shared/ipc-contract.ts` with 5 new request methods
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 
 - [ ] **Step 1: Add `E_TRASH` to the error-code union and table**
@@ -111,9 +116,7 @@ Append after the existing `// --- file namespace types ---` block (around line 1
 ```ts
 // --- soft-delete + hard-delete envelopes (phase-10) ---
 
-export type FileTrashResult =
-  | { ok: true }
-  | { ok: false; error: IpcErrorShape }
+export type FileTrashResult = { ok: true } | { ok: false; error: IpcErrorShape }
 
 // --- conflict diff structured result (phase-10) ---
 
@@ -185,6 +188,7 @@ Then in the `IpcContract` block (`shared/ipc-contract.ts:137-180`), append three
 ```bash
 npm run typecheck
 ```
+
 Expected: PASS. (No call sites import `E_TRASH` yet, so this should be a clean compile.)
 
 - [ ] **Step 5: Commit**
@@ -197,9 +201,11 @@ git commit -m "feat(ipc): contract for file.trash/hardDelete, ops.list, conflict
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: implement `electron/ipc/trash.ts` (`file.trash` + `file.hardDelete`)
 
 **Files:**
+
 - Create: `electron/ipc/trash.ts`
 - Create: `electron/ipc/trash.test.ts`
 - Modify: `electron/ipc/index.ts` (register `file.trash` + `file.hardDelete`)
@@ -245,9 +251,7 @@ describe('file.trash', () => {
     const abs = join(tmp, 'a.md')
     await writeFile(abs, 'hello')
     const { shell } = await import('electron')
-    const trashSpy = vi
-      .spyOn(shell, 'trashItem')
-      .mockResolvedValue(undefined)
+    const trashSpy = vi.spyOn(shell, 'trashItem').mockResolvedValue(undefined)
 
     const result = await handleTrash('a.md')
 
@@ -330,6 +334,7 @@ Use whichever pattern matches the existing IPC tests.
 ```bash
 npx vitest run electron/ipc/trash.test.ts
 ```
+
 Expected: ALL FAIL (`Cannot find module './trash'`).
 
 - [ ] **Step 3: Implement `electron/ipc/trash.ts`**
@@ -464,6 +469,7 @@ register('file.hardDelete', (rel: string) => handleHardDelete(rel))
 ```bash
 npx vitest run electron/ipc/trash.test.ts
 ```
+
 Expected: 7 PASS.
 
 - [ ] **Step 6: Commit**
@@ -476,9 +482,11 @@ git commit -m "feat(ipc): file.trash + file.hardDelete with ops_log audit (phase
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: implement `electron/ipc/ops.ts` (`ops.list`)
 
 **Files:**
+
 - Create: `electron/ipc/ops.ts`
 - Create: `electron/ipc/ops.test.ts`
 - Modify: `electron/ipc/index.ts` (register `ops.list`)
@@ -526,6 +534,7 @@ describe('ops.list', () => {
 ```bash
 npx vitest run electron/ipc/ops.test.ts
 ```
+
 Expected: FAIL (`Cannot find module './ops'`).
 
 - [ ] **Step 3: Implement `electron/ipc/ops.ts`**
@@ -564,6 +573,7 @@ Add `import { opsHandlers } from './ops'` and merge or `register('ops.list', han
 ```bash
 npx vitest run electron/ipc/ops.test.ts
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 6: Commit**
@@ -576,11 +586,13 @@ git commit -m "feat(ipc): ops.list pass-through to opsLog.list (phase-10 3.3)"
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: scaffold `conflict.diff` + `conflict.deleteAll` in `electron/ipc/conflicts.ts`
 
 This task adds the handler stubs + dispatch wiring. The diff body lands in Task 5; the ops_log writes land in Task 6.
 
 **Files:**
+
 - Modify: `electron/ipc/conflicts.ts`
 - Modify: `electron/ipc/conflicts.test.ts`
 - Modify: `electron/ipc/index.ts` (register the two new channels if not implicit via the existing handler map)
@@ -607,6 +619,7 @@ describe('conflict.diff / conflict.deleteAll exports (phase-10 3.4)', () => {
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 3.4"
 ```
+
 Expected: FAIL (handlers not exported).
 
 - [ ] **Step 3: Add stub exports to `electron/ipc/conflicts.ts`**
@@ -616,10 +629,7 @@ Append to the file (do not touch the existing `list/read/delete` handlers):
 ```ts
 import type { DiffResult, DiffSidesPair } from '@shared/ipc-contract'
 
-export async function handleConflictDiff(
-  _id: string,
-  _sides: DiffSidesPair
-): Promise<DiffResult> {
+export async function handleConflictDiff(_id: string, _sides: DiffSidesPair): Promise<DiffResult> {
   // Implemented in phase-10 task 3.5
   throw new Error('not implemented')
 }
@@ -652,6 +662,7 @@ register('conflict.deleteAll', handleConflictDeleteAll)
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 3.4"
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 5: Commit**
@@ -664,6 +675,7 @@ git commit -m "feat(ipc): scaffold conflict.diff + conflict.deleteAll handlers (
 ---
 
 <!-- openspec-task: 3.5 -->
+
 ### Task 5: implement `conflict.diff` (jsdiff → row-aligned `DiffResult`)
 
 The handler reads the snapshot via phase-9 `readSnapshot(id)`, picks two of the three texts according to `sides`, and runs `diffLines` from jsdiff. Conversion: walk the `Change[]`, keeping `left` and `right` in lockstep with empty-line padding so a UI can render side-by-side without re-aligning.
@@ -694,6 +706,7 @@ for each change in changes:
 Use `num: 0` for padding rows so the renderer can render an empty gutter cell. Real line numbers start at 1.
 
 **Files:**
+
 - Create: `electron/services/conflicts/diff.ts`
 - Create: `electron/services/conflicts/diff.test.ts`
 - Modify: `electron/ipc/conflicts.ts` (replace `handleConflictDiff` stub)
@@ -780,18 +793,14 @@ describe('computeDiff', () => {
 ```bash
 npx vitest run electron/services/conflicts/diff.test.ts
 ```
+
 Expected: FAIL (module missing).
 
 - [ ] **Step 3: Implement `electron/services/conflicts/diff.ts`**
 
 ```ts
 import { diffLines, type Change } from 'diff'
-import type {
-  DiffLineLeft,
-  DiffLineRight,
-  DiffResult,
-  DiffSide
-} from '@shared/ipc-contract'
+import type { DiffLineLeft, DiffLineRight, DiffResult, DiffSide } from '@shared/ipc-contract'
 
 export interface ComputeDiffInput {
   a: string
@@ -853,6 +862,7 @@ export function computeDiff(input: ComputeDiffInput): DiffResult {
 ```bash
 npx vitest run electron/services/conflicts/diff.test.ts
 ```
+
 Expected: 6 PASS.
 
 - [ ] **Step 5: Wire `handleConflictDiff` to use `readSnapshot` + `computeDiff`**
@@ -864,10 +874,7 @@ import { readSnapshot } from '../services/conflicts/store'
 import { computeDiff } from '../services/conflicts/diff'
 import type { DiffResult, DiffSide, DiffSidesPair } from '@shared/ipc-contract'
 
-export async function handleConflictDiff(
-  id: string,
-  sides: DiffSidesPair
-): Promise<DiffResult> {
+export async function handleConflictDiff(id: string, sides: DiffSidesPair): Promise<DiffResult> {
   const snap = await readSnapshot(id) // throws E_NOT_FOUND / E_PERMISSION
   const map: Record<DiffSide, string> = {
     local: snap.localText,
@@ -908,8 +915,9 @@ describe('conflict.diff IPC (phase-10 3.5)', () => {
   })
 
   it('throws E_NOT_FOUND for missing id', async () => {
-    await expect(handleConflictDiff('does-not-exist', 'local-remote'))
-      .rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+    await expect(handleConflictDiff('does-not-exist', 'local-remote')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 })
 ```
@@ -919,6 +927,7 @@ describe('conflict.diff IPC (phase-10 3.5)', () => {
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 3.5"
 ```
+
 Expected: 2 PASS.
 
 - [ ] **Step 8: Commit**
@@ -931,11 +940,13 @@ git commit -m "feat(conflicts): conflict.diff returns row-aligned DiffResult via
 ---
 
 <!-- openspec-task: 3.6 -->
+
 ### Task 6: write `op='conflict_delete'` for both `conflict.delete` and `conflict.deleteAll`
 
 `conflict.delete` already exists (phase-9). We extend it to also call `opsLog.record`. `conflict.deleteAll` is new — same audit per-snapshot.
 
 **Files:**
+
 - Modify: `electron/ipc/conflicts.ts`
 - Modify: `electron/ipc/conflicts.test.ts`
 
@@ -973,10 +984,18 @@ describe('conflict.deleteAll (phase-10 3.6)', () => {
   it('deletes all snapshots and records one ops_log row per snapshot', async () => {
     const recordSpy = vi.spyOn(opsLog, 'record').mockResolvedValue(undefined as never)
     await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '', resolvedBy: 'keep_local'
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'keep_local'
     })
     await writeSnapshot({
-      path: 'b.md', baseText: '', localText: '', remoteText: '', resolvedBy: 'load_remote'
+      path: 'b.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
+      resolvedBy: 'load_remote'
     })
 
     const result = await handleConflictDeleteAll()
@@ -1002,6 +1021,7 @@ describe('conflict.deleteAll (phase-10 3.6)', () => {
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 3.6"
 ```
+
 Expected: FAIL (no audit yet; `handleConflictDeleteAll` still throws).
 
 - [ ] **Step 3: Implement**
@@ -1010,11 +1030,7 @@ Edit `electron/ipc/conflicts.ts`. Replace the existing `handleConflictDelete` bo
 
 ```ts
 import * as opsLog from '../../src/main/ops/log'
-import {
-  deleteSnapshot,
-  listSnapshots,
-  readSnapshot
-} from '../services/conflicts/store'
+import { deleteSnapshot, listSnapshots, readSnapshot } from '../services/conflicts/store'
 
 export async function handleConflictDelete(id: string): Promise<void> {
   // Read meta first so we know the original path; if missing, deleteSnapshot
@@ -1089,6 +1105,7 @@ If the previous `handleConflictDelete` also did extra work (e.g. emitting a rend
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts -t "phase-10 3.6"
 ```
+
 Expected: 3 PASS.
 
 Run the full conflicts test file to confirm no regressions in phase-9 behaviour:
@@ -1096,6 +1113,7 @@ Run the full conflicts test file to confirm no regressions in phase-9 behaviour:
 ```bash
 npx vitest run electron/ipc/conflicts.test.ts
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -1108,9 +1126,11 @@ git commit -m "feat(conflicts): conflict.delete + conflict.deleteAll write ops_l
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 7: add "移到废纸篓" item to `FileRowContextMenu.tsx`
 
 **Files:**
+
 - Modify: `src/components/library/FileRowContextMenu.tsx`
 - Modify: `src/components/library/FileRowContextMenu.test.tsx`
 
@@ -1119,6 +1139,7 @@ git commit -m "feat(conflicts): conflict.delete + conflict.deleteAll write ops_l
 ```bash
 grep -n "ContextMenuItem\|ContextMenuSeparator" /Users/aaa/develop/workspace-ai/acornvo/src/components/library/FileRowContextMenu.tsx
 ```
+
 Expected: phase-6 added two items ("打开" / "在 Finder/资源管理器中显示"). The component's prop signature should expose `path: string` and (likely) callbacks. Identify whether the file already takes an `onTrash` prop.
 
 - [ ] **Step 2: Write failing test**
@@ -1161,6 +1182,7 @@ If the existing component does not yet take `onTrash`, that's expected — Step 
 ```bash
 npx vitest run src/components/library/FileRowContextMenu.test.tsx -t "phase-10 4.1"
 ```
+
 Expected: FAIL (no "移到废纸篓" text rendered).
 
 - [ ] **Step 4: Implement**
@@ -1184,6 +1206,7 @@ Place the separator and the new item AFTER the existing two items.
 ```bash
 npx vitest run src/components/library/FileRowContextMenu.test.tsx
 ```
+
 Expected: all PASS (existing tests + the new one).
 
 - [ ] **Step 6: Commit**
@@ -1196,9 +1219,11 @@ git commit -m "feat(library): add 移到废纸篓 menu item with separator (phas
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 8: implement `TrashConfirmDialog.tsx` (confirm-mode + fallback-mode)
 
 The dialog has a small internal state machine:
+
 - `state = 'confirm'`: shows the path and `[取消] [移到废纸篓]`. Clicking `移到废纸篓` calls `onConfirm()`.
 - If `onConfirm` rejects with `code === 'E_TRASH'`, transition to `state = 'fallback'`.
 - `state = 'fallback'`: shows error message + checkbox `我知道这无法恢复` + `[永久删除]` (disabled until checkbox is checked) + `[取消]`. Clicking `永久删除` calls `onHardDelete()` (passed in as a prop or constructed from `window.api.file.hardDelete`).
@@ -1206,6 +1231,7 @@ The dialog has a small internal state machine:
 For separation of concerns, the dialog accepts both `onConfirm` (trash) and `onHardDelete` callbacks; the parent (Library) wires them to `window.api.file.trash` / `window.api.file.hardDelete`. This keeps the dialog testable without IPC.
 
 **Files:**
+
 - Create: `src/components/library/TrashConfirmDialog.tsx`
 - Create: `src/components/library/TrashConfirmDialog.test.tsx`
 
@@ -1308,6 +1334,7 @@ describe('TrashConfirmDialog — fallback mode after E_TRASH (phase-10 4.2)', ()
 ```bash
 npx vitest run src/components/library/TrashConfirmDialog.test.tsx
 ```
+
 Expected: FAIL (component not yet created).
 
 - [ ] **Step 3: Implement `TrashConfirmDialog.tsx`**
@@ -1335,9 +1362,7 @@ export interface TrashConfirmDialogProps {
   onHardDelete: () => Promise<void>
 }
 
-type Mode =
-  | { kind: 'confirm' }
-  | { kind: 'fallback'; reason: string }
+type Mode = { kind: 'confirm' } | { kind: 'fallback'; reason: string }
 
 export function TrashConfirmDialog(props: TrashConfirmDialogProps): JSX.Element {
   const [mode, setMode] = useState<Mode>({ kind: 'confirm' })
@@ -1360,8 +1385,7 @@ export function TrashConfirmDialog(props: TrashConfirmDialogProps): JSX.Element 
       // Parent closes the dialog on success
     } catch (err) {
       const code = (err as { code?: string }).code
-      const message =
-        err instanceof Error ? err.message : String(err)
+      const message = err instanceof Error ? err.message : String(err)
       if (code === 'E_TRASH') {
         setMode({ kind: 'fallback', reason: message })
       } else {
@@ -1447,9 +1471,11 @@ export function TrashConfirmDialog(props: TrashConfirmDialogProps): JSX.Element 
 ```
 
 If `@/components/ui/checkbox` is not yet present (shadcn add), run:
+
 ```bash
 grep -l "components/ui/checkbox" /Users/aaa/develop/workspace-ai/acornvo/src/components/ui 2>/dev/null || echo "checkbox missing — add via shadcn"
 ```
+
 If missing: `npx shadcn-ui@latest add checkbox` (or use the `Checkbox` from `@radix-ui/react-checkbox` directly). Verify the actual import path in `src/components/ui/`.
 
 - [ ] **Step 4: Run, confirm pass**
@@ -1457,6 +1483,7 @@ If missing: `npx shadcn-ui@latest add checkbox` (or use the `Checkbox` from `@ra
 ```bash
 npx vitest run src/components/library/TrashConfirmDialog.test.tsx
 ```
+
 Expected: 4 PASS.
 
 - [ ] **Step 5: Commit**
@@ -1469,9 +1496,11 @@ git commit -m "feat(library): TrashConfirmDialog with confirm + fallback hard-de
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 9: `VirtualFileList` `onKeyDown` opens `TrashConfirmDialog` on `Cmd/Ctrl+Backspace` / `Delete`
 
 **Files:**
+
 - Modify: `src/components/library/VirtualFileList.tsx`
 - Modify: `src/components/library/VirtualFileList.test.tsx`
 
@@ -1480,6 +1509,7 @@ git commit -m "feat(library): TrashConfirmDialog with confirm + fallback hard-de
 ```bash
 grep -n "onKeyDown\|Backspace\|Delete\|selectedPath" /Users/aaa/develop/workspace-ai/acornvo/src/components/library/VirtualFileList.tsx
 ```
+
 Phase-6 likely already wires `onKeyDown` for arrow-keys + Enter. We extend the same handler.
 
 - [ ] **Step 2: Write failing test**
@@ -1496,25 +1526,29 @@ describe('VirtualFileList — Cmd+Backspace opens TrashConfirmDialog (phase-10 4
     // Use the existing test harness for VirtualFileList; expect
     // the harness to expose a way to assert which dialog is open.
     const { container } = renderListWithSelection('notes/a.md')
-    container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
-    )
+    container
+      .querySelector('[data-testid="virtual-file-list"]')
+      ?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
+      )
     expect(await screen.findByText(/移到废纸篓？/)).toBeInTheDocument()
   })
 
   it('opens dialog on Delete (win/linux)', async () => {
     const { container } = renderListWithSelection('notes/b.md')
-    container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true })
-    )
+    container
+      .querySelector('[data-testid="virtual-file-list"]')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }))
     expect(await screen.findByText(/移到废纸篓？/)).toBeInTheDocument()
   })
 
   it('does NOT open when no row is selected', async () => {
     const { container } = renderListWithSelection(null)
-    container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
-    )
+    container
+      .querySelector('[data-testid="virtual-file-list"]')
+      ?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
+      )
     expect(screen.queryByText(/移到废纸篓？/)).not.toBeInTheDocument()
   })
 })
@@ -1534,6 +1568,7 @@ Open the existing `VirtualFileList.test.tsx` and copy/extend its setup helper ra
 ```bash
 npx vitest run src/components/library/VirtualFileList.test.tsx -t "phase-10 4.3"
 ```
+
 Expected: 3 FAIL.
 
 - [ ] **Step 4: Implement keyboard handler + dialog wiring**
@@ -1555,8 +1590,7 @@ const handleContainerKeyDown = useCallback(
   (e: React.KeyboardEvent<HTMLDivElement>) => {
     // …existing arrow/Enter handling unchanged…
 
-    const isMacTrash =
-      e.key === 'Backspace' && (e.metaKey || e.ctrlKey)
+    const isMacTrash = e.key === 'Backspace' && (e.metaKey || e.ctrlKey)
     const isWinLinuxTrash = e.key === 'Delete'
     if ((isMacTrash || isWinLinuxTrash) && selectedPath) {
       e.preventDefault()
@@ -1570,35 +1604,37 @@ const handleContainerKeyDown = useCallback(
 Then in the JSX, render `TrashConfirmDialog` whenever `trashTarget !== null`:
 
 ```tsx
-{trashTarget && (
-  <TrashConfirmDialog
-    open
-    path={trashTarget}
-    onCancel={() => setTrashTarget(null)}
-    onConfirm={async () => {
-      const result = await window.api.file.trash(trashTarget)
-      if (!result.ok) {
-        // throw so the dialog can transition to fallback mode
-        const { IpcError } = await import('@shared/ipc-contract')
-        throw new IpcError(result.error.code, result.error.message)
-      }
-      // Library cleanup happens in Task 10 (4.4) — do it here too
-      removeItem(trashTarget)
-      if (selectedPath === trashTarget) setSelectedPath(null)
-      setTrashTarget(null)
-    }}
-    onHardDelete={async () => {
-      const result = await window.api.file.hardDelete(trashTarget)
-      if (!result.ok) {
-        const { IpcError } = await import('@shared/ipc-contract')
-        throw new IpcError(result.error.code, result.error.message)
-      }
-      removeItem(trashTarget)
-      if (selectedPath === trashTarget) setSelectedPath(null)
-      setTrashTarget(null)
-    }}
-  />
-)}
+{
+  trashTarget && (
+    <TrashConfirmDialog
+      open
+      path={trashTarget}
+      onCancel={() => setTrashTarget(null)}
+      onConfirm={async () => {
+        const result = await window.api.file.trash(trashTarget)
+        if (!result.ok) {
+          // throw so the dialog can transition to fallback mode
+          const { IpcError } = await import('@shared/ipc-contract')
+          throw new IpcError(result.error.code, result.error.message)
+        }
+        // Library cleanup happens in Task 10 (4.4) — do it here too
+        removeItem(trashTarget)
+        if (selectedPath === trashTarget) setSelectedPath(null)
+        setTrashTarget(null)
+      }}
+      onHardDelete={async () => {
+        const result = await window.api.file.hardDelete(trashTarget)
+        if (!result.ok) {
+          const { IpcError } = await import('@shared/ipc-contract')
+          throw new IpcError(result.error.code, result.error.message)
+        }
+        removeItem(trashTarget)
+        if (selectedPath === trashTarget) setSelectedPath(null)
+        setTrashTarget(null)
+      }}
+    />
+  )
+}
 ```
 
 Also wire the right-click menu's `onTrash` callback (added in Task 7) to `setTrashTarget(path)` so the menu and the keyboard share the same dialog.
@@ -1610,6 +1646,7 @@ Tag the outer container with `data-testid="virtual-file-list"` (idempotent — p
 ```bash
 npx vitest run src/components/library/VirtualFileList.test.tsx
 ```
+
 Expected: all PASS (existing tests + the 3 new ones).
 
 - [ ] **Step 6: Commit**
@@ -1622,11 +1659,13 @@ git commit -m "feat(library): Cmd+Backspace / Delete opens TrashConfirmDialog (p
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 10: library-store cleanup after successful trash
 
 The wiring inside `VirtualFileList` (Task 9) already calls `removeItem(path)` and clears `selectedPath` on success. This task adds explicit unit tests for the store contract and ensures both the keyboard path and the right-click path share the same effect.
 
 **Files:**
+
 - Modify: `src/stores/library.ts` (only if `removeItem` does not already exist or does not handle `selectedPath`)
 - Modify: `src/stores/library.test.ts`
 - Modify: `src/components/library/VirtualFileList.test.tsx` (assert store post-state after a successful trash)
@@ -1650,10 +1689,7 @@ import { useLibraryStore } from './library'
 describe('library.removeItem (phase-10 4.4)', () => {
   beforeEach(() => {
     useLibraryStore.setState({
-      items: [
-        { path: 'a.md', /* …minimal mock fields… */ } as any,
-        { path: 'b.md' } as any
-      ],
+      items: [{ path: 'a.md' /* …minimal mock fields… */ } as any, { path: 'b.md' } as any],
       selectedPath: 'a.md'
     })
   })
@@ -1684,6 +1720,7 @@ npx vitest run src/stores/library.test.ts -t "phase-10 4.4"
 ```
 
 Two scenarios:
+
 - All 3 PASS → store already correct → proceed to Step 5.
 - 1 or more FAIL → continue to Step 4.
 
@@ -1700,9 +1737,11 @@ removeItem: (path: string) =>
 ```
 
 Re-run the test:
+
 ```bash
 npx vitest run src/stores/library.test.ts -t "phase-10 4.4"
 ```
+
 Expected: 3 PASS.
 
 - [ ] **Step 5: Add an integration assertion in `VirtualFileList.test.tsx`**
@@ -1720,9 +1759,11 @@ it('successful trash → row removed from items + selectedPath cleared', async (
     }
   })
   const { container } = renderListWithSelection('notes/a.md')
-  container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
-  )
+  container
+    .querySelector('[data-testid="virtual-file-list"]')
+    ?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
+    )
   await userEvent.click(await screen.findByRole('button', { name: '移到废纸篓' }))
   // After the resolved promise tick, the store should have removed the item
   await waitFor(() => {
@@ -1739,6 +1780,7 @@ it('successful trash → row removed from items + selectedPath cleared', async (
 ```bash
 npx vitest run src/stores/library.test.ts src/components/library/VirtualFileList.test.tsx
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -1753,11 +1795,13 @@ git commit -m "feat(library): clear selectedPath when removeItem deletes the sel
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 11: hard-delete path — fallback dialog calls `file.hardDelete`, library cleanup matches 4.4
 
 The keyboard/right-click integration in Task 9 already calls `window.api.file.hardDelete` from the dialog's `onHardDelete` and runs the same `removeItem` + `selectedPath` cleanup. This task adds the end-to-end test that proves the full path: trash fails → fallback → checkbox + 永久删除 → store cleanup.
 
 **Files:**
+
 - Modify: `src/components/library/VirtualFileList.test.tsx`
 
 - [ ] **Step 1: Write failing E2E-style test (renderer-only, IPC mocked)**
@@ -1779,9 +1823,11 @@ describe('VirtualFileList — hard-delete fallback path (phase-10 4.5)', () => {
     })
 
     const { container } = renderListWithSelection('notes/a.md')
-    container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
-    )
+    container
+      .querySelector('[data-testid="virtual-file-list"]')
+      ?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
+      )
 
     // Confirm-mode: click "移到废纸篓"
     await userEvent.click(await screen.findByRole('button', { name: '移到废纸篓' }))
@@ -1818,9 +1864,11 @@ describe('VirtualFileList — hard-delete fallback path (phase-10 4.5)', () => {
     })
 
     const { container } = renderListWithSelection('notes/a.md')
-    container.querySelector('[data-testid="virtual-file-list"]')?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
-    )
+    container
+      .querySelector('[data-testid="virtual-file-list"]')
+      ?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true, bubbles: true })
+      )
     await userEvent.click(await screen.findByRole('button', { name: '移到废纸篓' }))
     await userEvent.click(await screen.findByRole('checkbox', { name: /我知道这无法恢复/ }))
     await userEvent.click(screen.getByRole('button', { name: '永久删除' }))
@@ -1865,6 +1913,7 @@ onHardDelete={async () => {
 ```bash
 npx vitest run src/components/library/VirtualFileList.test.tsx src/components/library/TrashConfirmDialog.test.tsx src/stores/library.test.ts
 ```
+
 Expected: ALL PASS.
 
 - [ ] **Step 4: Run the full unit suite to catch regressions**
@@ -1872,6 +1921,7 @@ Expected: ALL PASS.
 ```bash
 npm test
 ```
+
 Expected: ALL PASS.
 
 - [ ] **Step 5: Commit**
@@ -1892,6 +1942,7 @@ After all tasks pass:
 ```bash
 grep -E "openspec-task: (3\.[1-6]|4\.[1-5])" /Users/aaa/develop/workspace-ai/acornvo/docs/superpowers/plans/2026-04-30-phase-10-history-and-trash-tasks-3.1-4.5.md | sort -u
 ```
+
 Expected: 11 unique labels (3.1–3.6, 4.1–4.5).
 
 2. **`file.trash` and `file.hardDelete` write to `ops_log` ON SUCCESS only:** Task 2's implementation has a try/catch around `shell.trashItem` that returns BEFORE `opsLog.record` runs on failure. Same for `unlink` in `handleHardDelete`. Tests assert `opsLog.record` is NOT called on `E_TRASH` / `E_NOT_FOUND` / `E_PERMISSION`.

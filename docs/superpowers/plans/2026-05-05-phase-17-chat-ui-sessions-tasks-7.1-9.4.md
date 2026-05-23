@@ -35,28 +35,28 @@ Land three orthogonal slices: (a) **Agent-loop attachment support** — `electro
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `electron/agent/attachments.ts` | Create | 7.2 |
-| `electron/agent/attachments.test.ts` | Create | 7.2, 7.3, 7.4 |
-| `electron/agent/loop.ts` | Modify (accept `attachments`) | 7.1 |
-| `electron/agent/loop.test.ts` | Modify | 7.1 |
-| `electron/ipc/chat.ts` | Modify (pass attachments through) | 7.5 |
-| `electron/ipc/chat.test.ts` | Modify | 7.5 |
-| `src/components/chat/ChatBanner.tsx` | Create | 8.1 |
-| `src/pages/Chat.tsx` | Modify (mount banner, error tail) | 8.1, 8.3, 8.4 |
-| `src/pages/Chat.test.tsx` | Modify | 8.1 |
-| `src/components/chat/ChatInput.tsx` | Modify (E_BUSY toast) | 8.2 |
-| `src/components/chat/ChatInput.test.tsx` | Modify | 8.2 |
-| `src/components/chat/MessageList.tsx` | Modify (error tail + retry) | 8.3, 8.4 |
-| `src/components/chat/MessageList.test.tsx` | Modify | 8.3, 8.4 |
-| `src/stores/chat.ts` | Modify (track lastUserText) | 8.4 |
-| `src/hooks/useGlobalHotkeys.ts` | Modify (chat hotkeys) | 9.1, 9.2, 9.3 |
-| `src/hooks/useGlobalHotkeys.test.ts` | Modify | 9.1, 9.2, 9.3 |
-| `src/components/chat/ShortcutsDialog.tsx` | Create | 9.3 |
-| `src/components/chat/SessionList.tsx` | Modify (↑↓/Enter/Delete) | 9.4 |
-| `src/components/chat/SessionList.test.tsx` | Modify | 9.4 |
-| `src/i18n/locales/zh-CN.json`, `en-US.json` | Modify (`chat.error.*`, `chat.shortcuts.*`) | 8.x, 9.3 |
+| Path                                        | Action                                      | Owner task    |
+| ------------------------------------------- | ------------------------------------------- | ------------- |
+| `electron/agent/attachments.ts`             | Create                                      | 7.2           |
+| `electron/agent/attachments.test.ts`        | Create                                      | 7.2, 7.3, 7.4 |
+| `electron/agent/loop.ts`                    | Modify (accept `attachments`)               | 7.1           |
+| `electron/agent/loop.test.ts`               | Modify                                      | 7.1           |
+| `electron/ipc/chat.ts`                      | Modify (pass attachments through)           | 7.5           |
+| `electron/ipc/chat.test.ts`                 | Modify                                      | 7.5           |
+| `src/components/chat/ChatBanner.tsx`        | Create                                      | 8.1           |
+| `src/pages/Chat.tsx`                        | Modify (mount banner, error tail)           | 8.1, 8.3, 8.4 |
+| `src/pages/Chat.test.tsx`                   | Modify                                      | 8.1           |
+| `src/components/chat/ChatInput.tsx`         | Modify (E_BUSY toast)                       | 8.2           |
+| `src/components/chat/ChatInput.test.tsx`    | Modify                                      | 8.2           |
+| `src/components/chat/MessageList.tsx`       | Modify (error tail + retry)                 | 8.3, 8.4      |
+| `src/components/chat/MessageList.test.tsx`  | Modify                                      | 8.3, 8.4      |
+| `src/stores/chat.ts`                        | Modify (track lastUserText)                 | 8.4           |
+| `src/hooks/useGlobalHotkeys.ts`             | Modify (chat hotkeys)                       | 9.1, 9.2, 9.3 |
+| `src/hooks/useGlobalHotkeys.test.ts`        | Modify                                      | 9.1, 9.2, 9.3 |
+| `src/components/chat/ShortcutsDialog.tsx`   | Create                                      | 9.3           |
+| `src/components/chat/SessionList.tsx`       | Modify (↑↓/Enter/Delete)                    | 9.4           |
+| `src/components/chat/SessionList.test.tsx`  | Modify                                      | 9.4           |
+| `src/i18n/locales/zh-CN.json`, `en-US.json` | Modify (`chat.error.*`, `chat.shortcuts.*`) | 8.x, 9.3      |
 
 ## Pre-flight
 
@@ -70,9 +70,11 @@ Land three orthogonal slices: (a) **Agent-loop attachment support** — `electro
 ## Tasks
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 1: `runAgent` accepts `attachments` — wire optional arg through
 
 **Files:**
+
 - Modify: `electron/agent/loop.ts`
 - Modify: `electron/agent/loop.test.ts`
 
@@ -89,12 +91,12 @@ Note the current parameter list and how the return is shaped.
 Append to `electron/agent/loop.test.ts`:
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { runAgent } from './loop';
+import { describe, it, expect, vi } from 'vitest'
+import { runAgent } from './loop'
 
 describe('runAgent — attachments parameter', () => {
   it('accepts an optional attachments array without breaking existing callers', async () => {
-    const writer = vi.fn();
+    const writer = vi.fn()
     // Use the same harness phase-16 used; this just confirms type+pass-through
     await expect(
       runAgent({
@@ -104,9 +106,9 @@ describe('runAgent — attachments parameter', () => {
         streamWriter: writer,
         cancel: { aborted: false }
       } as any)
-    ).resolves.toBeUndefined();
-  });
-});
+    ).resolves.toBeUndefined()
+  })
+})
 ```
 
 (If the existing test file uses fakes for `llmClient` and DB, follow that pattern. The above is intentionally minimal because the real coverage lives in Tasks 2–4.)
@@ -124,17 +126,17 @@ Expected: FAIL — TypeScript or runtime error.
 In `electron/agent/loop.ts`, accept and pass through `attachments`:
 
 ```ts
-import type { Attachment } from '@shared/agent-types';
+import type { Attachment } from '@shared/agent-types'
 
 export async function runAgent(args: {
-  sessionId: string;
-  userText: string;
-  attachments?: Attachment[];
+  sessionId: string
+  userText: string
+  attachments?: Attachment[]
   // ...existing fields preserved
-  streamWriter: (evt: unknown) => void;
-  cancel: { aborted: boolean };
+  streamWriter: (evt: unknown) => void
+  cancel: { aborted: boolean }
 }): Promise<void> {
-  const { sessionId, userText, attachments = [], streamWriter, cancel } = args;
+  const { sessionId, userText, attachments = [], streamWriter, cancel } = args
   // ...existing flow
   // Task 3 will inject pre-user message via collectAttachmentContext
 }
@@ -160,9 +162,11 @@ git commit -m "feat(phase-17): runAgent accepts optional attachments param"
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 2: `collectAttachmentContext` — read file/clip with `safeResolve` + clip-store
 
 **Files:**
+
 - Create: `electron/agent/attachments.ts`
 - Create: `electron/agent/attachments.test.ts`
 
@@ -180,45 +184,48 @@ Record the import paths — use them below as `<safeResolve-import>` and `<clip-
 Create `electron/agent/attachments.test.ts`:
 
 ```ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import { collectAttachmentContext } from './attachments';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { promises as fs } from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import { collectAttachmentContext } from './attachments'
 
 describe('collectAttachmentContext', () => {
-  let tmp: string;
+  let tmp: string
   beforeEach(async () => {
-    tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'));
-  });
+    tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'))
+  })
 
   it('reads a file attachment and wraps it in fence', async () => {
-    const p = path.join(tmp, 'a.md');
-    await fs.writeFile(p, 'hello world', 'utf8');
-    const out = await collectAttachmentContext(
-      [{ type: 'file', path: 'a.md', title: 'A' }],
-      { groveRoot: tmp, clipsGet: vi.fn() }
-    );
-    expect(out.blocks).toHaveLength(1);
-    expect(out.blocks[0]).toContain('--- a.md');
-    expect(out.blocks[0]).toContain('hello world');
-  });
+    const p = path.join(tmp, 'a.md')
+    await fs.writeFile(p, 'hello world', 'utf8')
+    const out = await collectAttachmentContext([{ type: 'file', path: 'a.md', title: 'A' }], {
+      groveRoot: tmp,
+      clipsGet: vi.fn()
+    })
+    expect(out.blocks).toHaveLength(1)
+    expect(out.blocks[0]).toContain('--- a.md')
+    expect(out.blocks[0]).toContain('hello world')
+  })
 
   it('reads a clip via clipsGet helper', async () => {
     const out = await collectAttachmentContext(
       [{ type: 'clip', clipId: 5, url: 'https://x.com', title: 'X' }],
-      { groveRoot: tmp, clipsGet: vi.fn().mockResolvedValue({ body: 'clip body', url: 'https://x.com' }) }
-    );
-    expect(out.blocks[0]).toContain('--- https://x.com');
-    expect(out.blocks[0]).toContain('clip body');
-  });
+      {
+        groveRoot: tmp,
+        clipsGet: vi.fn().mockResolvedValue({ body: 'clip body', url: 'https://x.com' })
+      }
+    )
+    expect(out.blocks[0]).toContain('--- https://x.com')
+    expect(out.blocks[0]).toContain('clip body')
+  })
 
   it('returns empty result for empty input', async () => {
-    const out = await collectAttachmentContext([], { groveRoot: tmp, clipsGet: vi.fn() });
-    expect(out.blocks).toEqual([]);
-    expect(out.totalChars).toBe(0);
-  });
-});
+    const out = await collectAttachmentContext([], { groveRoot: tmp, clipsGet: vi.fn() })
+    expect(out.blocks).toEqual([])
+    expect(out.totalChars).toBe(0)
+  })
+})
 ```
 
 - [ ] **Step 3: Run — verify it fails**
@@ -231,81 +238,81 @@ npx vitest run electron/agent/attachments.test.ts
 
 ```ts
 // electron/agent/attachments.ts
-import { promises as fs } from 'node:fs';
-import { join, resolve } from 'node:path';
-import type { Attachment } from '@shared/agent-types';
+import { promises as fs } from 'node:fs'
+import { join, resolve } from 'node:path'
+import type { Attachment } from '@shared/agent-types'
 
 export interface CollectContext {
-  groveRoot: string;
-  clipsGet: (id: number) => Promise<{ body: string; url: string } | null>;
+  groveRoot: string
+  clipsGet: (id: number) => Promise<{ body: string; url: string } | null>
 }
 
 export interface CollectResult {
-  blocks: string[];
-  totalChars: number;
-  truncatedCount: number;
-  droppedCount: number;
+  blocks: string[]
+  totalChars: number
+  truncatedCount: number
+  droppedCount: number
 }
 
-const PER_ATTACHMENT_LIMIT = 20000;
-const TOTAL_LIMIT = 80000;
+const PER_ATTACHMENT_LIMIT = 20000
+const TOTAL_LIMIT = 80000
 
 function safeJoin(root: string, rel: string): string {
-  const abs = resolve(join(root, rel));
+  const abs = resolve(join(root, rel))
   if (!abs.startsWith(resolve(root))) {
-    throw new Error('path escapes grove root');
+    throw new Error('path escapes grove root')
   }
-  return abs;
+  return abs
 }
 
 function fence(label: string, body: string): string {
-  return `--- ${label}\n${body}\n---\n`;
+  return `--- ${label}\n${body}\n---\n`
 }
 
 export async function collectAttachmentContext(
   attachments: Attachment[],
   ctx: CollectContext
 ): Promise<CollectResult> {
-  const blocks: string[] = [];
-  let totalChars = 0;
-  let truncatedCount = 0;
+  const blocks: string[] = []
+  let totalChars = 0
+  let truncatedCount = 0
 
   for (const a of attachments) {
-    let label = '';
-    let body = '';
+    let label = ''
+    let body = ''
     try {
       if (a.type === 'file') {
-        label = a.path;
-        const abs = safeJoin(ctx.groveRoot, a.path);
-        body = await fs.readFile(abs, 'utf8');
+        label = a.path
+        const abs = safeJoin(ctx.groveRoot, a.path)
+        body = await fs.readFile(abs, 'utf8')
       } else {
-        label = a.url;
-        const clip = await ctx.clipsGet(a.clipId);
-        if (!clip) throw new Error('clip not found');
-        body = clip.body;
+        label = a.url
+        const clip = await ctx.clipsGet(a.clipId)
+        if (!clip) throw new Error('clip not found')
+        body = clip.body
       }
       if (body.length > PER_ATTACHMENT_LIMIT) {
-        body = body.slice(0, PER_ATTACHMENT_LIMIT) + '\n…(已截断)';
-        truncatedCount += 1;
+        body = body.slice(0, PER_ATTACHMENT_LIMIT) + '\n…(已截断)'
+        truncatedCount += 1
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      label = a.type === 'file' ? a.path : a.url;
-      body = `[读取失败: ${msg}]`;
+      const msg = e instanceof Error ? e.message : String(e)
+      label = a.type === 'file' ? a.path : a.url
+      body = `[读取失败: ${msg}]`
     }
-    const block = fence(label, body);
-    blocks.push(block);
-    totalChars += block.length;
+    const block = fence(label, body)
+    blocks.push(block)
+    totalChars += block.length
   }
 
-  let droppedCount = 0;
+  let droppedCount = 0
   while (totalChars > TOTAL_LIMIT && blocks.length > 0) {
-    const dropped = blocks.shift()!;
-    totalChars -= dropped.length;
-    droppedCount += 1;
+    const dropped = blocks.shift()!
+    totalChars -= dropped.length
+    droppedCount += 1
   }
 
-  return { blocks, totalChars, truncatedCount, droppedCount };
+  return { blocks, totalChars, truncatedCount, droppedCount }
 }
 ```
 
@@ -327,9 +334,11 @@ git commit -m "feat(phase-17): collectAttachmentContext helper for file/clip rea
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 3: Truncation policy — 20k per attachment, 80k total
 
 **Files:**
+
 - Modify: `electron/agent/attachments.test.ts` (already done in Task 2)
 - Modify: `electron/agent/attachments.ts` (already done in Task 2)
 
@@ -340,32 +349,38 @@ This task formalises tests for limit policy:
 ```ts
 describe('collectAttachmentContext — limits', () => {
   it('truncates a single attachment > 20000 chars and adds 已截断', async () => {
-    const big = 'x'.repeat(40000);
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'));
-    await fs.writeFile(path.join(tmp, 'big.md'), big, 'utf8');
-    const out = await collectAttachmentContext(
-      [{ type: 'file', path: 'big.md', title: 'B' }],
-      { groveRoot: tmp, clipsGet: vi.fn() }
-    );
-    expect(out.blocks[0].length).toBeLessThan(big.length + 200);
-    expect(out.blocks[0]).toContain('已截断');
-    expect(out.truncatedCount).toBe(1);
-  });
+    const big = 'x'.repeat(40000)
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'))
+    await fs.writeFile(path.join(tmp, 'big.md'), big, 'utf8')
+    const out = await collectAttachmentContext([{ type: 'file', path: 'big.md', title: 'B' }], {
+      groveRoot: tmp,
+      clipsGet: vi.fn()
+    })
+    expect(out.blocks[0].length).toBeLessThan(big.length + 200)
+    expect(out.blocks[0]).toContain('已截断')
+    expect(out.truncatedCount).toBe(1)
+  })
 
   it('drops oldest blocks once total exceeds 80000 chars', async () => {
-    const big = 'y'.repeat(20000);
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'));
+    const big = 'y'.repeat(20000)
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'att-'))
     await Promise.all(
-      ['a.md', 'b.md', 'c.md', 'd.md', 'e.md'].map((n) => fs.writeFile(path.join(tmp, n), big, 'utf8'))
-    );
+      ['a.md', 'b.md', 'c.md', 'd.md', 'e.md'].map((n) =>
+        fs.writeFile(path.join(tmp, n), big, 'utf8')
+      )
+    )
     const out = await collectAttachmentContext(
-      ['a.md', 'b.md', 'c.md', 'd.md', 'e.md'].map((p) => ({ type: 'file' as const, path: p, title: p })),
+      ['a.md', 'b.md', 'c.md', 'd.md', 'e.md'].map((p) => ({
+        type: 'file' as const,
+        path: p,
+        title: p
+      })),
       { groveRoot: tmp, clipsGet: vi.fn() }
-    );
-    expect(out.totalChars).toBeLessThanOrEqual(80000);
-    expect(out.droppedCount).toBeGreaterThan(0);
-  });
-});
+    )
+    expect(out.totalChars).toBeLessThanOrEqual(80000)
+    expect(out.droppedCount).toBeGreaterThan(0)
+  })
+})
 ```
 
 - [ ] **Step 2: Run tests**
@@ -381,28 +396,33 @@ Expected: PASS — already implemented.
 In `electron/agent/loop.ts`, after history is read and before the LLM call:
 
 ```ts
-import { collectAttachmentContext } from './attachments';
-import { getActiveGroveRoot } from '<bootstrap-helper>'; // existing util that returns grove root
-import { clipsGet } from '<clip-store-import>';
+import { collectAttachmentContext } from './attachments'
+import { getActiveGroveRoot } from '<bootstrap-helper>' // existing util that returns grove root
+import { clipsGet } from '<clip-store-import>'
 
-const collected = attachments.length > 0
-  ? await collectAttachmentContext(attachments, {
-      groveRoot: getActiveGroveRoot(),
-      clipsGet: (id) => clipsGet(id)
-    })
-  : { blocks: [], totalChars: 0, truncatedCount: 0, droppedCount: 0 };
+const collected =
+  attachments.length > 0
+    ? await collectAttachmentContext(attachments, {
+        groveRoot: getActiveGroveRoot(),
+        clipsGet: (id) => clipsGet(id)
+      })
+    : { blocks: [], totalChars: 0, truncatedCount: 0, droppedCount: 0 }
 
 const messages: ChatMessage[] = [
   ...historyMessages,
   ...(collected.blocks.length > 0
-    ? [{
-        role: 'user' as const,
-        content: '以下是我附加的内容供你参考：\n' + collected.blocks.join('') +
-          (collected.droppedCount > 0 ? `\n[已省略 ${collected.droppedCount} 个附件]` : '')
-      }]
+    ? [
+        {
+          role: 'user' as const,
+          content:
+            '以下是我附加的内容供你参考：\n' +
+            collected.blocks.join('') +
+            (collected.droppedCount > 0 ? `\n[已省略 ${collected.droppedCount} 个附件]` : '')
+        }
+      ]
     : []),
   { role: 'user' as const, content: userText }
-];
+]
 // CRITICAL: do NOT append the synthesised pre-user message to session_messages.
 // Only the final `userText` row is persisted (see existing flow).
 ```
@@ -427,9 +447,11 @@ git commit -m "feat(phase-17): runAgent injects synthesised pre-user message fro
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 4: Read failure → `[读取失败: ...]` block, loop continues
 
 **Files:**
+
 - Modify: `electron/agent/attachments.test.ts` (already in Task 2)
 - Modify: `electron/agent/loop.test.ts`
 
@@ -438,24 +460,24 @@ The replacement-on-failure logic landed in Task 2. This task adds an end-to-end 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { runAgent } from './loop';
+import { describe, it, expect, vi } from 'vitest'
+import { runAgent } from './loop'
 
 describe('runAgent — attachment read failure', () => {
   it('non-existent file is replaced with 读取失败 block; loop completes', async () => {
-    const writer = vi.fn();
+    const writer = vi.fn()
     await runAgent({
       sessionId: 'test-session',
       userText: 'hi',
       attachments: [{ type: 'file', path: 'does-not-exist.md', title: 'X' }],
       streamWriter: writer,
       cancel: { aborted: false }
-    } as any);
+    } as any)
     // Assert the synthesised pre-user message contained the error marker
     // by inspecting llmClient stub's last messages array (use the same fake the file already uses)
     // ...
-  });
-});
+  })
+})
 ```
 
 (If the existing tests don't already expose the LLM stub's recorded messages, adapt to capture the prompt sent.)
@@ -478,9 +500,11 @@ git commit -m "test(phase-17): runAgent — attachment read failure does not bre
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 5: `electron/ipc/chat.ts` — `sendUserMessage` passes `attachments` through
 
 **Files:**
+
 - Modify: `electron/ipc/chat.ts`
 - Modify: `electron/ipc/chat.test.ts`
 
@@ -499,21 +523,23 @@ Append to `electron/ipc/chat.test.ts`:
 ```ts
 describe('chat IPC — sendUserMessage attachments', () => {
   it('forwards attachments array to runAgent', async () => {
-    const runAgentSpy = vi.fn();
+    const runAgentSpy = vi.fn()
     // Inject runAgent stub via the same DI mechanism the existing tests use
     // ...
     await sendUserMessageHandler({
       sessionId: 's1',
       text: 'hi',
       attachments: [{ type: 'file', path: 'a.md', title: 'A' }]
-    });
-    expect(runAgentSpy).toHaveBeenCalledWith(expect.objectContaining({
-      sessionId: 's1',
-      userText: 'hi',
-      attachments: [{ type: 'file', path: 'a.md', title: 'A' }]
-    }));
-  });
-});
+    })
+    expect(runAgentSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 's1',
+        userText: 'hi',
+        attachments: [{ type: 'file', path: 'a.md', title: 'A' }]
+      })
+    )
+  })
+})
 ```
 
 - [ ] **Step 3: Modify the handler**
@@ -521,22 +547,27 @@ describe('chat IPC — sendUserMessage attachments', () => {
 In `electron/ipc/chat.ts`:
 
 ```ts
-ipcMain.handle('chat:sendUserMessage', async (_e, payload: { sessionId: string; text: string; attachments?: Attachment[] }) => {
-  await runAgent({
-    sessionId: payload.sessionId,
-    userText: payload.text,
-    attachments: payload.attachments ?? [],
-    streamWriter,
-    cancel
-  });
-  return { ok: true };
-});
+ipcMain.handle(
+  'chat:sendUserMessage',
+  async (_e, payload: { sessionId: string; text: string; attachments?: Attachment[] }) => {
+    await runAgent({
+      sessionId: payload.sessionId,
+      userText: payload.text,
+      attachments: payload.attachments ?? [],
+      streamWriter,
+      cancel
+    })
+    return { ok: true }
+  }
+)
 ```
 
 Update the IPC contract in `shared/ipc-contract.ts` if the schema is statically typed (most likely yes — phase 16 added it):
 
 ```ts
-sendUserMessage: (input: { sessionId: string; text: string; attachments?: Attachment[] }) => { ok: true }
+sendUserMessage: (input: { sessionId: string; text: string; attachments?: Attachment[] }) => {
+  ok: true
+}
 ```
 
 - [ ] **Step 4: Run tests + typecheck**
@@ -557,9 +588,11 @@ git commit -m "feat(phase-17): chat:sendUserMessage IPC accepts attachments"
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 6: `E_MISSING_PROFILE` banner in Chat top bar
 
 **Files:**
+
 - Create: `src/components/chat/ChatBanner.tsx`
 - Modify: `src/pages/Chat.tsx`
 - Modify: `src/i18n/locales/zh-CN.json`, `en-US.json`
@@ -600,57 +633,82 @@ Append to `src/pages/Chat.test.tsx`:
 ```tsx
 describe('Chat — missing profile banner', () => {
   it('shows banner when active session has profileId=null AND no default profile', async () => {
-    const { useProfilesStore } = await import('@/stores/profiles');
-    useProfilesStore.setState({ profiles: [] } as any);
-    mockApi.chat.sessions.list = vi.fn().mockResolvedValue([
-      { id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }
-    ]);
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    expect(await screen.findByTestId('chat-banner-missing-profile')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /前往设置|Go to settings/i }).getAttribute('href')).toBe('/settings/ai');
-  });
+    const { useProfilesStore } = await import('@/stores/profiles')
+    useProfilesStore.setState({ profiles: [] } as any)
+    mockApi.chat.sessions.list = vi
+      .fn()
+      .mockResolvedValue([{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }])
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    expect(await screen.findByTestId('chat-banner-missing-profile')).toBeTruthy()
+    expect(
+      screen.getByRole('link', { name: /前往设置|Go to settings/i }).getAttribute('href')
+    ).toBe('/settings/ai')
+  })
 
   it('hides banner when default profile exists', async () => {
-    const { useProfilesStore } = await import('@/stores/profiles');
-    useProfilesStore.setState({ profiles: [{ id: 'p1', name: 'P', provider: 'openai', model: 'm', baseUrl: null, secretRef: null, default: true }] } as any);
-    render(<MemoryRouter><Chat /></MemoryRouter>);
-    await screen.findByTestId('chat-main');
-    expect(screen.queryByTestId('chat-banner-missing-profile')).toBeFalsy();
-  });
-});
+    const { useProfilesStore } = await import('@/stores/profiles')
+    useProfilesStore.setState({
+      profiles: [
+        {
+          id: 'p1',
+          name: 'P',
+          provider: 'openai',
+          model: 'm',
+          baseUrl: null,
+          secretRef: null,
+          default: true
+        }
+      ]
+    } as any)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
+    await screen.findByTestId('chat-main')
+    expect(screen.queryByTestId('chat-banner-missing-profile')).toBeFalsy()
+  })
+})
 ```
 
 - [ ] **Step 3: Create `ChatBanner.tsx`**
 
 ```tsx
 // src/components/chat/ChatBanner.tsx
-import type { JSX } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { AlertCircle } from 'lucide-react';
-import { useChatStore } from '@/stores/chat';
-import { useProfilesStore } from '@/stores/profiles';
+import type { JSX } from 'react'
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { AlertCircle } from 'lucide-react'
+import { useChatStore } from '@/stores/chat'
+import { useProfilesStore } from '@/stores/profiles'
 
 export function ChatBanner(): JSX.Element | null {
-  const { t } = useTranslation();
-  const activeId = useChatStore((s) => s.activeSessionId);
-  const sessions = useChatStore((s) => s.sessions);
-  const profiles = useProfilesStore((s) => s.profiles);
+  const { t } = useTranslation()
+  const activeId = useChatStore((s) => s.activeSessionId)
+  const sessions = useChatStore((s) => s.sessions)
+  const profiles = useProfilesStore((s) => s.profiles)
 
-  const activeSession = sessions.find((s) => s.id === activeId) ?? null;
-  if (!activeSession) return null;
-  const hasProfile = activeSession.profileId !== null || profiles.some((p) => p.default);
-  if (hasProfile) return null;
+  const activeSession = sessions.find((s) => s.id === activeId) ?? null
+  if (!activeSession) return null
+  const hasProfile = activeSession.profileId !== null || profiles.some((p) => p.default)
+  if (hasProfile) return null
 
   return (
-    <div data-testid="chat-banner-missing-profile" className="flex items-center gap-2 border-b border-border bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700">
+    <div
+      data-testid="chat-banner-missing-profile"
+      className="flex items-center gap-2 border-b border-border bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700"
+    >
       <AlertCircle size={14} />
       <span>{t('chat.error.missingProfile')}</span>
       <Link to="/settings/ai" className="ml-auto text-primary underline">
         {t('chat.error.goToSettings')}
       </Link>
     </div>
-  );
+  )
 }
 ```
 
@@ -688,9 +746,11 @@ git commit -m "feat(phase-17): E_MISSING_PROFILE banner with settings link"
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 7: `E_BUSY` toast on second send
 
 **Files:**
+
 - Modify: `src/components/chat/ChatInput.tsx`
 - Modify: `src/components/chat/ChatInput.test.tsx`
 
@@ -701,43 +761,45 @@ Append to `ChatInput.test.tsx`:
 ```tsx
 describe('ChatInput — E_BUSY toast', () => {
   it('shows toast when sendUserMessage rejects with E_BUSY', async () => {
-    const toast = vi.fn();
-    vi.doMock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }));
+    const toast = vi.fn()
+    vi.doMock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }))
     // re-import ChatInput so the mock applies
-    const { ChatInput: Fresh } = await import('./ChatInput');
+    const { ChatInput: Fresh } = await import('./ChatInput')
     useChatStore.setState((s) => ({
       bySession: { ...s.bySession, s1: { ...s.bySession.s1, status: 'streaming' } }
-    }));
-    render(<Fresh />);
-    const ta = screen.getByRole('textbox');
-    await userEvent.type(ta, 'hi');
-    await userEvent.keyboard('{Meta>}{Enter}{/Meta}');
-    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
-      title: expect.stringMatching(/已在生成|already generating/i)
-    }));
-  });
-});
+    }))
+    render(<Fresh />)
+    const ta = screen.getByRole('textbox')
+    await userEvent.type(ta, 'hi')
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}')
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringMatching(/已在生成|already generating/i)
+      })
+    )
+  })
+})
 ```
 
 - [ ] **Step 2: Wire `useToast` into `ChatInput.tsx`**
 
 ```tsx
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast'
 
-const { toast } = useToast();
+const { toast } = useToast()
 
 async function send(): Promise<void> {
-  const t = text.trim();
-  const atts = slot?.pendingAttachments ?? [];
-  if (!t && atts.length === 0) return;
-  setText('');
+  const t = text.trim()
+  const atts = slot?.pendingAttachments ?? []
+  if (!t && atts.length === 0) return
+  setText('')
   try {
-    await sendUserMessage({ text: t, attachments: atts });
+    await sendUserMessage({ text: t, attachments: atts })
   } catch (err) {
     if ((err as { code?: string }).code === 'E_BUSY') {
-      toast({ title: tFn('chat.error.busy') });
+      toast({ title: tFn('chat.error.busy') })
     } else {
-      throw err;
+      throw err
     }
   }
 }
@@ -763,9 +825,11 @@ git commit -m "feat(phase-17): toast on E_BUSY when sending while streaming"
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 8: `E_STEP_LIMIT` gray tail message
 
 **Files:**
+
 - Modify: `src/components/chat/MessageList.tsx`
 - Modify: `src/components/chat/MessageList.test.tsx`
 
@@ -780,13 +844,23 @@ describe('MessageList — error tail', () => {
       sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: {
-        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'error', error: 'E_STEP_LIMIT' }
+        s1: {
+          loaded: true,
+          messages: [],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_STEP_LIMIT'
+        }
       }
-    });
-    render(<MessageList />);
-    expect(screen.getByText(/步骤上限|step limit/i)).toBeTruthy();
-  });
-});
+    })
+    render(<MessageList />)
+    expect(screen.getByText(/步骤上限|step limit/i)).toBeTruthy()
+  })
+})
 ```
 
 - [ ] **Step 2: Add error tail in `MessageList.tsx`**
@@ -794,16 +868,21 @@ describe('MessageList — error tail', () => {
 After the streaming-tail block but before the sentinel:
 
 ```tsx
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 
-const { t } = useTranslation();
+const { t } = useTranslation()
 
 // inside the messages container:
-{slot.status === 'error' && slot.error && (
-  <div className="my-2 rounded bg-muted/40 px-3 py-2 text-xs text-muted-foreground" data-testid="message-error-tail">
-    {t(`chat.error.${normalizeErrorKey(slot.error)}`, slot.error)}
-  </div>
-)}
+{
+  slot.status === 'error' && slot.error && (
+    <div
+      className="my-2 rounded bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+      data-testid="message-error-tail"
+    >
+      {t(`chat.error.${normalizeErrorKey(slot.error)}`, slot.error)}
+    </div>
+  )
+}
 ```
 
 Helper at module top:
@@ -811,10 +890,14 @@ Helper at module top:
 ```ts
 function normalizeErrorKey(err: string): string {
   switch (err) {
-    case 'E_STEP_LIMIT': return 'stepLimit';
-    case 'E_NETWORK': return 'network';
-    case 'E_SERVER': return 'server';
-    default: return err;
+    case 'E_STEP_LIMIT':
+      return 'stepLimit'
+    case 'E_NETWORK':
+      return 'network'
+    case 'E_SERVER':
+      return 'server'
+    default:
+      return err
   }
 }
 ```
@@ -837,9 +920,11 @@ git commit -m "feat(phase-17): gray error tail for E_STEP_LIMIT"
 ---
 
 <!-- openspec-task: 8.4 -->
+
 ### Task 9: `E_NETWORK` / `E_SERVER` retry button — re-send last user text + attachments
 
 **Files:**
+
 - Modify: `src/stores/chat.ts` (track `lastUserText` + `lastUserAttachments` per session)
 - Modify: `src/stores/chat.test.ts`
 - Modify: `src/components/chat/MessageList.tsx`
@@ -855,12 +940,12 @@ describe('chat store — lastUser tracking', () => {
     await useChatStore.getState().sendUserMessage({
       text: 'remember me',
       attachments: [{ type: 'file', path: 'a.md', title: 'A' }]
-    });
-    const slot = useChatStore.getState().bySession.s1!;
-    expect(slot.lastUserText).toBe('remember me');
-    expect(slot.lastUserAttachments).toEqual([{ type: 'file', path: 'a.md', title: 'A' }]);
-  });
-});
+    })
+    const slot = useChatStore.getState().bySession.s1!
+    expect(slot.lastUserText).toBe('remember me')
+    expect(slot.lastUserAttachments).toEqual([{ type: 'file', path: 'a.md', title: 'A' }])
+  })
+})
 ```
 
 - [ ] **Step 2: Add fields to `SessionState`**
@@ -870,8 +955,8 @@ In `src/stores/chat.ts`:
 ```ts
 export interface SessionState {
   // ...existing fields
-  lastUserText: string;
-  lastUserAttachments: Attachment[];
+  lastUserText: string
+  lastUserAttachments: Attachment[]
 }
 ```
 
@@ -899,7 +984,7 @@ set((s) => ({
       lastUserAttachments: attachments ?? []
     }
   }
-}));
+}))
 ```
 
 - [ ] **Step 3: Run store test**
@@ -913,21 +998,25 @@ Expected: PASS.
 - [ ] **Step 4: Add retry button in `MessageList.tsx`**
 
 ```tsx
-const sendUserMessage = useChatStore((s) => s.sendUserMessage);
+const sendUserMessage = useChatStore((s) => s.sendUserMessage)
 
-{slot.status === 'error' && (slot.error === 'E_NETWORK' || slot.error === 'E_SERVER') && (
-  <div className="my-2 flex items-center gap-2 rounded bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-    <span>{t(`chat.error.${normalizeErrorKey(slot.error)}`)}</span>
-    <button
-      type="button"
-      data-testid="error-retry"
-      onClick={() => void sendUserMessage({ text: slot.lastUserText, attachments: slot.lastUserAttachments })}
-      className="rounded border border-border px-2 py-0.5 hover:bg-muted"
-    >
-      {t('chat.error.retry')}
-    </button>
-  </div>
-)}
+{
+  slot.status === 'error' && (slot.error === 'E_NETWORK' || slot.error === 'E_SERVER') && (
+    <div className="my-2 flex items-center gap-2 rounded bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+      <span>{t(`chat.error.${normalizeErrorKey(slot.error)}`)}</span>
+      <button
+        type="button"
+        data-testid="error-retry"
+        onClick={() =>
+          void sendUserMessage({ text: slot.lastUserText, attachments: slot.lastUserAttachments })
+        }
+        className="rounded border border-border px-2 py-0.5 hover:bg-muted"
+      >
+        {t('chat.error.retry')}
+      </button>
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 5: Append failing UI test**
@@ -939,14 +1028,28 @@ describe('MessageList — retry button', () => {
       sessions: [{ id: 's1', title: 'A', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: {
-        s1: { loaded: true, messages: [], streamingBuffer: '', flushedLength: 0, pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', status: 'error', error: 'E_NETWORK', lastUserText: 'try again', lastUserAttachments: [] }
+        s1: {
+          loaded: true,
+          messages: [],
+          streamingBuffer: '',
+          flushedLength: 0,
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          status: 'error',
+          error: 'E_NETWORK',
+          lastUserText: 'try again',
+          lastUserAttachments: []
+        }
       }
-    });
-    render(<MessageList />);
-    await userEvent.click(screen.getByTestId('error-retry'));
-    expect(mockApi.chat.sendUserMessage).toHaveBeenCalledWith(expect.objectContaining({ text: 'try again' }));
-  });
-});
+    })
+    render(<MessageList />)
+    await userEvent.click(screen.getByTestId('error-retry'))
+    expect(mockApi.chat.sendUserMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'try again' })
+    )
+  })
+})
 ```
 
 - [ ] **Step 6: Run tests**
@@ -967,9 +1070,11 @@ git commit -m "feat(phase-17): network/server error tail with retry button"
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 10: `Cmd/Ctrl+N` — new session on /chat
 
 **Files:**
+
 - Modify: `src/hooks/useGlobalHotkeys.ts`
 - Modify: `src/hooks/useGlobalHotkeys.test.ts`
 
@@ -1009,25 +1114,25 @@ it('Cmd+N on /chat creates a new session', async () => {
 - [ ] **Step 3: Add to `useGlobalHotkeys.ts`**
 
 ```ts
-import { useLocation } from 'react-router-dom';
-import { useChatStore } from '@/stores/chat';
+import { useLocation } from 'react-router-dom'
+import { useChatStore } from '@/stores/chat'
 
 export function useGlobalHotkeys(): void {
-  const location = useLocation();
+  const location = useLocation()
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
-      const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
+      const mod = e.metaKey || e.ctrlKey
+      if (!mod) return
       if (location.pathname.startsWith('/chat')) {
         if (e.key === 'n' || e.key === 'N') {
-          e.preventDefault();
-          void useChatStore.getState().createSession();
+          e.preventDefault()
+          void useChatStore.getState().createSession()
         }
       }
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [location.pathname]);
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [location.pathname])
   // ...existing hotkeys
 }
 ```
@@ -1050,9 +1155,11 @@ git commit -m "feat(phase-17): Cmd/Ctrl+N creates new chat session"
 ---
 
 <!-- openspec-task: 9.2 -->
+
 ### Task 11: `Cmd/Ctrl+K` — focus + clear ChatInput
 
 **Files:**
+
 - Modify: `src/hooks/useGlobalHotkeys.ts`
 - Modify: `src/components/chat/ChatInput.tsx` (expose focus via store flag)
 - Modify: `src/hooks/useGlobalHotkeys.test.ts`
@@ -1080,13 +1187,13 @@ bumpFocusInput() {
 In `ChatInput.tsx`:
 
 ```tsx
-const focusBump = useChatStore((s) => s.focusInputBump);
+const focusBump = useChatStore((s) => s.focusInputBump)
 useEffect(() => {
   if (focusBump > 0) {
-    setText('');
-    taRef.current?.focus();
+    setText('')
+    taRef.current?.focus()
   }
-}, [focusBump]);
+}, [focusBump])
 ```
 
 - [ ] **Step 3: Hotkey wiring**
@@ -1095,8 +1202,8 @@ In `useGlobalHotkeys.ts` add:
 
 ```ts
 if (e.key === 'k' || e.key === 'K') {
-  e.preventDefault();
-  useChatStore.getState().bumpFocusInput();
+  e.preventDefault()
+  useChatStore.getState().bumpFocusInput()
 }
 ```
 
@@ -1126,9 +1233,11 @@ git commit -m "feat(phase-17): Cmd/Ctrl+K focuses + clears chat input"
 ---
 
 <!-- openspec-task: 9.3 -->
+
 ### Task 12: `Cmd/Ctrl+/` — shortcuts dialog
 
 **Files:**
+
 - Create: `src/components/chat/ShortcutsDialog.tsx`
 - Modify: `src/pages/Chat.tsx` (mount + hook to top bar `?`)
 - Modify: `src/hooks/useGlobalHotkeys.ts`
@@ -1162,8 +1271,8 @@ In `useGlobalHotkeys.ts`:
 
 ```ts
 if (e.key === '/') {
-  e.preventDefault();
-  useChatStore.getState().bumpShowShortcuts();
+  e.preventDefault()
+  useChatStore.getState().bumpShowShortcuts()
 }
 ```
 
@@ -1171,17 +1280,19 @@ if (e.key === '/') {
 
 ```tsx
 // src/components/chat/ShortcutsDialog.tsx
-import type { JSX } from 'react';
-import { useEffect, useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { useTranslation } from 'react-i18next';
-import { useChatStore } from '@/stores/chat';
+import type { JSX } from 'react'
+import { useEffect, useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { useTranslation } from 'react-i18next'
+import { useChatStore } from '@/stores/chat'
 
 export function ShortcutsDialog(): JSX.Element {
-  const { t } = useTranslation();
-  const bump = useChatStore((s) => s.showShortcutsBump);
-  const [open, setOpen] = useState(false);
-  useEffect(() => { if (bump > 0) setOpen(true); }, [bump]);
+  const { t } = useTranslation()
+  const bump = useChatStore((s) => s.showShortcutsBump)
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (bump > 0) setOpen(true)
+  }, [bump])
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
@@ -1198,7 +1309,7 @@ export function ShortcutsDialog(): JSX.Element {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
+  )
 }
 ```
 
@@ -1242,9 +1353,11 @@ git commit -m "feat(phase-17): Cmd/Ctrl+/ opens shortcuts dialog (also via ? ico
 ---
 
 <!-- openspec-task: 9.4 -->
+
 ### Task 13: SessionList ↑↓ navigation, Enter activate, Delete confirm
 
 **Files:**
+
 - Modify: `src/components/chat/SessionList.tsx`
 - Modify: `src/components/chat/SessionList.test.tsx`
 
@@ -1263,31 +1376,31 @@ describe('SessionList — keyboard navigation', () => {
       ],
       activeSessionId: 's1',
       bySession: {}
-    });
-  });
+    })
+  })
 
   it('ArrowDown moves selection to next', async () => {
-    render(<SessionList />);
-    const ul = screen.getByRole('list', { name: /sessions/i });
-    ul.focus();
-    await userEvent.keyboard('{ArrowDown}');
-    expect(useChatStore.getState().activeSessionId).toBe('s2');
-  });
+    render(<SessionList />)
+    const ul = screen.getByRole('list', { name: /sessions/i })
+    ul.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(useChatStore.getState().activeSessionId).toBe('s2')
+  })
 
   it('ArrowUp at top stays at first', async () => {
-    render(<SessionList />);
-    screen.getByRole('list', { name: /sessions/i }).focus();
-    await userEvent.keyboard('{ArrowUp}');
-    expect(useChatStore.getState().activeSessionId).toBe('s1');
-  });
+    render(<SessionList />)
+    screen.getByRole('list', { name: /sessions/i }).focus()
+    await userEvent.keyboard('{ArrowUp}')
+    expect(useChatStore.getState().activeSessionId).toBe('s1')
+  })
 
   it('Delete key triggers confirmation dialog', async () => {
-    render(<SessionList />);
-    screen.getByRole('list', { name: /sessions/i }).focus();
-    await userEvent.keyboard('{Delete}');
-    expect(screen.getByRole('dialog')).toBeTruthy();
-  });
-});
+    render(<SessionList />)
+    screen.getByRole('list', { name: /sessions/i }).focus()
+    await userEvent.keyboard('{Delete}')
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+})
 ```
 
 - [ ] **Step 2: Modify `SessionList.tsx`**

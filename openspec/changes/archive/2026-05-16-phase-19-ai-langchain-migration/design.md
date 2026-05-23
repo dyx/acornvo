@@ -39,16 +39,19 @@
 **决策**：拥抱 LangGraph **interrupt** + **SQLite checkpointer**（`@langchain/langgraph-checkpoint-sqlite`）。
 
 **理由**：
+
 - 与 v1 中间件机制对齐，是 LangChain 团队推荐的 HITL 模式
 - 自动持久化挂起状态，免费获得「app 重启恢复审批」能力
 - 删掉自写 Map gate（87 LOC + 测试）
 
 **替代方案**：
+
 - 保留自写 ApprovalGate 仅在执行 tool 前查表 —— 拒绝。则失去 v1 默认的 `Command({ resume })` 一致性，且 SqliteSaver 仍需引入以支持其他持久化需求。
 
 ### S1 · session_messages 表与 checkpointer 的关系
 
 **决策**：**双库共存**。`thread_id = session_id`。
+
 - `session_messages` 表保持为 UI truth source 不变（renderer 仍按它渲染）
 - checkpointer 是 LangGraph 运行时实现细节（仅 HITL resume 时被读）
 - runner 作桥梁：从 stream-translator 收到 user-visible 事件时同步写 session_messages
@@ -58,6 +61,7 @@
 **理由**：避免两份历史不一致；UI 仍只读一个表；checkpointer 仅承担 HITL 暂停态。
 
 **替代方案**：
+
 - A. 全量依赖 checkpointer 取消 session_messages —— 拒绝，UI 改动巨大且超出本次范围
 - B. 让 checkpointer 与 session_messages 双向同步 —— 拒绝，易产生分歧 bug；本方案保持单向流（runner → session_messages）
 
@@ -79,11 +83,13 @@
 **决策**：**清白重写** 5 个内置工具为 `tool(fn, { schema: z.object(...) })`。删除 registry 的 schema converter 与 Ajv 校验。
 
 **理由**：
+
 - 现 registry 38 LOC 全部是 JSON Schema 双向转换的样板，重写比适配更短
 - Zod schema 由 LangChain 自动转给具体 provider 的 schema 格式
 - `safeResolve` 路径沙箱、`E_*` 错误码、副作用语义都不变
 
 **替代方案**：
+
 - 写适配器把现有 JSONSchema 包成 LangChain Tool —— 拒绝，等于把样板代码原地保留
 
 ### 并行工具调用
@@ -91,6 +97,7 @@
 **决策**：**去掉单工具串行约束**，跟随 LangGraph v1 默认并行。
 
 **理由**：
+
 - 当前 loop 强制只执行 `toolCalls[0]` 并 emit `step.warning` 是手写循环的折中，非产品需求
 - 并行使「读 3 个文件 + 列标签」一次完成，明显改善体验
 - v1 默认参数无单工具串行选项，强行兼容代价高
@@ -105,16 +112,16 @@
 
 ### Stream Translator 事件映射表
 
-| LangGraph 输出 | 翻译为 AgentEvent | 备注 |
-|---|---|---|
-| `["updates", { model: { messages: [AIMessage] } }]` 无 tool_calls | `message.appended`（assistant）+ 写库 | 终止 |
-| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ 对每个 tool_call emit `tool.start { tool, args, callId }` | callId = `tool_calls[i].id`；K1 例外第 2 条 |
-| `["updates", { tools: { messages: [ToolMessage] } }]` | `tool.result { tool, result, callId }` + 写库（role=tool, toolCallId=callId） | callId = `ToolMessage.tool_call_id`；K1 例外第 2 条 |
-| `["messages", [AIMessageChunk, metadata]]` | `token { text }` | 仅 model 节点的 chunk |
-| `result.__interrupt__` 含 action_requests | `tool.approval-needed { callId, tool, args }` | callId = interrupt id |
-| LangChain 抛非 AbortError 异常 | `error { error: normalize(...) }` | 走 normalize-errors |
-| signal aborted | `canceled` | |
-| 最终消息后聚合 `usage_metadata` | `done { usage }` + `aiUsage.insert(...)` | |
+| LangGraph 输出                                                      | 翻译为 AgentEvent                                                                                      | 备注                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| `["updates", { model: { messages: [AIMessage] } }]` 无 tool_calls   | `message.appended`（assistant）+ 写库                                                                  | 终止                                                |
+| `["updates", { model: { messages: [AIMessage with tool_calls] } }]` | `message.appended`（assistant + toolCalls）+ 对每个 tool_call emit `tool.start { tool, args, callId }` | callId = `tool_calls[i].id`；K1 例外第 2 条         |
+| `["updates", { tools: { messages: [ToolMessage] } }]`               | `tool.result { tool, result, callId }` + 写库（role=tool, toolCallId=callId）                          | callId = `ToolMessage.tool_call_id`；K1 例外第 2 条 |
+| `["messages", [AIMessageChunk, metadata]]`                          | `token { text }`                                                                                       | 仅 model 节点的 chunk                               |
+| `result.__interrupt__` 含 action_requests                           | `tool.approval-needed { callId, tool, args }`                                                          | callId = interrupt id                               |
+| LangChain 抛非 AbortError 异常                                      | `error { error: normalize(...) }`                                                                      | 走 normalize-errors                                 |
+| signal aborted                                                      | `canceled`                                                                                             |                                                     |
+| 最终消息后聚合 `usage_metadata`                                     | `done { usage }` + `aiUsage.insert(...)`                                                               |                                                     |
 
 ### Profile → Model 工厂
 
@@ -129,21 +136,24 @@ switch (p.provider) {
       apiKey: p.apiKey ?? '',
       temperature: p.temperature ?? 0.3,
       maxTokens: p.maxTokens ?? 800,
-      configuration: p.baseUrl ? { baseURL: p.baseUrl } : undefined,
-    });
+      configuration: p.baseUrl ? { baseURL: p.baseUrl } : undefined
+    })
   case 'anthropic':
-    return new ChatAnthropic({ model, apiKey, temperature, maxTokens });
+    return new ChatAnthropic({ model, apiKey, temperature, maxTokens })
   case 'ollama':
     return new ChatOllama({
-      model, baseUrl: p.baseUrl ?? 'http://localhost:11434',
-      temperature, numPredict: maxTokens,
-    });
+      model,
+      baseUrl: p.baseUrl ?? 'http://localhost:11434',
+      temperature,
+      numPredict: maxTokens
+    })
 }
 ```
 
 ### 错误归一化
 
 **决策**：`electron/ai/normalize-errors.ts` 统一映射：
+
 - AbortError → 透传（runner emit `canceled`）
 - LangChain `AuthenticationError` / `RateLimitError` / `APIError` → `E_AUTH` / `E_RATE` / `E_SERVER`
 - HTTP status 兜底（401/403→E_AUTH, 429→E_RATE, ≥500→E_SERVER, fetch 网络错→E_NETWORK）

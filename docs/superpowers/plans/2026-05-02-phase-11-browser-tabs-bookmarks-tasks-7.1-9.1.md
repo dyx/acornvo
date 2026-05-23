@@ -28,17 +28,17 @@ Land the keyboard shortcuts that make the in-app browser feel like a real browse
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/hooks/useBrowserHotkeys.ts` | Create | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
-| `src/hooks/useBrowserHotkeys.test.ts` | Create | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
-| `src/pages/Browse.tsx` | Modify (mount hook) | 7.1 |
-| `src/components/AppRail.tsx` | Create | 8.1 |
-| `src/components/AppRail.test.tsx` | Create | 8.1 |
-| `src/App.tsx` | Modify (rail layout + /browser route) | 8.1, 8.2 |
-| `electron/security/external-links.ts` | Verify (no edit) | 8.3 |
-| `electron/security/external-links.test.ts` | Modify (add scope assertion) | 8.3 |
-| `src/i18n/locales/zh-CN.json` | Modify (add browser keys) | 9.1 |
+| Path                                       | Action                                | Owner task                   |
+| ------------------------------------------ | ------------------------------------- | ---------------------------- |
+| `src/hooks/useBrowserHotkeys.ts`           | Create                                | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
+| `src/hooks/useBrowserHotkeys.test.ts`      | Create                                | 7.1, 7.2, 7.3, 7.4, 7.5, 7.6 |
+| `src/pages/Browse.tsx`                     | Modify (mount hook)                   | 7.1                          |
+| `src/components/AppRail.tsx`               | Create                                | 8.1                          |
+| `src/components/AppRail.test.tsx`          | Create                                | 8.1                          |
+| `src/App.tsx`                              | Modify (rail layout + /browser route) | 8.1, 8.2                     |
+| `electron/security/external-links.ts`      | Verify (no edit)                      | 8.3                          |
+| `electron/security/external-links.test.ts` | Modify (add scope assertion)          | 8.3                          |
+| `src/i18n/locales/zh-CN.json`              | Modify (add browser keys)             | 9.1                          |
 
 ## Pre-flight
 
@@ -54,9 +54,11 @@ Land the keyboard shortcuts that make the in-app browser feel like a real browse
 ## Tasks
 
 <!-- openspec-task: 7.1 -->
+
 ### Task 1: `useBrowserHotkeys` skeleton + Cmd/Ctrl+T (new tab) / Cmd/Ctrl+W (close current tab)
 
 **Files:**
+
 - Create: `src/hooks/useBrowserHotkeys.ts`
 - Create: `src/hooks/useBrowserHotkeys.test.ts`
 - Modify: `src/pages/Browse.tsx`
@@ -76,21 +78,37 @@ const port = {
   closeTab: vi.fn(),
   activateTab: vi.fn(),
   navigate: vi.fn(),
-  reload: vi.fn(), goBack: vi.fn(), goForward: vi.fn(),
-  setReaderMode: vi.fn(), setViewport: vi.fn(),
-  suspendTab: vi.fn(), resumeTab: vi.fn()
+  reload: vi.fn(),
+  goBack: vi.fn(),
+  goForward: vi.fn(),
+  setReaderMode: vi.fn(),
+  setViewport: vi.fn(),
+  suspendTab: vi.fn(),
+  resumeTab: vi.fn()
 } as any
 
 function makeTab(id: string) {
   return {
-    id, url: 'https://x', title: id, favicon: null,
-    loading: false, canGoBack: false, canGoForward: false,
-    readerMode: false, suspended: false, savedUrl: 'https://x'
+    id,
+    url: 'https://x',
+    title: id,
+    favicon: null,
+    loading: false,
+    canGoBack: false,
+    canGoForward: false,
+    readerMode: false,
+    suspended: false,
+    savedUrl: 'https://x'
   }
 }
 
 function reset(tabs: any[] = [], active: string | null = null) {
-  useBrowserStore.setState({ tabs, activeTabId: active, bookmarksOpen: false, viewport: { x: 0, y: 0, width: 0, height: 0 } })
+  useBrowserStore.setState({
+    tabs,
+    activeTabId: active,
+    bookmarksOpen: false,
+    viewport: { x: 0, y: 0, width: 0, height: 0 }
+  })
 }
 
 describe('useBrowserHotkeys — Cmd+T / Cmd+W', () => {
@@ -212,9 +230,11 @@ git commit -m "feat(phase-11): browser hotkeys — Cmd/Ctrl+T new tab, Cmd/Ctrl+
 ---
 
 <!-- openspec-task: 7.2 -->
+
 ### Task 2: Cmd/Ctrl+Tab / Shift+Tab — cycle tabs
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -275,24 +295,24 @@ Expected: FAIL.
 In `src/hooks/useBrowserHotkeys.ts`:
 
 ```ts
-  const tabs = useBrowserStore((s) => s.tabs)
-  const activateTab = useBrowserStore((s) => s.activateTab)
+const tabs = useBrowserStore((s) => s.tabs)
+const activateTab = useBrowserStore((s) => s.activateTab)
 ```
 
 Inside `onKeyDown`, before the closing `}`:
 
 ```ts
-      if (ev.key === 'Tab') {
-        ev.preventDefault()
-        if (tabs.length < 2 || !activeTabId) return
-        const idx = tabs.findIndex((t) => t.id === activeTabId)
-        if (idx === -1) return
-        const next = ev.shiftKey
-          ? tabs[(idx - 1 + tabs.length) % tabs.length]
-          : tabs[(idx + 1) % tabs.length]
-        void activateTab(next.id)
-        return
-      }
+if (ev.key === 'Tab') {
+  ev.preventDefault()
+  if (tabs.length < 2 || !activeTabId) return
+  const idx = tabs.findIndex((t) => t.id === activeTabId)
+  if (idx === -1) return
+  const next = ev.shiftKey
+    ? tabs[(idx - 1 + tabs.length) % tabs.length]
+    : tabs[(idx + 1) % tabs.length]
+  void activateTab(next.id)
+  return
+}
 ```
 
 Add `tabs, activateTab` to the `useEffect` dep array.
@@ -315,9 +335,11 @@ git commit -m "feat(phase-11): browser hotkeys — Cmd/Ctrl+(Shift+)Tab cycle ta
 ---
 
 <!-- openspec-task: 7.3 -->
+
 ### Task 3: Cmd/Ctrl+1..9 — jump to tab N
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -376,19 +398,19 @@ Expected: FAIL.
 Inside `onKeyDown`:
 
 ```ts
-      if (key >= '1' && key <= '9') {
-        ev.preventDefault()
-        const n = Number(key)
-        if (n === 9) {
-          // Jump to last tab regardless of count
-          const last = tabs[tabs.length - 1]
-          if (last) void activateTab(last.id)
-          return
-        }
-        const target = tabs[n - 1]
-        if (target) void activateTab(target.id)
-        return
-      }
+if (key >= '1' && key <= '9') {
+  ev.preventDefault()
+  const n = Number(key)
+  if (n === 9) {
+    // Jump to last tab regardless of count
+    const last = tabs[tabs.length - 1]
+    if (last) void activateTab(last.id)
+    return
+  }
+  const target = tabs[n - 1]
+  if (target) void activateTab(target.id)
+  return
+}
 ```
 
 - [ ] **Step 4: Run tests**
@@ -409,9 +431,11 @@ git commit -m "feat(phase-11): browser hotkeys — Cmd/Ctrl+1..9 jump to tab N (
 ---
 
 <!-- openspec-task: 7.4 -->
+
 ### Task 4: Cmd/Ctrl+L — focus AddressBar + select all
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -463,15 +487,15 @@ Expected: FAIL.
 - [ ] **Step 3: Extend hook**
 
 ```ts
-      if (key === 'l') {
-        ev.preventDefault()
-        const el = document.querySelector<HTMLInputElement>('input[aria-label="address bar"]')
-        if (el) {
-          el.focus()
-          el.select()
-        }
-        return
-      }
+if (key === 'l') {
+  ev.preventDefault()
+  const el = document.querySelector<HTMLInputElement>('input[aria-label="address bar"]')
+  if (el) {
+    el.focus()
+    el.select()
+  }
+  return
+}
 ```
 
 - [ ] **Step 4: Run tests**
@@ -492,9 +516,11 @@ git commit -m "feat(phase-11): browser hotkeys — Cmd/Ctrl+L focuses AddressBar
 ---
 
 <!-- openspec-task: 7.5 -->
+
 ### Task 5: Cmd/Ctrl+[ / Cmd/Ctrl+] / Cmd/Ctrl+R — back / forward / reload
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 
@@ -550,30 +576,31 @@ Expected: FAIL.
 - [ ] **Step 3: Extend hook**
 
 Get the actions:
+
 ```ts
-  const goBack = useBrowserStore((s) => s.goBack)
-  const goForward = useBrowserStore((s) => s.goForward)
-  const reload = useBrowserStore((s) => s.reload)
+const goBack = useBrowserStore((s) => s.goBack)
+const goForward = useBrowserStore((s) => s.goForward)
+const reload = useBrowserStore((s) => s.reload)
 ```
 
 Inside `onKeyDown` (before the closing return):
 
 ```ts
-      if (key === '[' && activeTabId) {
-        ev.preventDefault()
-        void goBack(activeTabId)
-        return
-      }
-      if (key === ']' && activeTabId) {
-        ev.preventDefault()
-        void goForward(activeTabId)
-        return
-      }
-      if (key === 'r' && !ev.shiftKey && activeTabId) {
-        ev.preventDefault()
-        void reload(activeTabId)
-        return
-      }
+if (key === '[' && activeTabId) {
+  ev.preventDefault()
+  void goBack(activeTabId)
+  return
+}
+if (key === ']' && activeTabId) {
+  ev.preventDefault()
+  void goForward(activeTabId)
+  return
+}
+if (key === 'r' && !ev.shiftKey && activeTabId) {
+  ev.preventDefault()
+  void reload(activeTabId)
+  return
+}
 ```
 
 Add `goBack, goForward, reload` to the `useEffect` deps.
@@ -596,11 +623,13 @@ git commit -m "feat(phase-11): browser hotkeys — Cmd/Ctrl+[/]/R back/forward/r
 ---
 
 <!-- openspec-task: 7.6 -->
+
 ### Task 6: Cmd/Ctrl+D — open BookmarkDialog for current page
 
 To avoid coupling `useBrowserHotkeys` to React component state, we dispatch a `CustomEvent('browser:bookmark-current')` on `window`. `AddressBar.tsx` listens for it and opens the dialog (the same code path the star button uses).
 
 **Files:**
+
 - Modify: `src/hooks/useBrowserHotkeys.ts`
 - Modify: `src/hooks/useBrowserHotkeys.test.ts`
 - Modify: `src/components/browser/AddressBar.tsx`
@@ -651,12 +680,12 @@ Expected: FAIL.
 In `useBrowserHotkeys.ts`, inside `onKeyDown`:
 
 ```ts
-      if (key === 'd' && !ev.shiftKey) {
-        ev.preventDefault()
-        if (!activeTabId) return
-        window.dispatchEvent(new CustomEvent('browser:bookmark-current'))
-        return
-      }
+if (key === 'd' && !ev.shiftKey) {
+  ev.preventDefault()
+  if (!activeTabId) return
+  window.dispatchEvent(new CustomEvent('browser:bookmark-current'))
+  return
+}
 ```
 
 - [ ] **Step 4: Listen in AddressBar**
@@ -692,9 +721,11 @@ git commit -m "feat(phase-11): browser hotkey — Cmd/Ctrl+D opens bookmark dial
 ---
 
 <!-- openspec-task: 8.1 -->
+
 ### Task 7: AppRail with three real items
 
 **Files:**
+
 - Create: `src/components/AppRail.tsx`
 - Create: `src/components/AppRail.test.tsx`
 - Modify: `src/App.tsx`
@@ -837,9 +868,11 @@ git commit -m "feat(phase-11): AppRail — 果仓 / 拾果 / 松语 (disabled)"
 ---
 
 <!-- openspec-task: 8.2 -->
+
 ### Task 8: Wire AppRail into `App.tsx` + replace `/browser` placeholder with `Browse`
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Modify App.tsx layout**
@@ -847,12 +880,14 @@ git commit -m "feat(phase-11): AppRail — 果仓 / 拾果 / 松语 (disabled)"
 In `src/App.tsx`:
 
 1. Add imports:
+
    ```tsx
    import { AppRail } from '@/components/AppRail'
    import { Browse } from '@/pages/Browse'
    ```
 
 2. Replace the `<Route path="/browser" element={<Placeholder name="browser" />} />` with:
+
    ```tsx
    <Route path="/browser" element={<Browse />} />
    ```
@@ -862,9 +897,7 @@ In `src/App.tsx`:
    <div className="flex h-full flex-col">
      <TitleBar />
      <main className="flex-1 overflow-hidden">
-       <Routes>
-         {/* ... */}
-       </Routes>
+       <Routes>{/* ... */}</Routes>
      </main>
      {/* overlays */}
    </div>
@@ -912,9 +945,11 @@ git commit -m "feat(phase-11): wire AppRail + replace /browser placeholder with 
 ---
 
 <!-- openspec-task: 8.3 -->
+
 ### Task 9: Verify external-link guard scope (BrowserWindow only, not WebContentsView)
 
 **Files:**
+
 - Modify: `electron/security/external-links.test.ts`
 
 - [ ] **Step 1: Inspect existing test**
@@ -979,9 +1014,11 @@ git commit -m "test(phase-11): assert external-link guard scope is BrowserWindow
 ---
 
 <!-- openspec-task: 9.1 -->
+
 ### Task 10: i18n keys for browser surface
 
 **Files:**
+
 - Modify: `src/i18n/locales/zh-CN.json`
 
 - [ ] **Step 1: Add keys**
@@ -1023,6 +1060,7 @@ Open `src/i18n/locales/zh-CN.json` and add a new top-level `browser` node (and a
 ```
 
 Also confirm/add:
+
 ```json
 "common": {
   // ... existing entries ...

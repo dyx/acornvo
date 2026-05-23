@@ -9,15 +9,18 @@
 **Tech Stack:** TypeScript 5, react-router-dom 7, Zustand 5, react-i18next 17, radix-ui (already installed).
 
 **Carry-over decisions from Plan 1:**
+
 - Event channel: `'settings:changed'` (colon).
 - DB scope: per-grove. Settings store and IPC handlers all assume `dbService.requireCurrent()` is non-null. Calls before a grove is open throw `E_NOT_FOUND` per existing IPC patterns; the renderer's `useSettingsStore` only fetches after the `'project:changed'` event fires.
 
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 1: Extend IpcContract with `settings` namespace
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts:147-244`
 
 - [ ] **Step 1: Write the failing contract test**
@@ -39,18 +42,28 @@ import type {
 
 describe('IpcContract.settings', () => {
   it('has get / set / aiProfilesList / aiProfilesCreate / aiProfilesUpdate / aiProfilesDelete / browserClearCookies', () => {
-    expectTypeOf<IpcContract['settings']['get']>()
-      .toEqualTypeOf<<NS extends SettingsNamespace>(ns: NS) => SettingsByNs[NS]>()
-    expectTypeOf<IpcContract['settings']['set']>()
-      .toEqualTypeOf<
-        <NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[NS]>) => { ok: true }
-      >()
-    expectTypeOf<IpcContract['settings']['aiProfilesList']>().returns.toEqualTypeOf<AiProviderProfile[]>()
-    expectTypeOf<IpcContract['settings']['aiProfilesCreate']>().parameters.toMatchTypeOf<[ProfileCreateInput]>()
-    expectTypeOf<IpcContract['settings']['aiProfilesCreate']>().returns.toEqualTypeOf<{ id: string }>()
-    expectTypeOf<IpcContract['settings']['aiProfilesUpdate']>().parameters.toMatchTypeOf<[string, ProfileUpdateInput]>()
+    expectTypeOf<IpcContract['settings']['get']>().toEqualTypeOf<
+      <NS extends SettingsNamespace>(ns: NS) => SettingsByNs[NS]
+    >()
+    expectTypeOf<IpcContract['settings']['set']>().toEqualTypeOf<
+      <NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[NS]>) => { ok: true }
+    >()
+    expectTypeOf<IpcContract['settings']['aiProfilesList']>().returns.toEqualTypeOf<
+      AiProviderProfile[]
+    >()
+    expectTypeOf<IpcContract['settings']['aiProfilesCreate']>().parameters.toMatchTypeOf<
+      [ProfileCreateInput]
+    >()
+    expectTypeOf<IpcContract['settings']['aiProfilesCreate']>().returns.toEqualTypeOf<{
+      id: string
+    }>()
+    expectTypeOf<IpcContract['settings']['aiProfilesUpdate']>().parameters.toMatchTypeOf<
+      [string, ProfileUpdateInput]
+    >()
     expectTypeOf<IpcContract['settings']['aiProfilesDelete']>().parameters.toMatchTypeOf<[string]>()
-    expectTypeOf<IpcContract['settings']['browserClearCookies']>().returns.toEqualTypeOf<{ ok: true }>()
+    expectTypeOf<IpcContract['settings']['browserClearCookies']>().returns.toEqualTypeOf<{
+      ok: true
+    }>()
   })
 
   it('does NOT expose secret.* or getDecryptedKey on the contract', () => {
@@ -147,9 +160,11 @@ git commit -m "feat(phase-13): IpcContract.settings namespace + 'settings:change
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 2: Main IPC handlers for `settings`
 
 **Files:**
+
 - Create: `electron/ipc/settings.ts`
 - Create: `electron/ipc/settings.test.ts`
 - Modify: `electron/ipc/handlers.ts`
@@ -180,7 +195,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../services/db'
 import { session } from 'electron'
 import { settingsHandlers } from './settings'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -215,7 +233,10 @@ describe('settingsHandlers', () => {
 
   it('aiProfilesCreate returns { id } and aiProfilesList shows it', () => {
     const { id } = settingsHandlers.aiProfilesCreate({
-      name: 'p1', provider: 'openai', model: 'gpt-4o', apiKey: 'sk'
+      name: 'p1',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
     })
     expect(typeof id).toBe('string')
     expect(settingsHandlers.aiProfilesList()).toHaveLength(1)
@@ -223,12 +244,17 @@ describe('settingsHandlers', () => {
 
   it('aiProfilesCreate with duplicate name throws E_DUPLICATE_NAME', () => {
     settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' })
-    expect(() => settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' }))
-      .toThrow(/E_DUPLICATE_NAME/)
+    expect(() =>
+      settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' })
+    ).toThrow(/E_DUPLICATE_NAME/)
   })
 
   it('aiProfilesUpdate / aiProfilesDelete return { ok: true }', () => {
-    const { id } = settingsHandlers.aiProfilesCreate({ name: 'p', provider: 'openai', model: 'gpt-4o' })
+    const { id } = settingsHandlers.aiProfilesCreate({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o'
+    })
     expect(settingsHandlers.aiProfilesUpdate(id, { name: 'p2' })).toEqual({ ok: true })
     expect(settingsHandlers.aiProfilesDelete(id)).toEqual({ ok: true })
   })
@@ -264,7 +290,9 @@ import { profilesStore } from '../settings/profiles'
 const BROWSER_PARTITION = 'persist:browser-default'
 
 type SettingsHandlers = {
-  [M in keyof IpcContract['settings']]: IpcContract['settings'][M] extends (...args: infer A) => infer R
+  [M in keyof IpcContract['settings']]: IpcContract['settings'][M] extends (
+    ...args: infer A
+  ) => infer R
     ? (...args: A) => R | Promise<Awaited<R>>
     : never
 }
@@ -350,9 +378,11 @@ git commit -m "feat(phase-13): electron/ipc/settings — handlers wired into rou
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 3: Preload exposure (no secrets in renderer)
 
 **Files:**
+
 - Modify: `preload/preload.ts`
 - Create: `preload/preload.settings.test.ts`
 
@@ -445,9 +475,11 @@ git commit -m "feat(phase-13): preload exposes settings.* (excludes secret + get
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 4: Settings broadcaster (main → renderer)
 
 **Files:**
+
 - Create: `electron/settings/broadcast.ts`
 - Create: `electron/settings/broadcast.test.ts`
 - Modify: `electron/main.ts`
@@ -593,9 +625,11 @@ git commit -m "feat(phase-13): installSettingsBroadcaster — fan settings:chang
 ---
 
 <!-- openspec-task: 4.1 -->
+
 ### Task 5: Renderer settings store
 
 **Files:**
+
 - Create: `src/stores/settings.ts`
 - Create: `src/stores/settings.test.ts`
 
@@ -612,7 +646,8 @@ vi.mock('@/ipc/client', () => ({
         if (ns === 'general') return { locale: 'zh-CN', autoBackup: 'off' }
         if (ns === 'appearance') return { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' }
         if (ns === 'ai') return { defaultProfileId: null }
-        if (ns === 'browser') return { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
+        if (ns === 'browser')
+          return { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
         throw new Error('unknown ns')
       }),
       set: vi.fn().mockResolvedValue({ ok: true })
@@ -652,10 +687,12 @@ describe('useSettingsStore', () => {
   it('installSettingsSubscriber merges incoming settings:changed events', async () => {
     type Payload = { ns: string; key: string; newValue: unknown }
     let captured: ((p: Payload) => void) | null = null
-    ;(ipc.on as unknown as ReturnType<typeof vi.fn>).mockImplementation((_chan: string, cb: (p: Payload) => void) => {
-      captured = cb
-      return () => {}
-    })
+    ;(ipc.on as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (_chan: string, cb: (p: Payload) => void) => {
+        captured = cb
+        return () => {}
+      }
+    )
     installSettingsSubscriber()
     expect(captured).not.toBeNull()
     captured!({ ns: 'appearance', key: 'theme', newValue: 'light' })
@@ -748,11 +785,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   _applyChange({ ns, key, newValue }) {
     const current = get()
-    if (ns === 'general') set({ general: { ...current.general, [key]: newValue } as GeneralSettings })
+    if (ns === 'general')
+      set({ general: { ...current.general, [key]: newValue } as GeneralSettings })
     else if (ns === 'appearance')
       set({ appearance: { ...current.appearance, [key]: newValue } as AppearanceSettings })
     else if (ns === 'ai') set({ ai: { ...current.ai, [key]: newValue } as AiSettings })
-    else if (ns === 'browser') set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
+    else if (ns === 'browser')
+      set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
   }
 }))
 
@@ -805,10 +844,13 @@ export function installGroveSubscriber(): () => void {
     useGroveStore.getState()._setCurrent(payload)
     groveSwitchHooks._fire(payload)
     if (payload) {
-      void useSettingsStore.getState().loadAll().catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('settings.loadAll failed', err)
-      })
+      void useSettingsStore
+        .getState()
+        .loadAll()
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('settings.loadAll failed', err)
+        })
     }
   })
   return () => {
@@ -833,9 +875,11 @@ git commit -m "feat(phase-13): renderer settings store + subscriber wired to pro
 ---
 
 <!-- openspec-task: 4.2 -->
+
 ### Task 6: `/settings` page with sub-routes
 
 **Files:**
+
 - Create: `src/pages/Settings.tsx`
 - Create: `src/components/settings/SettingsLayout.tsx`
 - Modify: `src/App.tsx`
@@ -918,7 +962,11 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { to: '/settings/general', labelKey: 'settings.tab.general', testId: 'settings-rail-general' },
-  { to: '/settings/appearance', labelKey: 'settings.tab.appearance', testId: 'settings-rail-appearance' },
+  {
+    to: '/settings/appearance',
+    labelKey: 'settings.tab.appearance',
+    testId: 'settings-rail-appearance'
+  },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' }
 ]
@@ -931,7 +979,9 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
         aria-label="settings"
         className="flex w-[160px] shrink-0 flex-col border-r bg-muted/30 py-4"
       >
-        <h2 className="px-4 pb-3 text-sm font-medium text-muted-foreground">{t('settings.title')}</h2>
+        <h2 className="px-4 pb-3 text-sm font-medium text-muted-foreground">
+          {t('settings.title')}
+        </h2>
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
@@ -939,9 +989,7 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
             data-testid={tab.testId}
             className={({ isActive }) =>
               `block px-4 py-2 text-sm transition-colors ${
-                isActive
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground hover:bg-muted'
+                isActive ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted'
               }`
             }
           >
@@ -999,7 +1047,7 @@ import { Settings } from './pages/Settings'
 // Replace:
 // <Route path="/settings" element={<Placeholder name="settings" />} />
 // With:
-<Route path="/settings/*" element={<Settings />} />
+;<Route path="/settings/*" element={<Settings />} />
 ```
 
 The `/*` is required so nested `<Routes>` inside `Settings.tsx` match.
@@ -1016,9 +1064,11 @@ Hold off on committing — we'll commit together with the General + Appearance t
 ---
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 7: General tab
 
 **Files:**
+
 - Create: `src/components/settings/GeneralTab.tsx`
 - Create: `src/components/settings/GeneralTab.test.tsx`
 
@@ -1041,8 +1091,7 @@ vi.mock('@/ipc/client', () => ({
 
 vi.mock('@/stores/grove', () => ({
   useGroveStore: Object.assign(
-    (selector: (s: unknown) => unknown) =>
-      selector({ current: { path: '/tmp/my-grove' } }),
+    (selector: (s: unknown) => unknown) => selector({ current: { path: '/tmp/my-grove' } }),
     { getState: () => ({ current: { path: '/tmp/my-grove' } }) }
   )
 }))
@@ -1170,9 +1219,11 @@ Expected: PASS — all 3 tests green.
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 8: Appearance tab + theme/font side-effects
 
 **Files:**
+
 - Create: `src/components/settings/AppearanceTab.tsx`
 - Create: `src/components/settings/AppearanceTab.test.tsx`
 - Modify: `src/index.css` (add `--font-scale` CSS var on root)
@@ -1323,11 +1374,15 @@ export function AppearanceTab(): JSX.Element {
             debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
           }}
         />
-        <span className="ml-3 text-sm text-muted-foreground">{appearance.fontScale.toFixed(1)}x</span>
+        <span className="ml-3 text-sm text-muted-foreground">
+          {appearance.fontScale.toFixed(1)}x
+        </span>
       </label>
 
       <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.appearance.editorFont')}</span>
+        <span className="mb-1 block text-sm font-medium">
+          {t('settings.appearance.editorFont')}
+        </span>
         <select
           className="block w-64 rounded border bg-background px-3 py-2 text-sm"
           value={appearance.editorFont}
@@ -1373,6 +1428,7 @@ Expected: PASS.
 
 Run in foreground: `npm run dev`
 Open the app, navigate to `/settings`. Verify:
+
 - The rail shows the four tab labels (zh-CN: 通用 / 外观 / AI / 浏览器)
 - `/settings` redirects to `/settings/general`
 - Clicking each rail entry switches the right pane
@@ -1405,6 +1461,7 @@ git commit -m "feat(phase-13): /settings page skeleton + General + Appearance ta
 - [ ] Dev app: drag font slider to 1.2 → text grows; reload → font scale persists (because `loadAll()` re-fetches from main)
 
 Surface area for Plan 3:
+
 - `useSettingsStore` is the single source of truth for the renderer
 - `installSettingsSubscriber` is already running — Plan 3 only needs to read from the store
 - `AiTabStub` and `BrowserTabStub` are placeholders to be replaced

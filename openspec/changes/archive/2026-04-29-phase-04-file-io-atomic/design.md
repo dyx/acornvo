@@ -3,6 +3,7 @@
 已有前置：phase 1 的 IPC 路由 + 错误形状；phase 2 的 `currentGrovePath`；phase 3 的 db（不在本阶段使用，但下游 indexer 会在同事务内写 db + 写 md）。
 
 PRD 的跨模块通用约定（[边界处理规范/跨模块通用约定]）：
+
 - **原子写入**：所有 md / JSON 持久化都走 writeFileAtomic
 - **编码统一**：读时 detect UTF-8 BOM / GBK 并转 UTF-8；写回统一无 BOM UTF-8
 - **换行符保留**：读时统一 LF；写回保留原风格
@@ -14,12 +15,14 @@ PRD 的跨模块通用约定（[边界处理规范/跨模块通用约定]）：
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 一次封装好 md I/O、frontmatter、路径校验，三者供后续所有模块调用
 - 抗断电、抗编码漂移、抗行尾漂移、抗越界
 - Frontmatter 读写尽量保留 YAML 原貌（key 顺序与未知字段），避免理果只改 3 个字段就动到整文件
 - mtime 乐观锁机制就位（值由下游 phase 9 用）
 
 **Non-Goals:**
+
 - 不做删除（trashItem 留到 phase 10）
 - 不做 chokidar 监听（留到 phase 5）
 - 不解决重命名 `<>:"|?*` 的 Windows 保留字符问题（slug 阶段过滤，phase 12）
@@ -54,6 +57,7 @@ async writeFileAtomic(abs, data: Buffer | string) {
 ### D2: 编码检测优先级
 
 读 `fs.readFile(abs)` → Buffer：
+
 1. 前三字节是 `EF BB BF` → UTF-8 BOM → 剥离返回
 2. `isUtf8(buf)`（node 22+ 内置或自实现）→ 直接 UTF-8 返回
 3. 启发式尝试 GBK / GB18030 解码（`iconv-lite`）；成功且无 replacement 字符 → 返回解码结果 + 记录 `originalEncoding: 'gbk'`（返给调用方，后续写回转 UTF-8）
@@ -64,6 +68,7 @@ async writeFileAtomic(abs, data: Buffer | string) {
 ### D3: 换行保留
 
 读取后扫描文件前 4KB 或全文：
+
 - 仅含 `\n` → LF
 - 仅含 `\r\n` → CRLF
 - 混合 → `mixed`（按多数派决定，同时记录 `hadMixedEol: true` 供日志）
@@ -92,25 +97,27 @@ stringify(frontmatter: Frontmatter, body: string, opts?: { baseRawYaml?: string 
 ### D5: Frontmatter Zod schema（`shared/frontmatter-schema.ts`）
 
 ```ts
-const FrontmatterSchema = z.object({
-  title: z.string().optional(),
-  url: z.string().url().optional(),
-  site: z.string().optional(),
-  author: z.string().optional(),
-  published_at: z.string().optional(),    // ISO date
-  clipped_at: z.string().datetime().optional(),
-  source_type: z.enum(['article', 'rss', 'manual']).optional(),
-  summary: z.string().optional(),
-  highlights: z.array(z.string()).optional(),
-  rating: z.number().int().min(1).max(5).optional(),
-  category: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  reviewed_at: z.string().datetime().optional(),
-  reviewed_model: z.string().optional(),
-  reviewed_version: z.number().int().nonnegative().optional(),
-  reviewed_error: z.string().optional(),  // 理果失败标记（phase 15）
-  sync_warning: z.string().optional(),    // 预留（phase 2 已在 project.json 用）
-}).passthrough()
+const FrontmatterSchema = z
+  .object({
+    title: z.string().optional(),
+    url: z.string().url().optional(),
+    site: z.string().optional(),
+    author: z.string().optional(),
+    published_at: z.string().optional(), // ISO date
+    clipped_at: z.string().datetime().optional(),
+    source_type: z.enum(['article', 'rss', 'manual']).optional(),
+    summary: z.string().optional(),
+    highlights: z.array(z.string()).optional(),
+    rating: z.number().int().min(1).max(5).optional(),
+    category: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    reviewed_at: z.string().datetime().optional(),
+    reviewed_model: z.string().optional(),
+    reviewed_version: z.number().int().nonnegative().optional(),
+    reviewed_error: z.string().optional(), // 理果失败标记（phase 15）
+    sync_warning: z.string().optional() // 预留（phase 2 已在 project.json 用）
+  })
+  .passthrough()
 ```
 
 **理由**：passthrough 支持用户/未来字段；`.optional()` 支持老文件慢慢补齐。
@@ -138,6 +145,7 @@ safeResolve(groveRoot: string, p: string): string {
 ### D7: 写后校验
 
 `file.write` 流程：
+
 1. `writeFileAtomic(abs, normalized)`
 2. `readFile(abs)` → 计算 sha256
 3. 与输入的期望 hash 对比；不符 → 等 50ms 再读一次（iCloud 延迟）；仍不符 → 删除刚写的内容回退到原版本（若存在备份则恢复）并抛 `E_WRITE_VERIFY`
@@ -147,6 +155,7 @@ safeResolve(groveRoot: string, p: string): string {
 ### D8: mtime 乐观锁（机制就位，用在 phase 9）
 
 `file.write(rel, content, { expectedMtime?: number })`：
+
 - 读 `fs.stat(abs).mtimeMs`
 - 若 `expectedMtime` 提供且与当前 mtime 不一致 → 抛 `E_MTIME_MISMATCH`（带当前值），**不**执行写入
 - 一致或未提供 → 正常走原子写

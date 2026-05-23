@@ -26,7 +26,7 @@ Typical examples:
   streaming={{
     hasNextChunk,
     enableAnimation: true,
-    tail: true,
+    tail: true
   }}
 />
 ```
@@ -42,12 +42,12 @@ Use `incompleteMarkdownComponentMap` when unfinished fragments should show custo
     hasNextChunk,
     incompleteMarkdownComponentMap: {
       link: 'link-loading',
-      table: 'table-loading',
-    },
+      table: 'table-loading'
+    }
   }}
   components={{
     'link-loading': LinkSkeleton,
-    'table-loading': TableSkeleton,
+    'table-loading': TableSkeleton
   }}
 />
 ```

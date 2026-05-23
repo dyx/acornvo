@@ -13,9 +13,11 @@
 ---
 
 <!-- openspec-task: 9.5 -->
+
 ### Task 1: Delete `electron/ai/client.ts` + test
 
 **Files:**
+
 - Delete: `electron/ai/client.ts`
 - Delete: `electron/ai/client.test.ts`
 
@@ -87,9 +89,11 @@ git commit -m "refactor(ai): delete client.ts, parse-json.ts, parse-tool-args.ts
 ---
 
 <!-- openspec-task: 9.6 -->
+
 ### Task 2: Delete `electron/agent/loop.ts`
 
 **Files:**
+
 - Delete: `electron/agent/loop.ts`
 
 - [ ] **Step 1: Confirm `chat.ts` no longer imports it (legacy fallback gone)**
@@ -129,9 +133,11 @@ git commit -m "refactor(agent): delete loop.ts and legacy fallback (runner.ts is
 ---
 
 <!-- openspec-task: 9.7 -->
+
 ### Task 3: Delete `electron/agent/approval.ts`
 
 **Files:**
+
 - Delete: `electron/agent/approval.ts`
 - Modify: `electron/ipc/handlers.ts` (drop `approvalGate` import)
 - Modify: `electron/ipc/chat.ts` (drop `approval` from deps; HITL middleware replaces it)
@@ -151,6 +157,7 @@ Edit `electron/ipc/handlers.ts`:
 ```
 
 Edit `electron/ipc/chat.ts`. The `approval: ApprovalGate` field on `ChatDeps` was used by:
+
 1. `cancelStream` → `deps.approval.cancelSession(sessionId)`. This is no longer needed; cancellation is via `AbortController.abort()` + `markThreadCanceled`.
 2. `sessions.delete` handler → `deps.approval.cancelSession(id)`. Also removed; checkpointer cascade-delete (Plan 4 Task 10) handles cleanup.
 
@@ -177,14 +184,17 @@ git commit -m "refactor(agent): delete approval.ts (humanInTheLoopMiddleware + C
 ---
 
 <!-- openspec-task: 9.8 -->
+
 ### Task 4: Delete `electron/agent/loop.test.ts`
 
 **Files:**
+
 - Delete: `electron/agent/loop.test.ts`
 
 - [ ] **Step 1: Verify replacement**
 
 Confirm `electron/agent/runner.test.ts` (Plan 3 Task 10) covers all the scenarios `loop.test.ts` covered:
+
 - One-step completion
 - Multi-step tool roundtrip
 - Cancellation
@@ -202,9 +212,11 @@ git commit -m "test(agent): delete legacy loop.test.ts (runner.test.ts is the re
 ---
 
 <!-- openspec-task: 9.9 -->
+
 ### Task 5: Grep verify zero imports of deleted modules
 
 **Files:**
+
 - Inspect-only across the entire repo
 
 - [ ] **Step 1: Run the grep audit**
@@ -228,6 +240,7 @@ grep -rn \
 Expected output: empty.
 
 If anything matches:
+
 - It's a leftover import that the deletion missed; fix the file, re-run, re-grep.
 
 - [ ] **Step 2: Also check for runtime `require` patterns**
@@ -271,9 +284,11 @@ git commit --allow-empty -m "chore: confirm no orphan imports of deleted AI modu
 ---
 
 <!-- openspec-task: 9.10 -->
+
 ### Task 6: Final acceptance + smoke
 
 **Files:**
+
 - Inspect: `electron/__acceptance__/**`
 
 - [ ] **Step 1: Run all acceptance tests**
@@ -281,6 +296,7 @@ git commit --allow-empty -m "chore: confirm no orphan imports of deleted AI modu
 ```bash
 pnpm vitest run electron/__acceptance__/
 ```
+
 Expected: 100% pass; same suite that passed in Plan 4 Task 1.
 
 - [ ] **Step 2: Run full unit test suite**
@@ -288,11 +304,13 @@ Expected: 100% pass; same suite that passed in Plan 4 Task 1.
 ```bash
 pnpm test
 ```
+
 Expected: green.
 
 - [ ] **Step 3: Smoke test interactively**
 
 `pnpm dev`. Exercise:
+
 1. Single-turn chat (no tools)
 2. Tool roundtrip (`search_files` + `read_file`)
 3. HITL approve flow (`update_frontmatter` accept)
@@ -312,9 +330,11 @@ git commit --allow-empty -m "test: full acceptance + manual smoke pass on new AI
 ---
 
 <!-- openspec-task: 10.1 -->
+
 ### Task 7: Update README / docs to reflect the new AI link
 
 **Files:**
+
 - Modify: `README.md` (if it mentions providers/loop)
 - Modify: `docs/AI.md` or similar (if exists; create if absent and explicitly requested by user)
 
@@ -329,6 +349,7 @@ grep -rn "OpenAI\|Anthropic\|Ollama\|provider\|llmClient\|chatWithTools\|approva
 For each match, edit the file. The narrative becomes:
 
 > Acornvo's AI link is built on **LangChain v1 + LangGraph v1**.
+>
 > - Provider adapters: `@langchain/openai` / `@langchain/anthropic` / `@langchain/ollama` via `electron/ai/model-factory.ts`.
 > - Agent runtime: `createAgent` + `agent.stream` in `electron/agent/runner.ts`.
 > - Human-in-the-loop: `humanInTheLoopMiddleware` + LangGraph `SqliteSaver` checkpointer.
@@ -353,9 +374,11 @@ git commit --allow-empty -m "docs: no README/docs sections referenced old AI lin
 ---
 
 <!-- openspec-task: 10.2 -->
+
 ### Task 8: Write release notes
 
 **Files:**
+
 - Modify: `CHANGELOG.md` (if exists) or `docs/release-notes/<version>.md`
 
 - [ ] **Step 1: Identify release note location**
@@ -377,13 +400,16 @@ mkdir -p docs/release-notes
 ## Phase 19 — AI runtime migration to LangChain v1 + LangGraph v1
 
 ### New capabilities
+
 - **Restart recovery for pending approvals**: when the app is closed with an `update_frontmatter` approval pending, restarting the app re-emits `tool.approval-needed` so the user can complete the decision.
 
 ### Behavior changes
+
 - **Tool calls now run in parallel by default**. The legacy single-tool-per-step constraint is removed; "read 3 files then list tags" now completes in one round-trip. The internal `step.warning` event is no longer triggered (the type is kept in the protocol for back-compat).
 - **`callId` is propagated to `tool.start` / `tool.result` events** (additive). New renderers can fold tool calls + results by callId into the originating assistant message's ThoughtChain. Existing renderers ignoring the field are unaffected.
 
 ### Internals (no user-visible impact)
+
 - 4 provider HTTP clients (~600 LOC) replaced by `@langchain/openai` / `@langchain/anthropic` / `@langchain/ollama`.
 - Hand-rolled ReAct loop replaced by `createAgent` + `agent.stream`.
 - In-process approval Map replaced by `humanInTheLoopMiddleware` + `SqliteSaver` checkpointer (3 new SQLite tables: `checkpoints`, `checkpoint_writes`, `checkpoint_blobs`, plus our sidecar `checkpoint_meta`).
@@ -391,6 +417,7 @@ mkdir -p docs/release-notes
 - 5 built-in tools now use Zod schemas via `tool(fn, { schema })`.
 
 ### Migration / data
+
 - Existing chat sessions / messages / tool calls are preserved (no data migration).
 - Approvals pending at upgrade time are LOST (the previous implementation did not persist them — same behavior as a normal app restart on the old version).
 - Ollama models without native tool support no longer get a system-prompt fallback; use a tool-capable model (e.g. recent Llama 3.x / Qwen 2.5) or upgrade Ollama.
@@ -406,9 +433,11 @@ git commit -m "docs(release): note LangChain v1 migration behavior changes + new
 ---
 
 <!-- openspec-task: 10.3 -->
+
 ### Task 9: Run the full test suite — final green
 
 **Files:**
+
 - Inspect-only
 
 - [ ] **Step 1: Full unit test sweep**
@@ -452,9 +481,11 @@ git commit --allow-empty -m "test: full suite green; build clean — phase 19 re
 ---
 
 <!-- openspec-task: 10.4 -->
+
 ### Task 10: OpenSpec verify + archive
 
 **Files:**
+
 - Modify (via CLI): `openspec/changes/phase-19-ai-langchain-migration/` → archived
 
 - [ ] **Step 1: Run OpenSpec verification**
@@ -507,6 +538,7 @@ After all 10 tasks above:
 ```bash
 pnpm run typecheck && pnpm test && pnpm run build && pnpm vitest run electron/__acceptance__/
 ```
+
 Expected: all green.
 
 - [ ] **Branch shape**

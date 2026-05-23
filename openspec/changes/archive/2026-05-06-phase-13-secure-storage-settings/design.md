@@ -1,6 +1,7 @@
 ## Context
 
 前置：
+
 - phase 1：主题 + locale 占位在 root store 内存态
 - phase 3：better-sqlite3 + migrations
 - phase 11：广告拦截硬编码 `blockAds = true`
@@ -11,12 +12,14 @@ PRD S-9 要求 API Key 不落 DB，用 OS 原生加密存储。
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 用户在 `/settings` 查看与修改应用行为；设置持久化
 - 敏感值（API key）经由 OS keychain 加密存储；DB 中只保存指针 `keyRef`
 - 多 AI provider profile 可配置，选默认；phase 15/16 只消费这份数据
 - 设置变更实时生效（ad block 开关瞬间影响 webRequest；主题切换无需重启）
 
 **Non-Goals:**
+
 - 不做 settings 导入/导出（phase 后续加）
 - 不做 cloud sync
 - 不做 OAuth / OpenID 登录 provider（profile 仅支持 API key）
@@ -29,21 +32,24 @@ PRD S-9 要求 API Key 不落 DB，用 OS 原生加密存储。
 ### D1: 敏感存储 — `safeStorage` over `keytar`
 
 两个方案：
+
 - **keytar**：跨平台 node native 绑定到 macOS Keychain / Windows Credential Manager / libsecret。缺点：native module，需 electron-rebuild；某些 Linux 发行版缺 libsecret 提示较丑
 - **Electron `safeStorage.encryptString(str)` / `decryptString(buf)`**：Electron 15+ 内置；macOS 用 Keychain + AES256-GCM；Windows DPAPI；Linux 用 libsecret 或 fallback plaintext。**采纳**
 
 **理由**：无额外依赖；Electron 官方维护；隔离"加密"与"写哪"（safeStorage 负责加密，我们负责把密文存 SQLite）；更新代价低。
 
 **实现**：
+
 ```ts
 // electron/settings/secrets.ts
 if (!safeStorage.isEncryptionAvailable()) {
   // Linux 无 libsecret；提示用户并拒绝存 secret
-  throw new Error('E_KEYCHAIN_UNAVAILABLE');
+  throw new Error('E_KEYCHAIN_UNAVAILABLE')
 }
-const enc = safeStorage.encryptString(plainValue); // Buffer
+const enc = safeStorage.encryptString(plainValue) // Buffer
 // Buffer 存 SQLite 表 settings_secrets (key TEXT PK, encrypted_value BLOB)
 ```
+
 - 存储位置：单独 `settings_secrets` 表（BLOB 列）；与非敏感 `settings` 表分离避免误读
 - `keyRef`：UUID（v4），表 `ai_provider_profiles.api_key_ref` 指向 `settings_secrets.key`
 - 明文永远不写 SQLite；`settings_secrets.encrypted_value` 只有 Electron 同机器、同用户能解
@@ -53,6 +59,7 @@ const enc = safeStorage.encryptString(plainValue); // Buffer
 ### D2: 非敏感 settings schema
 
 `settings` 表用 **namespace + key** 二级模型：
+
 ```sql
 CREATE TABLE settings (
   ns TEXT NOT NULL,          -- 'general' | 'appearance' | 'ai' | 'browser'
@@ -62,6 +69,7 @@ CREATE TABLE settings (
   PRIMARY KEY (ns, key)
 );
 ```
+
 **理由**：k-v 简单；单条读写便捷；namespace 区分让 `settings.get('browser')` 一次性拿回一个 tab 的全部字段。
 
 ### D3: 默认值与 "设置缺失" 回退
@@ -73,7 +81,7 @@ CREATE TABLE settings (
     appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
     ai: { defaultProfileId: null },
     browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
-  };
+  }
   ```
 - `settings.get(ns)`：左连默认值（用户未设过的字段回退到 default）
 - 迁移时不预插默认值；只在读取时 merge
@@ -96,9 +104,11 @@ CREATE TABLE ai_provider_profiles (
 );
 CREATE UNIQUE INDEX idx_profiles_name ON ai_provider_profiles(name);
 ```
+
 默认 profile id 存 `settings.ai.defaultProfileId`。
 
 CRUD IPC：
+
 - `settings.ai.profiles.list() → Profile[]`（**不含** apiKey，只带 apiKeyRef）
 - `settings.ai.profiles.create(input) → { id }`（若 input 含 apiKey 则先存 secret 拿到 ref，再 insert 行）
 - `settings.ai.profiles.update(id, patch)`（patch.apiKey 触发 secret 覆盖）
@@ -108,6 +118,7 @@ CRUD IPC：
 ### D5: Settings 页结构
 
 路由 `/settings`；内嵌子路由（或状态 driven tab 切换）：
+
 ```
 /settings
 ├── /general
@@ -115,6 +126,7 @@ CRUD IPC：
 ├── /ai
 └── /browser
 ```
+
 - 左侧 tab 列表（60px 宽 icon + 标签），右侧详情区
 - 每个 tab 的字段有 `onChange` 立即写 store + 发 IPC `settings.set(ns, patch)`（debounce 300ms 合并）
 - 对于 AI profile 的 key，保存按钮单独触发（否则每按一键都 keychain 写）
@@ -158,6 +170,7 @@ settings.secret.saved / settings.secret.unavailable
 ### D10: 清除 cookies / 数据
 
 设置 `browser.clearCookies` 按钮：
+
 - 调 main 的 `session.fromPartition('persist:browser-default').clearStorageData({ storages: ['cookies'] })`
 - 确认框 "确定清除所有站点的登录态？"
 

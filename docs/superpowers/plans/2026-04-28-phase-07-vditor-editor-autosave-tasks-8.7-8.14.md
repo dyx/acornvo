@@ -29,12 +29,12 @@ Run the remaining acceptance scenarios — image-paste interception, on-disk byt
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md` | Create | 8.7–8.13 |
-| `src/stores/editor.ts` | Modify (subscribe to watcher events for 8.13) | 8.13 |
-| `src/stores/editor.test.ts` | Modify | 8.13 |
-| `openspec/changes/phase-07-vditor-editor-autosave/**` | Read-only — validated by `openspec validate --strict` | 8.14 |
+| Path                                                           | Action                                                | Owner task |
+| -------------------------------------------------------------- | ----------------------------------------------------- | ---------- |
+| `docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md` | Create                                                | 8.7–8.13   |
+| `src/stores/editor.ts`                                         | Modify (subscribe to watcher events for 8.13)         | 8.13       |
+| `src/stores/editor.test.ts`                                    | Modify                                                | 8.13       |
+| `openspec/changes/phase-07-vditor-editor-autosave/**`          | Read-only — validated by `openspec validate --strict` | 8.14       |
 
 ## Pre-flight
 
@@ -51,13 +51,14 @@ If any FAIL: do not start the acceptance scripts. Fix in the upstream plan first
 ## Tasks
 
 <!-- openspec-task: 8.7 -->
+
 ### Task 1: Acceptance — paste image is intercepted with toast
 
 - [ ] **Step 1: Create the manual-acceptance batch-2 doc**
 
 Create `docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md`:
 
-```markdown
+````markdown
 # Phase 07 — Acceptance Batch 2 (tasks 8.7–8.14)
 
 Run `npm run dev` for the interactive scenarios. Each step has an explicit pass criterion.
@@ -68,6 +69,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 2. With a `.md` open in editor, place the cursor at the end of body and `Cmd/Ctrl+V`.
 
 **Pass:**
+
 - A toast appears with the text "尚未支持图片粘贴，将在拾果阶段接入".
 - The body does NOT receive a `data:image/...` URL or any image markup.
 - Vditor doesn't fire an upload request (DevTools Network tab → no POST).
@@ -78,6 +80,8 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
    ```bash
    shasum -a 256 path/to/grove/notes/sample.md > /tmp/before.sha
    ```
+````
+
 2. Open it in editor.
 3. Wait for `ready` state. Do NOT type anything.
 4. Hit `Cmd+S` to flush.
@@ -88,6 +92,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
    ```
 
 **Pass:**
+
 - `diff` shows the hashes are identical, OR if they differ, `git diff path/to/grove/notes/sample.md` shows ONLY trailing-LF changes (the spec allows "结尾 LF 规整").
 - Mixed `*` and `_` italics survive.
 - Code fences, lists, headings preserved exactly.
@@ -104,6 +109,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Wait 1s for debounce + save attempt.
 
 **Pass:**
+
 - A toast appears: "文件在外部被修改，请先刷新".
 - The dirty dot stays visible (the body was NOT overwritten on disk).
 - Subsequent `cat path/to/grove/notes/sample.md` shows it does NOT contain the new character.
@@ -116,6 +122,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Switch back to Library briefly (Cmd+1 or whatever shortcut).
 
 **Pass:**
+
 - Library list does NOT re-render or flicker during the typing.
 - DevTools React Profiler shows zero re-renders of `<VirtualFileList>` rows triggered by the editor's writes (selfWrites is suppressing the watcher event).
 - (If a re-render IS observed: check that `electron/services/indexer.ts` emits `index:fileChanged` and that the renderer's library store filters it. Fix in phase-05 if drifted.)
@@ -128,6 +135,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Open any file in editor.
 
 **Pass:**
+
 - Vditor renders icons + uses CN i18n (assuming `lang: 'zh_CN'` was set or default English is acceptable).
 - DevTools Network tab shows zero failed requests for `vditor` assets — every asset comes from `/vditor/...`.
 - `npm run build` produces a build that includes `dist/renderer/vditor/` (run `npm run build && ls out/renderer/vditor` to confirm).
@@ -157,6 +165,7 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 3. Click the "在系统文本编辑器中打开" button.
 
 **Pass:**
+
 - Rail shows: `技术/深度学习` (top-left), `example.com` (top-right), title, 4 filled stars + 1 empty, summary, two highlight bullets, two tag chips, both dates.
 - Click → OS opens the file in the user's default text editor (TextEdit / Notepad / etc.).
 
@@ -170,9 +179,11 @@ Run `npm run dev` for the interactive scenarios. Each step has an explicit pass 
 4. Type a single character in the editor (or just wait for debounce).
 
 **Pass:**
+
 - The store transitions to `{ kind: 'error', error: 'E_NOT_FOUND' }` either from the watcher event or the next save attempt's `E_NOT_FOUND` reply (per spec: "本阶段可只在保存时遇到 E_NOT_FOUND 后转错误态").
 - The error view appears with "文件已被移除或重命名".
-```
+
+````
 
 - [ ] **Step 2: Run scenario 8.7**
 
@@ -184,7 +195,7 @@ Append the result and commit:
 
 ```markdown
 **Result (run on YYYY-MM-DD):** Toast displayed, body unchanged, no upload network call. PASS.
-```
+````
 
 ```bash
 git add docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md
@@ -194,6 +205,7 @@ git commit -m "test(phase-07): manual acceptance batch-2 doc + 8.7 paste-image i
 ---
 
 <!-- openspec-task: 8.8 -->
+
 ### Task 2: Acceptance — ir-mode preserves md byte-equality (modulo trailing LF)
 
 - [ ] **Step 1: Pick a representative source file**
@@ -228,6 +240,7 @@ git commit -m "test(phase-07): acceptance 8.8 ir-mode byte-equality passed"
 ---
 
 <!-- openspec-task: 8.9 -->
+
 ### Task 3: Acceptance — external mtime change triggers conflict toast
 
 - [ ] **Step 1: Run scenario 8.9**
@@ -255,6 +268,7 @@ git commit -m "test(phase-07): acceptance 8.9 mtime conflict toast passed"
 ---
 
 <!-- openspec-task: 8.10 -->
+
 ### Task 4: Acceptance — Library 5000-row stability during edit (selfWrites silence)
 
 - [ ] **Step 1: Prepare a large grove**
@@ -294,6 +308,7 @@ git commit -m "test(phase-07): acceptance 8.10 5000-row library no flicker durin
 ---
 
 <!-- openspec-task: 8.11 -->
+
 ### Task 5: Acceptance — offline Vditor assets
 
 - [ ] **Step 1: Verify packaged assets**
@@ -326,6 +341,7 @@ git commit -m "test(phase-07): acceptance 8.11 offline Vditor assets passed"
 ---
 
 <!-- openspec-task: 8.12 -->
+
 ### Task 6: Acceptance — full frontmatter rail + open-external launch
 
 - [ ] **Step 1: Author a fixture file**
@@ -348,6 +364,7 @@ tags:
 published_at: 2026-01-15
 clipped_at: 2026-04-01T12:00:00Z
 ---
+
 # body content
 ```
 
@@ -374,9 +391,11 @@ git commit -m "test(phase-07): acceptance 8.12 frontmatter rail + open-external 
 ---
 
 <!-- openspec-task: 8.13 -->
+
 ### Task 7: Acceptance — watcher-triggered "file removed" → editor error state
 
 **Files:**
+
 - Modify: `src/stores/editor.ts` (add subscription if missing)
 - Modify: `src/stores/editor.test.ts`
 - Append result to: `docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md`
@@ -410,6 +429,7 @@ describe('editor store — file removed during edit', () => {
 ```
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts -t 'file removed'
 ```
@@ -421,12 +441,12 @@ Expected: FAIL — currently `E_NOT_FOUND` lands in the generic `else` branch wh
 In `src/stores/editor.ts` `_doSave` catch block, add an early branch above the generic non-conflict branch:
 
 ```ts
-    if (err instanceof IpcError && err.code === 'E_NOT_FOUND') {
-      useEditorStore.setState({
-        state: { kind: 'error', path: cur.path, error: 'E_NOT_FOUND' }
-      })
-      return
-    }
+if (err instanceof IpcError && err.code === 'E_NOT_FOUND') {
+  useEditorStore.setState({
+    state: { kind: 'error', path: cur.path, error: 'E_NOT_FOUND' }
+  })
+  return
+}
 ```
 
 > The reference to `cur.path` here works because we captured `path` from `next` (rename `next` to `cur` here for safety, or capture `path = next.path` at the top of catch). Use whatever local that's already in scope from the enclosing function.
@@ -434,6 +454,7 @@ In `src/stores/editor.ts` `_doSave` catch block, add an early branch above the g
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/stores/editor.test.ts
 ```
@@ -462,9 +483,11 @@ git commit -m "feat(phase-07): editor store transitions to error on save E_NOT_F
 ---
 
 <!-- openspec-task: 8.14 -->
+
 ### Task 8: `openspec validate phase-07-vditor-editor-autosave --strict`
 
 **Files:**
+
 - (validation only — no source changes expected)
 
 This is the gating check. The OpenSpec validator enforces format invariants (every Requirement has ≥1 Scenario, every modified spec correctly merges, etc.).
@@ -472,16 +495,19 @@ This is the gating check. The OpenSpec validator enforces format invariants (eve
 - [ ] **Step 1: Run the validator**
 
 Run:
+
 ```bash
 openspec validate phase-07-vditor-editor-autosave --strict
 ```
 
 Expected: exit code 0, "OK" or equivalent. If failures appear:
+
 - Read each error message.
 - Fix the offending spec/proposal/design/tasks file inside `openspec/changes/phase-07-vditor-editor-autosave/`.
 - Re-run.
 
 Common strict-mode complaints:
+
 - Requirement without scenario.
 - Scenario without `WHEN` / `THEN`.
 - A `MODIFIED` requirement that does not match an existing requirement in the base spec.
@@ -516,6 +542,7 @@ The change is now ready for `/opsx:archive`. The archive command will move the a
 ## Plan-5 Acceptance
 
 After all 8 tasks complete:
+
 - [ ] Every scenario in `docs/superpowers/plans/manual-acceptance-phase-07-batch-2.md` has a recorded PASS result.
 - [ ] `openspec validate phase-07-vditor-editor-autosave --strict` exits 0.
 - [ ] `npm run typecheck` PASSES

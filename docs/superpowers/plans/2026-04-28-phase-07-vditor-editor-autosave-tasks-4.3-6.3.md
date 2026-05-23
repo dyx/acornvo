@@ -31,19 +31,19 @@ Finish the four-trigger autosave matrix by wiring the remaining global hooks: `C
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `src/pages/Editor.tsx` | Modify (add keydown handlers + useBlocker) | 4.3, 4.4, 4.5 |
-| `src/pages/Editor.test.tsx` | Modify (add tests) | 4.3, 4.4, 4.5 |
-| `shared/ipc-contract.ts` | Modify (add `file.openExternal`) | 5.1 |
-| `shared/ipc-contract.type-test.ts` | Modify | 5.1 |
-| `electron/ipc/file.ts` | Modify (add `openExternal` handler) | 5.2 |
-| `electron/ipc/file.test.ts` | Modify (add cases) | 5.2 |
-| `src/components/editor/FrontmatterCard.tsx` | Modify (wire openExternal onClick) | 5.2 |
-| `src/components/editor/EditorErrorState.tsx` | Modify (wire openExternal onClick on E_ENCODING) | 5.2 |
-| `src/components/library/FilePreviewPanel.tsx` | Modify (replace onClick) | 6.1 |
-| `src/components/library/VirtualFileList.tsx` | Modify (replace Enter handler) | 6.2 |
-| `src/components/library/FileRow.tsx` | Modify (replace onDoubleClick) | 6.3 |
+| Path                                          | Action                                           | Owner task    |
+| --------------------------------------------- | ------------------------------------------------ | ------------- |
+| `src/pages/Editor.tsx`                        | Modify (add keydown handlers + useBlocker)       | 4.3, 4.4, 4.5 |
+| `src/pages/Editor.test.tsx`                   | Modify (add tests)                               | 4.3, 4.4, 4.5 |
+| `shared/ipc-contract.ts`                      | Modify (add `file.openExternal`)                 | 5.1           |
+| `shared/ipc-contract.type-test.ts`            | Modify                                           | 5.1           |
+| `electron/ipc/file.ts`                        | Modify (add `openExternal` handler)              | 5.2           |
+| `electron/ipc/file.test.ts`                   | Modify (add cases)                               | 5.2           |
+| `src/components/editor/FrontmatterCard.tsx`   | Modify (wire openExternal onClick)               | 5.2           |
+| `src/components/editor/EditorErrorState.tsx`  | Modify (wire openExternal onClick on E_ENCODING) | 5.2           |
+| `src/components/library/FilePreviewPanel.tsx` | Modify (replace onClick)                         | 6.1           |
+| `src/components/library/VirtualFileList.tsx`  | Modify (replace Enter handler)                   | 6.2           |
+| `src/components/library/FileRow.tsx`          | Modify (replace onDoubleClick)                   | 6.3           |
 
 ## Pre-flight
 
@@ -56,9 +56,11 @@ If phase-06 did not establish a placeholder route, plan 4 task 1 will simply not
 ## Tasks
 
 <!-- openspec-task: 4.3 -->
+
 ### Task 1: `Cmd/Ctrl+S` keydown → `flushSave()`
 
 **Files:**
+
 - Modify: `src/pages/Editor.tsx`
 - Modify: `src/pages/Editor.test.tsx`
 
@@ -67,37 +69,52 @@ If phase-06 did not establish a placeholder route, plan 4 task 1 will simply not
 Append to `src/pages/Editor.test.tsx` inside the `describe('Editor page', ...)` block:
 
 ```ts
-  it('Cmd+S triggers flushSave and prevents browser default', async () => {
-    ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
-    })
-    renderAt(encodeURIComponent('a.md'))
-    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
-
-    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
-    const ev = new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true })
-    const prevented = !window.dispatchEvent(ev)
-
-    expect(flushSpy).toHaveBeenCalled()
-    expect(prevented).toBe(true)
+it('Cmd+S triggers flushSave and prevents browser default', async () => {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: '',
+    eol: 'lf',
+    mtimeMs: 1,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body: '',
+    rawYaml: ''
   })
+  renderAt(encodeURIComponent('a.md'))
+  await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
 
-  it('Ctrl+S also triggers flushSave (Win/Linux)', async () => {
-    ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
-    })
-    renderAt(encodeURIComponent('a.md'))
-    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+  const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+  const ev = new KeyboardEvent('keydown', { key: 's', metaKey: true, cancelable: true })
+  const prevented = !window.dispatchEvent(ev)
 
-    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
-    expect(flushSpy).toHaveBeenCalled()
+  expect(flushSpy).toHaveBeenCalled()
+  expect(prevented).toBe(true)
+})
+
+it('Ctrl+S also triggers flushSave (Win/Linux)', async () => {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: '',
+    eol: 'lf',
+    mtimeMs: 1,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body: '',
+    rawYaml: ''
   })
+  renderAt(encodeURIComponent('a.md'))
+  await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+
+  const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
+  expect(flushSpy).toHaveBeenCalled()
+})
 ```
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx -t 'Cmd\+S\|Ctrl\+S'
 ```
@@ -109,24 +126,25 @@ Expected: 2 FAIL.
 Inside `Editor` (after the `visibilitychange` `useEffect` block from plan 2 task 3), add:
 
 ```tsx
-  useEffect(() => {
-    if (kind !== 'ready') return
-    function onKey(e: KeyboardEvent): void {
-      // Cmd+S (mac) / Ctrl+S (win/linux)
-      if (e.key === 's' && (e.metaKey || e.ctrlKey) && !e.altKey) {
-        e.preventDefault()
-        void useEditorStore.getState().flushSave()
-        return
-      }
+useEffect(() => {
+  if (kind !== 'ready') return
+  function onKey(e: KeyboardEvent): void {
+    // Cmd+S (mac) / Ctrl+S (win/linux)
+    if (e.key === 's' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+      e.preventDefault()
+      void useEditorStore.getState().flushSave()
+      return
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [kind])
+  }
+  window.addEventListener('keydown', onKey)
+  return () => window.removeEventListener('keydown', onKey)
+}, [kind])
 ```
 
 - [ ] **Step 3: Run the tests**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx
 ```
@@ -143,9 +161,11 @@ git commit -m "feat(phase-07): Cmd/Ctrl+S keydown triggers flushSave with preven
 ---
 
 <!-- openspec-task: 4.4 -->
+
 ### Task 2: `Cmd/Ctrl+W` → `flushSave()` then `navigate(-1)`
 
 **Files:**
+
 - Modify: `src/pages/Editor.tsx`
 - Modify: `src/pages/Editor.test.tsx`
 
@@ -156,29 +176,39 @@ git commit -m "feat(phase-07): Cmd/Ctrl+S keydown triggers flushSave with preven
 Append to `src/pages/Editor.test.tsx`:
 
 ```ts
-  it('Cmd+W flushes then navigates -1', async () => {
-    ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
-    })
-    let resolveFlush: () => void = () => {}
-    const flushPromise = new Promise<void>((res) => { resolveFlush = res })
-    vi.spyOn(useEditorStore.getState(), 'flushSave').mockImplementation(async () => {
-      // simulate non-zero flush
-      await flushPromise
-    })
-
-    renderAt(encodeURIComponent('a.md'))
-    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
-
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', metaKey: true, cancelable: true }))
-    // Navigate must wait until flush resolves
-    expect(navigateSpy).not.toHaveBeenCalled()
-    resolveFlush()
-    // microtask drain
-    await Promise.resolve(); await Promise.resolve()
-    await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith(-1))
+it('Cmd+W flushes then navigates -1', async () => {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: '',
+    eol: 'lf',
+    mtimeMs: 1,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body: '',
+    rawYaml: ''
   })
+  let resolveFlush: () => void = () => {}
+  const flushPromise = new Promise<void>((res) => {
+    resolveFlush = res
+  })
+  vi.spyOn(useEditorStore.getState(), 'flushSave').mockImplementation(async () => {
+    // simulate non-zero flush
+    await flushPromise
+  })
+
+  renderAt(encodeURIComponent('a.md'))
+  await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', metaKey: true, cancelable: true }))
+  // Navigate must wait until flush resolves
+  expect(navigateSpy).not.toHaveBeenCalled()
+  resolveFlush()
+  // microtask drain
+  await Promise.resolve()
+  await Promise.resolve()
+  await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith(-1))
+})
 ```
 
 (`navigateSpy` was added in Plan 2 Task 4 by mocking `react-router-dom`; if the page test doesn't already define it, hoist the mock from `EditorTitleBar.test.tsx` into `Editor.test.tsx` too.)
@@ -192,9 +222,11 @@ Append to `src/pages/Editor.test.tsx`:
 >   return { ...actual, useNavigate: () => navigateSpy }
 > })
 > ```
+>
 > …and `beforeEach(() => navigateSpy.mockReset())`.
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx -t 'Cmd\+W'
 ```
@@ -206,25 +238,25 @@ Expected: FAIL.
 Update the `useEffect` block from task 1 step 2:
 
 ```tsx
-  useEffect(() => {
-    if (kind !== 'ready') return
-    function onKey(e: KeyboardEvent): void {
-      if (e.key === 's' && (e.metaKey || e.ctrlKey) && !e.altKey) {
-        e.preventDefault()
-        void useEditorStore.getState().flushSave()
-        return
-      }
-      if (e.key === 'w' && (e.metaKey || e.ctrlKey) && !e.altKey) {
-        e.preventDefault()
-        void (async () => {
-          await useEditorStore.getState().flushSave()
-          navigate(-1)
-        })()
-      }
+useEffect(() => {
+  if (kind !== 'ready') return
+  function onKey(e: KeyboardEvent): void {
+    if (e.key === 's' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+      e.preventDefault()
+      void useEditorStore.getState().flushSave()
+      return
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [kind, navigate])
+    if (e.key === 'w' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+      e.preventDefault()
+      void (async () => {
+        await useEditorStore.getState().flushSave()
+        navigate(-1)
+      })()
+    }
+  }
+  window.addEventListener('keydown', onKey)
+  return () => window.removeEventListener('keydown', onKey)
+}, [kind, navigate])
 ```
 
 This requires capturing `navigate = useNavigate()` at the top of `Editor`. Add the import + hook:
@@ -238,6 +270,7 @@ const navigate = useNavigate()
 - [ ] **Step 3: Run the test**
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx
 ```
@@ -254,9 +287,11 @@ git commit -m "feat(phase-07): Cmd/Ctrl+W flushSave then navigate(-1)"
 ---
 
 <!-- openspec-task: 4.5 -->
+
 ### Task 3: `useBlocker` — wait for in-flight save before allowing route exit
 
 **Files:**
+
 - Modify: `src/pages/Editor.tsx`
 - Modify: `src/pages/Editor.test.tsx`
 
@@ -269,43 +304,52 @@ React Router 7 ships `useBlocker(blocker | shouldBlock)` which returns a `Blocke
 Append to `src/pages/Editor.test.tsx`:
 
 ```ts
-  it('useBlocker awaits flushSave before allowing navigation away', async () => {
-    ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: '', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: '', rawYaml: ''
-    })
-    renderAt(encodeURIComponent('a.md'))
-    await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
+it('useBlocker awaits flushSave before allowing navigation away', async () => {
+  ipcMock.file.readParsed.mockResolvedValueOnce({
+    content: '',
+    eol: 'lf',
+    mtimeMs: 1,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body: '',
+    rawYaml: ''
+  })
+  renderAt(encodeURIComponent('a.md'))
+  await waitFor(() => expect(screen.getByTestId('vditor-stub')).toBeTruthy())
 
-    // Make the store dirty + in-flight saving
-    useEditorStore.setState((prev) => ({
-      ...prev,
-      state: prev.state.kind === 'ready'
+  // Make the store dirty + in-flight saving
+  useEditorStore.setState((prev) => ({
+    ...prev,
+    state:
+      prev.state.kind === 'ready'
         ? { ...prev.state, body: 'X', dirty: true, saving: true }
         : prev.state
-    }))
+  }))
 
-    const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
+  const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
 
-    // Simulate a router navigation attempt by dispatching a popstate-like event.
-    // The blocker callback we wire returns true when dirty/saving; the harness
-    // we use here just verifies that the component invokes flushSave when its
-    // blocker callback observes a transition. We test the callback unit
-    // directly by exporting it.
-    // (Pragmatic approach: call the exported decision function with a fake
-    // transition and assert it returns true; flushSave gets called by the
-    // useEffect that watches for blocker.state === 'blocked'.)
+  // Simulate a router navigation attempt by dispatching a popstate-like event.
+  // The blocker callback we wire returns true when dirty/saving; the harness
+  // we use here just verifies that the component invokes flushSave when its
+  // blocker callback observes a transition. We test the callback unit
+  // directly by exporting it.
+  // (Pragmatic approach: call the exported decision function with a fake
+  // transition and assert it returns true; flushSave gets called by the
+  // useEffect that watches for blocker.state === 'blocked'.)
 
-    // Instead, smoke-test by setting blocker state via the store integration
-    // hook the component uses. See Step 2 implementation: the component calls
-    // flushSave().then(blocker.proceed) inside an effect.
-    expect(flushSpy).not.toHaveBeenCalled() // baseline; effect runs only on blocked
-  })
+  // Instead, smoke-test by setting blocker state via the store integration
+  // hook the component uses. See Step 2 implementation: the component calls
+  // flushSave().then(blocker.proceed) inside an effect.
+  expect(flushSpy).not.toHaveBeenCalled() // baseline; effect runs only on blocked
+})
 ```
 
 > Note: this test is a smoke check, not full end-to-end. Full coverage of the blocker happens in plan 5 acceptance task 8.5 ("切到其他路由 → 返回，文件内容一致"). The unit is small enough that a smoke test suffices.
 
 Run:
+
 ```bash
 npx vitest run src/pages/Editor.test.tsx -t 'useBlocker'
 ```
@@ -319,20 +363,20 @@ Add the import and the hook usage:
 ```tsx
 import { useBlocker } from 'react-router-dom'
 // …
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    if (currentLocation.pathname === nextLocation.pathname) return false
-    const s = useEditorStore.getState().state
-    return s.kind === 'ready' && (s.dirty || s.saving)
-  })
+const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+  if (currentLocation.pathname === nextLocation.pathname) return false
+  const s = useEditorStore.getState().state
+  return s.kind === 'ready' && (s.dirty || s.saving)
+})
 
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      void (async () => {
-        await useEditorStore.getState().flushSave()
-        blocker.proceed?.()
-      })()
-    }
-  }, [blocker])
+useEffect(() => {
+  if (blocker.state === 'blocked') {
+    void (async () => {
+      await useEditorStore.getState().flushSave()
+      blocker.proceed?.()
+    })()
+  }
+}, [blocker])
 ```
 
 - [ ] **Step 3: Run typecheck + tests**
@@ -353,9 +397,11 @@ git commit -m "feat(phase-07): useBlocker awaits flushSave before allowing route
 ---
 
 <!-- openspec-task: 5.1 -->
+
 ### Task 4: Add `file.openExternal(path)` to the IPC contract
 
 **Files:**
+
 - Modify: `shared/ipc-contract.ts`
 - Modify: `shared/ipc-contract.type-test.ts`
 
@@ -373,6 +419,7 @@ void _openExternalOk
 ```
 
 Run:
+
 ```bash
 npm run typecheck:node
 ```
@@ -405,6 +452,7 @@ Modify `shared/ipc-contract.ts:148-163` (the `file: { ... }` block). Add `openEx
 - [ ] **Step 3: Run the type assertions**
 
 Run:
+
 ```bash
 npm run typecheck
 ```
@@ -421,15 +469,18 @@ git commit -m "feat(phase-07): add file.openExternal(rel) to IPC contract"
 ---
 
 <!-- openspec-task: 5.2 -->
+
 ### Task 5: Implement `file.openExternal` handler + wire to UI
 
 **Files:**
+
 - Modify: `electron/ipc/file.ts`
 - Modify: `electron/ipc/file.test.ts`
 - Modify: `src/components/editor/FrontmatterCard.tsx`
 - Modify: `src/components/editor/EditorErrorState.tsx`
 
 The handler:
+
 1. `requireGroveRoot()` → throws `E_NOT_FOUND` if no grove open.
 2. `safeResolve(root, rel)` → throws `E_PERMISSION` on path traversal.
 3. `await shell.openPath(abs)` — Electron returns `''` on success, an error string on failure.
@@ -499,6 +550,7 @@ describe('file.openExternal', () => {
 > If `setGroveRoot` is not yet a helper in `file.test.ts`, copy/adapt the helper used in phase-04's `file.test.ts` (it should already exist there). If the existing test file uses a different pattern (e.g. directly mocking `groveSvc.getCurrent`), follow that pattern.
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/file.test.ts -t 'openExternal'
 ```
@@ -524,6 +576,7 @@ Edit `electron/ipc/file.ts`. Add `import { shell } from 'electron'` near the top
 - [ ] **Step 3: Run handler tests**
 
 Run:
+
 ```bash
 npx vitest run electron/ipc/file.test.ts
 ```
@@ -554,6 +607,7 @@ const path = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.path : nu
 ```
 
 …and add at the top:
+
 ```tsx
 import { ipc } from '@/ipc/client'
 ```
@@ -565,11 +619,15 @@ Edit `src/components/editor/EditorErrorState.tsx`. Add the same import and wire 
 ```tsx
 import { ipc } from '@/ipc/client'
 // …
-<button
+;<button
   type="button"
   className="rounded border border-[color:var(--color-line-1)] px-3 py-1 text-sm"
   onClick={async () => {
-    try { await ipc.file.openExternal(err.path) } catch { /* noop */ }
+    try {
+      await ipc.file.openExternal(err.path)
+    } catch {
+      /* noop */
+    }
   }}
 >
   {t('editor.open_external')}
@@ -594,13 +652,16 @@ git commit -m "feat(phase-07): file.openExternal handler + wire to FrontmatterCa
 ---
 
 <!-- openspec-task: 6.1 -->
+
 ### Task 6: `FilePreviewPanel` — "open editor" button → real route
 
 **Files:**
+
 - Modify: `src/components/library/FilePreviewPanel.tsx`
 - Modify: `src/components/library/FilePreviewPanel.test.tsx` (if exists)
 
 Locate the existing "打开编辑器" button. Phase-06 wired its onClick to either:
+
 - a placeholder `navigate('/editor-placeholder')`, or
 - a no-op + dispatching a `'open-editor'` custom event.
 
@@ -609,6 +670,7 @@ Replace whatever it does with `navigate('/editor/' + encodeURIComponent(selected
 - [ ] **Step 1: Locate the button**
 
 Run:
+
 ```bash
 grep -rn '打开编辑器\|open.editor\|Open editor' src/components/library
 ```
@@ -618,6 +680,7 @@ Note the file + line. Common name: `src/components/library/FilePreviewPanel.tsx`
 - [ ] **Step 2: Inspect the current onClick**
 
 Read the file. Identify the onClick handler. Sample patterns to look for:
+
 - `onClick={() => navigate('/editor-placeholder')}`
 - `onClick={() => window.dispatchEvent(new CustomEvent('open-editor', ...))}`
 - `onClick={onOpenEditor}` (prop) — in this case the parent owns the navigation.
@@ -653,6 +716,7 @@ If the panel previously took an `onOpenEditor` prop, lift the navigation up: eit
 - [ ] **Step 5: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library
 ```
@@ -669,9 +733,11 @@ git commit -m "feat(phase-07): FilePreviewPanel 'open editor' button navigates t
 ---
 
 <!-- openspec-task: 6.2 -->
+
 ### Task 7: `VirtualFileList` — Enter key → real route
 
 **Files:**
+
 - Modify: `src/components/library/VirtualFileList.tsx`
 - Modify: `src/components/library/VirtualFileList.test.tsx` (if exists)
 
@@ -680,6 +746,7 @@ Per spec `library-view#文件列表虚拟化` scenario "Enter 打开编辑器", 
 - [ ] **Step 1: Locate the keydown handler**
 
 Run:
+
 ```bash
 grep -rn 'Enter\|onKeyDown' src/components/library/VirtualFileList.tsx
 ```
@@ -712,6 +779,7 @@ if (e.key === 'Enter') {
 - [ ] **Step 4: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library
 ```
@@ -728,9 +796,11 @@ git commit -m "feat(phase-07): VirtualFileList Enter key navigates to /editor/<e
 ---
 
 <!-- openspec-task: 6.3 -->
+
 ### Task 8: `FileRow` — double-click → real route
 
 **Files:**
+
 - Modify: `src/components/library/FileRow.tsx`
 - Modify: `src/components/library/FileRow.test.tsx` (if exists)
 
@@ -770,6 +840,7 @@ Remove any old `onOpenEditor` prop drilling once this commit lands and Tasks 6 +
 - [ ] **Step 4: Run tests**
 
 Run:
+
 ```bash
 npx vitest run src/components/library
 ```
@@ -788,6 +859,7 @@ git commit -m "feat(phase-07): FileRow double-click navigates to /editor/<encode
 ## Plan-3 Acceptance
 
 After all 8 tasks complete:
+
 - [ ] `npm run typecheck` PASSES
 - [ ] `npm test` PASSES (editor page ≥ 7 cases including Cmd+S/W + visibilitychange + blocker; file IPC ≥ 4 new openExternal cases; library 3 entry-point tests updated)
 - [ ] `npm run lint` PASSES

@@ -23,11 +23,13 @@ SQLite `files` / `tags` / `file_tags` / `files_fts` 是所有视图（果仓、�
 ## Capabilities
 
 ### New Capabilities
+
 - `file-indexer`: md 文件的全量/增量 → SQLite 同步（files / tags / file_tags / files_fts 写入）
 - `file-watcher`: chokidar 封装，含自我过滤、批处理、rename 识别
 - `index-startup-progress`: 启动全量扫描的进度/取消/完成事件与 UI 遮罩
 
 ### Modified Capabilities
+
 - `md-file-io`: `file.write` 在成功后 MUST 通知 watcher 的自我过滤集合（机制层集成）
 
 ## Impact

@@ -19,7 +19,7 @@
 - [x] 3.2 `walk(groveRoot, skipSet)`：async generator 产出 `{ absPath, relPath }`；跳过目录集合 + symlink
 - [x] 3.3 `startScan(groveRoot)`：
   - [x] 3.3.1 状态转 `scanning`
-  - [x] 3.3.2 先轻量 pre-count（仅 `readdir` 统计 *.md 数量）填 `total`
+  - [x] 3.3.2 先轻量 pre-count（仅 `readdir` 统计 \*.md 数量）填 `total`
   - [x] 3.3.3 遍历文件：`file.read` → `parseFile` → sha256(body) → 与 db 行对比 → upsert/skip
   - [x] 3.3.4 每 50 文件或 2 秒推一次 `index:progress`
   - [x] 3.3.5 `abort` 标志 check；每文件前检查

@@ -36,21 +36,21 @@ Land the **main-process foundation** for the in-app web clipper: dependencies, t
 
 ## Files Touched (this plan)
 
-| Path | Action | Owner task |
-|---|---|---|
-| `package.json` | Modify (add deps) | 1.1 |
-| `electron/services/db/migrations/005_clips.sql` | Create | 1.2 |
-| `electron/services/db/migrations/005_clips.test.ts` | Create | 1.2 |
-| `shared/clipper-types.ts` | Create | 1.3 |
-| `shared/clip-types.ts` | Create | 1.4 |
-| `electron/clipper/readability-bundle.ts` | Create | 2.1 |
-| `electron/clipper/readability-bundle.test.ts` | Create | 2.1 |
-| `electron/clipper/extract.ts` | Create stub → implement | 2.2, 2.3 |
-| `electron/clipper/extract.test.ts` | Create | 2.2, 2.3 |
-| `electron/clipper/enrich.ts` | Create | 2.4 |
-| `electron/clipper/enrich.test.ts` | Create | 2.4 |
-| `electron/clipper/transform.ts` | Create stub → implement | 3.1, 3.2, 3.3, 3.4 |
-| `electron/clipper/transform.test.ts` | Create | 3.1, 3.2, 3.3, 3.4 |
+| Path                                                | Action                  | Owner task         |
+| --------------------------------------------------- | ----------------------- | ------------------ |
+| `package.json`                                      | Modify (add deps)       | 1.1                |
+| `electron/services/db/migrations/005_clips.sql`     | Create                  | 1.2                |
+| `electron/services/db/migrations/005_clips.test.ts` | Create                  | 1.2                |
+| `shared/clipper-types.ts`                           | Create                  | 1.3                |
+| `shared/clip-types.ts`                              | Create                  | 1.4                |
+| `electron/clipper/readability-bundle.ts`            | Create                  | 2.1                |
+| `electron/clipper/readability-bundle.test.ts`       | Create                  | 2.1                |
+| `electron/clipper/extract.ts`                       | Create stub → implement | 2.2, 2.3           |
+| `electron/clipper/extract.test.ts`                  | Create                  | 2.2, 2.3           |
+| `electron/clipper/enrich.ts`                        | Create                  | 2.4                |
+| `electron/clipper/enrich.test.ts`                   | Create                  | 2.4                |
+| `electron/clipper/transform.ts`                     | Create stub → implement | 3.1, 3.2, 3.3, 3.4 |
+| `electron/clipper/transform.test.ts`                | Create                  | 3.1, 3.2, 3.3, 3.4 |
 
 ## Pre-flight
 
@@ -80,9 +80,11 @@ Land the **main-process foundation** for the in-app web clipper: dependencies, t
 ## Tasks
 
 <!-- openspec-task: 1.1 -->
+
 ### Task 1: Add npm dependencies
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json`
 
@@ -130,9 +132,11 @@ git commit -m "chore(phase-12): add @mozilla/readability, turndown, turndown-plu
 ---
 
 <!-- openspec-task: 1.2 -->
+
 ### Task 2: Migration 005 — `clips` table
 
 **Files:**
+
 - Create: `electron/services/db/migrations/005_clips.sql`
 - Create: `electron/services/db/migrations/005_clips.test.ts`
 
@@ -185,9 +189,19 @@ describe('migration 005_clips', () => {
       `INSERT INTO clips(url, path, clipped_at, created_at)
        VALUES (?, ?, ?, ?)`
     )
-    insert.run('https://example.com/a', 'inbox/202605/a.md', '2026-05-02T00:00:00Z', '2026-05-02T00:00:00Z')
+    insert.run(
+      'https://example.com/a',
+      'inbox/202605/a.md',
+      '2026-05-02T00:00:00Z',
+      '2026-05-02T00:00:00Z'
+    )
     expect(() =>
-      insert.run('https://example.com/a', 'inbox/202605/a-dup.md', '2026-05-02T00:00:01Z', '2026-05-02T00:00:01Z')
+      insert.run(
+        'https://example.com/a',
+        'inbox/202605/a-dup.md',
+        '2026-05-02T00:00:01Z',
+        '2026-05-02T00:00:01Z'
+      )
     ).toThrow(/UNIQUE/)
   })
 
@@ -273,9 +287,11 @@ git commit -m "feat(phase-12): migration 005 — clips table + indices"
 ---
 
 <!-- openspec-task: 1.3 -->
+
 ### Task 3: Shared clipper types (`shared/clipper-types.ts`)
 
 **Files:**
+
 - Create: `shared/clipper-types.ts`
 
 - [ ] **Step 1: Create the types file**
@@ -449,9 +465,11 @@ git commit -m "feat(phase-12): shared clipper types — ExtractResult / ClipInpu
 ---
 
 <!-- openspec-task: 1.4 -->
+
 ### Task 4: Shared clip row type (`shared/clip-types.ts`)
 
 **Files:**
+
 - Create: `shared/clip-types.ts`
 
 - [ ] **Step 1: Create the row-model file**
@@ -526,11 +544,13 @@ git commit -m "feat(phase-12): shared Clip row model + DAO input/output types"
 ---
 
 <!-- openspec-task: 2.1 -->
+
 ### Task 5: `readability-bundle.ts` — inline Readability source
 
 `@mozilla/readability` ships a single UMD file (`Readability.js`) safe to inject via `webContents.executeJavaScript`. We read it at module load (synchronously, since it's a few KB and only runs at startup) and export the source string + a runtime check.
 
 **Files:**
+
 - Create: `electron/clipper/readability-bundle.ts`
 - Create: `electron/clipper/readability-bundle.test.ts`
 
@@ -650,11 +670,13 @@ git commit -m "feat(phase-12): inline @mozilla/readability bundle for executeJav
 ---
 
 <!-- openspec-task: 2.2 -->
+
 ### Task 6: `extract.ts` — `extract(webContents)` with 5s timeout
 
 Pure orchestration: inject the bundle, run the extraction snippet, surface a typed result. We split into `createExtractor(deps)` for testability and a thin singleton convenience.
 
 **Files:**
+
 - Create: `electron/clipper/extract.ts`
 - Create: `electron/clipper/extract.test.ts`
 
@@ -906,11 +928,13 @@ git commit -m "feat(phase-12): extract — Readability injection + parse + 5s ti
 ---
 
 <!-- openspec-task: 2.3 -->
+
 ### Task 7: `extract.ts` — degraded fallback (`article=null` → `body.innerHTML`)
 
 When Readability returns null, the spec says we fall back to `document.body.innerHTML` and mark the result `degraded: true`. We extend the in-page snippet to do that — it's cheaper than a second round-trip.
 
 **Files:**
+
 - Modify: `electron/clipper/extract.ts`
 - Modify: `electron/clipper/extract.test.ts`
 
@@ -1045,11 +1069,13 @@ git commit -m "feat(phase-12): extract — fallback to body.innerHTML; mark degr
 ---
 
 <!-- openspec-task: 2.4 -->
+
 ### Task 8: `enrich.ts` — URL clean, site, author, published_at, lang, excerpt
 
 Pure function. No webContents access; takes an `ExtractResult`, returns `EnrichedResult`. This makes pipeline composable and unit-testable.
 
 **Files:**
+
 - Create: `electron/clipper/enrich.ts`
 - Create: `electron/clipper/enrich.test.ts`
 
@@ -1233,7 +1259,10 @@ function cleanAuthor(byline: string | undefined): string | undefined {
 }
 
 function pickExcerpt(extract: ExtractResult): string | undefined {
-  const candidate = (extract.excerpt && extract.excerpt.trim()) || (extract.textContent && extract.textContent.trim()) || ''
+  const candidate =
+    (extract.excerpt && extract.excerpt.trim()) ||
+    (extract.textContent && extract.textContent.trim()) ||
+    ''
   if (!candidate) return undefined
   return candidate.length > 160 ? candidate.slice(0, 160) : candidate
 }
@@ -1255,7 +1284,10 @@ export function enrich(extract: ExtractResult): EnrichedResult {
     site: siteFromUrl(url),
     title: extract.title && extract.title.trim().length > 0 ? extract.title : undefined,
     author: cleanAuthor(extract.byline),
-    publishedTime: extract.publishedTime && extract.publishedTime.trim().length > 0 ? extract.publishedTime : undefined,
+    publishedTime:
+      extract.publishedTime && extract.publishedTime.trim().length > 0
+        ? extract.publishedTime
+        : undefined,
     lang: extract.lang && extract.lang.trim().length > 0 ? extract.lang : undefined,
     excerpt: pickExcerpt(extract),
     degraded: extract.degraded === true,
@@ -1291,17 +1323,19 @@ git commit -m "feat(phase-12): enrich — cleanUrl + site/author/excerpt/lang/de
 ---
 
 <!-- openspec-task: 3.1 -->
+
 ### Task 9: `transform.ts` — Turndown instance + GFM plugin + base options
 
 Plain TDD: a single `transformHtmlToMarkdown(html, baseUrl)` entry point. We accept `baseUrl` so tasks 3.3 (relative→absolute) and the renderer-preview pane have a single signature to call.
 
 **Files:**
+
 - Create: `electron/clipper/transform.ts`
 - Create: `electron/clipper/transform.test.ts`
 
 - [ ] **Step 1: Write failing tests for the base options**
 
-```ts
+````ts
 // electron/clipper/transform.test.ts
 import { describe, it, expect } from 'vitest'
 import { transformHtmlToMarkdown } from './transform'
@@ -1360,7 +1394,7 @@ describe('transform — base options', () => {
     ).toBe('![figure](https://cdn/x.png "t")')
   })
 })
-```
+````
 
 - [ ] **Step 2: Confirm fails**
 
@@ -1372,7 +1406,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement `transform.ts` (base, no cleanup yet)**
 
-```ts
+````ts
 // electron/clipper/transform.ts
 import TurndownService from 'turndown'
 // turndown-plugin-gfm exposes a `gfm` named export plus standalone helpers.
@@ -1413,7 +1447,7 @@ export function transformHtmlToMarkdown(html: string, baseUrl: string): string {
   void baseUrl
   return getService().turndown(html)
 }
-```
+````
 
 - [ ] **Step 4: Run tests**
 
@@ -1427,25 +1461,21 @@ Expected: 8 passed. (If "fenced code with language class" fails, Turndown's defa
 
 If the language-class test failed, append inside `makeService()` before returning:
 
-```ts
-  td.addRule('fencedCodeWithLanguage', {
-    filter: function (node) {
-      return (
-        node.nodeName === 'PRE' &&
-        node.firstChild != null &&
-        node.firstChild.nodeName === 'CODE'
-      )
-    },
-    replacement: function (_content, node) {
-      const code = (node as HTMLElement).firstChild as HTMLElement
-      const cls = code.getAttribute('class') || ''
-      const m = /language-([\w+-]+)/.exec(cls)
-      const lang = m ? m[1] : ''
-      const text = code.textContent || ''
-      return '\n\n```' + lang + '\n' + text + '\n```\n\n'
-    }
-  })
-```
+````ts
+td.addRule('fencedCodeWithLanguage', {
+  filter: function (node) {
+    return node.nodeName === 'PRE' && node.firstChild != null && node.firstChild.nodeName === 'CODE'
+  },
+  replacement: function (_content, node) {
+    const code = (node as HTMLElement).firstChild as HTMLElement
+    const cls = code.getAttribute('class') || ''
+    const m = /language-([\w+-]+)/.exec(cls)
+    const lang = m ? m[1] : ''
+    const text = code.textContent || ''
+    return '\n\n```' + lang + '\n' + text + '\n```\n\n'
+  }
+})
+````
 
 Re-run tests; expected green.
 
@@ -1467,11 +1497,13 @@ git commit -m "feat(phase-12): transform — turndown + gfm + atx/fenced/code-la
 ---
 
 <!-- openspec-task: 3.2 -->
+
 ### Task 10: `transform.ts` — HTML pre-clean (script/style/comments + attribute strip)
 
 Add a sanitisation pass via Turndown remove-rules + a regex-driven attribute-strip on the input string. We avoid a full DOM parser to keep main lean.
 
 **Files:**
+
 - Modify: `electron/clipper/transform.ts`
 - Modify: `electron/clipper/transform.test.ts`
 
@@ -1479,7 +1511,7 @@ Add a sanitisation pass via Turndown remove-rules + a regex-driven attribute-str
 
 Append to `transform.test.ts`:
 
-```ts
+````ts
 describe('transform — HTML pre-clean', () => {
   it('removes <script>/<style>/<noscript>', () => {
     const html =
@@ -1512,7 +1544,7 @@ describe('transform — HTML pre-clean', () => {
     expect(md).toContain('```py')
   })
 })
-```
+````
 
 - [ ] **Step 2: Confirm fails**
 
@@ -1527,16 +1559,16 @@ Expected: FAIL.
 In `transform.ts`, register removal rules inside `makeService()` (after the language-fence rule):
 
 ```ts
-  td.addRule('removeScriptStyleNoscript', {
-    filter: ['script', 'style', 'noscript'] as TurndownService.Filter,
-    replacement: () => ''
-  })
-  td.addRule('removeComments', {
-    filter: function (node) {
-      return node.nodeType === 8 // COMMENT_NODE
-    },
-    replacement: () => ''
-  })
+td.addRule('removeScriptStyleNoscript', {
+  filter: ['script', 'style', 'noscript'] as TurndownService.Filter,
+  replacement: () => ''
+})
+td.addRule('removeComments', {
+  filter: function (node) {
+    return node.nodeType === 8 // COMMENT_NODE
+  },
+  replacement: () => ''
+})
 ```
 
 Then add a pre-pass that strips dangerous/cluttering attributes from the **string** before Turndown sees it. Replace the body of `transformHtmlToMarkdown` with:
@@ -1594,11 +1626,13 @@ git commit -m "feat(phase-12): transform — strip script/style/noscript/comment
 ---
 
 <!-- openspec-task: 3.3 -->
+
 ### Task 11: `transform.ts` — relative href/src → absolute via baseUrl
 
 Add an `absolutiseUrls(html, baseUrl)` pre-pass that rewrites `href="..."` and `src="..."` to absolute. This lets the markdown body open links/images standalone.
 
 **Files:**
+
 - Modify: `electron/clipper/transform.ts`
 - Modify: `electron/clipper/transform.test.ts`
 
@@ -1705,11 +1739,13 @@ git commit -m "feat(phase-12): transform — rewrite relative href/src to absolu
 ---
 
 <!-- openspec-task: 3.4 -->
+
 ### Task 12: `transform.ts` — collapse empty wrapper nodes
 
 Readability's output sometimes contains empty `<p>`, `<span>`, `<div>` shells (whitespace only). Without cleanup these turn into stray blank lines in the output. Add a final compaction pass.
 
 **Files:**
+
 - Modify: `electron/clipper/transform.ts`
 - Modify: `electron/clipper/transform.test.ts`
 

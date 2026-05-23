@@ -1,6 +1,7 @@
 ## Context
 
 phase 16 完成了 agent 后端。现在要做"松语" UI，核心挑战：
+
 - 流式 token 丝滑渲染（不闪烁、不卡顿、要能跟上中等速率）
 - 副作用 tool 的 approval 不能打断用户心流，但必须醒目
 - 消息太长或 tool result 太大时折叠
@@ -11,6 +12,7 @@ PRD S-11 / S-12 要求"松语简洁、直接、随手可问"。
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 3 栏布局：session 列表 / 对话区 / approval 栏
 - 流式 token 基本不掉帧（requestAnimationFrame batching）
 - `@` 引用文件：无缝接入 QuickSwitcher，结构化 attachment
@@ -18,6 +20,7 @@ PRD S-11 / S-12 要求"松语简洁、直接、随手可问"。
 - session 历史、重命名、删除可用
 
 **Non-Goals:**
+
 - 不做消息搜索（phase 未来可加）
 - 不做消息导出（复制单条可以）
 - 不做语音输入 / 附图（只支持文本 + 文件引用）
@@ -79,10 +82,11 @@ PRD S-11 / S-12 要求"松语简洁、直接、随手可问"。
 ```ts
 type Attachment =
   | { type: 'file'; path: string; title: string }
-  | { type: 'clip'; clipId: number; url: string; title: string };
+  | { type: 'clip'; clipId: number; url: string; title: string }
 ```
 
 发送时：`chat.sendUserMessage({ sessionId, text, attachments })`。agent loop 将 attachments 处理为：
+
 - 在 user message 之前追加一条 `role: 'user', content: '以下是我附加的内容供你参考：\n' + 每个 attachment 读取后的内容块`
 - 内容块格式：`--- <path or url>\n<body>\n---\n`
 - 超长 attachment body 截 20000 字符，附 `(已截断)`
@@ -92,6 +96,7 @@ type Attachment =
 ### D7: Approval UI
 
 右侧 320px 抽屉；有 pending approval 时自动滑入：
+
 - 顶部：工具名 + icon + reason 文字
 - 主区：args diff
   - update_frontmatter：两栏 before / after YAML，变更行底色
@@ -133,6 +138,7 @@ type Attachment =
 ### D12: agent-loop 的 attachment 扩展
 
 phase 17 SHALL 扩展 phase 16 的 `runAgent` 接受 `attachments`：
+
 - 读所有 attachments 的内容（内部调 `read_file` 的逻辑或直接 fs read）
 - 拼成一段 pre-user message（role='user'）放到 history 中但**不 append 到 session_messages**（否则 DB 膨胀）
 - 这意味着 session_messages 只存"显示给用户看的"；实际发送给 LLM 的 messages 是"运行时重建"的

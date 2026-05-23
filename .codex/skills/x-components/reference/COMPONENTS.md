@@ -48,29 +48,29 @@ import { Bubble } from '@ant-design/x';
 **`Bubble.List` — the preferred multi-message component**:
 
 ```tsx
-import { Bubble } from '@ant-design/x';
+import { Bubble } from '@ant-design/x'
 
 const roles = {
   assistant: {
     placement: 'start',
-    avatar: <Avatar icon={<RobotOutlined />} />,
+    avatar: <Avatar icon={<RobotOutlined />} />
   },
   user: {
     placement: 'end',
-    avatar: <Avatar icon={<UserOutlined />} />,
-  },
-};
+    avatar: <Avatar icon={<UserOutlined />} />
+  }
+}
 
-<Bubble.List
+;<Bubble.List
   items={messages.map((msg) => ({
     key: msg.id,
     role: msg.role, // maps to roles object above
     content: msg.content,
-    loading: msg.loading,
+    loading: msg.loading
   }))}
   role={roles}
   autoScroll
-/>;
+/>
 ```
 
 `Bubble.List` key props:
@@ -88,24 +88,24 @@ const roles = {
 **Purpose**: Chat input box — text entry, file attachment, voice input, submit.
 
 ```tsx
-import { Sender } from '@ant-design/x';
-import { useState } from 'react';
+import { Sender } from '@ant-design/x'
+import { useState } from 'react'
 
-const [value, setValue] = useState('');
-const [loading, setLoading] = useState(false);
+const [value, setValue] = useState('')
+const [loading, setLoading] = useState(false)
 
-<Sender
+;<Sender
   value={value}
   loading={loading}
   onChange={(v) => setValue(v)}
   onSubmit={(msg) => {
-    setValue('');
-    setLoading(true);
+    setValue('')
+    setLoading(true)
     // send msg...
   }}
   onCancel={() => setLoading(false)}
   placeholder="Ask anything..."
-/>;
+/>
 ```
 
 **Key props**:
@@ -129,16 +129,16 @@ const [loading, setLoading] = useState(false);
 **Combining with Attachments**:
 
 ```tsx
-const [attachments, setAttachments] = useState([]);
+const [attachments, setAttachments] = useState([])
 
-<Sender
+;<Sender
   header={
     <Sender.Header>
       <Attachments items={attachments} onChange={({ fileList }) => setAttachments(fileList)} />
     </Sender.Header>
   }
   prefix={<Attachments.UploadBtn onChange={({ fileList }) => setAttachments(fileList)} />}
-/>;
+/>
 ```
 
 ---
@@ -148,39 +148,39 @@ const [attachments, setAttachments] = useState([]);
 **Purpose**: Sidebar list for switching between multiple chat sessions.
 
 ```tsx
-import { Conversations } from '@ant-design/x';
+import { Conversations } from '@ant-design/x'
 
-<Conversations
+;<Conversations
   items={[
     { key: '1', label: 'Chat with Assistant', icon: <MessageOutlined /> },
-    { key: '2', label: 'Code Review', group: 'Today' },
+    { key: '2', label: 'Code Review', group: 'Today' }
   ]}
   activeKey={activeKey}
   onActiveChange={(key) => setActiveKey(key)}
   groupable
   creation={{
     label: 'New Chat',
-    onClick: () => createNewConversation(),
+    onClick: () => createNewConversation()
   }}
   menu={(conversation) => ({
     items: [
       { key: 'rename', label: 'Rename' },
-      { key: 'delete', label: 'Delete', danger: true },
+      { key: 'delete', label: 'Delete', danger: true }
     ],
-    onClick: ({ key }) => handleMenu(key, conversation),
+    onClick: ({ key }) => handleMenu(key, conversation)
   })}
-/>;
+/>
 ```
 
 **Key props**:
 
-| Prop | Purpose |
-| --- | --- |
-| `items` | Array of `ConversationItemType` — `key`, `label`, `icon`, `group`, `disabled` |
-| `activeKey` / `onActiveChange` | Controlled selection |
-| `groupable` | Group items by `item.group` field |
-| `creation` | Config for "New Chat" button |
-| `menu` | Per-item dropdown menu (rename, delete, etc.) |
+| Prop                           | Purpose                                                                       |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| `items`                        | Array of `ConversationItemType` — `key`, `label`, `icon`, `group`, `disabled` |
+| `activeKey` / `onActiveChange` | Controlled selection                                                          |
+| `groupable`                    | Group items by `item.group` field                                             |
+| `creation`                     | Config for "New Chat" button                                                  |
+| `menu`                         | Per-item dropdown menu (rename, delete, etc.)                                 |
 
 ---
 
@@ -221,14 +221,14 @@ import { Welcome, Prompts } from '@ant-design/x';
 
 **Prompts props**:
 
-| Prop | Purpose |
-| --- | --- |
-| `items` | Array of `PromptProps` — `key`, `label`, `description`, `icon`, `disabled`, `children` |
-| `title` | Section heading |
-| `wrap` | Wrap on overflow |
-| `vertical` | Stack vertically |
-| `onItemClick` | Called with `{ data: PromptProps }` |
-| `fadeIn` / `fadeInLeft` | Entrance animation |
+| Prop                    | Purpose                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `items`                 | Array of `PromptProps` — `key`, `label`, `description`, `icon`, `disabled`, `children` |
+| `title`                 | Section heading                                                                        |
+| `wrap`                  | Wrap on overflow                                                                       |
+| `vertical`              | Stack vertically                                                                       |
+| `onItemClick`           | Called with `{ data: PromptProps }`                                                    |
+| `fadeIn` / `fadeInLeft` | Entrance animation                                                                     |
 
 ---
 
@@ -239,9 +239,9 @@ import { Welcome, Prompts } from '@ant-design/x';
 **Purpose**: Visualize a multi-step agent reasoning chain — tool calls, searches, sub-tasks.
 
 ```tsx
-import { ThoughtChain } from '@ant-design/x';
+import { ThoughtChain } from '@ant-design/x'
 
-<ThoughtChain
+;<ThoughtChain
   items={[
     {
       key: '1',
@@ -249,18 +249,18 @@ import { ThoughtChain } from '@ant-design/x';
       description: 'query: "React hooks"',
       status: 'success',
       content: <pre>{searchResults}</pre>,
-      collapsible: true,
+      collapsible: true
     },
     {
       key: '2',
       title: 'Generating answer',
       status: 'loading',
-      blink: true,
-    },
+      blink: true
+    }
   ]}
   expandedKeys={expandedKeys}
   onExpand={setExpandedKeys}
-/>;
+/>
 ```
 
 **ThoughtChainItemType**:
@@ -281,11 +281,11 @@ import { ThoughtChain } from '@ant-design/x';
 **Purpose**: Collapsible "deep thinking" block — for models that expose a reasoning step.
 
 ```tsx
-import { Think } from '@ant-design/x';
+import { Think } from '@ant-design/x'
 
-<Think title="Thinking..." loading={isStreaming} blink={isStreaming} defaultExpanded={false}>
+;<Think title="Thinking..." loading={isStreaming} blink={isStreaming} defaultExpanded={false}>
   {reasoningContent}
-</Think>;
+</Think>
 ```
 
 **ThinkProps**:
@@ -306,35 +306,35 @@ import { Think } from '@ant-design/x';
 **Purpose**: Feedback/control buttons below an AI message — copy, thumbs up/down, retry, audio.
 
 ```tsx
-import { Actions } from '@ant-design/x';
+import { Actions } from '@ant-design/x'
 
-<Actions
+;<Actions
   items={[
     {
       key: 'copy',
-      actionRender: () => <Actions.Copy text={messageContent} />,
+      actionRender: () => <Actions.Copy text={messageContent} />
     },
     {
       key: 'feedback',
-      actionRender: () => <Actions.Feedback value={feedbackValue} onChange={setFeedbackValue} />,
+      actionRender: () => <Actions.Feedback value={feedbackValue} onChange={setFeedbackValue} />
     },
     {
       key: 'retry',
       icon: <RedoOutlined />,
       label: 'Retry',
-      onItemClick: () => handleRetry(),
+      onItemClick: () => handleRetry()
     },
     {
       key: 'more',
       icon: <MoreOutlined />,
       subItems: [
         { key: 'edit', label: 'Edit' },
-        { key: 'delete', label: 'Delete', danger: true },
-      ],
-    },
+        { key: 'delete', label: 'Delete', danger: true }
+      ]
+    }
   ]}
   variant="borderless"
-/>;
+/>
 ```
 
 **Built-in sub-components**:
@@ -362,13 +362,13 @@ import { Actions } from '@ant-design/x';
 **Purpose**: File attachment list with drag-drop, paste, and overflow support — used in `Sender.Header`.
 
 ```tsx
-import { Attachments } from '@ant-design/x';
-import { useState, useRef } from 'react';
+import { Attachments } from '@ant-design/x'
+import { useState, useRef } from 'react'
 
-const [fileList, setFileList] = useState([]);
-const attachRef = useRef(null);
+const [fileList, setFileList] = useState([])
+const attachRef = useRef(null)
 
-<Attachments
+;<Attachments
   ref={attachRef}
   items={fileList}
   onChange={({ fileList: newList }) => setFileList(newList)}
@@ -376,12 +376,12 @@ const attachRef = useRef(null);
   placeholder={{
     icon: <PaperClipOutlined />,
     title: 'Drop files here',
-    description: 'Or click to browse',
+    description: 'Or click to browse'
   }}
-/>;
+/>
 
 // Programmatically open file picker:
-attachRef.current?.select({ accept: 'image/*', multiple: true });
+attachRef.current?.select({ accept: 'image/*', multiple: true })
 ```
 
 **AttachmentsProps**: Extends antd `Upload` props, key additions:
@@ -401,29 +401,29 @@ attachRef.current?.select({ accept: 'image/*', multiple: true });
 **Purpose**: Show reference citations (URLs) used in an AI answer.
 
 ```tsx
-import { Sources } from '@ant-design/x';
+import { Sources } from '@ant-design/x'
 
-<Sources
+;<Sources
   title="References"
   items={[
     { key: '1', title: 'React Docs', url: 'https://react.dev', description: 'Official docs' },
-    { key: '2', title: 'MDN', url: 'https://developer.mozilla.org' },
+    { key: '2', title: 'MDN', url: 'https://developer.mozilla.org' }
   ]}
   defaultExpanded
   onClick={(item) => window.open(item.url)}
-/>;
+/>
 ```
 
 **SourcesProps**:
 
-| Prop | Purpose |
-| --- | --- |
-| `items` | Array of `SourcesItem` — `key`, `title`, `url`, `icon`, `description` |
-| `title` | Section heading |
-| `expanded` / `defaultExpanded` / `onExpand` | Controlled expand |
-| `inline` | Compact inline mode with popover |
-| `onClick` | Callback when source is clicked |
-| `expandIconPosition` | `'start'` (default) \| `'end'` |
+| Prop                                        | Purpose                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| `items`                                     | Array of `SourcesItem` — `key`, `title`, `url`, `icon`, `description` |
+| `title`                                     | Section heading                                                       |
+| `expanded` / `defaultExpanded` / `onExpand` | Controlled expand                                                     |
+| `inline`                                    | Compact inline mode with popover                                      |
+| `onClick`                                   | Callback when source is clicked                                       |
+| `expandIconPosition`                        | `'start'` (default) \| `'end'`                                        |
 
 ---
 
@@ -432,36 +432,36 @@ import { Sources } from '@ant-design/x';
 **Purpose**: Slash-command or trigger-based suggestion popup in the Sender.
 
 ```tsx
-import { Suggestion, Sender } from '@ant-design/x';
+import { Suggestion, Sender } from '@ant-design/x'
 
-<Suggestion
+;<Suggestion
   items={[
     { value: '/search', label: '/search', icon: <SearchOutlined /> },
-    { value: '/help', label: '/help', icon: <QuestionOutlined /> },
+    { value: '/help', label: '/help', icon: <QuestionOutlined /> }
   ]}
   onSelect={(value) => console.log('Selected:', value)}
 >
   {({ onTrigger, onKeyDown }) => (
     <Sender
       onChange={(v) => {
-        if (v === '/') onTrigger({});
-        else onTrigger(false);
+        if (v === '/') onTrigger({})
+        else onTrigger(false)
       }}
       onKeyDown={onKeyDown}
     />
   )}
-</Suggestion>;
+</Suggestion>
 ```
 
 **SuggestionProps**:
 
-| Prop | Purpose |
-| --- | --- |
-| `items` | Array of `SuggestionItem` or render function `(info) => SuggestionItem[]` |
-| `children` | Render prop — `({ onTrigger, onKeyDown }) => ReactElement` |
-| `onSelect` | Called with selected `value` and options path |
-| `open` / `onOpenChange` | Controlled panel visibility |
-| `block` | Full-width mode |
+| Prop                    | Purpose                                                                   |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `items`                 | Array of `SuggestionItem` or render function `(info) => SuggestionItem[]` |
+| `children`              | Render prop — `({ onTrigger, onKeyDown }) => ReactElement`                |
+| `onSelect`              | Called with selected `value` and options path                             |
+| `open` / `onOpenChange` | Controlled panel visibility                                               |
+| `block`                 | Full-width mode                                                           |
 
 ---
 
@@ -493,9 +493,9 @@ import { FileCard } from '@ant-design/x';
 **Purpose**: Syntax-highlighted code block in a bubble or message.
 
 ```tsx
-import { CodeHighlighter } from '@ant-design/x';
+import { CodeHighlighter } from '@ant-design/x'
 
-<CodeHighlighter language="typescript" content={`const x = 1;`} />;
+;<CodeHighlighter language="typescript" content={`const x = 1;`} />
 ```
 
 > Tip: When rendering code from Markdown, prefer `@ant-design/x-markdown` with a custom code block component mapping.
@@ -507,13 +507,13 @@ import { CodeHighlighter } from '@ant-design/x';
 **Purpose**: Render Mermaid diagrams inside chat messages.
 
 ```tsx
-import { Mermaid } from '@ant-design/x';
+import { Mermaid } from '@ant-design/x'
 
-<Mermaid
+;<Mermaid
   content={`graph TD
   A --> B
   B --> C`}
-/>;
+/>
 ```
 
 > Tip: Use inside `Bubble` `contentRender` or as a Markdown code block component for `language="mermaid"`.
@@ -525,22 +525,22 @@ import { Mermaid } from '@ant-design/x';
 **Purpose**: Display a hierarchical file/folder tree with optional file preview — useful in AI coding assistant scenarios.
 
 ```tsx
-import { Folder } from '@ant-design/x';
+import { Folder } from '@ant-design/x'
 
-<Folder
+;<Folder
   treeData={[
     {
       title: 'src',
       path: 'src',
       children: [
         { title: 'index.tsx', path: 'src/index.tsx', content: 'export default () => null;' },
-        { title: 'App.tsx', path: 'src/App.tsx', content: 'const App = () => <div />;' },
-      ],
-    },
+        { title: 'App.tsx', path: 'src/App.tsx', content: 'const App = () => <div />;' }
+      ]
+    }
   ]}
   defaultExpandAll
   onSelectedFileChange={(file) => console.log(file.path, file.content)}
-/>;
+/>
 ```
 
 **Dynamic content loading via service**:
@@ -550,28 +550,28 @@ import { Folder } from '@ant-design/x';
   treeData={treeData}
   fileContentService={{
     loadFileContent: async (filePath) => {
-      const res = await fetch(`/api/file?path=${filePath}`);
-      return res.text();
-    },
+      const res = await fetch(`/api/file?path=${filePath}`)
+      return res.text()
+    }
   }}
 />
 ```
 
 **Key props**:
 
-| Prop | Purpose |
-| --- | --- |
-| `treeData` | Tree structure — `FolderTreeData[]` with `title`, `path`, `content`, `children` |
-| `selectedFile` / `defaultSelectedFile` | Controlled/uncontrolled selected file paths |
-| `onSelectedFileChange` | Called with `{ path, name, content }` on file select |
-| `expandedPaths` / `defaultExpandedPaths` | Controlled/uncontrolled expanded paths |
-| `defaultExpandAll` | Expand all nodes by default (`true`) |
-| `fileContentService` | Async service for loading file content on demand |
-| `previewRender` | Custom file preview renderer |
-| `directoryTitle` | Title above the tree (`false` to hide) |
-| `directoryIcons` | Custom icons per file type (`false` to hide all icons) |
-| `selectable` | Enable file selection (`true` by default) |
-| `emptyRender` | Empty state content |
+| Prop                                     | Purpose                                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------- |
+| `treeData`                               | Tree structure — `FolderTreeData[]` with `title`, `path`, `content`, `children` |
+| `selectedFile` / `defaultSelectedFile`   | Controlled/uncontrolled selected file paths                                     |
+| `onSelectedFileChange`                   | Called with `{ path, name, content }` on file select                            |
+| `expandedPaths` / `defaultExpandedPaths` | Controlled/uncontrolled expanded paths                                          |
+| `defaultExpandAll`                       | Expand all nodes by default (`true`)                                            |
+| `fileContentService`                     | Async service for loading file content on demand                                |
+| `previewRender`                          | Custom file preview renderer                                                    |
+| `directoryTitle`                         | Title above the tree (`false` to hide)                                          |
+| `directoryIcons`                         | Custom icons per file type (`false` to hide all icons)                          |
+| `selectable`                             | Enable file selection (`true` by default)                                       |
+| `emptyRender`                            | Empty state content                                                             |
 
 ---
 
@@ -580,19 +580,19 @@ import { Folder } from '@ant-design/x';
 **Purpose**: Global configuration wrapper — replaces `antd`'s `ConfigProvider`.
 
 ```tsx
-import { XProvider } from '@ant-design/x';
-import zhCN from 'antd/locale/zh_CN';
-import zhCN_X from '@ant-design/x/locale/zh_CN';
+import { XProvider } from '@ant-design/x'
+import zhCN from 'antd/locale/zh_CN'
+import zhCN_X from '@ant-design/x/locale/zh_CN'
 
-<XProvider
+;<XProvider
   locale={{ ...zhCN, ...zhCN_X }}
   theme={{
-    token: { colorPrimary: '#1677ff' },
+    token: { colorPrimary: '#1677ff' }
   }}
   direction="ltr"
 >
   <App />
-</XProvider>;
+</XProvider>
 ```
 
 - Fully extends `antd`'s `ConfigProvider` — all antd config props are valid.
@@ -606,13 +606,13 @@ import zhCN_X from '@ant-design/x/locale/zh_CN';
 **Purpose**: Imperative notification messages (non-bubble, global alerts).
 
 ```tsx
-import { notification } from '@ant-design/x';
+import { notification } from '@ant-design/x'
 
 notification.open({
   title: 'Connection lost',
   description: 'Reconnecting...',
-  type: 'error',
-});
+  type: 'error'
+})
 ```
 
 Use when you need to surface errors or events outside the chat bubble flow.
