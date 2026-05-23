@@ -34,12 +34,26 @@ function applyLocale(locale: Locale): void {
 
 let installed = false
 let unsubscribe: (() => void) | null = null
+let mediaQueryList: MediaQueryList | null = null
+
+function handleSystemThemeChange() {
+  const { appearance } = useSettingsStore.getState()
+  if (appearance.theme === 'system') {
+    applyTheme('system')
+  }
+}
 
 export function installSettingsEffects(): () => void {
   if (installed) return unsubscribe ?? (() => {})
   installed = true
 
   const { appearance, general } = useSettingsStore.getState()
+  
+  if (typeof window !== 'undefined') {
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaQueryList.addEventListener('change', handleSystemThemeChange)
+  }
+
   applyTheme(appearance.theme)
   applyFontScale(appearance.fontScale)
   applyEditorFont(appearance.editorFont)
@@ -75,5 +89,9 @@ export function installSettingsEffects(): () => void {
 export function __resetEffectsForTest(): void {
   unsubscribe?.()
   unsubscribe = null
+  if (mediaQueryList) {
+    mediaQueryList.removeEventListener('change', handleSystemThemeChange)
+    mediaQueryList = null
+  }
   installed = false
 }
