@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
+import { useProfilesStore } from './profiles'
+import { useSettingsStore } from './settings'
 import type { AgentEvent, Attachment, Session, SessionMessage } from '@shared/agent-types'
 
 export interface ChatSession {
@@ -8,6 +10,7 @@ export interface ChatSession {
   createdAt: number
   updatedAt: number
   profileId: string | null
+  messageCount: number
 }
 
 export interface ChatMessage {
@@ -51,7 +54,8 @@ function toChatSession(s: Session): ChatSession {
     title: s.title ?? '',
     profileId: s.profileId,
     createdAt: new Date(s.createdAt).getTime(),
-    updatedAt: new Date(s.updatedAt).getTime()
+    updatedAt: new Date(s.updatedAt).getTime(),
+    messageCount: s.messageCount ?? (!s.title ? 0 : 1)
   }
 }
 
@@ -176,7 +180,27 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async createSession() {
     let createdId = ''
     try {
-      const raw = await ipc.chat['sessions.create']({ profileId: null })
+      const profiles = useProfilesStore.getState().profiles
+      const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
+      let targetProfileId: string | null = null
+
+      if (profiles.length > 0) {
+        const sortedProfiles = [...profiles].sort((a, b) => {
+          if (a.id === defaultProfileId) return -1
+          if (b.id === defaultProfileId) return 1
+          return 0
+        })
+        targetProfileId = sortedProfiles[0].id
+      }
+
+      const cur = get()
+      const existingEmptySession = cur.sessions.find((s) => s.messageCount === 0)
+      if (existingEmptySession) {
+        await get().selectSession(existingEmptySession.id)
+        return existingEmptySession.id
+      }
+
+      const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
       const session = toChatSession(raw)
       createdId = session.id
       set((s) => ({

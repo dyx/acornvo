@@ -71,7 +71,7 @@ export function installEditorSubscriber(): () => void {
   if (_editorSubscriberInstalled) return () => {}
   _editorSubscriberInstalled = true
 
-  const off = ipc.on('index:fileChanged', (payload) => {
+  const offChanged = ipc.on('index:fileChanged', (payload) => {
     const cur = useEditorStore.getState().state
     if (cur.kind !== 'ready') return
     if (cur.path !== payload.path) return
@@ -127,10 +127,19 @@ export function installEditorSubscriber(): () => void {
     }
   })
 
-  return off
-}
+  const offProject = ipc.on('project:changed', () => {
+    // Project changed from under us (e.g. backend swapped). 
+    // Force reset state to avoid saving to the new project.
+    _cancelDebounce()
+    useEditorStore.setState({ state: { kind: 'idle' } })
+  })
 
-/** Reset subscriber guard for tests. */
+  return () => {
+    _editorSubscriberInstalled = false
+    offChanged()
+    offProject()
+  }
+}
 export function _resetEditorSubscriber(): void {
   _editorSubscriberInstalled = false
 }

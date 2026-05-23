@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import type { JSX } from 'react'
-import { useLibraryStore, installLibrarySubscriber } from '@/stores/library'
+import { useBlocker } from 'react-router-dom'
+import { useLibraryStore } from '@/stores/library'
+import { useEditorStore } from '@/stores/editor'
 import { VirtualFileList } from '@/components/library/VirtualFileList'
 import { EmbeddedEditorPanel } from '@/components/library/EmbeddedEditorPanel'
 import { IndexBanner } from '@/components/library/IndexBanner'
@@ -8,10 +10,23 @@ import { IndexBanner } from '@/components/library/IndexBanner'
 export function Library(): JSX.Element {
   const refresh = useLibraryStore((s) => s.refresh)
 
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    if (currentLocation.pathname === nextLocation.pathname) return false
+    const s = useEditorStore.getState().state
+    return s.kind === 'ready' && (s.dirty || s.saving)
+  })
+
   useEffect(() => {
-    const unsub = installLibrarySubscriber()
+    if (blocker.state === 'blocked') {
+      void (async () => {
+        await useEditorStore.getState().flushSave()
+        blocker.proceed?.()
+      })()
+    }
+  }, [blocker])
+
+  useEffect(() => {
     void refresh()
-    return unsub
   }, [refresh])
 
   return (

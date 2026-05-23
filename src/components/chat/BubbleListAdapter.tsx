@@ -167,7 +167,7 @@ export function BubbleListAdapter() {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   return (
-    <div ref={containerRef} data-testid="bubble-list-container" className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 flex flex-col min-h-0 relative scroll-smooth">
+    <div ref={containerRef} data-testid="bubble-list-container" className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 flex flex-col min-h-0 scroll-smooth">
       <div className="flex-1" /> {/* push to bottom if few messages */}
       {items.map((item, index) => {
         const isUser = item.role === 'user'

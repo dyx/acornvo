@@ -52,11 +52,11 @@
     }
   },
   "switcher": {
-    "ariaLabel": "切换果仓",
-    "new": "新建果仓…",
+    "ariaLabel": "切换树林",
+    "new": "新建树林…",
     "open": "打开已有目录…",
-    "noGrove": "未选择果仓",
-    "selectGrove": "选择果仓"
+    "noGrove": "未选择树林",
+    "selectGrove": "选择树林"
   },
   "takeover": {
     "title": "树林已被占用",
@@ -96,7 +96,7 @@
   },
   "editor": {
     "loading": "正在加载文件…",
-    "back": "返回果仓",
+    "back": "返回树林",
     "saving": "保存中…",
     "saved": "已保存",
     "dirty": "未保存",

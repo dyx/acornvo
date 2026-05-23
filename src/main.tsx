@@ -7,6 +7,8 @@ import { installSettingsEffects } from '@/stores/settings-effects'
 import { installGroveSubscriber } from '@/stores/grove'
 import { installSettingsSubscriber } from '@/stores/settings'
 import { installChatStreamSubscriber } from '@/stores/chat'
+import { installLibrarySubscriber } from '@/stores/library'
+import { installEditorSubscriber } from '@/stores/editor'
 import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
 import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { Placeholder } from './pages/Placeholder'
@@ -57,6 +59,8 @@ installSettingsEffects()
 installGroveSubscriber()
 installSettingsSubscriber()
 installChatStreamSubscriber()
+installLibrarySubscriber()
+installEditorSubscriber()
 setBrowserPort(browserPort)
 setBrowserEventPort(browserEventPort)
 

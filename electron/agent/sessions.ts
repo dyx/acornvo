@@ -26,12 +26,24 @@ export function createSessions(): SessionsDao {
       const t = nowIso();
       db().prepare("INSERT INTO sessions (id, title, profile_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
         .run(id, title, profileId ?? null, t, t);
-      return { id, title, profileId, createdAt: t, updatedAt: t };
+      return { id, title, profileId, createdAt: t, updatedAt: t, messageCount: 0 };
     },
 
     async list() {
-      const rows = db().prepare("SELECT id, title, profile_id, created_at, updated_at FROM sessions ORDER BY updated_at DESC").all() as any[];
-      return rows.map(r => ({ id: r.id, title: r.title, profileId: r.profile_id, createdAt: r.created_at, updatedAt: r.updated_at }));
+      const rows = db().prepare(`
+        SELECT s.id, s.title, s.profile_id, s.created_at, s.updated_at,
+               (SELECT COUNT(*) FROM session_messages sm WHERE sm.session_id = s.id) as message_count
+        FROM sessions s
+        ORDER BY s.updated_at DESC
+      `).all() as any[];
+      return rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        profileId: r.profile_id,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        messageCount: r.message_count
+      }));
     },
 
     async delete(id) {

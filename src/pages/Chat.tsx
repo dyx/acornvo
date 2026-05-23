@@ -268,7 +268,7 @@ export function Chat() {
               />
             </header>
             
-            <section className="flex min-h-0 flex-1 flex-col bg-background/50">
+            <section className="flex min-h-0 flex-1 flex-col bg-background/50 relative">
               {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
             </section>
             

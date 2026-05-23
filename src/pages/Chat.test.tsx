@@ -166,7 +166,7 @@ describe.skip('Chat empty-state', () => {
   it('hides empty-state once session has messages', async () => {
     useChatStore.setState({
       sessions: [
-        { id: 's1', title: 'Test Session', createdAt: Date.now(), updatedAt: Date.now(), profileId: null }
+        { id: 's1', title: 'Test Session', createdAt: Date.now(), updatedAt: Date.now(), profileId: null, messageCount: 0 }
       ],
       activeSessionId: 's1',
       bySession: {
@@ -177,7 +177,9 @@ describe.skip('Chat empty-state', () => {
           pendingAttachments: [],
           pendingPromptText: '',
           status: 'idle',
-          error: null
+          error: null,
+          lastUserText: '',
+          lastUserAttachments: []
         }
       }
     })
@@ -202,8 +204,10 @@ describe.skip('SessionList collapsed mode', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 })
     window.dispatchEvent(new Event('resize'))
     useChatStore.setState({
-      sessions: [{ id: 's1', title: 'foo', createdAt: 1, updatedAt: 1, profileId: null }],
-      activeSessionId: 's1',
+      sessions: [
+        { id: '1', title: 'Test 1', createdAt: 0, updatedAt: 0, profileId: null, messageCount: 0 }
+      ],
+      activeSessionId: '1',
       bySession: {},
       sessionsLoading: false,
       sessionsError: null

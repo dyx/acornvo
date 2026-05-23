@@ -41,6 +41,7 @@ export interface Session {
   profileId: string | null;
   createdAt: string;
   updatedAt: string;
+  messageCount?: number;
 }
 
 export interface SessionMessage {

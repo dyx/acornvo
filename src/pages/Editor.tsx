@@ -2,7 +2,7 @@ import type { JSX } from 'react'
 import { useEffect } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useEditorStore, installEditorSubscriber } from '@/stores/editor'
+import { useEditorStore } from '@/stores/editor'
 import { VditorEditor } from '@/components/editor/VditorEditor'
 import { EditorTitleBar } from '@/components/editor/EditorTitleBar'
 import { FrontmatterCard } from '@/components/editor/FrontmatterCard'
@@ -40,11 +40,7 @@ export function Editor(): JSX.Element {
     }
   }, [path])
 
-  // Phase-09: subscribe to external file changes
-  useEffect(() => {
-    const unsub = installEditorSubscriber()
-    return unsub
-  }, [])
+
 
   // Visibility-change autosave (task 4.2): hidden → flushSave.
   useEffect(() => {

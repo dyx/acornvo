@@ -160,6 +160,16 @@ async function bootstrap(): Promise<void> {
             trimPerfSamples({ db })
             await startScan(payload.path)
             await watcherStart(payload.path, db)
+            
+            if (telemetryHandle) {
+              telemetryHandle.stop()
+              telemetryHandle = null
+            }
+            if (queueRunner) {
+              queueRunner.stop()
+              queueRunner = null
+            }
+            
             // phase-14: start the queue runner
             const { bootstrapQueueRunner } = await import('./queue')
             const { record: opsLogRecord } = await import('./services/ops/log')

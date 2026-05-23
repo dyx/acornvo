@@ -4,6 +4,8 @@ import { ipc } from '@/ipc/client'
 import { useSettingsStore } from './settings'
 import { grove as groveSwitchHooks } from './grove-switch-hooks'
 
+import { useEditorStore } from './editor'
+
 export type OpenOutcomeLite =
   | { status: 'opened'; grove: GroveSummary }
   | { status: 'locked'; holder: { pid: number; hostname: string; started_at: string } }
@@ -46,6 +48,11 @@ export const useGroveStore = create<GroveState>((set, get) => ({
   },
 
   async openExisting(path, opts) {
+    try {
+      await useEditorStore.getState().flushSave()
+    } catch (err) {
+      console.warn('Failed to flush save before opening grove:', err)
+    }
     try {
       const res = await ipc.project.openGrove(path, opts)
       if (res.status === 'opened') {

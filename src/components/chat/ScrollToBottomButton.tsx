@@ -3,26 +3,6 @@ import { ArrowDownIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
-/**
- * Since we are no longer using antd-x, the container itself is scrollable.
- */
-function isScrollable(el: HTMLElement): boolean {
-  const s = getComputedStyle(el)
-  return (
-    (s.overflow === 'auto' || s.overflowY === 'auto' ||
-     s.overflow === 'scroll' || s.overflowY === 'scroll') &&
-    el.scrollHeight > el.clientHeight
-  )
-}
-
-function findScroller(root: HTMLElement): HTMLElement | null {
-  if (isScrollable(root)) return root
-  for (const child of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
-    if (isScrollable(child)) return child
-  }
-  return null
-}
-
 export function ScrollToBottomButton({
   containerRef,
   threshold = 80
@@ -32,40 +12,25 @@ export function ScrollToBottomButton({
 }) {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
-  const scrollerRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    const root = containerRef.current
-    if (!root) return
-
-    let scroller = findScroller(root)
-    scrollerRef.current = scroller
+    const el = containerRef.current
+    if (!el) return
 
     const handler = () => {
-      const el = scrollerRef.current
-      if (!el) return
-      const distance = el.scrollHeight - (el.scrollTop + el.clientHeight)
+      // Use Math.ceil because el.scrollTop can be fractional
+      const distance = el.scrollHeight - (Math.ceil(el.scrollTop) + el.clientHeight)
       setVisible(distance > threshold)
     }
 
-    if (scroller) {
-      scroller.addEventListener('scroll', handler)
-      handler()
-    }
+    el.addEventListener('scroll', handler)
+    handler()
 
-    const observer = new MutationObserver(() => {
-      const found = findScroller(root)
-      if (found && found !== scrollerRef.current) {
-        scrollerRef.current?.removeEventListener('scroll', handler)
-        scrollerRef.current = found
-        found.addEventListener('scroll', handler)
-        handler()
-      }
-    })
-    observer.observe(root, { childList: true, subtree: true })
+    const observer = new MutationObserver(handler)
+    observer.observe(el, { childList: true, subtree: true })
 
     return () => {
-      scrollerRef.current?.removeEventListener('scroll', handler)
+      el.removeEventListener('scroll', handler)
       observer.disconnect()
     }
   }, [containerRef, threshold])
@@ -77,7 +42,7 @@ export function ScrollToBottomButton({
       variant="secondary"
       size="sm"
       onClick={() => {
-        const el = scrollerRef.current
+        const el = containerRef.current
         if (!el) return
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       }}

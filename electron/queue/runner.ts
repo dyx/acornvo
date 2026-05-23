@@ -107,24 +107,28 @@ export function createQueueRunner(deps: QueueRunnerDeps): QueueRunner {
 
   function tick(): void {
     if (!acceptingNew) return
-    const nowMs = now()
-    const nowIso = new Date(nowMs).toISOString()
-    for (const entry of kinds.values()) {
-      if (entry.running.size >= entry.concurrency) continue
-      if (nowMs - entry.lastPickedAt < entry.minGapMs) continue
-      const slots = entry.concurrency - entry.running.size
-      // Single-pick per tick when minGapMs is set; otherwise fill all slots.
-      const limit = entry.minGapMs > 0 ? 1 : slots
-      const due = deps.store.list({
-        kind: entry.kind,
-        status: 'pending',
-        limit,
-        offset: 0
-      })
-      const ready = due.items.filter((j) => j.nextRunAt <= nowIso)
-      if (ready.length === 0) continue
-      entry.lastPickedAt = nowMs
-      for (const job of ready) runOne(entry, job)
+    try {
+      const nowMs = now()
+      const nowIso = new Date(nowMs).toISOString()
+      for (const entry of kinds.values()) {
+        if (entry.running.size >= entry.concurrency) continue
+        if (nowMs - entry.lastPickedAt < entry.minGapMs) continue
+        const slots = entry.concurrency - entry.running.size
+        // Single-pick per tick when minGapMs is set; otherwise fill all slots.
+        const limit = entry.minGapMs > 0 ? 1 : slots
+        const due = deps.store.list({
+          kind: entry.kind,
+          status: 'pending',
+          limit,
+          offset: 0
+        })
+        const ready = due.items.filter((j) => j.nextRunAt <= nowIso)
+        if (ready.length === 0) continue
+        entry.lastPickedAt = nowMs
+        for (const job of ready) runOne(entry, job)
+      }
+    } catch (err) {
+      log('error', 'queue runner tick failed', { error: String(err) })
     }
   }
 
