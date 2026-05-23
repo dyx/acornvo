@@ -41,8 +41,6 @@ export function GeneralTab(): JSX.Element {
           </SelectContent>
         </Select>
       </div>
-
-      </div>
     </div>
   )
 }
