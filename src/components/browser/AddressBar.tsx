@@ -26,7 +26,7 @@ export function AddressBar(): JSX.Element {
   const clipperStage = useClipperStore((s) => s.stage)
   const startClip = useClipperStore((s) => s.start)
 
-  const [value, setValue] = useState(tab?.url ?? '')
+  const [value, setValue] = useState(tab?.url === 'about:blank' ? '' : (tab?.url ?? ''))
   const [bookmark, setBookmark] = useState<Bookmark | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [openClippedConfirm, setOpenClippedConfirm] = useState(false)
@@ -58,8 +58,11 @@ export function AddressBar(): JSX.Element {
 
   useEffect(() => {
     if (tab?.url === 'about:blank' && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
+      const timer = setTimeout(() => {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }, 50)
+      return () => clearTimeout(timer)
     }
   }, [tab?.id, tab?.url])
 
