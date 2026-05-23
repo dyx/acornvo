@@ -133,7 +133,7 @@ export function ConversationsAdapter() {
                         />
                       ) : (
                         <>
-                          <span className="truncate block flex-1 min-w-0 pr-1">
+                          <span className="line-clamp-1 break-all flex-1 min-w-0 pr-1" title={displayLabel}>
                             {displayLabel}
                           </span>
                           {hasApproval && (
