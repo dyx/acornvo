@@ -166,7 +166,8 @@ const request: IpcClient<IpcContract> = {
     aggregates: (area, windowMs) => invoke('perf.aggregates', area, windowMs)
   },
   app: {
-    runtimeInfo: () => invoke('app.runtimeInfo')
+    runtimeInfo: () => invoke('app.runtimeInfo'),
+    getBootstrap: () => invoke('app.getBootstrap')
   },
   update: {
     checkManual: () => invoke('update.checkManual'),

@@ -26,9 +26,9 @@ import { Browse } from '@/pages/Browse'
 import './i18n'
 import './index.css'
 
-function BootstrapGate(): JSX.Element {
+function BootstrapGate(): JSX.Element | null {
   const payload = useBootstrap()
-  if (!payload) return <Placeholder name="loading" />
+  if (!payload) return null
   return <Navigate to={payload.initialRoute} replace />
 }
 

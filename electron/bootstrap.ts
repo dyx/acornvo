@@ -6,6 +6,12 @@ import { logger } from './services/logger'
 
 export type BootstrapResult = IpcEventContract['bootstrap:ready']
 
+let lastResult: BootstrapResult | null = null
+
+export function getBootstrapResult(): BootstrapResult | null {
+  return lastResult
+}
+
 const TIMEOUT_MS = 2000
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -50,7 +56,9 @@ async function decide(): Promise<BootstrapResult> {
 
 export async function runBootstrap(): Promise<BootstrapResult> {
   try {
-    return await withTimeout(decide(), TIMEOUT_MS)
+    const result = await withTimeout(decide(), TIMEOUT_MS)
+    lastResult = result
+    return result
   } catch (err) {
     logger.warn('bootstrap fell back to Picker', {
       message: err instanceof Error ? err.message : String(err)
@@ -61,9 +69,11 @@ export async function runBootstrap(): Promise<BootstrapResult> {
         ...item,
         valid: existsSync(item.path)
       }))
-      return { initialRoute: '/picker', recent: items }
+      lastResult = { initialRoute: '/picker', recent: items }
+      return lastResult
     } catch {
-      return { initialRoute: '/picker', recent: [] }
+      lastResult = { initialRoute: '/picker', recent: [] }
+      return lastResult
     }
   }
 }

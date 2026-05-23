@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { getBootstrapResult } from '../bootstrap'
 
 export const appHandlers = {
   async runtimeInfo() {
@@ -13,5 +14,8 @@ export const appHandlers = {
       platform: process.platform,
       arch: process.arch
     }
+  },
+  getBootstrap() {
+    return getBootstrapResult()
   }
 }

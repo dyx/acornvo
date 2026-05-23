@@ -31,7 +31,13 @@ export function createPerf(deps: PerfDeps): Perf {
         const t1 = now()
         const ms = Math.max(0, t1 - t0)
         const merged = { ...startMeta, ...meta }
-        ins.run(new Date().toISOString(), area, ok ? 1 : 0, ms, JSON.stringify(merged))
+        try {
+          if (deps.db.open) {
+            ins.run(new Date().toISOString(), area, ok ? 1 : 0, ms, JSON.stringify(merged))
+          }
+        } catch (err) {
+          // Gracefully handle if DB is closed or closing concurrently
+        }
       }
     }
   }
