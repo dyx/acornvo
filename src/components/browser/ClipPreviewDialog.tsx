@@ -51,7 +51,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
             {t('browser.clip.preview.title', '剪藏预览')}
           </Dialog.Title>
 
-          <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr,2fr] gap-3 overflow-hidden">
+          <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr_2fr] gap-3 overflow-hidden">
             {/* Left: meta */}
             <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2">
               <label className="text-xs">
