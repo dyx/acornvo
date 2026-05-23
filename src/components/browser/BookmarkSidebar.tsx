@@ -62,7 +62,7 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-[color:var(--color-line)] p-2 gap-2">
+      <div className="flex h-[42px] shrink-0 items-center justify-between border-b border-[color:var(--color-line)] px-2 gap-2">
         <Input
           type="search"
           role="searchbox"
