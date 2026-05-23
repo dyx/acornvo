@@ -105,42 +105,42 @@ export function ConversationsAdapter() {
                     <div
                       key={s.id}
                       className={cn(
-                        'group flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors',
+                        'group flex items-center rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors',
                         isActive
                           ? 'bg-muted font-medium text-foreground'
                           : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                       )}
                       onClick={() => !isEditing && selectSession(s.id)}
                     >
-                      <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
-                        <MessageSquareIcon className="size-4 shrink-0 opacity-70" />
+                      <MessageSquareIcon className="size-4 shrink-0 opacity-70 mr-2" />
 
-                        {isEditing ? (
-                          <Input
-                            autoFocus
-                            size={1}
-                            className="h-6 py-0 px-1 text-sm bg-background flex-1 min-w-0"
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') commitRename(s.id)
-                              if (e.key === 'Escape') {
-                                setEditingId(null)
-                                setEditingTitle('')
-                              }
-                            }}
-                            onBlur={() => commitRename(s.id)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <div className="truncate flex-1 min-w-0 relative pr-2">
+                      {isEditing ? (
+                        <Input
+                          autoFocus
+                          size={1}
+                          className="h-6 py-0 px-1 text-sm bg-background flex-1 min-w-0"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitRename(s.id)
+                            if (e.key === 'Escape') {
+                              setEditingId(null)
+                              setEditingTitle('')
+                            }
+                          }}
+                          onBlur={() => commitRename(s.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <>
+                          <span className="truncate block flex-1 min-w-0 pr-1">
                             {displayLabel}
-                            {hasApproval && (
-                              <span className="absolute right-0 top-1.5 size-1.5 rounded-full bg-orange-500" />
-                            )}
-                          </div>
-                        )}
-                      </div>
+                          </span>
+                          {hasApproval && (
+                            <span className="size-1.5 shrink-0 rounded-full bg-orange-500 mr-1" />
+                          )}
+                        </>
+                      )}
 
                       {!narrow && !isEditing && (
                         <DropdownMenu>
