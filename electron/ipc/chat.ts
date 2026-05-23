@@ -112,11 +112,20 @@ export function createChatHandlers(deps: ChatDeps) {
     }
   }
 
+  function clearPendingInterrupts(sessionId: string) {
+    for (const [callId, pending] of pendingInterrupts.entries()) {
+      if (pending.sessionId === sessionId) {
+        pendingInterrupts.delete(callId)
+      }
+    }
+  }
+
   return {
     'sessions.list': () => deps.sessions.list(),
     'sessions.create': (opts: { profileId: string | null; title?: string | null }) =>
       deps.sessions.createSession(opts),
     'sessions.delete': async (id: string) => {
+      clearPendingInterrupts(id)
       await deps.sessions.delete(id)
       return { ok: true } as const
     },
@@ -235,6 +244,7 @@ export function createChatHandlers(deps: ChatDeps) {
     },
 
     cancelStream: async (sessionId: string) => {
+      clearPendingInterrupts(sessionId)
       const ctl = aborts.get(sessionId)
       if (ctl) ctl.abort()
       try {
