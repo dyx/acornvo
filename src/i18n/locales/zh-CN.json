@@ -362,7 +362,8 @@
     "website": "官网"
   },
   "browser": {
-    "new_tab": {
+    "new_tab": "新标签页",
+    "new_tab_page": {
       "welcome": "拾果",
       "hint": "在地址栏输入网址或搜索词",
       "recent": "最近收藏"

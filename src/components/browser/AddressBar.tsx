@@ -51,8 +51,17 @@ export function AddressBar(): JSX.Element {
   if (tab?.url !== prevTabUrl || tab?.id !== prevTabId) {
     setPrevTabUrl(tab?.url)
     setPrevTabId(tab?.id)
-    if (tab?.url !== undefined) setValue(tab.url)
+    if (tab?.url !== undefined) {
+      setValue(tab.url === 'about:blank' ? '' : tab.url)
+    }
   }
+
+  useEffect(() => {
+    if (tab?.url === 'about:blank' && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [tab?.id, tab?.url])
 
   // Refresh bookmark state when active URL changes
   useEffect(() => {
@@ -136,7 +145,7 @@ export function AddressBar(): JSX.Element {
           onFocus={(e) => e.currentTarget.select()}
           onKeyDown={(e) => {
             if (e.key === 'Enter') submit()
-            else if (e.key === 'Escape') setValue(tab.url)
+            else if (e.key === 'Escape') setValue(tab.url === 'about:blank' ? '' : tab.url)
           }}
           className="flex-1 border-none bg-transparent font-mono text-[12.5px] text-[color:var(--color-ink)] outline-none"
         />

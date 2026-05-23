@@ -19,14 +19,16 @@ export function NewTabPage(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-[color:var(--color-ink)]">
-      <h1 className="serif text-3xl font-semibold">{t('browser.new_tab.welcome', '拾果')}</h1>
-      <p className="text-sm text-[color:var(--color-ink-3)]">
-        {t('browser.new_tab.hint', 'Type a URL or search term in the address bar.')}
-      </p>
+      <div className="text-[28px] font-medium text-[color:var(--color-ink)] mb-2 mt-8">
+        {t('browser.new_tab_page.welcome', 'Browser')}
+      </div>
+      <div className="text-[13px] text-[color:var(--color-ink-3)] mb-10">
+        {t('browser.new_tab_page.hint', 'Enter a URL or search term in the address bar')}
+      </div>
       {recent.length > 0 && (
         <section className="w-full max-w-2xl">
-          <h2 className="mb-2 text-xs uppercase tracking-wider text-[color:var(--color-ink-3)]">
-            {t('browser.new_tab.recent', 'Recent bookmarks')}
+          <h2 className="text-[12px] font-semibold text-[color:var(--color-ink-3)] uppercase tracking-wider mb-3">
+            {t('browser.new_tab_page.recent', 'Recent bookmarks')}
           </h2>
           <ul className="grid grid-cols-2 gap-2">
             {recent.map((b) => (

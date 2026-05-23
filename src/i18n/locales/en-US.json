@@ -331,7 +331,8 @@
     "website": "Website"
   },
   "browser": {
-    "new_tab": {
+    "new_tab": "New tab",
+    "new_tab_page": {
       "welcome": "Browser",
       "hint": "Enter a URL or search term in the address bar",
       "recent": "Recent bookmarks"

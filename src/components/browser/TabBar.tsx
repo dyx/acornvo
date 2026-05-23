@@ -1,6 +1,6 @@
-// src/components/browser/TabBar.tsx
 import type { JSX } from 'react'
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useBrowserStore } from '@/stores/browser'
 import type { Tab } from '@shared/browser-types'
 
@@ -20,6 +20,7 @@ function TabFavicon({ tab }: { tab: Tab }): JSX.Element {
 }
 
 export function TabBar(): JSX.Element {
+  const { t } = useTranslation()
   const tabs = useBrowserStore((s) => s.tabs)
   const activeTabId = useBrowserStore((s) => s.activeTabId)
   const activateTab = useBrowserStore((s) => s.activateTab)
@@ -68,7 +69,7 @@ export function TabBar(): JSX.Element {
           >
             <TabFavicon tab={t} />
             <span className="flex-1 truncate text-left">
-              {t.title || (t.url === 'about:blank' ? 'New tab' : t.url)}
+              {t.title || (t.url === 'about:blank' ? t('browser.new_tab', 'New tab') : t.url)}
             </span>
             <span
               role="button"
