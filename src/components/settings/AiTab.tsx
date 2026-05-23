@@ -6,6 +6,16 @@ import { useSettingsStore } from '@/stores/settings'
 import { useProfilesStore } from '@/stores/profiles'
 import type { AiProviderProfile } from '@shared/settings-types'
 import { ProfileDialog } from './ProfileDialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface AiTabProps {
   keychainAvailable: boolean
@@ -19,6 +29,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
   const ai = useSettingsStore((s) => s.ai)
   const setAi = useSettingsStore((s) => s.setAi)
   const [dialogProfile, setDialogProfile] = useState<AiProviderProfile | null | 'new'>(null)
+  const [profileToDelete, setProfileToDelete] = useState<AiProviderProfile | null>(null)
 
   useEffect(() => {
     void refresh()
@@ -89,11 +100,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                 <button
                   type="button"
                   className="rounded border border-destructive px-2 py-1 text-destructive hover:bg-destructive/10"
-                  onClick={() => {
-                    if (window.confirm(t('settings.ai.confirmDelete', { name: p.name }))) {
-                      void remove(p.id)
-                    }
-                  }}
+                  onClick={() => setProfileToDelete(p)}
                 >
                   {t('settings.ai.deleteProfile')}
                 </button>
@@ -109,6 +116,29 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
           onClose={() => setDialogProfile(null)}
         />
       )}
+
+      <AlertDialog open={profileToDelete !== null} onOpenChange={(open) => { if (!open) setProfileToDelete(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{profileToDelete ? t('settings.ai.confirmDelete', { name: profileToDelete.name }) : ''}</AlertDialogTitle>
+            <AlertDialogDescription className="hidden">Confirm deletion</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (profileToDelete) {
+                  void remove(profileToDelete.id)
+                  setProfileToDelete(null)
+                }
+              }}
+            >
+              {t('common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

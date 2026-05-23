@@ -13,11 +13,23 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export function BrowserTab(): JSX.Element {
   const { t } = useTranslation()
   const browser = useSettingsStore((s) => s.browser)
   const setBrowser = useSettingsStore((s) => s.setBrowser)
+  const [showClearCookies, setShowClearCookies] = useState(false)
 
   return (
     <div data-testid="settings-tab-browser" className="space-y-6">
@@ -65,14 +77,31 @@ export function BrowserTab(): JSX.Element {
       <div>
         <Button
           variant="destructive"
-          onClick={() => {
-            if (window.confirm(t('settings.browser.clearCookiesConfirm'))) {
-              void ipc.settings.browserClearCookies()
-            }
-          }}
+          onClick={() => setShowClearCookies(true)}
         >
           {t('settings.browser.clearCookies')}
         </Button>
+
+        <AlertDialog open={showClearCookies} onOpenChange={setShowClearCookies}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('settings.browser.clearCookiesConfirm')}</AlertDialogTitle>
+              <AlertDialogDescription className="hidden">Confirm clear cookies</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  void ipc.settings.browserClearCookies()
+                  setShowClearCookies(false)
+                }}
+              >
+                {t('common.confirm')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )
