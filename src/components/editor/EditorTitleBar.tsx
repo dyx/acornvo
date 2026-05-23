@@ -39,7 +39,9 @@ export function EditorTitleBar(): JSX.Element {
         <div className="flex flex-1 items-center justify-center gap-2 text-[color:var(--color-ink-2)]">
           <span>{ready.path}</span>
           {ready.dirty && (
-            <span data-testid="editor-dirty-dot" className="text-[color:var(--color-accent)]">●</span>
+            <span data-testid="editor-dirty-dot" className="text-[color:var(--color-accent)]">
+              ●
+            </span>
           )}
           {ready.saving && (
             <span

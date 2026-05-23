@@ -1,10 +1,6 @@
 import type { Frontmatter } from './frontmatter-schema'
 
-export type ConflictResolvedBy =
-  | 'keep_local'
-  | 'load_remote'
-  | 'load_remote_banner'
-  | 'save_as'
+export type ConflictResolvedBy = 'keep_local' | 'load_remote' | 'load_remote_banner' | 'save_as'
 
 export interface ConflictMeta {
   /** rel-path inside the grove (POSIX, no leading slash) */

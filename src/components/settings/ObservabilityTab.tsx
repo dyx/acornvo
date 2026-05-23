@@ -57,7 +57,9 @@ export function ObservabilityTab(): JSX.Element {
           data-testid="obs-export-diagnostic"
           disabled={exporting}
           variant="outline"
-          onClick={() => { void onExport() }}
+          onClick={() => {
+            void onExport()
+          }}
         >
           {exporting ? t('obs.export.diagnosticBusy') : t('obs.export.diagnostic')}
         </Button>
@@ -99,11 +101,13 @@ function ObservabilityAiPanel(): JSX.Element {
         tokens: v.tokens
       }))
 
-      const byGrove = Object.entries((summary as any).byGrove ?? {}).map(([groveId, v]: [string, any]) => ({
-        groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : groveId,
-        requests: v.calls,
-        tokens: v.tokens
-      }))
+      const byGrove = Object.entries((summary as any).byGrove ?? {}).map(
+        ([groveId, v]: [string, any]) => ({
+          groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : groveId,
+          requests: v.calls,
+          tokens: v.tokens
+        })
+      )
 
       // Aggregate by model (proxy for tool)
       const toolMap = new Map<string, number>()
@@ -138,7 +142,9 @@ function ObservabilityAiPanel(): JSX.Element {
       })
     }
     void fetchData()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [windowSel, t])
 
   return (
@@ -158,9 +164,21 @@ function ObservabilityAiPanel(): JSX.Element {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <NumberCard testId="obs-ai-total-requests" label={t('obs.ai.totalRequests')} value={data?.totals.requests ?? 0} />
-        <NumberCard testId="obs-ai-total-tokens" label={t('obs.ai.totalTokens')} value={data?.totals.tokens ?? 0} />
-        <NumberCard testId="obs-ai-cost" label={t('obs.ai.estimatedCost')} value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`} />
+        <NumberCard
+          testId="obs-ai-total-requests"
+          label={t('obs.ai.totalRequests')}
+          value={data?.totals.requests ?? 0}
+        />
+        <NumberCard
+          testId="obs-ai-total-tokens"
+          label={t('obs.ai.totalTokens')}
+          value={data?.totals.tokens ?? 0}
+        />
+        <NumberCard
+          testId="obs-ai-cost"
+          label={t('obs.ai.estimatedCost')}
+          value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -179,25 +197,44 @@ function ObservabilityAiPanel(): JSX.Element {
   )
 }
 
-function NumberCard({ testId, label, value }: { testId: string; label: string; value: number | string }): JSX.Element {
+function NumberCard({
+  testId,
+  label,
+  value
+}: {
+  testId: string
+  label: string
+  value: number | string
+}): JSX.Element {
   return (
     <div className="rounded border p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div data-testid={testId} className="text-xl font-semibold">{value}</div>
+      <div data-testid={testId} className="text-xl font-semibold">
+        {value}
+      </div>
     </div>
   )
 }
 
-function ProfileBars({ data }: { data: { profileId: string; requests: number; tokens: number }[] }) {
+function ProfileBars({
+  data
+}: {
+  data: { profileId: string; requests: number; tokens: number }[]
+}) {
   if (data.length === 0) return <div className="text-sm text-dim">No data</div>
   const maxReq = Math.max(...data.map((d) => d.requests))
   return (
     <div className="space-y-2">
       {data.map((d) => (
         <div key={d.profileId} className="flex items-center gap-2 text-sm">
-          <div className="w-24 truncate" title={d.profileId}>{d.profileId}</div>
+          <div className="w-24 truncate" title={d.profileId}>
+            {d.profileId}
+          </div>
           <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
-            <div className="h-full bg-blue-500" style={{ width: `${(d.requests / maxReq) * 100}%` }} />
+            <div
+              className="h-full bg-blue-500"
+              style={{ width: `${(d.requests / maxReq) * 100}%` }}
+            />
           </div>
           <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
         </div>
@@ -213,9 +250,14 @@ function GroveBars({ data }: { data: { groveId: string; requests: number; tokens
     <div className="space-y-2">
       {data.map((d) => (
         <div key={d.groveId} className="flex items-center gap-2 text-sm">
-          <div className="w-24 truncate" title={d.groveId}>{d.groveId}</div>
+          <div className="w-24 truncate" title={d.groveId}>
+            {d.groveId}
+          </div>
           <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
-            <div className="h-full bg-green-500" style={{ width: `${(d.requests / maxReq) * 100}%` }} />
+            <div
+              className="h-full bg-green-500"
+              style={{ width: `${(d.requests / maxReq) * 100}%` }}
+            />
           </div>
           <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
         </div>
@@ -267,11 +309,19 @@ function ObservabilityQueuePanel(): JSX.Element {
     let cancelled = false
     async function tick() {
       const [h, r] = await Promise.all([ipc.queue.health(), ipc.queue.recent()])
-      if (!cancelled) { setHealth(h); setRecent(r) }
+      if (!cancelled) {
+        setHealth(h)
+        setRecent(r)
+      }
     }
     void tick()
-    const id = setInterval(() => { void tick() }, 5000)
-    return () => { cancelled = true; clearInterval(id) }
+    const id = setInterval(() => {
+      void tick()
+    }, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
   }, [])
 
   return (
@@ -279,15 +329,21 @@ function ObservabilityQueuePanel(): JSX.Element {
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.pending')}</div>
-          <div data-testid="obs-queue-pending" className="text-xl font-semibold">{health.pending}</div>
+          <div data-testid="obs-queue-pending" className="text-xl font-semibold">
+            {health.pending}
+          </div>
         </div>
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.running')}</div>
-          <div data-testid="obs-queue-running" className="text-xl font-semibold">{health.running}</div>
+          <div data-testid="obs-queue-running" className="text-xl font-semibold">
+            {health.running}
+          </div>
         </div>
         <div className="rounded border p-3">
           <div className="text-xs text-muted-foreground">{t('obs.queue.failed')}</div>
-          <div data-testid="obs-queue-failed" className="text-xl font-semibold">{health.failed}</div>
+          <div data-testid="obs-queue-failed" className="text-xl font-semibold">
+            {health.failed}
+          </div>
         </div>
       </div>
 
@@ -296,10 +352,28 @@ function ObservabilityQueuePanel(): JSX.Element {
           <li key={f.id} className="flex items-center gap-2 border-b py-1">
             <span className="w-32 truncate">{f.kind}</span>
             <span className="flex-1 truncate text-muted-foreground">{f.last_error}</span>
-            <Button data-testid={`obs-queue-retry-${f.id}`} variant="outline" size="sm" className="h-6 px-2 text-xs"
-              onClick={() => { void ipc.queue.retry(f.id) }}>{t('obs.queue.retry')}</Button>
-            <Button data-testid={`obs-queue-discard-${f.id}`} variant="outline" size="sm" className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10"
-              onClick={() => { void ipc.queue.discard(f.id) }}>{t('obs.queue.discard')}</Button>
+            <Button
+              data-testid={`obs-queue-retry-${f.id}`}
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              onClick={() => {
+                void ipc.queue.retry(f.id)
+              }}
+            >
+              {t('obs.queue.retry')}
+            </Button>
+            <Button
+              data-testid={`obs-queue-discard-${f.id}`}
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10"
+              onClick={() => {
+                void ipc.queue.discard(f.id)
+              }}
+            >
+              {t('obs.queue.discard')}
+            </Button>
           </li>
         ))}
       </ul>
@@ -307,7 +381,8 @@ function ObservabilityQueuePanel(): JSX.Element {
       <ul data-testid="obs-queue-opslog" className="space-y-1 text-xs text-muted-foreground">
         {recent.opsLog.slice(0, 20).map((r, i) => (
           <li key={i} className="flex gap-2">
-            <span className="tabular-nums">{r.ts}</span><span>{r.area}</span>
+            <span className="tabular-nums">{r.ts}</span>
+            <span>{r.area}</span>
             <span className="flex-1 truncate">{r.message}</span>
           </li>
         ))}
@@ -318,7 +393,15 @@ function ObservabilityQueuePanel(): JSX.Element {
 
 // --- Perf Panel ---
 
-const PERF_AREAS = ['search.query', 'agent.step', 'clipper.save', 'clipper.ai-review', 'indexer.scan', 'indexer.update', 'project.open'] as const
+const PERF_AREAS = [
+  'search.query',
+  'agent.step',
+  'clipper.save',
+  'clipper.ai-review',
+  'indexer.scan',
+  'indexer.update',
+  'project.open'
+] as const
 
 const THRESHOLDS_MS: Record<string, number> = {
   'search.query': 500,
@@ -332,7 +415,9 @@ const THRESHOLDS_MS: Record<string, number> = {
 
 function ObservabilityPerfPanel(): JSX.Element {
   const { t } = useTranslation()
-  const [rows, setRows] = useState<{ area: string; count: number; p50: number; p95: number; successRate: number }[]>([])
+  const [rows, setRows] = useState<
+    { area: string; count: number; p50: number; p95: number; successRate: number }[]
+  >([])
 
   useEffect(() => {
     let cancelled = false
@@ -341,7 +426,9 @@ function ObservabilityPerfPanel(): JSX.Element {
     ).then((r) => {
       if (!cancelled) setRows(r)
     })
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -359,9 +446,12 @@ function ObservabilityPerfPanel(): JSX.Element {
         {rows.map((r) => {
           const over = r.p95 > (THRESHOLDS_MS[r.area] ?? 999_999)
           return (
-            <tr key={r.area} data-testid={`obs-perf-row-${r.area}`}
+            <tr
+              key={r.area}
+              data-testid={`obs-perf-row-${r.area}`}
               data-threshold={over ? 'over' : 'ok'}
-              className={over ? 'text-red-600' : ''}>
+              className={over ? 'text-red-600' : ''}
+            >
               <td>{r.area}</td>
               <td className="text-right tabular-nums">{r.count}</td>
               <td className="text-right tabular-nums">{r.p50}</td>
@@ -387,7 +477,9 @@ function TelemetryToggle(): JSX.Element {
         id="obs-telemetry-toggle"
         data-testid="obs-telemetry-toggle"
         checked={telemetry.enabled}
-        onCheckedChange={(checked) => { void setTelemetry({ enabled: checked }) }}
+        onCheckedChange={(checked) => {
+          void setTelemetry({ enabled: checked })
+        }}
       />
       <label htmlFor="obs-telemetry-toggle" className="cursor-pointer space-y-1">
         <strong className="block text-foreground">{t('telemetry.enable')}</strong>

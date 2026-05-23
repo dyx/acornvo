@@ -37,7 +37,11 @@ export function App(): JSX.Element {
   useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
   const [indexState, setIndexState] = useState<IndexStateName>('idle')
-  const [progress, setProgress] = useState<{ scanned: number; total: number; currentPath?: string }>({ scanned: 0, total: 0 })
+  const [progress, setProgress] = useState<{
+    scanned: number
+    total: number
+    currentPath?: string
+  }>({ scanned: 0, total: 0 })
 
   useEffect(() => {
     const offRebuilding = ipc.on('db:rebuilding', () => {

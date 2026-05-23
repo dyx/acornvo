@@ -29,19 +29,34 @@ const port = {
   createTab: vi.fn(async () => ({ id: 'new', url: 'about:blank' })),
   closeTab: vi.fn(),
   activateTab: vi.fn(),
-  navigate: vi.fn(), reload: vi.fn(), goBack: vi.fn(), goForward: vi.fn(),
-  setViewport: vi.fn(), suspendTab: vi.fn(), resumeTab: vi.fn()
+  navigate: vi.fn(),
+  reload: vi.fn(),
+  goBack: vi.fn(),
+  goForward: vi.fn(),
+  setViewport: vi.fn(),
+  suspendTab: vi.fn(),
+  resumeTab: vi.fn()
 } as any
 
 describe('TabBar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setBrowserPort(port)
-    useBrowserStore.setState({ tabs: [], activeTabId: null, bookmarksOpen: false, viewport: { x: 0, y: 0, width: 0, height: 0 } })
+    useBrowserStore.setState({
+      tabs: [],
+      activeTabId: null,
+      bookmarksOpen: false,
+      viewport: { x: 0, y: 0, width: 0, height: 0 }
+    })
   })
   afterEach(() => {
     cleanup()
-    useBrowserStore.setState({ tabs: [], activeTabId: null, bookmarksOpen: false, viewport: { x: 0, y: 0, width: 0, height: 0 } })
+    useBrowserStore.setState({
+      tabs: [],
+      activeTabId: null,
+      bookmarksOpen: false,
+      viewport: { x: 0, y: 0, width: 0, height: 0 }
+    })
   })
 
   it('renders one button per tab + a "+" button', () => {

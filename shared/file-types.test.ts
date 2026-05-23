@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type {
-  FileSummary,
-  FileFilter,
-  Pagination,
-  CategoryNode,
-  TagCloudItem
-} from './file-types'
+import type { FileSummary, FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
 
 describe('file-types', () => {
   it('FileSummary has all required fields with correct nullability', () => {

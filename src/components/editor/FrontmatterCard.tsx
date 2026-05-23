@@ -20,9 +20,7 @@ function StarRow({ rating }: { rating: number }): JSX.Element {
 }
 
 export function FrontmatterCard(): JSX.Element {
-  const fm = useEditorStore((s) =>
-    s.state.kind === 'ready' ? s.state.frontmatter : null
-  )
+  const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
   const path = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.path : null))
   const { t } = useTranslation()
 
@@ -59,9 +57,14 @@ export function FrontmatterCard(): JSX.Element {
       {typeof rating === 'number' && <StarRow rating={rating} />}
       {summary && <p className="text-[color:var(--color-ink-2)]">{summary}</p>}
       {aiSummary && (
-        <div className="rounded border border-[color:var(--color-line-1)] p-2" data-testid="frontmatter-ai-row">
+        <div
+          className="rounded border border-[color:var(--color-line-1)] p-2"
+          data-testid="frontmatter-ai-row"
+        >
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-[color:var(--color-accent)]">{t('editor.ai.sidecard.label')}</span>
+            <span className="font-medium text-[color:var(--color-accent)]">
+              {t('editor.ai.sidecard.label')}
+            </span>
           </div>
           <p className="mt-1 text-xs text-[color:var(--color-ink-2)]">
             {aiSummary.length > 80 ? `${aiSummary.slice(0, 80)}…` : aiSummary}
@@ -78,10 +81,7 @@ export function FrontmatterCard(): JSX.Element {
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded bg-[color:var(--color-bg-2)] px-2 py-0.5 text-xs"
-            >
+            <span key={tag} className="rounded bg-[color:var(--color-bg-2)] px-2 py-0.5 text-xs">
               {tag}
             </span>
           ))}
@@ -98,7 +98,11 @@ export function FrontmatterCard(): JSX.Element {
         className="w-full rounded border border-[color:var(--color-line-1)] px-2 py-1 text-xs hover:bg-[color:var(--color-bg-2)]"
         onClick={async () => {
           if (!path) return
-          try { await ipc.file.openExternal(path) } catch { /* silent */ }
+          try {
+            await ipc.file.openExternal(path)
+          } catch {
+            /* silent */
+          }
         }}
       >
         {t('editor.open_external')}

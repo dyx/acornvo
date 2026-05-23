@@ -22,10 +22,7 @@ function resolveLogDir(): string {
   } catch (err) {
     const fallback = join(app.getPath('userData'), 'logs')
     mkdirSync(fallback, { recursive: true })
-    console.warn(
-      `logger: falling back to ${fallback} because ${primary} could not be created`,
-      err
-    )
+    console.warn(`logger: falling back to ${fallback} because ${primary} could not be created`, err)
     return fallback
   }
 }
@@ -70,10 +67,8 @@ export async function initLogger(): Promise<void> {
 
   log.transports.file.resolvePathFn = () => filePath
   log.transports.file.maxSize = TEN_MB
-  log.transports.file.level =
-    process.env.NODE_ENV === 'development' ? 'debug' : 'info'
-  log.transports.console.level =
-    process.env.NODE_ENV === 'development' ? 'debug' : 'info'
+  log.transports.file.level = process.env.NODE_ENV === 'development' ? 'debug' : 'info'
+  log.transports.console.level = process.env.NODE_ENV === 'development' ? 'debug' : 'info'
 
   log.initialize()
 }

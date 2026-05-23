@@ -149,8 +149,15 @@ describe('editor store — open(path)', () => {
 
 async function openReady(body = '# Body', mtime = 1000): Promise<void> {
   ipcMock.file.readParsed.mockResolvedValueOnce({
-    content: body, eol: 'lf', mtimeMs: mtime, sha256: 'h', hadBom: false,
-    originalEncoding: 'utf8', frontmatter: {}, body, rawYaml: ''
+    content: body,
+    eol: 'lf',
+    mtimeMs: mtime,
+    sha256: 'h',
+    hadBom: false,
+    originalEncoding: 'utf8',
+    frontmatter: {},
+    body,
+    rawYaml: ''
   })
   await useEditorStore.getState().open('a.md')
 }
@@ -201,12 +208,9 @@ describe('editor store — save (success path)', () => {
     await useEditorStore.getState().save()
 
     expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
-    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
-      'a.md',
-      {},
-      '# New body',
-      { expectedMtime: 100 }
-    )
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith('a.md', {}, '# New body', {
+      expectedMtime: 100
+    })
 
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
@@ -261,12 +265,12 @@ describe('editor store — save (success path)', () => {
     await new Promise((r) => setTimeout(r, 5))
 
     expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(2)
-    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(
-      1, 'a.md', {}, 'B', { expectedMtime: 10 }
-    )
-    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(
-      2, 'a.md', {}, 'C', { expectedMtime: 11 }
-    )
+    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(1, 'a.md', {}, 'B', {
+      expectedMtime: 10
+    })
+    expect(ipcMock.file.writeParsed).toHaveBeenNthCalledWith(2, 'a.md', {}, 'C', {
+      expectedMtime: 11
+    })
     const s = useEditorStore.getState().state
     if (s.kind !== 'ready') throw new Error('unreachable')
     expect(s.savedBody).toBe('C')
@@ -296,9 +300,12 @@ describe('editor store — flushSave', () => {
     const savePromise = useEditorStore.getState().save()
     // flushSave is called while save is still pending
     let flushed = false
-    const flushPromise = useEditorStore.getState().flushSave().then(() => {
-      flushed = true
-    })
+    const flushPromise = useEditorStore
+      .getState()
+      .flushSave()
+      .then(() => {
+        flushed = true
+      })
     expect(flushed).toBe(false)
     release({ mtimeMs: 2, sha256: 'h2' })
     await savePromise
@@ -326,126 +333,125 @@ describe('editor store — flushSave', () => {
     expect(s.dirty).toBe(false)
   })
 
-describe('editor store — save error branches', () => {
-  it('E_MTIME_MISMATCH: sets conflictState=saveConflict, dirty preserved, saveErrorCount unchanged', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed
-      .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'changed externally'))
-    ipcMock.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 999 },
-      frontmatter: {},
-      body: 'remote'
+  describe('editor store — save error branches', () => {
+    it('E_MTIME_MISMATCH: sets conflictState=saveConflict, dirty preserved, saveErrorCount unchanged', async () => {
+      await openReady('A', 1)
+      useEditorStore.getState().setBody('B')
+      ipcMock.file.writeParsed.mockRejectedValueOnce(
+        new IpcError('E_MTIME_MISMATCH', 'changed externally')
+      )
+      ipcMock.files.get.mockResolvedValueOnce({
+        summary: { path: 'a.md', mtimeMs: 999 },
+        frontmatter: {},
+        body: 'remote'
+      })
+
+      await useEditorStore.getState().save()
+
+      const s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.conflictState.kind).toBe('saveConflict')
+      expect(s.dirty).toBe(true)
+      expect(s.saving).toBe(false)
+      expect(s.saveErrorCount).toBe(0)
+      expect(s.persistentFailure).toBe(false)
     })
 
-    await useEditorStore.getState().save()
+    it('E_PERMISSION: lastError=code, saveErrorCount=1, dirty preserved', async () => {
+      await openReady('A', 1)
+      useEditorStore.getState().setBody('B')
+      ipcMock.file.writeParsed.mockRejectedValueOnce(new IpcError('E_PERMISSION', 'EACCES'))
 
-    const s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.conflictState.kind).toBe('saveConflict')
-    expect(s.dirty).toBe(true)
-    expect(s.saving).toBe(false)
-    expect(s.saveErrorCount).toBe(0)
-    expect(s.persistentFailure).toBe(false)
-  })
+      await useEditorStore.getState().save()
 
-  it('E_PERMISSION: lastError=code, saveErrorCount=1, dirty preserved', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed
-      .mockRejectedValueOnce(new IpcError('E_PERMISSION', 'EACCES'))
-
-    await useEditorStore.getState().save()
-
-    const s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.lastError).toBe('E_PERMISSION')
-    expect(s.dirty).toBe(true)
-    expect(s.saveErrorCount).toBe(1)
-    expect(s.persistentFailure).toBe(false)
-  })
-
-  it('three consecutive non-conflict errors flip persistentFailure=true', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-
-    const s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(3)
-    expect(s.persistentFailure).toBe(true)
-  })
-
-  it('successful save after errors clears the count and persistentFailure flag', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed = vi
-      .fn()
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
-      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
-
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-    await useEditorStore.getState().save()
-    let s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(3)
-    expect(s.persistentFailure).toBe(true)
-
-    // User retries
-    await useEditorStore.getState().save()
-
-    s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(0)
-    expect(s.lastError).toBeNull()
-    expect(s.persistentFailure).toBe(false)
-    expect(s.savedBody).toBe('B')
-    expect(s.savedMtimeMs).toBe(2)
-  })
-
-  it('conflict-then-success leaves saveErrorCount untouched on the conflict but resets on success', async () => {
-    await openReady('A', 1)
-    useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed = vi
-      .fn()
-      .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
-      .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
-    ipcMock.files.get.mockResolvedValueOnce({
-      summary: { path: 'a.md', mtimeMs: 999 },
-      frontmatter: {},
-      body: 'remote'
+      const s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.lastError).toBe('E_PERMISSION')
+      expect(s.dirty).toBe(true)
+      expect(s.saveErrorCount).toBe(1)
+      expect(s.persistentFailure).toBe(false)
     })
 
-    await useEditorStore.getState().save()
-    let s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.saveErrorCount).toBe(0)
-    expect(s.conflictState.kind).toBe('saveConflict')
+    it('three consecutive non-conflict errors flip persistentFailure=true', async () => {
+      await openReady('A', 1)
+      useEditorStore.getState().setBody('B')
+      ipcMock.file.writeParsed
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
 
-    await useEditorStore.getState().save()
-    s = useEditorStore.getState().state
-    if (s.kind !== 'ready') throw new Error('unreachable')
-    expect(s.lastError).toBeNull()
-    expect(s.saveErrorCount).toBe(0)
+      await useEditorStore.getState().save()
+      await useEditorStore.getState().save()
+      await useEditorStore.getState().save()
+
+      const s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.saveErrorCount).toBe(3)
+      expect(s.persistentFailure).toBe(true)
+    })
+
+    it('successful save after errors clears the count and persistentFailure flag', async () => {
+      await openReady('A', 1)
+      useEditorStore.getState().setBody('B')
+      ipcMock.file.writeParsed = vi
+        .fn()
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+        .mockRejectedValueOnce(new IpcError('E_NOSPACE', 'disk full'))
+        .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+
+      await useEditorStore.getState().save()
+      await useEditorStore.getState().save()
+      await useEditorStore.getState().save()
+      let s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.saveErrorCount).toBe(3)
+      expect(s.persistentFailure).toBe(true)
+
+      // User retries
+      await useEditorStore.getState().save()
+
+      s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.saveErrorCount).toBe(0)
+      expect(s.lastError).toBeNull()
+      expect(s.persistentFailure).toBe(false)
+      expect(s.savedBody).toBe('B')
+      expect(s.savedMtimeMs).toBe(2)
+    })
+
+    it('conflict-then-success leaves saveErrorCount untouched on the conflict but resets on success', async () => {
+      await openReady('A', 1)
+      useEditorStore.getState().setBody('B')
+      ipcMock.file.writeParsed = vi
+        .fn()
+        .mockRejectedValueOnce(new IpcError('E_MTIME_MISMATCH', 'race'))
+        .mockResolvedValueOnce({ mtimeMs: 9, sha256: 'h' })
+      ipcMock.files.get.mockResolvedValueOnce({
+        summary: { path: 'a.md', mtimeMs: 999 },
+        frontmatter: {},
+        body: 'remote'
+      })
+
+      await useEditorStore.getState().save()
+      let s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.saveErrorCount).toBe(0)
+      expect(s.conflictState.kind).toBe('saveConflict')
+
+      await useEditorStore.getState().save()
+      s = useEditorStore.getState().state
+      if (s.kind !== 'ready') throw new Error('unreachable')
+      expect(s.lastError).toBeNull()
+      expect(s.saveErrorCount).toBe(0)
+    })
   })
-})
 
   it('cancels a pending debounce timer (no second IPC call from the timer)', async () => {
     vi.useFakeTimers()
     try {
       await openReady('A', 1)
-      ipcMock.file.writeParsed
-        .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
+      ipcMock.file.writeParsed.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h2' })
       useEditorStore.getState().setBody('B') // schedules a 1s timer
       await useEditorStore.getState().flushSave() // should fire save and cancel timer
       vi.advanceTimersByTime(2000) // would fire the canceled timer if not canceled
@@ -461,15 +467,12 @@ describe('editor store — close()', () => {
   it('flushes pending save before returning to idle', async () => {
     await openReady('A', 1)
     useEditorStore.getState().setBody('B')
-    ipcMock.file.writeParsed
-      .mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h' })
+    ipcMock.file.writeParsed.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'h' })
 
     await useEditorStore.getState().close()
 
     expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
-    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
-      'a.md', {}, 'B', { expectedMtime: 1 }
-    )
+    expect(ipcMock.file.writeParsed).toHaveBeenCalledWith('a.md', {}, 'B', { expectedMtime: 1 })
     expect(useEditorStore.getState().state.kind).toBe('idle')
   })
 
@@ -477,8 +480,7 @@ describe('editor store — close()', () => {
     vi.useFakeTimers()
     try {
       await openReady('A', 1)
-      ipcMock.file.writeParsed
-        .mockResolvedValue({ mtimeMs: 2, sha256: 'h' })
+      ipcMock.file.writeParsed.mockResolvedValue({ mtimeMs: 2, sha256: 'h' })
       useEditorStore.getState().setBody('B') // schedules 1s timer
       await useEditorStore.getState().close()
       vi.advanceTimersByTime(2000) // would re-fire if not cancelled
@@ -503,7 +505,8 @@ describe('editor store — debounce coalescing', () => {
     try {
       await openReady('A', 1)
       ipcMock.file.writeParsed = vi.fn().mockResolvedValueOnce({
-        mtimeMs: 2, sha256: 'h'
+        mtimeMs: 2,
+        sha256: 'h'
       })
 
       for (let i = 0; i < 20; i++) {
@@ -518,9 +521,7 @@ describe('editor store — debounce coalescing', () => {
       await vi.runAllTimersAsync?.()
       // Now the debounce timer fired and triggered save().
       expect(ipcMock.file.writeParsed).toHaveBeenCalledTimes(1)
-      expect(ipcMock.file.writeParsed).toHaveBeenCalledWith(
-        'a.md', {}, 'B19', { expectedMtime: 1 }
-      )
+      expect(ipcMock.file.writeParsed).toHaveBeenCalledWith('a.md', {}, 'B19', { expectedMtime: 1 })
     } finally {
       vi.useRealTimers()
     }
@@ -559,9 +560,7 @@ describe('editor store retry counter (phase-09 5.6)', () => {
     await openReady('A', 1)
     for (let i = 0; i < 3; i++) {
       useEditorStore.getState().setBody('L' + i)
-      ipcMock.file.writeParsed.mockRejectedValueOnce(
-        new IpcError('E_PERMISSION', 'no perms')
-      )
+      ipcMock.file.writeParsed.mockRejectedValueOnce(new IpcError('E_PERMISSION', 'no perms'))
       await useEditorStore.getState().save()
     }
     const s = useEditorStore.getState().state
@@ -765,8 +764,14 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
   it('writes snapshot then file.write force=true; updates saved* and resets conflictState', async () => {
     ipcMock.file.readParsed.mockResolvedValueOnce({
       content: '---\ntitle: t\n---\nB',
-      eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: { title: 't' }, body: 'B', rawYaml: 'title: t'
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: { title: 't' },
+      body: 'B',
+      rawYaml: 'title: t'
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('LOCAL')
@@ -774,7 +779,15 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
     useEditorStore.setState((cur: any) => {
       const s = typeof cur.state !== 'undefined' ? cur.state : cur
       if (s.kind !== 'ready') return cur
-      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 999, remoteBody: 'REMOTE', remoteFrontmatter: { title: 't' } } }
+      const updated = {
+        ...s,
+        conflictState: {
+          kind: 'saveConflict' as const,
+          remoteMtimeMs: 999,
+          remoteBody: 'REMOTE',
+          remoteFrontmatter: { title: 't' }
+        }
+      }
       return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
     })
     ipcMock.conflict.writeSnapshot = vi.fn().mockResolvedValue({ id: 'snap' })
@@ -786,7 +799,9 @@ describe('editor.keepLocal (phase-09 7.2)', () => {
       expect.objectContaining({ resolvedBy: 'keep_local', path: 'a.md' })
     )
     expect(ipcMock.file.write).toHaveBeenCalledWith(
-      'a.md', expect.any(String), expect.objectContaining({ force: true })
+      'a.md',
+      expect.any(String),
+      expect.objectContaining({ force: true })
     )
     const s = useEditorStore.getState()
     if (s.state.kind !== 'ready') throw new Error('expected ready')
@@ -816,7 +831,10 @@ describe('editor.reloadFromDisk (phase-09 6.2)', () => {
       const s = typeof cur.state !== 'undefined' ? cur.state : cur
       if (s.kind !== 'ready') return cur
       return typeof cur.state !== 'undefined'
-        ? { ...cur, state: { ...s, conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } } }
+        ? {
+            ...cur,
+            state: { ...s, conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } }
+          }
         : { ...cur, conflictState: { kind: 'externalModified', remoteMtimeMs: 999 } }
     })
 
@@ -856,8 +874,14 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
   it('builds path notes/a.conflict.<ts>.md and writes + snapshots', async () => {
     ipcMock.file.readParsed.mockResolvedValueOnce({
       content: '---\ntitle: t\n---\nB',
-      eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: { title: 't' }, body: 'B', rawYaml: 'title: t'
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: { title: 't' },
+      body: 'B',
+      rawYaml: 'title: t'
     })
     await useEditorStore.getState().open('notes/a.md')
     useEditorStore.getState().setBody('L')
@@ -865,7 +889,15 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
     useEditorStore.setState((cur: any) => {
       const s = typeof cur.state !== 'undefined' ? cur.state : cur
       if (s.kind !== 'ready') return cur
-      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} } }
+      const updated = {
+        ...s,
+        conflictState: {
+          kind: 'saveConflict' as const,
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
+      }
       return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
     })
     // Mock file.exists to return false (first slot free)
@@ -895,8 +927,15 @@ describe('editor.saveAsCopy (phase-09 7.4)', () => {
 describe('editor.dismissDialog (phase-09 7.5)', () => {
   it('saveConflict → externalModified (banner shows; dirty preserved)', async () => {
     ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: 'B', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: 'B', rawYaml: ''
+      content: 'B',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'B',
+      rawYaml: ''
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -904,7 +943,15 @@ describe('editor.dismissDialog (phase-09 7.5)', () => {
     useEditorStore.setState((cur: any) => {
       const s = typeof cur.state !== 'undefined' ? cur.state : cur
       if (s.kind !== 'ready') return cur
-      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 9, remoteBody: 'R', remoteFrontmatter: {} } }
+      const updated = {
+        ...s,
+        conflictState: {
+          kind: 'saveConflict' as const,
+          remoteMtimeMs: 9,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
+      }
       return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
     })
     useEditorStore.getState().dismissDialog()
@@ -920,13 +967,27 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
   it('uses resolved_by=load_remote (not load_remote_banner)', async () => {
     // Mock readParsed for open()
     ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: 'B', eol: 'lf', mtimeMs: 1, sha256: 'h', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: 'B', rawYaml: ''
+      content: 'B',
+      eol: 'lf',
+      mtimeMs: 1,
+      sha256: 'h',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'B',
+      rawYaml: ''
     })
     // Mock readParsed for reloadFromDisk()
     ipcMock.file.readParsed.mockResolvedValueOnce({
-      content: 'R', eol: 'lf', mtimeMs: 999, sha256: 'h2', hadBom: false,
-      originalEncoding: 'utf8', frontmatter: {}, body: 'R', rawYaml: ''
+      content: 'R',
+      eol: 'lf',
+      mtimeMs: 999,
+      sha256: 'h2',
+      hadBom: false,
+      originalEncoding: 'utf8',
+      frontmatter: {},
+      body: 'R',
+      rawYaml: ''
     })
     await useEditorStore.getState().open('a.md')
     useEditorStore.getState().setBody('L')
@@ -934,7 +995,15 @@ describe('editor.reloadFromDisk from saveConflict (phase-09 7.3)', () => {
     useEditorStore.setState((cur: any) => {
       const s = typeof cur.state !== 'undefined' ? cur.state : cur
       if (s.kind !== 'ready') return cur
-      const updated = { ...s, conflictState: { kind: 'saveConflict' as const, remoteMtimeMs: 999, remoteBody: 'R', remoteFrontmatter: {} } }
+      const updated = {
+        ...s,
+        conflictState: {
+          kind: 'saveConflict' as const,
+          remoteMtimeMs: 999,
+          remoteBody: 'R',
+          remoteFrontmatter: {}
+        }
+      }
       return typeof cur.state !== 'undefined' ? { ...cur, state: updated } : updated
     })
     ipcMock.conflict.writeSnapshot = vi.fn().mockResolvedValue({ id: 'snap' })
@@ -1027,9 +1096,7 @@ describe('9.15 3x E_PERMISSION → persistent-failure trips', () => {
     await useEditorStore.getState().open('a.md')
     for (let i = 0; i < 3; i++) {
       useEditorStore.getState().setBody(`v${i}`)
-      ipcMock.file.writeParsed.mockRejectedValueOnce(
-        new IpcError('E_PERMISSION', 'no perms')
-      )
+      ipcMock.file.writeParsed.mockRejectedValueOnce(new IpcError('E_PERMISSION', 'no perms'))
       await useEditorStore.getState().save()
     }
     const s = useEditorStore.getState().state

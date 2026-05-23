@@ -51,7 +51,9 @@ describe('createJobStore — enqueue (no dedupe)', () => {
   it('respects opts.delayMs', () => {
     const store = createJobStore(db, { now: () => new Date('2026-05-03T10:00:00.000Z') })
     const { id } = store.enqueue('index-retry', { path: 'a.md' }, { delayMs: 5000 })
-    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as { next_run_at: string }
+    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as {
+      next_run_at: string
+    }
     expect(row.next_run_at).toBe('2026-05-03T10:00:05.000Z')
   })
 })
@@ -257,7 +259,7 @@ describe('createJobStore — recoverRunning', () => {
     // Simulate crash: just call recoverRunning
     const result = store.recoverRunning()
     expect(result.restored).toBe(2) // a and b
-    const after = db.prepare("SELECT id, status, attempts FROM jobs ORDER BY id").all() as {
+    const after = db.prepare('SELECT id, status, attempts FROM jobs ORDER BY id').all() as {
       id: string
       status: string
       attempts: number
@@ -276,13 +278,15 @@ describe('createJobStore — recoverRunning', () => {
     store.markDone(d.id)
     store.markFailed(f.id, 'oops')
     store.markCanceled(c.id)
-    const before = db
-      .prepare('SELECT id, status FROM jobs ORDER BY id')
-      .all() as { id: string; status: string }[]
+    const before = db.prepare('SELECT id, status FROM jobs ORDER BY id').all() as {
+      id: string
+      status: string
+    }[]
     store.recoverRunning()
-    const after = db
-      .prepare('SELECT id, status FROM jobs ORDER BY id')
-      .all() as { id: string; status: string }[]
+    const after = db.prepare('SELECT id, status FROM jobs ORDER BY id').all() as {
+      id: string
+      status: string
+    }[]
     expect(after).toEqual(before)
     expect(p.id && d.id && f.id && c.id).toBeTruthy()
   })

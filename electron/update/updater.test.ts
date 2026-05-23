@@ -4,7 +4,7 @@ vi.mock('electron-updater', () => ({
   autoUpdater: {
     autoDownload: false,
     checkForUpdates: vi.fn(),
-    on: vi.fn(),
+    on: vi.fn()
   }
 }))
 
@@ -22,11 +22,7 @@ vi.mock('../obs/logger', () => ({
 }))
 
 import { autoUpdater } from 'electron-updater'
-import {
-  initAutoUpdate,
-  checkForUpdatesManual,
-  __resetUpdaterForTests
-} from './updater'
+import { initAutoUpdate, checkForUpdatesManual, __resetUpdaterForTests } from './updater'
 
 describe('checkForUpdatesManual', () => {
   beforeEach(() => {

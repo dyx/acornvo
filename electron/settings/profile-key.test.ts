@@ -33,7 +33,12 @@ describe('getProfileDecryptedKey', () => {
   afterEach(() => db.close())
 
   it('returns the decrypted plaintext for a profile that has a key', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-abc' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-abc'
+    })
     expect(getProfileDecryptedKey(id)).toBe('sk-abc')
   })
 

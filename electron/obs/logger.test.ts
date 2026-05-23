@@ -26,7 +26,9 @@ describe('obs logger (JSON Lines)', () => {
     expect(files).toHaveLength(1)
     expect(files[0]).toMatch(/^app-2026-05-09\.log$/)
 
-    const lines = readFileSync(join(tempBase, 'logs', files[0]), 'utf8').trim().split('\n')
+    const lines = readFileSync(join(tempBase, 'logs', files[0]), 'utf8')
+      .trim()
+      .split('\n')
     expect(lines).toHaveLength(2)
     const r0 = JSON.parse(lines[0])
     expect(r0).toMatchObject({

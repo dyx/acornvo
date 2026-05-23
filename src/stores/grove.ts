@@ -25,10 +25,10 @@ export type GroveState = {
   recent: RecentItemView[]
   lastError: string | null
 } & GroveActions & {
-  _setCurrent: (value: GroveSummary | null) => void
-  _setRecent: (items: RecentItemView[]) => void
-  _setError: (message: string | null) => void
-}
+    _setCurrent: (value: GroveSummary | null) => void
+    _setRecent: (items: RecentItemView[]) => void
+    _setError: (message: string | null) => void
+  }
 
 function findPath(recent: RecentItemView[], id: string): string | null {
   return recent.find((i) => i.id === id)?.path ?? null
@@ -101,9 +101,12 @@ export function installGroveSubscriber(): () => void {
     useGroveStore.getState()._setCurrent(payload)
     groveSwitchHooks._fire(payload)
     if (payload) {
-      void useSettingsStore.getState().loadAll().catch((err) => {
-        console.error('settings.loadAll failed', err)
-      })
+      void useSettingsStore
+        .getState()
+        .loadAll()
+        .catch((err) => {
+          console.error('settings.loadAll failed', err)
+        })
     }
   })
   return () => {

@@ -23,7 +23,17 @@ function makeDb(): Database.Database {
   return db
 }
 
-import { upsertFile, deleteFile, renameFile, syncTags, upsertFts, listAllPaths, queryBy, upsertFileWithBodyDelta, type FileRow } from './index-queries'
+import {
+  upsertFile,
+  deleteFile,
+  renameFile,
+  syncTags,
+  upsertFts,
+  listAllPaths,
+  queryBy,
+  upsertFileWithBodyDelta,
+  type FileRow
+} from './index-queries'
 
 const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
   path: 'notes/a.md',
@@ -42,7 +52,9 @@ const baseRow = (overrides: Partial<FileRow> = {}): FileRow => ({
 
 describe('upsertFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('inserts a new row', () => {
     const result = upsertFile(db, baseRow())
@@ -61,25 +73,34 @@ describe('upsertFile', () => {
     upsertFile(db, baseRow())
     const result = upsertFile(db, baseRow({ content_hash: 'h2', updated_at: 200 }))
     expect(result).toBe('updated')
-    const row = db.prepare('SELECT content_hash, updated_at FROM files WHERE path=?').get('notes/a.md')
+    const row = db
+      .prepare('SELECT content_hash, updated_at FROM files WHERE path=?')
+      .get('notes/a.md')
     expect(row).toEqual({ content_hash: 'h2', updated_at: 200 })
   })
 
   it('returns "updated" when only frontmatter (rating) changes', () => {
     upsertFile(db, baseRow())
-    const result = upsertFile(db, baseRow({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 200 }))
+    const result = upsertFile(
+      db,
+      baseRow({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 200 })
+    )
     expect(result).toBe('updated')
   })
 })
 
 describe('deleteFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('removes the row from files, file_tags, and files_fts', () => {
     upsertFile(db, baseRow())
     db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run('notes/a.md', 'foo')
-    db.prepare("INSERT INTO files_fts(rowid, path, title, body) VALUES (1, 'notes/a.md', 'A', 'body')").run()
+    db.prepare(
+      "INSERT INTO files_fts(rowid, path, title, body) VALUES (1, 'notes/a.md', 'A', 'body')"
+    ).run()
 
     deleteFile(db, 'notes/a.md')
 
@@ -95,7 +116,9 @@ describe('deleteFile', () => {
 
 describe('renameFile', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('updates path across files, file_tags, files_fts in one transaction', () => {
     upsertFile(db, baseRow({ path: 'old.md' }))
@@ -117,7 +140,10 @@ describe('renameFile', () => {
 
 describe('syncTags', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb(); upsertFile(db, baseRow()) })
+  beforeEach(() => {
+    db = makeDb()
+    upsertFile(db, baseRow())
+  })
 
   it('inserts new tag rows and bumps usage_count from 0', () => {
     syncTags(db, 'notes/a.md', ['attention', 'transformer'])
@@ -130,7 +156,7 @@ describe('syncTags', () => {
 
   it('decrements usage_count for removed tags and increments for added ones', () => {
     syncTags(db, 'notes/a.md', ['x', 'y'])
-    syncTags(db, 'notes/a.md', ['y', 'z'])  // remove x, keep y, add z
+    syncTags(db, 'notes/a.md', ['y', 'z']) // remove x, keep y, add z
 
     expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
       { name: 'x', usage_count: 0 },
@@ -142,7 +168,9 @@ describe('syncTags', () => {
   it('is idempotent when tags do not change', () => {
     syncTags(db, 'notes/a.md', ['x'])
     syncTags(db, 'notes/a.md', ['x'])
-    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({ usage_count: 1 })
+    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({
+      usage_count: 1
+    })
   })
 
   it('handles deduplication of input tags', () => {
@@ -153,13 +181,23 @@ describe('syncTags', () => {
 
 describe('upsertFts (phase-08)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   function seedFile(path: string): number {
     const row: FileRow = {
-      path, title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path,
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
     return (db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }).rowid
@@ -196,7 +234,9 @@ describe('upsertFts (phase-08)', () => {
 
 describe('listAllPaths', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('returns empty Set on empty table', () => {
     expect(listAllPaths(db)).toEqual(new Set<string>())
@@ -211,12 +251,22 @@ describe('listAllPaths', () => {
 
 describe('upsertFileWithBodyDelta (phase-08)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   const r = (overrides: Partial<FileRow> = {}): FileRow => ({
-    path: 'notes/a.md', title: 'A', summary: null, category: null, rating: null,
-    content_hash: 'h1', mtime: 0, size_bytes: 0, frontmatter_json: null,
-    created_at: 0, updated_at: 0,
+    path: 'notes/a.md',
+    title: 'A',
+    summary: null,
+    category: null,
+    rating: null,
+    content_hash: 'h1',
+    mtime: 0,
+    size_bytes: 0,
+    frontmatter_json: null,
+    created_at: 0,
+    updated_at: 0,
     ...overrides
   })
 
@@ -227,7 +277,10 @@ describe('upsertFileWithBodyDelta (phase-08)', () => {
 
   it('frontmatter-only change (rating): bodyChanged=false', () => {
     upsertFileWithBodyDelta(db, r())
-    const out = upsertFileWithBodyDelta(db, r({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 100 }))
+    const out = upsertFileWithBodyDelta(
+      db,
+      r({ rating: 4, frontmatter_json: '{"rating":4}', updated_at: 100 })
+    )
     expect(out).toEqual({ result: 'updated', bodyChanged: false })
   })
 
@@ -246,16 +299,28 @@ describe('upsertFileWithBodyDelta (phase-08)', () => {
 
 describe('deleteFile (phase-08 FTS)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('removes both files row and files_fts row in one logical operation', () => {
     const row: FileRow = {
-      path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: 'notes/x.md',
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: 'notes/x.md', title: 'T', body: 'attention' })
 
     deleteFile(db, 'notes/x.md')
@@ -269,16 +334,28 @@ describe('deleteFile (phase-08 FTS)', () => {
 
 describe('renameFile (phase-08 FTS)', () => {
   let db: Database.Database
-  beforeEach(() => { db = makeDb() })
+  beforeEach(() => {
+    db = makeDb()
+  })
 
   it('updates files_fts.path; rowid stays stable', () => {
     const row: FileRow = {
-      path: 'notes/x.md', title: 'T', summary: null, category: null, rating: null,
-      content_hash: 'h', mtime: 0, size_bytes: 0, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: 'notes/x.md',
+      title: 'T',
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime: 0,
+      size_bytes: 0,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     }
     upsertFile(db, row)
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get('notes/x.md') as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: 'notes/x.md', title: 'T', body: '注意力' })
 
     renameFile(db, 'notes/x.md', 'notes/y.md')
@@ -289,9 +366,9 @@ describe('renameFile (phase-08 FTS)', () => {
     expect(ftsRow).toEqual({ rowid, path: 'notes/y.md' })
 
     // FTS still queryable on the new path
-    const hit = db.prepare(
-      "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
-    ).get() as { path: string } | undefined
+    const hit = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH '注意力'").get() as
+      | { path: string }
+      | undefined
     expect(hit?.path).toBe('notes/y.md')
   })
 })

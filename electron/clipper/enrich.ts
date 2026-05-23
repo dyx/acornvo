@@ -49,7 +49,10 @@ function cleanAuthor(byline: string | undefined): string | undefined {
 }
 
 function pickExcerpt(extract: ExtractResult): string | undefined {
-  const candidate = (extract.excerpt && extract.excerpt.trim()) || (extract.textContent && extract.textContent.trim()) || ''
+  const candidate =
+    (extract.excerpt && extract.excerpt.trim()) ||
+    (extract.textContent && extract.textContent.trim()) ||
+    ''
   if (!candidate) return undefined
   return candidate.length > 160 ? candidate.slice(0, 160) : candidate
 }
@@ -71,7 +74,10 @@ export function enrich(extract: ExtractResult): EnrichedResult {
     site: siteFromUrl(url),
     title: extract.title && extract.title.trim().length > 0 ? extract.title : undefined,
     author: cleanAuthor(extract.byline),
-    publishedTime: extract.publishedTime && extract.publishedTime.trim().length > 0 ? extract.publishedTime : undefined,
+    publishedTime:
+      extract.publishedTime && extract.publishedTime.trim().length > 0
+        ? extract.publishedTime
+        : undefined,
     lang: extract.lang && extract.lang.trim().length > 0 ? extract.lang : undefined,
     excerpt: pickExcerpt(extract),
     degraded: extract.degraded === true,

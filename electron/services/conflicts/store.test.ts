@@ -6,7 +6,15 @@ import { join } from 'node:path'
 import * as groveSvc from '../grove'
 import { writeFileAtomic } from '../fs-atomic'
 import * as store from './store'
-import { buildId, writeSnapshot, prune, listSnapshots, readSnapshot, deleteSnapshot, _internals } from './store'
+import {
+  buildId,
+  writeSnapshot,
+  prune,
+  listSnapshots,
+  readSnapshot,
+  deleteSnapshot,
+  _internals
+} from './store'
 
 let tmp: string
 
@@ -74,9 +82,9 @@ describe('writeSnapshot', () => {
       resolvedBy: 'keep_local'
     })
     const dir = join(_internals.requireConflictsRoot(), id)
-    expect((await readFile(join(dir, 'local.md'), 'utf8'))).toBe('LOCAL')
-    expect((await readFile(join(dir, 'remote.md'), 'utf8'))).toBe('REMOTE')
-    expect((await readFile(join(dir, 'base.md'), 'utf8'))).toBe('BASE')
+    expect(await readFile(join(dir, 'local.md'), 'utf8')).toBe('LOCAL')
+    expect(await readFile(join(dir, 'remote.md'), 'utf8')).toBe('REMOTE')
+    expect(await readFile(join(dir, 'base.md'), 'utf8')).toBe('BASE')
     const meta = JSON.parse(await readFile(join(dir, 'meta.json'), 'utf8'))
     expect(meta).toMatchObject({
       path: 'notes/a.md',

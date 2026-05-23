@@ -28,12 +28,23 @@ import { VditorEditor } from './VditorEditor'
 
 function readyState(over: Partial<EditorReadyState> = {}): EditorReadyState {
   return {
-    kind: 'ready', path: 'a.md', frontmatter: {}, body: '# Hello',
-    savedFrontmatter: {}, savedBody: '# Hello', savedMtimeMs: 1,
-    baseFrontmatter: {}, baseBody: '# Hello', baseMtimeMs: 1,
-    dirty: false, saving: false,
-    lastError: null, saveErrorCount: 0, persistentFailure: false,
-    conflictState: { kind: 'none' }, ...over
+    kind: 'ready',
+    path: 'a.md',
+    frontmatter: {},
+    body: '# Hello',
+    savedFrontmatter: {},
+    savedBody: '# Hello',
+    savedMtimeMs: 1,
+    baseFrontmatter: {},
+    baseBody: '# Hello',
+    baseMtimeMs: 1,
+    dirty: false,
+    saving: false,
+    lastError: null,
+    saveErrorCount: 0,
+    persistentFailure: false,
+    conflictState: { kind: 'none' },
+    ...over
   }
 }
 

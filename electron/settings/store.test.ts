@@ -38,8 +38,9 @@ describe('settingsStore', () => {
       fontScale: 1.0,
       editorFont: 'system-ui'
     })
-    const row = db.prepare("SELECT value_json FROM settings WHERE ns='appearance' AND key='theme'").get() as
-      { value_json: string }
+    const row = db
+      .prepare("SELECT value_json FROM settings WHERE ns='appearance' AND key='theme'")
+      .get() as { value_json: string }
     expect(JSON.parse(row.value_json)).toBe('dark')
   })
 

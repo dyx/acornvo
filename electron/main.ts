@@ -3,7 +3,12 @@ import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
 import { initLogger, logger } from './services/logger'
 import { logger as obsLogger, rotateOnBoot } from './obs/logger'
-import { checkLastRun, installCrashHooks, purgeOldAcked, startElectronCrashReporter } from './obs/crashReporter'
+import {
+  checkLastRun,
+  installCrashHooks,
+  purgeOldAcked,
+  startElectronCrashReporter
+} from './obs/crashReporter'
 import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
@@ -42,9 +47,7 @@ function createMainWindow(): BrowserWindow {
     center: true,
     show: false,
     titleBarStyle: 'hiddenInset',
-    ...(process.platform === 'win32'
-      ? { titleBarOverlay: getOverlayForTheme() }
-      : {}),
+    ...(process.platform === 'win32' ? { titleBarOverlay: getOverlayForTheme() } : {}),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -157,7 +160,7 @@ async function bootstrap(): Promise<void> {
             setIndexerDb(db)
             await startScan(payload.path)
             await watcherStart(payload.path, db)
-            
+
             if (telemetryHandle) {
               telemetryHandle.stop()
               telemetryHandle = null
@@ -166,7 +169,7 @@ async function bootstrap(): Promise<void> {
               queueRunner.stop()
               queueRunner = null
             }
-            
+
             // phase-14: start the queue runner
             const { bootstrapQueueRunner } = await import('./queue')
             const { record: opsLogRecord } = await import('./services/ops/log')
@@ -243,14 +246,17 @@ async function bootstrap(): Promise<void> {
         const { recoverPendingApprovals } = await import('./agent/startup-recovery')
         const r = await recoverPendingApprovals({
           getTargets: () =>
-            mainWindow && !mainWindow.isDestroyed() ? [mainWindow.webContents] : [],
+            mainWindow && !mainWindow.isDestroyed() ? [mainWindow.webContents] : []
         })
         if (r.recovered > 0) {
-          logger.info('agent.startup-recovery', { recovered: r.recovered, candidates: r.candidates })
+          logger.info('agent.startup-recovery', {
+            recovered: r.recovered,
+            candidates: r.candidates
+          })
         }
       } catch (err) {
         logger.warn('agent.startup-recovery failed', {
-          message: err instanceof Error ? err.message : String(err),
+          message: err instanceof Error ? err.message : String(err)
         })
       }
     })()
@@ -262,7 +268,7 @@ async function bootstrap(): Promise<void> {
         appLifecycle.onBeforeQuit(() => stopSweeper())
       } catch (err) {
         logger.warn('agent.checkpointer-sweeper failed to start', {
-          message: err instanceof Error ? err.message : String(err),
+          message: err instanceof Error ? err.message : String(err)
         })
       }
     })()
@@ -279,7 +285,11 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  obsLogger().error('app', { op: 'boot', ok: false, msg: err instanceof Error ? err.message : String(err) })
+  obsLogger().error('app', {
+    op: 'boot',
+    ok: false,
+    msg: err instanceof Error ? err.message : String(err)
+  })
   process.exit(1)
 })
 

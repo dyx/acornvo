@@ -19,6 +19,5 @@ export const browserPort: BrowserPort = {
 }
 
 export const browserEventPort: BrowserEventPort = {
-  onTabStateChanged: (h) =>
-    ipc.on('browser:tabStateChanged', (p: TabStateChangedPayload) => h(p))
+  onTabStateChanged: (h) => ipc.on('browser:tabStateChanged', (p: TabStateChangedPayload) => h(p))
 }

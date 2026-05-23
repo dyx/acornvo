@@ -2,17 +2,11 @@
 import { readdir, lstat } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
-export const DEFAULT_SKIP_SET = new Set([
-  '.acornvo',
-  '.obsidian',
-  '.git',
-  'node_modules',
-  '.trash'
-])
+export const DEFAULT_SKIP_SET = new Set(['.acornvo', '.obsidian', '.git', 'node_modules', '.trash'])
 
 export interface WalkEntry {
   absPath: string
-  relPath: string  // posix-style, relative to groveRoot
+  relPath: string // posix-style, relative to groveRoot
 }
 
 export async function* walk(

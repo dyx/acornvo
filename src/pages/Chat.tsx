@@ -1,13 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronDownIcon, HelpCircleIcon, MessageSquareIcon, SparklesIcon, FileTextIcon, TerminalIcon } from 'lucide-react'
+import {
+  ChevronDownIcon,
+  HelpCircleIcon,
+  MessageSquareIcon,
+  SparklesIcon,
+  FileTextIcon,
+  TerminalIcon
+} from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
@@ -23,7 +35,12 @@ function SessionsErrorBanner() {
     <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
       <AlertDescription className="flex justify-between items-center w-full">
         <span>{sessionsError}</span>
-        <button onClick={() => useChatStore.setState({ sessionsError: null })} className="underline text-xs">Close</button>
+        <button
+          onClick={() => useChatStore.setState({ sessionsError: null })}
+          className="underline text-xs"
+        >
+          Close
+        </button>
       </AlertDescription>
     </Alert>
   )
@@ -39,15 +56,20 @@ function StreamErrorBanner() {
     <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
       <AlertDescription className="flex justify-between items-center w-full">
         <span>{streamError}</span>
-        <button onClick={() => {
-          const sid = useChatStore.getState().activeSessionId
-          if (!sid) return
-          useChatStore.setState((s) => {
-            const cur = s.bySession[sid]
-            if (!cur) return s
-            return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
-          })
-        }} className="underline text-xs">Close</button>
+        <button
+          onClick={() => {
+            const sid = useChatStore.getState().activeSessionId
+            if (!sid) return
+            useChatStore.setState((s) => {
+              const cur = s.bySession[sid]
+              if (!cur) return s
+              return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
+            })
+          }}
+          className="underline text-xs"
+        >
+          Close
+        </button>
       </AlertDescription>
     </Alert>
   )
@@ -65,7 +87,11 @@ function MissingProfileBanner() {
     <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
       <AlertDescription className="flex justify-between items-center w-full">
         <span>{t('chat.error.missingProfile')}</span>
-        <Link to="/settings/ai" data-testid="chat-banner-settings-link" className="underline font-medium">
+        <Link
+          to="/settings/ai"
+          data-testid="chat-banner-settings-link"
+          className="underline font-medium"
+        >
           {t('chat.error.goToSettings')}
         </Link>
       </AlertDescription>
@@ -91,15 +117,21 @@ function ShortcutsModal() {
         <div className="flex flex-col gap-3 py-4">
           <div className="flex justify-between items-center text-sm">
             <span>{t('chat.shortcuts.send')}</span>
-            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Cmd+Enter</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">
+              Cmd+Enter
+            </kbd>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span>{t('chat.shortcuts.send')} (Alternative)</span>
-            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Shift+Enter</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">
+              Shift+Enter
+            </kbd>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span>{t('chat.shortcuts.stopStream')}</span>
-            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Esc</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">
+              Esc
+            </kbd>
           </div>
         </div>
       </DialogContent>
@@ -130,9 +162,7 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
           {current ? (
             <>
               <span className="truncate font-medium">{current.name}</span>
-              <span className="text-muted-foreground/40 shrink-0">
-                |
-              </span>
+              <span className="text-muted-foreground/40 shrink-0">|</span>
               <span className="text-muted-foreground truncate">{current.model}</span>
             </>
           ) : (
@@ -182,10 +212,14 @@ function EmptyState() {
         <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
           <SparklesIcon className="size-8 text-primary" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight mb-3 text-foreground">{t('chat.empty.heading')}</h2>
-        <p className="text-muted-foreground text-lg max-w-lg mx-auto">{t('chat.empty.subheading')}</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-3 text-foreground">
+          {t('chat.empty.heading')}
+        </h2>
+        <p className="text-muted-foreground text-lg max-w-lg mx-auto">
+          {t('chat.empty.subheading')}
+        </p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         {promptItems.map((item) => (
           <button
@@ -199,7 +233,9 @@ function EmptyState() {
             <div className="bg-primary/5 p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
               <item.icon className="size-5 text-primary/70" />
             </div>
-            <span className="text-sm font-medium text-foreground/80 leading-relaxed mt-0.5">{item.label}</span>
+            <span className="text-sm font-medium text-foreground/80 leading-relaxed mt-0.5">
+              {item.label}
+            </span>
           </button>
         ))}
       </div>
@@ -224,15 +260,23 @@ export function Chat() {
       console.log('[Chat] init: loading sessions and profiles…')
       await Promise.all([loadSessions(), refreshProfiles()])
       const state = useChatStore.getState()
-      console.log('[Chat] init: sessions=%d, activeSessionId=%s, sessionsError=%s',
-        state.sessions.length, state.activeSessionId, state.sessionsError)
+      console.log(
+        '[Chat] init: sessions=%d, activeSessionId=%s, sessionsError=%s',
+        state.sessions.length,
+        state.activeSessionId,
+        state.sessionsError
+      )
       console.log('[Chat] init: profiles=%d', useProfilesStore.getState().profiles.length)
       if (state.sessions.length === 0) {
         console.log('[Chat] init: no sessions, creating one…')
         await createSession()
         const after = useChatStore.getState()
-        console.log('[Chat] init: after create — sessions=%d, activeSessionId=%s, error=%s',
-          after.sessions.length, after.activeSessionId, after.sessionsError)
+        console.log(
+          '[Chat] init: after create — sessions=%d, activeSessionId=%s, error=%s',
+          after.sessions.length,
+          after.activeSessionId,
+          after.sessionsError
+        )
       }
     }
     void init()
@@ -254,7 +298,10 @@ export function Chat() {
             <ConversationsAdapter />
           </aside>
 
-          <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden relative">
+          <main
+            data-testid="chat-main"
+            className="flex min-w-0 flex-1 flex-col overflow-hidden relative"
+          >
             <SessionsErrorBanner />
             <StreamErrorBanner />
             <MissingProfileBanner />
@@ -267,11 +314,11 @@ export function Chat() {
                 profileId={activeSession?.profileId ?? null}
               />
             </header>
-            
+
             <section className="flex min-h-0 flex-1 flex-col bg-background/50 relative">
               {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
             </section>
-            
+
             <div className="z-10 bg-gradient-to-t from-background via-background to-transparent pt-4">
               <ChatInputArea />
             </div>

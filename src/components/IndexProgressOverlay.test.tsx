@@ -13,14 +13,24 @@ vi.mock('react-i18next', () => ({
 
 describe('IndexProgressOverlay', () => {
   it('shows progress text "scanned/total" when visible', () => {
-    render(<IndexProgressOverlay visible scanned={34} total={100} currentPath="notes/a.md" onCancel={() => {}} />)
+    render(
+      <IndexProgressOverlay
+        visible
+        scanned={34}
+        total={100}
+        currentPath="notes/a.md"
+        onCancel={() => {}}
+      />
+    )
     expect(screen.getByText(/34/)).toBeInTheDocument()
     expect(screen.getByText(/100/)).toBeInTheDocument()
     expect(screen.getByText(/notes\/a\.md/)).toBeInTheDocument()
   })
 
   it('does not render anything when visible=false', () => {
-    const { container } = render(<IndexProgressOverlay visible={false} scanned={0} total={0} onCancel={() => {}} />)
+    const { container } = render(
+      <IndexProgressOverlay visible={false} scanned={0} total={0} onCancel={() => {}} />
+    )
     expect(container.querySelector('[role="dialog"]')).toBeNull()
   })
 
@@ -32,9 +42,18 @@ describe('IndexProgressOverlay', () => {
   })
 
   it('truncates long paths at 60 characters', () => {
-    const longPath = '/very/long/path/that/exceeds/sixty/characters/somewhere/deep/in/the/tree/note.md'
+    const longPath =
+      '/very/long/path/that/exceeds/sixty/characters/somewhere/deep/in/the/tree/note.md'
     expect(longPath.length).toBeGreaterThan(60)
-    render(<IndexProgressOverlay visible scanned={1} total={10} currentPath={longPath} onCancel={() => {}} />)
+    render(
+      <IndexProgressOverlay
+        visible
+        scanned={1}
+        total={10}
+        currentPath={longPath}
+        onCancel={() => {}}
+      />
+    )
     // Should show truncated version with ellipsis
     expect(screen.getByText(/^…/)).toBeInTheDocument()
   })
@@ -42,7 +61,15 @@ describe('IndexProgressOverlay', () => {
   it('shows full path when its length is 60 characters or fewer', () => {
     const shortPath = '/short/path/note.md'
     expect(shortPath.length).toBeLessThanOrEqual(60)
-    render(<IndexProgressOverlay visible scanned={1} total={10} currentPath={shortPath} onCancel={() => {}} />)
+    render(
+      <IndexProgressOverlay
+        visible
+        scanned={1}
+        total={10}
+        currentPath={shortPath}
+        onCancel={() => {}}
+      />
+    )
     expect(screen.getByText(shortPath)).toBeInTheDocument()
   })
 })

@@ -48,13 +48,21 @@ describe('TrashTab', () => {
 
   it('renders loading state initially', () => {
     vi.mocked(ipc.ops.list).mockReturnValue(new Promise(() => {})) // never resolves
-    render(<MemoryRouter><TrashTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <TrashTab />
+      </MemoryRouter>
+    )
     expect(screen.getByText('加载中…')).toBeTruthy()
   })
 
   it('renders empty state when no items', async () => {
     vi.mocked(ipc.ops.list).mockResolvedValue({ items: [], total: 0 })
-    render(<MemoryRouter><TrashTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <TrashTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByText('废纸篓为空')).toBeTruthy()
     })
@@ -67,11 +75,17 @@ describe('TrashTab', () => {
         total: 1
       })
       .mockResolvedValueOnce({
-        items: [makeItem({ id: 2, op: 'hard_delete', path: 'b.md', ts: '2026-05-03T11:00:00.000Z' })],
+        items: [
+          makeItem({ id: 2, op: 'hard_delete', path: 'b.md', ts: '2026-05-03T11:00:00.000Z' })
+        ],
         total: 1
       })
 
-    render(<MemoryRouter><TrashTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <TrashTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('a.md')).toBeTruthy()
@@ -90,7 +104,11 @@ describe('TrashTab', () => {
       })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><TrashTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <TrashTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('废纸篓')).toBeTruthy()
@@ -105,7 +123,11 @@ describe('TrashTab', () => {
       })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><TrashTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <TrashTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('notes/thought.md')).toBeTruthy()

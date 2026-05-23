@@ -35,10 +35,7 @@ async function createGrove(parentDir: string, name: string): Promise<GroveSummar
   }
 }
 
-async function openGrove(
-  path: string,
-  opts?: { force?: boolean }
-): Promise<OpenGroveOutcome> {
+async function openGrove(path: string, opts?: { force?: boolean }): Promise<OpenGroveOutcome> {
   const p = getPerf()
   const end = p?.start('project.open', { path })
   try {
@@ -73,9 +70,7 @@ async function removeFromRecent(id: string): Promise<void> {
 
 async function selectDirectory(purpose: SelectDirectoryPurpose): Promise<string | null> {
   const properties: Array<'openDirectory' | 'createDirectory'> =
-    purpose === 'createParent'
-      ? ['openDirectory', 'createDirectory']
-      : ['openDirectory']
+    purpose === 'createParent' ? ['openDirectory', 'createDirectory'] : ['openDirectory']
   const options = {
     properties,
     buttonLabel: purpose === 'createParent' ? '选择父目录' : '选择树林目录',

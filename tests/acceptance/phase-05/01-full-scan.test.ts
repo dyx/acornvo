@@ -12,7 +12,9 @@ describe('Acceptance 9.1 — full scan of 50-file grove', () => {
     _injectDbForTest(db)
     root = makeGroveTmp('p5-9.1-')
   })
-  afterEach(() => { cleanup(root, db) })
+  afterEach(() => {
+    cleanup(root, db)
+  })
 
   it('inserts 50 rows after scan', async () => {
     seedMd(root, 50, true)

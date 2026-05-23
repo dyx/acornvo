@@ -1,7 +1,13 @@
 // electron/ipc/clips.ts — phase-12 clips CRUD handlers
 import type Database from 'better-sqlite3'
 import { IpcError } from '@shared/ipc-contract'
-import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult, IpcContract } from '@shared/ipc-contract'
+import type {
+  Clip,
+  ClipCreateInput,
+  ClipsListOpts,
+  ClipsListResult,
+  IpcContract
+} from '@shared/ipc-contract'
 import { dbService } from '../services/db'
 
 interface ClipDeps {
@@ -42,7 +48,8 @@ function rowToClip(r: ClipRow): Clip {
 }
 
 export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
-  const insertStmt = (db: Database.Database) => db.prepare(`
+  const insertStmt = (db: Database.Database) =>
+    db.prepare(`
     INSERT INTO clips (url, path, title, site, author, published_at, clipped_at, excerpt, content_length, degraded, created_at)
     VALUES (@url, @path, @title, @site, @author, @published_at, @clipped_at, @excerpt, @content_length, @degraded, @created_at)
   `)
@@ -71,10 +78,13 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
         return rowToClip(row)
       } catch (e: any) {
         if (e && /UNIQUE/i.test(String(e.message))) {
-          throw new IpcError('E_DUPLICATE', JSON.stringify({
-            message: 'url already clipped',
-            existingUrl: input.url
-          }))
+          throw new IpcError(
+            'E_DUPLICATE',
+            JSON.stringify({
+              message: 'url already clipped',
+              existingUrl: input.url
+            })
+          )
         }
         throw new IpcError('E_INTERNAL', e?.message ?? 'insert failed')
       }
@@ -89,7 +99,9 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
       const where: string[] = []
       const params: Record<string, unknown> = {}
       if (opts.q && opts.q.trim().length > 0) {
-        where.push('(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR excerpt LIKE @q COLLATE NOCASE)')
+        where.push(
+          '(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR excerpt LIKE @q COLLATE NOCASE)'
+        )
         params.q = `%${opts.q.trim()}%`
       }
       if (opts.site && opts.site.trim().length > 0) {
@@ -98,12 +110,15 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
       }
       const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
-      const totalRow = db.prepare<typeof params, { n: number }>(
-        `SELECT COUNT(*) as n FROM clips ${whereSql}`
-      ).get(params)
-      const items = db.prepare<typeof params & { __limit: number; __offset: number }, ClipRow>(
-        `SELECT * FROM clips ${whereSql} ORDER BY ${orderBy} LIMIT @__limit OFFSET @__offset`
-      ).all({ ...params, __limit: limit, __offset: offset })
+      const totalRow = db
+        .prepare<typeof params, { n: number }>(`SELECT COUNT(*) as n FROM clips ${whereSql}`)
+        .get(params)
+      const items = db
+        .prepare<
+          typeof params & { __limit: number; __offset: number },
+          ClipRow
+        >(`SELECT * FROM clips ${whereSql} ORDER BY ${orderBy} LIMIT @__limit OFFSET @__offset`)
+        .all({ ...params, __limit: limit, __offset: offset })
 
       return { items: items.map(rowToClip), total: totalRow?.n ?? 0 }
     },

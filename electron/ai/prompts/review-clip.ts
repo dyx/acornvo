@@ -1,29 +1,26 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
-const BODY_MAX = 16000;
+const BODY_MAX = 16000
 
 interface RenderVars {
-  title: string;
-  url: string;
-  body: string;
+  title: string
+  url: string
+  body: string
 }
 
 function truncateBody(body: string): string {
-  if (body.length <= BODY_MAX) return body;
-  return body.slice(0, BODY_MAX) + '\n\n...(内容过长已截断)';
+  if (body.length <= BODY_MAX) return body
+  return body.slice(0, BODY_MAX) + '\n\n...(内容过长已截断)'
 }
 
 export const AiReviewSchema = z.object({
   summary: z.string().min(1).describe('150 字以内的中文摘要'),
   suggestedTitle: z.string().min(1).describe('一个更精炼的标题；若原标题足够好可复用'),
-  tags: z
-    .array(z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'kebab-case lowercase'))
-    .min(3)
-    .max(8),
-  keyQuotes: z.array(z.string().min(1)).min(1).max(3),
-});
+  tags: z.array(z.string().describe('kebab-case lowercase')).min(3).max(8),
+  keyQuotes: z.array(z.string().min(1)).min(1).max(3)
+})
 
-export type AiReviewOutput = z.infer<typeof AiReviewSchema>;
+export type AiReviewOutput = z.infer<typeof AiReviewSchema>
 
 export const reviewClip = {
   schema: AiReviewSchema,
@@ -33,8 +30,8 @@ export const reviewClip = {
       '你是一位博学的中英双语阅读助手。',
       '你将收到一篇文章，输出对它的结构化评注。',
       '输出必须匹配指定 schema，由 LangChain 结构化输出机制处理 —— 不要包含任何额外文本，不要使用 markdown code fence。',
-      'tags 必须使用 kebab-case 英文短词。summary 使用原文主语言（若中英混合则以中文为主）。',
-    ].join('\n');
+      'tags 必须使用 kebab-case 英文短词。summary 使用原文主语言（若中英混合则以中文为主）。'
+    ].join('\n')
 
     const user = [
       `# 标题\n${title}`,
@@ -45,9 +42,9 @@ export const reviewClip = {
       '1. `summary`：150 字以内的摘要。',
       '2. `suggestedTitle`：一个更精炼、信息密度更高的标题（若原标题已足够好，可复用）。',
       '3. `tags`：3-8 个 kebab-case 英文短标签（如 "deep-learning", "transformer"）。',
-      '4. `keyQuotes`：最重要的 1-3 句原文引用（保持原文语言）。',
-    ].join('\n');
+      '4. `keyQuotes`：最重要的 1-3 句原文引用（保持原文语言）。'
+    ].join('\n')
 
-    return { system, user };
-  },
-};
+    return { system, user }
+  }
+}

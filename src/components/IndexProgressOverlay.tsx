@@ -41,7 +41,10 @@ export function IndexProgressOverlay(props: IndexProgressOverlayProps): JSX.Elem
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
             </div>
             {truncatedPath && (
-              <div className="text-xs text-zinc-500 truncate mb-4 font-mono" title={props.currentPath}>
+              <div
+                className="text-xs text-zinc-500 truncate mb-4 font-mono"
+                title={props.currentPath}
+              >
                 {truncatedPath}
               </div>
             )}

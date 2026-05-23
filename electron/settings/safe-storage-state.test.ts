@@ -7,7 +7,11 @@ vi.mock('electron', () => ({
 }))
 
 import { safeStorage } from 'electron'
-import { initSafeStorageAvailability, isSafeStorageAvailable, __resetForTest } from './safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  isSafeStorageAvailable,
+  __resetForTest
+} from './safe-storage-state'
 
 const mockIsAvailable = safeStorage.isEncryptionAvailable as unknown as ReturnType<typeof vi.fn>
 

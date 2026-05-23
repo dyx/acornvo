@@ -11,7 +11,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select'
 
 export function BrowserTab(): JSX.Element {
@@ -24,15 +24,25 @@ export function BrowserTab(): JSX.Element {
       <h3 className="text-lg font-medium">{t('settings.tab.browser')}</h3>
 
       <div className="flex items-center space-x-2">
-        <Switch id="blockAds" checked={browser.blockAds}
-          onCheckedChange={(checked) => void setBrowser({ blockAds: checked })} />
-        <label htmlFor="blockAds" className="text-sm cursor-pointer">{t('settings.browser.blockAds')}</label>
+        <Switch
+          id="blockAds"
+          checked={browser.blockAds}
+          onCheckedChange={(checked) => void setBrowser({ blockAds: checked })}
+        />
+        <label htmlFor="blockAds" className="text-sm cursor-pointer">
+          {t('settings.browser.blockAds')}
+        </label>
       </div>
 
       <div className="flex items-center space-x-2" title={t('settings.common.comingSoon')}>
-        <Switch id="clipImagesLocalize" checked={browser.clipImagesLocalize}
-          onCheckedChange={(checked) => void setBrowser({ clipImagesLocalize: checked })} />
-        <label htmlFor="clipImagesLocalize" className="text-sm cursor-pointer">{t('settings.browser.clipImages')}</label>
+        <Switch
+          id="clipImagesLocalize"
+          checked={browser.clipImagesLocalize}
+          onCheckedChange={(checked) => void setBrowser({ clipImagesLocalize: checked })}
+        />
+        <label htmlFor="clipImagesLocalize" className="text-sm cursor-pointer">
+          {t('settings.browser.clipImages')}
+        </label>
       </div>
 
       <div className="space-y-1">
@@ -53,12 +63,14 @@ export function BrowserTab(): JSX.Element {
       </div>
 
       <div>
-        <Button variant="destructive"
+        <Button
+          variant="destructive"
           onClick={() => {
             if (window.confirm(t('settings.browser.clearCookiesConfirm'))) {
               void ipc.settings.browserClearCookies()
             }
-          }}>
+          }}
+        >
           {t('settings.browser.clearCookies')}
         </Button>
       </div>

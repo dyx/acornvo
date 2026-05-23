@@ -39,7 +39,9 @@ export function ConflictDialog(): React.JSX.Element | null {
         <div className="space-y-1 text-sm text-muted-foreground">
           <div>{t('conflict.dialog.meta_path', { path: state.path })}</div>
           <div>{t('conflict.dialog.meta_words', { count: Math.abs(localUnsaved) })}</div>
-          <div>{t('conflict.dialog.meta_remote_time', { time: formatRemote(cs.remoteMtimeMs) })}</div>
+          <div>
+            {t('conflict.dialog.meta_remote_time', { time: formatRemote(cs.remoteMtimeMs) })}
+          </div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
           <Button
@@ -49,7 +51,9 @@ export function ConflictDialog(): React.JSX.Element | null {
             onClick={() => useEditorStore.getState().keepLocal?.()}
           >
             <div className="font-medium">{t('conflict.dialog.keep_local')}</div>
-            <div className="text-xs opacity-70 font-normal">{t('conflict.dialog.keep_local_sub')}</div>
+            <div className="text-xs opacity-70 font-normal">
+              {t('conflict.dialog.keep_local_sub')}
+            </div>
           </Button>
           <Button
             data-testid="dlg-load-remote"
@@ -57,7 +61,9 @@ export function ConflictDialog(): React.JSX.Element | null {
             onClick={() => useEditorStore.getState().reloadFromDisk?.()}
           >
             <div className="font-medium">{t('conflict.dialog.load_remote')}</div>
-            <div className="text-xs opacity-90 font-normal">{t('conflict.dialog.load_remote_sub')}</div>
+            <div className="text-xs opacity-90 font-normal">
+              {t('conflict.dialog.load_remote_sub')}
+            </div>
           </Button>
           <Button
             data-testid="dlg-save-as"

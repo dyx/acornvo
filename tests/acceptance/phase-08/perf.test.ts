@@ -20,11 +20,21 @@ describeOrSkip('9.15 fullText P50 perf (RUN_PERF=1)', () => {
       for (let i = 0; i < 10_000; i++) {
         const path = `n/${Math.floor(i / 100)}/${i}.md`
         upsertFile(db, {
-          path, title: `T${i}`, summary: null, category: null, rating: null,
-          content_hash: `h${i}`, mtime: 0, size_bytes: 0, frontmatter_json: null,
-          created_at: 0, updated_at: 0
+          path,
+          title: `T${i}`,
+          summary: null,
+          category: null,
+          rating: null,
+          content_hash: `h${i}`,
+          mtime: 0,
+          size_bytes: 0,
+          frontmatter_json: null,
+          created_at: 0,
+          updated_at: 0
         })
-        const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }).rowid
+        const rowid = (
+          db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number }
+        ).rowid
         const body = i % 7 === 0 ? `注意力机制${i} 研究` : `attention mechanism ${i}`
         upsertFts(db, { rowid, path, title: `T${i}`, body })
       }

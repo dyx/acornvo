@@ -1,10 +1,5 @@
 // src/ipc/clipper-port.ts
-import type {
-  ClipInput,
-  ClipPreview,
-  ClipResult,
-  ClipRunId
-} from '@shared/clipper-types'
+import type { ClipInput, ClipPreview, ClipResult, ClipRunId } from '@shared/clipper-types'
 import { IpcError, type IpcResult } from '@shared/ipc-contract'
 
 export interface ClipperPort {

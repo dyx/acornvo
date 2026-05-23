@@ -49,7 +49,9 @@ const request: IpcClient<IpcContract> = {
     list: (dirRel, opts) => invoke('file.list', dirRel, opts),
     rename: (oldRel, newRel) => invoke('file.rename', oldRel, newRel),
     openExternal: (rel) => invoke('file.openExternal', rel),
-    openContainingDir: (rel) => invoke('file.openContainingDir', rel)
+    openContainingDir: (rel) => invoke('file.openContainingDir', rel),
+    trash: (rel) => invoke('file.trash', rel),
+    hardDelete: (rel) => invoke('file.hardDelete', rel)
   },
   files: {
     list: (filter, pagination) => invoke('files.list', filter, pagination),
@@ -145,16 +147,18 @@ const request: IpcClient<IpcContract> = {
     'sessions.getMessages': (id: string) => invoke('chat.sessions.getMessages', id),
     'sessions.updateProfile': (id: string, profileId: string | null) =>
       invoke('chat.sessions.updateProfile', id, profileId),
-    sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string }) => invoke('chat.sendUserMessage', opts),
+    sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string }) =>
+      invoke('chat.sendUserMessage', opts),
     cancelStream: (sessionId: string) => invoke('chat.cancelStream', sessionId),
-    approveTool: (callId: string, opts?: { editedArgs?: unknown }) => invoke('chat.approveTool', callId, opts),
+    approveTool: (callId: string, opts?: { editedArgs?: unknown }) =>
+      invoke('chat.approveTool', callId, opts),
     rejectTool: (callId: string) => invoke('chat.rejectTool', callId),
     onStream: (sessionId: string, cb: (e: any) => void) => {
-      const channel = `chat:stream:${sessionId}`;
-      const listener = (_evt: any, payload: any) => cb(payload);
-      ipcRenderer.on(channel, listener);
-      return () => ipcRenderer.removeListener(channel, listener);
-    },
+      const channel = `chat:stream:${sessionId}`
+      const listener = (_evt: any, payload: any) => cb(payload)
+      ipcRenderer.on(channel, listener)
+      return () => ipcRenderer.removeListener(channel, listener)
+    }
   },
   queue: {
     health: () => invoke('queue.health'),

@@ -14,7 +14,6 @@ import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { Placeholder } from './pages/Placeholder'
 import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
-import { Editor } from './pages/Editor'
 import { Settings } from './pages/Settings'
 import { Chat } from './pages/Chat'
 import { useBootstrap } from './hooks/useBootstrap'
@@ -39,7 +38,6 @@ const router = createMemoryRouter([
       { index: true, element: <BootstrapGate /> },
       { path: 'picker', element: <ProjectPicker /> },
       { path: 'library', element: <Library /> },
-      { path: 'editor/:encodedPath', element: <Editor /> },
       { path: 'browser', element: <Browse /> },
       { path: 'chat', element: <Chat /> },
       { path: 'settings/*', element: <Settings /> },

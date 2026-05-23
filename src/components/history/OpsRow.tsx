@@ -51,7 +51,8 @@ export interface OpsRowProps {
 }
 
 export function OpsRow({ item, onClick }: OpsRowProps): JSX.Element {
-  const isClickable = onClick && item.op === 'conflict_resolve' && item.meta && typeof item.meta.id === 'string'
+  const isClickable =
+    onClick && item.op === 'conflict_resolve' && item.meta && typeof item.meta.id === 'string'
 
   return (
     <div
@@ -78,9 +79,7 @@ export function OpsRow({ item, onClick }: OpsRowProps): JSX.Element {
       <div className="flex-1 min-w-0">
         <p className="text-sm text-[color:var(--color-ink)] truncate">{item.path}</p>
       </div>
-      <span className="text-xs text-muted-foreground flex-shrink-0">
-        {formatTime(item.ts)}
-      </span>
+      <span className="text-xs text-muted-foreground flex-shrink-0">{formatTime(item.ts)}</span>
     </div>
   )
 }

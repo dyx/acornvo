@@ -4,7 +4,9 @@ import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 function sqlFiles(dir: string): string[] {
-  return readdirSync(dir).filter((file) => file.endsWith('.sql')).sort()
+  return readdirSync(dir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort()
 }
 
 describe('copy-sql-migrations script', () => {

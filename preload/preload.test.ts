@@ -45,7 +45,9 @@ describe('security audit — preload contextBridge', () => {
       for (const key of Object.keys(obj as Record<string, unknown>)) {
         const child = (obj as Record<string, unknown>)[key]
         const lower = key.toLowerCase()
-        expect(lower.includes('secret') || lower.includes('decrypt') || lower === 'getdecryptedkey').toBe(false)
+        expect(
+          lower.includes('secret') || lower.includes('decrypt') || lower === 'getdecryptedkey'
+        ).toBe(false)
         if (typeof child === 'object' && child !== null) walk(child, `${path}.${key}`)
       }
     }

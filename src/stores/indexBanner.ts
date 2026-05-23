@@ -28,8 +28,6 @@ export const useIndexBannerStore = create<IndexBannerStore>((set) => ({
     }
   },
 
-  _setProgressForTest: (done: number, total: number) =>
-    set({ rebuildVisible: true, done, total }),
-  _setHiddenForTest: () =>
-    set({ rebuildVisible: false, done: 0, total: 0 })
+  _setProgressForTest: (done: number, total: number) => set({ rebuildVisible: true, done, total }),
+  _setHiddenForTest: () => set({ rebuildVisible: false, done: 0, total: 0 })
 }))

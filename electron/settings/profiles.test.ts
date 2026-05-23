@@ -46,8 +46,10 @@ describe('profilesStore', () => {
     const { id } = profilesStore.create({ name: 'p1', provider: 'openai', model: 'gpt-4o' })
     expect(typeof id).toBe('string')
     expect(id.length).toBeGreaterThan(8)
-    const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id=?').get(id) as
-      { name: string; api_key_ref: string | null }
+    const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id=?').get(id) as {
+      name: string
+      api_key_ref: string | null
+    }
     expect(row.name).toBe('p1')
     expect(row.api_key_ref).toBeNull()
   })
@@ -66,18 +68,25 @@ describe('profilesStore', () => {
       apiKey: 'sk-abc'
     })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('sk-abc')
-    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as
-      { api_key_ref: string }
+    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as {
+      api_key_ref: string
+    }
     expect(row.api_key_ref).toBe(`ai.key.${id}`)
   })
 
   it('create with duplicate name throws E_DUPLICATE_NAME; no row, no secret', () => {
     profilesStore.create({ name: 'dup', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-1' })
     expect(() =>
-      profilesStore.create({ name: 'dup', provider: 'anthropic', model: 'claude-4', apiKey: 'sk-2' })
+      profilesStore.create({
+        name: 'dup',
+        provider: 'anthropic',
+        model: 'claude-4',
+        apiKey: 'sk-2'
+      })
     ).toThrow(/E_DUPLICATE_NAME/)
-    const count = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE name=?').get('dup') as
-      { n: number }
+    const count = db
+      .prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE name=?')
+      .get('dup') as { n: number }
     expect(count.n).toBe(1)
   })
 
@@ -93,30 +102,50 @@ describe('profilesStore', () => {
   })
 
   it('update with apiKey="newkey" overwrites secret, leaves other fields unchanged', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'old' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'old'
+    })
     profilesStore.update(id, { apiKey: 'new' })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('new')
-    const row = db.prepare('SELECT name FROM ai_provider_profiles WHERE id=?').get(id) as { name: string }
+    const row = db.prepare('SELECT name FROM ai_provider_profiles WHERE id=?').get(id) as {
+      name: string
+    }
     expect(row.name).toBe('p')
   })
 
   it('update with apiKey="" deletes the secret and sets api_key_ref=NULL', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
+    })
     profilesStore.update(id, { apiKey: '' })
     expect(secretsStore.get(`ai.key.${id}`)).toBeNull()
-    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as
-      { api_key_ref: string | null }
+    const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id=?').get(id) as {
+      api_key_ref: string | null
+    }
     expect(row.api_key_ref).toBeNull()
   })
 
   it('update with apiKey=undefined leaves secret untouched', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'keep' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'keep'
+    })
     profilesStore.update(id, { name: 'p2' })
     expect(secretsStore.get(`ai.key.${id}`)).toBe('keep')
   })
 
   it('update on missing id throws E_PROFILE_NOT_FOUND', () => {
-    expect(() => profilesStore.update('does-not-exist', { name: 'x' })).toThrow(/E_PROFILE_NOT_FOUND/)
+    expect(() => profilesStore.update('does-not-exist', { name: 'x' })).toThrow(
+      /E_PROFILE_NOT_FOUND/
+    )
   })
 
   it('update name conflict throws E_DUPLICATE_NAME', () => {
@@ -126,9 +155,16 @@ describe('profilesStore', () => {
   })
 
   it('delete cascades to secret in a single transaction', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
+    })
     profilesStore.delete(id)
-    expect(db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE id=?').get(id)).toMatchObject({ n: 0 })
+    expect(
+      db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles WHERE id=?').get(id)
+    ).toMatchObject({ n: 0 })
     expect(secretsStore.get(`ai.key.${id}`)).toBeNull()
   })
 
@@ -192,27 +228,48 @@ describe('security audit — profile CRUD never leaks apiKey plaintext', () => {
   })
 
   it('create() return shape is { id } only — does not echo apiKey', () => {
-    const result = profilesStore.create({ name: 'a', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-secret' })
+    const result = profilesStore.create({
+      name: 'a',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-secret'
+    })
     expect(result).toEqual({ id: expect.any(String) })
     expect(JSON.stringify(result)).not.toMatch(/sk-secret/)
   })
 
   it('after delete, secrets.get(oldRef) returns null AND no orphan row remains', () => {
-    const { id } = profilesStore.create({ name: 'audit', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-x' })
+    const { id } = profilesStore.create({
+      name: 'audit',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-x'
+    })
     const ref = `ai.key.${id}`
     expect(secretsStore.get(ref)).toBe('sk-x')
     profilesStore.delete(id)
     expect(secretsStore.get(ref)).toBeNull()
-    const remaining = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key = ?').get(ref) as { n: number }
+    const remaining = db
+      .prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key = ?')
+      .get(ref) as { n: number }
     expect(remaining.n).toBe(0)
-    const profileRow = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?').get(id)
+    const profileRow = db
+      .prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?')
+      .get(id)
     expect(profileRow).toBeUndefined()
   })
 
   it('delete is atomic at the SQL level — verify with a fresh select', () => {
-    const { id } = profilesStore.create({ name: 'x', provider: 'openai', model: 'gpt-4o', apiKey: 'k' })
+    const { id } = profilesStore.create({
+      name: 'x',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'k'
+    })
     profilesStore.delete(id)
-    const profiles = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as { n: number }
+    const profiles = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as {
+      n: number
+    }
     const secrets = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets').get() as { n: number }
     expect(profiles.n).toBe(0)
     expect(secrets.n).toBe(0)

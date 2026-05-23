@@ -18,11 +18,21 @@ export type UpsertResult = 'inserted' | 'updated' | 'unchanged'
 
 export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
   const existing = db
-    .prepare('SELECT title, summary, category, rating, content_hash, mtime, size_bytes, frontmatter_json FROM files WHERE path=?')
-    .get(row.path) as {
-      title: string | null; summary: string | null; category: string | null; rating: number | null
-      content_hash: string; mtime: number; size_bytes: number; frontmatter_json: string | null
-    } | undefined
+    .prepare(
+      'SELECT title, summary, category, rating, content_hash, mtime, size_bytes, frontmatter_json FROM files WHERE path=?'
+    )
+    .get(row.path) as
+    | {
+        title: string | null
+        summary: string | null
+        category: string | null
+        rating: number | null
+        content_hash: string
+        mtime: number
+        size_bytes: number
+        frontmatter_json: string | null
+      }
+    | undefined
 
   if (
     existing &&
@@ -77,9 +87,12 @@ function escapeForFts(s: string): string {
 export function upsertFts(db: Database.Database, row: FtsRow): void {
   const tx = db.transaction(() => {
     db.prepare('DELETE FROM files_fts WHERE rowid=?').run(row.rowid)
-    db.prepare(
-      'INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
-    ).run(row.rowid, row.path, row.title, escapeForFts(row.body))
+    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
+      row.rowid,
+      row.path,
+      row.title,
+      escapeForFts(row.body)
+    )
   })
   tx()
 }
@@ -92,7 +105,7 @@ export function listAllPaths(db: Database.Database): Set<string> {
 export interface QueryOptions {
   category?: string
   tag?: string
-  rating?: number  // minimum rating
+  rating?: number // minimum rating
   limit: number
   offset: number
   orderBy: 'updated_at_desc' | 'updated_at_asc' | 'created_at_desc' | 'created_at_asc'
@@ -141,9 +154,9 @@ export interface UpsertWithBodyDelta {
 
 /** Like upsertFile but also returns whether the body content changed (content_hash diff). */
 export function upsertFileWithBodyDelta(db: Database.Database, row: FileRow): UpsertWithBodyDelta {
-  const existing = db
-    .prepare('SELECT content_hash FROM files WHERE path=?')
-    .get(row.path) as { content_hash: string } | undefined
+  const existing = db.prepare('SELECT content_hash FROM files WHERE path=?').get(row.path) as
+    | { content_hash: string }
+    | undefined
 
   const bodyChanged = !existing || existing.content_hash !== row.content_hash
   const result = upsertFile(db, row)

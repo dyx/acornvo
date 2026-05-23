@@ -14,9 +14,7 @@ export function NewTabPage(): JSX.Element {
   const [recent, setRecent] = useState<Bookmark[]>([])
 
   useEffect(() => {
-    void ipc.bookmarks
-      .list({ limit: 6, offset: 0 })
-      .then((r) => setRecent(r.items))
+    void ipc.bookmarks.list({ limit: 6, offset: 0 }).then((r) => setRecent(r.items))
   }, [])
 
   return (

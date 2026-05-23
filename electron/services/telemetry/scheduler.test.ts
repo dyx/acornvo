@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { scheduleDailyTelemetry } from './scheduler'
 import type { JobStore } from '../../queue/store'
 
-function fakeStore(): JobStore & { enqueued: { kind: string; payload: Record<string, unknown> }[] } {
+function fakeStore(): JobStore & {
+  enqueued: { kind: string; payload: Record<string, unknown> }[]
+} {
   const enqueued: { kind: string; payload: Record<string, unknown> }[] = []
   return {
     enqueued,
@@ -16,11 +18,26 @@ function fakeStore(): JobStore & { enqueued: { kind: string; payload: Record<str
     markFailed() {},
     markCanceled() {},
     resetForManualRetry() {},
-    list() { return { items: [], total: 0 } },
-    getById() { return null },
-    clearDone() { return { removed: 0 } },
-    recoverRunning() { return { restored: 0 } },
-    events: { on() { return this }, off() { return this } } as unknown as JobStore['events']
+    list() {
+      return { items: [], total: 0 }
+    },
+    getById() {
+      return null
+    },
+    clearDone() {
+      return { removed: 0 }
+    },
+    recoverRunning() {
+      return { restored: 0 }
+    },
+    events: {
+      on() {
+        return this
+      },
+      off() {
+        return this
+      }
+    } as unknown as JobStore['events']
   }
 }
 

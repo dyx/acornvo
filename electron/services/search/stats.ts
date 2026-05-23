@@ -11,7 +11,10 @@ function statePath(groveRoot: string): string {
   return join(groveRoot, '.acornvo', 'state', 'fts_last_rebuild.json')
 }
 
-export function writeRebuildTimestamp(groveRoot: string, at: string = new Date().toISOString()): void {
+export function writeRebuildTimestamp(
+  groveRoot: string,
+  at: string = new Date().toISOString()
+): void {
   const dir = join(groveRoot, '.acornvo', 'state')
   mkdirSync(dir, { recursive: true })
   writeFileSync(statePath(groveRoot), JSON.stringify({ at }))

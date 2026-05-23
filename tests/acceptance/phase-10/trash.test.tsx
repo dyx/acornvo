@@ -190,10 +190,7 @@ describe('Phase 10 Acceptance: Right-click trash flow', () => {
     vi.mocked(ipc.file.trash).mockResolvedValue({ ok: true })
 
     useLibraryStore.setState({
-      items: [
-        row('notes/a.md', { title: 'A' }),
-        row('notes/b.md', { title: 'B' })
-      ],
+      items: [row('notes/a.md', { title: 'A' }), row('notes/b.md', { title: 'B' })],
       total: 2
     })
 
@@ -522,7 +519,9 @@ describe('Phase 10 Acceptance: TrashConfirmDialog busy state', () => {
 
     // Wait for busy state
     await waitFor(() => {
-      expect((screen.getByRole('button', { name: '移到废纸篓' }) as HTMLButtonElement).disabled).toBe(true)
+      expect(
+        (screen.getByRole('button', { name: '移到废纸篓' }) as HTMLButtonElement).disabled
+      ).toBe(true)
     })
 
     // Cancel button should still be enabled

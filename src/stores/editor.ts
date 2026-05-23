@@ -124,13 +124,15 @@ export function installEditorSubscriber(): () => void {
               }
             }
           })
-        } catch (_) { /* ignore read errors during silent reload */ }
+        } catch (_) {
+          /* ignore read errors during silent reload */
+        }
       })()
     }
   })
 
   const offProject = ipc.on('project:changed', () => {
-    // Project changed from under us (e.g. backend swapped). 
+    // Project changed from under us (e.g. backend swapped).
     // Force reset state to avoid saving to the new project.
     _cancelDebounce()
     useEditorStore.setState({ state: { kind: 'idle' } })
@@ -151,10 +153,7 @@ let _jobsUnsubscribe: (() => void) | null = null
 
 function isBlockedByConflict(s: EditorState): boolean {
   if (s.kind !== 'ready') return false
-  return (
-    s.conflictState.kind === 'externalModified' ||
-    s.conflictState.kind === 'saveConflict'
-  )
+  return s.conflictState.kind === 'externalModified' || s.conflictState.kind === 'saveConflict'
 }
 
 function _scheduleSave(): void {
@@ -179,10 +178,7 @@ async function _doSave(): Promise<void> {
 
   useEditorStore.setState((prev) => ({
     ...prev,
-    state:
-      prev.state.kind === 'ready'
-        ? { ...prev.state, saving: true }
-        : prev.state
+    state: prev.state.kind === 'ready' ? { ...prev.state, saving: true } : prev.state
   }))
 
   try {
@@ -232,8 +228,7 @@ async function _doSave(): Promise<void> {
               conflictState: {
                 kind: 'saveConflict',
                 remoteMtimeMs:
-                  (err.context?.remoteMtimeMs as number | undefined) ??
-                  fresh.summary.mtimeMs,
+                  (err.context?.remoteMtimeMs as number | undefined) ?? fresh.summary.mtimeMs,
                 remoteBody: fresh.body,
                 remoteFrontmatter: fresh.frontmatter
               }
@@ -339,12 +334,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     _jobsUnsubscribe?.()
     _jobsUnsubscribe = ipc.on('jobs:changed', (job) => {
       if (job.kind !== 'ai-review-clip') return
-      if (job.status !== 'done') return
+      if (job.status !== 'done' && job.status !== 'failed') return
       const p = (job.payload as Record<string, unknown> | undefined)?.path as string | undefined
       const cur = get().state
       if (cur.kind !== 'ready') return
       if (p && p === cur.path) {
-        void get().reloadFromDisk()
+        if (job.status === 'done') void get().reloadFromDisk()
         get().setAiRerunInflight(false)
       }
     })
@@ -425,7 +420,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const baseText = stringify(cur.baseFrontmatter, cur.baseBody)
     await ipc.conflict.writeSnapshot({
       path: cur.path,
-      baseText, localText, remoteText, resolvedBy
+      baseText,
+      localText,
+      remoteText,
+      resolvedBy
     })
     set({
       state: {
@@ -467,7 +465,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const baseText = stringify(s.baseFrontmatter, s.baseBody)
     await ipc.conflict.writeSnapshot({
       path: s.path,
-      baseText, localText, remoteText,
+      baseText,
+      localText,
+      remoteText,
       resolvedBy: 'keep_local'
     })
     const result = await ipc.file.write(s.path, localText, { force: true })
@@ -521,7 +521,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     await ipc.file.write(newPath, localText)
     await ipc.conflict.writeSnapshot({
       path: cur.path,
-      baseText, localText, remoteText,
+      baseText,
+      localText,
+      remoteText,
       resolvedBy: 'save_as',
       winnerPath: newPath
     })
@@ -550,7 +552,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       state: {
         ...s,
         frontmatter: { ...s.frontmatter, title: next },
-        dirty: true,
+        dirty: true
       }
     })
     _scheduleSave()
@@ -559,15 +561,15 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   mergeAiTags: () => {
     const s = get().state
     if (s.kind !== 'ready') return
-    const ai = Array.isArray(s.frontmatter.ai_tags) ? s.frontmatter.ai_tags as string[] : []
-    const cur = Array.isArray(s.frontmatter.tags) ? s.frontmatter.tags as string[] : []
+    const ai = Array.isArray(s.frontmatter.ai_tags) ? (s.frontmatter.ai_tags as string[]) : []
+    const cur = Array.isArray(s.frontmatter.tags) ? (s.frontmatter.tags as string[]) : []
     const merged = Array.from(new Set([...cur, ...ai]))
     if (merged.length === cur.length) return
     set({
       state: {
         ...s,
         frontmatter: { ...s.frontmatter, tags: merged },
-        dirty: true,
+        dirty: true
       }
     })
     _scheduleSave()
@@ -577,8 +579,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const s = get().state
     if (s.kind !== 'ready') return
     const titleNext = String(s.frontmatter.ai_suggested_title ?? s.frontmatter.title ?? '')
-    const aiTags = Array.isArray(s.frontmatter.ai_tags) ? s.frontmatter.ai_tags as string[] : []
-    const curTags = Array.isArray(s.frontmatter.tags) ? s.frontmatter.tags as string[] : []
+    const aiTags = Array.isArray(s.frontmatter.ai_tags) ? (s.frontmatter.ai_tags as string[]) : []
+    const curTags = Array.isArray(s.frontmatter.tags) ? (s.frontmatter.tags as string[]) : []
     const mergedTags = Array.from(new Set([...curTags, ...aiTags]))
     set({
       state: {
@@ -587,9 +589,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           ...s.frontmatter,
           title: titleNext,
           tags: mergedTags,
-          ai_review_accepted_at: new Date().toISOString(),
+          ai_review_accepted_at: new Date().toISOString()
         },
-        dirty: true,
+        dirty: true
       }
     })
     _scheduleSave()
@@ -602,7 +604,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       state: {
         ...s,
         frontmatter: { ...s.frontmatter, ai_review_accepted_at: new Date().toISOString() },
-        dirty: true,
+        dirty: true
       }
     })
     _scheduleSave()
@@ -612,5 +614,5 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const s = get().state
     if (s.kind !== 'ready') return
     set({ state: { ...s, aiRerunInflight: v } })
-  },
+  }
 }))

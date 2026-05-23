@@ -138,11 +138,7 @@ export function TrashTab(): JSX.Element {
   if (items.length === 0) {
     return (
       <div data-testid="trash-tab">
-        <EmptyState
-          icon={<Trash2 />}
-          title="废纸篓为空"
-          description="被删除的文件会出现在这里"
-        />
+        <EmptyState icon={<Trash2 />} title="废纸篓为空" description="被删除的文件会出现在这里" />
       </div>
     )
   }

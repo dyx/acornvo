@@ -21,7 +21,9 @@ describe('walk', () => {
     mkdirSync(join(root, 'node_modules', 'pkg'), { recursive: true })
     writeFileSync(join(root, 'node_modules', 'pkg', 'inner.md'), '# inner')
   })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }) })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
 
   it('yields only *.md files, recursively', async () => {
     const found: string[] = []

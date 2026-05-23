@@ -26,7 +26,14 @@ export const DEFAULTS: {
   telemetry: { enabled: false }
 }
 
-const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = ['general', 'appearance', 'ai', 'browser', 'update', 'telemetry']
+const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = [
+  'general',
+  'appearance',
+  'ai',
+  'browser',
+  'update',
+  'telemetry'
+]
 
 export function isKnownNamespace(value: unknown): value is SettingsNamespace {
   return typeof value === 'string' && (KNOWN_NAMESPACES as readonly string[]).includes(value)

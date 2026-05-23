@@ -55,7 +55,10 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2">
             <span>{approval.toolName}</span>
-            <Badge variant="outline" className="text-orange-500 border-orange-500 bg-orange-50 dark:bg-orange-950">
+            <Badge
+              variant="outline"
+              className="text-orange-500 border-orange-500 bg-orange-50 dark:bg-orange-950"
+            >
               {t('chat.approval.pendingTag')}
             </Badge>
           </SheetTitle>
@@ -68,7 +71,7 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
               <p className="text-sm text-muted-foreground">{approval.reason}</p>
             </div>
           )}
-          
+
           <div>
             {isFrontmatter ? (
               <FrontmatterDiff
@@ -89,7 +92,9 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
 
         <SheetFooter className="mt-8">
           <div className="flex justify-end gap-2 w-full">
-            <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button variant="outline" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
             <Button onClick={handleSubmit}>{t('chat.approval.submit')}</Button>
           </div>
         </SheetFooter>

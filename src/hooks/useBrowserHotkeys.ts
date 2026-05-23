@@ -27,7 +27,11 @@ export function useBrowserHotkeys(): void {
         if (!/^https?:\/\//i.test(tabUrl)) {
           useClipperStore.setState({
             stage: 'error',
-            error: { code: 'E_UNSUPPORTED_SCHEME', message: 'unsupported scheme', stage: 'precheck' }
+            error: {
+              code: 'E_UNSUPPORTED_SCHEME',
+              message: 'unsupported scheme',
+              stage: 'precheck'
+            }
           })
           return
         }

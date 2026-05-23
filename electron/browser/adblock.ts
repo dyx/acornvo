@@ -8,7 +8,12 @@ import { logger } from '../services/logger'
 const BROWSER_PARTITION = 'persist:browser-default'
 
 let blockedHosts: Set<string> | null = null
-let listener: ((details: Electron.OnBeforeRequestListenerDetails, cb: (r: { cancel: boolean }) => void) => void) | null = null
+let listener:
+  | ((
+      details: Electron.OnBeforeRequestListenerDetails,
+      cb: (r: { cancel: boolean }) => void
+    ) => void)
+  | null = null
 let unsubFromSettings: (() => void) | null = null
 let cancelCount = 0
 
@@ -22,7 +27,10 @@ function loadBlockList(): Set<string> {
     try {
       const content = readFileSync(path, 'utf8')
       blockedHosts = new Set(
-        content.split('\n').map((line) => line.trim()).filter((line) => line.length > 0 && !line.startsWith('#'))
+        content
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0 && !line.startsWith('#'))
       )
       return blockedHosts
     } catch {

@@ -23,9 +23,15 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
       const fm = JSON.parse(row.frontmatter_json) as { site?: unknown; url?: unknown }
       if (typeof fm.site === 'string') site = fm.site
       else if (typeof fm.url === 'string') {
-        try { site = new URL(fm.url).host } catch { /* ignore */ }
+        try {
+          site = new URL(fm.url).host
+        } catch {
+          /* ignore */
+        }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return {
     path: row.path,
@@ -124,19 +130,21 @@ export function fullText(
   let totalRow: { c: number } | undefined
   let hits: FtsHitRow[] = []
   try {
-    totalRow = db.prepare(
-      'SELECT COUNT(*) AS c FROM files_fts WHERE files_fts MATCH ?'
-    ).get(expr) as { c: number }
+    totalRow = db
+      .prepare('SELECT COUNT(*) AS c FROM files_fts WHERE files_fts MATCH ?')
+      .get(expr) as { c: number }
 
-    hits = db.prepare(
-      `SELECT path,
+    hits = db
+      .prepare(
+        `SELECT path,
               snippet(files_fts, 2, '<mark>', '</mark>', '…', 16) AS snippet,
               rank
        FROM files_fts
        WHERE files_fts MATCH ?
        ORDER BY rank
        LIMIT ? OFFSET ?`
-    ).all(expr, limit, offset) as FtsHitRow[]
+      )
+      .all(expr, limit, offset) as FtsHitRow[]
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     end?.({ ok: false, meta: { error: msg } })
@@ -150,8 +158,9 @@ export function fullText(
   }
 
   const placeholders = hits.map(() => '?').join(',')
-  const rows = db.prepare(
-    `SELECT
+  const rows = db
+    .prepare(
+      `SELECT
        files.path, files.title, files.category, files.rating, files.clipped_at,
        files.summary, files.frontmatter_json,
        GROUP_CONCAT(file_tags.tag, ',') AS tags_concat
@@ -159,7 +168,8 @@ export function fullText(
      LEFT JOIN file_tags ON file_tags.path = files.path
      WHERE files.path IN (${placeholders})
      GROUP BY files.path`
-  ).all(...hits.map((h) => h.path)) as SummaryRow[]
+    )
+    .all(...hits.map((h) => h.path)) as SummaryRow[]
 
   const byPath = new Map(rows.map((r) => [r.path, r]))
   const items = hits

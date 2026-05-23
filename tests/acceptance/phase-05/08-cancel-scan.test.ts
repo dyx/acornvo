@@ -1,18 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { startScan, cancelScan, state, _injectDbForTest, _resetForTest } from '../../../electron/services/indexer'
+import {
+  startScan,
+  cancelScan,
+  state,
+  _injectDbForTest,
+  _resetForTest
+} from '../../../electron/services/indexer'
 import { _resetSelfWritesForTest } from '../../../electron/services/watcher'
 import { makeIndexedDb, makeGroveTmp, seedMd, cleanup } from './_helpers'
 
 describe('Acceptance 9.8 — cancelScan returns to idle and preserves partial data', () => {
-  let root: string; let db: ReturnType<typeof makeIndexedDb>
+  let root: string
+  let db: ReturnType<typeof makeIndexedDb>
 
   beforeEach(() => {
-    _resetForTest(); _resetSelfWritesForTest()
-    db = makeIndexedDb(); _injectDbForTest(db)
+    _resetForTest()
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    _injectDbForTest(db)
     root = makeGroveTmp('p5-9.8-')
     seedMd(root, 100)
   })
-  afterEach(() => { cleanup(root, db) })
+  afterEach(() => {
+    cleanup(root, db)
+  })
 
   it('flips state back to idle after cancel; some rows are preserved', async () => {
     const scanP = startScan(root)

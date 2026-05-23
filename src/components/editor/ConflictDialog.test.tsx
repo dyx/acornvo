@@ -128,23 +128,23 @@ describe('ConflictDialog meta', () => {
     expect(saveAsCopy).toHaveBeenCalled()
   })
 
-describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
-  it('clicking 稍后处理 calls dismissDialog()', () => {
-    const dismissDialog = vi.fn()
-    setSaveConflict({ actionMocks: { dismissDialog } })
-    render(<ConflictDialog />)
-    fireEvent.click(screen.getByTestId('dlg-later'))
-    expect(dismissDialog).toHaveBeenCalled()
-  })
+  describe('ConflictDialog dismissDialog (phase-09 7.5)', () => {
+    it('clicking 稍后处理 calls dismissDialog()', () => {
+      const dismissDialog = vi.fn()
+      setSaveConflict({ actionMocks: { dismissDialog } })
+      render(<ConflictDialog />)
+      fireEvent.click(screen.getByTestId('dlg-later'))
+      expect(dismissDialog).toHaveBeenCalled()
+    })
 
-  it('Esc/onOpenChange(false) also calls dismissDialog()', () => {
-    const dismissDialog = vi.fn()
-    setSaveConflict({ actionMocks: { dismissDialog } })
-    render(<ConflictDialog />)
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
-    expect(dismissDialog).toHaveBeenCalled()
+    it('Esc/onOpenChange(false) also calls dismissDialog()', () => {
+      const dismissDialog = vi.fn()
+      setSaveConflict({ actionMocks: { dismissDialog } })
+      render(<ConflictDialog />)
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+      expect(dismissDialog).toHaveBeenCalled()
+    })
   })
-})
 
   it('diff link is non-clickable and shows diff_soon tooltip', () => {
     setSaveConflict()

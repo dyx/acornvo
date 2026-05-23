@@ -44,13 +44,21 @@ describe('ConflictsTab', () => {
 
   it('renders loading state initially', () => {
     vi.mocked(ipc.conflict.list).mockReturnValue(new Promise(() => {}))
-    render(<MemoryRouter><ConflictsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <ConflictsTab />
+      </MemoryRouter>
+    )
     expect(screen.getByText('加载中…')).toBeTruthy()
   })
 
   it('renders empty state when no conflicts', async () => {
     vi.mocked(ipc.conflict.list).mockResolvedValue({ items: [], total: 0 })
-    render(<MemoryRouter><ConflictsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <ConflictsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByText('暂无冲突')).toBeTruthy()
     })
@@ -65,7 +73,11 @@ describe('ConflictsTab', () => {
       total: 2
     })
 
-    render(<MemoryRouter><ConflictsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <ConflictsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('a.md')).toBeTruthy()
@@ -85,7 +97,11 @@ describe('ConflictsTab', () => {
       total: 1
     })
 
-    render(<MemoryRouter><ConflictsTab onSelectConflict={onSelect} /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <ConflictsTab onSelectConflict={onSelect} />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('notes/xyz.md')).toBeTruthy()
@@ -97,7 +113,11 @@ describe('ConflictsTab', () => {
 
   it('handles fetch error gracefully', async () => {
     vi.mocked(ipc.conflict.list).mockRejectedValue(new Error('Network error'))
-    render(<MemoryRouter><ConflictsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <ConflictsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByText('暂无冲突')).toBeTruthy()
     })

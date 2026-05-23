@@ -40,14 +40,12 @@ export function AboutTab(): JSX.Element {
 
         <dt>{t('about.runtime')}</dt>
         <dd data-testid="about-runtime">
-          Electron {info?.electron ?? '—'} &middot; Chrome{' '}
-          {info?.chrome ?? '—'} &middot; Node {info?.node ?? '—'}
+          Electron {info?.electron ?? '—'} &middot; Chrome {info?.chrome ?? '—'} &middot; Node{' '}
+          {info?.node ?? '—'}
         </dd>
 
         <dt>{t('about.platform')}</dt>
-        <dd data-testid="about-platform">
-          {info ? `${info.platform} / ${info.arch}` : '—'}
-        </dd>
+        <dd data-testid="about-platform">{info ? `${info.platform} / ${info.arch}` : '—'}</dd>
       </dl>
 
       <footer className="flex gap-3 pt-4 border-t">
@@ -94,10 +92,7 @@ function CheckUpdateButton(): JSX.Element {
         {checking ? t('about.checkUpdateBusy') : t('about.checkUpdate')}
       </button>
       {result && (
-        <span
-          data-testid="about-check-update-result"
-          className="text-sm text-muted-foreground"
-        >
+        <span data-testid="about-check-update-result" className="text-sm text-muted-foreground">
           {result.status === 'up-to-date'
             ? t('about.upToDate')
             : result.status === 'available'

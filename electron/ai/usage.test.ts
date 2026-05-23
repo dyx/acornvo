@@ -1,188 +1,258 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { runMigrations } from '../services/db/migrations';
-import { migrationsDir } from '../services/db/migrations/index';
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import Database from 'better-sqlite3'
+import { runMigrations } from '../services/db/migrations'
+import { migrationsDir } from '../services/db/migrations/index'
 
-vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }));
-import { dbService } from '../services/db';
-import { aiUsage, rowFromUsageMetadata, writeUsage } from './usage';
+vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
+import { dbService } from '../services/db'
+import { aiUsage, rowFromUsageMetadata, writeUsage } from './usage'
 
-let db: Database.Database;
+let db: Database.Database
 beforeEach(() => {
-  db = new Database(':memory:');
-  runMigrations(db, migrationsDir());
-  (dbService.requireCurrent as any).mockReturnValue(db);
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-05-04T12:00:00Z'));
-});
+  db = new Database(':memory:')
+  runMigrations(db, migrationsDir())
+  ;(dbService.requireCurrent as any).mockReturnValue(db)
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-05-04T12:00:00Z'))
+})
 
 describe('aiUsage.insert', () => {
   it('inserts a success row', () => {
     aiUsage.insert({
-      jobId: 'job-1', profileId: 'p1', model: 'gpt-4o-mini',
-      promptTokens: 100, completionTokens: 50, latencyMs: 1200,
-      ok: 1, error: null,
-    });
-    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[];
-    expect(rows).toHaveLength(1);
+      jobId: 'job-1',
+      profileId: 'p1',
+      model: 'gpt-4o-mini',
+      promptTokens: 100,
+      completionTokens: 50,
+      latencyMs: 1200,
+      ok: 1,
+      error: null
+    })
+    const rows = db.prepare('SELECT * FROM ai_usage').all() as any[]
+    expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({
-      job_id: 'job-1', profile_id: 'p1', model: 'gpt-4o-mini',
-      prompt_tokens: 100, completion_tokens: 50, latency_ms: 1200,
-      ok: 1, error: null,
-    });
-    expect(rows[0].created_at).toMatch(/2026-05-04T12:00:00/);
-  });
+      job_id: 'job-1',
+      profile_id: 'p1',
+      model: 'gpt-4o-mini',
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      latency_ms: 1200,
+      ok: 1,
+      error: null
+    })
+    expect(rows[0].created_at).toMatch(/2026-05-04T12:00:00/)
+  })
 
   it('inserts a failure row with null tokens', () => {
     aiUsage.insert({
-      jobId: 'job-1', profileId: 'p1', model: 'gpt-4o-mini',
-      promptTokens: null, completionTokens: null, latencyMs: 30,
-      ok: 0, error: 'E_AUTH',
-    });
-    const row = db.prepare('SELECT * FROM ai_usage').get() as any;
-    expect(row.ok).toBe(0);
-    expect(row.error).toBe('E_AUTH');
-    expect(row.prompt_tokens).toBeNull();
-  });
+      jobId: 'job-1',
+      profileId: 'p1',
+      model: 'gpt-4o-mini',
+      promptTokens: null,
+      completionTokens: null,
+      latencyMs: 30,
+      ok: 0,
+      error: 'E_AUTH'
+    })
+    const row = db.prepare('SELECT * FROM ai_usage').get() as any
+    expect(row.ok).toBe(0)
+    expect(row.error).toBe('E_AUTH')
+    expect(row.prompt_tokens).toBeNull()
+  })
 
   it('persists sessionId when provided', () => {
     aiUsage.insert({
-      jobId: 'job-1', profileId: 'p1', model: 'gpt-x',
-      promptTokens: 1, completionTokens: 1, latencyMs: 10,
-      ok: 1, error: null, sessionId: 'sess1',
-    });
-    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
-    expect(row.session_id).toBe('sess1');
-  });
+      jobId: 'job-1',
+      profileId: 'p1',
+      model: 'gpt-x',
+      promptTokens: 1,
+      completionTokens: 1,
+      latencyMs: 10,
+      ok: 1,
+      error: null,
+      sessionId: 'sess1'
+    })
+    const row: any = db.prepare('SELECT session_id FROM ai_usage').get()
+    expect(row.session_id).toBe('sess1')
+  })
 
   it('persists null when omitted (back-compat with phase-15 callers)', () => {
     aiUsage.insert({
-      jobId: 'job-1', profileId: 'p1', model: 'gpt-x',
-      promptTokens: 1, completionTokens: 1, latencyMs: 10,
-      ok: 1, error: null,
-    });
-    const row: any = db.prepare("SELECT session_id FROM ai_usage").get();
-    expect(row.session_id).toBeNull();
-  });
-});
+      jobId: 'job-1',
+      profileId: 'p1',
+      model: 'gpt-x',
+      promptTokens: 1,
+      completionTokens: 1,
+      latencyMs: 10,
+      ok: 1,
+      error: null
+    })
+    const row: any = db.prepare('SELECT session_id FROM ai_usage').get()
+    expect(row.session_id).toBeNull()
+  })
+})
 
 describe('aiUsage.summary', () => {
   it('aggregates within sinceDays', () => {
     const seed = (ok: number, prompt: number, completion: number, daysAgo: number) => {
-      const d = new Date('2026-05-04T12:00:00Z'); d.setUTCDate(d.getUTCDate() - daysAgo);
-      db.prepare(`INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        'j', 'p1', 'gpt-4o-mini', prompt, completion, 1000, ok, ok ? null : 'E_RATE', d.toISOString());
-    };
-    seed(1, 100, 50, 1);
-    seed(1, 200, 100, 5);
-    seed(0, 0, 0, 10);
-    seed(1, 999, 999, 40); // out of 30-day window
+      const d = new Date('2026-05-04T12:00:00Z')
+      d.setUTCDate(d.getUTCDate() - daysAgo)
+      db.prepare(
+        `INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        'j',
+        'p1',
+        'gpt-4o-mini',
+        prompt,
+        completion,
+        1000,
+        ok,
+        ok ? null : 'E_RATE',
+        d.toISOString()
+      )
+    }
+    seed(1, 100, 50, 1)
+    seed(1, 200, 100, 5)
+    seed(0, 0, 0, 10)
+    seed(1, 999, 999, 40) // out of 30-day window
 
-    const r = aiUsage.summary({ sinceDays: 30 });
-    expect(r.totalCalls).toBe(3);
-    expect(r.okCount).toBe(2);
-    expect(r.errorRate).toBeCloseTo(1 / 3, 5);
-    expect(r.totalTokens).toBe(100 + 50 + 200 + 100);
-    expect(r.byProvider['p1']).toMatchObject({ calls: 3 });
-  });
+    const r = aiUsage.summary({ sinceDays: 30 })
+    expect(r.totalCalls).toBe(3)
+    expect(r.okCount).toBe(2)
+    expect(r.errorRate).toBeCloseTo(1 / 3, 5)
+    expect(r.totalTokens).toBe(100 + 50 + 200 + 100)
+    expect(r.byProvider['p1']).toMatchObject({ calls: 3 })
+  })
 
   it('uses default sinceDays = 30', () => {
-    const r = aiUsage.summary();
-    expect(r.totalCalls).toBe(0);
-    expect(r.errorRate).toBe(0);
-  });
-});
+    const r = aiUsage.summary()
+    expect(r.totalCalls).toBe(0)
+    expect(r.errorRate).toBe(0)
+  })
+})
 
 describe('aiUsage.list', () => {
   it('paginates DESC by created_at', () => {
     for (let i = 0; i < 5; i++) {
-      const d = new Date('2026-05-04T12:00:00Z'); d.setUTCMinutes(i);
-      db.prepare(`INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        `j${i}`, 'p1', 'm', 1, 1, 1, 1, null, d.toISOString());
+      const d = new Date('2026-05-04T12:00:00Z')
+      d.setUTCMinutes(i)
+      db.prepare(
+        `INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(`j${i}`, 'p1', 'm', 1, 1, 1, 1, null, d.toISOString())
     }
-    const r = aiUsage.list({ limit: 3, offset: 0 });
-    expect(r.items).toHaveLength(3);
-    expect(r.items[0].jobId).toBe('j4');
-    expect(r.total).toBe(5);
-  });
+    const r = aiUsage.list({ limit: 3, offset: 0 })
+    expect(r.items).toHaveLength(3)
+    expect(r.items[0].jobId).toBe('j4')
+    expect(r.total).toBe(5)
+  })
 
   it('filters by profileId and okOnly', () => {
-    db.prepare(`INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-                VALUES ('p1','m',1,1,1,1,null,'2026-05-04T12:00:00Z')`).run();
-    db.prepare(`INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-                VALUES ('p2','m',1,1,1,1,null,'2026-05-04T12:00:01Z')`).run();
-    db.prepare(`INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
-                VALUES ('p1','m',null,null,1,0,'E_AUTH','2026-05-04T12:00:02Z')`).run();
-    const r1 = aiUsage.list({ limit: 10, offset: 0, profileId: 'p1' });
-    expect(r1.total).toBe(2);
-    const r2 = aiUsage.list({ limit: 10, offset: 0, profileId: 'p1', okOnly: true });
-    expect(r2.total).toBe(1);
-  });
-});
+    db.prepare(
+      `INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
+                VALUES ('p1','m',1,1,1,1,null,'2026-05-04T12:00:00Z')`
+    ).run()
+    db.prepare(
+      `INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
+                VALUES ('p2','m',1,1,1,1,null,'2026-05-04T12:00:01Z')`
+    ).run()
+    db.prepare(
+      `INSERT INTO ai_usage (profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, created_at)
+                VALUES ('p1','m',null,null,1,0,'E_AUTH','2026-05-04T12:00:02Z')`
+    ).run()
+    const r1 = aiUsage.list({ limit: 10, offset: 0, profileId: 'p1' })
+    expect(r1.total).toBe(2)
+    const r2 = aiUsage.list({ limit: 10, offset: 0, profileId: 'p1', okOnly: true })
+    expect(r2.total).toBe(1)
+  })
+})
 
 describe('rowFromUsageMetadata', () => {
   it('returns row with input_tokens → promptTokens', () => {
     const row = rowFromUsageMetadata(
       { input_tokens: 100, output_tokens: 50 },
-      { profileId: 'p1', model: 'm', latencyMs: 1000, ok: 1, error: null },
-    );
+      { profileId: 'p1', model: 'm', latencyMs: 1000, ok: 1, error: null }
+    )
     expect(row).toMatchObject({
       promptTokens: 100,
       completionTokens: 50,
       ok: 1,
-      latencyMs: 1000,
-    });
-  });
+      latencyMs: 1000
+    })
+  })
 
   it('returns null when usage is undefined', () => {
     const row = rowFromUsageMetadata(undefined, {
-      profileId: 'p1', model: 'm', latencyMs: 0, ok: 1, error: null,
-    });
-    expect(row).toBeNull();
-  });
+      profileId: 'p1',
+      model: 'm',
+      latencyMs: 0,
+      ok: 1,
+      error: null
+    })
+    expect(row).toBeNull()
+  })
 
   it('treats missing input/output as 0', () => {
-    const row = rowFromUsageMetadata({}, {
-      profileId: 'p1', model: 'm', latencyMs: 0, ok: 1, error: null,
-    });
-    expect(row?.promptTokens).toBe(0);
-    expect(row?.completionTokens).toBe(0);
-  });
-});
+    const row = rowFromUsageMetadata(
+      {},
+      {
+        profileId: 'p1',
+        model: 'm',
+        latencyMs: 0,
+        ok: 1,
+        error: null
+      }
+    )
+    expect(row?.promptTokens).toBe(0)
+    expect(row?.completionTokens).toBe(0)
+  })
+})
 
 describe('writeUsage', () => {
   it('writes a row with usage values when usage_metadata is present', () => {
     writeUsage({
       usage: { input_tokens: 10, output_tokens: 5 },
-      profileId: 'p1', model: 'm', latencyMs: 100, ok: 1, error: null,
-    });
-    const r = db.prepare('SELECT * FROM ai_usage').get() as any;
-    expect(r.prompt_tokens).toBe(10);
-    expect(r.completion_tokens).toBe(5);
-    expect(r.ok).toBe(1);
-    expect(r.latency_ms).toBe(100);
-  });
+      profileId: 'p1',
+      model: 'm',
+      latencyMs: 100,
+      ok: 1,
+      error: null
+    })
+    const r = db.prepare('SELECT * FROM ai_usage').get() as any
+    expect(r.prompt_tokens).toBe(10)
+    expect(r.completion_tokens).toBe(5)
+    expect(r.ok).toBe(1)
+    expect(r.latency_ms).toBe(100)
+  })
 
   it('writes a zero-token row when usage is missing (preserves 1-row-per-call invariant)', () => {
     writeUsage({
-      profileId: 'p1', model: 'm', latencyMs: 100, ok: 0, error: 'E_UNKNOWN',
-    });
-    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any;
-    expect(r.prompt_tokens).toBe(0);
-    expect(r.completion_tokens).toBe(0);
-    expect(r.ok).toBe(0);
-    expect(r.error).toBe('E_UNKNOWN');
-  });
+      profileId: 'p1',
+      model: 'm',
+      latencyMs: 100,
+      ok: 0,
+      error: 'E_UNKNOWN'
+    })
+    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any
+    expect(r.prompt_tokens).toBe(0)
+    expect(r.completion_tokens).toBe(0)
+    expect(r.ok).toBe(0)
+    expect(r.error).toBe('E_UNKNOWN')
+  })
 
   it('uses explicit promptTokens/completionTokens when caller already extracted them', () => {
     writeUsage({
-      profileId: 'p1', model: 'm', latencyMs: 100, ok: 1, error: null,
-      promptTokens: 42, completionTokens: 7,
-    });
-    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any;
-    expect(r.prompt_tokens).toBe(42);
-    expect(r.completion_tokens).toBe(7);
-  });
-});
+      profileId: 'p1',
+      model: 'm',
+      latencyMs: 100,
+      ok: 1,
+      error: null,
+      promptTokens: 42,
+      completionTokens: 7
+    })
+    const r = db.prepare('SELECT * FROM ai_usage ORDER BY id DESC LIMIT 1').get() as any
+    expect(r.prompt_tokens).toBe(42)
+    expect(r.completion_tokens).toBe(7)
+  })
+})

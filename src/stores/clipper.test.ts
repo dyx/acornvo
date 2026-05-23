@@ -31,7 +31,9 @@ describe('clipper store', () => {
       reextract: vi.fn()
     } as any)
     const stages: string[] = []
-    const unsub = useClipperStore.subscribe((s) => { stages.push(s.stage) })
+    const unsub = useClipperStore.subscribe((s) => {
+      stages.push(s.stage)
+    })
 
     await useClipperStore.getState().start('t1')
 
@@ -60,7 +62,13 @@ describe('clipper store', () => {
       clip: vi.fn(async () => ({ ok: true, data: fakePreview })),
       saveClip: vi.fn(async () => ({
         ok: true,
-        data: { id: 9, path: 'inbox/202605/x.md', url: 'https://x/', title: 'Hello', degraded: false }
+        data: {
+          id: 9,
+          path: 'inbox/202605/x.md',
+          url: 'https://x/',
+          title: 'Hello',
+          degraded: false
+        }
       })),
       cancelClip: vi.fn(),
       reextract: vi.fn()

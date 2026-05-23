@@ -41,7 +41,11 @@ export function writeCrash(p: CrashPayload): string {
 
 export function installCrashHooks(): void {
   app.on('render-process-gone', (_e, _wc, details) => {
-    const file = writeCrash({ kind: 'renderer', reason: details.reason, details: { exitCode: details.exitCode } })
+    const file = writeCrash({
+      kind: 'renderer',
+      reason: details.reason,
+      details: { exitCode: details.exitCode }
+    })
     logger().error('crash', { op: 'renderer-gone', meta: { file, reason: details.reason } })
   })
 

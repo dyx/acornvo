@@ -9,22 +9,42 @@ import { createQueueRunner } from './runner'
 // === 10.9 ===
 describe('Acceptance 10.9 — crash recovery resets running → pending', () => {
   let dir: string
-  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'p14-crash-')); __resetForTest() })
-  afterEach(() => { closeCurrent(); __resetForTest(); rmSync(dir, { recursive: true, force: true }) })
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'p14-crash-'))
+    __resetForTest()
+  })
+  afterEach(() => {
+    closeCurrent()
+    __resetForTest()
+    rmSync(dir, { recursive: true, force: true })
+  })
 
   it('a running job becomes pending after grove reopen', () => {
     openForGrove(dir)
     const db1 = requireCurrent()
-    db1.prepare(
-      `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, created_at, updated_at)
+    db1
+      .prepare(
+        `INSERT INTO jobs (id, kind, payload_json, status, attempts, next_run_at, created_at, updated_at)
        VALUES (?,?,?,?,?,?,?,?)`
-    ).run('crashed', 'ai-review-clip', JSON.stringify({ clipId: 1, path: 'inbox/a.md' }),
-      'running', 2, '2026-05-03T10:00:00.000Z', '2026-05-03T10:00:00.000Z', '2026-05-03T10:00:00.000Z')
+      )
+      .run(
+        'crashed',
+        'ai-review-clip',
+        JSON.stringify({ clipId: 1, path: 'inbox/a.md' }),
+        'running',
+        2,
+        '2026-05-03T10:00:00.000Z',
+        '2026-05-03T10:00:00.000Z',
+        '2026-05-03T10:00:00.000Z'
+      )
     closeCurrent()
 
     openForGrove(dir)
     const db2 = requireCurrent()
-    const row = db2.prepare('SELECT status, attempts FROM jobs WHERE id=?').get('crashed') as { status: string; attempts: number }
+    const row = db2.prepare('SELECT status, attempts FROM jobs WHERE id=?').get('crashed') as {
+      status: string
+      attempts: number
+    }
     expect(row.status).toBe('pending')
     expect(row.attempts).toBe(2)
   })
@@ -42,8 +62,13 @@ describe('Acceptance 10.10 — before-quit drains running handlers', () => {
     let resolveHandler!: (r: { kind: 'ok' }) => void
     const runner = createQueueRunner({ store, tickMs: 50 })
     runner.register({
-      kind: 'ai-review-clip', concurrency: 1, minGapMs: 0,
-      handler: () => new Promise<{ kind: 'ok' }>((r) => { resolveHandler = r })
+      kind: 'ai-review-clip',
+      concurrency: 1,
+      minGapMs: 0,
+      handler: () =>
+        new Promise<{ kind: 'ok' }>((r) => {
+          resolveHandler = r
+        })
     })
     const { id: running } = store.enqueue('ai-review-clip', { clipId: 1, path: 'a.md' })
     const { id: pending } = store.enqueue('ai-review-clip', { clipId: 2, path: 'b.md' })

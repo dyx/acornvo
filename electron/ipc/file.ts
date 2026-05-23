@@ -63,10 +63,9 @@ export const fileHandlers = {
     const parsed = parseFile(r.content)
     let clip: { id: number } | undefined
     try {
-      clip = dbService
-        .requireCurrent()
-        .prepare('SELECT id FROM clips WHERE path = ?')
-        .get(rel) as { id: number } | undefined
+      clip = dbService.requireCurrent().prepare('SELECT id FROM clips WHERE path = ?').get(rel) as
+        | { id: number }
+        | undefined
     } catch {
       clip = undefined
     }
@@ -84,11 +83,7 @@ export const fileHandlers = {
     }
   },
 
-  async write(
-    rel: string,
-    content: string,
-    opts: FileWriteOptions = {}
-  ): Promise<FileWriteResult> {
+  async write(rel: string, content: string, opts: FileWriteOptions = {}): Promise<FileWriteResult> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
     // opts.force / opts.expectedMtime / opts.eol all flow through to writeWithVerify,
@@ -198,9 +193,7 @@ export const fileHandlers = {
     return { ok: true }
   },
 
-  async openContainingDir(
-    rel: string
-  ): Promise<{ ok: true } | { ok: false; reason: 'missing' }> {
+  async openContainingDir(rel: string): Promise<{ ok: true } | { ok: false; reason: 'missing' }> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
     try {
@@ -220,7 +213,7 @@ export const fileHandlers = {
     try {
       await fsRename(absOld, absNew)
       const newStat = await fsStat(absNew)
-      registerSelfWrite(absOld, 0)              // suppress unlink event
+      registerSelfWrite(absOld, 0) // suppress unlink event
       registerSelfWrite(absNew, newStat.mtimeMs) // suppress add event
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -228,5 +221,5 @@ export const fileHandlers = {
       }
       throw err
     }
-  },
+  }
 }

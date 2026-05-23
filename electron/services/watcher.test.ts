@@ -42,14 +42,21 @@ function waitFor(predicate: () => boolean, timeoutMs = 5000, intervalMs = 50): P
   return new Promise((resolve, reject) => {
     const start = Date.now()
     const id = setInterval(() => {
-      if (predicate()) { clearInterval(id); resolve() }
-      else if (Date.now() - start > timeoutMs) { clearInterval(id); reject(new Error('timeout')) }
+      if (predicate()) {
+        clearInterval(id)
+        resolve()
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(id)
+        reject(new Error('timeout'))
+      }
     }, intervalMs)
   })
 }
 
 describe('selfWrites map', () => {
-  beforeEach(() => { _resetSelfWritesForTest() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+  })
 
   it('returns false when path was never registered', () => {
     expect(shouldIgnore('/some/path.md', 1000)).toBe(false)
@@ -77,7 +84,7 @@ describe('selfWrites map', () => {
   it('removes the entry after a successful match (one-shot)', () => {
     registerSelfWrite('/p.md', 1000)
     expect(shouldIgnore('/p.md', 1000)).toBe(true)
-    expect(shouldIgnore('/p.md', 1000)).toBe(false)  // already consumed
+    expect(shouldIgnore('/p.md', 1000)).toBe(false) // already consumed
   })
 
   it('expires entries after 3s TTL', () => {
@@ -90,12 +97,14 @@ describe('selfWrites map', () => {
 })
 
 describe('selfWrites GC', () => {
-  beforeEach(() => { _resetSelfWritesForTest() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+  })
 
   it('removes entries past their expiresAt', () => {
     const now = Date.now()
-    registerSelfWrite('/a.md', 1, now - 4000)  // already expired
-    registerSelfWrite('/b.md', 1, now)         // fresh
+    registerSelfWrite('/a.md', 1, now - 4000) // already expired
+    registerSelfWrite('/b.md', 1, now) // fresh
     expect(_selfWritesSizeForTest()).toBe(2)
     _gcSelfWrites(now)
     expect(_selfWritesSizeForTest()).toBe(1)
@@ -151,7 +160,9 @@ describe('watcher batching', () => {
   it('inserts a single new md file after debounce', async () => {
     await start(root, db)
     writeFileSync(join(root, 'a.md'), '---\ntitle: A\n---\nbody')
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1)
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1
+    )
     expect(db.prepare('SELECT path, title FROM files').get()).toEqual({ path: 'a.md', title: 'A' })
   })
 
@@ -160,8 +171,12 @@ describe('watcher batching', () => {
     writeFileSync(join(root, 'a.md'), 'v1')
     writeFileSync(join(root, 'a.md'), 'v2')
     writeFileSync(join(root, 'a.md'), 'v3')
-    await waitFor(() => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1)
-    const row = db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as { content_hash: string }
+    await waitFor(
+      () => (db.prepare('SELECT COUNT(*) AS n FROM files').get() as { n: number }).n === 1
+    )
+    const row = db.prepare('SELECT content_hash FROM files WHERE path=?').get('a.md') as {
+      content_hash: string
+    }
     const expected = createHash('sha256').update('v3').digest('hex')
     expect(row.content_hash).toBe(expected)
   })
@@ -171,17 +186,32 @@ describe('watcher transactional flush + rename', () => {
   let root: string
   let db: Database.Database
 
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'rename-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'rename-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('detects rename when unlink + add of same content_hash within window', async () => {
     writeFileSync(join(root, 'old.md'), 'same body')
     await start(root, db)
     upsertFile(db, {
-      path: 'old.md', title: null, summary: null, category: null, rating: null,
+      path: 'old.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: createHash('sha256').update('same body').digest('hex'),
-      mtime: 1, size_bytes: 9, frontmatter_json: '{}',
-      created_at: 1, updated_at: 1
+      mtime: 1,
+      size_bytes: 9,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
 
     rmSync(join(root, 'old.md'))
@@ -199,24 +229,43 @@ describe('watcher transactional flush + rename', () => {
     writeFileSync(join(root, 'a.md'), 'A body')
     await start(root, db)
     upsertFile(db, {
-      path: 'a.md', title: null, summary: null, category: null, rating: null,
+      path: 'a.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: createHash('sha256').update('A body').digest('hex'),
-      mtime: 1, size_bytes: 6, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime: 1,
+      size_bytes: 6,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     rmSync(join(root, 'a.md'))
     writeFileSync(join(root, 'b.md'), 'totally different')
 
     await waitFor(() => {
-      const paths = (db.prepare('SELECT path FROM files').all() as { path: string }[]).map((r) => r.path).sort()
+      const paths = (db.prepare('SELECT path FROM files').all() as { path: string }[])
+        .map((r) => r.path)
+        .sort()
       return paths.length === 1 && paths[0] === 'b.md'
     }, 3000)
   })
 })
 
 describe('watcher emits aggregate events', () => {
-  let root: string; let db: Database.Database
-  beforeEach(() => { _resetSelfWritesForTest(); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'evt-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  let root: string
+  let db: Database.Database
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'evt-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('emits index:fileChanged on new file', async () => {
     const events: { path: string }[] = []
@@ -231,8 +280,17 @@ describe('watcher emits aggregate events', () => {
     writeFileSync(join(root, 'a.md'), 'body')
     await start(root, db)
     upsertFile(db, {
-      path: 'a.md', title: null, summary: null, category: null, rating: null,
-      content_hash: 'h', mtime: 1, size_bytes: 4, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      path: 'a.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: 'h',
+      mtime: 1,
+      size_bytes: 4,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     const events: { path: string }[] = []
     onFileDeleted((p) => events.push(p))
@@ -245,9 +303,17 @@ describe('watcher emits aggregate events', () => {
     writeFileSync(join(root, 'old.md'), 'same body')
     await start(root, db)
     upsertFile(db, {
-      path: 'old.md', title: null, summary: null, category: null, rating: null,
+      path: 'old.md',
+      title: null,
+      summary: null,
+      category: null,
+      rating: null,
       content_hash: createHash('sha256').update('same body').digest('hex'),
-      mtime: 1, size_bytes: 9, frontmatter_json: '{}', created_at: 1, updated_at: 1
+      mtime: 1,
+      size_bytes: 9,
+      frontmatter_json: '{}',
+      created_at: 1,
+      updated_at: 1
     })
     const events: { oldPath: string; newPath: string }[] = []
     onFileRenamed((p) => events.push(p))
@@ -259,9 +325,19 @@ describe('watcher emits aggregate events', () => {
 })
 
 describe('watcher restart logic', () => {
-  let root: string; let db: Database.Database
-  beforeEach(() => { _resetSelfWritesForTest(); _indexerSetState('idle'); db = makeIndexedDb(); root = mkdtempSync(join(tmpdir(), 'err-')) })
-  afterEach(async () => { await stop(); rmSync(root, { recursive: true, force: true }); db.close() })
+  let root: string
+  let db: Database.Database
+  beforeEach(() => {
+    _resetSelfWritesForTest()
+    _indexerSetState('idle')
+    db = makeIndexedDb()
+    root = mkdtempSync(join(tmpdir(), 'err-'))
+  })
+  afterEach(async () => {
+    await stop()
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('flips IndexState to error after 3 failed restarts', async () => {
     await start(root, db)

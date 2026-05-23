@@ -39,8 +39,10 @@ vi.mock('@/ipc/client', () => ({
       'sessions.list': vi.fn().mockResolvedValue([]),
       'sessions.getMessages': vi.fn().mockResolvedValue([]),
       'sessions.create': vi.fn().mockResolvedValue({
-        id: 's-auto', title: '未命名对话',
-        createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z',
+        id: 's-auto',
+        title: '未命名对话',
+        createdAt: '2024-06-01T00:00:00.000Z',
+        updatedAt: '2024-06-01T00:00:00.000Z',
         profileId: null
       }),
       'sessions.rename': vi.fn().mockResolvedValue({ ok: true }),
@@ -51,7 +53,9 @@ vi.mock('@/ipc/client', () => ({
       rejectTool: vi.fn().mockResolvedValue({ ok: true }),
       onStream: vi.fn((sessionId: string, cb: (evt: any) => void) => {
         streamHandlers[sessionId] = cb
-        return () => { delete streamHandlers[sessionId] }
+        return () => {
+          delete streamHandlers[sessionId]
+        }
       })
     },
     file: {
@@ -72,7 +76,11 @@ vi.mock('@/ipc/client', () => ({
 
 import { ipc } from '@/ipc/client'
 import { Chat } from '@/pages/Chat'
-import { useChatStore, installChatStreamSubscriber, uninstallChatStreamSubscriber } from '@/stores/chat'
+import {
+  useChatStore,
+  installChatStreamSubscriber,
+  uninstallChatStreamSubscriber
+} from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -120,7 +128,13 @@ function mkSlot(overrides: Record<string, unknown> = {}) {
  * loadSessions → createSession override).
  */
 function seedPage(
-  sessions: Array<{ id: string; title: string; createdAt: string; updatedAt: string; profileId: string | null }>,
+  sessions: Array<{
+    id: string
+    title: string
+    createdAt: string
+    updatedAt: string
+    profileId: string | null
+  }>,
   activeSessionId: string,
   bySession: Record<string, any>
 ) {
@@ -146,13 +160,22 @@ function seedPage(
 // the new antd-x adapters; skipping here keeps the green baseline while
 // the legacy DOM still mounts.
 describe.skip('acceptance 11.1 — auto-create session + empty-state 4 cards', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('auto-creates a session when the list is empty and shows 4 onboarding cards', async () => {
     vi.mocked(ipc.chat['sessions.list']).mockResolvedValue([] as any)
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await vi.waitFor(() => {
       expect(useChatStore.getState().sessions.length).toBeGreaterThan(0)
     })
@@ -162,18 +185,38 @@ describe.skip('acceptance 11.1 — auto-create session + empty-state 4 cards', (
 })
 
 describe.skip('acceptance 11.3 — streaming token rendering via stream subscriber', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
-  afterEach(() => { cleanup(); uninstallChatStreamSubscriber() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    cleanup()
+    uninstallChatStreamSubscriber()
+  })
 
   it('appends streaming tokens into the streaming-pre element', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test Chat', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test Chat',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot({ messages: [], streamingBuffer: '正在处理...', status: 'streaming' }) }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     installChatStreamSubscriber()
 
     // Need at least one message for MessageList to render (Chat page isEmpty check)
@@ -192,12 +235,24 @@ describe.skip('acceptance 11.3 — streaming token rendering via stream subscrib
 
   it('streaming pre disappears after done event commits the message', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test Chat', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test Chat',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot({ streamingBuffer: 'streaming text', status: 'streaming' }) }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await screen.findByTestId('streaming-pre')
 
     // Now commit: switch to idle with the committed assistant message
@@ -223,18 +278,38 @@ describe.skip('acceptance 11.3 — streaming token rendering via stream subscrib
 })
 
 describe.skip('acceptance 11.4 — Esc cancels streaming and shows stop button', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
-  afterEach(() => { cleanup(); uninstallChatStreamSubscriber() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    cleanup()
+    uninstallChatStreamSubscriber()
+  })
 
   it('pressing Esc while streaming calls cancelStream via IPC', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot({ status: 'streaming', streamingBuffer: 'tokens...' }) }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
 
     // The stop button should be visible during streaming
     expect(await screen.findByTestId('chat-input-stop')).toBeTruthy()
@@ -247,8 +322,13 @@ describe.skip('acceptance 11.4 — Esc cancels streaming and shows stop button',
 })
 
 describe('acceptance 11.5 — send message with attachment propagates to store', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('sendUserMessage with attachments passes them through to IPC', async () => {
@@ -256,7 +336,9 @@ describe('acceptance 11.5 — send message with attachment propagates to store',
       sessions: [{ id: 's1', title: 'Test', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: {
-        s1: mkSlot({ pendingAttachments: [{ type: 'file', path: '/notes/test.md', title: 'test.md' }] })
+        s1: mkSlot({
+          pendingAttachments: [{ type: 'file', path: '/notes/test.md', title: 'test.md' }]
+        })
       }
     })
 
@@ -272,13 +354,29 @@ describe('acceptance 11.5 — send message with attachment propagates to store',
 })
 
 describe.skip('acceptance 11.8–11.9 — error state display (network, step limit)', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
-  afterEach(() => { cleanup(); uninstallChatStreamSubscriber() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    cleanup()
+    uninstallChatStreamSubscriber()
+  })
 
   it('E_NETWORK error shows retry button and retry re-sends last user message', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
@@ -293,7 +391,11 @@ describe.skip('acceptance 11.8–11.9 — error state display (network, step lim
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
 
     expect(await screen.findByTestId('chat-error-tail')).toBeTruthy()
     expect(screen.getByTestId('chat-error-retry')).toBeTruthy()
@@ -310,21 +412,31 @@ describe.skip('acceptance 11.8–11.9 — error state display (network, step lim
 
   it('E_STEP_LIMIT shows gray message without retry button', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
           status: 'error',
           error: 'E_STEP_LIMIT',
           lastUserText: 'hello',
-          messages: [
-            { id: 'm1', role: 'assistant', text: 'ok', createdAt: 200 }
-          ]
+          messages: [{ id: 'm1', role: 'assistant', text: 'ok', createdAt: 200 }]
         })
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
 
     expect(await screen.findByTestId('chat-error-tail')).toBeTruthy()
     expect(screen.queryByTestId('chat-error-retry')).toBeFalsy()
@@ -332,15 +444,35 @@ describe.skip('acceptance 11.8–11.9 — error state display (network, step lim
 })
 
 describe.skip('acceptance 11.11 — background streaming on another session', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
-  afterEach(() => { cleanup(); uninstallChatStreamSubscriber() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    cleanup()
+    uninstallChatStreamSubscriber()
+  })
 
   it('non-active session with streaming status shows streaming badge in SessionList', async () => {
     seedPage(
       [
-        { id: 's1', title: 'Active Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:01.000Z', profileId: null },
-        { id: 's2', title: 'Streaming Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+        {
+          id: 's1',
+          title: 'Active Session',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:01.000Z',
+          profileId: null
+        },
+        {
+          id: 's2',
+          title: 'Streaming Session',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
       ],
       's1',
       {
@@ -349,15 +481,31 @@ describe.skip('acceptance 11.11 — background streaming on another session', ()
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     expect(await screen.findByTestId('badge-streaming')).toBeTruthy()
   })
 
   it('streaming badge disappears when background streaming completes', async () => {
     seedPage(
       [
-        { id: 's1', title: 'Active Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:01.000Z', profileId: null },
-        { id: 's2', title: 'Done Session', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+        {
+          id: 's1',
+          title: 'Active Session',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:01.000Z',
+          profileId: null
+        },
+        {
+          id: 's2',
+          title: 'Done Session',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
       ],
       's1',
       {
@@ -366,7 +514,11 @@ describe.skip('acceptance 11.11 — background streaming on another session', ()
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await screen.findByTestId('chat-session-list')
     expect(screen.queryByTestId('badge-streaming')).toBeFalsy()
   })
@@ -374,8 +526,20 @@ describe.skip('acceptance 11.11 — background streaming on another session', ()
   it('non-active session with pending approval shows approval badge', async () => {
     seedPage(
       [
-        { id: 's1', title: 'Active', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:01.000Z', profileId: null },
-        { id: 's2', title: 'Awaiting Approval', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }
+        {
+          id: 's1',
+          title: 'Active',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:01.000Z',
+          profileId: null
+        },
+        {
+          id: 's2',
+          title: 'Awaiting Approval',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
       ],
       's1',
       {
@@ -388,25 +552,44 @@ describe.skip('acceptance 11.11 — background streaming on another session', ()
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     expect(await screen.findByTestId('badge-approval')).toBeTruthy()
   })
 })
 
 describe('acceptance 11.12 — sessions persist across "reload" simulation', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('after re-loading sessions from IPC, store state is restored', async () => {
     const sessionData = [
-      { id: 's1', title: 'Saved Session', createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-02T00:00:00.000Z', profileId: 'p1' }
+      {
+        id: 's1',
+        title: 'Saved Session',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-02T00:00:00.000Z',
+        profileId: 'p1'
+      }
     ]
     vi.mocked(ipc.chat['sessions.list']).mockResolvedValueOnce(sessionData as any)
     vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValueOnce([
-      { id: 1, sessionId: 's1', role: 'user', content: 'persisted message',
-        createdAt: '2024-01-01T00:00:00.000Z' }
+      {
+        id: 1,
+        sessionId: 's1',
+        role: 'user',
+        content: 'persisted message',
+        createdAt: '2024-01-01T00:00:00.000Z'
+      }
     ])
 
     await useChatStore.getState().loadSessions()
@@ -417,8 +600,13 @@ describe('acceptance 11.12 — sessions persist across "reload" simulation', () 
 
     vi.mocked(ipc.chat['sessions.list']).mockResolvedValueOnce(sessionData as any)
     vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValueOnce([
-      { id: 1, sessionId: 's1', role: 'user', content: 'persisted message',
-        createdAt: '2024-01-01T00:00:00.000Z' }
+      {
+        id: 1,
+        sessionId: 's1',
+        role: 'user',
+        content: 'persisted message',
+        createdAt: '2024-01-01T00:00:00.000Z'
+      }
     ])
 
     await useChatStore.getState().loadSessions()
@@ -433,14 +621,18 @@ describe('acceptance 11.12 — sessions persist across "reload" simulation', () 
 })
 
 describe('acceptance 11.13–11.14 — attachment edge cases (store-level)', () => {
-  afterEach(() => { resetStore(); vi.clearAllMocks() })
+  afterEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
 
   it('pushAttachment stores the attachment in session state', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [] }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     const att = { type: 'file' as const, path: '/very/long/path/note.md', title: 'note.md' }
@@ -466,7 +658,8 @@ describe('acceptance 11.13–11.14 — attachment edge cases (store-level)', () 
           ]
         })
       },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     useChatStore.getState().removeAttachment(0)
@@ -480,7 +673,8 @@ describe('acceptance 11.13–11.14 — attachment edge cases (store-level)', () 
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [] }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     const att = { type: 'file' as const, path: '/notes/file.md', title: 'file.md' }
@@ -492,29 +686,66 @@ describe('acceptance 11.13–11.14 — attachment edge cases (store-level)', () 
 })
 
 describe.skip('acceptance 11.17 — profile switch updates session.profileId', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('switching profile from dropdown updates session.profileId in store', async () => {
     useProfilesStore.setState({
       profiles: [
-        { id: 'p1', name: 'OpenAI', provider: 'openai', baseUrl: null, model: 'gpt-4o',
-          temperature: 0.7, topP: 1, maxTokens: null, apiKeyRef: null,
-          createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' },
-        { id: 'p2', name: 'Llama', provider: 'ollama', baseUrl: 'http://localhost:11434',
-          model: 'llama3.1', temperature: 0.7, topP: 1, maxTokens: null, apiKeyRef: null,
-          createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' }
+        {
+          id: 'p1',
+          name: 'OpenAI',
+          provider: 'openai',
+          baseUrl: null,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          topP: 1,
+          maxTokens: null,
+          apiKeyRef: null,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z'
+        },
+        {
+          id: 'p2',
+          name: 'Llama',
+          provider: 'ollama',
+          baseUrl: 'http://localhost:11434',
+          model: 'llama3.1',
+          temperature: 0.7,
+          topP: 1,
+          maxTokens: null,
+          apiKeyRef: null,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z'
+        }
       ]
     })
 
     seedPage(
-      [{ id: 's1', title: 'Test Chat', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: 'p1' }],
+      [
+        {
+          id: 's1',
+          title: 'Test Chat',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: 'p1'
+        }
+      ],
       's1',
       { s1: mkSlot() }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
 
     const chip = await screen.findByTestId('chat-profile-chip')
     expect(chip.textContent).toContain('OpenAI')
@@ -534,58 +765,121 @@ describe.skip('acceptance 11.17 — profile switch updates session.profileId', (
   it('profile chip shows "noProfile" when session has no profileId', async () => {
     useProfilesStore.setState({
       profiles: [
-        { id: 'p1', name: 'OpenAI', provider: 'openai', baseUrl: null, model: 'gpt-4o',
-          temperature: 0.7, topP: 1, maxTokens: null, apiKeyRef: null,
-          createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' }
+        {
+          id: 'p1',
+          name: 'OpenAI',
+          provider: 'openai',
+          baseUrl: null,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          topP: 1,
+          maxTokens: null,
+          apiKeyRef: null,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z'
+        }
       ]
     })
 
     seedPage(
-      [{ id: 's1', title: 'No Profile', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'No Profile',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot() }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     const chip = await screen.findByTestId('chat-profile-chip')
     expect(chip.textContent).toContain('未配置')
   })
 })
 
 describe.skip('acceptance — ChatBanner missing profile', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('shows missing-profile banner when no profiles exist (11.8)', async () => {
     useProfilesStore.setState({ profiles: [] })
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot() }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
 
     expect(await screen.findByTestId('chat-missing-profile-banner')).toBeTruthy()
-    expect(screen.getByTestId('chat-banner-settings-link').getAttribute('href')).toBe('/settings/ai')
+    expect(screen.getByTestId('chat-banner-settings-link').getAttribute('href')).toBe(
+      '/settings/ai'
+    )
   })
 
   it('hides banner when profiles exist', async () => {
     useProfilesStore.setState({
       profiles: [
-        { id: 'p1', name: 'OpenAI', provider: 'openai', baseUrl: null, model: 'gpt-4o',
-          temperature: 0.7, topP: 1, maxTokens: null, apiKeyRef: null,
-          createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' }
+        {
+          id: 'p1',
+          name: 'OpenAI',
+          provider: 'openai',
+          baseUrl: null,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          topP: 1,
+          maxTokens: null,
+          apiKeyRef: null,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z'
+        }
       ]
     })
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       { s1: mkSlot() }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await screen.findByTestId('chat-main')
     await new Promise((r) => setTimeout(r, 50))
     expect(screen.queryByTestId('chat-missing-profile-banner')).toBeFalsy()
@@ -593,74 +887,140 @@ describe.skip('acceptance — ChatBanner missing profile', () => {
 })
 
 describe.skip('acceptance — ApprovalPanel integration with Chat page', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { resetStore(); vi.clearAllMocks() })
-  afterEach(() => { cleanup(); uninstallChatStreamSubscriber() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    resetStore()
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    cleanup()
+    uninstallChatStreamSubscriber()
+  })
 
   it('approval panel slides in (width=320) when pending approvals exist (11.6)', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
           status: 'awaiting-approval',
-          pendingApprovals: [{
-            callId: 'c1', toolName: 'update_frontmatter',
-            args: { before: { tags: ['a'] }, after: { tags: ['a', 'b'] } },
-            reason: 'Update tags', receivedAt: 1
-          }]
+          pendingApprovals: [
+            {
+              callId: 'c1',
+              toolName: 'update_frontmatter',
+              args: { before: { tags: ['a'] }, after: { tags: ['a', 'b'] } },
+              reason: 'Update tags',
+              receivedAt: 1
+            }
+          ]
         })
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     const panel = screen.getByTestId('chat-approval')
     expect(panel.style.width).toBe('320px')
   })
 
   it('approve button calls approveTool through store (11.6)', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
           status: 'awaiting-approval',
-          pendingApprovals: [{
-            callId: 'c1', toolName: 'list_tags',
-            args: { path: 'a.md' }, reason: '', receivedAt: 1
-          }]
+          pendingApprovals: [
+            {
+              callId: 'c1',
+              toolName: 'list_tags',
+              args: { path: 'a.md' },
+              reason: '',
+              receivedAt: 1
+            }
+          ]
         })
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await userEvent.click(screen.getByTestId('approval-approve-btn'))
     expect(ipc.chat.approveTool).toHaveBeenCalledWith('c1', undefined)
   })
 
   it('reject button calls rejectTool through store (11.7)', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
           status: 'awaiting-approval',
-          pendingApprovals: [{
-            callId: 'c1', toolName: 'list_tags',
-            args: { path: 'a.md' }, reason: '', receivedAt: 1
-          }]
+          pendingApprovals: [
+            {
+              callId: 'c1',
+              toolName: 'list_tags',
+              args: { path: 'a.md' },
+              reason: '',
+              receivedAt: 1
+            }
+          ]
         })
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     await userEvent.click(screen.getByTestId('approval-reject-btn'))
     expect(ipc.chat.rejectTool).toHaveBeenCalledWith('c1')
   })
 
   it('queue indicator shows "还有 N 条待审" for multiple pending (11.7)', async () => {
     seedPage(
-      [{ id: 's1', title: 'Test', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }],
+      [
+        {
+          id: 's1',
+          title: 'Test',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }
+      ],
       's1',
       {
         s1: mkSlot({
@@ -674,28 +1034,37 @@ describe.skip('acceptance — ApprovalPanel integration with Chat page', () => {
       }
     )
 
-    render(<MemoryRouter><Chat /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <Chat />
+      </MemoryRouter>
+    )
     const indicator = screen.getByTestId('approval-queue-indicator')
     expect(indicator.textContent).toMatch(/2/)
   })
 })
 
 describe('acceptance — Stream subscriber fires events into store', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   beforeEach(async () => {
     resetStore()
     vi.clearAllMocks()
     const { __setChatTokenBatching } = await import('@/stores/chat')
     __setChatTokenBatching(false)
   })
-  afterEach(() => { uninstallChatStreamSubscriber() })
+  afterEach(() => {
+    uninstallChatStreamSubscriber()
+  })
 
   it('token events lazily create + append the streaming assistant message', () => {
     useChatStore.setState({
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [] }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -708,7 +1077,7 @@ describe('acceptance — Stream subscriber fires events into store', () => {
     expect(slot?.messages[0]).toMatchObject({
       role: 'assistant',
       text: 'Hi',
-      status: 'streaming',
+      status: 'streaming'
     })
   })
 
@@ -717,7 +1086,8 @@ describe('acceptance — Stream subscriber fires events into store', () => {
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [] }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -739,12 +1109,19 @@ describe('acceptance — Stream subscriber fires events into store', () => {
       bySession: {
         s1: mkSlot({
           messages: [
-            { id: 'a', role: 'assistant' as const, text: 'partial text', status: 'streaming' as const, createdAt: 0 },
+            {
+              id: 'a',
+              role: 'assistant' as const,
+              text: 'partial text',
+              status: 'streaming' as const,
+              createdAt: 0
+            }
           ],
-          status: 'streaming',
-        }),
+          status: 'streaming'
+        })
       },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -761,7 +1138,8 @@ describe('acceptance — Stream subscriber fires events into store', () => {
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [], status: 'streaming' }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -778,7 +1156,8 @@ describe('acceptance — Stream subscriber fires events into store', () => {
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [], status: 'streaming' }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -803,7 +1182,8 @@ describe('acceptance — Stream subscriber fires events into store', () => {
       sessions: [{ id: 's1', title: 'T', createdAt: 1, updatedAt: 1, profileId: null }],
       activeSessionId: 's1',
       bySession: { s1: mkSlot({ messages: [], status: 'streaming' }) },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -829,11 +1209,18 @@ describe('acceptance — Stream subscriber fires events into store', () => {
           messages: [],
           status: 'awaiting-approval',
           pendingApprovals: [
-            { callId: 'c1', toolName: 'write_file', args: {}, reason: 'need approval', receivedAt: 1 }
+            {
+              callId: 'c1',
+              toolName: 'write_file',
+              args: {},
+              reason: 'need approval',
+              receivedAt: 1
+            }
           ]
         })
       },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()
@@ -859,7 +1246,8 @@ describe('acceptance — Stream subscriber fires events into store', () => {
         s1: mkSlot({ messages: [] }),
         s2: mkSlot({ messages: [] })
       },
-      sessionsLoading: false, sessionsError: null
+      sessionsLoading: false,
+      sessionsError: null
     })
 
     installChatStreamSubscriber()

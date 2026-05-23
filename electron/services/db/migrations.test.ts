@@ -63,7 +63,9 @@ describe('runMigrations', () => {
     runMigrations(db, dir)
     expect(db.pragma('user_version', { simple: true })).toBe(2)
     const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
     expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
   })
@@ -76,7 +78,9 @@ describe('runMigrations', () => {
     runMigrations(db, dir)
     expect(db.pragma('user_version', { simple: true })).toBe(2)
     const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      )
       .all() as Array<{ name: string }>
     expect(tables.map((t) => t.name)).toEqual(['a', 'b'])
   })
@@ -89,7 +93,6 @@ describe('runMigrations', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(1)
   })
 })
-
 
 describe('runMigrations error handling', () => {
   let dir: string
@@ -136,7 +139,9 @@ describe('migration 003 ops_log', () => {
   it('create ops_log table with correct columns', () => {
     writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE t1(x INTEGER);')
     writeFileSync(join(dir, '002_fts.sql'), 'CREATE TABLE t2(x INTEGER);')
-    writeFileSync(join(dir, '003_ops_log.sql'), `
+    writeFileSync(
+      join(dir, '003_ops_log.sql'),
+      `
       CREATE TABLE ops_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         op TEXT NOT NULL,
@@ -147,7 +152,8 @@ describe('migration 003 ops_log', () => {
       CREATE INDEX idx_ops_log_ts ON ops_log(ts DESC);
       CREATE INDEX idx_ops_log_op_ts ON ops_log(op, ts DESC);
       PRAGMA user_version = 3;
-    `)
+    `
+    )
     db.pragma('user_version = 0')
     runMigrations(db, dir)
     const status = db.pragma('user_version', { simple: true }) as number
@@ -175,7 +181,9 @@ describe('migration 003 ops_log', () => {
   it('creates idx_ops_log_ts and idx_ops_log_op_ts', () => {
     writeFileSync(join(dir, '001_init.sql'), 'CREATE TABLE t1(x INTEGER);')
     writeFileSync(join(dir, '002_fts.sql'), 'CREATE TABLE t2(x INTEGER);')
-    writeFileSync(join(dir, '003_ops_log.sql'), `
+    writeFileSync(
+      join(dir, '003_ops_log.sql'),
+      `
       CREATE TABLE ops_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         op TEXT NOT NULL,
@@ -186,7 +194,8 @@ describe('migration 003 ops_log', () => {
       CREATE INDEX idx_ops_log_ts ON ops_log(ts DESC);
       CREATE INDEX idx_ops_log_op_ts ON ops_log(op, ts DESC);
       PRAGMA user_version = 3;
-    `)
+    `
+    )
     db.pragma('user_version = 0')
     runMigrations(db, dir)
     const idx = db

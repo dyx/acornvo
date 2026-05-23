@@ -23,7 +23,11 @@ export function EditorErrorState(): JSX.Element {
           type="button"
           className="rounded border border-[color:var(--color-line-1)] px-3 py-1 text-sm"
           onClick={async () => {
-            try { await ipc.file.openExternal(err.path) } catch { /* silent */ }
+            try {
+              await ipc.file.openExternal(err.path)
+            } catch {
+              /* silent */
+            }
           }}
         >
           {t('editor.open_external')}

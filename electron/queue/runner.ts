@@ -41,7 +41,11 @@ export interface QueueRunnerDeps {
   tickMs?: number
   now?: () => number
   opsLog?: (record: { op: string; path: string; meta?: Record<string, unknown> }) => void
-  log?: (level: 'debug' | 'info' | 'warn' | 'error', msg: string, ctx?: Record<string, unknown>) => void
+  log?: (
+    level: 'debug' | 'info' | 'warn' | 'error',
+    msg: string,
+    ctx?: Record<string, unknown>
+  ) => void
 }
 
 interface KindEntry extends RegisterOpts {
@@ -178,8 +182,7 @@ export function createQueueRunner(deps: QueueRunnerDeps): QueueRunner {
       return
     }
     // retry
-    const supplied =
-      Number.isFinite(result.delayMs) && result.delayMs > 0 ? result.delayMs : null
+    const supplied = Number.isFinite(result.delayMs) && result.delayMs > 0 ? result.delayMs : null
     const delay = supplied ?? nextDelay(job.attempts)
     if (delay === null) deps.store.markFailed(job.id, result.reason)
     else deps.store.markRetry(job.id, delay, result.reason)

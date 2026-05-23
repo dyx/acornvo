@@ -20,7 +20,10 @@ export function createJobsHandlers(deps: JobsHandlerDeps) {
         throw new IpcError('E_INVALID_ARGS', 'E_INVALID_ARGS: limit must be a non-negative integer')
       }
       if (!Number.isInteger(filter.offset) || filter.offset < 0) {
-        throw new IpcError('E_INVALID_ARGS', 'E_INVALID_ARGS: offset must be a non-negative integer')
+        throw new IpcError(
+          'E_INVALID_ARGS',
+          'E_INVALID_ARGS: offset must be a non-negative integer'
+        )
       }
       return deps.getStore().list(filter)
     },

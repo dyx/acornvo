@@ -8,7 +8,8 @@ vi.mock('@/ipc/client', () => ({
         if (ns === 'general') return { locale: 'zh-CN', autoBackup: 'off' }
         if (ns === 'appearance') return { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' }
         if (ns === 'ai') return { defaultProfileId: null }
-        if (ns === 'browser') return { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
+        if (ns === 'browser')
+          return { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
         if (ns === 'update') return { autoCheck: true }
         throw new Error('unknown ns')
       }),
@@ -50,10 +51,12 @@ describe('useSettingsStore', () => {
   it('installSettingsSubscriber merges incoming settings:changed events', async () => {
     type Payload = { ns: string; key: string; newValue: unknown }
     let captured: ((p: Payload) => void) | null = null
-    ;(ipc.on as unknown as ReturnType<typeof vi.fn>).mockImplementation((_chan: string, cb: (p: Payload) => void) => {
-      captured = cb
-      return () => {}
-    })
+    ;(ipc.on as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (_chan: string, cb: (p: Payload) => void) => {
+        captured = cb
+        return () => {}
+      }
+    )
     installSettingsSubscriber()
     expect(captured).not.toBeNull()
     captured!({ ns: 'appearance', key: 'theme', newValue: 'light' })

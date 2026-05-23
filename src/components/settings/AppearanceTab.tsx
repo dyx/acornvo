@@ -12,7 +12,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select'
 
 const FONT_FALLBACK = ['system-ui', 'Georgia', 'SF Mono', 'Courier New']
@@ -61,7 +61,9 @@ export function AppearanceTab(): JSX.Element {
           {(['system', 'light', 'dark'] as const).map((value) => (
             <div key={value} className="flex items-center space-x-2">
               <RadioGroupItem value={value} id={`theme-${value}`} />
-              <Label htmlFor={`theme-${value}`} className="font-normal">{t(`settings.appearance.theme.${value}`)}</Label>
+              <Label htmlFor={`theme-${value}`} className="font-normal">
+                {t(`settings.appearance.theme.${value}`)}
+              </Label>
             </div>
           ))}
         </RadioGroup>
@@ -81,7 +83,9 @@ export function AppearanceTab(): JSX.Element {
               debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
             }}
           />
-          <span className="text-sm text-muted-foreground w-8 text-right">{appearance.fontScale.toFixed(1)}x</span>
+          <span className="text-sm text-muted-foreground w-8 text-right">
+            {appearance.fontScale.toFixed(1)}x
+          </span>
         </div>
       </div>
 

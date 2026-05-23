@@ -43,14 +43,20 @@ function rowToProfile(row: ProfileRow): AiProviderProfile {
 
 function list(): AiProviderProfile[] {
   const db = getGlobalDb()
-  const rows = db.prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC').all() as ProfileRow[]
+  const rows = db
+    .prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC')
+    .all() as ProfileRow[]
   return rows.map(rowToProfile)
 }
 
 function create(input: ProfileCreateInput): { id: string } {
   const db = getGlobalDb()
   const exists = db.prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ?').get(input.name)
-  if (exists) throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: name "${input.name}" is already in use`)
+  if (exists)
+    throw new IpcError(
+      'E_DUPLICATE_NAME',
+      `E_DUPLICATE_NAME: name "${input.name}" is already in use`
+    )
 
   const id = uuidv4()
   const apiKeyRef = input.apiKey && input.apiKey.length > 0 ? `ai.key.${id}` : null
@@ -63,11 +69,13 @@ function create(input: ProfileCreateInput): { id: string } {
   }
 
   try {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO ai_provider_profiles
         (id, name, provider, base_url, model, temperature, top_p, max_tokens, api_key_ref, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       id,
       input.name,
       input.provider,
@@ -99,12 +107,21 @@ function create(input: ProfileCreateInput): { id: string } {
 
 function update(id: string, patch: ProfileUpdateInput): void {
   const db = getGlobalDb()
-  const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as ProfileRow | undefined
-  if (!row) throw new IpcError('E_PROFILE_NOT_FOUND', `E_PROFILE_NOT_FOUND: profile ${id} not found`)
+  const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as
+    | ProfileRow
+    | undefined
+  if (!row)
+    throw new IpcError('E_PROFILE_NOT_FOUND', `E_PROFILE_NOT_FOUND: profile ${id} not found`)
 
   if (patch.name !== undefined && patch.name !== row.name) {
-    const conflict = db.prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ? AND id != ?').get(patch.name, id)
-    if (conflict) throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: name "${patch.name}" is already in use`)
+    const conflict = db
+      .prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ? AND id != ?')
+      .get(patch.name, id)
+    if (conflict)
+      throw new IpcError(
+        'E_DUPLICATE_NAME',
+        `E_DUPLICATE_NAME: name "${patch.name}" is already in use`
+      )
   }
 
   // Determine new api_key_ref from patch.apiKey semantics
@@ -121,7 +138,8 @@ function update(id: string, patch: ProfileUpdateInput): void {
   }
 
   const now = new Date().toISOString()
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE ai_provider_profiles SET
       name = COALESCE(?, name),
       provider = COALESCE(?, provider),
@@ -133,7 +151,8 @@ function update(id: string, patch: ProfileUpdateInput): void {
       api_key_ref = ?,
       updated_at = ?
     WHERE id = ?
-  `).run(
+  `
+  ).run(
     patch.name ?? null,
     patch.provider ?? null,
     patch.baseUrl ?? null,
@@ -156,7 +175,8 @@ function deleteProfile(id: string): void {
   const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?').get(id) as
     | { api_key_ref: string | null }
     | undefined
-  if (!row) throw new IpcError('E_PROFILE_NOT_FOUND', `E_PROFILE_NOT_FOUND: profile ${id} not found`)
+  if (!row)
+    throw new IpcError('E_PROFILE_NOT_FOUND', `E_PROFILE_NOT_FOUND: profile ${id} not found`)
 
   // Delete secret first, then the row.
   if (row.api_key_ref) {
@@ -171,9 +191,9 @@ function deleteProfile(id: string): void {
   // If this was the default profile, fall back to the first remaining or null
   const ai = settingsStore.get('ai')
   if (ai.defaultProfileId === id) {
-    const next = db.prepare('SELECT id FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1').get() as
-      | { id: string }
-      | undefined
+    const next = db
+      .prepare('SELECT id FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1')
+      .get() as { id: string } | undefined
     settingsStore.set('ai', { defaultProfileId: next?.id ?? null })
   }
 

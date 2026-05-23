@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "tailwindcss-animate";
 
 :root {
@@ -29,9 +29,10 @@ html {
   --color-sky: oklch(0.55 0.06 230);
   --color-sky-bg: oklch(0.93 0.02 230);
 
-  --font-serif: "Noto Serif SC", "Source Han Serif", "Songti SC", Georgia, serif;
-  --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif', 'Songti SC', Georgia, serif;
+  --font-sans:
+    'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
 
   /* shadcn/ui mappings to acorn theme */
   --color-background: var(--color-paper);
@@ -53,14 +54,14 @@ html {
   --color-border: var(--color-line);
   --color-input: var(--color-line);
   --color-ring: var(--color-acorn);
-  
+
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-paper: oklch(0.2 0.015 60);
   --color-paper-2: oklch(0.22 0.018 60);
   --color-paper-3: oklch(0.25 0.02 60);

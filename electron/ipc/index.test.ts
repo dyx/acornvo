@@ -4,7 +4,9 @@ import { indexHandlers } from './index'
 import { _resetForTest as resetIndexer, _setStateForTest } from '../services/indexer'
 
 describe('index IPC handlers', () => {
-  beforeEach(() => { resetIndexer() })
+  beforeEach(() => {
+    resetIndexer()
+  })
 
   it('status() returns the indexer status', () => {
     const s = indexHandlers.status()

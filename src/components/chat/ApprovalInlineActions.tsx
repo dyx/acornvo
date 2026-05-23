@@ -23,30 +23,25 @@ export function ApprovalInlineActions({
   return (
     <>
       <div className="flex items-center gap-2 mt-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => void approveTool(activeSessionId, callId)}
           className="h-8 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-900"
         >
           <CheckIcon className="size-3.5 mr-1.5" />
           {t('chat.approval.approve')}
         </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => void rejectTool(activeSessionId, callId)}
           className="h-8 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900"
         >
           <XIcon className="size-3.5 mr-1.5" />
           {t('chat.approval.reject')}
         </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setDrawerOpen(true)}
-          className="h-8"
-        >
+        <Button variant="outline" size="sm" onClick={() => setDrawerOpen(true)} className="h-8">
           <Edit2Icon className="size-3.5 mr-1.5" />
           {t('chat.approval.edit')}
         </Button>

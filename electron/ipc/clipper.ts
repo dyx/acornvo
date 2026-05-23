@@ -10,7 +10,10 @@ export interface ClipperHandlerDeps {
     clip: (webContents: WebContents) => Promise<{ runId: ClipRunId; preview: ClipPreview }>
     saveClip: (input: ClipInput) => Promise<ClipResult>
     cancelClip: (runId: ClipRunId) => void
-    reextract: (runId: ClipRunId, webContents: WebContents) => Promise<{ runId: ClipRunId; preview: ClipPreview }>
+    reextract: (
+      runId: ClipRunId,
+      webContents: WebContents
+    ) => Promise<{ runId: ClipRunId; preview: ClipPreview }>
   }
   getWebContentsForTab: (tabId: TabId) => WebContents | null
 }

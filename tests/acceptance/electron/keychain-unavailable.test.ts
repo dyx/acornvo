@@ -16,7 +16,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../../../electron/services/db'
 import { profilesStore } from '../../../electron/settings/profiles'
 import { settingsHandlers } from '../../../electron/ipc/settings'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../../../electron/settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../../../electron/settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -24,7 +27,8 @@ const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
 describe('acceptance 9.13 — keychain unavailable', () => {
   let db: Database.Database
   beforeEach(() => {
-    resetSafe(); initSafeStorageAvailability()
+    resetSafe()
+    initSafeStorageAvailability()
     db = new Database(':memory:')
     runMigrations(db, MIGRATIONS)
     reqCur.mockReturnValue(db)
@@ -36,7 +40,9 @@ describe('acceptance 9.13 — keychain unavailable', () => {
   })
 
   it('creating a profile WITH apiKey throws E_KEYCHAIN_UNAVAILABLE', () => {
-    expect(() => profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-x' })).toThrow(/E_KEYCHAIN_UNAVAILABLE/)
+    expect(() =>
+      profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-x' })
+    ).toThrow(/E_KEYCHAIN_UNAVAILABLE/)
     const n = db.prepare('SELECT COUNT(*) AS n FROM ai_provider_profiles').get() as { n: number }
     expect(n.n).toBe(0)
   })

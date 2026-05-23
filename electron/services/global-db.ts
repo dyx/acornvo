@@ -91,17 +91,21 @@ export function initGlobalDb(): void {
   // Migration: Add grove_id if schema already existed without it
   try {
     const tableInfo = db.pragma('table_info(perf_samples)') as { name: string }[]
-    if (!tableInfo.some(c => c.name === 'grove_id')) {
+    if (!tableInfo.some((c) => c.name === 'grove_id')) {
       db.prepare('ALTER TABLE perf_samples ADD COLUMN grove_id TEXT').run()
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   try {
     const aiUsageInfo = db.pragma('table_info(ai_usage)') as { name: string }[]
-    if (!aiUsageInfo.some(c => c.name === 'grove_id')) {
+    if (!aiUsageInfo.some((c) => c.name === 'grove_id')) {
       db.prepare('ALTER TABLE ai_usage ADD COLUMN grove_id TEXT').run()
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   globalDb = db
 }
@@ -115,7 +119,11 @@ export function getGlobalDb(): Database.Database {
 
 export function __resetGlobalDbForTest(): void {
   if (globalDb) {
-    try { globalDb.close() } catch { /* ignore */ }
+    try {
+      globalDb.close()
+    } catch {
+      /* ignore */
+    }
     globalDb = null
   }
 }

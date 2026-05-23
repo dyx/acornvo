@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createPipeline, type PipelineDeps } from './pipeline'
-import type {
-  Extractor,
-  ExtractorDeps
-} from './extract'
+import type { Extractor, ExtractorDeps } from './extract'
 import type { Dedupe } from './dedupe'
 
 vi.mock('../obs/logger', () => ({
@@ -202,9 +199,7 @@ describe('pipeline.saveClip', () => {
     })
     // create mock that returns the path it received
     const clipsDao = {
-      create: vi.fn().mockImplementation(async (input: any) =>
-        makeClip({ path: input.path })
-      ),
+      create: vi.fn().mockImplementation(async (input: any) => makeClip({ path: input.path })),
       getByUrl: vi.fn().mockResolvedValue(null)
     }
     const deps = makeDefaultDeps({ writeAtomic, clipsDao })
@@ -225,10 +220,11 @@ describe('pipeline.saveClip', () => {
   })
 
   it('throws E_WRITE_FAILED after exhausting EEXIST retries', async () => {
-    const writeAtomic = vi.fn().mockRejectedValue(Object.assign(
-      new Error('EEXIST: file already exists'),
-      { code: 'EEXIST' }
-    ))
+    const writeAtomic = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error('EEXIST: file already exists'), { code: 'EEXIST' })
+      )
     const deps = makeDefaultDeps({ writeAtomic })
     const pipeline = createPipeline(deps)
     const wc = { getURL: () => 'https://example.com/article', isDestroyed: () => false } as any
@@ -305,7 +301,9 @@ describe('pipeline.reextract', () => {
       length: 15
     })
     deps.extract = makeExtractor(reExtractResult)
-    ;(deps.transform as ReturnType<typeof vi.fn>).mockReturnValue('# Updated Article\n\nUpdated content')
+    ;(deps.transform as ReturnType<typeof vi.fn>).mockReturnValue(
+      '# Updated Article\n\nUpdated content'
+    )
 
     const updated = await pipeline.reextract(start.runId, wc)
     expect(updated.preview.title).toBe('Updated Article')

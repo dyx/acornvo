@@ -42,7 +42,8 @@ describe('buildSlug', () => {
   })
 
   it('truncates English slugified title to ≤50 chars', () => {
-    const longTitle = 'A Very Long Title About Many Different Topics In The World Of Technology And Science And Everything Else'
+    const longTitle =
+      'A Very Long Title About Many Different Topics In The World Of Technology And Science And Everything Else'
     const slug = buildSlug({
       title: longTitle,
       url: 'https://example.com/long'

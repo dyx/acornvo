@@ -88,8 +88,8 @@ describe('computeDiff', () => {
     expect(result.stats.added).toBe(2)
 
     // Check kinds
-    const leftKinds = result.left.lines.map(l => l.kind)
-    const rightKinds = result.right.lines.map(l => l.kind)
+    const leftKinds = result.left.lines.map((l) => l.kind)
+    const rightKinds = result.right.lines.map((l) => l.kind)
     expect(leftKinds).toEqual(['del', 'del', 'equal', 'equal'])
     expect(rightKinds).toEqual(['equal', 'equal', 'add', 'add'])
   })
@@ -116,8 +116,8 @@ describe('computeDiff', () => {
     expect(result.left.lines.length).toBe(result.right.lines.length)
 
     // Line numbers should be sequential (no gaps) for real rows
-    const leftNums = result.left.lines.filter(l => l.num > 0).map(l => l.num)
-    const rightNums = result.right.lines.filter(l => l.num > 0).map(l => l.num)
+    const leftNums = result.left.lines.filter((l) => l.num > 0).map((l) => l.num)
+    const rightNums = result.right.lines.filter((l) => l.num > 0).map((l) => l.num)
     expect(leftNums).toEqual([1, 2, 3, 4])
     expect(rightNums).toEqual([1, 2, 3, 4])
 

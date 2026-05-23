@@ -20,7 +20,11 @@ export type NewGroveDialogProps = {
   onCreated: (grovePath: string) => void
 }
 
-export function NewGroveDialog({ open, onOpenChange, onCreated }: NewGroveDialogProps): JSX.Element {
+export function NewGroveDialog({
+  open,
+  onOpenChange,
+  onCreated
+}: NewGroveDialogProps): JSX.Element {
   const { t } = useTranslation()
   const [parentDir, setParentDir] = useState<string>('')
   const [name, setName] = useState<string>('')

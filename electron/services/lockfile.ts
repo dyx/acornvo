@@ -6,9 +6,7 @@ import { writeFileAtomic } from './fs-atomic'
 import { groveLockFile, groveAcornDir } from './paths'
 import { logger } from './logger'
 
-export type AcquireOutcome =
-  | { status: 'acquired' }
-  | { status: 'held'; holder: LockInfo }
+export type AcquireOutcome = { status: 'acquired' } | { status: 'held'; holder: LockInfo }
 
 async function readLock(path: string): Promise<LockInfo | null> {
   let raw: string

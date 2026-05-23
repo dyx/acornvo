@@ -47,12 +47,16 @@ export function AppRail(): JSX.Element {
         <span className="text-[24px]">🌰</span>
       </button>
       <div className="mb-2.5 h-[1px] w-7 bg-[color:var(--color-line)]" />
-      
+
       <div className="flex flex-1 flex-col gap-1 w-full items-center">
-        {ENTRIES.filter(e => !e.bottom).map(entry => <RailBtn key={entry.to} entry={entry} t={t} />)}
+        {ENTRIES.filter((e) => !e.bottom).map((entry) => (
+          <RailBtn key={entry.to} entry={entry} t={t} />
+        ))}
       </div>
       <div className="flex flex-col gap-1 w-full items-center">
-        {ENTRIES.filter(e => e.bottom).map(entry => <RailBtn key={entry.to} entry={entry} t={t} />)}
+        {ENTRIES.filter((e) => e.bottom).map((entry) => (
+          <RailBtn key={entry.to} entry={entry} t={t} />
+        ))}
       </div>
     </nav>
   )
@@ -60,11 +64,15 @@ export function AppRail(): JSX.Element {
 
 function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
   const label = t(entry.labelKey)
-  const baseCls = 'flex w-14 flex-col items-center gap-[3px] rounded-[10px] border py-2 transition-colors cursor-pointer font-inherit'
-  
+  const baseCls =
+    'flex w-14 flex-col items-center gap-[3px] rounded-[10px] border py-2 transition-colors cursor-pointer font-inherit'
+
   if (entry.disabled) {
     return (
-      <div className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`} title={t('settings.common.comingSoon')}>
+      <div
+        className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`}
+        title={t('settings.common.comingSoon')}
+      >
         <entry.Icon size={18} />
         <span className="font-serif text-[11px] font-medium">{label}</span>
       </div>

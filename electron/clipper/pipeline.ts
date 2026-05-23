@@ -17,6 +17,7 @@ import { getPerf } from '../obs/perf'
 import { enrich } from './enrich'
 import { buildSlug } from './slug'
 import type { WebContents } from 'electron'
+import { settingsStore } from '../settings/store'
 
 // --- types ---
 
@@ -110,23 +111,26 @@ function rootName(path: string): string {
 export function createPipeline(deps: PipelineDeps) {
   const flights = new Map<ClipRunId, InFlightState>()
 
-  function clipError(code: ClipErrorCode, message: string, context?: Record<string, unknown>): IpcError {
+  function clipError(
+    code: ClipErrorCode,
+    message: string,
+    context?: Record<string, unknown>
+  ): IpcError {
     return new IpcError(code as any, message, context)
   }
 
   async function clip(webContents: WebContents): Promise<ClipStartResult> {
-    const rawUrl = webContents.isDestroyed() ? '' : (webContents.getURL() || '')
+    const rawUrl = webContents.isDestroyed() ? '' : webContents.getURL() || ''
     if (!HTTP_RE.test(rawUrl)) {
       throw clipError('E_UNSUPPORTED_SCHEME', `cannot clip non-http URL: ${rawUrl || '(empty)'}`)
     }
 
     const existing = await deps.dedupe.findExisting(rawUrl)
     if (existing) {
-      throw clipError(
-        'E_ALREADY_CLIPPED',
-        `URL already clipped as id=${existing.id}`,
-        { existingId: existing.id, existingPath: existing.path }
-      )
+      throw clipError('E_ALREADY_CLIPPED', `URL already clipped as id=${existing.id}`, {
+        existingId: existing.id,
+        existingPath: existing.path
+      })
     }
 
     // Extract
@@ -258,7 +262,8 @@ export function createPipeline(deps: PipelineDeps) {
 
     // Enqueue ai-review-clip job (phase-14)
     const queue = getQueueBootstrap()
-    if (queue) {
+    const profileId = settingsStore.get('ai').defaultProfileId
+    if (queue && profileId) {
       try {
         queue.store.enqueue(
           'ai-review-clip',
@@ -267,10 +272,27 @@ export function createPipeline(deps: PipelineDeps) {
         )
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
-        logger().error('clipper', { op: 'enqueue-review', ok: false, msg: 'ai-review-clip enqueue failed; clip already saved', meta: { clipId: clipResult.id, error: msg } })
+        logger().error('clipper', {
+          op: 'enqueue-review',
+          ok: false,
+          msg: 'ai-review-clip enqueue failed; clip already saved',
+          meta: { clipId: clipResult.id, error: msg }
+        })
       }
+    } else if (!profileId) {
+      logger().info('clipper', {
+        op: 'enqueue-review',
+        ok: false,
+        msg: 'no ai profile configured; skipping ai-review-clip',
+        meta: { clipId: clipResult.id }
+      })
     } else {
-      logger().warn('clipper', { op: 'enqueue-review', ok: false, msg: 'queue bootstrap unavailable; ai-review-clip not enqueued', meta: { clipId: clipResult.id } })
+      logger().warn('clipper', {
+        op: 'enqueue-review',
+        ok: false,
+        msg: 'queue bootstrap unavailable; ai-review-clip not enqueued',
+        meta: { clipId: clipResult.id }
+      })
     }
 
     end?.({ ok: true, meta: { clipId: clipResult.id, path } })

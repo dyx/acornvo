@@ -64,11 +64,7 @@ export function ConflictsTab({ onSelectConflict }: ConflictsTabProps): JSX.Eleme
   return (
     <div data-testid="conflicts-tab" className="flex flex-col h-full overflow-y-auto">
       {items.map((item) => (
-        <ConflictListItem
-          key={item.id}
-          conflict={item}
-          onClick={handleClick}
-        />
+        <ConflictListItem key={item.id} conflict={item} onClick={handleClick} />
       ))}
     </div>
   )

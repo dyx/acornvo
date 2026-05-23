@@ -32,10 +32,15 @@ export function QuickSwitcher(): JSX.Element {
     const curOnPick = useSearchStore.getState().quickSwitcher.onPick
     pushRecent(item.path)
     if (curOnPick) {
-      const fs = items.find((i) => i.path === item.path) ?? ({ path: item.path, title: item.title ?? null, clipped_at: null } as any)
+      const fs =
+        items.find((i) => i.path === item.path) ??
+        ({ path: item.path, title: item.title ?? null, clipped_at: null } as any)
       curOnPick(fs)
     } else {
-      navigate('/editor/' + encodeURIComponent(item.path))
+      void import('@/stores/library').then(({ useLibraryStore }) => {
+        useLibraryStore.getState().select(item.path)
+      })
+      navigate('/library')
     }
     close()
   }
@@ -54,7 +59,10 @@ export function QuickSwitcher(): JSX.Element {
       if (!target) return
       if (mod) {
         pushRecent(target.path)
-        navigate('/library?focus=' + encodeURIComponent(target.path))
+        void import('@/stores/library').then(({ useLibraryStore }) => {
+          useLibraryStore.getState().select(target.path)
+        })
+        navigate('/library')
         close()
       } else {
         pickItem(target)
@@ -65,7 +73,12 @@ export function QuickSwitcher(): JSX.Element {
   const recent = useSearchStore((s) => s.quickSwitcher.recent)
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) close() }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) close()
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay
           className="fixed inset-0 z-50 bg-background/40 backdrop-blur-sm"
@@ -76,7 +89,9 @@ export function QuickSwitcher(): JSX.Element {
           className="fixed left-1/2 top-[15vh] z-50 -translate-x-1/2 w-[600px] max-w-[90vw] rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
         >
           <Dialog.Title className="sr-only">QuickSwitcher</Dialog.Title>
-          <Dialog.Description className="sr-only">{t('search.placeholder_quick')}</Dialog.Description>
+          <Dialog.Description className="sr-only">
+            {t('search.placeholder_quick')}
+          </Dialog.Description>
           <div className="border-b border-border p-3">
             <input
               ref={inputRef}
@@ -96,7 +111,9 @@ export function QuickSwitcher(): JSX.Element {
                   {t('search.recent')}
                 </li>
                 {recent.length === 0 ? (
-                  <li className="px-3 py-2 text-sm text-muted-foreground">{t('search.no_results')}</li>
+                  <li className="px-3 py-2 text-sm text-muted-foreground">
+                    {t('search.no_results')}
+                  </li>
                 ) : (
                   recent.map((p, i) => (
                     <li
@@ -105,7 +122,9 @@ export function QuickSwitcher(): JSX.Element {
                       aria-selected={i === selectedIndex ? 'true' : 'false'}
                       className={
                         'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer ' +
-                        (i === selectedIndex ? 'bg-accent text-accent-foreground border-l-2 border-primary' : '')
+                        (i === selectedIndex
+                          ? 'bg-accent text-accent-foreground border-l-2 border-primary'
+                          : '')
                       }
                       onMouseEnter={() => setSelectedIndex(i)}
                       onClick={() => pickItem({ path: p })}
@@ -125,7 +144,9 @@ export function QuickSwitcher(): JSX.Element {
                   aria-selected={i === selectedIndex ? 'true' : 'false'}
                   className={
                     'flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer ' +
-                    (i === selectedIndex ? 'bg-accent text-accent-foreground border-l-2 border-primary' : '')
+                    (i === selectedIndex
+                      ? 'bg-accent text-accent-foreground border-l-2 border-primary'
+                      : '')
                   }
                   onMouseEnter={() => setSelectedIndex(i)}
                   onClick={() => pickItem(it)}

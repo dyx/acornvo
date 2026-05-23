@@ -16,9 +16,7 @@ import { safeResolve } from '../services/path-safety'
 import * as groveSvc from '../services/grove'
 
 type FileQueryHandlers = {
-  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (
-    ...args: infer A
-  ) => infer R
+  [M in keyof IpcContract['files']]: IpcContract['files'][M] extends (...args: infer A) => infer R
     ? (...args: A) => R | Promise<Awaited<R>>
     : never
 }
@@ -83,7 +81,7 @@ async function list(
         ) AS rn
       FROM jobs
       WHERE kind = 'ai-review-clip'
-    ) rj ON rj.clip_id = CAST(c.id AS TEXT) AND rj.rn = 1
+    ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
     WHERE
       (:category IS NULL OR f.category = :category OR f.category LIKE :category || '/%')
       AND (:pathPrefix IS NULL OR f.path LIKE :pathPrefix || '%')
@@ -151,7 +149,7 @@ async function get(path: string): Promise<{
   body: string
 }> {
   const db = dbService.requireCurrent()
-  let row: (Omit<ListRow, 'total'>) | undefined
+  let row: Omit<ListRow, 'total'> | undefined
   try {
     row = db
       .prepare(
@@ -174,13 +172,11 @@ async function get(path: string): Promise<{
              ) AS rn
            FROM jobs
            WHERE kind = 'ai-review-clip'
-         ) rj ON rj.clip_id = CAST(c.id AS TEXT) AND rj.rn = 1
+         ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
          WHERE f.path = ?
          GROUP BY f.path`
       )
-      .get(path) as
-      | (Omit<ListRow, 'total'>)
-      | undefined
+      .get(path) as Omit<ListRow, 'total'> | undefined
   } catch (err) {
     throw new IpcError('E_INTERNAL', `files.get: ${(err as Error).message}`)
   }

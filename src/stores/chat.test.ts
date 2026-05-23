@@ -5,11 +5,31 @@ vi.mock('@/ipc/client', () => ({
   ipc: {
     chat: {
       'sessions.list': vi.fn().mockResolvedValue([
-        { id: 's1', title: '会话 A', createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-02T00:00:00.000Z', profileId: null },
-        { id: 's2', title: '会话 B', createdAt: '2024-01-03T00:00:00.000Z', updatedAt: '2024-01-04T00:00:00.000Z', profileId: 'p1' }
+        {
+          id: 's1',
+          title: '会话 A',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-02T00:00:00.000Z',
+          profileId: null
+        },
+        {
+          id: 's2',
+          title: '会话 B',
+          createdAt: '2024-01-03T00:00:00.000Z',
+          updatedAt: '2024-01-04T00:00:00.000Z',
+          profileId: 'p1'
+        }
       ]),
       'sessions.getMessages': vi.fn().mockResolvedValue([]),
-      'sessions.create': vi.fn().mockResolvedValue({ id: 'snew', title: '未命名对话', createdAt: '2024-06-01T00:00:00.000Z', updatedAt: '2024-06-01T00:00:00.000Z', profileId: null }),
+      'sessions.create': vi
+        .fn()
+        .mockResolvedValue({
+          id: 'snew',
+          title: '未命名对话',
+          createdAt: '2024-06-01T00:00:00.000Z',
+          updatedAt: '2024-06-01T00:00:00.000Z',
+          profileId: null
+        }),
       'sessions.rename': vi.fn().mockResolvedValue({ ok: true }),
       'sessions.delete': vi.fn().mockResolvedValue({ ok: true }),
       'sessions.updateProfile': vi.fn().mockResolvedValue({ ok: true }),
@@ -74,7 +94,13 @@ describe('chat store — sessions', () => {
 
   it('selectSession switches activeSessionId and lazy-loads messages', async () => {
     vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValueOnce([
-      { id: 1, sessionId: 's2', role: 'user' as const, content: 'hi', createdAt: '2024-01-05T00:00:00.000Z' }
+      {
+        id: 1,
+        sessionId: 's2',
+        role: 'user' as const,
+        content: 'hi',
+        createdAt: '2024-01-05T00:00:00.000Z'
+      }
     ])
     await useChatStore.getState().loadSessions()
     await useChatStore.getState().selectSession('s2')
@@ -86,7 +112,15 @@ describe('chat store — sessions', () => {
 
   it('selectSession maps IPC SessionMessage fields to ChatMessage', async () => {
     vi.mocked(ipc.chat['sessions.getMessages']).mockResolvedValueOnce([
-      { id: 42, sessionId: 's2', role: 'assistant' as const, content: 'hello', toolCalls: undefined, toolCallId: undefined, createdAt: '2024-02-01T12:00:00.000Z' }
+      {
+        id: 42,
+        sessionId: 's2',
+        role: 'assistant' as const,
+        content: 'hello',
+        toolCalls: undefined,
+        toolCallId: undefined,
+        createdAt: '2024-02-01T12:00:00.000Z'
+      }
     ])
     await useChatStore.getState().loadSessions()
     await useChatStore.getState().selectSession('s2')
@@ -169,12 +203,20 @@ describe('chat store — actions', () => {
     useChatStore.setState((cur) => ({
       bySession: {
         ...cur.bySession,
-        s1: { ...(cur.bySession.s1 ?? {} as any), loaded: true, messages: [], pendingApprovals: [], pendingAttachments: [], status: 'streaming', error: null }
+        s1: {
+          ...(cur.bySession.s1 ?? ({} as any)),
+          loaded: true,
+          messages: [],
+          pendingApprovals: [],
+          pendingAttachments: [],
+          status: 'streaming',
+          error: null
+        }
       }
     }))
-    await expect(
-      useChatStore.getState().sendUserMessage({ text: 'hi' })
-    ).rejects.toMatchObject({ code: 'E_BUSY' })
+    await expect(useChatStore.getState().sendUserMessage({ text: 'hi' })).rejects.toMatchObject({
+      code: 'E_BUSY'
+    })
     expect(ipc.chat.sendUserMessage).not.toHaveBeenCalled()
   })
 
@@ -187,7 +229,18 @@ describe('chat store — actions', () => {
     useChatStore.setState((s) => ({
       bySession: {
         ...s.bySession,
-        s1: { ...(s.bySession.s1 ?? {}), status: 'streaming' as const, messages: [], pendingApprovals: [], pendingAttachments: [], pendingPromptText: '', loaded: true, error: null, lastUserText: '', lastUserAttachments: [] }
+        s1: {
+          ...(s.bySession.s1 ?? {}),
+          status: 'streaming' as const,
+          messages: [],
+          pendingApprovals: [],
+          pendingAttachments: [],
+          pendingPromptText: '',
+          loaded: true,
+          error: null,
+          lastUserText: '',
+          lastUserAttachments: []
+        }
       }
     }))
     await useChatStore.getState().cancelStream()
@@ -214,7 +267,7 @@ describe('chat store — actions', () => {
       bySession: {
         ...cur.bySession,
         s1: {
-          ...(cur.bySession.s1 ?? {} as any),
+          ...(cur.bySession.s1 ?? ({} as any)),
           loaded: true,
           messages: [],
           pendingApprovals: [
@@ -240,7 +293,7 @@ describe('chat store — actions', () => {
       bySession: {
         ...cur.bySession,
         s1: {
-          ...(cur.bySession.s1 ?? {} as any),
+          ...(cur.bySession.s1 ?? ({} as any)),
           loaded: true,
           messages: [],
           pendingApprovals: [
@@ -307,7 +360,9 @@ describe('chat stream subscriber', () => {
     Object.keys(handlers).forEach((k) => delete handlers[k])
     vi.mocked(ipc.chat as any).onStream = vi.fn((sessionId: string, cb: (evt: any) => void) => {
       handlers[sessionId] = cb
-      return () => { delete handlers[sessionId] }
+      return () => {
+        delete handlers[sessionId]
+      }
     })
     await useChatStore.getState().loadSessions()
     installChatStreamSubscriber()
@@ -321,7 +376,7 @@ describe('chat stream subscriber', () => {
     expect(slot?.messages[0]).toMatchObject({
       role: 'assistant',
       text: '你',
-      status: 'streaming',
+      status: 'streaming'
     })
     expect(slot?.status).toBe('streaming')
   })
@@ -356,12 +411,10 @@ describe('chat stream subscriber', () => {
       bySession: {
         ...s.bySession,
         s1: {
-          ...(s.bySession.s1 ?? {} as any),
-          pendingApprovals: [
-            { callId: 'A', toolName: 'fa', args: {}, reason: '', receivedAt: 0 },
-          ],
-        },
-      },
+          ...(s.bySession.s1 ?? ({} as any)),
+          pendingApprovals: [{ callId: 'A', toolName: 'fa', args: {}, reason: '', receivedAt: 0 }]
+        }
+      }
     }))
     handlers['s1']({ type: 'done' })
     expect(useChatStore.getState().bySession.s1?.status).toBe('awaiting-approval')
@@ -377,8 +430,8 @@ describe('chat stream subscriber', () => {
         role: 'assistant' as const,
         content: 'hello',
         toolCalls: [{ id: 'A', name: 'fa', args: {} }],
-        createdAt: new Date('2024-06-01T00:00:00.000Z').toISOString(),
-      },
+        createdAt: new Date('2024-06-01T00:00:00.000Z').toISOString()
+      }
     })
     const slot = useChatStore.getState().bySession.s1
     expect(slot?.messages).toHaveLength(1)
@@ -387,7 +440,7 @@ describe('chat stream subscriber', () => {
       role: 'assistant',
       text: 'hello',
       status: 'streaming',
-      toolCalls: [{ id: 'A', name: 'fa', args: {} }],
+      toolCalls: [{ id: 'A', name: 'fa', args: {} }]
     })
   })
 
@@ -403,7 +456,7 @@ describe('chat stream subscriber', () => {
       type: 'tool.result',
       callId: 'X1',
       tool: 'search',
-      result: { ok: true, data: [1] },
+      result: { ok: true, data: [1] }
     })
     const slot = useChatStore.getState().bySession.s1
     const toolMsg = slot?.messages.find((m) => m.role === 'tool')

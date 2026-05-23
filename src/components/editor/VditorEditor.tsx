@@ -11,9 +11,10 @@ export function VditorEditor(): JSX.Element {
   const vditorRef = useRef<Vditor | null>(null)
   const { t } = useTranslation()
   const { toast } = useToast()
-  const initialBody = useEditorStore.getState().state.kind === 'ready'
-    ? (useEditorStore.getState().state as { body: string }).body
-    : ''
+  const initialBody =
+    useEditorStore.getState().state.kind === 'ready'
+      ? (useEditorStore.getState().state as { body: string }).body
+      : ''
 
   useEffect(() => {
     if (!elRef.current) return
@@ -40,7 +41,11 @@ export function VditorEditor(): JSX.Element {
     })
     vditorRef.current = v
     return () => {
-      try { v.destroy() } catch { /* Vditor may throw if its DOM element was already removed */ }
+      try {
+        v.destroy()
+      } catch {
+        /* Vditor may throw if its DOM element was already removed */
+      }
       vditorRef.current = null
     }
     // We deliberately do NOT depend on `initialBody` — Vditor owns its own

@@ -45,7 +45,9 @@ import { useSettingsStore } from '@/stores/settings'
 import { installSettingsEffects, __resetEffectsForTest } from '@/stores/settings-effects'
 
 describe('acceptance 9.2 — theme persists across reload', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   beforeEach(() => {
     useSettingsStore.setState(useSettingsStore.getInitialState(), true)
     __resetEffectsForTest()

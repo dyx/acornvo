@@ -6,7 +6,10 @@ import { isSafeStorageAvailable } from './safe-storage-state'
 
 function requireKeychain(): void {
   if (!isSafeStorageAvailable()) {
-    throw new IpcError('E_KEYCHAIN_UNAVAILABLE', 'E_KEYCHAIN_UNAVAILABLE: OS keychain (safeStorage) is not available')
+    throw new IpcError(
+      'E_KEYCHAIN_UNAVAILABLE',
+      'E_KEYCHAIN_UNAVAILABLE: OS keychain (safeStorage) is not available'
+    )
   }
 }
 
@@ -14,11 +17,13 @@ function set(key: string, plain: string): void {
   requireKeychain()
   const enc = safeStorage.encryptString(plain)
   const db = getGlobalDb()
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO settings_secrets (key, encrypted_value, updated_at)
     VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET encrypted_value = excluded.encrypted_value, updated_at = excluded.updated_at
-  `).run(key, enc, new Date().toISOString())
+  `
+  ).run(key, enc, new Date().toISOString())
 }
 
 function get(key: string): string | null {

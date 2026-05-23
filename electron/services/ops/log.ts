@@ -71,9 +71,9 @@ export function list(opts: OpsLogListOptions): OpsLogListResult {
   try {
     const where = opts.op ? `WHERE op = ?` : ``
     const args: unknown[] = opts.op ? [opts.op] : []
-    const totalRow = db
-      .prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`)
-      .get(...args) as { n: number }
+    const totalRow = db.prepare(`SELECT COUNT(*) AS n FROM ops_log ${where}`).get(...args) as {
+      n: number
+    }
     const itemRows = db
       .prepare(
         `SELECT id, op, path, ts, meta_json FROM ops_log ${where}

@@ -17,7 +17,10 @@ import { dbService } from '../../../electron/services/db'
 import { profilesStore } from '../../../electron/settings/profiles'
 import { secretsStore } from '../../../electron/settings/secrets'
 import { getProfileDecryptedKey } from '../../../electron/settings/profile-key'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../../../electron/settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../../../electron/settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -25,7 +28,8 @@ const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
 describe('acceptance 9.6 — edit without apiKey preserves original', () => {
   let db: Database.Database
   beforeEach(() => {
-    resetSafe(); initSafeStorageAvailability()
+    resetSafe()
+    initSafeStorageAvailability()
     db = new Database(':memory:')
     runMigrations(db, MIGRATIONS)
     reqCur.mockReturnValue(db)
@@ -33,7 +37,12 @@ describe('acceptance 9.6 — edit without apiKey preserves original', () => {
   afterEach(() => db.close())
 
   it('update with apiKey=undefined leaves the secret + ref intact', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-orig' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-orig'
+    })
     expect(getProfileDecryptedKey(id)).toBe('sk-orig')
     profilesStore.update(id, { name: 'p-renamed' })
     expect(getProfileDecryptedKey(id)).toBe('sk-orig')
@@ -44,7 +53,8 @@ describe('acceptance 9.6 — edit without apiKey preserves original', () => {
 describe('acceptance 9.7 — edit with apiKey="" clears the secret', () => {
   let db: Database.Database
   beforeEach(() => {
-    resetSafe(); initSafeStorageAvailability()
+    resetSafe()
+    initSafeStorageAvailability()
     db = new Database(':memory:')
     runMigrations(db, MIGRATIONS)
     reqCur.mockReturnValue(db)
@@ -52,7 +62,12 @@ describe('acceptance 9.7 — edit with apiKey="" clears the secret', () => {
   afterEach(() => db.close())
 
   it('update with apiKey="" removes the secret row AND nulls api_key_ref', () => {
-    const { id } = profilesStore.create({ name: 'p', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-orig' })
+    const { id } = profilesStore.create({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk-orig'
+    })
     const ref = `ai.key.${id}`
     expect(secretsStore.get(ref)).toBe('sk-orig')
     profilesStore.update(id, { apiKey: '' })

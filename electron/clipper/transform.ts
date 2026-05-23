@@ -18,9 +18,7 @@ function makeService(): TurndownService {
   td.addRule('fencedCodeWithLanguage', {
     filter: function (node) {
       return (
-        node.nodeName === 'PRE' &&
-        node.firstChild != null &&
-        node.firstChild.nodeName === 'CODE'
+        node.nodeName === 'PRE' && node.firstChild != null && node.firstChild.nodeName === 'CODE'
       )
     },
     replacement: function (_content, node) {

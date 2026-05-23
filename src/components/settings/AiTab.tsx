@@ -39,7 +39,10 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       </div>
 
       {!keychainAvailable && (
-        <div role="alert" className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {t('settings.secret.unavailable')}
         </div>
       )}
@@ -49,7 +52,10 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       ) : (
         <ul className="space-y-2">
           {profiles.map((p) => (
-            <li key={p.id} className="flex items-center justify-between rounded border bg-background px-3 py-2">
+            <li
+              key={p.id}
+              className="flex items-center justify-between rounded border bg-background px-3 py-2"
+            >
               <div className="flex flex-col">
                 <span className="text-sm font-medium">
                   {p.name}
@@ -65,21 +71,30 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
               </div>
               <div className="flex gap-2 text-sm">
                 {ai.defaultProfileId !== p.id && (
-                  <button type="button" className="rounded border px-2 py-1 hover:bg-muted"
-                    onClick={() => void setAi({ defaultProfileId: p.id })}>
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 hover:bg-muted"
+                    onClick={() => void setAi({ defaultProfileId: p.id })}
+                  >
                     {t('settings.ai.setDefault')}
                   </button>
                 )}
-                <button type="button" className="rounded border px-2 py-1 hover:bg-muted"
-                  onClick={() => setDialogProfile(p)}>
+                <button
+                  type="button"
+                  className="rounded border px-2 py-1 hover:bg-muted"
+                  onClick={() => setDialogProfile(p)}
+                >
                   {t('settings.ai.editProfile')}
                 </button>
-                <button type="button" className="rounded border border-destructive px-2 py-1 text-destructive hover:bg-destructive/10"
+                <button
+                  type="button"
+                  className="rounded border border-destructive px-2 py-1 text-destructive hover:bg-destructive/10"
                   onClick={() => {
                     if (window.confirm(t('settings.ai.confirmDelete', { name: p.name }))) {
                       void remove(p.id)
                     }
-                  }}>
+                  }}
+                >
                   {t('settings.ai.deleteProfile')}
                 </button>
               </div>

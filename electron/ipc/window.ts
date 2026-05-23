@@ -6,8 +6,6 @@ export const windowHandlers = {
   async themeApplied(effective: 'light' | 'dark') {
     if (process.platform !== 'win32') return
     if (!mainWindow || mainWindow.isDestroyed()) return
-    mainWindow.setTitleBarOverlay(
-      effective === 'dark' ? OVERLAY_DARK : OVERLAY_LIGHT
-    )
+    mainWindow.setTitleBarOverlay(effective === 'dark' ? OVERLAY_DARK : OVERLAY_LIGHT)
   }
 }

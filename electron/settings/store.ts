@@ -20,8 +20,10 @@ const emitter = new EventEmitter()
 
 function readNamespaceRaw(ns: SettingsNamespace): Record<string, unknown> {
   const db = getGlobalDb()
-  const rows = db.prepare('SELECT key, value_json FROM settings WHERE ns = ?').all(ns) as
-    { key: string; value_json: string }[]
+  const rows = db.prepare('SELECT key, value_json FROM settings WHERE ns = ?').all(ns) as {
+    key: string
+    value_json: string
+  }[]
   const out: Record<string, unknown> = {}
   for (const r of rows) {
     out[r.key] = JSON.parse(r.value_json)
@@ -31,7 +33,10 @@ function readNamespaceRaw(ns: SettingsNamespace): Record<string, unknown> {
 
 function get<NS extends SettingsNamespace>(ns: NS): SettingsByNs[NS] {
   if (!isKnownNamespace(ns)) {
-    throw new IpcError('E_UNKNOWN_NAMESPACE', `E_UNKNOWN_NAMESPACE: unknown settings namespace: ${ns}`)
+    throw new IpcError(
+      'E_UNKNOWN_NAMESPACE',
+      `E_UNKNOWN_NAMESPACE: unknown settings namespace: ${ns}`
+    )
   }
   const raw = readNamespaceRaw(ns)
   return { ...getDefault(ns), ...raw } as SettingsByNs[NS]
@@ -39,7 +44,10 @@ function get<NS extends SettingsNamespace>(ns: NS): SettingsByNs[NS] {
 
 function set<NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[NS]>): void {
   if (!isKnownNamespace(ns)) {
-    throw new IpcError('E_UNKNOWN_NAMESPACE', `E_UNKNOWN_NAMESPACE: unknown settings namespace: ${ns}`)
+    throw new IpcError(
+      'E_UNKNOWN_NAMESPACE',
+      `E_UNKNOWN_NAMESPACE: unknown settings namespace: ${ns}`
+    )
   }
   const db = getGlobalDb()
   const before = get(ns)

@@ -92,9 +92,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
               <span className="font-serif">{current.name}</span>
             </>
           ) : (
-            <span className="text-[color:var(--color-ink-3)]">
-              {t('switcher.selectGrove')}
-            </span>
+            <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
           )}
           <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
         </button>
@@ -109,10 +107,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
               void handleSwitch(item.id)
             }}
           >
-            <span
-              className="h-2 w-2 rounded-sm"
-              style={{ background: dotColor[item.color] }}
-            />
+            <span className="h-2 w-2 rounded-sm" style={{ background: dotColor[item.color] }} />
             <span className="flex-1 truncate">{item.name}</span>
             {!item.valid ? (
               <span className="font-mono text-[10px] text-[color:var(--color-berry)]">

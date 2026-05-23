@@ -22,13 +22,23 @@ import { useProfilesStore } from '@/stores/profiles'
 import { AiTab } from './AiTab'
 
 const sampleProfile = {
-  id: 'a', name: 'OpenAI Prod', provider: 'openai' as const, baseUrl: null, model: 'gpt-4o',
-  temperature: 0.7, topP: 1.0, maxTokens: null, apiKeyRef: 'ai.key.a',
-  createdAt: '2026-05-03', updatedAt: '2026-05-03'
+  id: 'a',
+  name: 'OpenAI Prod',
+  provider: 'openai' as const,
+  baseUrl: null,
+  model: 'gpt-4o',
+  temperature: 0.7,
+  topP: 1.0,
+  maxTokens: null,
+  apiKeyRef: 'ai.key.a',
+  createdAt: '2026-05-03',
+  updatedAt: '2026-05-03'
 }
 
 describe('AiTab', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   beforeEach(() => {
     useSettingsStore.setState(useSettingsStore.getInitialState(), true)
     useProfilesStore.setState(useProfilesStore.getInitialState(), true)
@@ -61,11 +71,21 @@ describe('AiTab', () => {
 
   it('clicking "set default" calls setAi({ defaultProfileId })', async () => {
     const setAi = vi.fn().mockResolvedValue(undefined)
-    vi.mocked(ipc.settings.aiProfilesList).mockResolvedValue([{
-      id: 'a', name: 'p', provider: 'openai' as const, baseUrl: null, model: 'gpt-4o',
-      temperature: 0.7, topP: 1.0, maxTokens: null, apiKeyRef: null,
-      createdAt: '2026-05-03', updatedAt: '2026-05-03'
-    }])
+    vi.mocked(ipc.settings.aiProfilesList).mockResolvedValue([
+      {
+        id: 'a',
+        name: 'p',
+        provider: 'openai' as const,
+        baseUrl: null,
+        model: 'gpt-4o',
+        temperature: 0.7,
+        topP: 1.0,
+        maxTokens: null,
+        apiKeyRef: null,
+        createdAt: '2026-05-03',
+        updatedAt: '2026-05-03'
+      }
+    ])
     useSettingsStore.setState({ ai: { defaultProfileId: null }, setAi })
     render(<AiTab keychainAvailable={true} />)
     fireEvent.click(await screen.findByRole('button', { name: /设为默认/i }))
@@ -73,11 +93,21 @@ describe('AiTab', () => {
   })
 
   it('shows "默认" badge on the default profile', async () => {
-    vi.mocked(ipc.settings.aiProfilesList).mockResolvedValue([{
-      id: 'a', name: 'p', provider: 'openai' as const, baseUrl: null, model: 'gpt-4o',
-      temperature: 0.7, topP: 1.0, maxTokens: null, apiKeyRef: null,
-      createdAt: '2026-05-03', updatedAt: '2026-05-03'
-    }])
+    vi.mocked(ipc.settings.aiProfilesList).mockResolvedValue([
+      {
+        id: 'a',
+        name: 'p',
+        provider: 'openai' as const,
+        baseUrl: null,
+        model: 'gpt-4o',
+        temperature: 0.7,
+        topP: 1.0,
+        maxTokens: null,
+        apiKeyRef: null,
+        createdAt: '2026-05-03',
+        updatedAt: '2026-05-03'
+      }
+    ])
     useSettingsStore.setState({ ai: { defaultProfileId: 'a' } })
     render(<AiTab keychainAvailable={true} />)
     await waitFor(() => screen.getByText('p'))

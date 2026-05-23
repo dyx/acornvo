@@ -12,11 +12,21 @@ import { useBrowserStore, setBrowserPort, setBrowserEventPort } from '@/stores/b
 import type { TabStateChangedPayload } from '@shared/browser-types'
 
 Element.prototype.getBoundingClientRect = vi.fn(() => ({
-  x: 0, y: 0, width: 800, height: 600, top: 0, right: 800, bottom: 600, left: 0, toJSON: () => {}
+  x: 0,
+  y: 0,
+  width: 800,
+  height: 600,
+  top: 0,
+  right: 800,
+  bottom: 600,
+  left: 0,
+  toJSON: () => {}
 }))
 Element.prototype.setPointerCapture = vi.fn()
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn()
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn()
 }))
 
 const { ipcMocks } = vi.hoisted(() => {
@@ -135,7 +145,17 @@ describe('10.1 AppRail → /browser', () => {
 describe('10.11/10.12 bookmark search + tag filter', () => {
   it('bookmarks.list with q filters by title or url', async () => {
     ipcMocks.bookmarks.list.mockResolvedValueOnce({
-      items: [{ id: 1, url: 'https://news.com', title: 'News', favicon: null, tags: [], createdAt: '', updatedAt: '' }],
+      items: [
+        {
+          id: 1,
+          url: 'https://news.com',
+          title: 'News',
+          favicon: null,
+          tags: [],
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
       total: 1
     })
     await ipcMocks.bookmarks.list({ q: 'news', limit: 200, offset: 0 })
@@ -144,7 +164,17 @@ describe('10.11/10.12 bookmark search + tag filter', () => {
 
   it('bookmarks.list with tag filters by tag', async () => {
     ipcMocks.bookmarks.list.mockResolvedValueOnce({
-      items: [{ id: 2, url: 'https://ai.com', title: 'AI', favicon: null, tags: ['ai'], createdAt: '', updatedAt: '' }],
+      items: [
+        {
+          id: 2,
+          url: 'https://ai.com',
+          title: 'AI',
+          favicon: null,
+          tags: ['ai'],
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
       total: 1
     })
     await ipcMocks.bookmarks.list({ tag: 'ai', limit: 200, offset: 0 })
@@ -158,7 +188,20 @@ describe('10.13 LRU suspend/resume', () => {
     const { port } = renderApp()
     // Seed the store directly rather than waiting for auto-create
     useBrowserStore.setState({
-      tabs: [{ id: 't0', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
+      tabs: [
+        {
+          id: 't0',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'about:blank',
+          isClipped: false
+        }
+      ],
       activeTabId: 't0'
     })
     setBrowserPort(port as any)
@@ -176,7 +219,20 @@ describe('10.13 LRU suspend/resume', () => {
     const { port } = renderApp()
     const id = 't-suspended'
     useBrowserStore.setState({
-      tabs: [{ id, url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: true, savedUrl: 'https://x', isClipped: false }],
+      tabs: [
+        {
+          id,
+          url: 'https://x',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: true,
+          savedUrl: 'https://x',
+          isClipped: false
+        }
+      ],
       activeTabId: null
     })
     setBrowserPort(port as any)
@@ -193,14 +249,18 @@ describe('10.14 viewport debounce', () => {
   it('setViewport coalesces within 16ms', async () => {
     vi.useFakeTimers()
     const { port } = renderApp('/browser')
-    act(() => { vi.advanceTimersByTime(20) })
+    act(() => {
+      vi.advanceTimersByTime(20)
+    })
     expect(port.setViewport).toHaveBeenCalled()
 
     const calls = port.setViewport.mock.calls.length
     for (let i = 0; i < 5; i++) {
       useBrowserStore.getState().setViewport({ x: 0, y: 0, width: 100 + i, height: 100 + i })
     }
-    act(() => { vi.advanceTimersByTime(20) })
+    act(() => {
+      vi.advanceTimersByTime(20)
+    })
 
     expect(port.setViewport.mock.calls.length).toBe(calls + 1)
     expect(port.setViewport).toHaveBeenLastCalledWith({ x: 0, y: 0, width: 104, height: 104 })

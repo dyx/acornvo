@@ -41,7 +41,11 @@ afterEach(cleanup)
 
 function renderError(error: string): void {
   useEditorStore.setState({ state: { kind: 'error', path: 'a.md', error } })
-  render(<MemoryRouter><EditorErrorState /></MemoryRouter>)
+  render(
+    <MemoryRouter>
+      <EditorErrorState />
+    </MemoryRouter>
+  )
 }
 
 describe('EditorErrorState', () => {

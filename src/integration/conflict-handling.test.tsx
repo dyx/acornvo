@@ -430,9 +430,7 @@ describe('9.9 同秒再次 另存副本 → -1 后缀', () => {
     })
 
     // Mock exists: base path taken, -1 suffix free
-    ipcMock.file.exists
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false)
+    ipcMock.file.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
 
     ipcMock.file.write.mockResolvedValueOnce({ mtimeMs: 2, sha256: 'x' })
     ipcMock.conflict.writeSnapshot.mockResolvedValueOnce({ id: 's' })

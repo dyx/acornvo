@@ -9,7 +9,7 @@ import {
   upsertFts,
   listAllPaths,
   deleteFile,
-  type FileRow,
+  type FileRow
 } from './index-queries'
 import { parseFile } from './frontmatter'
 import { getQueueBootstrap } from '../queue'
@@ -62,7 +62,7 @@ function setState(next: IndexStateName, error?: string): void {
   emitter.emit('stateChange', state())
 }
 
-export const status = state  // alias
+export const status = state // alias
 
 export function _injectDbForTest(db: Database.Database): void {
   _db = db
@@ -190,7 +190,7 @@ export async function startScan(groveRoot: string): Promise<void> {
         frontmatter_json: JSON.stringify(frontmatter),
         created_at:
           typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
-        updated_at: Date.now(),
+        updated_at: Date.now()
       }
 
       const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
@@ -215,10 +215,7 @@ export async function startScan(groveRoot: string): Promise<void> {
       _scanned++
 
       const now = Date.now()
-      if (
-        _scanned % PROGRESS_FILE_INTERVAL === 0 ||
-        now - lastEmit > PROGRESS_TIME_INTERVAL_MS
-      ) {
+      if (_scanned % PROGRESS_FILE_INTERVAL === 0 || now - lastEmit > PROGRESS_TIME_INTERVAL_MS) {
         progressEmitter.emit('progress', state())
         lastEmit = now
       }
@@ -266,9 +263,8 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       mtime: st.mtimeMs,
       size_bytes: st.size,
       frontmatter_json: JSON.stringify(frontmatter),
-      created_at:
-        typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
-      updated_at: Date.now(),
+      created_at: typeof frontmatter.created_at === 'number' ? frontmatter.created_at : Date.now(),
+      updated_at: Date.now()
     }
 
     const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
@@ -298,7 +294,12 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       try {
         deleteFile(db, relPath)
       } catch (delErr) {
-        logger().warn('indexer', { op: 'delete-row', ok: false, msg: 'failed to delete row on ENOENT', meta: { path: relPath, error: String(delErr) } })
+        logger().warn('indexer', {
+          op: 'delete-row',
+          ok: false,
+          msg: 'failed to delete row on ENOENT',
+          meta: { path: relPath, error: String(delErr) }
+        })
       }
       return
     }
@@ -308,12 +309,26 @@ export async function upsertFromFs(relPath: string): Promise<void> {
     const reason = e instanceof Error ? e.message : String(e)
     if (queue) {
       try {
-        queue.store.enqueue('index-retry', { path: relPath, reason }, { dedupeKey: `idx:${relPath}` })
+        queue.store.enqueue(
+          'index-retry',
+          { path: relPath, reason },
+          { dedupeKey: `idx:${relPath}` }
+        )
       } catch (enqErr) {
-        logger().error('indexer', { op: 'enqueue-retry', ok: false, msg: 'enqueue index-retry failed', meta: { path: relPath, error: String(enqErr) } })
+        logger().error('indexer', {
+          op: 'enqueue-retry',
+          ok: false,
+          msg: 'enqueue index-retry failed',
+          meta: { path: relPath, error: String(enqErr) }
+        })
       }
     } else {
-      logger().warn('indexer', { op: 'enqueue-retry', ok: false, msg: 'queue not initialised; dropping retry', meta: { path: relPath, reason } })
+      logger().warn('indexer', {
+        op: 'enqueue-retry',
+        ok: false,
+        msg: 'queue not initialised; dropping retry',
+        meta: { path: relPath, reason }
+      })
     }
   }
 }

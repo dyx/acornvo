@@ -18,7 +18,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../services/db'
 import { safeStorage } from 'electron'
 import { secretsStore } from './secrets'
-import { __resetForTest as resetSafeStorage, initSafeStorageAvailability } from './safe-storage-state'
+import {
+  __resetForTest as resetSafeStorage,
+  initSafeStorageAvailability
+} from './safe-storage-state'
 
 const requireCurrentMock = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const isEncAvailableMock = safeStorage.isEncryptionAvailable as unknown as ReturnType<typeof vi.fn>
@@ -62,7 +65,9 @@ describe('secretsStore', () => {
     secretsStore.set('k', 'v1')
     secretsStore.set('k', 'v2')
     expect(secretsStore.get('k')).toBe('v2')
-    const count = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key=?').get('k') as { n: number }
+    const count = db.prepare('SELECT COUNT(*) AS n FROM settings_secrets WHERE key=?').get('k') as {
+      n: number
+    }
     expect(count.n).toBe(1)
   })
 

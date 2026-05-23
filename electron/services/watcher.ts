@@ -5,7 +5,13 @@ import { createHash } from 'node:crypto'
 import { relative } from 'node:path'
 import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
-import { upsertFileWithBodyDelta, syncTags, upsertFts, deleteFile, renameFile } from './index-queries'
+import {
+  upsertFileWithBodyDelta,
+  syncTags,
+  upsertFts,
+  deleteFile,
+  renameFile
+} from './index-queries'
 import { parseFile } from './frontmatter'
 import { _setStateForTest as _indexerSetState } from './indexer'
 import * as opsLog from './ops/log'
@@ -13,10 +19,17 @@ import * as opsLog from './ops/log'
 const SELF_WRITE_TTL_MS = 3000
 const MTIME_TOLERANCE_MS = 50
 
-interface SelfWriteEntry { mtimeMs: number; expiresAt: number }
+interface SelfWriteEntry {
+  mtimeMs: number
+  expiresAt: number
+}
 const selfWrites = new Map<string, SelfWriteEntry>()
 
-export function registerSelfWrite(absPath: string, mtimeMs: number, now: number = Date.now()): void {
+export function registerSelfWrite(
+  absPath: string,
+  mtimeMs: number,
+  now: number = Date.now()
+): void {
   selfWrites.set(absPath, { mtimeMs, expiresAt: now + SELF_WRITE_TTL_MS })
 }
 
@@ -35,7 +48,10 @@ export function shouldIgnore(absPath: string, mtimeMs: number, now: number = Dat
 export function _resetSelfWritesForTest(): void {
   selfWrites.clear()
   batch.clear()
-  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null }
+  if (_flushTimer) {
+    clearTimeout(_flushTimer)
+    _flushTimer = null
+  }
 }
 
 export function _gcSelfWrites(now: number = Date.now()): void {
@@ -44,7 +60,9 @@ export function _gcSelfWrites(now: number = Date.now()): void {
   }
 }
 
-export function _selfWritesSizeForTest(): number { return selfWrites.size }
+export function _selfWritesSizeForTest(): number {
+  return selfWrites.size
+}
 
 let _gcTimer: NodeJS.Timeout | null = null
 
@@ -65,14 +83,24 @@ export function stopSelfWritesGc(): void {
 
 const fileEventEmitter = new EventEmitter()
 
-export function onFileChanged(h: (p: { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }) => void): () => void {
-  fileEventEmitter.on('fileChanged', h); return () => fileEventEmitter.off('fileChanged', h)
+export function onFileChanged(
+  h: (p: {
+    path: string
+    contentHash: string
+    mtime: number
+    frontmatter: Record<string, unknown>
+  }) => void
+): () => void {
+  fileEventEmitter.on('fileChanged', h)
+  return () => fileEventEmitter.off('fileChanged', h)
 }
 export function onFileDeleted(h: (p: { path: string }) => void): () => void {
-  fileEventEmitter.on('fileDeleted', h); return () => fileEventEmitter.off('fileDeleted', h)
+  fileEventEmitter.on('fileDeleted', h)
+  return () => fileEventEmitter.off('fileDeleted', h)
 }
 export function onFileRenamed(h: (p: { oldPath: string; newPath: string }) => void): () => void {
-  fileEventEmitter.on('fileRenamed', h); return () => fileEventEmitter.off('fileRenamed', h)
+  fileEventEmitter.on('fileRenamed', h)
+  return () => fileEventEmitter.off('fileRenamed', h)
 }
 
 // --- Watcher core: start/stop ---
@@ -86,7 +114,11 @@ const RESTART_DELAY_MS = 2000
 
 let _restartInProgress = false
 
-async function tryRestart(intervalMs: number = RESTART_DELAY_MS, attemptsAllowed: number = RESTART_MAX_ATTEMPTS, simulateFailures = 0): Promise<boolean> {
+async function tryRestart(
+  intervalMs: number = RESTART_DELAY_MS,
+  attemptsAllowed: number = RESTART_MAX_ATTEMPTS,
+  simulateFailures = 0
+): Promise<boolean> {
   if (_restartInProgress) return false
   _restartInProgress = true
   try {
@@ -94,9 +126,13 @@ async function tryRestart(intervalMs: number = RESTART_DELAY_MS, attemptsAllowed
     for (let attempt = 1; attempt <= attemptsAllowed; attempt++) {
       await new Promise((r) => setTimeout(r, intervalMs))
       try {
-        if (failuresLeft > 0) { failuresLeft--; throw new Error('simulated restart failure') }
+        if (failuresLeft > 0) {
+          failuresLeft--
+          throw new Error('simulated restart failure')
+        }
         if (!_root || !_db) return false
-        const root = _root, db = _db
+        const root = _root,
+          db = _db
         if (_watcher) await _watcher.close()
         _watcher = null
         await start(root, db)
@@ -118,7 +154,10 @@ function handleWatcherError(_err: unknown): void {
   void tryRestart()
 }
 
-export async function _simulateWatcherErrorForTest(opts: { failRestarts: number; intervalMs?: number }): Promise<void> {
+export async function _simulateWatcherErrorForTest(opts: {
+  failRestarts: number
+  intervalMs?: number
+}): Promise<void> {
   await tryRestart(opts.intervalMs ?? 1, RESTART_MAX_ATTEMPTS, opts.failRestarts)
 }
 
@@ -130,13 +169,18 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
 
   _watcher = chokidar.watch(groveRoot, {
     ignored: [
-      /(^|[/\\])\../,  // dotfiles
+      /(^|[/\\])\../, // dotfiles
       /node_modules/,
-      '**/*.tmp', '**/*~', '**/*.swp',
+      '**/*.tmp',
+      '**/*~',
+      '**/*.swp',
       (p: string) => {
         if (p.endsWith('.md')) return false
-        try { return statSync(p).isFile() }
-        catch { return false }
+        try {
+          return statSync(p).isFile()
+        } catch {
+          return false
+        }
       }
     ],
     persistent: true,
@@ -160,7 +204,10 @@ export async function start(groveRoot: string, db: Database.Database): Promise<v
 }
 
 export async function stop(): Promise<void> {
-  if (_watcher) { await _watcher.close(); _watcher = null }
+  if (_watcher) {
+    await _watcher.close()
+    _watcher = null
+  }
   _root = null
   _db = null
   selfWrites.clear()
@@ -171,7 +218,11 @@ export async function stop(): Promise<void> {
 // --- Watcher core: batching ---
 
 type EventKind = 'add' | 'change' | 'unlink'
-interface EventEntry { kind: EventKind; abs: string; rel: string }
+interface EventEntry {
+  kind: EventKind
+  abs: string
+  rel: string
+}
 
 const FLUSH_DEBOUNCE_MS = 500
 const batch: Map<string, EventEntry> = new Map()
@@ -183,9 +234,11 @@ function toRel(abs: string): string {
 }
 
 function queue(entry: EventEntry): void {
-  batch.set(entry.abs, entry)  // last-write-wins per path
+  batch.set(entry.abs, entry) // last-write-wins per path
   if (_flushTimer) clearTimeout(_flushTimer)
-  _flushTimer = setTimeout(() => { void flush() }, FLUSH_DEBOUNCE_MS)
+  _flushTimer = setTimeout(() => {
+    void flush()
+  }, FLUSH_DEBOUNCE_MS)
 }
 
 function onAddOrChange(abs: string, kind: 'add' | 'change'): void {
@@ -195,7 +248,10 @@ function onUnlink(abs: string): void {
   queue({ kind: 'unlink', abs, rel: toRel(abs) })
 }
 function cancelPendingFlush(): void {
-  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null }
+  if (_flushTimer) {
+    clearTimeout(_flushTimer)
+    _flushTimer = null
+  }
   batch.clear()
 }
 
@@ -203,7 +259,10 @@ function cancelPendingFlush(): void {
 
 async function flush(): Promise<void> {
   _flushTimer = null
-  if (!_db) { batch.clear(); return }
+  if (!_db) {
+    batch.clear()
+    return
+  }
   const events = [...batch.values()]
   batch.clear()
   if (events.length === 0) return
@@ -217,7 +276,13 @@ async function flush(): Promise<void> {
     }
   }
 
-  type Hashed = EventEntry & { body?: string; frontmatter?: Record<string, unknown>; content_hash?: string; mtimeMs?: number; size?: number }
+  type Hashed = EventEntry & {
+    body?: string
+    frontmatter?: Record<string, unknown>
+    content_hash?: string
+    mtimeMs?: number
+    size?: number
+  }
   const enriched: Hashed[] = []
   for (const ev of events) {
     if (ev.kind === 'unlink') {
@@ -233,7 +298,10 @@ async function flush(): Promise<void> {
       const content_hash = createHash('sha256').update(body).digest('hex')
       enriched.push({ ...ev, body, frontmatter, content_hash, mtimeMs: st.mtimeMs, size: st.size })
     } catch (err) {
-      console.error(`[watcher] failed to process ${ev.rel}:`, err instanceof Error ? err.message : String(err))
+      console.error(
+        `[watcher] failed to process ${ev.rel}:`,
+        err instanceof Error ? err.message : String(err)
+      )
     }
   }
 
@@ -241,7 +309,9 @@ async function flush(): Promise<void> {
   const pendingRenames = new Map<string, string>()
   for (const ev of enriched) {
     if (ev.kind !== 'unlink') continue
-    const row = _db!.prepare('SELECT content_hash FROM files WHERE path=?').get(ev.rel) as { content_hash: string } | undefined
+    const row = _db!.prepare('SELECT content_hash FROM files WHERE path=?').get(ev.rel) as
+      | { content_hash: string }
+      | undefined
     if (row) pendingRenames.set(ev.rel, row.content_hash)
   }
 
@@ -276,7 +346,8 @@ async function flush(): Promise<void> {
     for (const ev of enriched) {
       if (ev.kind === 'unlink') continue
       if (renamedNewPaths.has(ev.rel)) continue
-      if (ev.content_hash === undefined || ev.body === undefined || ev.frontmatter === undefined) continue
+      if (ev.content_hash === undefined || ev.body === undefined || ev.frontmatter === undefined)
+        continue
       const row = {
         path: ev.rel,
         title: typeof ev.frontmatter.title === 'string' ? ev.frontmatter.title : null,
@@ -287,7 +358,8 @@ async function flush(): Promise<void> {
         mtime: ev.mtimeMs!,
         size_bytes: ev.size!,
         frontmatter_json: JSON.stringify(ev.frontmatter),
-        created_at: typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),
+        created_at:
+          typeof ev.frontmatter.created_at === 'number' ? ev.frontmatter.created_at : Date.now(),
         updated_at: Date.now()
       }
       const { bodyChanged } = upsertFileWithBodyDelta(_db!, row)
@@ -296,7 +368,9 @@ async function flush(): Promise<void> {
         : []
       syncTags(_db!, row.path, tags)
       if (bodyChanged) {
-        const ftsRowid = (_db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }).rowid
+        const ftsRowid = (
+          _db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
+        ).rowid
         upsertFts(_db!, { rowid: ftsRowid, path: row.path, title: row.title ?? '', body: ev.body! })
       }
     }
@@ -313,7 +387,11 @@ async function flush(): Promise<void> {
   for (const ev of enriched) {
     if (ev.kind === 'unlink') continue
     let isRenameTarget = false
-    for (const newRel of renamedFromTo.values()) if (newRel === ev.rel) { isRenameTarget = true; break }
+    for (const newRel of renamedFromTo.values())
+      if (newRel === ev.rel) {
+        isRenameTarget = true
+        break
+      }
     if (isRenameTarget) continue
     if (ev.content_hash && ev.mtimeMs !== undefined && ev.frontmatter) {
       fileEventEmitter.emit('fileChanged', {

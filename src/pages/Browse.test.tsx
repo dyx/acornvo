@@ -20,8 +20,14 @@ vi.mock('@/ipc/client', () => ({
 
 // jsdom polyfill: getBoundingClientRect returns zeros by default
 Element.prototype.getBoundingClientRect = vi.fn(() => ({
-  x: 0, y: 0, width: 800, height: 600,
-  top: 0, right: 800, bottom: 600, left: 0,
+  x: 0,
+  y: 0,
+  width: 800,
+  height: 600,
+  top: 0,
+  right: 800,
+  bottom: 600,
+  left: 0,
   toJSON: () => {}
 }))
 
@@ -82,7 +88,20 @@ describe('Browse page', () => {
     const port = mockPort()
     setBrowserPort(port)
     useBrowserStore.setState({
-      tabs: [{ id: 'existing', url: 'about:blank', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'about:blank', isClipped: false }],
+      tabs: [
+        {
+          id: 'existing',
+          url: 'about:blank',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'about:blank',
+          isClipped: false
+        }
+      ],
       activeTabId: 'existing'
     })
     render(<Browse />)
@@ -101,7 +120,9 @@ describe('Browse — viewport sync', () => {
     vi.useFakeTimers()
     render(<Browse />)
 
-    act(() => { vi.advanceTimersByTime(20) })
+    act(() => {
+      vi.advanceTimersByTime(20)
+    })
     // Initial getBoundingClientRect() call in useEffect pushes viewport
     expect(port.setViewport).toHaveBeenCalled()
     vi.useRealTimers()
@@ -113,11 +134,15 @@ describe('Browse — viewport sync', () => {
     vi.useFakeTimers()
     render(<Browse />)
 
-    act(() => { vi.advanceTimersByTime(20) })
+    act(() => {
+      vi.advanceTimersByTime(20)
+    })
     const before = (port.setViewport as any).mock.calls.length
 
     useBrowserStore.getState().setBookmarksOpen(true)
-    act(() => { vi.advanceTimersByTime(50) })
+    act(() => {
+      vi.advanceTimersByTime(50)
+    })
 
     expect((port.setViewport as any).mock.calls.length).toBeGreaterThanOrEqual(before)
     vi.useRealTimers()

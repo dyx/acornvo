@@ -6,12 +6,22 @@ import { runMigrations } from '../../../electron/services/db/migrations'
 
 // vi.mock factories are hoisted — use vi.hoisted for mutable state they reference.
 const { registeredListener } = vi.hoisted(() => {
-  const state = { listener: null as ((details: { url: string }, cb: (r: { cancel: boolean }) => void) => void) | null }
+  const state = {
+    listener: null as
+      | ((details: { url: string }, cb: (r: { cancel: boolean }) => void) => void)
+      | null
+  }
   return {
     registeredListener: {
-      get value() { return state.listener },
-      set value(v) { state.listener = v },
-      reset() { state.listener = null }
+      get value() {
+        return state.listener
+      },
+      set value(v) {
+        state.listener = v
+      },
+      reset() {
+        state.listener = null
+      }
     }
   }
 })
@@ -65,13 +75,18 @@ describe('acceptance 9.10 + 9.11 — ad-block toggle', () => {
     settingsStore.__resetSubscribers()
     registeredListener.reset()
   })
-  afterEach(() => { db.close(); resetAdBlock() })
+  afterEach(() => {
+    db.close()
+    resetAdBlock()
+  })
 
   it('starts with blockAds=true → listener cancels googletagmanager', () => {
     initAdBlock({ initialEnabled: true })
     expect(registeredListener.value).not.toBeNull()
     let result: { cancel: boolean } | null = null
-    registeredListener.value!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => { result = r })
+    registeredListener.value!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => {
+      result = r
+    })
     expect(result).toEqual({ cancel: true })
   })
 
@@ -88,7 +103,9 @@ describe('acceptance 9.10 + 9.11 — ad-block toggle', () => {
     settingsStore.set('browser', { blockAds: true })
     expect(registeredListener.value).not.toBeNull()
     let result: { cancel: boolean } | null = null
-    registeredListener.value!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => { result = r })
+    registeredListener.value!({ url: 'https://www.googletagmanager.com/gtm.js' }, (r) => {
+      result = r
+    })
     expect(result).toEqual({ cancel: true })
   })
 })

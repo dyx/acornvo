@@ -7,13 +7,12 @@ export interface SafeResolveOptions {
   realpath?: boolean
 }
 
-export function safeResolve(
-  groveRoot: string,
-  p: string,
-  opts: SafeResolveOptions = {}
-): string {
+export function safeResolve(groveRoot: string, p: string, opts: SafeResolveOptions = {}): string {
   if (typeof groveRoot !== 'string' || groveRoot.length === 0) {
-    throw new IpcError('E_INVALID_ARGS', 'safeResolve: E_INVALID_ARGS — groveRoot must be a non-empty string')
+    throw new IpcError(
+      'E_INVALID_ARGS',
+      'safeResolve: E_INVALID_ARGS — groveRoot must be a non-empty string'
+    )
   }
   if (typeof p !== 'string') {
     throw new IpcError('E_INVALID_ARGS', 'safeResolve: E_INVALID_ARGS — path must be a string')
@@ -21,7 +20,10 @@ export function safeResolve(
   // Reject any literal `..` path segment in the input. Use both / and \ as separators
   // so we catch Windows-style inputs even on POSIX (defense in depth).
   if (p.split(/[\\/]/).includes('..')) {
-    throw new IpcError('E_PERMISSION', `safeResolve: E_PERMISSION — path contains .. segment (${p})`)
+    throw new IpcError(
+      'E_PERMISSION',
+      `safeResolve: E_PERMISSION — path contains .. segment (${p})`
+    )
   }
   const normRoot = resolve(groveRoot)
   const normRootSep = normRoot.endsWith(sep) ? normRoot : normRoot + sep

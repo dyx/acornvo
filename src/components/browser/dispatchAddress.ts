@@ -1,7 +1,5 @@
 // src/components/browser/dispatchAddress.ts
-export type AddressDispatch =
-  | { kind: 'url'; url: string }
-  | { kind: 'search'; url: string }
+export type AddressDispatch = { kind: 'url'; url: string } | { kind: 'search'; url: string }
 
 export function dispatchAddress(raw: string): AddressDispatch {
   const trimmed = raw.trim()

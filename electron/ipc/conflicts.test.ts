@@ -16,8 +16,14 @@ beforeEach(async () => {
   vi.clearAllMocks()
   tmp = await mkdtemp(join(tmpdir(), 'cf-h-'))
   vi.spyOn(groveSvc, 'getCurrent').mockReturnValue({
-    id: 'g', path: tmp, name: 'g', color: 'acorn',
-    schema_version: 1, created_at: '', last_opened_at: '', sync_warning: null
+    id: 'g',
+    path: tmp,
+    name: 'g',
+    color: 'acorn',
+    schema_version: 1,
+    created_at: '',
+    last_opened_at: '',
+    sync_warning: null
   })
   // make sure conflicts dir exists
   await mkdir(join(tmp, '.acornvo/conflicts'), { recursive: true })
@@ -43,7 +49,10 @@ describe('conflictHandlers.list', () => {
 describe('conflictHandlers.read', () => {
   it('returns snapshot bodies', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
       resolvedBy: 'keep_local'
     })
     const r = await conflictHandlers.read(id)
@@ -61,7 +70,10 @@ describe('conflictHandlers.read', () => {
 describe('conflictHandlers.delete', () => {
   it('removes the snapshot directory', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     await conflictHandlers.delete(id)
@@ -79,7 +91,10 @@ describe('conflictHandlers.delete', () => {
   it('records ops_log audit on delete', async () => {
     const recordSpy = vi.spyOn(opsLog, 'record')
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     await conflictHandlers.delete(id)
@@ -92,7 +107,10 @@ describe('conflictHandlers.delete', () => {
 
   it('skips ops_log audit when snapshot is corrupt', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     // Corrupt the snapshot by removing meta.json
@@ -153,25 +171,19 @@ describe('conflictHandlers.diff', () => {
   })
 
   it('throws E_NOT_FOUND for a missing snapshot', async () => {
-    await expect(
-      conflictHandlers.diff('nonexistent-id', 'local-remote')
-    ).rejects.toMatchObject({
+    await expect(conflictHandlers.diff('nonexistent-id', 'local-remote')).rejects.toMatchObject({
       code: 'E_NOT_FOUND'
     })
   })
 
   it('throws E_INVALID_ARGS for empty id', async () => {
-    await expect(
-      conflictHandlers.diff('', 'local-remote')
-    ).rejects.toMatchObject({
+    await expect(conflictHandlers.diff('', 'local-remote')).rejects.toMatchObject({
       code: 'E_INVALID_ARGS'
     })
   })
 
   it('throws E_INVALID_ARGS for invalid sides pair', async () => {
-    await expect(
-      conflictHandlers.diff('any-id', 'base-local' as any)
-    ).rejects.toMatchObject({
+    await expect(conflictHandlers.diff('any-id', 'base-local' as any)).rejects.toMatchObject({
       code: 'E_INVALID_ARGS'
     })
   })
@@ -180,11 +192,17 @@ describe('conflictHandlers.diff', () => {
 describe('conflictHandlers.deleteAll', () => {
   it('deletes all snapshots and returns count', async () => {
     await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     await writeSnapshot({
-      path: 'b.md', baseText: '', localText: '', remoteText: '',
+      path: 'b.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'load_remote'
     })
     const result = await conflictHandlers.deleteAll()
@@ -197,11 +215,17 @@ describe('conflictHandlers.deleteAll', () => {
   it('records ops_log audit for each deleted snapshot', async () => {
     const recordSpy = vi.spyOn(opsLog, 'record')
     const { id: id1 } = await writeSnapshot({
-      path: 'a.md', baseText: '', localText: '', remoteText: '',
+      path: 'a.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     const { id: id2 } = await writeSnapshot({
-      path: 'b.md', baseText: '', localText: '', remoteText: '',
+      path: 'b.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'load_remote'
     })
     await conflictHandlers.deleteAll()
@@ -224,11 +248,17 @@ describe('conflictHandlers.deleteAll', () => {
 
   it('skips corrupt entries and only deletes valid snapshots', async () => {
     const { id: idOk } = await writeSnapshot({
-      path: 'ok.md', baseText: '', localText: '', remoteText: '',
+      path: 'ok.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'keep_local'
     })
     const { id: idBad } = await writeSnapshot({
-      path: 'bad.md', baseText: '', localText: '', remoteText: '',
+      path: 'bad.md',
+      baseText: '',
+      localText: '',
+      remoteText: '',
       resolvedBy: 'load_remote'
     })
     // Corrupt bad snapshot — listSnapshots skips entries with missing meta.json
@@ -250,7 +280,10 @@ describe('conflictHandlers.deleteAll', () => {
 describe('conflictHandlers.openSnapshotFile', () => {
   it('calls shell.showItemInFolder with the snapshot side file path — returns { ok: true }', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
       resolvedBy: 'keep_local'
     })
     // Wait, the writeSnapshot already writes the side files.
@@ -264,20 +297,23 @@ describe('conflictHandlers.openSnapshotFile', () => {
 
   it('throws E_NOT_FOUND when snapshot file does not exist', async () => {
     const { id } = await writeSnapshot({
-      path: 'a.md', baseText: 'B', localText: 'L', remoteText: 'R',
+      path: 'a.md',
+      baseText: 'B',
+      localText: 'L',
+      remoteText: 'R',
       resolvedBy: 'keep_local'
     })
     // Remove the local.md file to trigger E_NOT_FOUND
     await rm(join(tmp, '.acornvo/conflicts', id, 'local.md'))
-    await expect(
-      conflictHandlers.openSnapshotFile(id, 'local')
-    ).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+    await expect(conflictHandlers.openSnapshotFile(id, 'local')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 
   it('throws E_INVALID_ARGS for empty id', async () => {
-    await expect(
-      conflictHandlers.openSnapshotFile('', 'local')
-    ).rejects.toMatchObject({ code: 'E_INVALID_ARGS' })
+    await expect(conflictHandlers.openSnapshotFile('', 'local')).rejects.toMatchObject({
+      code: 'E_INVALID_ARGS'
+    })
   })
 
   it('throws E_INVALID_ARGS for invalid side', async () => {
@@ -288,8 +324,8 @@ describe('conflictHandlers.openSnapshotFile', () => {
 
   it('throws E_NOT_FOUND when no grove is open', async () => {
     vi.spyOn(groveSvc, 'getCurrent').mockReturnValue(null)
-    await expect(
-      conflictHandlers.openSnapshotFile('any-id', 'local')
-    ).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+    await expect(conflictHandlers.openSnapshotFile('any-id', 'local')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 })

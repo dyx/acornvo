@@ -15,18 +15,20 @@ export async function handleTelemetryAggregate(input: TelemetryAggregateInput): 
 
   const globalDb = getGlobalDb()
 
-  const aiAgg = globalDb.prepare(
-    `SELECT COUNT(*) AS requests, COALESCE(SUM(prompt_tokens), 0) + COALESCE(SUM(completion_tokens), 0) AS total_tokens
+  const aiAgg = globalDb
+    .prepare(
+      `SELECT COUNT(*) AS requests, COALESCE(SUM(prompt_tokens), 0) + COALESCE(SUM(completion_tokens), 0) AS total_tokens
      FROM ai_usage WHERE created_at >= ? AND created_at <= ?`
-  ).get(dayStart, dayEnd) as { requests: number; total_tokens: number }
+    )
+    .get(dayStart, dayEnd) as { requests: number; total_tokens: number }
 
-  const clipsCount = db.prepare(
-    `SELECT COUNT(*) AS n FROM clips WHERE created_at >= ? AND created_at <= ?`
-  ).get(dayStart, dayEnd) as { n: number } | undefined
+  const clipsCount = db
+    .prepare(`SELECT COUNT(*) AS n FROM clips WHERE created_at >= ? AND created_at <= ?`)
+    .get(dayStart, dayEnd) as { n: number } | undefined
 
-  const perfCount = globalDb.prepare(
-    `SELECT COUNT(*) AS n FROM perf_samples WHERE ts >= ? AND ts <= ?`
-  ).get(dayStart, dayEnd) as { n: number }
+  const perfCount = globalDb
+    .prepare(`SELECT COUNT(*) AS n FROM perf_samples WHERE ts >= ? AND ts <= ?`)
+    .get(dayStart, dayEnd) as { n: number }
 
   const ups = globalDb.prepare(
     `INSERT INTO telemetry_local (day, metric, value) VALUES (?, ?, ?)

@@ -69,7 +69,11 @@ afterEach(cleanup)
 
 describe('EditorTitleBar', () => {
   it('renders the relative path and shows no dirty dot when clean', () => {
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByText('notes/a.md')).toBeTruthy()
     expect(screen.queryByTestId('editor-dirty-dot')).toBeNull()
     expect(screen.queryByTestId('editor-saving-pulse')).toBeNull()
@@ -77,19 +81,31 @@ describe('EditorTitleBar', () => {
 
   it('shows dirty dot when state.dirty', () => {
     useEditorStore.setState({ state: readyState({ dirty: true }) })
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByTestId('editor-dirty-dot')).toBeTruthy()
   })
 
   it('shows saving pulse when state.saving', () => {
     useEditorStore.setState({ state: readyState({ saving: true, dirty: true }) })
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     expect(screen.getByTestId('editor-saving-pulse')).toBeTruthy()
   })
 
   it('back button calls flushSave then navigate(-1)', async () => {
     const flushSpy = vi.spyOn(useEditorStore.getState(), 'flushSave')
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     await userEvent.click(screen.getByRole('button', { name: /返回果仓/ }))
     expect(flushSpy).toHaveBeenCalled()
     expect(navigateSpy).toHaveBeenCalledWith(-1)
@@ -105,7 +121,11 @@ describe('EditorTitleBar', () => {
         }
       })
     })
-    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <EditorTitleBar />
+      </MemoryRouter>
+    )
     await userEvent.click(screen.getByRole('button', { name: /editor.ai.badge.label/i }))
     await userEvent.click(screen.getByRole('button', { name: /editor.ai.rerun/i }))
     expect(ipc.ai.reviewClip).toHaveBeenCalledWith(42, { force: true })

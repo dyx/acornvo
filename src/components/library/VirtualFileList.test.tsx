@@ -30,9 +30,18 @@ import type { FileSummary } from '@shared/ipc-contract'
 
 function row(path: string, extra: Partial<FileSummary> = {}): FileSummary {
   return {
-    path, title: path, category: null, rating: null, clipped_at: null,
-    site: null, has_summary: false, tags: [], is_reviewing: false,
-    review_status: 'none', review_error: null, ...extra
+    path,
+    title: path,
+    category: null,
+    rating: null,
+    clipped_at: null,
+    site: null,
+    has_summary: false,
+    tags: [],
+    is_reviewing: false,
+    review_status: 'none',
+    review_error: null,
+    ...extra
   }
 }
 
@@ -51,11 +60,15 @@ describe('VirtualFileList', () => {
     // jsdom returns 0 for these by default, which makes useVirtualizer render no items.
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
       configurable: true,
-      get() { return 600 }
+      get() {
+        return 600
+      }
     })
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
       configurable: true,
-      get() { return 360 }
+      get() {
+        return 360
+      }
     })
   })
 
@@ -76,7 +89,11 @@ describe('VirtualFileList', () => {
   })
 
   it('renders the search input', () => {
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     expect(screen.getByRole('searchbox')).toBeTruthy()
   })
 
@@ -84,10 +101,16 @@ describe('VirtualFileList', () => {
     vi.useFakeTimers()
     const setFilter = vi.fn()
     useLibraryStore.setState({ setFilter })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: '注意力' } })
     expect(setFilter).not.toHaveBeenCalled()
-    act(() => { vi.advanceTimersByTime(150) })
+    act(() => {
+      vi.advanceTimersByTime(150)
+    })
     // flush pending microtasks after timer fires
     await act(() => Promise.resolve())
     expect(setFilter).toHaveBeenCalledWith({ q: '注意力' })
@@ -99,7 +122,11 @@ describe('VirtualFileList', () => {
       items: [row('a.md', { title: 'A' }), row('b.md', { title: 'B' })],
       total: 2
     })
-    const { container } = render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    const { container } = render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     const rows = container.querySelectorAll('[data-testid="file-row"]')
     expect(rows.length).toBeGreaterThanOrEqual(2)
   })
@@ -108,7 +135,11 @@ describe('VirtualFileList', () => {
     useLibraryStore.setState({ items: [row('a.md', { title: 'A' })], total: 1 })
     const select = vi.fn()
     useLibraryStore.setState({ select })
-    const { container } = render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    const { container } = render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     const rowEl = container.querySelector('[data-testid="file-row"]')!
     fireEvent.click(rowEl)
     expect(select).toHaveBeenCalledWith('a.md')
@@ -116,13 +147,21 @@ describe('VirtualFileList', () => {
 
   it('shows footer "{shown} / {total}"', () => {
     useLibraryStore.setState({ items: [row('a.md'), row('b.md')], total: 5 })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     expect(screen.getByText(/2.*\/.*5/)).toBeTruthy()
   })
 
   it('list container has correct role', () => {
     useLibraryStore.setState({ items: [row('a.md')], total: 1, selectedPath: 'a.md' })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     expect(screen.getByRole('listbox')).toBeTruthy()
   })
 
@@ -132,7 +171,11 @@ describe('VirtualFileList', () => {
       total: 2,
       selectedPath: 'a.md'
     })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     const listbox = screen.getByRole('listbox')
     fireEvent.keyDown(listbox, { key: 'Delete' })
     expect(screen.getByRole('dialog')).toBeTruthy()
@@ -145,7 +188,11 @@ describe('VirtualFileList', () => {
       total: 1,
       selectedPath: 'a.md'
     })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     const listbox = screen.getByRole('listbox')
     fireEvent.keyDown(listbox, { key: 'Backspace', metaKey: true })
     expect(screen.getByRole('dialog')).toBeTruthy()
@@ -157,7 +204,11 @@ describe('VirtualFileList', () => {
       total: 1,
       selectedPath: null
     })
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
     const listbox = screen.getByRole('listbox')
     fireEvent.keyDown(listbox, { key: 'Delete' })
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -177,7 +228,11 @@ describe('VirtualFileList', () => {
       selectedPath: 'a.md'
     })
 
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
 
     // Trigger Cmd+Backspace to open dialog
     const listbox = screen.getByRole('listbox')
@@ -217,7 +272,9 @@ describe('VirtualFileList', () => {
   it('hardDelete failure keeps dialog open and preserves store item', async () => {
     // Catch expected unhandled rejection from hardDelete throwing IpcError
     const rejectionCaught = vi.fn<(reason: unknown) => void>()
-    const onRejection = (reason: unknown) => { rejectionCaught(reason) }
+    const onRejection = (reason: unknown) => {
+      rejectionCaught(reason)
+    }
     process.on('unhandledRejection', onRejection)
 
     vi.mocked(ipc.file.trash).mockResolvedValue({
@@ -235,7 +292,11 @@ describe('VirtualFileList', () => {
       selectedPath: 'a.md'
     })
 
-    render(<MemoryRouter><VirtualFileList /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <VirtualFileList />
+      </MemoryRouter>
+    )
 
     // Trigger Cmd+Backspace
     const listbox = screen.getByRole('listbox')

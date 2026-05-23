@@ -35,18 +35,23 @@ export function FullTextResultList({
             onClick={(e) => {
               const mod = e.metaKey || e.ctrlKey
               if (mod) {
-                navigate('/library?focus=' + encodeURIComponent(it.summary.path))
+                void import('@/stores/library').then(({ useLibraryStore }) => {
+                  useLibraryStore.getState().select(it.summary.path)
+                })
+                navigate('/library')
               } else {
-                navigate(
-                  '/editor/' + encodeURIComponent(it.summary.path) +
-                  '#match=' + encodeURIComponent(q)
-                )
+                void import('@/stores/library').then(({ useLibraryStore }) => {
+                  useLibraryStore.getState().select(it.summary.path)
+                })
+                navigate('/library#match=' + encodeURIComponent(q))
               }
             }}
           >
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium truncate">{it.summary.title ?? it.summary.path}</span>
-              <span className="text-xs text-muted-foreground shrink-0">{it.summary.clipped_at ?? ''}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {it.summary.clipped_at ?? ''}
+              </span>
             </div>
             <div className="text-xs text-muted-foreground truncate">{it.summary.path}</div>
             <div

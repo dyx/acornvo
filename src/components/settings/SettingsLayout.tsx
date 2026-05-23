@@ -11,10 +11,18 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { to: '/settings/general', labelKey: 'settings.tab.general', testId: 'settings-rail-general' },
-  { to: '/settings/appearance', labelKey: 'settings.tab.appearance', testId: 'settings-rail-appearance' },
+  {
+    to: '/settings/appearance',
+    labelKey: 'settings.tab.appearance',
+    testId: 'settings-rail-appearance'
+  },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' },
-  { to: '/settings/observability', labelKey: 'settings.tab.observability', testId: 'settings-rail-observability' },
+  {
+    to: '/settings/observability',
+    labelKey: 'settings.tab.observability',
+    testId: 'settings-rail-observability'
+  },
   { to: '/settings/about', labelKey: 'settings.tab.about', testId: 'settings-rail-about' }
 ]
 
@@ -26,7 +34,9 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
         aria-label="settings"
         className="flex w-[200px] shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-[14px]"
       >
-        <h2 className="px-[12px] pb-[10px] text-[10px] font-mono font-semibold uppercase tracking-[0.1em] text-[color:var(--color-ink-4)]">{t('settings.title')}</h2>
+        <h2 className="px-[12px] pb-[10px] text-[10px] font-mono font-semibold uppercase tracking-[0.1em] text-[color:var(--color-ink-4)]">
+          {t('settings.title')}
+        </h2>
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}

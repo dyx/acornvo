@@ -284,7 +284,9 @@ describe('createQueueRunner — handler result branches', () => {
     runner.start()
     await vi.advanceTimersByTimeAsync(300)
     runner.stop()
-    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as { next_run_at: string }
+    const row = db.prepare('SELECT next_run_at FROM jobs WHERE id=?').get(id) as {
+      next_run_at: string
+    }
     const delta = Date.parse(row.next_run_at) - Date.parse('2026-05-03T10:00:00.000Z')
     expect(delta).toBeGreaterThanOrEqual(900)
     expect(delta).toBeLessThanOrEqual(1500)
@@ -327,7 +329,10 @@ describe('createQueueRunner — drainOnQuit', () => {
       kind: 'ai-review-clip',
       concurrency: 1,
       minGapMs: 0,
-      handler: () => new Promise<{ kind: 'ok' }>((r) => { resolveHandler = r })
+      handler: () =>
+        new Promise<{ kind: 'ok' }>((r) => {
+          resolveHandler = r
+        })
     })
     store.enqueue('ai-review-clip', { clipId: 1 })
     runner.start()

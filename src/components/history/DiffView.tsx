@@ -35,10 +35,8 @@ function DiffRow({
   rightText: string
   rightKind: 'equal' | 'add'
 }): JSX.Element {
-  const leftBg =
-    leftKind === 'del' ? 'bg-red-50 dark:bg-red-950/30' : ''
-  const rightBg =
-    rightKind === 'add' ? 'bg-green-50 dark:bg-green-950/30' : ''
+  const leftBg = leftKind === 'del' ? 'bg-red-50 dark:bg-red-950/30' : ''
+  const rightBg = rightKind === 'add' ? 'bg-green-50 dark:bg-green-950/30' : ''
 
   return (
     <div className="flex font-mono text-xs leading-5">

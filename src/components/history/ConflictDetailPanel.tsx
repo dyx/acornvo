@@ -80,7 +80,10 @@ function hashSnippet(id: string): string {
   return id.length > 8 ? id.slice(0, 8) : id
 }
 
-export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanelProps): JSX.Element {
+export function ConflictDetailPanel({
+  conflictId,
+  onClose
+}: ConflictDetailPanelProps): JSX.Element {
   const [meta, setMeta] = useState<ConflictMeta | null>(null)
   const [sides, setSides] = useState<DiffSidesPair>('local-remote')
   const [diff, setDiff] = useState<DiffResult | null>(null)
@@ -180,7 +183,10 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
 
   if (loading) {
     return (
-      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
+      <div
+        data-testid="conflict-detail-panel"
+        className="flex flex-col h-full border-l border-[color:var(--color-line)]"
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)]">
           <p className="text-sm text-muted-foreground">加载中…</p>
         </div>
@@ -190,7 +196,10 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
 
   if (!meta) {
     return (
-      <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
+      <div
+        data-testid="conflict-detail-panel"
+        className="flex flex-col h-full border-l border-[color:var(--color-line)]"
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)]">
           <p className="text-sm text-muted-foreground">无法加载冲突信息</p>
           {onClose ? (
@@ -204,13 +213,18 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
   }
 
   return (
-    <div data-testid="conflict-detail-panel" className="flex flex-col h-full border-l border-[color:var(--color-line)]">
+    <div
+      data-testid="conflict-detail-panel"
+      className="flex flex-col h-full border-l border-[color:var(--color-line)]"
+    >
       {/* Header */}
       <div className="border-b border-[color:var(--color-line)] px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium text-[color:var(--color-ink)] truncate">{meta.path}</p>
+              <p className="text-sm font-medium text-[color:var(--color-ink)] truncate">
+                {meta.path}
+              </p>
               <span
                 className={cn(
                   'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0',
@@ -227,7 +241,13 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
             </div>
           </div>
           {onClose ? (
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="关闭" className="flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              aria-label="关闭"
+              className="flex-shrink-0"
+            >
               <X className="size-4" />
             </Button>
           ) : null}
@@ -245,7 +265,12 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
               打开 {label}
             </Button>
           ))}
-          <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)} className="text-red-600 hover:text-red-700">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDeleteDialogOpen(true)}
+            className="text-red-600 hover:text-red-700"
+          >
             <Trash2 className="size-3.5 mr-1" />
             删除此冲突
           </Button>
@@ -281,7 +306,12 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
 
       {/* Footer */}
       <div className="border-t border-[color:var(--color-line)] px-4 py-2.5 flex justify-end">
-        <Button variant="outline" size="sm" onClick={() => setDeleteAllDialogOpen(true)} className="text-red-600 hover:text-red-700">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDeleteAllDialogOpen(true)}
+          className="text-red-600 hover:text-red-700"
+        >
           <Trash2 className="size-3.5 mr-1" />
           删除全部冲突
         </Button>
@@ -293,7 +323,8 @@ export function ConflictDetailPanel({ conflictId, onClose }: ConflictDetailPanel
           <AlertDialogHeader>
             <AlertDialogTitle>删除此冲突</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除 <span className="font-mono text-xs">{meta.path}</span> 的冲突记录吗？此操作无法撤销。
+              确定要删除 <span className="font-mono text-xs">{meta.path}</span>{' '}
+              的冲突记录吗？此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

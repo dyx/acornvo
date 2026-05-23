@@ -3,16 +3,25 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createManager, type ManagerDeps } from './manager'
 
 function makeView(label: string) {
-  return { __label: label, webContents: { destroy: vi.fn(), isDestroyed: () => false, close: vi.fn() } } as any
+  return {
+    __label: label,
+    webContents: { destroy: vi.fn(), isDestroyed: () => false, close: vi.fn() }
+  } as any
 }
 
 function makeDeps(): ManagerDeps & {
-  contentView: { addChildView: ReturnType<typeof vi.fn>; removeChildView: ReturnType<typeof vi.fn>; children: any[] }
+  contentView: {
+    addChildView: ReturnType<typeof vi.fn>
+    removeChildView: ReturnType<typeof vi.fn>
+    children: any[]
+  }
 } {
   const children: any[] = []
   const contentView = {
     children,
-    addChildView: vi.fn((v: any) => { children.push(v) }),
+    addChildView: vi.fn((v: any) => {
+      children.push(v)
+    }),
     removeChildView: vi.fn((v: any) => {
       const i = children.indexOf(v)
       if (i !== -1) children.splice(i, 1)
@@ -97,9 +106,12 @@ describe('manager', () => {
     m.register('t2', makeView('b'))
     m.register('t3', makeView('c'))
 
-    now = 100; m.attach('t1')
-    now = 300; m.attach('t2')
-    now = 200; m.attach('t3') // out of order
+    now = 100
+    m.attach('t1')
+    now = 300
+    m.attach('t2')
+    now = 200
+    m.attach('t3') // out of order
 
     expect(m.pickLruTabId()).toBe('t1')
   })

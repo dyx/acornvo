@@ -69,7 +69,12 @@ export function VirtualFileList(): JSX.Element {
     if (!trashTarget) return
     const result = await ipc.file.trash(trashTarget)
     if (!result.ok) {
-      throw new IpcError(result.error)
+      if (result.error.code === 'E_NOT_FOUND') {
+        removeItem(trashTarget)
+        setTrashTarget(null)
+        return
+      }
+      throw new IpcError(result.error.code, result.error.message)
     }
     removeItem(trashTarget)
     setTrashTarget(null)
@@ -79,7 +84,12 @@ export function VirtualFileList(): JSX.Element {
     if (!trashTarget) return
     const result = await ipc.file.hardDelete(trashTarget)
     if (!result.ok) {
-      throw new IpcError(result.error)
+      if (result.error.code === 'E_NOT_FOUND') {
+        removeItem(trashTarget)
+        setTrashTarget(null)
+        return
+      }
+      throw new IpcError(result.error.code, result.error.message)
     }
     removeItem(trashTarget)
     setTrashTarget(null)
@@ -90,16 +100,16 @@ export function VirtualFileList(): JSX.Element {
   }, [])
 
   function onKey(e: React.KeyboardEvent<HTMLDivElement>): void {
-    if (e.key === 'ArrowDown') { e.preventDefault(); void moveSelection(1) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); void moveSelection(-1) }
-    else if (e.key === 'Enter' && selectedPath) {
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
-      navigate(`/editor/${encodeURIComponent(selectedPath)}`)
-    }
-    else if (
-      e.key === 'Delete' ||
-      (e.key === 'Backspace' && (e.metaKey || e.ctrlKey))
-    ) {
+      void moveSelection(1)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      void moveSelection(-1)
+    } else if (e.key === 'Enter' && selectedPath) {
+      e.preventDefault()
+      // File is already selected and displayed in EmbeddedEditorPanel
+    } else if (e.key === 'Delete' || (e.key === 'Backspace' && (e.metaKey || e.ctrlKey))) {
       if (selectedPath) {
         e.preventDefault()
         setTrashTarget(selectedPath)
@@ -112,14 +122,28 @@ export function VirtualFileList(): JSX.Element {
       <div className="flex border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
         <button
           type="button"
-          onClick={() => setFilter({ pathPrefix: undefined, category: undefined, tag: undefined, rating: undefined })}
+          onClick={() =>
+            setFilter({
+              pathPrefix: undefined,
+              category: undefined,
+              tag: undefined,
+              rating: undefined
+            })
+          }
           className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${!filter.rating ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
         >
           {t('library.all')}
         </button>
         <button
           type="button"
-          onClick={() => setFilter({ rating: { min: 0, max: 0 }, pathPrefix: undefined, category: undefined, tag: undefined })}
+          onClick={() =>
+            setFilter({
+              rating: { min: 0, max: 0 },
+              pathPrefix: undefined,
+              category: undefined,
+              tag: undefined
+            })
+          }
           className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${filter.rating?.min === 0 ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
         >
           {t('library.unreviewed')}
@@ -129,15 +153,23 @@ export function VirtualFileList(): JSX.Element {
         <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5">
           <Search size={12} className="text-[color:var(--color-ink-3)]" />
           <input
-            type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={t('library.search_ph')}
             className="flex-1 border-none bg-transparent text-[12px] text-[color:var(--color-ink)] outline-none"
           />
         </div>
       </div>
 
-      <div ref={parentRef} data-testid="library-list" tabIndex={0} onKeyDown={onKey}
-        className="flex-1 overflow-y-auto outline-none" role="listbox">
+      <div
+        ref={parentRef}
+        data-testid="library-list"
+        tabIndex={0}
+        onKeyDown={onKey}
+        className="flex-1 overflow-y-auto outline-none"
+        role="listbox"
+      >
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
           {virtualizer.getVirtualItems().map((vi) => {
             const file = items[vi.index]
@@ -147,11 +179,16 @@ export function VirtualFileList(): JSX.Element {
                 data-index={vi.index}
                 ref={virtualizer.measureElement}
                 style={{
-                  position: 'absolute', top: 0, left: 0, width: '100%',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
                   transform: `translateY(${vi.start}px)`
                 }}
               >
-                <FileRow file={file} active={file.path === selectedPath}
+                <FileRow
+                  file={file}
+                  active={file.path === selectedPath}
                   onClick={async () => {
                     const s = useEditorStore.getState().state
                     if (s.kind === 'ready' && (s.dirty || s.saving)) {
@@ -159,11 +196,15 @@ export function VirtualFileList(): JSX.Element {
                     }
                     void select(file.path)
                   }}
-                  onDoubleClick={() => navigate(`/editor/${encodeURIComponent(file.path)}`)}
+                  onDoubleClick={(e) => {
+                    e.preventDefault()
+                    // File is already selected and displayed in EmbeddedEditorPanel
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     setMenu({ x: e.clientX, y: e.clientY, path: file.path })
-                  }} />
+                  }}
+                />
               </div>
             )
           })}
@@ -181,7 +222,10 @@ export function VirtualFileList(): JSX.Element {
           y={menu.y}
           path={menu.path}
           onClose={() => setMenu(null)}
-          onTrash={(path) => { setTrashTarget(path); setMenu(null) }}
+          onTrash={(path) => {
+            setTrashTarget(path)
+            setMenu(null)
+          }}
         />
       ) : null}
 

@@ -6,11 +6,7 @@ import { safeResolve } from '../path-safety'
 import { writeFileAtomic } from '../fs-atomic'
 import * as opsLog from '../ops/log'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  ConflictItem,
-  ConflictMeta,
-  ConflictResolvedBy
-} from '@shared/conflict-types'
+import type { ConflictItem, ConflictMeta, ConflictResolvedBy } from '@shared/conflict-types'
 
 const MAX_KEEP = 100
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000

@@ -10,10 +10,16 @@ function broadcastEvent(channel: string, payload: unknown): void {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const electron = require('electron') as {
-      BrowserWindow: { getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[] }
+      BrowserWindow: {
+        getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[]
+      }
     }
     for (const win of electron.BrowserWindow.getAllWindows()) {
-      try { win.webContents.send(channel, payload) } catch { /* destroyed */ }
+      try {
+        win.webContents.send(channel, payload)
+      } catch {
+        /* destroyed */
+      }
     }
   } catch {
     // running outside electron (unit tests) — silently no-op
@@ -30,8 +36,13 @@ export interface RebuildProgressPayload {
   total: number
 }
 
-interface FilesCountRow { c: number }
-interface FileRow { path: string; title: string | null }
+interface FilesCountRow {
+  c: number
+}
+interface FileRow {
+  path: string
+  title: string | null
+}
 
 /** Returns true if a rebuild was triggered (and completed). */
 export async function maybeRebuildFts(db: Database.Database, groveRoot: string): Promise<boolean> {
@@ -54,7 +65,8 @@ export async function rebuildFts(
   groveRoot: string,
   expectedTotal?: number
 ): Promise<void> {
-  const total = expectedTotal ?? (db.prepare('SELECT COUNT(*) AS c FROM files').get() as FilesCountRow).c
+  const total =
+    expectedTotal ?? (db.prepare('SELECT COUNT(*) AS c FROM files').get() as FilesCountRow).c
   if (total === 0) return
 
   const rows = db.prepare('SELECT path, title FROM files ORDER BY path').all() as FileRow[]
@@ -70,7 +82,11 @@ export async function rebuildFts(
   for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
     const batch = rows.slice(batchStart, batchStart + BATCH_SIZE)
 
-    interface ReadResult { row: FileRow; rowid: number; body: string }
+    interface ReadResult {
+      row: FileRow
+      rowid: number
+      body: string
+    }
     const readResults: ReadResult[] = []
     for (const row of batch) {
       try {

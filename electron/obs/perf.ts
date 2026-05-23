@@ -1,5 +1,3 @@
-
-
 import { getGlobalDb } from '../services/global-db'
 import { getCurrent } from '../services/grove'
 
@@ -34,14 +32,9 @@ export function createPerf(deps?: PerfDeps): Perf {
         try {
           const db = getGlobalDb()
           if (db.open) {
-            db.prepare(`INSERT INTO perf_samples (ts, area, ok, ms, meta, grove_id) VALUES (?, ?, ?, ?, ?, ?)`).run(
-              new Date().toISOString(),
-              area,
-              ok ? 1 : 0,
-              ms,
-              JSON.stringify(merged),
-              groveId
-            )
+            db.prepare(
+              `INSERT INTO perf_samples (ts, area, ok, ms, meta, grove_id) VALUES (?, ?, ?, ?, ?, ?)`
+            ).run(new Date().toISOString(), area, ok ? 1 : 0, ms, JSON.stringify(merged), groveId)
           }
         } catch (err) {
           // Gracefully handle if DB is closed or closing concurrently

@@ -61,13 +61,21 @@ describe('JobsTab — default load', () => {
   })
 
   it('on mount, queries jobs.list for pending + running + failed', async () => {
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
   })
 
   it('renders loading state initially', () => {
     vi.mocked(ipc.jobs.list).mockReturnValue(new Promise(() => {})) // never resolves
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
     expect(screen.getByText('加载中…')).toBeTruthy()
   })
 
@@ -76,7 +84,11 @@ describe('JobsTab — default load', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
     })
@@ -85,14 +97,22 @@ describe('JobsTab — default load', () => {
   })
 
   it('subscribes to jobs:changed on mount', () => {
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
     expect(ipc.on).toHaveBeenCalledWith('jobs:changed', expect.any(Function))
   })
 
   it('unsubscribes from jobs:changed on unmount', () => {
     const unsub = vi.fn()
     vi.mocked(ipc.on).mockReturnValue(unsub)
-    const { unmount } = render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    const { unmount } = render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
     unmount()
     expect(unsub).toHaveBeenCalled()
   })
@@ -114,15 +134,29 @@ describe('JobsTab — render items', () => {
     vi.mocked(ipc.jobs.list)
       .mockResolvedValueOnce({
         items: [
-          makeJob({ id: 'j1', kind: 'index-retry', status: 'pending', payload: { path: 'notes/a.md' } }),
-          makeJob({ id: 'j2', kind: 'ai-review-clip', status: 'running', payload: { clipId: 'c1' } })
+          makeJob({
+            id: 'j1',
+            kind: 'index-retry',
+            status: 'pending',
+            payload: { path: 'notes/a.md' }
+          }),
+          makeJob({
+            id: 'j2',
+            kind: 'ai-review-clip',
+            status: 'running',
+            payload: { clipId: 'c1' }
+          })
         ],
         total: 2
       })
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
@@ -133,14 +167,23 @@ describe('JobsTab — render items', () => {
     vi.mocked(ipc.jobs.list)
       .mockResolvedValueOnce({
         items: [
-          makeJob({ id: 'j1', kind: 'index-retry', status: 'pending', payload: { path: 'notes/doc.md' } })
+          makeJob({
+            id: 'j1',
+            kind: 'index-retry',
+            status: 'pending',
+            payload: { path: 'notes/doc.md' }
+          })
         ],
         total: 1
       })
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('notes/doc.md')).toBeTruthy()
@@ -166,7 +209,11 @@ describe('JobsTab — clearDone confirm flow', () => {
       .mockResolvedValueOnce({ items: [], total: 0 }) // running
       .mockResolvedValueOnce({ items: [], total: 0 }) // failed
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
@@ -185,7 +232,11 @@ describe('JobsTab — clearDone confirm flow', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
@@ -217,7 +268,11 @@ describe('JobsTab — clearDone confirm flow', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
@@ -246,7 +301,11 @@ describe('JobsTab — clearDone confirm flow', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-tab')).toBeTruthy()
@@ -291,7 +350,11 @@ describe('JobsTab — empty state per filter', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
 
@@ -307,7 +370,11 @@ describe('JobsTab — empty state per filter', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
 
@@ -324,7 +391,11 @@ describe('JobsTab — empty state per filter', () => {
       .mockResolvedValueOnce({ items: [], total: 0 })
       .mockResolvedValueOnce({ items: [], total: 0 })
 
-    render(<MemoryRouter><JobsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <JobsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => expect(ipc.jobs.list).toHaveBeenCalled())
 

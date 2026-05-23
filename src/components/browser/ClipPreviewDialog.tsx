@@ -36,7 +36,10 @@ export function ClipPreviewDialog(): JSX.Element | null {
   if (!open || !preview) return null
 
   function parseTags(raw: string): string[] {
-    return raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
+    return raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
   }
 
   return (
@@ -61,7 +64,9 @@ export function ClipPreviewDialog(): JSX.Element | null {
               </label>
 
               <div className="text-xs text-[color:var(--color-ink-3)]">
-                <div className="truncate" title={preview.url}>{preview.url}</div>
+                <div className="truncate" title={preview.url}>
+                  {preview.url}
+                </div>
                 <div>{preview.site}</div>
                 {preview.author && <div>{preview.author}</div>}
                 {preview.publishedTime && <div>{preview.publishedTime}</div>}

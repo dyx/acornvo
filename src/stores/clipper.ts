@@ -1,11 +1,6 @@
 // src/stores/clipper.ts
 import { create } from 'zustand'
-import type {
-  ClipErrorEnvelope,
-  ClipInput,
-  ClipPreview,
-  ClipStage
-} from '@shared/clipper-types'
+import type { ClipErrorEnvelope, ClipInput, ClipPreview, ClipStage } from '@shared/clipper-types'
 import { getClipperPort } from '@/ipc/clipper-port'
 
 interface ClipperState {

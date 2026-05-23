@@ -72,11 +72,26 @@ export function parseSidesPair(pair: string): {
 } {
   switch (pair) {
     case 'local-remote':
-      return { leftLabel: 'local', rightLabel: 'remote', leftTextField: 'localText', rightTextField: 'remoteText' }
+      return {
+        leftLabel: 'local',
+        rightLabel: 'remote',
+        leftTextField: 'localText',
+        rightTextField: 'remoteText'
+      }
     case 'local-base':
-      return { leftLabel: 'local', rightLabel: 'base', leftTextField: 'localText', rightTextField: 'baseText' }
+      return {
+        leftLabel: 'local',
+        rightLabel: 'base',
+        leftTextField: 'localText',
+        rightTextField: 'baseText'
+      }
     case 'remote-base':
-      return { leftLabel: 'remote', rightLabel: 'base', leftTextField: 'remoteText', rightTextField: 'baseText' }
+      return {
+        leftLabel: 'remote',
+        rightLabel: 'base',
+        leftTextField: 'remoteText',
+        rightTextField: 'baseText'
+      }
     default:
       throw new Error(`invalid DiffSidesPair: ${pair}`)
   }

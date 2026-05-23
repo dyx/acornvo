@@ -2,7 +2,14 @@ import { readFile, writeFile, mkdir, access, constants } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectJsonSchema, type ProjectJson } from '@shared/schemas/project'
-import type { Grove, GroveColor, GroveSummary, LockInfo, OpenGroveOutcome, SyncProvider } from '@shared/grove'
+import type {
+  Grove,
+  GroveColor,
+  GroveSummary,
+  LockInfo,
+  OpenGroveOutcome,
+  SyncProvider
+} from '@shared/grove'
 import { IpcError } from '@shared/ipc-contract'
 import { writeFileAtomic } from './fs-atomic'
 import * as lockfile from './lockfile'
@@ -18,7 +25,10 @@ import { logger } from './logger'
 const DEFAULT_COLOR: GroveColor = 'acorn'
 
 const SYNC_PATTERNS: Array<{ re: RegExp; provider: SyncProvider }> = [
-  { re: /(?:^|\/)(?:iCloud(?:\s|~|Drive)|Mobile Documents|com~apple~CloudDocs)/i, provider: 'iCloud' },
+  {
+    re: /(?:^|\/)(?:iCloud(?:\s|~|Drive)|Mobile Documents|com~apple~CloudDocs)/i,
+    provider: 'iCloud'
+  },
   { re: /(?:^|\/)Dropbox(?:\/|$|\s)/i, provider: 'Dropbox' },
   { re: /(?:^|\/)OneDrive(?:\/|$|\s|-)/i, provider: 'OneDrive' },
   { re: /(?:^|\/)Google\s*Drive(?:\/|$)/i, provider: 'GoogleDrive' },

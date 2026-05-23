@@ -21,7 +21,10 @@ vi.mock('electron', () => ({
 import { dbService } from '../services/db'
 import { session } from 'electron'
 import { settingsHandlers } from './settings'
-import { initSafeStorageAvailability, __resetForTest as resetSafe } from '../settings/safe-storage-state'
+import {
+  initSafeStorageAvailability,
+  __resetForTest as resetSafe
+} from '../settings/safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const MIGRATIONS = resolve(__dirname, '../services/db/migrations')
@@ -57,7 +60,10 @@ describe('settingsHandlers', () => {
 
   it('aiProfilesCreate returns { id } and aiProfilesList shows it', () => {
     const { id } = settingsHandlers.aiProfilesCreate({
-      name: 'p1', provider: 'openai', model: 'gpt-4o', apiKey: 'sk'
+      name: 'p1',
+      provider: 'openai',
+      model: 'gpt-4o',
+      apiKey: 'sk'
     })
     expect(typeof id).toBe('string')
     expect(settingsHandlers.aiProfilesList()).toHaveLength(1)
@@ -65,12 +71,17 @@ describe('settingsHandlers', () => {
 
   it('aiProfilesCreate with duplicate name throws E_DUPLICATE_NAME', () => {
     settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' })
-    expect(() => settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' }))
-      .toThrow(/E_DUPLICATE_NAME/)
+    expect(() =>
+      settingsHandlers.aiProfilesCreate({ name: 'a', provider: 'openai', model: 'gpt-4o' })
+    ).toThrow(/E_DUPLICATE_NAME/)
   })
 
   it('aiProfilesUpdate / aiProfilesDelete return { ok: true }', () => {
-    const { id } = settingsHandlers.aiProfilesCreate({ name: 'p', provider: 'openai', model: 'gpt-4o' })
+    const { id } = settingsHandlers.aiProfilesCreate({
+      name: 'p',
+      provider: 'openai',
+      model: 'gpt-4o'
+    })
     expect(settingsHandlers.aiProfilesUpdate(id, { name: 'p2' })).toEqual({ ok: true })
     expect(settingsHandlers.aiProfilesDelete(id)).toEqual({ ok: true })
   })

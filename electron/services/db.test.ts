@@ -5,7 +5,17 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { existsSync, writeFileSync, readdirSync, mkdirSync, statSync } from 'node:fs'
 import { dbService } from './db'
-import { applyPragmas, integrityCheck, backupCorruptDb, __setMainWindowForTest, openForGrove, __resetForTest, getCurrent, closeCurrent, requireCurrent } from './db'
+import {
+  applyPragmas,
+  integrityCheck,
+  backupCorruptDb,
+  __setMainWindowForTest,
+  openForGrove,
+  __resetForTest,
+  getCurrent,
+  closeCurrent,
+  requireCurrent
+} from './db'
 import { IpcError } from '@shared/ipc-contract'
 
 describe('applyPragmas', () => {

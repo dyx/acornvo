@@ -14,10 +14,16 @@ import * as electronMock from 'electron'
 
 describe('attachWindowOpenHandler', () => {
   function makeWebContents() {
-    const handlers: { open?: (a: any) => any; events: Record<string, (a: any) => void> } = { events: {} }
+    const handlers: { open?: (a: any) => any; events: Record<string, (a: any) => void> } = {
+      events: {}
+    }
     return {
-      setWindowOpenHandler: (h: any) => { handlers.open = h },
-      on: (e: string, h: any) => { handlers.events[e] = h },
+      setWindowOpenHandler: (h: any) => {
+        handlers.open = h
+      },
+      on: (e: string, h: any) => {
+        handlers.events[e] = h
+      },
       __h: handlers
     } as any
   }

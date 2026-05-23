@@ -21,10 +21,9 @@ vi.mock('@/stores/chat', () => {
     bumpShowShortcuts: vi.fn()
   }
   return {
-    useChatStore: Object.assign(
-      (selector: (s: unknown) => unknown) => selector({}),
-      { getState: () => mocks }
-    )
+    useChatStore: Object.assign((selector: (s: unknown) => unknown) => selector({}), {
+      getState: () => mocks
+    })
   }
 })
 
@@ -34,45 +33,67 @@ import { useChatStore } from '@/stores/chat'
 function HotkeyHost({ pathSink }: { pathSink: { path: string } }): JSX.Element {
   useGlobalHotkeys()
   const loc = useLocation()
-  useEffect(() => { pathSink.path = loc.pathname }, [loc.pathname, pathSink])
+  useEffect(() => {
+    pathSink.path = loc.pathname
+  }, [loc.pathname, pathSink])
   return <div data-testid="host" />
 }
 
 describe('useGlobalHotkeys — Cmd+, navigates to /settings', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   afterEach(() => cleanup())
 
   it('Cmd+, navigates to /settings', () => {
     const sink = { path: '/library' }
-    render(<MemoryRouter initialEntries={['/library']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: ',', metaKey: true })
     expect(sink.path).toBe('/settings')
   })
 
   it('Ctrl+, also navigates (Windows / Linux)', () => {
     const sink = { path: '/library' }
-    render(<MemoryRouter initialEntries={['/library']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: ',', ctrlKey: true })
     expect(sink.path).toBe('/settings')
   })
 
   it(', with no modifier does NOT navigate', () => {
     const sink = { path: '/library' }
-    render(<MemoryRouter initialEntries={['/library']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: ',' })
     expect(sink.path).toBe('/library')
   })
 })
 
 describe('useGlobalHotkeys — Cmd/Ctrl+N new session', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   afterEach(() => cleanup())
 
   it('Cmd+N on /chat calls createSession', () => {
     const sink = { path: '/chat' }
     const m = useChatStore.getState() as unknown as { createSession: ReturnType<typeof vi.fn> }
     m.createSession.mockClear()
-    render(<MemoryRouter initialEntries={['/chat']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: 'N', metaKey: true })
     expect(m.createSession).toHaveBeenCalledOnce()
   })
@@ -81,21 +102,31 @@ describe('useGlobalHotkeys — Cmd/Ctrl+N new session', () => {
     const sink = { path: '/library' }
     const m = useChatStore.getState() as unknown as { createSession: ReturnType<typeof vi.fn> }
     m.createSession.mockClear()
-    render(<MemoryRouter initialEntries={['/library']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/library']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: 'N', metaKey: true })
     expect(m.createSession).not.toHaveBeenCalled()
   })
 })
 
 describe('useGlobalHotkeys — Cmd/Ctrl+K focus input', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   afterEach(() => cleanup())
 
   it('Cmd+K on /chat calls bumpFocusInput', () => {
     const sink = { path: '/chat' }
     const m = useChatStore.getState() as unknown as { bumpFocusInput: ReturnType<typeof vi.fn> }
     m.bumpFocusInput.mockClear()
-    render(<MemoryRouter initialEntries={['/chat']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: 'K', metaKey: true })
     expect(m.bumpFocusInput).toHaveBeenCalledOnce()
   })
@@ -104,21 +135,31 @@ describe('useGlobalHotkeys — Cmd/Ctrl+K focus input', () => {
     const sink = { path: '/chat' }
     const m = useChatStore.getState() as unknown as { bumpFocusInput: ReturnType<typeof vi.fn> }
     m.bumpFocusInput.mockClear()
-    render(<MemoryRouter initialEntries={['/chat']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: 'K', ctrlKey: true })
     expect(m.bumpFocusInput).toHaveBeenCalledOnce()
   })
 })
 
 describe('useGlobalHotkeys — Cmd/Ctrl+/ shortcuts dialog', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   afterEach(() => cleanup())
 
   it('Cmd+/ on /chat calls bumpShowShortcuts', () => {
     const sink = { path: '/chat' }
     const m = useChatStore.getState() as unknown as { bumpShowShortcuts: ReturnType<typeof vi.fn> }
     m.bumpShowShortcuts.mockClear()
-    render(<MemoryRouter initialEntries={['/chat']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: '/', metaKey: true })
     expect(m.bumpShowShortcuts).toHaveBeenCalledOnce()
   })
@@ -127,7 +168,11 @@ describe('useGlobalHotkeys — Cmd/Ctrl+/ shortcuts dialog', () => {
     const sink = { path: '/chat' }
     const m = useChatStore.getState() as unknown as { bumpShowShortcuts: ReturnType<typeof vi.fn> }
     m.bumpShowShortcuts.mockClear()
-    render(<MemoryRouter initialEntries={['/chat']}><HotkeyHost pathSink={sink} /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <HotkeyHost pathSink={sink} />
+      </MemoryRouter>
+    )
     fireEvent.keyDown(window, { key: '/', ctrlKey: true })
     expect(m.bumpShowShortcuts).toHaveBeenCalledOnce()
   })

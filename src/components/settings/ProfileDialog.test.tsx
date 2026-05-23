@@ -20,14 +20,27 @@ import { useProfilesStore } from '@/stores/profiles'
 import { ProfileDialog } from './ProfileDialog'
 
 const sampleProfile = {
-  id: 'a', name: 'p', provider: 'openai' as const, baseUrl: null, model: 'gpt-4o',
-  temperature: 0.7, topP: 1.0, maxTokens: null, apiKeyRef: 'ai.key.a',
-  createdAt: '2026-05-03', updatedAt: '2026-05-03'
+  id: 'a',
+  name: 'p',
+  provider: 'openai' as const,
+  baseUrl: null,
+  model: 'gpt-4o',
+  temperature: 0.7,
+  topP: 1.0,
+  maxTokens: null,
+  apiKeyRef: 'ai.key.a',
+  createdAt: '2026-05-03',
+  updatedAt: '2026-05-03'
 }
 
 describe('ProfileDialog', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
-  beforeEach(() => { useProfilesStore.setState(useProfilesStore.getInitialState(), true); vi.clearAllMocks() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
+  beforeEach(() => {
+    useProfilesStore.setState(useProfilesStore.getInitialState(), true)
+    vi.clearAllMocks()
+  })
   afterEach(() => cleanup())
 
   it('create flow: empty form, save calls aiProfilesCreate with input', async () => {
@@ -36,9 +49,16 @@ describe('ProfileDialog', () => {
     fireEvent.change(screen.getByLabelText(/模型/i), { target: { value: 'gpt-4o' } })
     fireEvent.change(screen.getByLabelText(/API 密钥/i), { target: { value: 'sk-abc' } })
     fireEvent.click(screen.getByRole('button', { name: /保存/i }))
-    await waitFor(() => expect(ipc.settings.aiProfilesCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'newprof', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-abc' })
-    ))
+    await waitFor(() =>
+      expect(ipc.settings.aiProfilesCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'newprof',
+          provider: 'openai',
+          model: 'gpt-4o',
+          apiKey: 'sk-abc'
+        })
+      )
+    )
   })
 
   it('edit flow: apiKey field starts EMPTY for existing profile', () => {
@@ -52,7 +72,8 @@ describe('ProfileDialog', () => {
     render(<ProfileDialog profile={sampleProfile} onClose={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /保存/i }))
     await waitFor(() => expect(ipc.settings.aiProfilesUpdate).toHaveBeenCalled())
-    const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+    const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0]
     expect(call[1].apiKey).toBeUndefined()
   })
 
@@ -61,7 +82,8 @@ describe('ProfileDialog', () => {
     fireEvent.change(screen.getByLabelText(/API 密钥/i), { target: { value: 'sk-new' } })
     fireEvent.click(screen.getByRole('button', { name: /保存/i }))
     await waitFor(() => {
-      const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+      const call = (ipc.settings.aiProfilesUpdate as unknown as ReturnType<typeof vi.fn>).mock
+        .calls[0]
       expect(call[1].apiKey).toBe('sk-new')
     })
   })

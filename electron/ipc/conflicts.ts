@@ -75,7 +75,9 @@ export const conflictHandlers = {
     winnerPath?: string
   }): Promise<{ id: string }> {
     if (!input?.path) throw new IpcError('E_INVALID_ARGS', 'path required')
-    if (!['keep_local', 'load_remote', 'load_remote_banner', 'save_as'].includes(input.resolvedBy)) {
+    if (
+      !['keep_local', 'load_remote', 'load_remote_banner', 'save_as'].includes(input.resolvedBy)
+    ) {
       throw new IpcError('E_INVALID_ARGS', `invalid resolvedBy: ${input.resolvedBy}`)
     }
     return storeWriteSnapshot(input)
@@ -123,10 +125,7 @@ export const conflictHandlers = {
     return { ok: true, deleted }
   },
 
-  async openSnapshotFile(
-    id: string,
-    side: 'local' | 'remote' | 'base'
-  ): Promise<{ ok: true }> {
+  async openSnapshotFile(id: string, side: 'local' | 'remote' | 'base'): Promise<{ ok: true }> {
     if (!id || typeof id !== 'string') {
       throw new IpcError('E_INVALID_ARGS', 'id is required')
     }

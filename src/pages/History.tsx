@@ -12,5 +12,10 @@ export default function History(): JSX.Element {
   if (!tab || !VALID_TABS.includes(tab as (typeof VALID_TABS)[number])) {
     return <Navigate to="/history/trash" replace />
   }
-  return <HistoryLayout tab={tab as (typeof VALID_TABS)[number]} initialSelectedConflictId={conflictId} />
+  return (
+    <HistoryLayout
+      tab={tab as (typeof VALID_TABS)[number]}
+      initialSelectedConflictId={conflictId}
+    />
+  )
 }

@@ -93,9 +93,7 @@ export function createBookmarkHandlers(deps: BookmarkDeps): IpcContract['bookmar
         .prepare(`SELECT COUNT(*) AS n FROM bookmarks ${whereSql}`)
         .get(...params) as { n: number }
       const items = db
-        .prepare(
-          `SELECT * FROM bookmarks ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-        )
+        .prepare(`SELECT * FROM bookmarks ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
         .all(...params, opts.limit, opts.offset) as RawRow[]
       return { items: items.map(rowToBookmark), total: totalRow.n }
     },
@@ -110,8 +108,7 @@ export function createBookmarkHandlers(deps: BookmarkDeps): IpcContract['bookmar
       }
       const newTitle = patch.title !== undefined ? patch.title : existing.title
       const newFavicon = patch.favicon !== undefined ? patch.favicon : existing.favicon
-      const newTagsJson =
-        patch.tags !== undefined ? JSON.stringify(patch.tags) : existing.tags_json
+      const newTagsJson = patch.tags !== undefined ? JSON.stringify(patch.tags) : existing.tags_json
       const updatedAt = deps.nowIso()
       db.prepare(
         `UPDATE bookmarks SET title=?, favicon=?, tags_json=?, updated_at=? WHERE id=?`

@@ -55,11 +55,7 @@ export interface JobStoreEvents {
 }
 
 export interface JobStore {
-  enqueue(
-    kind: string,
-    payload: Record<string, unknown>,
-    opts?: EnqueueOpts
-  ): { id: string }
+  enqueue(kind: string, payload: Record<string, unknown>, opts?: EnqueueOpts): { id: string }
   markRunning(id: string): void
   markDone(id: string): void
   markRetry(id: string, delayMs: number, reason: string): void
@@ -203,9 +199,7 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
       db.prepare(`SELECT COUNT(*) AS n FROM jobs ${whereSql}`).get(...params) as { n: number }
     ).n
     const rows = db
-      .prepare(
-        `SELECT * FROM jobs ${whereSql} ORDER BY ${orderCol} ASC LIMIT ? OFFSET ?`
-      )
+      .prepare(`SELECT * FROM jobs ${whereSql} ORDER BY ${orderCol} ASC LIMIT ? OFFSET ?`)
       .all(...params, filter.limit, filter.offset) as JobsRow[]
     return { items: rows.map(rowToJob), total }
   }

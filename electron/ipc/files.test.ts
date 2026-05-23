@@ -182,10 +182,7 @@ describe('fileQueryHandlers.list', () => {
   })
 
   it('returns empty result + total=0 on empty grove', async () => {
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
     expect(r.items).toEqual([])
     expect(r.total).toBe(0)
   })
@@ -194,10 +191,7 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'a.md', title: 'A', clipped_at: '2026-01-01T00:00:00Z' })
     insertFile(db, { path: 'b.md', title: 'B', clipped_at: '2026-01-03T00:00:00Z' })
     insertFile(db, { path: 'c.md', title: 'C', clipped_at: '2026-01-02T00:00:00Z' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
     expect(r.items.map((i) => i.path)).toEqual(['b.md', 'c.md', 'a.md'])
     expect(r.total).toBe(3)
   })
@@ -280,22 +274,21 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'c.md', title: 'Carrot' })
     insertFile(db, { path: 'a.md', title: 'Apple' })
     insertFile(db, { path: 'b.md', title: 'Banana' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'title_asc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
     expect(r.items.map((i) => i.title)).toEqual(['Apple', 'Banana', 'Carrot'])
   })
 
   it('returns FileSummary shape with review_status and has_summary correct', async () => {
     insertFile(db, {
-      path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x', 'y']
+      path: 'a.md',
+      title: 'A',
+      rating: 4,
+      summary: 's',
+      site: 'example.com',
+      tags: ['x', 'y']
     })
     insertFile(db, { path: 'b.md', title: 'B' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'title_asc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
     const a = r.items.find((i) => i.path === 'a.md')!
     const b = r.items.find((i) => i.path === 'b.md')!
     expect(a.has_summary).toBe(true)
@@ -315,23 +308,65 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'r.md', title: 'Running' })
     insertFile(db, { path: 'f.md', title: 'Failed' })
     // Create clip rows so JOIN works
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
-      .run('http://p.example', 'p.md', '2026-01-01', '2026-01-01')
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
-      .run('http://r.example', 'r.md', '2026-01-01', '2026-01-01')
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
-      .run('http://f.example', 'f.md', '2026-01-01', '2026-01-01')
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
+      'http://p.example',
+      'p.md',
+      '2026-01-01',
+      '2026-01-01'
+    )
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
+      'http://r.example',
+      'r.md',
+      '2026-01-01',
+      '2026-01-01'
+    )
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
+      'http://f.example',
+      'f.md',
+      '2026-01-01',
+      '2026-01-01'
+    )
     // Get clip IDs
-    const pClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'p.md'`).get() as { id: number }).id
-    const rClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'r.md'`).get() as { id: number }).id
-    const fClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'f.md'`).get() as { id: number }).id
+    const pClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'p.md'`).get() as { id: number })
+      .id
+    const rClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'r.md'`).get() as { id: number })
+      .id
+    const fClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'f.md'`).get() as { id: number })
+      .id
     // Create job rows
-    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
-      .run('j1', 'ai-review-clip', JSON.stringify({ clipId: pClipId }), 'pending', '2026-01-01', '2026-01-01', '2026-01-01')
-    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
-      .run('j2', 'ai-review-clip', JSON.stringify({ clipId: rClipId }), 'running', '2026-01-01', '2026-01-01', '2026-01-01')
-    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
-      .run('j3', 'ai-review-clip', JSON.stringify({ clipId: fClipId }), 'failed', '2026-01-01', '2026-01-01', '2026-01-01T00:00:01')
+    db.prepare(
+      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
+    ).run(
+      'j1',
+      'ai-review-clip',
+      JSON.stringify({ clipId: pClipId }),
+      'pending',
+      '2026-01-01',
+      '2026-01-01',
+      '2026-01-01'
+    )
+    db.prepare(
+      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
+    ).run(
+      'j2',
+      'ai-review-clip',
+      JSON.stringify({ clipId: rClipId }),
+      'running',
+      '2026-01-01',
+      '2026-01-01',
+      '2026-01-01'
+    )
+    db.prepare(
+      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
+    ).run(
+      'j3',
+      'ai-review-clip',
+      JSON.stringify({ clipId: fClipId }),
+      'failed',
+      '2026-01-01',
+      '2026-01-01',
+      '2026-01-01T00:00:01'
+    )
     // Update j3 to have an error
     db.prepare(`UPDATE jobs SET last_error = 'E_MISSING_PROFILE' WHERE id = 'j3'`).run()
 
@@ -350,10 +385,7 @@ describe('fileQueryHandlers.list', () => {
 
   it('returns empty tags array for file with no tags (NULL tags_concat)', async () => {
     insertFile(db, { path: 'a.md', title: 'A' })
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'title_asc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
     expect(r.items).toHaveLength(1)
     expect(r.items[0].tags).toEqual([])
   })
@@ -384,10 +416,7 @@ describe('fileQueryHandlers.list', () => {
     db.exec('DROP TABLE file_tags')
     db.exec('DROP TABLE files')
     try {
-      await fileQueryHandlers.list(
-        {},
-        { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-      )
+      await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
       expect.unreachable('Expected list() to throw')
     } catch (err) {
       expect(err).toBeInstanceOf(IpcError)
@@ -450,7 +479,12 @@ describe('fileQueryHandlers.get', () => {
 
   it('returns summary + frontmatter + body when path exists', async () => {
     insertFile(db, {
-      path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x']
+      path: 'a.md',
+      title: 'A',
+      rating: 4,
+      summary: 's',
+      site: 'example.com',
+      tags: ['x']
     })
     const md = stringify({ title: 'A', rating: 4 }, '# Hello\n\nbody')
     wfs(join(dir, 'a.md'), md)
@@ -527,10 +561,7 @@ describe('fileQueryHandlers — error / empty fallbacks', () => {
   })
 
   it('list: empty grove returns total=0 (not E_*)', async () => {
-    const r = await fileQueryHandlers.list(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
     expect(r).toEqual({ items: [], total: 0 })
   })
 

@@ -14,7 +14,10 @@ function reset() {
 
 function makePort(overrides: Partial<BrowserPort> = {}): BrowserPort {
   return {
-    createTab: vi.fn(async (url) => ({ id: 'mock-' + Math.random().toString(36).slice(2, 6), url: url ?? 'about:blank' })),
+    createTab: vi.fn(async (url) => ({
+      id: 'mock-' + Math.random().toString(36).slice(2, 6),
+      url: url ?? 'about:blank'
+    })),
     closeTab: vi.fn(async () => {}),
     activateTab: vi.fn(async () => {}),
     navigate: vi.fn(async () => {}),
@@ -55,7 +58,18 @@ describe('browser store — state', () => {
   it('exposes selectors for active tab', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 't1', url: 'https://a', title: 'A', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://a', isClipped: false }
+        {
+          id: 't1',
+          url: 'https://a',
+          title: 'A',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'https://a',
+          isClipped: false
+        }
       ],
       activeTabId: 't1'
     })
@@ -88,9 +102,42 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        },
+        {
+          id: 'c',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        }
       ],
       activeTabId: 'b'
     })
@@ -110,7 +157,18 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'only', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://x', isClipped: false }
+        {
+          id: 'only',
+          url: 'https://x',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'https://x',
+          isClipped: false
+        }
       ],
       activeTabId: 'only'
     })
@@ -127,8 +185,30 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        }
       ],
       activeTabId: 'a'
     })
@@ -142,9 +222,42 @@ describe('browser store — actions', () => {
   it('reorderTab moves a tab to the target index', () => {
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'b', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false },
-        { id: 'c', url: '', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: '', isClipped: false }
+        {
+          id: 'a',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        },
+        {
+          id: 'b',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        },
+        {
+          id: 'c',
+          url: '',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: '',
+          isClipped: false
+        }
       ]
     })
     useBrowserStore.getState().reorderTab('a', 2)
@@ -156,7 +269,18 @@ describe('browser store — actions', () => {
     setBrowserPort(port)
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://old', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://old', isClipped: false }
+        {
+          id: 'a',
+          url: 'https://old',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'https://old',
+          isClipped: false
+        }
       ],
       activeTabId: 'a'
     })
@@ -197,7 +321,18 @@ describe('browser store — tabStateChanged subscription', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://x', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: false, savedUrl: 'https://x', isClipped: false }
+        {
+          id: 'a',
+          url: 'https://x',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: false,
+          savedUrl: 'https://x',
+          isClipped: false
+        }
       ],
       activeTabId: 'a'
     })
@@ -234,9 +369,17 @@ describe('browser store — LRU suspend', () => {
 
     useBrowserStore.setState({
       tabs: Array.from({ length: 20 }, (_, i) => ({
-        id: `t${i + 1}`, url: '', title: '', favicon: null,
-        loading: false, canGoBack: false, canGoForward: false,
-        suspended: false, savedUrl: '', isClipped: false })),
+        id: `t${i + 1}`,
+        url: '',
+        title: '',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        suspended: false,
+        savedUrl: '',
+        isClipped: false
+      })),
       activeTabId: 't20'
     })
 
@@ -258,9 +401,17 @@ describe('browser store — LRU suspend', () => {
 
     useBrowserStore.setState({
       tabs: Array.from({ length: 20 }, (_, i) => ({
-        id: `t${i + 1}`, url: '', title: '', favicon: null,
-        loading: false, canGoBack: false, canGoForward: false,
-        suspended: false, savedUrl: '', isClipped: false })),
+        id: `t${i + 1}`,
+        url: '',
+        title: '',
+        favicon: null,
+        loading: false,
+        canGoBack: false,
+        canGoForward: false,
+        suspended: false,
+        savedUrl: '',
+        isClipped: false
+      })),
       activeTabId: 't1'
     })
 
@@ -283,7 +434,18 @@ describe('browser store — resume', () => {
 
     useBrowserStore.setState({
       tabs: [
-        { id: 'a', url: 'https://restored', title: '', favicon: null, loading: false, canGoBack: false, canGoForward: false, suspended: true, savedUrl: 'https://restored', isClipped: false }
+        {
+          id: 'a',
+          url: 'https://restored',
+          title: '',
+          favicon: null,
+          loading: false,
+          canGoBack: false,
+          canGoForward: false,
+          suspended: true,
+          savedUrl: 'https://restored',
+          isClipped: false
+        }
       ],
       activeTabId: null
     })

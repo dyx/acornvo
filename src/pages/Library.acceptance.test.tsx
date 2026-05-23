@@ -26,12 +26,25 @@ import { buildSummaries, sortByClippedDesc } from '../../tests/fixtures/grove-bu
 
 beforeEach(() => {
   Element.prototype.getBoundingClientRect = vi.fn(() => ({
-    width: 360, height: 600, top: 0, left: 0, right: 360, bottom: 600, x: 0, y: 0,
+    width: 360,
+    height: 600,
+    top: 0,
+    left: 0,
+    right: 360,
+    bottom: 600,
+    x: 0,
+    y: 0,
     toJSON: () => ({})
   })) as unknown as Element['getBoundingClientRect']
   // Also mock offsetHeight/offsetWidth for useVirtualizer
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 600 })
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => 360 })
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    get: () => 600
+  })
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    configurable: true,
+    get: () => 360
+  })
   useLibraryStore.setState(useLibraryStore.getInitialState(), true)
   _resetLibrarySubscriber()
   useGroveStore.setState(
@@ -52,8 +65,14 @@ describe('OpenSpec acceptance 7.1 — 50 md files render in clipped_desc order',
     }))
     const items = sortByClippedDesc(buildSummaries(fixtures))
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items, total: 50 })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const renderedRows = document.querySelectorAll('[data-testid="file-row"]')
     expect(renderedRows.length).toBeGreaterThan(0)
     expect(useLibraryStore.getState().total).toBe(50)
@@ -64,28 +83,34 @@ describe('OpenSpec acceptance 7.1 — 50 md files render in clipped_desc order',
 describe('OpenSpec acceptance 7.2 — clicking 果篮 narrows to inbox/* files', () => {
   it('clicking 果篮 calls ipc.files.list with pathPrefix=inbox/', async () => {
     const inbox = sortByClippedDesc(
-      buildSummaries([
-        { path: 'inbox/a.md' },
-        { path: 'inbox/b.md' }
-      ])
+      buildSummaries([{ path: 'inbox/a.md' }, { path: 'inbox/b.md' }])
     )
     const all = sortByClippedDesc(
-      buildSummaries([
-        { path: 'inbox/a.md' },
-        { path: 'inbox/b.md' },
-        { path: 'notes/c.md' }
-      ])
+      buildSummaries([{ path: 'inbox/a.md' }, { path: 'inbox/b.md' }, { path: 'notes/c.md' }])
     )
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockImplementation(async (filter: any) => {
       if (filter?.pathPrefix === 'inbox/') return { items: inbox, total: 2 }
       return { items: all, total: 3 }
     })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const inboxButton = screen.getByRole('button', { name: /library.inbox/ })
     await userEvent.click(inboxButton)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
-    expect(useLibraryStore.getState().items.map((i) => i.path).sort()).toEqual(['inbox/a.md', 'inbox/b.md'])
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    expect(
+      useLibraryStore
+        .getState()
+        .items.map((i) => i.path)
+        .sort()
+    ).toEqual(['inbox/a.md', 'inbox/b.md'])
   })
 })
 
@@ -112,12 +137,23 @@ describe('OpenSpec acceptance 7.3 — clicking 技术 matches 技术 and 技术/
       { name: '技术', count: 2, children: [{ name: '深度学习', count: 1, children: [] }] },
       { name: '产品', count: 1, children: [] }
     ])
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const sidebar = screen.getByTestId('library-category-sidebar')
     await userEvent.click(within(sidebar).getByText('技术'))
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
-    const paths = useLibraryStore.getState().items.map((i) => i.path).sort()
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    const paths = useLibraryStore
+      .getState()
+      .items.map((i) => i.path)
+      .sort()
     expect(paths).toEqual(['t1.md', 't2.md'])
     const lastListCall = (ipc.files.list as ReturnType<typeof vi.fn>).mock.calls.at(-1)
     expect(lastListCall?.[0]).toMatchObject({ category: '技术' })
@@ -148,11 +184,19 @@ describe('OpenSpec acceptance 7.4 — clicking #attention narrows by tag', () =>
       { name: 'transformer', usage_count: 1 },
       { name: 'other', usage_count: 1 }
     ])
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const sidebar = screen.getByTestId('library-category-sidebar')
     await userEvent.click(within(sidebar).getByText('#attention'))
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     expect(useLibraryStore.getState().items.length).toBe(2)
     const lastListCall = (ipc.files.list as ReturnType<typeof vi.fn>).mock.calls.at(-1)
     expect(lastListCall?.[0]).toMatchObject({ tag: 'attention' })
@@ -172,17 +216,31 @@ describe('OpenSpec acceptance 7.5 — search "注意力" narrows; clearing resto
       if (filter?.q === '注意力') return { items: filtered, total: filtered.length }
       return { items: all, total: all.length }
     })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 100))
+    })
     const search = screen.getByRole('searchbox')
     // fireEvent.change reliably sets the input value for CJK in jsdom; debounce 150ms
-    await act(async () => { fireEvent.change(search, { target: { value: '注意力' } }) })
-    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    await act(async () => {
+      fireEvent.change(search, { target: { value: '注意力' } })
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 200))
+    })
     expect(useLibraryStore.getState().items.length).toBe(filtered.length)
     expect(useLibraryStore.getState().items[0].title).toContain('注意力')
     // Clear the search box — debounce fires again, passing q=undefined
-    await act(async () => { fireEvent.change(search, { target: { value: '' } }) })
-    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    await act(async () => {
+      fireEvent.change(search, { target: { value: '' } })
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 200))
+    })
     expect(useLibraryStore.getState().items.length).toBe(all.length)
   })
 })
@@ -197,8 +255,14 @@ describe('OpenSpec acceptance 7.6 — 5000 rows: virtualizer keeps DOM count bou
       )
     )
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items, total: 5000 })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 200)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 200))
+    })
     expect(useLibraryStore.getState().items.length).toBe(5000)
     const dom = document.querySelectorAll('[data-testid="file-row"]')
     // 600px / 60px = 10 visible rows + overscan 10 above + 10 below = <= 30
@@ -221,11 +285,19 @@ describe('OpenSpec acceptance 7.7 — selecting a file populates the preview + o
       frontmatter: { summary: 'AI summary', highlights: ['p1', 'p2'] },
       body: 'body'
     })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 100))
+    })
     const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
     await userEvent.click(row)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     expect(screen.getByText('AI summary')).toBeTruthy()
     expect(screen.getByText('p1')).toBeTruthy()
     expect(screen.getByText('p2')).toBeTruthy()
@@ -241,8 +313,14 @@ describe('OpenSpec acceptance 7.8 — rating IS NULL shows 理果中 in row and 
       buildSummaries([{ path: 'a.md', title: 'Unrated', rating: null }])
     )
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     expect(screen.getAllByText(/library.reviewing/).length).toBeGreaterThanOrEqual(1)
   })
 
@@ -252,13 +330,23 @@ describe('OpenSpec acceptance 7.8 — rating IS NULL shows 理果中 in row and 
     )
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
     ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      summary: fixture[0], frontmatter: {}, body: ''
+      summary: fixture[0],
+      frontmatter: {},
+      body: ''
     })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
     await userEvent.click(row)
-    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
     expect(screen.getByTestId('preview-reviewing-loader')).toBeTruthy()
   })
 })
@@ -267,15 +355,25 @@ describe('OpenSpec acceptance 7.9 — right-click → Reveal in Finder', () => {
   it('right-click opens the menu, "在 Finder 中显示" calls files.revealInFinder', async () => {
     const fixture = sortByClippedDesc(buildSummaries([{ path: 'a.md', title: 'A' }]))
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: fixture, total: 1 })
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     const row = document.querySelector('[data-testid="file-row"]') as HTMLElement
     fireEvent.contextMenu(row, { clientX: 50, clientY: 50 })
-    await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
     const menu = screen.getByTestId('file-row-menu')
     expect(menu).toBeTruthy()
     await userEvent.click(screen.getByRole('menuitem', { name: 'library.reveal' }))
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
     expect(ipc.files.revealInFinder).toHaveBeenCalledWith('a.md')
   })
 })
@@ -297,8 +395,14 @@ describe('OpenSpec acceptance 7.10 — external new md → list updates via inde
       return () => {}
     })
 
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
     expect(useLibraryStore.getState().items.length).toBe(1)
 
     await act(async () => {
@@ -320,7 +424,9 @@ describe('OpenSpec acceptance 7.11 — external delete of selected file clears r
       return listCallCount === 1 ? { items: before, total: 2 } : { items: after, total: 1 }
     })
     ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      summary: before[0], frontmatter: {}, body: ''
+      summary: before[0],
+      frontmatter: {},
+      body: ''
     })
 
     let onDeleted: ((p: any) => void) | null = null
@@ -329,10 +435,18 @@ describe('OpenSpec acceptance 7.11 — external delete of selected file clears r
       return () => {}
     })
 
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-    await act(async () => { await useLibraryStore.getState().select('a.md') })
+    await act(async () => {
+      await useLibraryStore.getState().select('a.md')
+    })
     expect(useLibraryStore.getState().selectedPath).toBe('a.md')
 
     // Delete 'a.md' externally
@@ -356,16 +470,26 @@ describe('OpenSpec acceptance 7.12 — index scanning shows banner', () => {
     })
     ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: [], total: 0 })
 
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
     // No banner yet
     expect(screen.queryByText('library.banner_scanning')).toBeNull()
 
-    await act(async () => { onState?.({ state: 'scanning' }) })
+    await act(async () => {
+      onState?.({ state: 'scanning' })
+    })
     expect(screen.getByText('library.banner_scanning')).toBeTruthy()
 
-    await act(async () => { onState?.({ state: 'watching' }) })
+    await act(async () => {
+      onState?.({ state: 'watching' })
+    })
     expect(screen.queryByText('library.banner_scanning')).toBeNull()
   })
 })
@@ -380,7 +504,9 @@ describe('OpenSpec acceptance 7.13 — switching grove resets library state', ()
       return callCount === 1 ? { items: groveA, total: 1 } : { items: groveB, total: 2 }
     })
     ;(ipc.files.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      summary: groveA[0], frontmatter: {}, body: ''
+      summary: groveA[0],
+      frontmatter: {},
+      body: ''
     })
 
     let onProject: ((p: any) => void) | null = null
@@ -389,9 +515,17 @@ describe('OpenSpec acceptance 7.13 — switching grove resets library state', ()
       return () => {}
     })
 
-    render(<MemoryRouter><Library /></MemoryRouter>)
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
-    await act(async () => { await useLibraryStore.getState().select('a.md') })
+    render(
+      <MemoryRouter>
+        <Library />
+      </MemoryRouter>
+    )
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    await act(async () => {
+      await useLibraryStore.getState().select('a.md')
+    })
     expect(useLibraryStore.getState().selectedPath).toBe('a.md')
     expect(useLibraryStore.getState().detailsByPath.size).toBe(1)
 

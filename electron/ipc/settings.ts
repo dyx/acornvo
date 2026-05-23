@@ -8,7 +8,9 @@ import { isSafeStorageAvailable } from '../settings/safe-storage-state'
 const BROWSER_PARTITION = 'persist:browser-default'
 
 type SettingsHandlers = {
-  [M in keyof IpcContract['settings']]: IpcContract['settings'][M] extends (...args: infer A) => infer R
+  [M in keyof IpcContract['settings']]: IpcContract['settings'][M] extends (
+    ...args: infer A
+  ) => infer R
     ? (...args: A) => R | Promise<Awaited<R>>
     : never
 }

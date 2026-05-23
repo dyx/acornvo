@@ -1,6 +1,12 @@
 // src/stores/browser.ts
 import { create } from 'zustand'
-import type { Tab, TabId, TabPatch, SetViewportArgs, TabStateChangedPayload } from '@shared/browser-types'
+import type {
+  Tab,
+  TabId,
+  TabPatch,
+  SetViewportArgs,
+  TabStateChangedPayload
+} from '@shared/browser-types'
 import { getClipsPort } from '@/ipc/clips-port'
 
 const BLANK_URL = 'about:blank'
@@ -22,18 +28,42 @@ export interface BrowserPort {
 }
 
 let port: BrowserPort = {
-  createTab: () => { throw new Error('BrowserPort not configured') },
-  closeTab: () => { throw new Error('BrowserPort not configured') },
-  activateTab: () => { throw new Error('BrowserPort not configured') },
-  navigate: () => { throw new Error('BrowserPort not configured') },
-  reload: () => { throw new Error('BrowserPort not configured') },
-  goBack: () => { throw new Error('BrowserPort not configured') },
-  goForward: () => { throw new Error('BrowserPort not configured') },
-  setViewport: () => { throw new Error('BrowserPort not configured') },
-  suspendTab: () => { throw new Error('BrowserPort not configured') },
-  resumeTab: () => { throw new Error('BrowserPort not configured') },
-  hideBrowserView: () => { throw new Error('BrowserPort not configured') },
-  showBrowserView: () => { throw new Error('BrowserPort not configured') }
+  createTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  closeTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  activateTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  navigate: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  reload: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  goBack: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  goForward: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  setViewport: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  suspendTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  resumeTab: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  hideBrowserView: () => {
+    throw new Error('BrowserPort not configured')
+  },
+  showBrowserView: () => {
+    throw new Error('BrowserPort not configured')
+  }
 }
 
 export function setBrowserPort(p: BrowserPort): void {
@@ -144,9 +174,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       if (victim) {
         await port.suspendTab(victim.id)
         set((s) => ({
-          tabs: s.tabs.map((t) =>
-            t.id === victim.id ? { ...t, suspended: true } : t
-          )
+          tabs: s.tabs.map((t) => (t.id === victim.id ? { ...t, suspended: true } : t))
         }))
       }
     }
@@ -184,9 +212,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
     if (tab?.suspended) {
       await port.resumeTab(id)
       set((s) => ({
-        tabs: s.tabs.map((t) =>
-          t.id === id ? { ...t, suspended: false, loading: true } : t
-        )
+        tabs: s.tabs.map((t) => (t.id === id ? { ...t, suspended: false, loading: true } : t))
       }))
     }
     await port.activateTab(id)
@@ -208,9 +234,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   async navigate(id, url) {
     await port.navigate(id, url)
     set((s) => ({
-      tabs: s.tabs.map((t) =>
-        t.id === id ? { ...t, savedUrl: url, loading: true } : t
-      )
+      tabs: s.tabs.map((t) => (t.id === id ? { ...t, savedUrl: url, loading: true } : t))
     }))
   },
 
@@ -236,7 +260,9 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
 
   applyTabPatch(id, patch) {
     set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch, savedUrl: patch.url ?? t.savedUrl } : t))
+      tabs: s.tabs.map((t) =>
+        t.id === id ? { ...t, ...patch, savedUrl: patch.url ?? t.savedUrl } : t
+      )
     }))
     if (patch.url) scheduleClipCheck(id, patch.url)
   }

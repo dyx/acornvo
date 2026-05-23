@@ -1,12 +1,15 @@
 import { ipcMain } from 'electron'
 import { logger } from '../services/logger'
-import { IpcError, type IpcContract, type IpcErrorShape, type IpcResult } from '@shared/ipc-contract'
+import {
+  IpcError,
+  type IpcContract,
+  type IpcErrorShape,
+  type IpcResult
+} from '@shared/ipc-contract'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
-    [M in keyof IpcContract[NS]]: IpcContract[NS][M] extends (
-      ...args: infer A
-    ) => infer R
+    [M in keyof IpcContract[NS]]: IpcContract[NS][M] extends (...args: infer A) => infer R
       ? (...args: A) => R | Promise<Awaited<R>>
       : never
   }
@@ -52,10 +55,7 @@ const ABSOLUTE_PATH_PATTERNS: RegExp[] = [
 function sanitizeMessage(message: string): string {
   // Keep only the first line (drop stack trace) and scrub absolute paths.
   const firstLine = message.split('\n', 1)[0] ?? message
-  return ABSOLUTE_PATH_PATTERNS.reduce(
-    (acc, pattern) => acc.replace(pattern, '<path>'),
-    firstLine
-  )
+  return ABSOLUTE_PATH_PATTERNS.reduce((acc, pattern) => acc.replace(pattern, '<path>'), firstLine)
 }
 
 export function normalize(err: unknown): IpcErrorShape {

@@ -104,7 +104,11 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
         <div className="grid gap-3">
           <label className="grid gap-1 text-xs">
             URL
-            <Input value={url} disabled={props.mode === 'edit'} onChange={(e) => setUrl(e.target.value)} />
+            <Input
+              value={url}
+              disabled={props.mode === 'edit'}
+              onChange={(e) => setUrl(e.target.value)}
+            />
           </label>
           <label className="grid gap-1 text-xs">
             Title
@@ -121,9 +125,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
               {t('browser.bookmark.delete', 'Delete')}
             </Button>
           )}
-          <Button onClick={() => void save()}>
-            {t('common.save', 'Save')}
-          </Button>
+          <Button onClick={() => void save()}>{t('common.save', 'Save')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

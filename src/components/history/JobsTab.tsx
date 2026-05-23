@@ -20,7 +20,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select'
 import type { Job, JobStatus } from '@shared/job-types'
 import { JOB_KINDS } from '@shared/job-types'
@@ -110,7 +110,12 @@ function reducer(state: State, action: Action): State {
     case 'CLEAR_DONE_START':
       return { ...state, clearDoneLoading: true, clearDoneResult: null }
     case 'CLEAR_DONE_RESULT':
-      return { ...state, clearDoneLoading: false, clearDoneResult: `已清除 ${action.removed} 个任务`, confirmOpen: false }
+      return {
+        ...state,
+        clearDoneLoading: false,
+        clearDoneResult: `已清除 ${action.removed} 个任务`,
+        confirmOpen: false
+      }
     case 'CLEAR_DONE_ERROR':
       return { ...state, clearDoneLoading: false, clearDoneResult: null, confirmOpen: false }
     default:
@@ -140,9 +145,7 @@ export function JobsTab(): JSX.Element {
     dispatch({ type: 'SET_LOADING', loading: true })
     try {
       const results = await Promise.allSettled(
-        ACTIVE_STATUSES.map((status) =>
-          ipc.jobs.list({ status, limit: LIMIT, offset: 0 })
-        )
+        ACTIVE_STATUSES.map((status) => ipc.jobs.list({ status, limit: LIMIT, offset: 0 }))
       )
 
       const allJobs: Job[] = []
@@ -153,9 +156,7 @@ export function JobsTab(): JSX.Element {
       }
 
       // Sort by nextRunAt ascending (sooner runs first)
-      allJobs.sort(
-        (a, b) => new Date(a.nextRunAt).getTime() - new Date(b.nextRunAt).getTime()
-      )
+      allJobs.sort((a, b) => new Date(a.nextRunAt).getTime() - new Date(b.nextRunAt).getTime())
 
       dispatch({ type: 'SET_JOBS', jobs: allJobs })
     } catch {
@@ -226,7 +227,9 @@ export function JobsTab(): JSX.Element {
         {/* kind filter */}
         <Select
           value={state.kindFilter || 'all'}
-          onValueChange={(value) => dispatch({ type: 'SET_KIND_FILTER', kind: value === 'all' ? '' : value })}
+          onValueChange={(value) =>
+            dispatch({ type: 'SET_KIND_FILTER', kind: value === 'all' ? '' : value })
+          }
         >
           <SelectTrigger className="w-32 h-8 text-xs">
             <SelectValue placeholder="全部类型" />
@@ -244,7 +247,9 @@ export function JobsTab(): JSX.Element {
         {/* status filter */}
         <Select
           value={state.statusFilter || 'all'}
-          onValueChange={(value) => dispatch({ type: 'SET_STATUS_FILTER', status: value === 'all' ? '' : value })}
+          onValueChange={(value) =>
+            dispatch({ type: 'SET_STATUS_FILTER', status: value === 'all' ? '' : value })
+          }
         >
           <SelectTrigger className="w-32 h-8 text-xs">
             <SelectValue placeholder="全部状态" />
@@ -268,7 +273,10 @@ export function JobsTab(): JSX.Element {
         )}
 
         {/* clear-done button */}
-        <AlertDialog open={state.confirmOpen} onOpenChange={(open) => dispatch({ type: open ? 'OPEN_CONFIRM' : 'CLOSE_CONFIRM' })}>
+        <AlertDialog
+          open={state.confirmOpen}
+          onOpenChange={(open) => dispatch({ type: open ? 'OPEN_CONFIRM' : 'CLOSE_CONFIRM' })}
+        >
           <AlertDialogTrigger asChild>
             <Button variant="outline" size="sm" disabled={state.clearDoneLoading}>
               <Trash2 className="h-3.5 w-3.5" />
@@ -295,11 +303,7 @@ export function JobsTab(): JSX.Element {
       {/* job list or empty state */}
       {filteredJobs.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
-          <EmptyState
-            icon={<ListChecks />}
-            title="暂无任务"
-            description="后台任务会出现在这里"
-          />
+          <EmptyState icon={<ListChecks />} title="暂无任务" description="后台任务会出现在这里" />
         </div>
       ) : useVirtual ? (
         <div ref={parentRef} className="flex-1 overflow-y-auto outline-none">

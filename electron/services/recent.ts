@@ -1,9 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import type { RecentItem } from '@shared/grove'
-import {
-  RecentProjectsFileSchema,
-  type RecentProjectsFile
-} from '@shared/schemas/project'
+import { RecentProjectsFileSchema, type RecentProjectsFile } from '@shared/schemas/project'
 import { writeFileAtomic } from './fs-atomic'
 import { recentProjectsFile } from './paths'
 import { logger } from './logger'

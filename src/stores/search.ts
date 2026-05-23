@@ -58,47 +58,52 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     requestId: 0,
     onPick: null,
 
-    open: () => set((prev) => ({
-      quickSwitcher: {
-        ...prev.quickSwitcher,
-        openState: true,
-        q: '',
-        items: [],
-        selectedIndex: 0,
-        onPick: null
-      }
-    })),
+    open: () =>
+      set((prev) => ({
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          openState: true,
+          q: '',
+          items: [],
+          selectedIndex: 0,
+          onPick: null
+        }
+      })),
 
-    openWithPick: (onPick) => set((prev) => ({
-      quickSwitcher: {
-        ...prev.quickSwitcher,
-        openState: true,
-        q: '',
-        items: [],
-        selectedIndex: 0,
-        onPick
-      }
-    })),
+    openWithPick: (onPick) =>
+      set((prev) => ({
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          openState: true,
+          q: '',
+          items: [],
+          selectedIndex: 0,
+          onPick
+        }
+      })),
 
-    close: () => set((prev) => ({
-      quickSwitcher: {
-        ...prev.quickSwitcher,
-        openState: false,
-        q: '',
-        items: [],
-        selectedIndex: 0,
-        onPick: null
-      }
-    })),
+    close: () =>
+      set((prev) => ({
+        quickSwitcher: {
+          ...prev.quickSwitcher,
+          openState: false,
+          q: '',
+          items: [],
+          selectedIndex: 0,
+          onPick: null
+        }
+      })),
 
-    setQuery: (q: string) => set((prev) => ({
-      quickSwitcher: { ...prev.quickSwitcher, q, selectedIndex: 0 }
-    })),
+    setQuery: (q: string) =>
+      set((prev) => ({
+        quickSwitcher: { ...prev.quickSwitcher, q, selectedIndex: 0 }
+      })),
 
     runQuery: async (q: string) => {
       const myId = get().quickSwitcher.requestId + 1
       set((prev) => ({ quickSwitcher: { ...prev.quickSwitcher, requestId: myId } }))
-      const items = q.length === 0 ? [] : await ipc.search.quickSwitch(q, { limit: QUICK_SWITCH_LIMIT })
+      const items =
+        q.length === 0 ? [] : await ipc.search.quickSwitch(q, { limit: QUICK_SWITCH_LIMIT })
       const cur = get().quickSwitcher.requestId
       if (cur !== myId) return // stale
       set((prev) => ({
@@ -119,20 +124,26 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       }, QUICK_SWITCH_DEBOUNCE_MS)
     },
 
-    moveSelection: (delta: number) => set((prev) => {
-      const max = Math.max(0, prev.quickSwitcher.items.length - 1)
-      const next = Math.min(max, Math.max(0, prev.quickSwitcher.selectedIndex + delta))
-      return { quickSwitcher: { ...prev.quickSwitcher, selectedIndex: next } }
-    }),
+    moveSelection: (delta: number) =>
+      set((prev) => {
+        const max = Math.max(0, prev.quickSwitcher.items.length - 1)
+        const next = Math.min(max, Math.max(0, prev.quickSwitcher.selectedIndex + delta))
+        return { quickSwitcher: { ...prev.quickSwitcher, selectedIndex: next } }
+      }),
 
-    setSelectedIndex: (i: number) => set((prev) => ({
-      quickSwitcher: { ...prev.quickSwitcher, selectedIndex: i }
-    })),
+    setSelectedIndex: (i: number) =>
+      set((prev) => ({
+        quickSwitcher: { ...prev.quickSwitcher, selectedIndex: i }
+      })),
 
-    pushRecent: (path: string) => set((prev) => {
-      const next = [path, ...prev.quickSwitcher.recent.filter((p) => p !== path)].slice(0, RECENT_MAX)
-      return { quickSwitcher: { ...prev.quickSwitcher, recent: next } }
-    })
+    pushRecent: (path: string) =>
+      set((prev) => {
+        const next = [path, ...prev.quickSwitcher.recent.filter((p) => p !== path)].slice(
+          0,
+          RECENT_MAX
+        )
+        return { quickSwitcher: { ...prev.quickSwitcher, recent: next } }
+      })
   },
 
   fullText: {
@@ -183,10 +194,14 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       }
     },
 
-    pushRecentSearch: (q: string) => set((prev) => {
-      const next = [q, ...prev.fullText.recentSearches.filter((r) => r !== q)].slice(0, RECENT_SEARCHES_MAX)
-      return { fullText: { ...prev.fullText, recentSearches: next } }
-    })
+    pushRecentSearch: (q: string) =>
+      set((prev) => {
+        const next = [q, ...prev.fullText.recentSearches.filter((r) => r !== q)].slice(
+          0,
+          RECENT_SEARCHES_MAX
+        )
+        return { fullText: { ...prev.fullText, recentSearches: next } }
+      })
   }
 }))
 

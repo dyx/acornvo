@@ -155,25 +155,37 @@ export function AddressBar(): JSX.Element {
           title={t('browser.clip.tooltip', '剪藏此页（Cmd+Shift+S）')}
           disabled={clipState === 'disabled'}
           onClick={async () => {
-            if (clipState === 'hollow' && tab) { void startClip(tab.id); return }
-            if (clipState === 'clipped') { setOpenClippedConfirm(true) }
+            if (clipState === 'hollow' && tab) {
+              void startClip(tab.id)
+              return
+            }
+            if (clipState === 'clipped') {
+              setOpenClippedConfirm(true)
+            }
           }}
           className={[
             'flex h-[32px] items-center gap-[8px] rounded-[8px] border-none px-[14px] font-serif text-[13px] font-medium transition-colors',
-            clipState === 'disabled' && 'opacity-40 bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-3)] cursor-default',
-            clipState === 'hollow' && 'bg-[color:var(--color-acorn)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
-            clipState === 'clipped' && 'bg-[color:var(--color-leaf)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
+            clipState === 'disabled' &&
+              'opacity-40 bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-3)] cursor-default',
+            clipState === 'hollow' &&
+              'bg-[color:var(--color-acorn)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
+            clipState === 'clipped' &&
+              'bg-[color:var(--color-leaf)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
             clipState === 'busy' && 'bg-[color:var(--color-acorn)] text-white animate-pulse'
-          ].filter(Boolean).join(' ')}
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
           {clipState === 'busy' ? (
             <div className="size-3 animate-spin rounded-full border-[1.5px] border-white/30 border-t-white" />
           ) : (
             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M5.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM2 0l5 7-5 7h2l4-5.5L12 14h2L9 7l5-7h-2L8 5.5 4 0H2Z"/>
+              <path d="M5.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM2 0l5 7-5 7h2l4-5.5L12 14h2L9 7l5-7h-2L8 5.5 4 0H2Z" />
             </svg>
           )}
-          {clipState === 'clipped' ? t('browser.clipped_label', '已拾果') : t('browser.clip_label', '拾果')}
+          {clipState === 'clipped'
+            ? t('browser.clipped_label', '已拾果')
+            : t('browser.clip_label', '拾果')}
         </button>
       </span>
       {bookmark ? (
@@ -201,19 +213,23 @@ export function AddressBar(): JSX.Element {
             <Dialog.Title className="text-sm font-semibold">
               {t('browser.clip.exists.title', '已剪藏')}
             </Dialog.Title>
-            <div className="mt-2 text-sm">{t('browser.clip.exists.body', '该页面已剪藏过，是否打开？')}</div>
+            <div className="mt-2 text-sm">
+              {t('browser.clip.exists.body', '该页面已剪藏过，是否打开？')}
+            </div>
             <div className="mt-6 flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setOpenClippedConfirm(false)}
-              >
+              <Button variant="outline" onClick={() => setOpenClippedConfirm(false)}>
                 {t('common.cancel', '取消')}
               </Button>
               <Button
                 onClick={async () => {
                   setOpenClippedConfirm(false)
                   const r = await getClipsPort().getByUrl({ url: tab?.url ?? '' })
-                  if (r.ok && r.data) reactNavigate('/editor/' + r.data.path)
+                  if (r.ok && r.data) {
+                    void import('@/stores/library').then(({ useLibraryStore }) => {
+                      useLibraryStore.getState().select(r.data!.path)
+                    })
+                    reactNavigate('/library')
+                  }
                 }}
               >
                 {t('common.open', '打开')}

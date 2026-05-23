@@ -6,9 +6,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 
 import {
-  state, status, _resetForTest, _setStateForTest, onStateChange,
-  startScan, cancelScan, onProgress, onDone, _injectDbForTest, reset,
-  upsertFromFs,
+  state,
+  status,
+  _resetForTest,
+  _setStateForTest,
+  onStateChange,
+  startScan,
+  cancelScan,
+  onProgress,
+  onDone,
+  _injectDbForTest,
+  reset,
+  upsertFromFs
 } from './indexer'
 import { listAllPaths } from './index-queries'
 import { bootstrapQueueRunner, disposeQueueBootstrap, getQueueBootstrap } from '../queue'
@@ -18,7 +27,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
   return {
     ...actual,
-    readFile: vi.fn((...args: any[]) => (actual as any).readFile(...args)),
+    readFile: vi.fn((...args: any[]) => (actual as any).readFile(...args))
   }
 })
 
@@ -66,7 +75,9 @@ function makeQueueDb(): Database.Database {
 }
 
 describe('IndexState machine', () => {
-  beforeEach(() => { _resetForTest() })
+  beforeEach(() => {
+    _resetForTest()
+  })
 
   it('starts in idle', () => {
     expect(state()).toEqual({ state: 'idle', total: 0, scanned: 0 })
@@ -91,7 +102,9 @@ describe('IndexState machine', () => {
 })
 
 describe('status()', () => {
-  beforeEach(() => { _resetForTest() })
+  beforeEach(() => {
+    _resetForTest()
+  })
 
   it('returns the same shape as state()', () => {
     expect(status()).toEqual({ state: 'idle', total: 0, scanned: 0 })
@@ -133,7 +146,7 @@ describe('startScan', () => {
     expect(listAllPaths(db)).toEqual(new Set(['a.md', 'b.md']))
     expect(db.prepare('SELECT COUNT(*) AS n FROM files_fts').get()).toEqual({ n: 2 })
     expect(db.prepare('SELECT name, usage_count FROM tags').all()).toEqual([
-      { name: 'x', usage_count: 1 },
+      { name: 'x', usage_count: 1 }
     ])
   })
 
@@ -151,13 +164,13 @@ describe('startScan', () => {
   it('skips files whose content_hash + mtime unchanged', async () => {
     writeFileSync(join(root, 'a.md'), '# A')
     await startScan(root)
-    const before = db
-      .prepare('SELECT updated_at FROM files WHERE path=?')
-      .get('a.md') as { updated_at: number }
+    const before = db.prepare('SELECT updated_at FROM files WHERE path=?').get('a.md') as {
+      updated_at: number
+    }
     await startScan(root) // no disk change
-    const after = db
-      .prepare('SELECT updated_at FROM files WHERE path=?')
-      .get('a.md') as { updated_at: number }
+    const after = db.prepare('SELECT updated_at FROM files WHERE path=?').get('a.md') as {
+      updated_at: number
+    }
     expect(after.updated_at).toBe(before.updated_at)
   })
 
@@ -202,7 +215,10 @@ describe('cancelScan', () => {
     _injectDbForTest(db)
     root = mkdtempSync(join(tmpdir(), 'cancel-'))
   })
-  afterEach(() => { rmSync(root, { recursive: true, force: true }); db.close() })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    db.close()
+  })
 
   it('stops scanning early and returns state to idle', async () => {
     for (let i = 0; i < 100; i++) writeFileSync(join(root, `f${i}.md`), `# ${i}`)
@@ -234,7 +250,9 @@ describe('cancelScan', () => {
 })
 
 describe('indexer.reset()', () => {
-  beforeEach(() => { _resetForTest() })
+  beforeEach(() => {
+    _resetForTest()
+  })
 
   it('returns state to idle and clears counters', () => {
     _setStateForTest('watching')

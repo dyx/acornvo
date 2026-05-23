@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react'
-import { AssistantRuntimeProvider, useLocalRuntime, type ThreadMessage, type AppendMessage } from '@assistant-ui/react'
+import {
+  AssistantRuntimeProvider,
+  useLocalRuntime,
+  type ThreadMessage,
+  type AppendMessage
+} from '@assistant-ui/react'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
@@ -56,9 +61,5 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
     )
   )
 
-  return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      {children}
-    </AssistantRuntimeProvider>
-  )
+  return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>
 }

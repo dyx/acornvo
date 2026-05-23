@@ -55,13 +55,21 @@ describe('OpsTab', () => {
 
   it('renders loading state initially', () => {
     vi.mocked(ipc.ops.list).mockReturnValue(new Promise(() => {}))
-    render(<MemoryRouter><OpsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
     expect(screen.getByText('加载中…')).toBeTruthy()
   })
 
   it('renders empty state when no items', async () => {
     vi.mocked(ipc.ops.list).mockResolvedValue({ items: [], total: 0 })
-    render(<MemoryRouter><OpsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByText('暂无操作记录')).toBeTruthy()
     })
@@ -77,7 +85,11 @@ describe('OpsTab', () => {
       total: 3
     })
 
-    render(<MemoryRouter><OpsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('a.md')).toBeTruthy()
@@ -94,7 +106,11 @@ describe('OpsTab', () => {
 
   it('handles fetch error gracefully', async () => {
     vi.mocked(ipc.ops.list).mockRejectedValue(new Error('Network error'))
-    render(<MemoryRouter><OpsTab /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <OpsTab />
+      </MemoryRouter>
+    )
     await waitFor(() => {
       expect(screen.getByText('暂无操作记录')).toBeTruthy()
     })

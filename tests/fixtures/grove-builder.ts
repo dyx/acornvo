@@ -26,7 +26,5 @@ export function buildSummaries(rows: FixtureFile[]): FileSummary[] {
 }
 
 export function sortByClippedDesc(rows: FileSummary[]): FileSummary[] {
-  return [...rows].sort(
-    (a, b) => (b.clipped_at ?? '').localeCompare(a.clipped_at ?? '')
-  )
+  return [...rows].sort((a, b) => (b.clipped_at ?? '').localeCompare(a.clipped_at ?? ''))
 }

@@ -4,7 +4,7 @@ vi.mock('electron-updater', () => ({
   autoUpdater: {
     autoDownload: false,
     checkForUpdates: vi.fn(),
-    on: vi.fn(),
+    on: vi.fn()
   }
 }))
 
@@ -49,9 +49,7 @@ describe('checkForUpdatesManual error handling (8.5)', () => {
   })
 
   it('handles network timeout errors', async () => {
-    vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce(
-      new Error('net::ERR_TIMED_OUT')
-    )
+    vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce(new Error('net::ERR_TIMED_OUT'))
     const result = await checkForUpdatesManual()
     expect(result.status).toBe('failed')
   })

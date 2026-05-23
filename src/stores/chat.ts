@@ -253,7 +253,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async sendUserMessage({ text, attachments }) {
     const cur = get()
     const sid = cur.activeSessionId
-    console.log('[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d', sid, text.length, attachments?.length ?? 0)
+    console.log(
+      '[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d',
+      sid,
+      text.length,
+      attachments?.length ?? 0
+    )
     if (!sid) {
       console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
       return

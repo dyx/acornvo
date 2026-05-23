@@ -1,5 +1,13 @@
 import { app } from 'electron'
-import { mkdirSync, appendFileSync, statSync, renameSync, existsSync, readdirSync, unlinkSync } from 'node:fs'
+import {
+  mkdirSync,
+  appendFileSync,
+  statSync,
+  renameSync,
+  existsSync,
+  readdirSync,
+  unlinkSync
+} from 'node:fs'
 import { join } from 'node:path'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'

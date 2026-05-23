@@ -16,7 +16,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   return {
     ...original,
     rename: vi.fn(original.rename),
-    readFile: vi.fn(original.readFile),
+    readFile: vi.fn(original.readFile)
   }
 })
 
@@ -223,7 +223,10 @@ describe('readFileDetect', () => {
 
   it('strips a UTF-8 BOM and reports hadBom=true', async () => {
     const target = join(dir, 'bom.md')
-    writeFileSync(target, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')]))
+    writeFileSync(
+      target,
+      Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')])
+    )
     const r = await readFileDetect(target)
     expect(r.content).toBe('hi')
     expect(r.hadBom).toBe(true)
@@ -265,10 +268,7 @@ describe('readFileDetect', () => {
     // 0xc0 0x80 is a long-form NUL — invalid UTF-8 modified-UTF-8 form,
     // and high-byte sequences interleaved with control chars trigger GBK
     // replacement chars.
-    writeFileSync(
-      target,
-      Buffer.from([0xc0, 0x80, 0xfe, 0xff, 0xff, 0xfe, 0xc0, 0x80, 0xfe, 0xff])
-    )
+    writeFileSync(target, Buffer.from([0xc0, 0x80, 0xfe, 0xff, 0xff, 0xfe, 0xc0, 0x80, 0xfe, 0xff]))
     await expect(readFileDetect(target)).rejects.toBeInstanceOf(IpcError)
     await expect(readFileDetect(target)).rejects.toMatchObject({ code: 'E_ENCODING' })
   })
@@ -326,9 +326,7 @@ describe('writeWithVerify (phase-09 2.2)', () => {
     await fsp.writeFile(abs, 'x')
     const real = (await fsp.stat(abs)).mtimeMs
     // expectedMtime within 1ms of real → must succeed
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 1 })
-    ).resolves.toBeTruthy()
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 1 })).resolves.toBeTruthy()
   })
 
   it('mtime mismatch >2ms throws E_MTIME_MISMATCH with remoteMtimeMs in context', async () => {
@@ -451,18 +449,16 @@ describe('writeWithVerify tolerance boundaries (phase-09 2.3)', () => {
     const abs = join(tmp, 'a.md')
     await writeFile(abs, 'x')
     const real = (await stat(abs)).mtimeMs
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 2 })
-    ).resolves.toBeTruthy()
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 2 })).resolves.toBeTruthy()
   })
 
   it('exactly 3ms drift: FAIL with mismatch', async () => {
     const abs = join(tmp, 'b.md')
     await writeFile(abs, 'x')
     const real = (await stat(abs)).mtimeMs
-    await expect(
-      writeWithVerify(abs, 'y', { expectedMtime: real - 3 })
-    ).rejects.toMatchObject({ code: 'E_MTIME_MISMATCH' })
+    await expect(writeWithVerify(abs, 'y', { expectedMtime: real - 3 })).rejects.toMatchObject({
+      code: 'E_MTIME_MISMATCH'
+    })
   })
 
   it('force + expectedMtime stale: force wins, audit logs both', async () => {

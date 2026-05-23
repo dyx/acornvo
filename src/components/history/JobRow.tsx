@@ -74,7 +74,8 @@ function formatTime(ts: string): string {
 
 function payloadSummary(payload: Record<string, unknown>): string {
   if (typeof payload.path === 'string') return payload.path
-  if (typeof payload.clipId === 'string' || typeof payload.clipId === 'number') return `clip: ${payload.clipId}`
+  if (typeof payload.clipId === 'string' || typeof payload.clipId === 'number')
+    return `clip: ${payload.clipId}`
   if (typeof payload.file === 'string') return payload.file
   // Pick the first string value
   for (const v of Object.values(payload)) {
@@ -106,9 +107,7 @@ export function JobRow({ job, onChanged }: JobRowProps): JSX.Element {
   }
 
   const truncatedError =
-    job.lastError && job.lastError.length > 60
-      ? job.lastError.slice(0, 60) + '…'
-      : job.lastError
+    job.lastError && job.lastError.length > 60 ? job.lastError.slice(0, 60) + '…' : job.lastError
 
   return (
     <div
@@ -135,9 +134,7 @@ export function JobRow({ job, onChanged }: JobRowProps): JSX.Element {
           )}
         </p>
         {job.status === 'failed' && truncatedError && (
-          <p className="text-xs text-red-500 dark:text-red-400 truncate mt-0.5">
-            {truncatedError}
-          </p>
+          <p className="text-xs text-red-500 dark:text-red-400 truncate mt-0.5">{truncatedError}</p>
         )}
       </div>
 

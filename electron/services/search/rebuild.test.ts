@@ -35,12 +35,17 @@ describe('maybeRebuildFts (detector)', () => {
 
   it('skips when files_fts already has rows (partial state)', async () => {
     // Simulate a partially-populated FTS (mid-rebuild crash recovery scenario)
-    db.prepare(
-      'INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)'
-    ).run('a.md', 0, 'h1')
-    db.prepare(
-      'INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
-    ).run(1, 'a.md', 'A', 'partial body')
+    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run(
+      'a.md',
+      0,
+      'h1'
+    )
+    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
+      1,
+      'a.md',
+      'A',
+      'partial body'
+    )
 
     await maybeRebuildFts(db, grove)
 
@@ -51,24 +56,23 @@ describe('maybeRebuildFts (detector)', () => {
   it('rebuilds when files has rows but files_fts is empty', async () => {
     // Write a real file so file.read in rebuild can pick it up
     mkdirSync(join(grove, 'notes'), { recursive: true })
-    writeFileSync(
-      join(grove, 'notes', 'x.md'),
-      '---\ntitle: X\n---\n\n注意力机制研究',
-      'utf8'
-    )
+    writeFileSync(join(grove, 'notes', 'x.md'), '---\ntitle: X\n---\n\n注意力机制研究', 'utf8')
 
-    db.prepare(
-      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, ?, ?)'
-    ).run('notes/x.md', 'X', 0, 'h1')
+    db.prepare('INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, ?, ?)').run(
+      'notes/x.md',
+      'X',
+      0,
+      'h1'
+    )
 
     await maybeRebuildFts(db, grove)
 
     const ftsCount = db.prepare('SELECT COUNT(*) AS c FROM files_fts').get() as { c: number }
     expect(ftsCount.c).toBe(1)
 
-    const hit = db.prepare(
-      "SELECT path FROM files_fts WHERE files_fts MATCH '注意力'"
-    ).get() as { path: string } | undefined
+    const hit = db.prepare("SELECT path FROM files_fts WHERE files_fts MATCH '注意力'").get() as
+      | { path: string }
+      | undefined
     expect(hit?.path).toBe('notes/x.md')
   })
 })
@@ -110,7 +114,11 @@ describe('rebuildFts progress events', () => {
   it('emits done event with total at the end', async () => {
     mkdirSync(join(grove, 'notes'), { recursive: true })
     writeFileSync(join(grove, 'notes', 'a.md'), 'body a', 'utf8')
-    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run('notes/a.md', 0, 'h')
+    db.prepare('INSERT INTO files (path, mtime, content_hash) VALUES (?, ?, ?)').run(
+      'notes/a.md',
+      0,
+      'h'
+    )
 
     const doneEvents: { total: number }[] = []
     rebuildEvents.on('done', (p: { total: number }) => doneEvents.push(p))

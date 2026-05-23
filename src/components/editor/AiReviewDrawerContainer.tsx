@@ -1,46 +1,48 @@
-import { useState } from 'react';
-import { useEditorStore } from '@/stores/editor';
-import { ipc } from '@/ipc/client';
-import { AiReviewDrawer } from './AiReviewDrawer';
+import { useState } from 'react'
+import { useEditorStore } from '@/stores/editor'
+import { ipc } from '@/ipc/client'
+import { AiReviewDrawer } from './AiReviewDrawer'
 
 interface Props {
-  clipId: number | null;
-  onClose: () => void;
+  clipId: number | null
+  onClose: () => void
 }
 
 export function AiReviewDrawerContainer({ clipId, onClose }: Props) {
-  const fm = useEditorStore((s) =>
-    s.state.kind === 'ready' ? s.state.frontmatter : null
-  );
+  const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
 
-  const acceptAiReview = useEditorStore((s) => s.acceptAiReview);
-  const applyAiSuggestedTitle = useEditorStore((s) => s.applyAiSuggestedTitle);
-  const mergeAiTags = useEditorStore((s) => s.mergeAiTags);
-  const rejectAiReview = useEditorStore((s) => s.rejectAiReview);
-  const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight);
+  const acceptAiReview = useEditorStore((s) => s.acceptAiReview)
+  const applyAiSuggestedTitle = useEditorStore((s) => s.applyAiSuggestedTitle)
+  const mergeAiTags = useEditorStore((s) => s.mergeAiTags)
+  const rejectAiReview = useEditorStore((s) => s.rejectAiReview)
+  const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
 
-  if (!fm) return null;
+  if (!fm) return null
 
   return (
     <AiReviewDrawer
       frontmatter={fm}
       clipId={clipId}
-      onAcceptAll={() => { acceptAiReview(); onClose(); }}
+      onAcceptAll={() => {
+        acceptAiReview()
+        onClose()
+      }}
       onUseTitle={() => applyAiSuggestedTitle()}
       onMergeTags={() => mergeAiTags()}
-      onReject={() => { rejectAiReview(); onClose(); }}
+      onReject={() => {
+        rejectAiReview()
+        onClose()
+      }}
       onRerun={async () => {
-        if (clipId === null) return;
+        if (clipId === null) return
         try {
-          setAiRerunInflight(true);
-          await ipc.ai.reviewClip(clipId, { force: true });
+          setAiRerunInflight(true)
+          await ipc.ai.reviewClip(clipId, { force: true })
         } catch {
-          setAiRerunInflight(false);
+          setAiRerunInflight(false)
         }
       }}
       onClose={onClose}
     />
-  );
+  )
 }
-
-

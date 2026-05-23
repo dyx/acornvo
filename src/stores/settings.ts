@@ -87,13 +87,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   _applyChange({ ns, key, newValue }) {
     const current = get()
-    if (ns === 'general') set({ general: { ...current.general, [key]: newValue } as GeneralSettings })
+    if (ns === 'general')
+      set({ general: { ...current.general, [key]: newValue } as GeneralSettings })
     else if (ns === 'appearance')
       set({ appearance: { ...current.appearance, [key]: newValue } as AppearanceSettings })
     else if (ns === 'ai') set({ ai: { ...current.ai, [key]: newValue } as AiSettings })
-    else if (ns === 'browser') set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
-    else if (ns === 'update') set({ update: { ...current.update, [key]: newValue } as UpdateSettings })
-    else if (ns === 'telemetry') set({ telemetry: { ...current.telemetry, [key]: newValue } as TelemetrySettings })
+    else if (ns === 'browser')
+      set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
+    else if (ns === 'update')
+      set({ update: { ...current.update, [key]: newValue } as UpdateSettings })
+    else if (ns === 'telemetry')
+      set({ telemetry: { ...current.telemetry, [key]: newValue } as TelemetrySettings })
   }
 }))
 

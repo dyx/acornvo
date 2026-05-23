@@ -15,7 +15,7 @@ export function parseFile(raw: string): ParsedFile {
   if (!result.success) {
     // Invalid frontmatter fields — fall back to empty frontmatter so the file
     // still gets indexed. The raw YAML is preserved for the editor.
-    const issues = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')
+    const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')
     console.warn(`[frontmatter] parse warnings in file: ${issues}`)
     return {
       frontmatter: {},

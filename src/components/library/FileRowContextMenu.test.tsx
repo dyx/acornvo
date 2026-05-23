@@ -62,7 +62,14 @@ describe('FileRowContextMenu', () => {
   it('renders trash item when onTrash is provided', () => {
     render(
       <MemoryRouter>
-        <FileRowContextMenu open={true} x={10} y={20} path="a.md" onClose={() => {}} onTrash={() => {}} />
+        <FileRowContextMenu
+          open={true}
+          x={10}
+          y={20}
+          path="a.md"
+          onClose={() => {}}
+          onTrash={() => {}}
+        />
       </MemoryRouter>
     )
     expect(screen.getByText(/移到废纸篓/)).toBeTruthy()
@@ -82,7 +89,14 @@ describe('FileRowContextMenu', () => {
     const onClose = vi.fn()
     render(
       <MemoryRouter>
-        <FileRowContextMenu open={true} x={10} y={20} path="a.md" onClose={onClose} onTrash={onTrash} />
+        <FileRowContextMenu
+          open={true}
+          x={10}
+          y={20}
+          path="a.md"
+          onClose={onClose}
+          onTrash={onTrash}
+        />
       </MemoryRouter>
     )
     fireEvent.click(screen.getByText(/移到废纸篓/))

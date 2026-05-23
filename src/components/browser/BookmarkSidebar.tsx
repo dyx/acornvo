@@ -24,11 +24,14 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      void ipc.bookmarks
-        .list({ q: q || undefined, tag: tag ?? undefined, limit: 200, offset: 0 })
-        .then((r) => setItems(r.items))
-    }, q || tag ? 200 : 0)
+    timerRef.current = setTimeout(
+      () => {
+        void ipc.bookmarks
+          .list({ q: q || undefined, tag: tag ?? undefined, limit: 200, offset: 0 })
+          .then((r) => setItems(r.items))
+      },
+      q || tag ? 200 : 0
+    )
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
@@ -45,7 +48,8 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
     return (
       <div className="flex h-full flex-col items-center pt-2">
         <Button
-          variant="ghost" size="icon"
+          variant="ghost"
+          size="icon"
           aria-label={t('browser.bookmarks.expand', 'expand bookmarks')}
           className="size-8 rounded hover:bg-[color:var(--color-bg-3)]"
           onClick={() => setBookmarksOpen(true)}
@@ -68,7 +72,8 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
           className="h-8 flex-1 text-xs"
         />
         <Button
-          variant="ghost" size="icon"
+          variant="ghost"
+          size="icon"
           aria-label={t('browser.bookmarks.collapse', 'collapse bookmarks')}
           className="size-8 rounded text-sm hover:bg-[color:var(--color-bg-3)]"
           onClick={() => setBookmarksOpen(false)}
@@ -95,7 +100,10 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
       )}
       {items.length === 0 ? (
         <div className="p-4 text-xs text-[color:var(--color-ink-3)]">
-          {t('browser.bookmarks.empty', 'No bookmarks yet. Click the star while browsing to save a page.')}
+          {t(
+            'browser.bookmarks.empty',
+            'No bookmarks yet. Click the star while browsing to save a page.'
+          )}
         </div>
       ) : (
         <ul className="flex-1 overflow-auto" role="list">

@@ -54,7 +54,7 @@ export function bootstrapQueueRunner(
   runner.register({
     kind: 'ai-review-clip',
     concurrency: 2,
-    minGapMs: 500,
+    minGapMs: 100,
     handler: aiReviewClipHandler
   })
 

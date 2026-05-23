@@ -1,5 +1,5 @@
-import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
+import * as path from 'node:path'
+import * as fs from 'node:fs/promises'
 import { BrowserWindow } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
@@ -76,20 +76,22 @@ const chatHandlers = createChatHandlers({
   getTargets: getChatTargets,
   vaultRoot: () => dbService.getCurrentGrovePath() ?? '/vault',
   clipsGet: async (id: number) => {
-    const db = dbService.requireCurrent();
-    const row = db.prepare('SELECT path FROM clips WHERE id = ?').get(id) as { path: string } | undefined;
-    if (!row) return null;
-    const groveRoot = dbService.getCurrentGrovePath();
-    if (!groveRoot) return null;
-    const abs = path.resolve(path.join(groveRoot, row.path));
-    if (!abs.startsWith(groveRoot + path.sep) && abs !== groveRoot) return null;
+    const db = dbService.requireCurrent()
+    const row = db.prepare('SELECT path FROM clips WHERE id = ?').get(id) as
+      | { path: string }
+      | undefined
+    if (!row) return null
+    const groveRoot = dbService.getCurrentGrovePath()
+    if (!groveRoot) return null
+    const abs = path.resolve(path.join(groveRoot, row.path))
+    if (!abs.startsWith(groveRoot + path.sep) && abs !== groveRoot) return null
     try {
-      const body = await fs.readFile(abs, 'utf-8');
-      return { body };
+      const body = await fs.readFile(abs, 'utf-8')
+      return { body }
     } catch {
-      return null;
+      return null
     }
-  },
+  }
 })
 
 const clipsHandlers = createClipsHandlers({

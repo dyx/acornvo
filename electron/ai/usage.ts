@@ -1,25 +1,25 @@
-import { getGlobalDb } from '../services/global-db';
-import { getCurrent } from '../services/grove';
+import { getGlobalDb } from '../services/global-db'
+import { getCurrent } from '../services/grove'
 
 export interface AiUsageSummary {
-  totalCalls: number;
-  okCount: number;
-  errorRate: number;
-  totalTokens: number;
-  byProvider: Record<string, { calls: number; tokens: number }>;
-  byGrove: Record<string, { calls: number; tokens: number }>;
+  totalCalls: number
+  okCount: number
+  errorRate: number
+  totalTokens: number
+  byProvider: Record<string, { calls: number; tokens: number }>
+  byGrove: Record<string, { calls: number; tokens: number }>
 }
 
 export interface AiUsageListOpts {
-  limit: number;
-  offset: number;
-  profileId?: string;
-  okOnly?: boolean;
+  limit: number
+  offset: number
+  profileId?: string
+  okOnly?: boolean
 }
 
 export interface AiUsageListResult {
-  items: AiUsageRow[];
-  total: number;
+  items: AiUsageRow[]
+  total: number
 }
 
 function rowFromDb(r: any): AiUsageRow {
@@ -35,95 +35,123 @@ function rowFromDb(r: any): AiUsageRow {
     error: r.error,
     sessionId: r.session_id ?? undefined,
     groveId: r.grove_id ?? undefined,
-    createdAt: r.created_at,
-  };
+    createdAt: r.created_at
+  }
 }
 
 export const aiUsage = {
   insert(row: Omit<AiUsageRow, 'id' | 'createdAt'> & { createdAt?: string }): void {
-    const db = getGlobalDb();
-    const groveId = getCurrent()?.id ?? null;
-    db.prepare(`
+    const db = getGlobalDb()
+    const groveId = getCurrent()?.id ?? null
+    db.prepare(
+      `
       INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      row.jobId, row.profileId, row.model,
-      row.promptTokens, row.completionTokens, row.latencyMs,
-      row.ok, row.error,
+    `
+    ).run(
+      row.jobId,
+      row.profileId,
+      row.model,
+      row.promptTokens,
+      row.completionTokens,
+      row.latencyMs,
+      row.ok,
+      row.error,
       row.sessionId ?? null,
       row.createdAt ?? new Date().toISOString(),
       groveId
-    );
+    )
   },
 
   summary(opts: { sinceDays?: number } = {}): AiUsageSummary {
-    const sinceDays = opts.sinceDays ?? 30;
-    const db = getGlobalDb();
-    const since = new Date(Date.now() - sinceDays * 86400_000).toISOString();
-    const rows = db.prepare(`
+    const sinceDays = opts.sinceDays ?? 30
+    const db = getGlobalDb()
+    const since = new Date(Date.now() - sinceDays * 86400_000).toISOString()
+    const rows = db
+      .prepare(
+        `
       SELECT profile_id, grove_id, ok, prompt_tokens, completion_tokens
       FROM ai_usage WHERE created_at >= ?
-    `).all(since) as any[];
-    const totalCalls = rows.length;
-    const okCount = rows.filter(r => r.ok === 1).length;
-    const totalTokens = rows.reduce((s, r) => s + (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0), 0);
-    const byProvider: Record<string, { calls: number; tokens: number }> = {};
-    const byGrove: Record<string, { calls: number; tokens: number }> = {};
+    `
+      )
+      .all(since) as any[]
+    const totalCalls = rows.length
+    const okCount = rows.filter((r) => r.ok === 1).length
+    const totalTokens = rows.reduce(
+      (s, r) => s + (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0),
+      0
+    )
+    const byProvider: Record<string, { calls: number; tokens: number }> = {}
+    const byGrove: Record<string, { calls: number; tokens: number }> = {}
     for (const r of rows) {
-      const pKey = r.profile_id ?? 'unknown';
-      byProvider[pKey] ??= { calls: 0, tokens: 0 };
-      byProvider[pKey].calls += 1;
-      byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0);
+      const pKey = r.profile_id ?? 'unknown'
+      byProvider[pKey] ??= { calls: 0, tokens: 0 }
+      byProvider[pKey].calls += 1
+      byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
 
-      const gKey = r.grove_id ?? 'unknown';
-      byGrove[gKey] ??= { calls: 0, tokens: 0 };
-      byGrove[gKey].calls += 1;
-      byGrove[gKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0);
+      const gKey = r.grove_id ?? 'unknown'
+      byGrove[gKey] ??= { calls: 0, tokens: 0 }
+      byGrove[gKey].calls += 1
+      byGrove[gKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
     }
     return {
-      totalCalls, okCount,
+      totalCalls,
+      okCount,
       errorRate: totalCalls === 0 ? 0 : (totalCalls - okCount) / totalCalls,
-      totalTokens, byProvider, byGrove
-    };
+      totalTokens,
+      byProvider,
+      byGrove
+    }
   },
 
   list(opts: AiUsageListOpts): AiUsageListResult {
-    const db = getGlobalDb();
-    const where: string[] = [];
-    const params: unknown[] = [];
-    if (opts.profileId) { where.push('profile_id = ?'); params.push(opts.profileId); }
-    if (opts.okOnly) { where.push('ok = 1'); }
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const db = getGlobalDb()
+    const where: string[] = []
+    const params: unknown[] = []
+    if (opts.profileId) {
+      where.push('profile_id = ?')
+      params.push(opts.profileId)
+    }
+    if (opts.okOnly) {
+      where.push('ok = 1')
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
-    const total = (db.prepare(`SELECT COUNT(*) AS c FROM ai_usage ${whereSql}`).get(...params) as { c: number }).c;
-    const items = db.prepare(`
+    const total = (
+      db.prepare(`SELECT COUNT(*) AS c FROM ai_usage ${whereSql}`).get(...params) as { c: number }
+    ).c
+    const items = db
+      .prepare(
+        `
       SELECT * FROM ai_usage ${whereSql}
       ORDER BY created_at DESC, id DESC
       LIMIT ? OFFSET ?
-    `).all(...params, opts.limit, opts.offset) as any[];
-    return { items: items.map(rowFromDb), total };
-  },
-};
+    `
+      )
+      .all(...params, opts.limit, opts.offset) as any[]
+    return { items: items.map(rowFromDb), total }
+  }
+}
 
 export interface UsageInput {
-  input_tokens?: number;
-  output_tokens?: number;
-  total_tokens?: number;
+  input_tokens?: number
+  output_tokens?: number
+  total_tokens?: number
 }
 
 export interface WriteUsageArgs {
-  usage?: UsageInput;
-  profileId: string | null;
-  model: string | null;
-  latencyMs: number;
-  ok: 0 | 1;
-  error: string | null;
-  sessionId?: string;
-  jobId?: string | null;
+  usage?: UsageInput
+  profileId: string | null
+  model: string | null
+  latencyMs: number
+  ok: 0 | 1
+  error: string | null
+  sessionId?: string
+  jobId?: string | null
   /** Pre-known token counts when the call site already has them (e.g. the
    *  legacy queue handler reads them off `out.llmCall.{promptTokens,completionTokens}`). */
-  promptTokens?: number | null;
-  completionTokens?: number | null;
+  promptTokens?: number | null
+  completionTokens?: number | null
 }
 
 /**
@@ -133,9 +161,9 @@ export interface WriteUsageArgs {
  */
 export function rowFromUsageMetadata(
   usage: UsageInput | undefined,
-  base: Omit<WriteUsageArgs, 'usage' | 'promptTokens' | 'completionTokens'>,
+  base: Omit<WriteUsageArgs, 'usage' | 'promptTokens' | 'completionTokens'>
 ): Parameters<typeof aiUsage.insert>[0] | null {
-  if (!usage) return null;
+  if (!usage) return null
   return {
     jobId: base.jobId ?? null,
     profileId: base.profileId,
@@ -145,8 +173,8 @@ export function rowFromUsageMetadata(
     latencyMs: base.latencyMs,
     ok: base.ok,
     error: base.error,
-    sessionId: base.sessionId,
-  };
+    sessionId: base.sessionId
+  }
 }
 
 /**
@@ -156,10 +184,10 @@ export function rowFromUsageMetadata(
  * report usage_metadata.
  */
 export function writeUsage(args: WriteUsageArgs): void {
-  const row = rowFromUsageMetadata(args.usage, args);
+  const row = rowFromUsageMetadata(args.usage, args)
   if (row) {
-    aiUsage.insert(row);
-    return;
+    aiUsage.insert(row)
+    return
   }
   aiUsage.insert({
     jobId: args.jobId ?? null,
@@ -170,6 +198,6 @@ export function writeUsage(args: WriteUsageArgs): void {
     latencyMs: args.latencyMs,
     ok: args.ok,
     error: args.error,
-    sessionId: args.sessionId,
-  });
+    sessionId: args.sessionId
+  })
 }

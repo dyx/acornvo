@@ -33,20 +33,14 @@ describe('ConflictListItem', () => {
 
   it('renders resolved_by badge for load_remote', () => {
     render(
-      <ConflictListItem
-        conflict={{ ...conflict, resolved_by: 'load_remote' }}
-        onClick={vi.fn()}
-      />
+      <ConflictListItem conflict={{ ...conflict, resolved_by: 'load_remote' }} onClick={vi.fn()} />
     )
     expect(screen.getByText('重载远端')).toBeTruthy()
   })
 
   it('renders resolved_by badge for save_as', () => {
     render(
-      <ConflictListItem
-        conflict={{ ...conflict, resolved_by: 'save_as' }}
-        onClick={vi.fn()}
-      />
+      <ConflictListItem conflict={{ ...conflict, resolved_by: 'save_as' }} onClick={vi.fn()} />
     )
     expect(screen.getByText('另存副本')).toBeTruthy()
   })

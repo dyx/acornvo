@@ -1,10 +1,10 @@
-import { dbService } from '../services/db';
+import { dbService } from '../services/db'
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000
+const DEFAULT_INTERVAL_MS = 60 * 60 * 1000
 
 export interface SweepResult {
-  removed: string[];
+  removed: string[]
 }
 
 /**
@@ -17,50 +17,50 @@ export interface SweepResult {
  * first message, and removing them would race the first send.
  */
 export function sweepStaleThreads(nowMs: number = Date.now()): SweepResult {
-  const cutoff = nowMs - DAY_MS;
-  const db = dbService.requireCurrent();
+  const cutoff = nowMs - DAY_MS
+  const db = dbService.requireCurrent()
   const stale = db
     .prepare(
       `SELECT thread_id FROM checkpoint_meta
        WHERE (canceled_at IS NOT NULL AND canceled_at <= ?)
-          OR (canceled_at IS NULL AND last_active_at <= ?)`,
+          OR (canceled_at IS NULL AND last_active_at <= ?)`
     )
-    .all(cutoff, cutoff) as Array<{ thread_id: string }>;
+    .all(cutoff, cutoff) as Array<{ thread_id: string }>
 
-  if (stale.length === 0) return { removed: [] };
+  if (stale.length === 0) return { removed: [] }
 
-  const removed: string[] = [];
+  const removed: string[] = []
   const tx = db.transaction(() => {
     for (const { thread_id } of stale) {
-      db.prepare('DELETE FROM checkpoints WHERE thread_id = ?').run(thread_id);
-      db.prepare('DELETE FROM writes WHERE thread_id = ?').run(thread_id);
-      db.prepare('DELETE FROM checkpoint_meta WHERE thread_id = ?').run(thread_id);
-      removed.push(thread_id);
+      db.prepare('DELETE FROM checkpoints WHERE thread_id = ?').run(thread_id)
+      db.prepare('DELETE FROM writes WHERE thread_id = ?').run(thread_id)
+      db.prepare('DELETE FROM checkpoint_meta WHERE thread_id = ?').run(thread_id)
+      removed.push(thread_id)
     }
-  });
-  tx();
-  return { removed };
+  })
+  tx()
+  return { removed }
 }
 
-let timer: NodeJS.Timeout | null = null;
+let timer: NodeJS.Timeout | null = null
 
 export function startSweeper(intervalMs: number = DEFAULT_INTERVAL_MS): () => void {
-  stopSweeper();
+  stopSweeper()
   timer = setInterval(() => {
     try {
-      sweepStaleThreads();
+      sweepStaleThreads()
     } catch {
       /* best effort */
     }
-  }, intervalMs);
+  }, intervalMs)
   // Prevent timer from keeping the event loop alive in tests / quit.
-  timer.unref?.();
-  return stopSweeper;
+  timer.unref?.()
+  return stopSweeper
 }
 
 export function stopSweeper(): void {
   if (timer) {
-    clearInterval(timer);
-    timer = null;
+    clearInterval(timer)
+    timer = null
   }
 }

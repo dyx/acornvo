@@ -111,8 +111,7 @@ export function ProjectPicker(): JSX.Element {
         <aside
           className="flex w-[420px] shrink-0 flex-col justify-between border-r border-[color:var(--color-line)] px-14 py-12"
           style={{
-            background:
-              'linear-gradient(180deg, transparent 0%, oklch(0.94 0.02 60 / 0.5) 100%)'
+            background: 'linear-gradient(180deg, transparent 0%, oklch(0.94 0.02 60 / 0.5) 100%)'
           }}
         >
           <div>

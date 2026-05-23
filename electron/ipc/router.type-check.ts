@@ -73,9 +73,17 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     list: () => ({ items: [], total: 0 }),
     get: () => ({
       summary: {
-        path: '', title: null, category: null, rating: null,
-        clipped_at: null, site: null, has_summary: false, tags: [], is_reviewing: false,
-        review_status: 'none' as const, review_error: null
+        path: '',
+        title: null,
+        category: null,
+        rating: null,
+        clipped_at: null,
+        site: null,
+        has_summary: false,
+        tags: [],
+        is_reviewing: false,
+        review_status: 'none' as const,
+        review_error: null
       },
       frontmatter: {},
       body: ''
@@ -101,7 +109,7 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     writeSnapshot: async () => ({ id: '' })
   },
   search: {
-    rebuild: async () => ({ ok: true } as const),
+    rebuild: async () => ({ ok: true }) as const,
     quickSwitch: () => [],
     fullText: async () => ({ items: [], total: 0, pending: false }),
     suggest: () => [],

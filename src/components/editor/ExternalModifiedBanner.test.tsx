@@ -25,7 +25,10 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-function setReadyState(overrides: Record<string, unknown> = {}, actionMocks?: Record<string, unknown>) {
+function setReadyState(
+  overrides: Record<string, unknown> = {},
+  actionMocks?: Record<string, unknown>
+) {
   useEditorStore.setState({
     state: {
       kind: 'ready',
@@ -62,7 +65,10 @@ describe('ExternalModifiedBanner visibility', () => {
   it('hidden when conflictState.kind = saveConflict (dialog takes over)', () => {
     setReadyState({
       conflictState: {
-        kind: 'saveConflict', remoteMtimeMs: 999, remoteBody: '', remoteFrontmatter: {}
+        kind: 'saveConflict',
+        remoteMtimeMs: 999,
+        remoteBody: '',
+        remoteFrontmatter: {}
       }
     })
     render(<ExternalModifiedBanner />)

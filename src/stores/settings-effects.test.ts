@@ -29,7 +29,9 @@ describe('settings effects', () => {
       dispatchEvent: vi.fn()
     })) as unknown as typeof window.matchMedia
   })
-  afterEach(() => { __resetEffectsForTest() })
+  afterEach(() => {
+    __resetEffectsForTest()
+  })
 
   it('applies initial appearance + locale on install', async () => {
     useSettingsStore.setState({
@@ -45,7 +47,9 @@ describe('settings effects', () => {
 
   it('reacts to subsequent appearance changes', () => {
     installSettingsEffects()
-    useSettingsStore.setState({ appearance: { theme: 'light', fontScale: 1.1, editorFont: 'system-ui' } })
+    useSettingsStore.setState({
+      appearance: { theme: 'light', fontScale: 1.1, editorFont: 'system-ui' }
+    })
     expect(document.documentElement.dataset.theme).toBe('light')
     expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('1.1')
   })
@@ -60,7 +64,9 @@ describe('settings effects', () => {
     installSettingsEffects()
     installSettingsEffects()
     const spy = vi.spyOn(document.documentElement.style, 'setProperty')
-    useSettingsStore.setState({ appearance: { theme: 'dark', fontScale: 1.3, editorFont: 'system-ui' } })
+    useSettingsStore.setState({
+      appearance: { theme: 'dark', fontScale: 1.3, editorFont: 'system-ui' }
+    })
     expect(spy.mock.calls.filter(([k]) => k === '--font-scale').length).toBe(1)
     spy.mockRestore()
   })

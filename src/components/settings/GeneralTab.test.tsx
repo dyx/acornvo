@@ -14,8 +14,7 @@ vi.mock('@/ipc/client', () => ({
 
 vi.mock('@/stores/grove', () => ({
   useGroveStore: Object.assign(
-    (selector: (s: unknown) => unknown) =>
-      selector({ current: { path: '/tmp/my-grove' } }),
+    (selector: (s: unknown) => unknown) => selector({ current: { path: '/tmp/my-grove' } }),
     { getState: () => ({ current: { path: '/tmp/my-grove' } }) }
   )
 }))

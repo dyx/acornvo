@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -99,7 +107,10 @@ describe('fileHandlers.list', () => {
     mkdirSync(join(dir, 'sub', 'deeper'))
     writeFileSync(join(dir, 'sub', 'deeper', 'c.md'), 'c')
     const r = await fileHandlers.list('.', { recursive: true })
-    const files = r.filter((e) => e.isFile).map((e) => e.rel).sort()
+    const files = r
+      .filter((e) => e.isFile)
+      .map((e) => e.rel)
+      .sort()
     expect(files).toEqual(['a.md', join('sub', 'b.md'), join('sub', 'deeper', 'c.md')])
   })
 
@@ -296,7 +307,7 @@ describe('fileHandlers.openContainingDir', () => {
     expect(result).toEqual({ ok: true })
   })
 
-  it('returns { ok: false, reason: \'missing\' } when containing dir does not exist', async () => {
+  it("returns { ok: false, reason: 'missing' } when containing dir does not exist", async () => {
     const result = await fileHandlers.openContainingDir('missing-dir/nope.md')
     expect(result).toEqual({ ok: false, reason: 'missing' })
     expect(shell.showItemInFolder).not.toHaveBeenCalled()
@@ -310,7 +321,9 @@ describe('fileHandlers.openContainingDir', () => {
 
   it('throws E_NOT_FOUND when no grove is open', async () => {
     setGroveRoot(null)
-    await expect(fileHandlers.openContainingDir('a.md')).rejects.toMatchObject({ code: 'E_NOT_FOUND' })
+    await expect(fileHandlers.openContainingDir('a.md')).rejects.toMatchObject({
+      code: 'E_NOT_FOUND'
+    })
   })
 })
 

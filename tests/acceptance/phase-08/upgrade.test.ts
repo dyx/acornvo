@@ -27,12 +27,15 @@ describe('9.2 v1 grove upgrade', () => {
         path UNINDEXED, title, summary, content
       );
     `)
-    const insert = v1.prepare('INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)')
+    const insert = v1.prepare(
+      'INSERT INTO files (path, title, mtime, content_hash) VALUES (?, ?, 0, ?)'
+    )
     for (const seed of [
       { p: 'notes/attention.md', t: 'attention' },
       { p: 'cn/zhuyili.md', t: '注意力机制综述' },
       { p: 'cn/zhuyili2.md', t: '注意力' }
-    ]) insert.run(seed.p, seed.t, seed.p)
+    ])
+      insert.run(seed.p, seed.t, seed.p)
     v1.close()
 
     // Stage 2: open with current code → migrations 002+003 runs (002 drops + recreates files_fts empty)

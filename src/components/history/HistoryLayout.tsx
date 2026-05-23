@@ -17,7 +17,9 @@ interface HistoryLayoutProps {
 
 export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutProps) {
   const navigate = useNavigate()
-  const [selectedConflictId, setSelectedConflictId] = useState<string | null>(initialSelectedConflictId ?? null)
+  const [selectedConflictId, setSelectedConflictId] = useState<string | null>(
+    initialSelectedConflictId ?? null
+  )
 
   const handleClosePanel = () => {
     setSelectedConflictId(null)
@@ -56,10 +58,7 @@ export function HistoryLayout({ tab, initialSelectedConflictId }: HistoryLayoutP
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={45} minSize={25}>
-            <ConflictDetailPanel
-              conflictId={selectedConflictId}
-              onClose={handleClosePanel}
-            />
+            <ConflictDetailPanel conflictId={selectedConflictId} onClose={handleClosePanel} />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

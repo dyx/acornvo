@@ -136,9 +136,9 @@ describe('safeResolve', () => {
       try {
         writeFileSync(join(outside, 'secret.md'), 'leak')
         symlinkSync(outside, join(realRoot, 'evil'), 'dir')
-        expect(() =>
-          safeResolve(realRoot, 'evil/secret.md', { realpath: true })
-        ).toThrow(/E_PERMISSION/)
+        expect(() => safeResolve(realRoot, 'evil/secret.md', { realpath: true })).toThrow(
+          /E_PERMISSION/
+        )
       } finally {
         rmSync(realRoot, { recursive: true, force: true })
         rmSync(outside, { recursive: true, force: true })

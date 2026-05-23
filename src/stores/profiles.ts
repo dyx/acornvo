@@ -1,7 +1,11 @@
 // src/stores/profiles.ts
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import type { AiProviderProfile, ProfileCreateInput, ProfileUpdateInput } from '@shared/settings-types'
+import type {
+  AiProviderProfile,
+  ProfileCreateInput,
+  ProfileUpdateInput
+} from '@shared/settings-types'
 
 interface ProfilesState {
   profiles: AiProviderProfile[]

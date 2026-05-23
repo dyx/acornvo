@@ -14,8 +14,7 @@ import { BROWSER_SESSION_PARTITION } from '../browser/init'
 
 // --- pure helpers (unit-tested) ---
 export const newTabId = (): TabId => `tab-${crypto.randomUUID()}`
-export const resolveCreateUrl = (url: string | undefined): string =>
-  url ?? 'about:blank'
+export const resolveCreateUrl = (url: string | undefined): string => url ?? 'about:blank'
 
 // --- adoption ---
 function adoptWebContents(webContents: Electron.WebContents): TabId {

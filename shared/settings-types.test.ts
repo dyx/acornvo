@@ -14,7 +14,11 @@ import type {
 describe('settings-types module', () => {
   it('exposes the four namespace types', () => {
     expectTypeOf<GeneralSettings>().toMatchTypeOf<{ locale: string; autoBackup: string }>()
-    expectTypeOf<AppearanceSettings>().toMatchTypeOf<{ theme: string; fontScale: number; editorFont: string }>()
+    expectTypeOf<AppearanceSettings>().toMatchTypeOf<{
+      theme: string
+      fontScale: number
+      editorFont: string
+    }>()
     expectTypeOf<AiSettings>().toMatchTypeOf<{ defaultProfileId: string | null }>()
     expectTypeOf<BrowserSettings>().toMatchTypeOf<{
       blockAds: boolean

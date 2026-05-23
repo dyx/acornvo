@@ -52,5 +52,4 @@ describe('AboutTab', () => {
     render(<AboutTab />)
     expect(await screen.findByTestId('about-website')).toBeInTheDocument()
   })
-
 })

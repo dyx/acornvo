@@ -78,7 +78,7 @@ function buildAboutJson() {
   return {
     name: 'Acornvo',
     version: app.getVersion(),
-    gitHash: (typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'dev')
+    gitHash: typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'dev'
   }
 }
 

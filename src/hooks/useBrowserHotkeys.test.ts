@@ -21,14 +21,25 @@ const port = {
 
 function makeTab(id: string) {
   return {
-    id, url: 'https://x', title: id, favicon: null,
-    loading: false, canGoBack: true, canGoForward: true,
-    suspended: false, savedUrl: 'https://x'
+    id,
+    url: 'https://x',
+    title: id,
+    favicon: null,
+    loading: false,
+    canGoBack: true,
+    canGoForward: true,
+    suspended: false,
+    savedUrl: 'https://x'
   }
 }
 
 function reset(tabs: any[] = [], active: string | null = null) {
-  useBrowserStore.setState({ tabs, activeTabId: active, bookmarksOpen: false, viewport: { x: 0, y: 0, width: 0, height: 0 } })
+  useBrowserStore.setState({
+    tabs,
+    activeTabId: active,
+    bookmarksOpen: false,
+    viewport: { x: 0, y: 0, width: 0, height: 0 }
+  })
 }
 
 describe('useBrowserHotkeys', () => {

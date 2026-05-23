@@ -59,12 +59,10 @@ export function TrashConfirmDialog({
       setConfirming(false)
     } catch (err) {
       setConfirming(false)
-      if (err instanceof IpcError && err.code === 'E_TRASH') {
-        setMode('fallback')
-        setErrorMessage(err.message)
-      } else {
-        throw err
-      }
+      const errCode =
+        err && typeof err === 'object' && 'code' in err ? (err as any).code : undefined
+      setMode('fallback')
+      setErrorMessage(err instanceof Error ? err.message : String(err))
     }
   }, [onConfirm])
 
@@ -73,6 +71,8 @@ export function TrashConfirmDialog({
     setHardDeleting(true)
     try {
       await onHardDelete()
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err))
     } finally {
       setHardDeleting(false)
     }
@@ -96,11 +96,7 @@ export function TrashConfirmDialog({
               <Button variant="outline" onClick={handleCancel}>
                 取消
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleConfirm}
-                disabled={confirming}
-              >
+              <Button variant="destructive" onClick={handleConfirm} disabled={confirming}>
                 移到废纸篓
               </Button>
             </DialogFooter>

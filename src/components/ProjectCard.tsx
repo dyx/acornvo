@@ -107,12 +107,7 @@ export function ProjectCard({
       </button>
 
       {invalid ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('common.remove')}
-          onClick={onRemove}
-        >
+        <Button variant="ghost" size="icon" aria-label={t('common.remove')} onClick={onRemove}>
           <X className="h-4 w-4" />
         </Button>
       ) : null}

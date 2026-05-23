@@ -16,7 +16,9 @@ import { useSettingsStore } from '@/stores/settings'
 import { BrowserTab } from './BrowserTab'
 
 describe('BrowserTab', () => {
-  beforeAll(async () => { if (!i18n.isInitialized) await i18n.init() })
+  beforeAll(async () => {
+    if (!i18n.isInitialized) await i18n.init()
+  })
   beforeEach(() => {
     useSettingsStore.setState(useSettingsStore.getInitialState(), true)
     vi.clearAllMocks()
@@ -25,7 +27,9 @@ describe('BrowserTab', () => {
   afterEach(() => cleanup())
 
   it('renders blockAds toggle reflecting state', () => {
-    useSettingsStore.setState({ browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' } })
+    useSettingsStore.setState({
+      browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' }
+    })
     render(<BrowserTab />)
     const toggle = screen.getByRole('checkbox', { name: /广告拦截/i }) as HTMLInputElement
     expect(toggle.checked).toBe(false)
@@ -33,7 +37,10 @@ describe('BrowserTab', () => {
 
   it('toggling blockAds calls setBrowser({ blockAds: true })', () => {
     const setBrowser = vi.fn().mockResolvedValue(undefined)
-    useSettingsStore.setState({ browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' }, setBrowser })
+    useSettingsStore.setState({
+      browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' },
+      setBrowser
+    })
     render(<BrowserTab />)
     fireEvent.click(screen.getByRole('checkbox', { name: /广告拦截/i }))
     expect(setBrowser).toHaveBeenCalledWith({ blockAds: true })
@@ -41,7 +48,10 @@ describe('BrowserTab', () => {
 
   it('changing search engine calls setBrowser({ searchEngine })', () => {
     const setBrowser = vi.fn().mockResolvedValue(undefined)
-    useSettingsStore.setState({ browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }, setBrowser })
+    useSettingsStore.setState({
+      browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' },
+      setBrowser
+    })
     render(<BrowserTab />)
     fireEvent.change(screen.getByLabelText(/搜索引擎/i), { target: { value: 'duckduckgo' } })
     expect(setBrowser).toHaveBeenCalledWith({ searchEngine: 'duckduckgo' })

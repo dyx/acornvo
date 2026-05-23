@@ -6,8 +6,22 @@ import { groupSession } from '@/lib/date-utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
@@ -40,7 +54,7 @@ export function ConversationsAdapter() {
 
   const itemsByGroup = useMemo(() => {
     const groups: Record<string, typeof sessions> = {}
-    sessions.forEach(s => {
+    sessions.forEach((s) => {
       const group = groupSession(s.updatedAt)
       if (!groups[group]) groups[group] = []
       groups[group].push(s)
@@ -59,8 +73,12 @@ export function ConversationsAdapter() {
   return (
     <>
       <div className="p-3 border-b border-border bg-background">
-        <Button onClick={() => void createSession()} variant="default" className={cn("w-full justify-start", narrow && "justify-center px-0")}>
-          <PlusIcon className={cn("size-4", !narrow && "mr-2")} />
+        <Button
+          onClick={() => void createSession()}
+          variant="default"
+          className={cn('w-full justify-start', narrow && 'justify-center px-0')}
+        >
+          <PlusIcon className={cn('size-4', !narrow && 'mr-2')} />
           {!narrow && t('chat.newSession')}
         </Button>
       </div>
@@ -69,12 +87,17 @@ export function ConversationsAdapter() {
         <div className="p-2 space-y-4">
           {Object.entries(itemsByGroup).map(([groupName, groupSessions]) => (
             <div key={groupName}>
-              {!narrow && <h3 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{groupName}</h3>}
+              {!narrow && (
+                <h3 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {groupName}
+                </h3>
+              )}
               <div className="space-y-0.5">
                 {groupSessions.map((s) => {
                   const isActive = s.id === activeSessionId
                   const isEditing = editingId === s.id
-                  const hasApproval = s.id !== activeSessionId && (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
+                  const hasApproval =
+                    s.id !== activeSessionId && (bySession[s.id]?.pendingApprovals?.length ?? 0) > 0
                   const baseLabel = s.title || t('chat.untitled')
                   const displayLabel = narrow ? baseLabel.slice(0, 8) : baseLabel
 
@@ -82,14 +105,16 @@ export function ConversationsAdapter() {
                     <div
                       key={s.id}
                       className={cn(
-                        "group flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors",
-                        isActive ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        'group flex items-center justify-between rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors',
+                        isActive
+                          ? 'bg-muted font-medium text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                       )}
                       onClick={() => !isEditing && selectSession(s.id)}
                     >
                       <div className="flex items-center gap-2 overflow-hidden flex-1">
                         <MessageSquareIcon className="size-4 shrink-0 opacity-70" />
-                        
+
                         {isEditing ? (
                           <Input
                             autoFocus
@@ -110,7 +135,9 @@ export function ConversationsAdapter() {
                         ) : (
                           <span className="truncate flex-1 relative pr-2">
                             {displayLabel}
-                            {hasApproval && <span className="absolute right-0 top-1.5 size-1.5 rounded-full bg-orange-500" />}
+                            {hasApproval && (
+                              <span className="absolute right-0 top-1.5 size-1.5 rounded-full bg-orange-500" />
+                            )}
                           </span>
                         )}
                       </div>
@@ -118,9 +145,9 @@ export function ConversationsAdapter() {
                       {!narrow && !isEditing && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 shrink-0 ml-1"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -128,11 +155,23 @@ export function ConversationsAdapter() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingId(s.id); setEditingTitle(baseLabel); }}>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingId(s.id)
+                                setEditingTitle(baseLabel)
+                              }}
+                            >
                               <Edit2Icon className="size-4 mr-2" />
                               {t('chat.session.rename')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-destructive-foreground" onClick={(e) => { e.stopPropagation(); setDeletingId(s.id); }}>
+                            <DropdownMenuItem
+                              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeletingId(s.id)
+                              }}
+                            >
                               <Trash2Icon className="size-4 mr-2" />
                               {t('chat.session.delete')}
                             </DropdownMenuItem>
@@ -156,8 +195,11 @@ export function ConversationsAdapter() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => { if (deletingId) deleteSession(deletingId); setDeletingId(null); }}
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingId) deleteSession(deletingId)
+                setDeletingId(null)
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t('chat.session.confirmDeleteOk')}

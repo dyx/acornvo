@@ -2,12 +2,7 @@
  * IPC contract — single source of truth for types shared between main, preload, and renderer.
  */
 
-import type {
-  GroveSummary,
-  LockInfo,
-  RecentItemView,
-  OpenGroveOutcome
-} from './grove'
+import type { GroveSummary, LockInfo, RecentItemView, OpenGroveOutcome } from './grove'
 import type {
   TabId,
   TabStateChangedPayload,
@@ -24,12 +19,7 @@ import type {
   ClipPreview,
   ClipErrorEnvelope
 } from './clipper-types'
-import type {
-  Clip,
-  ClipCreateInput,
-  ClipsListOpts,
-  ClipsListResult
-} from './clip-types'
+import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 export type { GroveSummary, LockInfo } from './grove'
 export type {
@@ -48,12 +38,7 @@ export type {
   ClipPreview,
   ClipErrorEnvelope
 } from './clipper-types'
-export type {
-  Clip,
-  ClipCreateInput,
-  ClipsListOpts,
-  ClipsListResult
-} from './clip-types'
+export type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 import type {
   AiProviderProfile,
@@ -296,11 +281,7 @@ export interface DiffResult {
 
 // --- conflict namespace types (phase-09) ---
 
-import type {
-  ConflictItem,
-  ConflictMeta,
-  ConflictResolvedBy
-} from './conflict-types'
+import type { ConflictItem, ConflictMeta, ConflictResolvedBy } from './conflict-types'
 
 export interface ConflictListResult {
   items: ConflictItem[]
@@ -369,10 +350,7 @@ export type IpcContract = {
     hardDelete: (rel: string) => FileTrashResult
   }
   files: {
-    list: (
-      filter: FileFilter,
-      pagination: Pagination
-    ) => { items: FileSummary[]; total: number }
+    list: (filter: FileFilter, pagination: Pagination) => { items: FileSummary[]; total: number }
     get: (path: string) => {
       summary: FileSummary
       frontmatter: Frontmatter
@@ -441,7 +419,10 @@ export type IpcContract = {
   bookmarks: {
     list: (opts: BookmarkListOpts) => BookmarkListResult
     create: (input: BookmarkInput) => Bookmark
-    update: (id: number, patch: { title?: string | null; favicon?: string | null; tags?: string[] }) => Bookmark
+    update: (
+      id: number,
+      patch: { title?: string | null; favicon?: string | null; tags?: string[] }
+    ) => Bookmark
     delete: (id: number) => { ok: true }
     getByUrl: (url: string) => Bookmark | null
   }
@@ -483,7 +464,12 @@ export type IpcContract = {
       totalTokens: number
       byProvider: Record<string, { calls: number; tokens: number }>
     }
-    'usage.list': (opts: { limit: number; offset: number; profileId?: string; okOnly?: boolean }) => {
+    'usage.list': (opts: {
+      limit: number
+      offset: number
+      profileId?: string
+      okOnly?: boolean
+    }) => {
       items: Array<{
         id?: number
         jobId: string | null
@@ -506,42 +492,66 @@ export type IpcContract = {
     'sessions.rename': (id: string, title: string) => { ok: true }
     'sessions.getMessages': (id: string) => SessionMessage[]
     'sessions.updateProfile': (id: string, profileId: string | null) => { ok: true }
-    sendUserMessage: (opts: { sessionId: string; text: string; profileId?: string; attachments?: import('./agent-types').Attachment[] }) => { ok: true }
+    sendUserMessage: (opts: {
+      sessionId: string
+      text: string
+      profileId?: string
+      attachments?: import('./agent-types').Attachment[]
+    }) => { ok: true }
     cancelStream: (sessionId: string) => { ok: true }
     approveTool: (callId: string, opts?: { editedArgs?: unknown }) => { ok: true }
     rejectTool: (callId: string) => { ok: true }
     subscribeStream: (sessionId: string) => { ok: true; channel: string }
-	  }
-	  queue: {
-	    health: () => { pending: number; running: number; failed: number }
-	    recent: () => {
-	      failed: { id: string; kind: string; last_error: string; updated_at: string }[]
-	      opsLog: { ts: string; area: string; message: string }[]
-	    }
-	    retry: (id: string) => void
-	    discard: (id: string) => void
-	  }
-	  perf: {
-	    aggregates: (area: string, windowMs: number) => { count: number; p50: number; p95: number; successRate: number }
-	  }
-	  app: {
-	    runtimeInfo: () => { appVersion: string; gitHash: string; electron: string; chrome: string; node: string; platform: string; arch: string }
-	    getBootstrap: () => { initialRoute: '/picker' | '/library'; recent: RecentItemView[]; locked?: { path: string; holder: LockInfo } } | null
-	  }
-	  update: {
-	    checkManual: () => Promise<{ status: 'up-to-date' | 'available' | 'failed'; version?: string; message?: string }>
-	    installNow: () => Promise<void>
-	  }
-	  shell: {
-	    openExternal: (url: string) => void
-	  }
-	  crash: {
-	    ack: (file: string) => Promise<void>
-	    openLogsFolder: () => Promise<void>
-	  }
-	  window: {
-	    themeApplied: (effective: 'light' | 'dark') => Promise<void>
-	  }
+  }
+  queue: {
+    health: () => { pending: number; running: number; failed: number }
+    recent: () => {
+      failed: { id: string; kind: string; last_error: string; updated_at: string }[]
+      opsLog: { ts: string; area: string; message: string }[]
+    }
+    retry: (id: string) => void
+    discard: (id: string) => void
+  }
+  perf: {
+    aggregates: (
+      area: string,
+      windowMs: number
+    ) => { count: number; p50: number; p95: number; successRate: number }
+  }
+  app: {
+    runtimeInfo: () => {
+      appVersion: string
+      gitHash: string
+      electron: string
+      chrome: string
+      node: string
+      platform: string
+      arch: string
+    }
+    getBootstrap: () => {
+      initialRoute: '/picker' | '/library'
+      recent: RecentItemView[]
+      locked?: { path: string; holder: LockInfo }
+    } | null
+  }
+  update: {
+    checkManual: () => Promise<{
+      status: 'up-to-date' | 'available' | 'failed'
+      version?: string
+      message?: string
+    }>
+    installNow: () => Promise<void>
+  }
+  shell: {
+    openExternal: (url: string) => void
+  }
+  crash: {
+    ack: (file: string) => Promise<void>
+    openLogsFolder: () => Promise<void>
+  }
+  window: {
+    themeApplied: (effective: 'light' | 'dark') => Promise<void>
+  }
 }
 
 /**
@@ -562,7 +572,12 @@ export type IpcEventContract = {
   'index:done': Record<string, never>
   'index:error': { message: string }
   'index:stateChange': { state: IndexStateName }
-  'index:fileChanged': { path: string; contentHash: string; mtime: number; frontmatter: Record<string, unknown> }
+  'index:fileChanged': {
+    path: string
+    contentHash: string
+    mtime: number
+    frontmatter: Record<string, unknown>
+  }
   'index:fileDeleted': { path: string }
   'index:fileRenamed': { oldPath: string; newPath: string }
   'index:rebuildProgress': { done: number; total: number }
@@ -571,7 +586,12 @@ export type IpcEventContract = {
   'settings:changed': SettingsChangedPayload
   'jobs:changed': Job
   'update:available': { version: string }
-  'update:download-progress': { percent: number; bytesPerSecond: number; total: number; transferred: number }
+  'update:download-progress': {
+    percent: number
+    bytesPerSecond: number
+    total: number
+    transferred: number
+  }
   'update:downloaded': { version: string }
   'update:error': { message: string }
   'crash:detected': { files: string[] }
@@ -593,10 +613,7 @@ export type IpcEventApi = {
 /**
  * Channel name template: `<namespace>.<method>`.
  */
-export type IpcChannelName<
-  NS extends string,
-  M extends string
-> = `${NS}.${M}`
+export type IpcChannelName<NS extends string, M extends string> = `${NS}.${M}`
 
 /**
  * Promisified + structurally-safe client type derived from any IPC contract.

@@ -41,12 +41,21 @@ export function cleanup(root: string, db: Database.Database): void {
   db.close()
 }
 
-export function waitFor(predicate: () => boolean, timeoutMs = 5000, intervalMs = 100): Promise<void> {
+export function waitFor(
+  predicate: () => boolean,
+  timeoutMs = 5000,
+  intervalMs = 100
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now()
     const id = setInterval(() => {
-      if (predicate()) { clearInterval(id); resolve() }
-      else if (Date.now() - start > timeoutMs) { clearInterval(id); reject(new Error(`timeout after ${timeoutMs}ms`)) }
+      if (predicate()) {
+        clearInterval(id)
+        resolve()
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(id)
+        reject(new Error(`timeout after ${timeoutMs}ms`))
+      }
     }, intervalMs)
   })
 }

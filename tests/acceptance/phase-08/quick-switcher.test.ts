@@ -14,7 +14,12 @@ function seedDb(rows: { path: string; title: string; clipped_at?: string }[]): D
   )
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i]
-    insert.run(r.path, r.title, r.path, r.clipped_at ?? `2025-${String((i % 12) + 1).padStart(2, '0')}-01`)
+    insert.run(
+      r.path,
+      r.title,
+      r.path,
+      r.clipped_at ?? `2025-${String((i % 12) + 1).padStart(2, '0')}-01`
+    )
   }
   return db
 }

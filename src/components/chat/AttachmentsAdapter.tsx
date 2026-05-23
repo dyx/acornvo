@@ -66,28 +66,31 @@ export const AttachmentsAdapter = forwardRef<AttachmentsAdapterHandle, Props>(
 
     if (!visible && pendingAttachments.length === 0) {
       return (
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          style={{ display: 'none' }} 
-          onChange={handleFileChange} 
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
         />
       )
     }
 
     return (
-      <div className={visible ? "flex flex-wrap gap-2 px-3 pt-3 pb-1" : "hidden"}>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          style={{ display: 'none' }} 
-          onChange={handleFileChange} 
+      <div className={visible ? 'flex flex-wrap gap-2 px-3 pt-3 pb-1' : 'hidden'}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
         />
         {pendingAttachments.map((att, i) => (
-          <div key={i} className="flex items-center gap-2 bg-background border border-border rounded-md pl-2 pr-1 py-1 text-sm shadow-sm max-w-[200px]">
+          <div
+            key={i}
+            className="flex items-center gap-2 bg-background border border-border rounded-md pl-2 pr-1 py-1 text-sm shadow-sm max-w-[200px]"
+          >
             <FileIcon className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate flex-1 text-xs font-medium">{att.title}</span>
-            <button 
+            <button
               type="button"
               className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => removeAttachment(i)}

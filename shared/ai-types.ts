@@ -1,65 +1,65 @@
-export type LlmRole = 'system' | 'user' | 'assistant';
+export type LlmRole = 'system' | 'user' | 'assistant'
 
 export interface LlmMessage {
-  role: LlmRole;
-  content: string;
+  role: LlmRole
+  content: string
 }
 
 export interface TokenUsage {
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
 }
 
 export interface ChatOptions {
-  profileId?: string;
-  messages: LlmMessage[];
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
+  profileId?: string
+  messages: LlmMessage[]
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  signal?: AbortSignal
 }
 
 export interface ChatJsonOptions extends ChatOptions {
-  schema: object;
+  schema: object
 }
 
 export interface ChatTextResult {
-  text: string;
-  model: string;
-  usage?: TokenUsage;
-  latencyMs: number;
+  text: string
+  model: string
+  usage?: TokenUsage
+  latencyMs: number
 }
 
 export interface ChatJsonResult<T = unknown> {
-  data: T;
-  rawText: string;
-  model: string;
-  usage?: TokenUsage;
-  latencyMs: number;
+  data: T
+  rawText: string
+  model: string
+  usage?: TokenUsage
+  latencyMs: number
 }
 
 export interface AiReviewResult {
-  summary: string;
-  suggestedTitle: string;
-  tags: string[];
-  keyQuotes: string[];
-  reviewedAt: string;
+  summary: string
+  suggestedTitle: string
+  tags: string[]
+  keyQuotes: string[]
+  reviewedAt: string
 }
 
 export interface AiUsageRow {
-  id?: number;
-  jobId: string | null;
-  profileId: string | null;
-  model: string | null;
-  promptTokens: number | null;
-  completionTokens: number | null;
-  latencyMs: number | null;
-  ok: 0 | 1;
-  error: string | null;
-  sessionId?: string | null;
-  groveId?: string | null;
-  createdAt: string;
+  id?: number
+  jobId: string | null
+  profileId: string | null
+  model: string | null
+  promptTokens: number | null
+  completionTokens: number | null
+  latencyMs: number | null
+  ok: 0 | 1
+  error: string | null
+  sessionId?: string | null
+  groveId?: string | null
+  createdAt: string
 }
 
 export type LlmErrorCode =
@@ -70,11 +70,11 @@ export type LlmErrorCode =
   | 'E_NETWORK'
   | 'E_SERVER'
   | 'E_RESPONSE'
-  | 'E_UNKNOWN';
+  | 'E_UNKNOWN'
 
 export interface LlmError {
-  code: LlmErrorCode;
-  message: string;
-  httpStatus?: number;
-  providerMessage?: string;
+  code: LlmErrorCode
+  message: string
+  httpStatus?: number
+  providerMessage?: string
 }

@@ -177,10 +177,7 @@ describe('library store — refresh + index event subscriptions', () => {
     vi.clearAllMocks()
     handlers = {}
     ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
-      <K extends IpcEventChannel>(
-        ch: K,
-        h: (p: IpcEventContract[K]) => void
-      ) => {
+      <K extends IpcEventChannel>(ch: K, h: (p: IpcEventContract[K]) => void) => {
         handlers[ch] = h
         return () => {
           delete handlers[ch]
@@ -377,10 +374,7 @@ describe('library store — project:changed reset', () => {
     vi.clearAllMocks()
     handlers = {}
     ;(ipc.on as ReturnType<typeof vi.fn>).mockImplementation(
-      <K extends IpcEventChannel>(
-        ch: K,
-        h: (p: IpcEventContract[K]) => void
-      ) => {
+      <K extends IpcEventChannel>(ch: K, h: (p: IpcEventContract[K]) => void) => {
         handlers[ch] = h
         return () => {}
       }

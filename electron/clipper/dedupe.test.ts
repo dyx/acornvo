@@ -30,8 +30,7 @@ describe('dedupe', () => {
   it('finds a match when the cleaned URL exists', async () => {
     const clip = makeClip('https://example.com/article')
     const lookup = makeLookup({
-      getByUrl: async (url: string) =>
-        url === 'https://example.com/article' ? clip : null
+      getByUrl: async (url: string) => (url === 'https://example.com/article' ? clip : null)
     })
     const dedupe = createDedupe(lookup)
 

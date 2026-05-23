@@ -13,9 +13,7 @@ export function EmptyState({ icon, title, description }: EmptyStateProps): JSX.E
       className="flex flex-col items-center justify-center py-16 gap-3 text-center"
     >
       {icon ? (
-        <div className="text-muted-foreground/40 [&>svg]:w-12 [&>svg]:h-12">
-          {icon}
-        </div>
+        <div className="text-muted-foreground/40 [&>svg]:w-12 [&>svg]:h-12">{icon}</div>
       ) : null}
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
       {description ? (

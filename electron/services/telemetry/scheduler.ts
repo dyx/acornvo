@@ -1,9 +1,13 @@
 import type { JobStore } from '../../queue/store'
 
-function utcDayOf(d: Date): string { return d.toISOString().slice(0, 10) }
+function utcDayOf(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
 
 function nextRunAtMs(now: Date): number {
-  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 10, 0, 0))
+  const next = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 10, 0, 0)
+  )
   if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1)
   return next.getTime() - now.getTime()
 }
@@ -25,5 +29,10 @@ export function scheduleDailyTelemetry(deps: TelemetrySchedulerDeps): { stop: ()
   }
 
   tick()
-  return { stop() { if (timer) clearTimeout(timer); timer = null } }
+  return {
+    stop() {
+      if (timer) clearTimeout(timer)
+      timer = null
+    }
+  }
 }

@@ -67,14 +67,14 @@ describe('ObservabilityTab', () => {
 
   it('telemetry toggle is unchecked by default', async () => {
     render(<ObservabilityTab />)
-    const toggle = await screen.findByTestId('obs-telemetry-toggle') as HTMLInputElement
+    const toggle = (await screen.findByTestId('obs-telemetry-toggle')) as HTMLInputElement
     expect(toggle.checked).toBe(false)
   })
 
   it('telemetry toggle is checked when telemetry is enabled', async () => {
     useSettingsStore.setState({ telemetry: { enabled: true } })
     render(<ObservabilityTab />)
-    const toggle = await screen.findByTestId('obs-telemetry-toggle') as HTMLInputElement
+    const toggle = (await screen.findByTestId('obs-telemetry-toggle')) as HTMLInputElement
     expect(toggle.checked).toBe(true)
   })
 

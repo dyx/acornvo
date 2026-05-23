@@ -12,7 +12,9 @@ export interface ClipsPort {
 
 let portRef: ClipsPort | null = null
 
-export function setClipsPort(p: ClipsPort): void { portRef = p }
+export function setClipsPort(p: ClipsPort): void {
+  portRef = p
+}
 
 export function getClipsPort(): ClipsPort {
   if (portRef) return portRef

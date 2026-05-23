@@ -12,11 +12,21 @@ function seedFtsDb(items: { path: string; title: string; body: string }[]): Data
   runMigrations(db, migrationsDir)
   for (const it of items) {
     upsertFile(db, {
-      path: it.path, title: it.title, summary: null, category: null, rating: null,
-      content_hash: it.path, mtime: 0, size_bytes: it.body.length, frontmatter_json: null,
-      created_at: 0, updated_at: 0
+      path: it.path,
+      title: it.title,
+      summary: null,
+      category: null,
+      rating: null,
+      content_hash: it.path,
+      mtime: 0,
+      size_bytes: it.body.length,
+      frontmatter_json: null,
+      created_at: 0,
+      updated_at: 0
     })
-    const rowid = (db.prepare('SELECT rowid FROM files WHERE path=?').get(it.path) as { rowid: number }).rowid
+    const rowid = (
+      db.prepare('SELECT rowid FROM files WHERE path=?').get(it.path) as { rowid: number }
+    ).rowid
     upsertFts(db, { rowid, path: it.path, title: it.title, body: it.body })
   }
   return db
@@ -73,7 +83,9 @@ describe('9.8 fullText stopword filter', () => {
     ])
     const withStop = fullText(db, '的 注意力', { limit: 10, offset: 0 })
     const withoutStop = fullText(db, '注意力', { limit: 10, offset: 0 })
-    expect(withStop.items.map((i) => i.summary.path)).toEqual(withoutStop.items.map((i) => i.summary.path))
+    expect(withStop.items.map((i) => i.summary.path)).toEqual(
+      withoutStop.items.map((i) => i.summary.path)
+    )
     db.close()
   })
 })
