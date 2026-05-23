@@ -5,6 +5,14 @@ import { useSettingsStore } from '@/stores/settings'
 import { useGroveStore } from '@/stores/grove'
 import { i18n } from '@/i18n'
 import type { Locale } from '@shared/settings-types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 
 export function GeneralTab(): JSX.Element {
   const { t } = useTranslation()
@@ -16,46 +24,51 @@ export function GeneralTab(): JSX.Element {
     <div data-testid="settings-tab-general" className="space-y-6">
       <h3 className="text-lg font-medium">{t('settings.tab.general')}</h3>
 
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.general.locale')}</span>
-        <select
-          className="block w-64 rounded border bg-background px-3 py-2 text-sm"
+      <div className="space-y-1">
+        <span className="block text-sm font-medium">{t('settings.general.locale')}</span>
+        <Select
           value={general.locale}
-          onChange={(e) => {
-            const next = e.target.value as Locale
+          onValueChange={(value) => {
+            const next = value as Locale
             void setGeneral({ locale: next })
             void i18n.changeLanguage(next)
           }}
         >
-          <option value="zh-CN">中文（简体）</option>
-          <option value="en-US">English</option>
-        </select>
-      </label>
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="zh-CN">中文（简体）</SelectItem>
+            <SelectItem value="en-US">English</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.general.autoBackup')}</span>
-        <select
-          className="block w-64 rounded border bg-background px-3 py-2 text-sm"
-          value={general.autoBackup}
-          disabled
-          title={t('settings.common.comingSoon')}
-        >
-          <option value="off">Off</option>
-        </select>
-      </label>
+      <div className="space-y-1">
+        <span className="block text-sm font-medium">{t('settings.general.autoBackup')}</span>
+        <Select value={general.autoBackup} disabled>
+          <SelectTrigger className="w-64" title={t('settings.common.comingSoon')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="off">Off</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div>
         <span className="mb-1 block text-sm font-medium">{t('settings.general.vaultPath')}</span>
         <div className="flex items-center gap-2">
           <code className="rounded bg-muted px-3 py-1 text-sm">{grove?.path ?? '—'}</code>
           {grove?.path && (
-            <button
+            <Button
               type="button"
-              className="rounded border px-3 py-1 text-sm hover:bg-muted"
+              variant="outline"
+              size="sm"
               onClick={() => navigator.clipboard.writeText(grove.path)}
             >
               {t('common.copy', { defaultValue: 'Copy' })}
-            </button>
+            </Button>
           )}
         </div>
       </div>

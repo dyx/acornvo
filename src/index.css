@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 :root {
   --font-scale: 1;
@@ -31,6 +32,32 @@ html {
   --font-serif: "Noto Serif SC", "Source Han Serif", "Songti SC", Georgia, serif;
   --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* shadcn/ui mappings to acorn theme */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-popover: var(--color-paper);
+  --color-popover-foreground: var(--color-ink);
+  --color-card: var(--color-paper);
+  --color-card-foreground: var(--color-ink);
+  --color-primary: var(--color-acorn);
+  --color-primary-foreground: #fff;
+  --color-secondary: var(--color-paper-2);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-paper-3);
+  --color-muted-foreground: var(--color-ink-3);
+  --color-accent: var(--color-paper-3);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: oklch(0.6 0.2 25);
+  --color-destructive-foreground: #fff;
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-acorn);
+  
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
 }
 
 [data-theme="dark"] {

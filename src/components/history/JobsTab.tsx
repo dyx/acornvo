@@ -15,6 +15,13 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Job, JobStatus } from '@shared/job-types'
 import { JOB_KINDS } from '@shared/job-types'
 import { ListChecks, Trash2 } from 'lucide-react'
@@ -217,34 +224,40 @@ export function JobsTab(): JSX.Element {
       {/* toolbar: filters + clear-done button */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-[color:var(--color-line)] flex-shrink-0">
         {/* kind filter */}
-        <select
-          data-testid="kind-filter"
-          className="h-8 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2 text-xs text-[color:var(--color-ink)]"
-          value={state.kindFilter}
-          onChange={(e) => dispatch({ type: 'SET_KIND_FILTER', kind: e.target.value })}
+        <Select
+          value={state.kindFilter || 'all'}
+          onValueChange={(value) => dispatch({ type: 'SET_KIND_FILTER', kind: value === 'all' ? '' : value })}
         >
-          <option value="">全部类型</option>
-          {JOB_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {kindLabel(k)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectValue placeholder="全部类型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部类型</SelectItem>
+            {JOB_KINDS.map((k) => (
+              <SelectItem key={k} value={k}>
+                {kindLabel(k)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* status filter */}
-        <select
-          data-testid="status-filter"
-          className="h-8 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2 text-xs text-[color:var(--color-ink)]"
-          value={state.statusFilter}
-          onChange={(e) => dispatch({ type: 'SET_STATUS_FILTER', status: e.target.value })}
+        <Select
+          value={state.statusFilter || 'all'}
+          onValueChange={(value) => dispatch({ type: 'SET_STATUS_FILTER', status: value === 'all' ? '' : value })}
         >
-          <option value="">全部状态</option>
-          {[...ACTIVE_STATUSES, ...DONE_STATUSES].map((s) => (
-            <option key={s} value={s}>
-              {statusLabel(s)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectValue placeholder="全部状态" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            {[...ACTIVE_STATUSES, ...DONE_STATUSES].map((s) => (
+              <SelectItem key={s} value={s}>
+                {statusLabel(s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* spacer */}
         <div className="flex-1" />

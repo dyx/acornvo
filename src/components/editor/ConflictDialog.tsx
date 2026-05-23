@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useEditorStore } from '@/stores/editor'
 
 function formatRemote(ts: number): string {
@@ -41,30 +42,32 @@ export function ConflictDialog(): React.JSX.Element | null {
           <div>{t('conflict.dialog.meta_remote_time', { time: formatRemote(cs.remoteMtimeMs) })}</div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          <button
+          <Button
             data-testid="dlg-keep-local"
-            className="rounded border border-red-500 text-red-700 px-4 py-2 text-left"
+            variant="outline"
+            className="border-red-500 text-red-700 h-auto flex flex-col items-start px-4 py-2"
             onClick={() => useEditorStore.getState().keepLocal?.()}
           >
             <div className="font-medium">{t('conflict.dialog.keep_local')}</div>
-            <div className="text-xs opacity-70">{t('conflict.dialog.keep_local_sub')}</div>
-          </button>
-          <button
+            <div className="text-xs opacity-70 font-normal">{t('conflict.dialog.keep_local_sub')}</div>
+          </Button>
+          <Button
             data-testid="dlg-load-remote"
-            className="rounded bg-blue-600 text-white px-4 py-2 text-left"
+            className="bg-blue-600 hover:bg-blue-700 text-white h-auto flex flex-col items-start px-4 py-2"
             onClick={() => useEditorStore.getState().reloadFromDisk?.()}
           >
             <div className="font-medium">{t('conflict.dialog.load_remote')}</div>
-            <div className="text-xs opacity-90">{t('conflict.dialog.load_remote_sub')}</div>
-          </button>
-          <button
+            <div className="text-xs opacity-90 font-normal">{t('conflict.dialog.load_remote_sub')}</div>
+          </Button>
+          <Button
             data-testid="dlg-save-as"
-            className="rounded border px-4 py-2 text-left"
+            variant="outline"
+            className="h-auto flex flex-col items-start px-4 py-2"
             onClick={() => useEditorStore.getState().saveAsCopy?.()}
           >
             <div className="font-medium">{t('conflict.dialog.save_as')}</div>
-            <div className="text-xs opacity-70">{t('conflict.dialog.save_as_sub')}</div>
-          </button>
+            <div className="text-xs opacity-70 font-normal">{t('conflict.dialog.save_as_sub')}</div>
+          </Button>
         </div>
         <div className="mt-3 flex justify-between text-xs">
           <span
@@ -74,13 +77,14 @@ export function ConflictDialog(): React.JSX.Element | null {
           >
             {t('conflict.dialog.view_diff')}
           </span>
-          <button
+          <Button
             data-testid="dlg-later"
-            className="text-muted-foreground underline"
+            variant="link"
+            className="h-auto p-0 text-muted-foreground text-xs"
             onClick={onLater}
           >
             {t('conflict.dialog.later')}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

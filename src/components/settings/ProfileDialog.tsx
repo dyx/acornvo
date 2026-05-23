@@ -4,6 +4,16 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProfilesStore } from '@/stores/profiles'
 import type { AiProviderProfile, AiProviderKind, ProfileCreateInput, ProfileUpdateInput } from '@shared/settings-types'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ProfileDialogProps {
   profile: AiProviderProfile | null
@@ -73,49 +83,61 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4">
       <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
         <h3 className="mb-4 text-lg font-medium">{profile ? t('settings.ai.editProfile') : t('settings.ai.addProfile')}</h3>
-        <div className="space-y-3 text-sm">
-          <label className="block"><span className="mb-1 block">{t('settings.ai.name')}</span>
-            <input className="block w-full rounded border bg-background px-3 py-2" value={form.name} onChange={(e) => set('name', e.target.value)} />
-          </label>
-          <label className="block"><span className="mb-1 block">{t('settings.ai.provider')}</span>
-            <select className="block w-full rounded border bg-background px-3 py-2" value={form.provider} onChange={(e) => set('provider', e.target.value as AiProviderKind)}>
-              {PROVIDERS.map((p) => (<option key={p} value={p}>{p}</option>))}
-            </select>
-          </label>
+        <div className="space-y-4 text-sm">
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.name')}</span>
+            <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.provider')}</span>
+            <Select value={form.provider} onValueChange={(value) => set('provider', value as AiProviderKind)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROVIDERS.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
           {(form.provider === 'openai-compatible' || form.provider === 'ollama') && (
-            <label className="block"><span className="mb-1 block">{t('settings.ai.baseUrl')}</span>
-              <input className="block w-full rounded border bg-background px-3 py-2" value={form.baseUrl}
+            <div className="space-y-1">
+              <span className="block font-medium">{t('settings.ai.baseUrl')}</span>
+              <Input value={form.baseUrl}
                 placeholder={form.provider === 'ollama' ? 'http://localhost:11434' : ''}
                 onChange={(e) => set('baseUrl', e.target.value)} />
-            </label>
+            </div>
           )}
-          <label className="block"><span className="mb-1 block">{t('settings.ai.model')}</span>
-            <input className="block w-full rounded border bg-background px-3 py-2" value={form.model} onChange={(e) => set('model', e.target.value)} />
-          </label>
-          <label className="block"><span className="mb-1 block">{t('settings.ai.temperature')} ({form.temperature})</span>
-            <input type="range" min={0} max={2} step={0.1} value={form.temperature} onChange={(e) => set('temperature', e.target.value)} />
-          </label>
-          <label className="block"><span className="mb-1 block">{t('settings.ai.topP')} ({form.topP})</span>
-            <input type="range" min={0} max={1} step={0.05} value={form.topP} onChange={(e) => set('topP', e.target.value)} />
-          </label>
-          <label className="block"><span className="mb-1 block">{t('settings.ai.maxTokens')}</span>
-            <input type="number" className="block w-full rounded border bg-background px-3 py-2" value={form.maxTokens} onChange={(e) => set('maxTokens', e.target.value)} />
-          </label>
-          <label className="block"><span className="mb-1 block">{t('settings.ai.apiKey')}</span>
-            <input type="password" autoComplete="off" className="block w-full rounded border bg-background px-3 py-2"
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.model')}</span>
+            <Input value={form.model} onChange={(e) => set('model', e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.temperature')} ({form.temperature})</span>
+            <Slider min={0} max={2} step={0.1} value={[Number(form.temperature)]} onValueChange={([v]) => set('temperature', String(v))} />
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.topP')} ({form.topP})</span>
+            <Slider min={0} max={1} step={0.05} value={[Number(form.topP)]} onValueChange={([v]) => set('topP', String(v))} />
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.maxTokens')}</span>
+            <Input type="number" value={form.maxTokens} onChange={(e) => set('maxTokens', e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.apiKey')}</span>
+            <Input type="password" autoComplete="off"
               value={form.apiKey} placeholder={profile ? t('settings.ai.apiKeyKeepEmpty') : ''}
               onChange={(e) => set('apiKey', e.target.value)} />
-          </label>
+          </div>
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" className="rounded border px-3 py-1 text-sm hover:bg-muted" onClick={onClose} disabled={busy}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
             {t('common.cancel')}
-          </button>
-          <button type="button" className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:opacity-90"
-            onClick={() => void onSave()} disabled={busy}>
+          </Button>
+          <Button type="button" onClick={() => void onSave()} disabled={busy}>
             {t('settings.ai.save')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

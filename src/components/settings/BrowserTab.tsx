@@ -4,6 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import { ipc } from '@/ipc/client'
 import type { SearchEngine } from '@shared/settings-types'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export function BrowserTab(): JSX.Element {
   const { t } = useTranslation()
@@ -14,39 +23,44 @@ export function BrowserTab(): JSX.Element {
     <div data-testid="settings-tab-browser" className="space-y-6">
       <h3 className="text-lg font-medium">{t('settings.tab.browser')}</h3>
 
-      <label className="flex items-center gap-3">
-        <input type="checkbox" checked={browser.blockAds}
-          onChange={(e) => void setBrowser({ blockAds: e.target.checked })} />
-        <span className="text-sm">{t('settings.browser.blockAds')}</span>
-      </label>
+      <div className="flex items-center space-x-2">
+        <Switch id="blockAds" checked={browser.blockAds}
+          onCheckedChange={(checked) => void setBrowser({ blockAds: checked })} />
+        <label htmlFor="blockAds" className="text-sm cursor-pointer">{t('settings.browser.blockAds')}</label>
+      </div>
 
-      <label className="flex items-center gap-3" title={t('settings.common.comingSoon')}>
-        <input type="checkbox" checked={browser.clipImagesLocalize}
-          onChange={(e) => void setBrowser({ clipImagesLocalize: e.target.checked })} />
-        <span className="text-sm">{t('settings.browser.clipImages')}</span>
-      </label>
+      <div className="flex items-center space-x-2" title={t('settings.common.comingSoon')}>
+        <Switch id="clipImagesLocalize" checked={browser.clipImagesLocalize}
+          onCheckedChange={(checked) => void setBrowser({ clipImagesLocalize: checked })} />
+        <label htmlFor="clipImagesLocalize" className="text-sm cursor-pointer">{t('settings.browser.clipImages')}</label>
+      </div>
 
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.browser.searchEngine')}</span>
-        <select className="block w-64 rounded border bg-background px-3 py-2 text-sm"
+      <div className="space-y-1">
+        <span className="block text-sm font-medium">{t('settings.browser.searchEngine')}</span>
+        <Select
           value={browser.searchEngine}
-          onChange={(e) => void setBrowser({ searchEngine: e.target.value as SearchEngine })}>
-          <option value="google">Google</option>
-          <option value="bing">Bing</option>
-          <option value="duckduckgo">DuckDuckGo</option>
-        </select>
-      </label>
+          onValueChange={(value) => void setBrowser({ searchEngine: value as SearchEngine })}
+        >
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="google">Google</SelectItem>
+            <SelectItem value="bing">Bing</SelectItem>
+            <SelectItem value="duckduckgo">DuckDuckGo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div>
-        <button type="button"
-          className="rounded border border-destructive px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+        <Button variant="destructive"
           onClick={() => {
             if (window.confirm(t('settings.browser.clearCookiesConfirm'))) {
               void ipc.settings.browserClearCookies()
             }
           }}>
           {t('settings.browser.clearCookies')}
-        </button>
+        </Button>
       </div>
     </div>
   )

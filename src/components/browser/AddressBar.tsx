@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useBrowserStore } from '@/stores/browser'
 import { useClipperStore } from '@/stores/clipper'
@@ -201,17 +202,14 @@ export function AddressBar(): JSX.Element {
               {t('browser.clip.exists.title', '已剪藏')}
             </Dialog.Title>
             <div className="mt-2 text-sm">{t('browser.clip.exists.body', '该页面已剪藏过，是否打开？')}</div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded border px-3 py-1 text-sm"
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="outline"
                 onClick={() => setOpenClippedConfirm(false)}
               >
                 {t('common.cancel', '取消')}
-              </button>
-              <button
-                type="button"
-                className="rounded bg-[color:var(--color-accent)] px-3 py-1 text-sm text-white"
+              </Button>
+              <Button
                 onClick={async () => {
                   setOpenClippedConfirm(false)
                   const r = await getClipsPort().getByUrl({ url: tab?.url ?? '' })
@@ -219,7 +217,7 @@ export function AddressBar(): JSX.Element {
                 }}
               >
                 {t('common.open', '打开')}
-              </button>
+              </Button>
             </div>
           </Dialog.Content>
         </Dialog.Portal>

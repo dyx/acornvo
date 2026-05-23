@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useBrowserStore } from '@/stores/browser'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } = {}): JSX.Element {
   const { t } = useTranslation()
@@ -42,56 +44,52 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
   if (collapsed) {
     return (
       <div className="flex h-full flex-col items-center pt-2">
-        <button
-          type="button"
+        <Button
+          variant="ghost" size="icon"
           aria-label={t('browser.bookmarks.expand', 'expand bookmarks')}
           className="size-8 rounded hover:bg-[color:var(--color-bg-3)]"
           onClick={() => setBookmarksOpen(true)}
         >
           ☰
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-[color:var(--color-line)] px-2 py-1.5">
-        <input
+      <div className="flex items-center justify-between border-b border-[color:var(--color-line)] p-2 gap-2">
+        <Input
           type="search"
           role="searchbox"
           placeholder={t('browser.bookmarks.search', 'search bookmarks')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="h-7 flex-1 rounded border border-[color:var(--color-line)] bg-[color:var(--color-bg)] px-2 text-xs"
+          className="h-8 flex-1 text-xs"
         />
-        <button
-          type="button"
+        <Button
+          variant="ghost" size="icon"
           aria-label={t('browser.bookmarks.collapse', 'collapse bookmarks')}
-          className="ml-1 size-7 rounded text-sm hover:bg-[color:var(--color-bg-3)]"
+          className="size-8 rounded text-sm hover:bg-[color:var(--color-bg-3)]"
           onClick={() => setBookmarksOpen(false)}
         >
           ×
-        </button>
+        </Button>
       </div>
       {tagsAll.length > 0 && (
         <div className="flex flex-wrap gap-1 border-b border-[color:var(--color-line)] px-2 py-1">
           {tagsAll.map((tg) => (
-            <button
+            <Button
               key={tg}
-              type="button"
+              variant={tag === tg ? 'default' : 'outline'}
+              size="sm"
               role="button"
               aria-label={`tag-${tg}`}
-              className={[
-                'rounded-full border px-2 py-0.5 text-xs',
-                tag === tg
-                  ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)] text-[color:var(--color-on-accent)]'
-                  : 'border-[color:var(--color-line)] hover:bg-[color:var(--color-bg-3)]'
-              ].join(' ')}
+              className="h-6 rounded-full px-2 text-xs"
               onClick={() => setTag(tag === tg ? null : tg)}
             >
               #{tg}
-            </button>
+            </Button>
           ))}
         </div>
       )}

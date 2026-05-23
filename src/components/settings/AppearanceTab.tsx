@@ -4,6 +4,16 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import type { Theme } from '@shared/settings-types'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const FONT_FALLBACK = ['system-ui', 'Georgia', 'SF Mono', 'Courier New']
 
@@ -38,63 +48,64 @@ export function AppearanceTab(): JSX.Element {
     <div data-testid="settings-tab-appearance" className="space-y-6">
       <h3 className="text-lg font-medium">{t('settings.tab.appearance')}</h3>
 
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium">{t('settings.appearance.theme')}</legend>
-        <div className="flex gap-4">
-          {(['system', 'light', 'dark'] as const).map((value) => (
-            <label key={value} className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="theme"
-                value={value}
-                checked={appearance.theme === value}
-                onChange={() => {
-                  applyTheme(value)
-                  void setAppearance({ theme: value })
-                }}
-              />
-              {t(`settings.appearance.theme.${value}`)}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.appearance.fontScale')}</span>
-        <input
-          type="range"
-          aria-label={t('settings.appearance.fontScale')}
-          min={0.8}
-          max={1.4}
-          step={0.1}
-          value={appearance.fontScale}
-          onChange={(e) => {
-            const value = Number(e.target.value)
-            applyFontScale(value)
-            if (debounceRef.current) clearTimeout(debounceRef.current)
-            debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
+      <div className="space-y-3">
+        <span className="block text-sm font-medium">{t('settings.appearance.theme')}</span>
+        <RadioGroup
+          value={appearance.theme}
+          onValueChange={(value) => {
+            applyTheme(value as Theme)
+            void setAppearance({ theme: value as Theme })
           }}
-        />
-        <span className="ml-3 text-sm text-muted-foreground">{appearance.fontScale.toFixed(1)}x</span>
-      </label>
+          className="flex gap-4"
+        >
+          {(['system', 'light', 'dark'] as const).map((value) => (
+            <div key={value} className="flex items-center space-x-2">
+              <RadioGroupItem value={value} id={`theme-${value}`} />
+              <Label htmlFor={`theme-${value}`} className="font-normal">{t(`settings.appearance.theme.${value}`)}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
 
-      <label className="block">
-        <span className="mb-1 block text-sm font-medium">{t('settings.appearance.editorFont')}</span>
-        <select
-          className="block w-64 rounded border bg-background px-3 py-2 text-sm"
+      <div className="space-y-3">
+        <span className="block text-sm font-medium">{t('settings.appearance.fontScale')}</span>
+        <div className="flex items-center gap-4 max-w-xs">
+          <Slider
+            min={0.8}
+            max={1.4}
+            step={0.1}
+            value={[appearance.fontScale]}
+            onValueChange={([value]) => {
+              applyFontScale(value)
+              if (debounceRef.current) clearTimeout(debounceRef.current)
+              debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
+            }}
+          />
+          <span className="text-sm text-muted-foreground w-8 text-right">{appearance.fontScale.toFixed(1)}x</span>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <span className="block text-sm font-medium">{t('settings.appearance.editorFont')}</span>
+        <Select
           value={appearance.editorFont}
-          onChange={(e) => {
-            void setAppearance({ editorFont: e.target.value })
-            document.documentElement.style.setProperty('--editor-font', e.target.value)
+          onValueChange={(value) => {
+            void setAppearance({ editorFont: value })
+            document.documentElement.style.setProperty('--editor-font', value)
           }}
         >
-          {FONT_FALLBACK.map((font) => (
-            <option key={font} value={font}>
-              {font}
-            </option>
-          ))}
-        </select>
-      </label>
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_FALLBACK.map((font) => (
+              <SelectItem key={font} value={font}>
+                {font}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   )
 }

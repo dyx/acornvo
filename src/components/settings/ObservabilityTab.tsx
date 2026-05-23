@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
 import { useSettingsStore } from '@/stores/settings'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
 
 type Panel = 'ai' | 'queue' | 'perf'
 type Window = '24h' | '7d' | '30d'
@@ -51,14 +53,14 @@ export function ObservabilityTab(): JSX.Element {
       </div>
 
       <footer className="mt-4 border-t pt-4">
-        <button
+        <Button
           data-testid="obs-export-diagnostic"
           disabled={exporting}
-          className="rounded border px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"
+          variant="outline"
           onClick={() => { void onExport() }}
         >
           {exporting ? t('obs.export.diagnosticBusy') : t('obs.export.diagnostic')}
-        </button>
+        </Button>
         <TelemetryToggle />
       </footer>
     </div>
@@ -258,10 +260,10 @@ function ObservabilityQueuePanel(): JSX.Element {
           <li key={f.id} className="flex items-center gap-2 border-b py-1">
             <span className="w-32 truncate">{f.kind}</span>
             <span className="flex-1 truncate text-muted-foreground">{f.last_error}</span>
-            <button data-testid={`obs-queue-retry-${f.id}`} className="rounded border px-2 py-0.5"
-              onClick={() => { void ipc.queue.retry(f.id) }}>{t('obs.queue.retry')}</button>
-            <button data-testid={`obs-queue-discard-${f.id}`} className="rounded border px-2 py-0.5"
-              onClick={() => { void ipc.queue.discard(f.id) }}>{t('obs.queue.discard')}</button>
+            <Button data-testid={`obs-queue-retry-${f.id}`} variant="outline" size="sm" className="h-6 px-2 text-xs"
+              onClick={() => { void ipc.queue.retry(f.id) }}>{t('obs.queue.retry')}</Button>
+            <Button data-testid={`obs-queue-discard-${f.id}`} variant="outline" size="sm" className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10"
+              onClick={() => { void ipc.queue.discard(f.id) }}>{t('obs.queue.discard')}</Button>
           </li>
         ))}
       </ul>
@@ -344,14 +346,17 @@ function TelemetryToggle(): JSX.Element {
   const telemetry = useSettingsStore((s) => s.telemetry)
   const setTelemetry = useSettingsStore((s) => s.setTelemetry)
   return (
-    <label className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-      <input data-testid="obs-telemetry-toggle" type="checkbox"
+    <div className="mt-4 flex items-start space-x-3 text-xs text-muted-foreground">
+      <Switch
+        id="obs-telemetry-toggle"
+        data-testid="obs-telemetry-toggle"
         checked={telemetry.enabled}
-        onChange={(e) => { void setTelemetry({ enabled: e.target.checked }) }} />
-      <span>
+        onCheckedChange={(checked) => { void setTelemetry({ enabled: checked }) }}
+      />
+      <label htmlFor="obs-telemetry-toggle" className="cursor-pointer space-y-1">
         <strong className="block text-foreground">{t('telemetry.enable')}</strong>
-        <span>{t('telemetry.description')}</span>
-      </span>
-    </label>
+        <span className="block">{t('telemetry.description')}</span>
+      </label>
+    </div>
   )
 }
