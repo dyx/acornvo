@@ -47,9 +47,9 @@ export function TabBar(): JSX.Element {
             aria-label={t.title || 'Untitled'}
             data-testid={`tab-${t.id}`}
             className={[
-              'group relative flex min-w-32 max-w-64 h-[42px] items-center gap-1.5 border-b-2 px-2 text-[13px] transition-colors -mb-px',
+              'group relative flex min-w-32 max-w-64 h-[42px] items-center gap-1.5 border-b-[3px] px-2 text-[13px] transition-colors -mb-px',
               active
-                ? 'border-[color:var(--color-ink)] text-[color:var(--color-ink)] font-medium z-10'
+                ? 'border-[color:var(--color-acorn)] text-[color:var(--color-ink)] font-medium z-10'
                 : 'border-transparent text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink)] hover:border-[color:var(--color-line)]'
             ].join(' ')}
             onClick={() => void activateTab(t.id)}
