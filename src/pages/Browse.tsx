@@ -82,19 +82,19 @@ export function Browse(): JSX.Element {
   const isBlank = activeTab?.savedUrl === 'about:blank' && activeTab?.title === ''
 
   return (
-    <div className="flex h-full flex-col" data-testid="browse-page">
-      <TabBar />
-      <AddressBar />
-      <div className="flex flex-1 overflow-hidden">
-        {bookmarksOpen ? (
-          <aside className="w-50 shrink-0 border-r border-[color:var(--color-line)] overflow-hidden">
-            <BookmarkSidebar />
-          </aside>
-        ) : (
-          <aside className="w-12 shrink-0 border-r border-[color:var(--color-line)]">
-            <BookmarkSidebar collapsed />
-          </aside>
-        )}
+    <div className="flex h-full" data-testid="browse-page">
+      {bookmarksOpen ? (
+        <aside className="flex flex-col w-50 shrink-0 border-r border-[color:var(--color-line)] overflow-hidden">
+          <BookmarkSidebar />
+        </aside>
+      ) : (
+        <aside className="flex flex-col w-12 shrink-0 border-r border-[color:var(--color-line)]">
+          <BookmarkSidebar collapsed />
+        </aside>
+      )}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <TabBar />
+        <AddressBar />
         <div className="relative flex-1">
           <div
             id="browser-viewport"
@@ -103,7 +103,7 @@ export function Browse(): JSX.Element {
             className="absolute inset-0"
           />
           {isBlank && (
-            <div className="absolute inset-0 z-10 bg-background">
+            <div className="absolute inset-0 z-10 bg-[color:var(--color-paper)]">
               <NewTabPage />
             </div>
           )}
