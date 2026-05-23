@@ -89,7 +89,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
                 className="h-2 w-2 rounded-[2px]"
                 style={{ background: dotColor[current.color] }}
               />
-              <span className="font-serif">{current.name}</span>
+              <span>{current.name}</span>
             </>
           ) : (
             <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>

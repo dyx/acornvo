@@ -74,7 +74,7 @@ function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
         title={t('settings.common.comingSoon')}
       >
         <entry.Icon size={18} />
-        <span className="font-serif text-[11px] font-medium">{label}</span>
+        <span className="text-[11px] font-medium">{label}</span>
       </div>
     )
   }
@@ -91,7 +91,7 @@ function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
       }
     >
       <entry.Icon size={18} />
-      <span className="font-serif text-[11px] font-medium">{label}</span>
+      <span className="text-[11px] font-medium">{label}</span>
     </NavLink>
   )
 }

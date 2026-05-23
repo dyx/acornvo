@@ -43,7 +43,7 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
             to={tab.to}
             data-testid={tab.testId}
             className={({ isActive }) =>
-              `mx-2 my-[1px] block rounded-[7px] py-2 pr-3 transition-colors text-[13px] font-serif ${
+              `mx-2 my-[1px] block rounded-[7px] py-2 pr-3 transition-colors text-[13px] ${
                 isActive
                   ? 'border-l-2 border-[color:var(--color-acorn)] bg-[color:var(--color-paper)] pl-[10px] text-[color:var(--color-ink)]'
                   : 'border-l-2 border-transparent pl-[12px] text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'

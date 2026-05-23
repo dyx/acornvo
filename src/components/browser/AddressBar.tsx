@@ -164,7 +164,7 @@ export function AddressBar(): JSX.Element {
             }
           }}
           className={[
-            'flex h-[32px] items-center gap-[8px] rounded-[8px] border-none px-[14px] font-serif text-[13px] font-medium transition-colors',
+            'flex h-[32px] items-center gap-[8px] rounded-[8px] border-none px-[14px] text-[13px] font-medium transition-colors',
             clipState === 'disabled' &&
               'opacity-40 bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-3)] cursor-default',
             clipState === 'hollow' &&
