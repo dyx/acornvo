@@ -1,5 +1,5 @@
 // electron/settings/profile-key.ts
-import { dbService } from '../services/db'
+import { getGlobalDb } from '../services/global-db'
 import { secretsStore } from './secrets'
 
 /**
@@ -11,7 +11,7 @@ import { secretsStore } from './secrets'
  * (chat agent) will call it directly when constructing LLM requests in main.
  */
 export function getProfileDecryptedKey(profileId: string): string | null {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const row = db
     .prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?')
     .get(profileId) as { api_key_ref: string | null } | undefined

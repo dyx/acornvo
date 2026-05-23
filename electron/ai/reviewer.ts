@@ -84,8 +84,10 @@ function loadMd(rel: string): {
   };
 }
 
+import { getGlobalDb } from '../services/global-db';
+
 function resolveProfile(profileId?: string): ResolvedProfile {
-  const db = dbService.requireCurrent();
+  const db = getGlobalDb();
   let id = profileId;
   if (!id) {
     const ai = settingsStore.get('ai');

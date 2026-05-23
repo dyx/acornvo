@@ -40,8 +40,10 @@ function listSessionsWithCheckpoints(): ThreadCandidate[] {
     .map((r) => ({ sessionId: r.session_id, profileId: r.profile_id }));
 }
 
+import { getGlobalDb } from '../services/global-db';
+
 function loadProfile(profileId: string): ResolvedProfile | null {
-  const db = dbService.requireCurrent();
+  const db = getGlobalDb();
   const p = db
     .prepare('SELECT * FROM ai_provider_profiles WHERE id = ?')
     .get(profileId) as

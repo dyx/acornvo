@@ -25,8 +25,10 @@ export interface ChatDeps {
   clipsGet?: (id: number) => Promise<{ body: string } | null>;
 }
 
+import { getGlobalDb } from '../services/global-db';
+
 function resolveProfile(profileId: string): ResolvedProfile {
-  const db = dbService.requireCurrent();
+  const db = getGlobalDb();
   const p = db
     .prepare('SELECT * FROM ai_provider_profiles WHERE id = ?')
     .get(profileId) as

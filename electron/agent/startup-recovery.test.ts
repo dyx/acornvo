@@ -24,6 +24,7 @@ vi.mock('./agent-singleton', () => ({
 import { dbService } from '../services/db';
 import { recoverPendingApprovals } from './startup-recovery';
 import { pendingInterrupts } from '../ipc/chat';
+import { __setGlobalDbForTest } from '../services/global-db';
 
 const MIGRATIONS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../services/db/migrations');
 
@@ -40,6 +41,7 @@ describe('recoverPendingApprovals', () => {
     pendingInterrupts.clear();
     db = freshDb();
     (dbService.requireCurrent as ReturnType<typeof vi.fn>).mockReturnValue(db);
+    __setGlobalDbForTest(db);
     fakeAgent.getState.mockReset();
   });
 
