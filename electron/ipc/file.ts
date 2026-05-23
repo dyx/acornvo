@@ -7,6 +7,7 @@ import { safeResolve } from '../services/path-safety'
 import { parseFile, stringify } from '../services/frontmatter'
 import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
 import { registerSelfWrite } from '../services/watcher'
+import { dbService } from '../services/db'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import {
   IpcError,
@@ -60,6 +61,15 @@ export const fileHandlers = {
       throw err
     }
     const parsed = parseFile(r.content)
+    let clip: { id: number } | undefined
+    try {
+      clip = dbService
+        .requireCurrent()
+        .prepare('SELECT id FROM clips WHERE path = ?')
+        .get(rel) as { id: number } | undefined
+    } catch {
+      clip = undefined
+    }
     return {
       content: r.content,
       eol: r.eol,
@@ -69,7 +79,8 @@ export const fileHandlers = {
       originalEncoding: r.originalEncoding,
       frontmatter: parsed.frontmatter,
       body: parsed.body,
-      rawYaml: parsed.rawYaml
+      rawYaml: parsed.rawYaml,
+      clipId: clip?.id ?? null
     }
   },
 

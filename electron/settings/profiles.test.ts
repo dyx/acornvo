@@ -18,6 +18,7 @@ vi.mock('electron', () => ({
 
 import { invalidateByProfile } from '../ai/model-factory'
 import { dbService } from '../services/db'
+import { __setGlobalDbForTest, __resetGlobalDbForTest } from '../services/global-db'
 import { profilesStore } from './profiles'
 import { secretsStore } from './secrets'
 import { settingsStore } from './store'
@@ -34,9 +35,12 @@ describe('profilesStore', () => {
     db = new Database(':memory:')
     runMigrations(db, MIGRATIONS)
     reqCur.mockReturnValue(db)
+    __setGlobalDbForTest(db)
     settingsStore.__resetSubscribers()
   })
-  afterEach(() => db.close())
+  afterEach(() => {
+    __resetGlobalDbForTest()
+  })
 
   it('create({ name, provider, model }) returns { id } and inserts a row WITHOUT api_key_ref', () => {
     const { id } = profilesStore.create({ name: 'p1', provider: 'openai', model: 'gpt-4o' })
@@ -46,6 +50,12 @@ describe('profilesStore', () => {
       { name: string; api_key_ref: string | null }
     expect(row.name).toBe('p1')
     expect(row.api_key_ref).toBeNull()
+  })
+
+  it('create repairs a stale defaultProfileId by making the new profile default', () => {
+    settingsStore.set('ai', { defaultProfileId: 'missing-profile' })
+    const { id } = profilesStore.create({ name: 'fresh', provider: 'openai', model: 'gpt-4o' })
+    expect(settingsStore.get('ai').defaultProfileId).toBe(id)
   })
 
   it('create with apiKey saves secret first then writes api_key_ref', () => {
@@ -166,8 +176,11 @@ describe('security audit — profile CRUD never leaks apiKey plaintext', () => {
     db = new Database(':memory:')
     runMigrations(db, MIGRATIONS)
     reqCur.mockReturnValue(db)
+    __setGlobalDbForTest(db)
   })
-  afterEach(() => db.close())
+  afterEach(() => {
+    __resetGlobalDbForTest()
+  })
 
   it('list() output is JSON-serializable and does not contain "apiKey"', () => {
     profilesStore.create({ name: 'a', provider: 'openai', model: 'gpt-4o', apiKey: 'sk-secret' })

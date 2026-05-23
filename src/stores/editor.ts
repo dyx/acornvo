@@ -7,6 +7,7 @@ import { IpcError } from '@shared/ipc-contract'
 export type EditorReadyState = {
   kind: 'ready'
   path: string
+  clipId?: number | null
   frontmatter: Frontmatter
   body: string
   savedFrontmatter: Frontmatter
@@ -105,6 +106,7 @@ export function installEditorSubscriber(): () => void {
               state: {
                 kind: 'ready',
                 path: cur.path,
+                clipId: fresh.clipId ?? null,
                 frontmatter: fresh.frontmatter,
                 body: fresh.body,
                 savedFrontmatter: fresh.frontmatter,
@@ -354,6 +356,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         state: {
           kind: 'ready',
           path,
+          clipId: r.clipId ?? null,
           frontmatter: r.frontmatter,
           body: r.body,
           savedFrontmatter: r.frontmatter,
@@ -428,6 +431,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       state: {
         kind: 'ready',
         path: cur.path,
+        clipId: fresh.clipId ?? null,
         frontmatter: fresh.frontmatter,
         body: fresh.body,
         savedFrontmatter: fresh.frontmatter,

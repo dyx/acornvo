@@ -14,10 +14,12 @@ interface SingletonHandle {
 
 let handle: SingletonHandle | null = null;
 let checkpointer: BaseCheckpointSaver | null = null;
+let currentDbForAgent: unknown = null;
 
 function getCheckpointer(): BaseCheckpointSaver {
-  if (checkpointer) return checkpointer;
   const db = dbService.requireCurrent();
+  if (checkpointer && currentDbForAgent === db) return checkpointer;
+  currentDbForAgent = db;
   checkpointer = new SqliteSaver(db as unknown as ConstructorParameters<typeof SqliteSaver>[0]);
   return checkpointer;
 }
@@ -31,7 +33,8 @@ function getCheckpointer(): BaseCheckpointSaver {
  * the app uses for everything else, so HITL state survives restarts.
  */
 export function getAgentBuilder(): SingletonHandle {
-  if (handle) return handle;
+  const db = dbService.requireCurrent();
+  if (handle && currentDbForAgent === db) return handle;
   const cp = getCheckpointer();
   const hitl = humanInTheLoopMiddleware({
     interruptOn: {
@@ -63,4 +66,5 @@ export function getCheckpointerInstance(): BaseCheckpointSaver {
 export function __resetAgentSingleton(): void {
   handle = null;
   checkpointer = null;
+  currentDbForAgent = null;
 }

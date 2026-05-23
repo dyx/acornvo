@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -16,7 +16,10 @@ vi.mock('./model-factory', () => ({
   buildChatModel: vi.fn(),
 }));
 vi.mock('../settings/store', () => ({
-  settingsStore: { get: vi.fn(() => ({ defaultProfileId: 'p1' })) },
+  settingsStore: {
+    get: vi.fn(() => ({ defaultProfileId: 'p1' })),
+    set: vi.fn(),
+  },
 }));
 vi.mock('../settings/profile-key', () => ({
   getProfileDecryptedKey: vi.fn(() => 'sk-test'),
@@ -31,6 +34,7 @@ import { buildChatModel } from './model-factory';
 import { fileHandlers } from '../ipc/file';
 import { settingsStore } from '../settings/store';
 import { getProfileDecryptedKey } from '../settings/profile-key';
+import { __setGlobalDbForTest, __resetGlobalDbForTest } from '../services/global-db';
 import { reviewClip } from './reviewer';
 
 const TMP = path.join(os.tmpdir(), 'phase19-reviewer-' + Date.now());
@@ -87,12 +91,17 @@ beforeEach(() => {
   vi.resetAllMocks();
   db = new Database(':memory:');
   runMigrations(db, migrationsDir());
+  __setGlobalDbForTest(db);
   (dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue(db);
   (getCurrent as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ path: TMP });
   (settingsStore.get as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ defaultProfileId: 'p1' });
   (getProfileDecryptedKey as unknown as ReturnType<typeof vi.fn>).mockReturnValue('sk-test');
   (fileHandlers.writeParsed as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
   seedProfile(db);
+});
+
+afterEach(() => {
+  __resetGlobalDbForTest();
 });
 
 describe('reviewer.reviewClip — fixtures', () => {
@@ -196,6 +205,7 @@ the body
     ];
     expect(rel).toBe('inbox/example.md');
     expect(fm.title).toBe('Example');
+    expect(fm.summary).toBe('s');
     expect(fm.tags).toEqual(['existing']);
     expect(fm.ai_summary).toBe('s');
     expect(fm.ai_suggested_title).toBe('st');
@@ -204,6 +214,18 @@ the body
     expect(typeof fm.ai_reviewed_at).toBe('string');
     expect(body).toBe('the body\n');
     expect(opts).toMatchObject({ expectedMtime: expect.any(Number) });
+  });
+
+  it('falls back to the first profile when the saved defaultProfileId is stale', async () => {
+    const { clipPath } = setupDbWithClip(db);
+    fs.mkdirSync(path.join(TMP, 'inbox'), { recursive: true });
+    fs.writeFileSync(path.join(TMP, clipPath), '---\n---\nbody\n');
+    (settingsStore.get as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ defaultProfileId: 'missing-profile' });
+    (buildChatModel as unknown as ReturnType<typeof vi.fn>).mockReturnValue(fakeModel({ parsed: validReview }));
+
+    await expect(reviewClip(1)).resolves.toMatchObject({ cacheHit: false });
+    expect(settingsStore.set).toHaveBeenCalledWith('ai', { defaultProfileId: 'p1' });
+    expect(buildChatModel).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }));
   });
 
   it('rethrows E_MTIME_CONFLICT when writeParsed fails with E_MTIME_MISMATCH', async () => {

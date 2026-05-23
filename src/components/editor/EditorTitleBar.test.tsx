@@ -10,7 +10,8 @@ import type { EditorReadyState } from '@/stores/editor'
 vi.mock('@/ipc/client', () => ({
   ipc: {
     file: { readParsed: vi.fn(), writeParsed: vi.fn(), write: vi.fn() },
-    files: { get: vi.fn() }
+    files: { get: vi.fn() },
+    ai: { reviewClip: vi.fn().mockResolvedValue({ jobId: 'job-1' }) }
   }
 }))
 
@@ -35,6 +36,7 @@ vi.mock('react-router-dom', async () => {
 })
 
 import { EditorTitleBar } from './EditorTitleBar'
+import { ipc } from '@/ipc/client'
 
 function readyState(over: Partial<EditorReadyState> = {}): EditorReadyState {
   return {
@@ -91,5 +93,21 @@ describe('EditorTitleBar', () => {
     await userEvent.click(screen.getByRole('button', { name: /返回果仓/ }))
     expect(flushSpy).toHaveBeenCalled()
     expect(navigateSpy).toHaveBeenCalledWith(-1)
+  })
+
+  it('reruns AI review with the real clip id from editor state', async () => {
+    useEditorStore.setState({
+      state: readyState({
+        clipId: 42,
+        frontmatter: {
+          ai_reviewed_at: '2026-05-04T00:00:00Z',
+          ai_summary: 'summary'
+        }
+      })
+    })
+    render(<MemoryRouter><EditorTitleBar /></MemoryRouter>)
+    await userEvent.click(screen.getByRole('button', { name: /editor.ai.badge.label/i }))
+    await userEvent.click(screen.getByRole('button', { name: /editor.ai.rerun/i }))
+    expect(ipc.ai.reviewClip).toHaveBeenCalledWith(42, { force: true })
   })
 })

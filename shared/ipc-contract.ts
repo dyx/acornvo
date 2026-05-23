@@ -229,6 +229,7 @@ export interface FileReadParsedResult extends FileReadResult {
   frontmatter: Frontmatter
   body: string
   rawYaml: string
+  clipId?: number | null
 }
 
 export interface FileWriteOptions {

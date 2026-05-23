@@ -40,7 +40,7 @@ describe('aiReviewClipHandler', () => {
     ['E_AUTH', 'fail'],
     ['E_CLIP_NOT_FOUND', 'fail'],
     ['E_FILE_NOT_FOUND', 'fail'],
-  ])('maps %s → fail', async (code, expectedKind) => {
+  ])('maps %s → fail', async (code) => {
     const e: any = new Error('x'); e.code = code;
     (reviewClip as any).mockRejectedValue(e);
     const r = await aiReviewClipHandler(baseCtx());

@@ -15,13 +15,7 @@ export function EditorTitleBar(): JSX.Element {
   const { t } = useTranslation()
   const ready = useEditorStore((s) => (s.state.kind === 'ready' ? s.state : null))
 
-  const clipId = useEditorStore((s) => {
-    // clipId is stored per-editor-page; for now derive it from ai_reviewed_at presence
-    // Phase 15 uses null for non-clip files
-    if (s.state.kind !== 'ready') return null
-    const fm = s.state.frontmatter as Record<string, unknown>
-    return fm.ai_reviewed_at || fm.clipped_at ? 0 : null
-  })
+  const clipId = useEditorStore((s) => (s.state.kind === 'ready' ? (s.state.clipId ?? null) : null))
   const { drawer, openDrawer } = useAiDrawer(clipId)
 
   if (!ready) return <div className="h-10 border-b border-[color:var(--color-line-1)]" />

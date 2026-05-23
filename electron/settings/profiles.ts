@@ -87,7 +87,10 @@ function create(input: ProfileCreateInput): { id: string } {
 
   // If this is the first profile (or no default is set), make it the default
   const ai = settingsStore.get('ai')
-  if (!ai.defaultProfileId) {
+  const defaultExists = ai.defaultProfileId
+    ? db.prepare('SELECT 1 FROM ai_provider_profiles WHERE id = ?').get(ai.defaultProfileId)
+    : null
+  if (!ai.defaultProfileId || !defaultExists) {
     settingsStore.set('ai', { defaultProfileId: id })
   }
 

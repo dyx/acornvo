@@ -34,6 +34,15 @@ interface ClipRow {
   excerpt: string | null;
 }
 
+interface ProfileRow {
+  id: string;
+  provider: string;
+  model: string;
+  base_url: string | null;
+  temperature: number;
+  max_tokens: number | null;
+}
+
 type ReviewerErrCode =
   | 'E_CLIP_NOT_FOUND'
   | 'E_FILE_NOT_FOUND'
@@ -95,18 +104,17 @@ function resolveProfile(profileId?: string): ResolvedProfile {
   }
   if (!id) throw rerr('E_MISSING_PROFILE', 'no profileId; settings.ai.defaultProfileId is null');
 
-  const p = db
+  let p = db
     .prepare('SELECT * FROM ai_provider_profiles WHERE id = ?')
-    .get(id) as
-    | {
-        id: string;
-        provider: string;
-        model: string;
-        base_url: string | null;
-        temperature: number;
-        max_tokens: number | null;
-      }
-    | undefined;
+    .get(id) as ProfileRow | undefined;
+  if (!p && !profileId) {
+    p = db
+      .prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1')
+      .get() as ProfileRow | undefined;
+    if (p) {
+      settingsStore.set('ai', { defaultProfileId: p.id });
+    }
+  }
   if (!p) throw rerr('E_MISSING_PROFILE', `profile not found: ${id}`);
   if (!p.model) throw rerr('E_CONFIG', `profile ${id} has empty model`);
   if (p.provider === 'openai-compatible' && !p.base_url) {
@@ -182,6 +190,10 @@ export async function reviewClip(clipId: number, opts: ReviewClipOpts = {}): Pro
 
   const nextFrontmatter = {
     ...md.frontmatter,
+    summary:
+      typeof md.frontmatter.summary === 'string' && md.frontmatter.summary.trim().length > 0
+        ? md.frontmatter.summary
+        : result.summary,
     ai_summary: result.summary,
     ai_suggested_title: result.suggestedTitle,
     ai_tags: result.tags,
