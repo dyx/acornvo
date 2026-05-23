@@ -1,6 +1,6 @@
 // src/components/settings/AppearanceTab.tsx
 import type { JSX } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import type { Theme } from '@shared/settings-types'
