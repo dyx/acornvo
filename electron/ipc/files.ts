@@ -87,8 +87,9 @@ async function list(
     WHERE
       (:category IS NULL OR f.category = :category OR f.category LIKE :category || '/%')
       AND (:pathPrefix IS NULL OR f.path LIKE :pathPrefix || '%')
-      AND (:minRating IS NULL OR f.rating >= :minRating)
-      AND (:maxRating IS NULL OR f.rating <= :maxRating)
+      AND (:isUnreviewed = 0 OR f.rating IS NULL)
+      AND (:isUnreviewed = 1 OR :minRating IS NULL OR f.rating >= :minRating)
+      AND (:isUnreviewed = 1 OR :maxRating IS NULL OR f.rating <= :maxRating)
       AND (:q IS NULL OR f.title LIKE '%' || :q || '%' ESCAPE '\\' OR f.path LIKE '%' || :q || '%' ESCAPE '\\')
       AND (:tag IS NULL OR f.path IN (SELECT path FROM file_tags WHERE tag = :tag))
     GROUP BY f.path
@@ -99,11 +100,13 @@ async function list(
   `
 
   const q = filter.q ? filter.q.replace(/%/g, '\\%').replace(/_/g, '\\_') : null
+  const isUnreviewed = filter.rating?.min === 0 && filter.rating?.max === 0
 
   const params = {
     category: filter.category ?? null,
     tag: filter.tag ?? null,
     pathPrefix: filter.pathPrefix ?? null,
+    isUnreviewed: isUnreviewed ? 1 : 0,
     minRating: filter.rating?.min ?? null,
     maxRating: filter.rating?.max ?? null,
     q,
