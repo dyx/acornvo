@@ -8,6 +8,7 @@ import type {
   CategoryNode,
   TagCloudItem
 } from '@shared/ipc-contract'
+import type { ReviewStatus } from '@shared/file-types'
 import { fileHandlers } from './file'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import { shell } from 'electron'
@@ -33,7 +34,22 @@ interface ListRow {
   site: string | null
   has_summary: number
   tags_concat: string | null
+  job_status: string | null
+  job_error: string | null
   total: number
+}
+
+function deriveReviewStatus(
+  rating: number | null,
+  hasSummary: boolean,
+  jobStatus: string | null
+): ReviewStatus {
+  if (rating !== null) return 'done'
+  if (hasSummary) return 'done'
+  if (jobStatus === 'running') return 'running'
+  if (jobStatus === 'pending') return 'pending'
+  if (jobStatus === 'failed') return 'failed'
+  return 'none'
 }
 
 async function list(
@@ -51,9 +67,23 @@ async function list(
       json_extract(f.frontmatter_json, '$.site') AS site,
       CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
       GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1) ORDER BY ft.tag) AS tags_concat,
+      rj.status AS job_status,
+      rj.last_error AS job_error,
       COUNT(*) OVER() AS total
     FROM files f
     LEFT JOIN file_tags ft ON ft.path = f.path
+    LEFT JOIN clips c ON c.path = f.path
+    LEFT JOIN (
+      SELECT
+        json_extract(payload_json, '$.clipId') AS clip_id,
+        status, last_error,
+        ROW_NUMBER() OVER (
+          PARTITION BY json_extract(payload_json, '$.clipId')
+          ORDER BY updated_at DESC
+        ) AS rn
+      FROM jobs
+      WHERE kind = 'ai-review-clip'
+    ) rj ON rj.clip_id = CAST(c.id AS TEXT) AND rj.rn = 1
     WHERE
       (:category IS NULL OR f.category = :category OR f.category LIKE :category || '/%')
       AND (:pathPrefix IS NULL OR f.path LIKE :pathPrefix || '%')
@@ -92,17 +122,23 @@ async function list(
   if (rows.length === 0) return { items: [], total: 0 }
 
   const total = rows[0].total
-  const items: FileSummary[] = rows.map((r) => ({
-    path: r.path,
-    title: r.title,
-    category: r.category,
-    rating: r.rating,
-    clipped_at: r.clipped_at,
-    site: r.site,
-    has_summary: r.has_summary === 1,
-    tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
-    is_reviewing: false
-  }))
+  const items: FileSummary[] = rows.map((r) => {
+    const hasSummary = r.has_summary === 1
+    const reviewStatus = deriveReviewStatus(r.rating, hasSummary, r.job_status)
+    return {
+      path: r.path,
+      title: r.title,
+      category: r.category,
+      rating: r.rating,
+      clipped_at: r.clipped_at,
+      site: r.site,
+      has_summary: hasSummary,
+      tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
+      is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
+      review_status: reviewStatus,
+      review_error: reviewStatus === 'failed' ? (r.job_error ?? null) : null
+    }
+  })
   return { items, total }
 }
 
@@ -119,9 +155,23 @@ async function get(path: string): Promise<{
         `SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
                 json_extract(f.frontmatter_json, '$.site') AS site,
                 CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-                GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat
+                GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat,
+                rj.status AS job_status,
+                rj.last_error AS job_error
          FROM files f
          LEFT JOIN file_tags ft ON ft.path = f.path
+         LEFT JOIN clips c ON c.path = f.path
+         LEFT JOIN (
+           SELECT
+             json_extract(payload_json, '$.clipId') AS clip_id,
+             status, last_error,
+             ROW_NUMBER() OVER (
+               PARTITION BY json_extract(payload_json, '$.clipId')
+               ORDER BY updated_at DESC
+             ) AS rn
+           FROM jobs
+           WHERE kind = 'ai-review-clip'
+         ) rj ON rj.clip_id = CAST(c.id AS TEXT) AND rj.rn = 1
          WHERE f.path = ?
          GROUP BY f.path`
       )
@@ -137,6 +187,8 @@ async function get(path: string): Promise<{
   }
 
   const parsed = await fileHandlers.readParsed(path)
+  const hasSummary = row.has_summary === 1
+  const reviewStatus = deriveReviewStatus(row.rating, hasSummary, row.job_status)
 
   const summary: FileSummary = {
     path: row.path,
@@ -145,9 +197,11 @@ async function get(path: string): Promise<{
     rating: row.rating,
     clipped_at: row.clipped_at,
     site: row.site,
-    has_summary: row.has_summary === 1,
+    has_summary: hasSummary,
     tags: row.tags_concat ? row.tags_concat.split(TAG_SEP).filter(Boolean) : [],
-    is_reviewing: false
+    is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
+    review_status: reviewStatus,
+    review_error: reviewStatus === 'failed' ? (row.job_error ?? null) : null
   }
   return { summary, frontmatter: parsed.frontmatter, body: parsed.body }
 }

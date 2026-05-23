@@ -53,8 +53,17 @@ export function FileRow({ file, active, onClick, onDoubleClick, onContextMenu }:
               )} />
             ))}
           </span>
+        ) : file.review_status === 'running' ? (
+          <span className="flex items-center gap-1 text-[color:var(--color-acorn-2)]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-acorn)]" />
+            {t('library.reviewing')}
+          </span>
+        ) : file.review_status === 'pending' ? (
+          <span className="text-[color:var(--color-ink-4)]">· {t('library.review_pending')}</span>
+        ) : file.review_status === 'failed' ? (
+          <span className="text-[color:var(--color-berry)]">· {t('library.review_failed')}</span>
         ) : (
-          <span className="text-[color:var(--color-acorn-2)]">· {t('library.reviewing')}</span>
+          <span className="text-[color:var(--color-ink-4)]">· {t('library.unreviewed')}</span>
         )}
         <span>·</span>
         <span>{formatClipped(file.clipped_at)}</span>

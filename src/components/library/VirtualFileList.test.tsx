@@ -31,7 +31,8 @@ import type { FileSummary } from '@shared/ipc-contract'
 function row(path: string, extra: Partial<FileSummary> = {}): FileSummary {
   return {
     path, title: path, category: null, rating: null, clipped_at: null,
-    site: null, has_summary: false, tags: [], is_reviewing: false, ...extra
+    site: null, has_summary: false, tags: [], is_reviewing: false,
+    review_status: 'none', review_error: null, ...extra
   }
 }
 

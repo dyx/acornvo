@@ -4,17 +4,29 @@ import { useTranslation } from 'react-i18next'
 import { Sparkles, Star, ChevronDown, ChevronRight } from 'lucide-react'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
+import { useSettingsStore } from '@/stores/settings'
 import { VditorEditor } from '@/components/editor/VditorEditor'
 import { EditorErrorState } from '@/components/editor/EditorErrorState'
 import { ExternalModifiedBanner } from '@/components/editor/ExternalModifiedBanner'
 import { ConflictDialog } from '@/components/editor/ConflictDialog'
 import { cn } from '@/lib/utils'
+import { ipc } from '@/ipc/client'
 
 function EditorPropertiesPanel(): JSX.Element {
   const fm = useEditorStore((s) => s.state.kind === 'ready' ? s.state.frontmatter : null)
   const detail = useLibraryStore((s) => s.selectedPath ? (s.detailsByPath.get(s.selectedPath) ?? null) : null)
+  const defaultProfileId = useSettingsStore((s) => s.ai.defaultProfileId)
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
+  const [profileName, setProfileName] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!defaultProfileId) { setProfileName(null); return }
+    void ipc.settings.aiProfilesList().then((profiles) => {
+      const p = profiles.find((pr) => pr.id === defaultProfileId)
+      setProfileName(p?.name ?? null)
+    }).catch(() => setProfileName(null))
+  }, [defaultProfileId])
 
   if (!detail || !fm) return <div />
 
@@ -64,10 +76,19 @@ function EditorPropertiesPanel(): JSX.Element {
                 </ul>
               ) : null}
             </div>
-          ) : summary.rating === null ? (
+          ) : summary.review_status === 'running' || summary.review_status === 'pending' ? (
             <div data-testid="preview-reviewing-loader" className="flex items-center gap-2.5 rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] p-4">
               <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-[color:var(--color-acorn)] border-t-transparent" />
-              <span className="serif text-[13px]">{t('library.reviewing')} · DeepSeek</span>
+              <span className="serif text-[13px]">{t('library.reviewing')} · {profileName ?? 'AI'}</span>
+            </div>
+          ) : summary.review_status === 'failed' ? (
+            <div data-testid="preview-review-failed" className="flex items-center gap-2.5 rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-berry)] bg-[color:var(--color-paper-2)] p-4">
+              <span className="text-[13px]">⚠️</span>
+              <span className="serif text-[13px] text-[color:var(--color-berry)]">{t('library.review_failed')}</span>
+            </div>
+          ) : summary.rating === null ? (
+            <div className="rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] p-4">
+              <span className="serif text-[13px] text-[color:var(--color-ink-4)]">{t('library.unreviewed')}</span>
             </div>
           ) : null}
 

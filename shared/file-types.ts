@@ -7,6 +7,9 @@
  * picker) MUST reuse this type — do not create a parallel shape.
  */
 
+/** Granular review lifecycle status for each file. */
+export type ReviewStatus = 'none' | 'pending' | 'running' | 'failed' | 'done'
+
 export interface FileSummary {
   /** posix-style path relative to grove root (e.g. `inbox/a.md`). */
   path: string
@@ -24,11 +27,21 @@ export interface FileSummary {
   /** Tag names attached to this file. Order is insertion order from `file_tags`. */
   tags: string[]
   /**
-   * Reserved for phase-15 queue JOIN.
-   * Phase-06 hard-codes `false`; phase-15 wires this to
-   * `LEFT JOIN queue ON ... WHERE kind='review' AND status IN ('pending','running')`.
+   * Compat field — `true` when `review_status` is `'pending'` or `'running'`.
+   * Derived from `review_status`; prefer using `review_status` directly.
    */
   is_reviewing: boolean
+  /**
+   * Granular review status derived from the jobs queue:
+   * - `'none'`    — never queued for review (rating is null, no job exists)
+   * - `'pending'` — review job is waiting in the queue
+   * - `'running'` — review job is actively executing
+   * - `'failed'`  — last review job failed
+   * - `'done'`    — review completed (rating is populated)
+   */
+  review_status: ReviewStatus
+  /** Error message from the last failed review job, or null. */
+  review_error: string | null
 }
 
 export interface FileFilter {

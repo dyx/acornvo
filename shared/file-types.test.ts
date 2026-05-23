@@ -18,7 +18,9 @@ describe('file-types', () => {
       site: 'example.com',
       has_summary: true,
       tags: ['x', 'y'],
-      is_reviewing: false
+      is_reviewing: false,
+      review_status: 'done',
+      review_error: null
     }
     expect(s.path).toBe('notes/a.md')
   })
@@ -33,7 +35,9 @@ describe('file-types', () => {
       site: null,
       has_summary: false,
       tags: [],
-      is_reviewing: false
+      is_reviewing: false,
+      review_status: 'none',
+      review_error: null
     }
     expect(s.tags).toEqual([])
   })

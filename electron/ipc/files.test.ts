@@ -43,6 +43,31 @@ function buildSchema(db: Database.Database): void {
       PRIMARY KEY (path, tag),
       FOREIGN KEY (path) REFERENCES files(path) ON DELETE CASCADE
     );
+    CREATE TABLE clips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT UNIQUE NOT NULL,
+      path TEXT NOT NULL,
+      title TEXT,
+      site TEXT,
+      author TEXT,
+      published_at TEXT,
+      clipped_at TEXT NOT NULL,
+      excerpt TEXT,
+      content_length INTEGER,
+      degraded INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE jobs (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      status TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      next_run_at TEXT NOT NULL,
+      last_error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `)
 }
 
@@ -262,7 +287,7 @@ describe('fileQueryHandlers.list', () => {
     expect(r.items.map((i) => i.title)).toEqual(['Apple', 'Banana', 'Carrot'])
   })
 
-  it('returns FileSummary shape with is_reviewing=false and has_summary correct', async () => {
+  it('returns FileSummary shape with review_status and has_summary correct', async () => {
     insertFile(db, {
       path: 'a.md', title: 'A', rating: 4, summary: 's', site: 'example.com', tags: ['x', 'y']
     })
@@ -277,8 +302,50 @@ describe('fileQueryHandlers.list', () => {
     expect(b.has_summary).toBe(false)
     expect(a.site).toBe('example.com')
     expect(new Set(a.tags)).toEqual(new Set(['x', 'y']))
+    // a has rating → done
+    expect(a.review_status).toBe('done')
     expect(a.is_reviewing).toBe(false)
+    // b has no rating, no job → none
+    expect(b.review_status).toBe('none')
     expect(b.is_reviewing).toBe(false)
+  })
+
+  it('review_status reflects pending/running/failed jobs from queue', async () => {
+    insertFile(db, { path: 'p.md', title: 'Pending' })
+    insertFile(db, { path: 'r.md', title: 'Running' })
+    insertFile(db, { path: 'f.md', title: 'Failed' })
+    // Create clip rows so JOIN works
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
+      .run('http://p.example', 'p.md', '2026-01-01', '2026-01-01')
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
+      .run('http://r.example', 'r.md', '2026-01-01', '2026-01-01')
+    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`)
+      .run('http://f.example', 'f.md', '2026-01-01', '2026-01-01')
+    // Get clip IDs
+    const pClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'p.md'`).get() as { id: number }).id
+    const rClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'r.md'`).get() as { id: number }).id
+    const fClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'f.md'`).get() as { id: number }).id
+    // Create job rows
+    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
+      .run('j1', 'ai-review-clip', JSON.stringify({ clipId: pClipId }), 'pending', '2026-01-01', '2026-01-01', '2026-01-01')
+    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
+      .run('j2', 'ai-review-clip', JSON.stringify({ clipId: rClipId }), 'running', '2026-01-01', '2026-01-01', '2026-01-01')
+    db.prepare(`INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`)
+      .run('j3', 'ai-review-clip', JSON.stringify({ clipId: fClipId }), 'failed', '2026-01-01', '2026-01-01', '2026-01-01T00:00:01')
+    // Update j3 to have an error
+    db.prepare(`UPDATE jobs SET last_error = 'E_MISSING_PROFILE' WHERE id = 'j3'`).run()
+
+    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
+    const p = r.items.find((i) => i.path === 'p.md')!
+    const run = r.items.find((i) => i.path === 'r.md')!
+    const f = r.items.find((i) => i.path === 'f.md')!
+    expect(p.review_status).toBe('pending')
+    expect(p.is_reviewing).toBe(true)
+    expect(run.review_status).toBe('running')
+    expect(run.is_reviewing).toBe(true)
+    expect(f.review_status).toBe('failed')
+    expect(f.is_reviewing).toBe(false)
+    expect(f.review_error).toBe('E_MISSING_PROFILE')
   })
 
   it('returns empty tags array for file with no tags (NULL tags_concat)', async () => {

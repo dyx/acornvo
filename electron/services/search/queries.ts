@@ -36,7 +36,9 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
     site,
     has_summary: row.summary !== null && row.summary !== '',
     tags,
-    is_reviewing: false
+    is_reviewing: false,
+    review_status: row.rating !== null ? 'done' : 'none',
+    review_error: null
   }
 }
 

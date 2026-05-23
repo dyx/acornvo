@@ -27,6 +27,8 @@ function makeSummary(path: string, extra: Partial<FileSummary> = {}): FileSummar
     has_summary: false,
     tags: [],
     is_reviewing: false,
+    review_status: 'none',
+    review_error: null,
     ...extra
   }
 }
