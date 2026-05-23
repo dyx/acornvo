@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import type { JobHandler } from '../runner'
 import { dbService } from '../../services/db'
+import { getGlobalDb } from '../../services/global-db'
 
 export interface TelemetryAggregateInput {
   db: Database.Database
@@ -12,7 +13,7 @@ export async function handleTelemetryAggregate(input: TelemetryAggregateInput): 
   const dayStart = `${day}T00:00:00Z`
   const dayEnd = `${day}T23:59:59Z`
 
-  const globalDb = require('../../services/global-db').getGlobalDb()
+  const globalDb = getGlobalDb()
 
   const aiAgg = globalDb.prepare(
     `SELECT COUNT(*) AS requests, COALESCE(SUM(prompt_tokens), 0) + COALESCE(SUM(completion_tokens), 0) AS total_tokens

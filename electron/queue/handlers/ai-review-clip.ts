@@ -40,7 +40,10 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     log('info', `ai-review-clip ok clipId=${clipId} cacheHit=${out.cacheHit}`);
     return { kind: 'ok' };
   } catch (e) {
-    const code = (e as any)?.code ?? 'E_UNKNOWN';
+    const err = e as { code?: string; message?: string };
+    const code = err.code ?? 'E_UNKNOWN';
+    const msg = err.message || code;
+
     writeUsage({
       jobId: job.id,
       profileId: profileId ?? null,
@@ -50,11 +53,14 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       error: code,
     });
     end?.({ ok: false, meta: { error: code } })
-    log('warn', `ai-review-clip ${code} clipId=${clipId}`);
+    log('warn', `ai-review-clip ${code} clipId=${clipId} msg=${msg}`);
 
-    if (FAIL_CODES.has(code)) return { kind: 'fail', error: code };
-    if (code === 'E_RATE') return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' };
-    if (code === 'E_MTIME_CONFLICT') return { kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' };
-    return { kind: 'retry', delayMs: nextDelay(job.attempts), reason: code };
+    if (FAIL_CODES.has(code) || code === 'E_UNKNOWN' || code === 'E_AUTH' || code === 'E_CONFIG') {
+      return { kind: 'fail', error: msg };
+    }
+    
+    if (code === 'E_RATE') return { kind: 'retry', delayMs: 60_000, reason: msg };
+    if (code === 'E_MTIME_CONFLICT') return { kind: 'retry', delayMs: 600_000, reason: msg };
+    return { kind: 'retry', delayMs: nextDelay(job.attempts), reason: msg };
   }
 };
