@@ -34,7 +34,7 @@ export function TabBar(): JSX.Element {
     <div
       role="tablist"
       aria-label="Browser tabs"
-      className="flex h-[42px] shrink-0 items-center gap-1.5 border-b border-[color:var(--color-line)] bg-[color:var(--color-bg-2)] px-2 overflow-x-auto"
+      className="flex h-[42px] shrink-0 items-end gap-2 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3 overflow-x-auto"
       data-testid="tabbar"
     >
       {tabs.map((t) => {
@@ -47,10 +47,10 @@ export function TabBar(): JSX.Element {
             aria-label={t.title || 'Untitled'}
             data-testid={`tab-${t.id}`}
             className={[
-              'group relative flex min-w-32 max-w-64 h-7 items-center gap-1.5 rounded-[6px] px-2 text-xs transition-colors border',
+              'group relative flex min-w-32 max-w-64 h-[42px] items-center gap-1.5 border-b-2 px-2 text-[13px] transition-colors -mb-px',
               active
-                ? 'bg-[color:var(--color-paper)] text-[color:var(--color-ink)] border-[color:var(--color-line)] shadow-sm'
-                : 'border-transparent text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-ink)]/5 hover:text-[color:var(--color-ink)]'
+                ? 'border-[color:var(--color-ink)] text-[color:var(--color-ink)] font-medium z-10'
+                : 'border-transparent text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink)] hover:border-[color:var(--color-line)]'
             ].join(' ')}
             onClick={() => void activateTab(t.id)}
             onPointerDown={(e) => {
@@ -67,7 +67,7 @@ export function TabBar(): JSX.Element {
             }}
           >
             <TabFavicon tab={t} />
-            <span className="flex-1 truncate text-left font-medium">
+            <span className="flex-1 truncate text-left">
               {t.title || (t.url === 'about:blank' ? 'New tab' : t.url)}
             </span>
             <span
@@ -91,7 +91,7 @@ export function TabBar(): JSX.Element {
       <button
         type="button"
         aria-label="new tab"
-        className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-[6px] text-base text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-ink)]/5 hover:text-[color:var(--color-ink)] transition-colors"
+        className="ml-1 flex h-[42px] w-8 shrink-0 items-center justify-center text-base text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink)] transition-colors"
         onClick={() => void createTab()}
       >
         <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
