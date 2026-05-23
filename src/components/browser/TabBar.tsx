@@ -38,47 +38,47 @@ export function TabBar(): JSX.Element {
       className="flex h-[42px] shrink-0 items-end gap-2 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3 overflow-x-auto"
       data-testid="tabbar"
     >
-      {tabs.map((t) => {
-        const active = t.id === activeTabId
+      {tabs.map((tab) => {
+        const active = tab.id === activeTabId
         return (
           <button
-            key={t.id}
+            key={tab.id}
             role="tab"
             aria-selected={active}
-            aria-label={t.title || 'Untitled'}
-            data-testid={`tab-${t.id}`}
+            aria-label={tab.title || 'Untitled'}
+            data-testid={`tab-${tab.id}`}
             className={[
               'group relative flex min-w-32 max-w-64 h-[42px] items-center gap-1.5 border-b-[3px] px-2 text-[13px] transition-colors -mb-px',
               active
                 ? 'border-[color:var(--color-acorn)] text-[color:var(--color-ink)] font-medium z-10'
                 : 'border-transparent text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink)] hover:border-[color:var(--color-line)]'
             ].join(' ')}
-            onClick={() => void activateTab(t.id)}
+            onClick={() => void activateTab(tab.id)}
             onPointerDown={(e) => {
-              dragId.current = t.id
+              dragId.current = tab.id
               e.currentTarget.setPointerCapture(e.pointerId)
             }}
             onPointerUp={(_e) => {
-              if (dragId.current && dragId.current !== t.id) {
-                const targetIndex = tabs.findIndex((x) => x.id === t.id)
+              if (dragId.current && dragId.current !== tab.id) {
+                const targetIndex = tabs.findIndex((x) => x.id === tab.id)
                 reorderTab(dragId.current, targetIndex)
                 force((v) => v + 1)
               }
               dragId.current = null
             }}
           >
-            <TabFavicon tab={t} />
+            <TabFavicon tab={tab} />
             <span className="flex-1 truncate text-left">
-              {t.title || (t.url === 'about:blank' ? t('browser.new_tab', 'New tab') : t.url)}
+              {tab.title || (tab.url === 'about:blank' ? t('browser.new_tab', 'New tab') : tab.url)}
             </span>
             <span
               role="button"
-              aria-label={`close tab ${t.title || t.id}`}
+              aria-label={`close tab ${tab.title || tab.id}`}
               tabIndex={0}
               className="flex size-4 items-center justify-center rounded-[4px] text-lg leading-none opacity-0 group-hover:opacity-100 hover:bg-[color:var(--color-ink)]/10"
               onClick={(e) => {
                 e.stopPropagation()
-                void closeTab(t.id)
+                void closeTab(tab.id)
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
