@@ -12,7 +12,9 @@ export async function handleTelemetryAggregate(input: TelemetryAggregateInput): 
   const dayStart = `${day}T00:00:00Z`
   const dayEnd = `${day}T23:59:59Z`
 
-  const aiAgg = db.prepare(
+  const globalDb = require('../../services/global-db').getGlobalDb()
+
+  const aiAgg = globalDb.prepare(
     `SELECT COUNT(*) AS requests, COALESCE(SUM(prompt_tokens), 0) + COALESCE(SUM(completion_tokens), 0) AS total_tokens
      FROM ai_usage WHERE created_at >= ? AND created_at <= ?`
   ).get(dayStart, dayEnd) as { requests: number; total_tokens: number }
@@ -21,16 +23,16 @@ export async function handleTelemetryAggregate(input: TelemetryAggregateInput): 
     `SELECT COUNT(*) AS n FROM clips WHERE created_at >= ? AND created_at <= ?`
   ).get(dayStart, dayEnd) as { n: number } | undefined
 
-  const perfCount = db.prepare(
+  const perfCount = globalDb.prepare(
     `SELECT COUNT(*) AS n FROM perf_samples WHERE ts >= ? AND ts <= ?`
   ).get(dayStart, dayEnd) as { n: number }
 
-  const ups = db.prepare(
+  const ups = globalDb.prepare(
     `INSERT INTO telemetry_local (day, metric, value) VALUES (?, ?, ?)
      ON CONFLICT (day, metric) DO UPDATE SET value = excluded.value`
   )
 
-  db.transaction(() => {
+  globalDb.transaction(() => {
     ups.run(day, 'ai.requests', aiAgg.requests)
     ups.run(day, 'ai.tokens.total', aiAgg.total_tokens)
     ups.run(day, 'clips.created', clipsCount?.n ?? 0)

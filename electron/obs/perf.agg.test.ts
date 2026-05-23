@@ -3,11 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { runMigrations } from '../services/db/migrations'
 import { getAggregates } from './perf'
+import { __setGlobalDbForTest } from '../services/global-db'
 
 describe('getAggregates', () => {
   it('returns P50, P95, successRate, count for a window', () => {
     const db = new Database(':memory:')
     runMigrations(db, join(process.cwd(), 'electron/services/db/migrations'))
+    db.prepare('ALTER TABLE perf_samples ADD COLUMN grove_id TEXT').run()
+    __setGlobalDbForTest(db)
+
     const ins = db.prepare(`INSERT INTO perf_samples (ts, area, ok, ms) VALUES (?, ?, ?, ?)`)
     const now = new Date('2026-05-09T12:00:00.000Z')
     // 10 samples, ms = 10..100 step 10, all ok
@@ -18,7 +22,6 @@ describe('getAggregates', () => {
     ins.run(now.toISOString(), 'search.query', 0, 999)
 
     const agg = getAggregates({
-      db,
       area: 'search.query',
       windowMs: 24 * 3600 * 1000,
       now: () => now
@@ -34,7 +37,10 @@ describe('getAggregates', () => {
   it('returns zeros when no rows in window', () => {
     const db = new Database(':memory:')
     runMigrations(db, join(process.cwd(), 'electron/services/db/migrations'))
-    const agg = getAggregates({ db, area: 'search.query', windowMs: 3600 * 1000 })
+    db.prepare('ALTER TABLE perf_samples ADD COLUMN grove_id TEXT').run()
+    __setGlobalDbForTest(db)
+
+    const agg = getAggregates({ area: 'search.query', windowMs: 3600 * 1000 })
     expect(agg).toEqual({ count: 0, p50: 0, p95: 0, successRate: 0 })
   })
 })

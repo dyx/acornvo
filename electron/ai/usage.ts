@@ -1,5 +1,5 @@
-import type { AiUsageRow } from '@shared/ai-types';
-import { dbService } from '../services/db';
+import { getGlobalDb } from '../services/global-db';
+import { getCurrent } from '../services/grove';
 
 export interface AiUsageSummary {
   totalCalls: number;
@@ -7,6 +7,7 @@ export interface AiUsageSummary {
   errorRate: number;
   totalTokens: number;
   byProvider: Record<string, { calls: number; tokens: number }>;
+  byGrove: Record<string, { calls: number; tokens: number }>;
 }
 
 export interface AiUsageListOpts {
@@ -33,52 +34,61 @@ function rowFromDb(r: any): AiUsageRow {
     ok: r.ok,
     error: r.error,
     sessionId: r.session_id ?? undefined,
+    groveId: r.grove_id ?? undefined,
     createdAt: r.created_at,
   };
 }
 
 export const aiUsage = {
   insert(row: Omit<AiUsageRow, 'id' | 'createdAt'> & { createdAt?: string }): void {
-    const db = dbService.requireCurrent();
+    const db = getGlobalDb();
+    const groveId = getCurrent()?.id ?? null;
     db.prepare(`
-      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       row.jobId, row.profileId, row.model,
       row.promptTokens, row.completionTokens, row.latencyMs,
       row.ok, row.error,
       row.sessionId ?? null,
       row.createdAt ?? new Date().toISOString(),
+      groveId
     );
   },
 
   summary(opts: { sinceDays?: number } = {}): AiUsageSummary {
     const sinceDays = opts.sinceDays ?? 30;
-    const db = dbService.requireCurrent();
+    const db = getGlobalDb();
     const since = new Date(Date.now() - sinceDays * 86400_000).toISOString();
     const rows = db.prepare(`
-      SELECT profile_id, ok, prompt_tokens, completion_tokens
+      SELECT profile_id, grove_id, ok, prompt_tokens, completion_tokens
       FROM ai_usage WHERE created_at >= ?
     `).all(since) as any[];
     const totalCalls = rows.length;
     const okCount = rows.filter(r => r.ok === 1).length;
     const totalTokens = rows.reduce((s, r) => s + (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0), 0);
     const byProvider: Record<string, { calls: number; tokens: number }> = {};
+    const byGrove: Record<string, { calls: number; tokens: number }> = {};
     for (const r of rows) {
-      const key = r.profile_id ?? 'unknown';
-      byProvider[key] ??= { calls: 0, tokens: 0 };
-      byProvider[key].calls += 1;
-      byProvider[key].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0);
+      const pKey = r.profile_id ?? 'unknown';
+      byProvider[pKey] ??= { calls: 0, tokens: 0 };
+      byProvider[pKey].calls += 1;
+      byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0);
+
+      const gKey = r.grove_id ?? 'unknown';
+      byGrove[gKey] ??= { calls: 0, tokens: 0 };
+      byGrove[gKey].calls += 1;
+      byGrove[gKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0);
     }
     return {
       totalCalls, okCount,
       errorRate: totalCalls === 0 ? 0 : (totalCalls - okCount) / totalCalls,
-      totalTokens, byProvider,
+      totalTokens, byProvider, byGrove
     };
   },
 
   list(opts: AiUsageListOpts): AiUsageListResult {
-    const db = dbService.requireCurrent();
+    const db = getGlobalDb();
     const where: string[] = [];
     const params: unknown[] = [];
     if (opts.profileId) { where.push('profile_id = ?'); params.push(opts.profileId); }

@@ -58,6 +58,7 @@ export interface AiUsageRow {
   ok: 0 | 1;
   error: string | null;
   sessionId?: string | null;
+  groveId?: string | null;
   createdAt: string;
 }
 

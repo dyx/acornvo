@@ -7,7 +7,7 @@ import type {
   ProfileUpdateInput
 } from '@shared/settings-types'
 import { invalidateByProfile } from '../ai/model-factory'
-import { dbService } from '../services/db'
+import { getGlobalDb } from '../services/global-db'
 import { secretsStore } from './secrets'
 import { settingsStore } from './store'
 
@@ -42,13 +42,13 @@ function rowToProfile(row: ProfileRow): AiProviderProfile {
 }
 
 function list(): AiProviderProfile[] {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const rows = db.prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC').all() as ProfileRow[]
   return rows.map(rowToProfile)
 }
 
 function create(input: ProfileCreateInput): { id: string } {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const exists = db.prepare('SELECT 1 FROM ai_provider_profiles WHERE name = ?').get(input.name)
   if (exists) throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: name "${input.name}" is already in use`)
 
@@ -88,7 +88,7 @@ function create(input: ProfileCreateInput): { id: string } {
 }
 
 function update(id: string, patch: ProfileUpdateInput): void {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const row = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as ProfileRow | undefined
   if (!row) throw new IpcError('E_PROFILE_NOT_FOUND', `E_PROFILE_NOT_FOUND: profile ${id} not found`)
 
@@ -142,7 +142,7 @@ function update(id: string, patch: ProfileUpdateInput): void {
 }
 
 function deleteProfile(id: string): void {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const row = db.prepare('SELECT api_key_ref FROM ai_provider_profiles WHERE id = ?').get(id) as
     | { api_key_ref: string | null }
     | undefined

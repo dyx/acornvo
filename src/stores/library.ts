@@ -43,7 +43,7 @@ export interface LibraryState {
   loadMore: () => Promise<void>
   loadCategoryTree: () => Promise<void>
   loadTagCloud: () => Promise<void>
-  select: (path: string | null) => Promise<void>
+  select: (path: string | null, force?: boolean) => Promise<void>
   removeItem: (path: string) => void
   refresh: () => Promise<void>
 }
@@ -129,18 +129,18 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ tagCloud: cloud })
   },
 
-  async select(path) {
+  async select(path, force = false) {
     if (path === null) {
       set({ selectedPath: null })
       return
     }
     const cache = get().detailsByPath
-    if (cache.has(path)) {
+    if (cache.has(path) && !force) {
       set({ selectedPath: path })
       return
     }
     const detail = await ipc.files.get(path)
-    const next = new Map(cache)
+    const next = new Map(get().detailsByPath) // Use latest state
     next.set(path, detail)
     set({ selectedPath: path, detailsByPath: next })
   },
@@ -157,10 +157,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   async refresh() {
+    const state = get()
     await Promise.all([
-      get().load(),
-      get().loadCategoryTree(),
-      get().loadTagCloud()
+      state.load(),
+      state.loadCategoryTree(),
+      state.loadTagCloud(),
+      ...(state.selectedPath ? [state.select(state.selectedPath, true)] : [])
     ])
   }
 }))
@@ -173,7 +175,10 @@ export function installLibrarySubscriber(): () => void {
   if (subscriberInstalled) return () => {}
   subscriberInstalled = true
 
-  const offChanged = ipc.on('index:fileChanged', () => {
+  const offChanged = ipc.on('index:fileChanged', (payload) => {
+    // payload might contain path, but if not we can just refresh
+    // Wait, index:fileChanged has no payload in type?
+    // Let's check type, but safely just refresh
     void useLibraryStore.getState().refresh()
   })
   const offDeleted = ipc.on('index:fileDeleted', (payload) => {
@@ -221,12 +226,19 @@ export function installLibrarySubscriber(): () => void {
     void useLibraryStore.getState().refresh()
   })
 
+  const offJobs = ipc.on('jobs:changed', (job) => {
+    if (job.kind === 'ai-review-clip') {
+      void useLibraryStore.getState().refresh()
+    }
+  })
+
   return () => {
     subscriberInstalled = false
     offChanged()
     offDeleted()
     offRenamed()
     offProject()
+    offJobs()
   }
 }
 

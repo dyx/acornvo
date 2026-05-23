@@ -76,10 +76,14 @@ function EditorPropertiesPanel(): JSX.Element {
                 </ul>
               ) : null}
             </div>
-          ) : summary.review_status === 'running' || summary.review_status === 'pending' ? (
+          ) : summary.review_status === 'running' ? (
             <div data-testid="preview-reviewing-loader" className="flex items-center gap-2.5 rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] p-4">
               <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-[color:var(--color-acorn)] border-t-transparent" />
               <span className="serif text-[13px]">{t('library.reviewing')} · {profileName ?? 'AI'}</span>
+            </div>
+          ) : summary.review_status === 'pending' ? (
+            <div data-testid="preview-pending-loader" className="flex items-center gap-2.5 rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] p-4">
+              <span className="serif text-[13px] text-[color:var(--color-ink-4)]">{t('library.review_pending')}</span>
             </div>
           ) : summary.review_status === 'failed' ? (
             <div data-testid="preview-review-failed" className="flex items-center gap-2.5 rounded-[10px] border-[0.5px] border-dashed border-[color:var(--color-berry)] bg-[color:var(--color-paper-2)] p-4">

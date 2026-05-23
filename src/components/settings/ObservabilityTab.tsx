@@ -72,6 +72,7 @@ export function ObservabilityTab(): JSX.Element {
 interface AiPanelData {
   totals: { requests: number; tokens: number; costUSD: number }
   byProfile: { profileId: string; requests: number; tokens: number }[]
+  byGrove: { groveId: string; requests: number; tokens: number }[]
   byTool: { tool: string; count: number }[]
   byDay: { day: string; tokens: number }[]
 }
@@ -94,6 +95,12 @@ function ObservabilityAiPanel(): JSX.Element {
       // Map byProvider to byProfile array
       const byProfile = Object.entries(summary.byProvider).map(([profileId, v]) => ({
         profileId: profileId === 'unknown' ? t('obs.ai.unknownProfile') : profileId,
+        requests: v.calls,
+        tokens: v.tokens
+      }))
+
+      const byGrove = Object.entries((summary as any).byGrove ?? {}).map(([groveId, v]: [string, any]) => ({
+        groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : groveId,
         requests: v.calls,
         tokens: v.tokens
       }))
@@ -125,6 +132,7 @@ function ObservabilityAiPanel(): JSX.Element {
       setData({
         totals: { requests: summary.totalCalls, tokens: summary.totalTokens, costUSD },
         byProfile,
+        byGrove,
         byTool,
         byDay
       })
@@ -155,7 +163,16 @@ function ObservabilityAiPanel(): JSX.Element {
         <NumberCard testId="obs-ai-cost" label={t('obs.ai.estimatedCost')} value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`} />
       </div>
 
-      <ProfileBars data={data?.byProfile ?? []} />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="text-xs font-semibold mb-2">By Profile</h4>
+          <ProfileBars data={data?.byProfile ?? []} />
+        </div>
+        <div>
+          <h4 className="text-xs font-semibold mb-2">By Project (Grove ID)</h4>
+          <GroveBars data={data?.byGrove ?? []} />
+        </div>
+      </div>
       <ToolList data={data?.byTool ?? []} />
       <DayLine data={data?.byDay ?? []} />
     </div>
@@ -171,20 +188,39 @@ function NumberCard({ testId, label, value }: { testId: string; label: string; v
   )
 }
 
-function ProfileBars({ data }: { data: { profileId: string; requests: number; tokens: number }[] }): JSX.Element {
-  const max = Math.max(1, ...data.map((d) => d.tokens))
+function ProfileBars({ data }: { data: { profileId: string; requests: number; tokens: number }[] }) {
+  if (data.length === 0) return <div className="text-sm text-dim">No data</div>
+  const maxReq = Math.max(...data.map((d) => d.requests))
   return (
-    <ul data-testid="obs-ai-profile-bars" className="space-y-1">
+    <div className="space-y-2">
       {data.map((d) => (
-        <li key={d.profileId} className="flex items-center gap-2 text-sm">
-          <span className="w-32 truncate">{d.profileId}</span>
-          <div className="h-2 flex-1 rounded bg-muted">
-            <div className="h-2 rounded bg-primary" style={{ width: `${(d.tokens / max) * 100}%` }} />
+        <div key={d.profileId} className="flex items-center gap-2 text-sm">
+          <div className="w-24 truncate" title={d.profileId}>{d.profileId}</div>
+          <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
+            <div className="h-full bg-blue-500" style={{ width: `${(d.requests / maxReq) * 100}%` }} />
           </div>
-          <span className="w-16 text-right tabular-nums">{d.tokens}</span>
-        </li>
+          <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
+        </div>
       ))}
-    </ul>
+    </div>
+  )
+}
+
+function GroveBars({ data }: { data: { groveId: string; requests: number; tokens: number }[] }) {
+  if (data.length === 0) return <div className="text-sm text-dim">No data</div>
+  const maxReq = Math.max(...data.map((d) => d.requests))
+  return (
+    <div className="space-y-2">
+      {data.map((d) => (
+        <div key={d.groveId} className="flex items-center gap-2 text-sm">
+          <div className="w-24 truncate" title={d.groveId}>{d.groveId}</div>
+          <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
+            <div className="h-full bg-green-500" style={{ width: `${(d.requests / maxReq) * 100}%` }} />
+          </div>
+          <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 

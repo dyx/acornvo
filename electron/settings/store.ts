@@ -6,8 +6,8 @@ import type {
   SettingsByNs,
   SettingsChangedPayload
 } from '@shared/settings-types'
-import { dbService } from '../services/db'
-import { DEFAULTS, getDefault, isKnownNamespace } from './defaults'
+import { getGlobalDb } from '../services/global-db'
+import { getDefault, isKnownNamespace } from './defaults'
 
 interface SettingChangeEvent {
   ns: SettingsNamespace
@@ -19,7 +19,7 @@ interface SettingChangeEvent {
 const emitter = new EventEmitter()
 
 function readNamespaceRaw(ns: SettingsNamespace): Record<string, unknown> {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const rows = db.prepare('SELECT key, value_json FROM settings WHERE ns = ?').all(ns) as
     { key: string; value_json: string }[]
   const out: Record<string, unknown> = {}
@@ -41,7 +41,7 @@ function set<NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[N
   if (!isKnownNamespace(ns)) {
     throw new IpcError('E_UNKNOWN_NAMESPACE', `E_UNKNOWN_NAMESPACE: unknown settings namespace: ${ns}`)
   }
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const before = get(ns)
   const updatedAt = new Date().toISOString()
   const upsert = db.prepare(`
@@ -52,7 +52,7 @@ function set<NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[N
   const events: SettingChangeEvent[] = []
   const tx = db.transaction((entries: [string, unknown][]) => {
     for (const [key, value] of entries) {
-      const oldValue = (before as Record<string, unknown>)[key]
+      const oldValue = (before as unknown as Record<string, unknown>)[key]
       // Idempotent: skip if shallow-equal via JSON encoding
       if (JSON.stringify(oldValue) === JSON.stringify(value)) continue
       upsert.run(ns, key, JSON.stringify(value), updatedAt)

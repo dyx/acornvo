@@ -1,20 +1,11 @@
 // electron/settings/store.test.ts
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { resolve } from 'node:path'
 import { runMigrations } from '../services/db/migrations'
-
-// Mock dbService.requireCurrent() to return our in-memory DB
-vi.mock('../services/db', () => ({
-  dbService: {
-    requireCurrent: vi.fn()
-  }
-}))
-
-import { dbService } from '../services/db'
 import { settingsStore } from './store'
+import { __setGlobalDbForTest } from '../services/global-db'
 
-const requireCurrentMock = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
 const REAL_MIGRATIONS = resolve(__dirname, '../services/db/migrations')
 
 describe('settingsStore', () => {
@@ -22,7 +13,7 @@ describe('settingsStore', () => {
   beforeEach(() => {
     db = new Database(':memory:')
     runMigrations(db, REAL_MIGRATIONS)
-    requireCurrentMock.mockReturnValue(db)
+    __setGlobalDbForTest(db)
     settingsStore.__resetSubscribers()
   })
   afterEach(() => {
@@ -72,8 +63,8 @@ describe('settingsStore', () => {
   })
 
   it('get with unknown ns throws E_UNKNOWN_NAMESPACE; DB untouched', () => {
-    expect(() => settingsStore.get('foo' as never)).toThrow(/E_UNKNOWN_NAMESPACE/)
-    expect(() => settingsStore.set('foo' as never, {})).toThrow(/E_UNKNOWN_NAMESPACE/)
+    expect(() => settingsStore.get('foo' as any)).toThrow(/E_UNKNOWN_NAMESPACE/)
+    expect(() => settingsStore.set('foo' as any, {} as any)).toThrow(/E_UNKNOWN_NAMESPACE/)
   })
 
   it('onChange returns an unsubscribe handle', () => {

@@ -1,4 +1,7 @@
-import type Database from 'better-sqlite3'
+
+
+import { getGlobalDb } from '../services/global-db'
+import { getCurrent } from '../services/grove'
 
 export interface PerfStartMeta {
   [k: string]: unknown
@@ -10,7 +13,6 @@ export interface PerfEndArgs {
 }
 
 export interface PerfDeps {
-  db: Database.Database
   now?: () => number
 }
 
@@ -18,22 +20,28 @@ export interface Perf {
   start: (area: string, meta?: PerfStartMeta) => (args: PerfEndArgs) => void
 }
 
-export function createPerf(deps: PerfDeps): Perf {
-  const now = deps.now ?? (() => Date.now())
-  const ins = deps.db.prepare(
-    `INSERT INTO perf_samples (ts, area, ok, ms, meta) VALUES (?, ?, ?, ?, ?)`
-  )
+export function createPerf(deps?: PerfDeps): Perf {
+  const now = deps?.now ?? (() => Date.now())
 
   return {
     start(area, startMeta = {}) {
       const t0 = now()
+      const groveId = getCurrent()?.id ?? null
       return ({ ok, meta = {} }) => {
         const t1 = now()
         const ms = Math.max(0, t1 - t0)
         const merged = { ...startMeta, ...meta }
         try {
-          if (deps.db.open) {
-            ins.run(new Date().toISOString(), area, ok ? 1 : 0, ms, JSON.stringify(merged))
+          const db = getGlobalDb()
+          if (db.open) {
+            db.prepare(`INSERT INTO perf_samples (ts, area, ok, ms, meta, grove_id) VALUES (?, ?, ?, ?, ?, ?)`).run(
+              new Date().toISOString(),
+              area,
+              ok ? 1 : 0,
+              ms,
+              JSON.stringify(merged),
+              groveId
+            )
           }
         } catch (err) {
           // Gracefully handle if DB is closed or closing concurrently
@@ -62,8 +70,8 @@ export function getPerf(): Perf | null {
 const PERF_HARD_CAP = 100_000
 const PERF_SOFT_CAP = 80_000
 
-export function trimPerfSamples(deps: { db: Database.Database }): void {
-  const { db } = deps
+export function trimPerfSamples(): void {
+  const db = getGlobalDb()
   const row = db.prepare(`SELECT COUNT(*) AS n FROM perf_samples`).get() as { n: number }
   if (row.n <= PERF_HARD_CAP) return
   // Keep newest PERF_SOFT_CAP rows.
@@ -75,7 +83,6 @@ export function trimPerfSamples(deps: { db: Database.Database }): void {
 }
 
 export interface AggDeps {
-  db: Database.Database
   area: string
   windowMs: number
   now?: () => Date
@@ -89,9 +96,10 @@ export interface Aggregates {
 }
 
 export function getAggregates(deps: AggDeps): Aggregates {
+  const db = getGlobalDb()
   const now = (deps.now ?? (() => new Date()))()
   const since = new Date(now.getTime() - deps.windowMs).toISOString()
-  const rows = deps.db
+  const rows = db
     .prepare(`SELECT ms, ok FROM perf_samples WHERE area = ? AND ts >= ? ORDER BY ms ASC`)
     .all(deps.area, since) as { ms: number; ok: number }[]
 

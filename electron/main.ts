@@ -114,10 +114,15 @@ function applyTelemetrySetting(): void {
   }
 }
 
+import { initGlobalDb } from './services/global-db'
+
 async function bootstrap(): Promise<void> {
   await initLogger()
   startElectronCrashReporter()
   await app.whenReady()
+  initGlobalDb()
+  setPerfInstance(createPerf())
+  trimPerfSamples()
   installCrashHooks()
   purgeOldAcked()
   rotateOnBoot()
@@ -137,17 +142,11 @@ async function bootstrap(): Promise<void> {
     void (async () => {
       try {
         if (payload === null) {
-          // Grove closed or switching away — cleanup (watcherStop, resetIndexer,
-          // closeCurrent) is already done by openGrove / closeGrove BEFORE they
-          // fire notifyChange(null). Nothing to do here.
+          // Grove closed or switching away
         } else {
-          // Grove opened or switched to — ensure db is open
           if (dbService.getCurrentGrovePath() !== payload.path) {
-            // openGrove already called openForGrove; this is the catch-all for
-            // future code paths that change the project without going through it.
             dbService.openForGrove(payload.path)
           }
-          // After DB is open, init ad-block with current setting (one-shot)
           if (!adBlockInstalled) {
             adBlockInstalled = true
             const browser = settingsStore.get('browser')
@@ -156,8 +155,6 @@ async function bootstrap(): Promise<void> {
           const db = dbService.getCurrent()
           if (db) {
             setIndexerDb(db)
-            setPerfInstance(createPerf({ db }))
-            trimPerfSamples({ db })
             await startScan(payload.path)
             await watcherStart(payload.path, db)
             

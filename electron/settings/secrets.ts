@@ -1,7 +1,7 @@
 // electron/settings/secrets.ts
 import { safeStorage } from 'electron'
 import { IpcError } from '@shared/ipc-contract'
-import { dbService } from '../services/db'
+import { getGlobalDb } from '../services/global-db'
 import { isSafeStorageAvailable } from './safe-storage-state'
 
 function requireKeychain(): void {
@@ -13,7 +13,7 @@ function requireKeychain(): void {
 function set(key: string, plain: string): void {
   requireKeychain()
   const enc = safeStorage.encryptString(plain)
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   db.prepare(`
     INSERT INTO settings_secrets (key, encrypted_value, updated_at)
     VALUES (?, ?, ?)
@@ -23,7 +23,7 @@ function set(key: string, plain: string): void {
 
 function get(key: string): string | null {
   requireKeychain()
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   const row = db.prepare('SELECT encrypted_value FROM settings_secrets WHERE key = ?').get(key) as
     | { encrypted_value: Buffer }
     | undefined
@@ -35,7 +35,7 @@ function get(key: string): string | null {
  *  clean up orphan rows (e.g. when deleting a profile after a reboot into a
  *  Linux session without libsecret). */
 function deleteSecret(key: string): void {
-  const db = dbService.requireCurrent()
+  const db = getGlobalDb()
   db.prepare('DELETE FROM settings_secrets WHERE key = ?').run(key)
 }
 
