@@ -72,6 +72,10 @@ html {
   --color-ink-4: oklch(0.48 0.01 70);
   --color-line: oklch(0.32 0.015 60);
   --color-line-2: oklch(0.4 0.018 60);
+  
+  --color-acorn-bg: oklch(0.3 0.03 48);
+  --color-leaf-bg: oklch(0.3 0.025 135);
+  --color-sky-bg: oklch(0.3 0.03 230);
 }
 
 html,
