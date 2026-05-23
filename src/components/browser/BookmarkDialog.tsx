@@ -84,7 +84,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
 
   async function remove(): Promise<void> {
     if (props.mode !== 'edit') return
-    if (!window.confirm(t('browser.bookmark.delete_confirm', 'Delete this bookmark?'))) return
+    if (!window.confirm(t('browser.bookmark_dialog.delete_confirm', 'Delete this bookmark?'))) return
     await ipc.bookmarks.delete(props.initial.id)
     props.onDeleted()
     bumpBookmarksRevision()
@@ -97,13 +97,13 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
         <DialogHeader>
           <DialogTitle>
             {props.mode === 'new'
-              ? t('browser.bookmark.save', 'Add bookmark')
-              : t('browser.bookmark.edit', 'Edit bookmark')}
+              ? t('browser.bookmark_dialog.save', 'Add bookmark')
+              : t('browser.bookmark_dialog.edit', 'Edit bookmark')}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-3">
           <label className="grid gap-1 text-xs">
-            URL
+            {t('browser.bookmark_dialog.url', 'URL')}
             <Input
               value={url}
               disabled={props.mode === 'edit'}
@@ -111,18 +111,18 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
             />
           </label>
           <label className="grid gap-1 text-xs">
-            Title
+            {t('browser.bookmark_dialog.title', 'Title')}
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
           <label className="grid gap-1 text-xs">
-            Tags (comma-separated)
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="news, ai" />
+            {t('browser.bookmark_dialog.tags', 'Tags (comma-separated)')}
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t('browser.bookmark_dialog.tags_placeholder', 'news, ai')} />
           </label>
         </div>
         <DialogFooter>
           {props.mode === 'edit' && (
             <Button variant="destructive" onClick={() => void remove()}>
-              {t('browser.bookmark.delete', 'Delete')}
+              {t('browser.bookmark_dialog.delete', 'Delete')}
             </Button>
           )}
           <Button onClick={() => void save()}>{t('common.save', 'Save')}</Button>

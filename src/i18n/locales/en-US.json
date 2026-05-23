@@ -344,6 +344,16 @@
     "reload": "Reload",
     "search": "Search",
     "bookmark": "Bookmark",
+    "bookmark_dialog": {
+      "save": "Add bookmark",
+      "edit": "Edit bookmark",
+      "delete": "Delete",
+      "delete_confirm": "Delete this bookmark?",
+      "url": "URL",
+      "title": "Title",
+      "tags": "Tags (comma-separated)",
+      "tags_placeholder": "news, ai"
+    },
     "clip": "Clip this page",
     "clip_soon": "Clipping will be available in the clipper phase",
     "clip.tooltip": "Clip this page (Cmd+Shift+S)",

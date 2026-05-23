@@ -375,6 +375,16 @@
     "reload": "刷新",
     "search": "搜索",
     "bookmark": "加入书签",
+    "bookmark_dialog": {
+      "save": "添加书签",
+      "edit": "编辑书签",
+      "delete": "删除",
+      "delete_confirm": "确定要删除这个书签吗？",
+      "url": "网址",
+      "title": "标题",
+      "tags": "标签（逗号分隔）",
+      "tags_placeholder": "新闻, ai"
+    },
     "clip": "剪藏此页",
     "clip_soon": "剪藏功能将在拾果阶段实装",
     "clip.tooltip": "剪藏此页（Cmd+Shift+S）",
