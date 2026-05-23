@@ -84,6 +84,13 @@ function create(input: ProfileCreateInput): { id: string } {
     if (apiKeyRef) secretsStore.delete(apiKeyRef)
     throw err
   }
+
+  // If this is the first profile (or no default is set), make it the default
+  const ai = settingsStore.get('ai')
+  if (!ai.defaultProfileId) {
+    settingsStore.set('ai', { defaultProfileId: id })
+  }
+
   return { id }
 }
 
