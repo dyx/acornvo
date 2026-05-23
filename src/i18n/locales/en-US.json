@@ -303,7 +303,9 @@
       "apiKeyKeepEmpty": "Leave empty to keep existing",
       "save": "Save",
       "confirmDelete": "Delete profile \"{{name}}\"?",
-      "errorDuplicateName": "Name already in use"
+      "errorDuplicateName": "Name already in use",
+      "errorNameRequired": "Provider name is required",
+      "errorModelRequired": "Model name is required"
     },
     "secret": {
       "saved": "Saved",

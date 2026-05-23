@@ -334,7 +334,9 @@
       "apiKeyKeepEmpty": "留空则保留现有密钥",
       "save": "保存",
       "confirmDelete": "确定要删除「{{name}}」吗？",
-      "errorDuplicateName": "该名称已被占用"
+      "errorDuplicateName": "该名称已被占用",
+      "errorNameRequired": "提供商名称不能为空",
+      "errorModelRequired": "模型名称不能为空"
     },
     "secret": {
       "saved": "已保存",

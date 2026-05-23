@@ -4,6 +4,12 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vite
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import { i18n } from '@/i18n'
 
+global.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 vi.mock('@/ipc/client', () => ({
   ipc: {
     settings: {

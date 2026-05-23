@@ -79,14 +79,28 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
     setBusy(true)
     setError(null)
     try {
+      const name = form.name.trim()
+      const model = form.model.trim()
+      
+      if (!name) {
+        setError(t('settings.ai.errorNameRequired', 'Provider name is required'))
+        setBusy(false)
+        return
+      }
+      if (!model) {
+        setError(t('settings.ai.errorModelRequired', 'Model name is required'))
+        setBusy(false)
+        return
+      }
+
       const baseUrl = form.baseUrl.trim().length > 0 ? form.baseUrl.trim() : null
       const maxTokens = form.maxTokens.trim().length > 0 ? Number(form.maxTokens) : null
       if (profile === null) {
         const input: ProfileCreateInput = {
-          name: form.name.trim(),
+          name,
           provider: form.provider,
           baseUrl,
-          model: form.model.trim(),
+          model,
           temperature: Number(form.temperature),
           topP: Number(form.topP),
           maxTokens,
@@ -95,10 +109,10 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
         await create(input)
       } else {
         const patch: ProfileUpdateInput = {
-          name: form.name.trim(),
+          name,
           provider: form.provider,
           baseUrl,
-          model: form.model.trim(),
+          model,
           temperature: Number(form.temperature),
           topP: Number(form.topP),
           maxTokens,
