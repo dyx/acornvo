@@ -14,10 +14,7 @@ import { CrashBanner } from '@/components/CrashBanner'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
-import { XProvider } from '@ant-design/x'
 import { useTranslation } from 'react-i18next'
-import { themeTokens, pickAntdLocale } from '@/lib/theme'
-
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
   if (!visible) return null
   return (
@@ -36,8 +33,6 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 
 export function App(): JSX.Element {
   const { i18n } = useTranslation()
-  const antdLocale = useMemo(() => pickAntdLocale(i18n.language), [i18n.language])
-  const antdTheme = useMemo(() => ({ token: themeTokens }), [])
   const { toast } = useToast()
   useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
@@ -71,7 +66,7 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <XProvider theme={antdTheme} locale={antdLocale}>
+    <>
       <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
         <TitleBar />
         <CrashBanner />
@@ -99,6 +94,6 @@ export function App(): JSX.Element {
         />
         <Toaster />
       </div>
-    </XProvider>
+    </>
   )
 }

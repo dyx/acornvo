@@ -1,28 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { Button } from 'antd'
-import { ArrowDownOutlined } from '@ant-design/icons'
+import { ArrowDownIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
 
 /**
- * Find the actual scrollable element rendered inside antd-x Bubble.List.
- * The outer container div is `display:flex` and does NOT scroll.
- * We look for the inner element that carries `overflow: auto`.
+ * Since we are no longer using antd-x, the container itself is scrollable.
  */
-function findScroller(root: HTMLElement): HTMLElement | null {
-  // 1. Try known antd-x class names
-  const byClass =
-    root.querySelector<HTMLElement>('.ant-bubble-list') ??
-    root.querySelector<HTMLElement>('[class*="bubble-list"]')
-  if (byClass && isScrollable(byClass)) return byClass
-
-  // 2. Fall back to any child with overflow:auto that actually overflows
-  for (const child of Array.from(root.querySelectorAll<HTMLElement>('div'))) {
-    if (isScrollable(child)) return child
-  }
-
-  return null
-}
-
 function isScrollable(el: HTMLElement): boolean {
   const s = getComputedStyle(el)
   return (
@@ -30,6 +13,14 @@ function isScrollable(el: HTMLElement): boolean {
      s.overflow === 'scroll' || s.overflowY === 'scroll') &&
     el.scrollHeight > el.clientHeight
   )
+}
+
+function findScroller(root: HTMLElement): HTMLElement | null {
+  if (isScrollable(root)) return root
+  for (const child of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+    if (isScrollable(child)) return child
+  }
+  return null
 }
 
 export function ScrollToBottomButton({
@@ -57,14 +48,11 @@ export function ScrollToBottomButton({
       setVisible(distance > threshold)
     }
 
-    // If the scroller is found immediately, attach the listener
     if (scroller) {
       scroller.addEventListener('scroll', handler)
       handler()
     }
 
-    // Observe DOM mutations to catch late-rendered Bubble.List content.
-    // antd-x renders its scrollable container asynchronously.
     const observer = new MutationObserver(() => {
       const found = findScroller(root)
       if (found && found !== scrollerRef.current) {
@@ -86,21 +74,16 @@ export function ScrollToBottomButton({
 
   return (
     <Button
-      type="primary"
-      shape="round"
-      icon={<ArrowDownOutlined />}
+      variant="secondary"
+      size="sm"
       onClick={() => {
         const el = scrollerRef.current
         if (!el) return
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       }}
-      style={{
-        position: 'absolute',
-        right: 16,
-        bottom: 16,
-        zIndex: 2
-      }}
+      className="absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background border"
     >
+      <ArrowDownIcon className="size-4 mr-2" />
       {t('chat.message.newMessages')}
     </Button>
   )

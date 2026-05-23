@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input, Typography } from 'antd'
-
-const { TextArea } = Input
+import { Textarea } from '@/components/ui/textarea'
 
 interface JsonArgsEditorProps {
   initialArgs: unknown
@@ -41,19 +39,18 @@ export function JsonArgsEditor({ initialArgs, onChange }: JsonArgsEditorProps) {
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minHeight: 0, flex: 1 }}>
-      <TextArea
+    <div className="flex flex-col gap-2 flex-1 min-h-[200px]">
+      <Textarea
         data-testid="json-args-textarea"
         value={text}
         onChange={(e) => handleChange(e.target.value)}
-        autoSize={{ minRows: 8, maxRows: 24 }}
         spellCheck={false}
-        style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)', fontSize: 12 }}
+        className="font-mono text-xs min-h-[200px] flex-1 resize-y bg-muted/50"
       />
       {error && (
-        <Typography.Text data-testid="json-args-error" type="danger" style={{ fontSize: 12 }}>
+        <span data-testid="json-args-error" className="text-destructive text-xs">
           {t('chat.approval.invalidJson')}: {error}
-        </Typography.Text>
+        </span>
       )}
     </div>
   )

@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Drawer, Tag, Button, Space, message as antdMessage } from 'antd'
 import { useChatStore, type PendingApproval } from '@/stores/chat'
 import { JsonArgsEditor } from './JsonArgsEditor'
 import { FrontmatterDiff } from './FrontmatterDiff'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/use-toast'
+import { Badge } from '@/components/ui/badge'
 
 type Props = {
   open: boolean
@@ -16,6 +19,7 @@ type FrontmatterArgs = { before?: unknown; after?: unknown }
 
 export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const approveTool = useChatStore((s) => s.approveTool)
 
@@ -33,7 +37,7 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
 
   const handleSubmit = async () => {
     if (!jsonValid) {
-      antdMessage.error(t('chat.approval.invalidJson'))
+      toast({ title: t('chat.approval.invalidJson'), variant: 'destructive' })
       return
     }
     if (!activeSessionId) return
@@ -41,50 +45,55 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
       await approveTool(activeSessionId, callId, editedArgs)
       onClose()
     } catch (err) {
-      antdMessage.error(err instanceof Error ? err.message : String(err))
+      toast({ title: err instanceof Error ? err.message : String(err), variant: 'destructive' })
     }
   }
 
   return (
-    <Drawer
-      title={
-        <Space>
-          <span>{approval.toolName}</span>
-          <Tag color="orange">{t('chat.approval.pendingTag')}</Tag>
-        </Space>
-      }
-      open={open}
-      onClose={onClose}
-      width={520}
-      footer={
-        <Space style={{ justifyContent: 'flex-end', display: 'flex', width: '100%' }}>
-          <Button onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="primary" onClick={handleSubmit}>
-            {t('chat.approval.submit')}
-          </Button>
-        </Space>
-      }
-    >
-      {approval.reason && (
-        <div style={{ marginBottom: 16 }}>
-          <strong>{t('chat.approval.reason')}</strong>
-          <p style={{ marginTop: 4 }}>{approval.reason}</p>
+    <Sheet open={open} onOpenChange={(val) => !val && onClose()}>
+      <SheetContent className="sm:max-w-xl overflow-y-auto">
+        <SheetHeader className="mb-6">
+          <SheetTitle className="flex items-center gap-2">
+            <span>{approval.toolName}</span>
+            <Badge variant="outline" className="text-orange-500 border-orange-500 bg-orange-50 dark:bg-orange-950">
+              {t('chat.approval.pendingTag')}
+            </Badge>
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="flex flex-col gap-6">
+          {approval.reason && (
+            <div>
+              <h4 className="font-semibold text-sm mb-1">{t('chat.approval.reason')}</h4>
+              <p className="text-sm text-muted-foreground">{approval.reason}</p>
+            </div>
+          )}
+          
+          <div>
+            {isFrontmatter ? (
+              <FrontmatterDiff
+                before={(approval.args as FrontmatterArgs)?.before}
+                after={(approval.args as FrontmatterArgs)?.after}
+              />
+            ) : (
+              <JsonArgsEditor
+                initialArgs={approval.args}
+                onChange={(_text, valid, parsed) => {
+                  setJsonValid(valid)
+                  if (valid) setEditedArgs(parsed)
+                }}
+              />
+            )}
+          </div>
         </div>
-      )}
-      {isFrontmatter ? (
-        <FrontmatterDiff
-          before={(approval.args as FrontmatterArgs)?.before}
-          after={(approval.args as FrontmatterArgs)?.after}
-        />
-      ) : (
-        <JsonArgsEditor
-          initialArgs={approval.args}
-          onChange={(_text, valid, parsed) => {
-            setJsonValid(valid)
-            if (valid) setEditedArgs(parsed)
-          }}
-        />
-      )}
-    </Drawer>
+
+        <SheetFooter className="mt-8">
+          <div className="flex justify-end gap-2 w-full">
+            <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button onClick={handleSubmit}>{t('chat.approval.submit')}</Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }

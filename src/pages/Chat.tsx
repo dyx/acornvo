@@ -1,29 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Welcome, Prompts } from '@ant-design/x'
-import type { PromptsItemType } from '@ant-design/x'
-import { Flex, Alert, Modal, Dropdown } from 'antd'
-import { DownOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
+import { ChevronDownIcon, HelpCircleIcon, MessageSquareIcon, SparklesIcon, FileTextIcon, TerminalIcon } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { useProfilesStore } from '@/stores/profiles'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 import { ConversationsAdapter } from '@/components/chat/ConversationsAdapter'
 import { BubbleListAdapter } from '@/components/chat/BubbleListAdapter'
 import { ChatInputArea } from '@/components/chat/ChatInputArea'
+import { ChatRuntimeProvider } from '@/components/chat/ChatRuntimeProvider'
 
 function SessionsErrorBanner() {
   const sessionsError = useChatStore((s) => s.sessionsError)
   if (!sessionsError) return null
   return (
-    <Alert
-      type="error"
-      banner
-      closable
-      data-testid="chat-sessions-error-banner"
-      message={sessionsError}
-      onClose={() => useChatStore.setState({ sessionsError: null })}
-    />
+    <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
+      <AlertDescription className="flex justify-between items-center w-full">
+        <span>{sessionsError}</span>
+        <button onClick={() => useChatStore.setState({ sessionsError: null })} className="underline text-xs">Close</button>
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -34,22 +36,20 @@ function StreamErrorBanner() {
   )
   if (!streamError) return null
   return (
-    <Alert
-      type="error"
-      banner
-      closable
-      data-testid="chat-stream-error-banner"
-      message={streamError}
-      onClose={() => {
-        const sid = useChatStore.getState().activeSessionId
-        if (!sid) return
-        useChatStore.setState((s) => {
-          const cur = s.bySession[sid]
-          if (!cur) return s
-          return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
-        })
-      }}
-    />
+    <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
+      <AlertDescription className="flex justify-between items-center w-full">
+        <span>{streamError}</span>
+        <button onClick={() => {
+          const sid = useChatStore.getState().activeSessionId
+          if (!sid) return
+          useChatStore.setState((s) => {
+            const cur = s.bySession[sid]
+            if (!cur) return s
+            return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
+          })
+        }} className="underline text-xs">Close</button>
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -62,16 +62,14 @@ function MissingProfileBanner() {
   const active = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null
   if (!active || active.profileId) return null
   return (
-    <Alert
-      type="error"
-      banner
-      message={t('chat.error.missingProfile')}
-      action={
-        <Link to="/settings/ai" data-testid="chat-banner-settings-link">
+    <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
+      <AlertDescription className="flex justify-between items-center w-full">
+        <span>{t('chat.error.missingProfile')}</span>
+        <Link to="/settings/ai" data-testid="chat-banner-settings-link" className="underline font-medium">
           {t('chat.error.goToSettings')}
         </Link>
-      }
-    />
+      </AlertDescription>
+    </Alert>
   )
 }
 
@@ -85,25 +83,27 @@ function ShortcutsModal() {
   }, [showShortcutsBump])
 
   return (
-    <Modal
-      open={open}
-      onCancel={() => setOpen(false)}
-      title={t('chat.shortcuts.title')}
-      footer={null}
-      width={480}
-    >
-      <ul style={{ paddingLeft: 16, margin: 0 }}>
-        <li>
-          <kbd>Cmd+Enter</kbd> — {t('chat.shortcuts.send')}
-        </li>
-        <li>
-          <kbd>Shift+Enter</kbd> — {t('chat.shortcuts.send')}
-        </li>
-        <li>
-          <kbd>Esc</kbd> — {t('chat.shortcuts.stopStream')}
-        </li>
-      </ul>
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('chat.shortcuts.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 py-4">
+          <div className="flex justify-between items-center text-sm">
+            <span>{t('chat.shortcuts.send')}</span>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Cmd+Enter</kbd>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span>{t('chat.shortcuts.send')} (Alternative)</span>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Shift+Enter</kbd>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span>{t('chat.shortcuts.stopStream')}</span>
+            <kbd className="px-2 py-1 bg-muted rounded font-mono text-xs text-muted-foreground border">Esc</kbd>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -114,94 +114,96 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
 
   const current = profiles.find((p) => p.id === profileId) ?? null
 
-  const menuItems =
-    profiles.length === 0
-      ? [
-          {
-            key: '__empty',
-            label: (
-              <Link to="/settings/ai" className="block">
-                {t('chat.topbar.noProfile')} — {t('chat.error.goToSettings')}
-              </Link>
-            )
-          }
-        ]
-      : profiles.map((p) => ({
-          key: p.id,
-          label: (
-            <>
-              {p.name}
-              <span className="text-muted-foreground ml-2">{p.model}</span>
-            </>
-          ),
-          onClick: () => void updateSessionProfile(sessionId, p.id)
-        }))
-
   return (
-    <Dropdown trigger={['click']} menu={{ items: menuItems }}>
-      <button
-        type="button"
-        data-testid="chat-profile-chip"
-        className="text-xs px-2 py-1 rounded-md border border-[color:var(--color-line)] hover:bg-muted inline-flex items-center gap-1 shrink-0 max-w-[240px]"
-        title={
-          current
-            ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
-            : t('chat.topbar.noProfile')
-        }
-      >
-        {current ? (
-          <>
-            <span className="truncate">{current.name}</span>
-            <span className="text-muted-foreground shrink-0">
-              {t('chat.topbar.modelSeparator')}
-            </span>
-            <span className="text-muted-foreground truncate">{current.model}</span>
-          </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          data-testid="chat-profile-chip"
+          className="text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted inline-flex items-center gap-1.5 shrink-0 max-w-[240px] transition-colors"
+          title={
+            current
+              ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
+              : t('chat.topbar.noProfile')
+          }
+        >
+          {current ? (
+            <>
+              <span className="truncate font-medium">{current.name}</span>
+              <span className="text-muted-foreground/40 shrink-0">
+                |
+              </span>
+              <span className="text-muted-foreground truncate">{current.model}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
+          )}
+          <ChevronDownIcon className="size-3 opacity-50 ml-1" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {profiles.length === 0 ? (
+          <DropdownMenuItem asChild>
+            <Link to="/settings/ai">
+              {t('chat.topbar.noProfile')} — {t('chat.error.goToSettings')}
+            </Link>
+          </DropdownMenuItem>
         ) : (
-          <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
+          profiles.map((p) => (
+            <DropdownMenuItem key={p.id} onClick={() => void updateSessionProfile(sessionId, p.id)}>
+              <span className="font-medium">{p.name}</span>
+              <span className="text-muted-foreground ml-2 text-xs">{p.model}</span>
+            </DropdownMenuItem>
+          ))
         )}
-        <DownOutlined style={{ fontSize: 10, opacity: 0.5 }} />
-      </button>
-    </Dropdown>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
-
-const EMPTY_STATE_FLEX_STYLE = { flex: 1, padding: 32 }
-const EMPTY_STATE_WELCOME_STYLE = { marginBottom: 24, maxWidth: 640, width: '100%' }
-const EMPTY_STATE_PROMPTS_STYLE = { maxWidth: 640, width: '100%' }
 
 function EmptyState() {
   const { t } = useTranslation()
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
-  const promptItems = useMemo<PromptsItemType[]>(
+  const promptItems = useMemo(
     () => [
-      { key: 'p1', label: t('chat.empty.card1') },
-      { key: 'p2', label: t('chat.empty.card2') },
-      { key: 'p3', label: t('chat.empty.card3') },
-      { key: 'p4', label: t('chat.empty.card4') }
+      { key: 'p1', label: t('chat.empty.card1'), icon: SparklesIcon },
+      { key: 'p2', label: t('chat.empty.card2'), icon: MessageSquareIcon },
+      { key: 'p3', label: t('chat.empty.card3'), icon: FileTextIcon },
+      { key: 'p4', label: t('chat.empty.card4'), icon: TerminalIcon }
     ],
     [t]
   )
 
   return (
-    <Flex vertical align="center" justify="center" style={EMPTY_STATE_FLEX_STYLE}>
-      <Welcome
-        title={t('chat.empty.heading')}
-        description={t('chat.empty.subheading')}
-        style={EMPTY_STATE_WELCOME_STYLE}
-      />
-      <Prompts
-        wrap
-        items={promptItems}
-        onItemClick={({ data }) => {
-          setPendingPromptText(String(data.label ?? ''))
-          bumpFocusInput()
-        }}
-        style={EMPTY_STATE_PROMPTS_STYLE}
-      />
-    </Flex>
+    <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-3xl mx-auto w-full">
+      <div className="text-center mb-12">
+        <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <SparklesIcon className="size-8 text-primary" />
+        </div>
+        <h2 className="text-3xl font-bold tracking-tight mb-3 text-foreground">{t('chat.empty.heading')}</h2>
+        <p className="text-muted-foreground text-lg max-w-lg mx-auto">{t('chat.empty.subheading')}</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        {promptItems.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => {
+              setPendingPromptText(String(item.label ?? ''))
+              bumpFocusInput()
+            }}
+            className="flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors text-left group"
+          >
+            <div className="bg-primary/5 p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
+              <item.icon className="size-5 text-primary/70" />
+            </div>
+            <span className="text-sm font-medium text-foreground/80 leading-relaxed mt-0.5">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -242,44 +244,42 @@ export function Chat() {
   const title = activeSession?.title || t('chat.untitled')
 
   return (
-    <div className="flex h-full w-full bg-[color:var(--color-paper)]" data-testid="chat-page-root">
-      <aside
-        data-testid="chat-session-list"
-        className="flex shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] overflow-hidden"
-      >
-        <ConversationsAdapter />
-      </aside>
-
-      <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <SessionsErrorBanner />
-        <StreamErrorBanner />
-        <MissingProfileBanner />
-        <header className="flex h-[42px] shrink-0 items-center gap-2.5 border-b border-[color:var(--color-line)] px-[18px]">
-          <h2 className="font-serif text-[14px] font-medium m-0 flex-1 truncate text-[color:var(--color-ink)]">
-            {title}
-          </h2>
-          <ProfileChip
-            sessionId={activeSession?.id ?? ''}
-            profileId={activeSession?.profileId ?? null}
-          />
-          <button
-            type="button"
-            data-testid="chat-shortcuts-btn"
-            className="flex size-7 items-center justify-center rounded-md text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-2)]"
-            aria-label={t('chat.topbar.helpAria')}
-            title={t('chat.topbar.helpAria')}
-            onClick={() => useChatStore.getState().bumpShowShortcuts()}
+    <ChatRuntimeProvider>
+      <TooltipProvider>
+        <div className="flex h-full w-full bg-background" data-testid="chat-page-root">
+          <aside
+            data-testid="chat-session-list"
+            className="flex shrink-0 flex-col border-r bg-muted/20 overflow-hidden w-64"
           >
-            ?
-          </button>
-        </header>
-        <section className="flex min-h-0 flex-1 flex-col">
-          {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
-        </section>
-        <ChatInputArea />
-      </main>
+            <ConversationsAdapter />
+          </aside>
 
-      <ShortcutsModal />
-    </div>
+          <main data-testid="chat-main" className="flex min-w-0 flex-1 flex-col overflow-hidden relative">
+            <SessionsErrorBanner />
+            <StreamErrorBanner />
+            <MissingProfileBanner />
+            <header className="flex h-14 shrink-0 items-center gap-3 border-b px-5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+              <h2 className="font-serif text-[15px] font-medium m-0 flex-1 truncate text-foreground">
+                {title}
+              </h2>
+              <ProfileChip
+                sessionId={activeSession?.id ?? ''}
+                profileId={activeSession?.profileId ?? null}
+              />
+            </header>
+            
+            <section className="flex min-h-0 flex-1 flex-col bg-background/50">
+              {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
+            </section>
+            
+            <div className="z-10 bg-gradient-to-t from-background via-background to-transparent pt-4">
+              <ChatInputArea />
+            </div>
+          </main>
+
+          <ShortcutsModal />
+        </div>
+      </TooltipProvider>
+    </ChatRuntimeProvider>
   )
 }
