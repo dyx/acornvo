@@ -79,7 +79,7 @@ export function Browse(): JSX.Element {
   }, [bookmarksOpen, setViewport])
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined
-  const isBlank = activeTab?.savedUrl === 'about:blank' && activeTab?.title === ''
+  const isBlank = !activeTab || (activeTab.savedUrl === 'about:blank' && activeTab.title === '')
 
   return (
     <div className="flex h-full" data-testid="browse-page">

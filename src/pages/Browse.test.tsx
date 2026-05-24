@@ -1,6 +1,7 @@
 // src/pages/Browse.test.tsx
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
 import '@testing-library/jest-dom/vitest'
 import { Browse } from './Browse'
 import { useBrowserStore, setBrowserPort } from '@/stores/browser'
@@ -13,6 +14,10 @@ vi.mock('@/ipc/client', () => ({
       update: vi.fn(),
       delete: vi.fn(),
       getByUrl: vi.fn(async () => null)
+    },
+    browser: {
+      showBrowserView: vi.fn(),
+      hideBrowserView: vi.fn()
     },
     on: vi.fn(() => () => {})
   }
@@ -59,6 +64,8 @@ function mockPort() {
     goBack: vi.fn(),
     goForward: vi.fn(),
     setViewport: vi.fn(),
+    showBrowserView: vi.fn(),
+    hideBrowserView: vi.fn(),
     suspendTab: vi.fn(),
     resumeTab: vi.fn()
   } as any
@@ -70,7 +77,11 @@ describe('Browse page', () => {
   it('on mount, auto-creates a blank tab if tabs is empty', async () => {
     const port = mockPort()
     setBrowserPort(port)
-    render(<Browse />)
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(useBrowserStore.getState().tabs).toHaveLength(1)
@@ -80,7 +91,11 @@ describe('Browse page', () => {
 
   it('renders the viewport div with stable id', () => {
     setBrowserPort(mockPort())
-    render(<Browse />)
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>
+    )
     expect(document.getElementById('browser-viewport')).not.toBeNull()
   })
 
@@ -104,7 +119,11 @@ describe('Browse page', () => {
       ],
       activeTabId: 'existing'
     })
-    render(<Browse />)
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>
+    )
 
     await new Promise((r) => setTimeout(r, 0))
     expect(port.createTab).not.toHaveBeenCalled()
@@ -118,7 +137,11 @@ describe('Browse — viewport sync', () => {
     const port = mockPort()
     setBrowserPort(port)
     vi.useFakeTimers()
-    render(<Browse />)
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>
+    )
 
     act(() => {
       vi.advanceTimersByTime(20)
@@ -132,7 +155,11 @@ describe('Browse — viewport sync', () => {
     const port = mockPort()
     setBrowserPort(port)
     vi.useFakeTimers()
-    render(<Browse />)
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>
+    )
 
     act(() => {
       vi.advanceTimersByTime(20)
