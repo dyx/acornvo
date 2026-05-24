@@ -5,6 +5,9 @@ vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() }, writeUsage: vi.
 vi.mock('../../settings/store', () => ({
   settingsStore: { get: vi.fn() }
 }))
+vi.mock('../../services/logger', () => ({
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+}))
 
 import { reviewClip } from '../../ai/reviewer'
 import { writeUsage } from '../../ai/usage'
@@ -67,7 +70,7 @@ describe('aiReviewClipHandler', () => {
     e.code = 'E_MTIME_CONFLICT'
     ;(reviewClip as any).mockRejectedValue(e)
     const r = await aiReviewClipHandler(baseCtx())
-    expect(r).toMatchObject({ kind: 'retry', delayMs: 600_000, reason: 'mtime-conflict' })
+    expect(r).toMatchObject({ kind: 'retry', delayMs: 60_000, reason: 'mtime-conflict' })
   })
 
   it.each([['E_NETWORK'], ['E_SERVER'], ['E_RESPONSE'], ['E_UNKNOWN']])(

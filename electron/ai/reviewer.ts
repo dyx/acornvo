@@ -10,6 +10,7 @@ import { buildChatModel, type ResolvedProfile } from './model-factory'
 import { normalizeLLMError } from './normalize-errors'
 import { settingsStore } from '../settings/store'
 import { getProfileDecryptedKey } from '../settings/profile-key'
+import { logger } from '../services/logger'
 
 export interface ReviewClipOpts {
   force?: boolean
@@ -92,31 +93,61 @@ function loadMd(rel: string): {
 import { getGlobalDb } from '../services/global-db'
 
 function resolveProfile(profileId?: string): ResolvedProfile {
+  logger.debug('[resolveProfile] start', { profileId })
   const db = getGlobalDb()
   let id = profileId
   if (!id) {
     const ai = settingsStore.get('ai')
     id = ai?.defaultProfileId ?? undefined
+    logger.debug('[resolveProfile] using defaultProfileId from settings', { defaultProfileId: id })
   }
-  if (!id) throw rerr('E_MISSING_PROFILE', 'no profileId; settings.ai.defaultProfileId is null')
+  if (!id) {
+    logger.error('[resolveProfile] no profileId available')
+    throw rerr('E_MISSING_PROFILE', 'no profileId; settings.ai.defaultProfileId is null')
+  }
 
   let p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as
     | ProfileRow
     | undefined
   if (!p && !profileId) {
+    logger.warn('[resolveProfile] default profile not found, falling back to first', { id })
     p = db.prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1').get() as
       | ProfileRow
       | undefined
     if (p) {
       settingsStore.set('ai', { defaultProfileId: p.id })
+      logger.info('[resolveProfile] auto-fixed defaultProfileId', { newId: p.id })
     }
   }
-  if (!p) throw rerr('E_MISSING_PROFILE', `profile not found: ${id}`)
-  if (!p.model) throw rerr('E_CONFIG', `profile ${id} has empty model`)
+  if (!p) {
+    logger.error('[resolveProfile] profile not found in DB', { id })
+    throw rerr('E_MISSING_PROFILE', `profile not found: ${id}`)
+  }
+  if (!p.model) {
+    logger.error('[resolveProfile] profile has empty model', { id: p.id, name: p.provider })
+    throw rerr('E_CONFIG', `profile ${id} has empty model`)
+  }
   if (p.provider === 'openai-compatible' && !p.base_url) {
+    logger.error('[resolveProfile] openai-compatible missing baseUrl', { id: p.id })
     throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on profile ${id}`)
   }
   const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id)
+  const hasKey = apiKey != null && apiKey.length > 0
+  logger.info('[resolveProfile] resolved', {
+    id: p.id,
+    provider: p.provider,
+    model: p.model,
+    baseUrl: p.base_url ?? null,
+    hasApiKey: hasKey,
+    temperature: p.temperature,
+    maxTokens: p.max_tokens
+  })
+  if (!hasKey && p.provider !== 'ollama') {
+    logger.warn('[resolveProfile] API key is empty — LLM call will likely fail with E_AUTH', {
+      id: p.id,
+      provider: p.provider
+    })
+  }
   return {
     id: p.id,
     provider: p.provider as ResolvedProfile['provider'],
@@ -138,11 +169,25 @@ export async function reviewClip(
   clipId: number,
   opts: ReviewClipOpts = {}
 ): Promise<ReviewClipOutput> {
+  logger.info('[reviewClip] start', { clipId, force: opts.force })
+
   const clip = loadClip(clipId)
+  logger.debug('[reviewClip] clip loaded', { clipId, url: clip.url, path: clip.path })
+
   const md = loadMd(clip.path)
+  logger.debug('[reviewClip] markdown loaded', {
+    path: clip.path,
+    bodyLen: md.body.length,
+    hasFrontmatter: Object.keys(md.frontmatter).length > 0,
+    aiReviewedAt: md.frontmatter.ai_reviewed_at ?? null
+  })
 
   // Cache short-circuit (unchanged).
   if (md.frontmatter.ai_reviewed_at && !opts.force) {
+    logger.info('[reviewClip] cache hit — skipping LLM call', {
+      clipId,
+      reviewedAt: md.frontmatter.ai_reviewed_at
+    })
     const cached: AiReviewResult = {
       summary: String(md.frontmatter.ai_summary ?? ''),
       suggestedTitle: String(md.frontmatter.ai_suggested_title ?? ''),
@@ -161,21 +206,56 @@ export async function reviewClip(
     url: clip.url,
     body: md.body
   })
+  logger.debug('[reviewClip] prompt rendered', {
+    clipId,
+    systemLen: system.length,
+    userLen: user.length
+  })
 
   const t0 = Date.now()
   let parsed: ReturnType<typeof AiReviewSchema.parse>
   let usage: { input_tokens?: number; output_tokens?: number } | undefined
 
   try {
+    logger.info('[reviewClip] invoking LLM', {
+      clipId,
+      provider: profile.provider,
+      model: profile.model
+    })
     const chatModel = buildChatModel(profile)
-    const structured = chatModel.withStructuredOutput(AiReviewSchema, { includeRaw: true })
+    // openai-compatible providers (e.g. DeepSeek) often don't support
+    // response_format: { type: "json_schema" } (Structured Outputs).
+    // Fall back to jsonMode which uses the widely-supported { type: "json_object" }.
+    const structuredMethod = profile.provider === 'openai-compatible' ? 'jsonMode' as const : undefined
+    const structured = chatModel.withStructuredOutput(AiReviewSchema, {
+      includeRaw: true,
+      ...(structuredMethod && { method: structuredMethod })
+    })
     const out = (await structured.invoke([
       { role: 'system', content: system },
       { role: 'user', content: user }
     ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> }
     parsed = out.parsed
     usage = readUsage(out.raw)
+    logger.info('[reviewClip] LLM call succeeded', {
+      clipId,
+      latencyMs: Date.now() - t0,
+      inputTokens: usage?.input_tokens ?? null,
+      outputTokens: usage?.output_tokens ?? null,
+      tagsCount: parsed.tags.length,
+      summaryLen: parsed.summary.length
+    })
   } catch (err) {
+    const elapsed = Date.now() - t0
+    const rawErr = err as { code?: string; name?: string; message?: string; status?: number }
+    logger.error('[reviewClip] LLM call failed', {
+      clipId,
+      latencyMs: elapsed,
+      errorName: rawErr.name,
+      errorCode: rawErr.code,
+      errorStatus: rawErr.status,
+      errorMessage: rawErr.message?.slice(0, 500)
+    })
     throw normalizeLLMError(err)
   }
 
@@ -201,11 +281,23 @@ export async function reviewClip(
   }
 
   try {
+    logger.debug('[reviewClip] writing back frontmatter', {
+      clipId,
+      path: clip.path,
+      expectedMtime: md.mtimeMs
+    })
     await fileHandlers.writeParsed(clip.path, nextFrontmatter, md.body, {
       expectedMtime: md.mtimeMs
     })
+    logger.info('[reviewClip] writeback done', { clipId, path: clip.path })
   } catch (e) {
     const code = (e as { code?: string })?.code
+    logger.error('[reviewClip] writeback failed', {
+      clipId,
+      path: clip.path,
+      code,
+      message: (e as Error)?.message?.slice(0, 300)
+    })
     if (code === 'E_MTIME_MISMATCH') {
       throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback')
     }
@@ -213,6 +305,7 @@ export async function reviewClip(
   }
 
   const latencyMs = Date.now() - t0
+  logger.info('[reviewClip] completed', { clipId, latencyMs, model: profile.model })
   return {
     result,
     cacheHit: false,

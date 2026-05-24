@@ -5,7 +5,8 @@ import type { SearchEngine } from '@shared/settings-types'
 const SEARCH_ENGINE_URLS: Record<SearchEngine, (q: string) => string> = {
   google: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
   bing: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-  duckduckgo: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
+  duckduckgo: (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+  baidu: (q) => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
 }
 
 const INBOX_PATH = 'inbox/'

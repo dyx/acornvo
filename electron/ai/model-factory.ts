@@ -3,6 +3,7 @@ import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatOllama } from '@langchain/ollama'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { createHash } from 'node:crypto'
+import { logger } from '../services/logger'
 
 export interface ResolvedProfile {
   id: string
@@ -51,7 +52,23 @@ export function invalidateByProfile(profileId: string): void {
 export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
   const key = cacheKey(profile)
   const hit = lookup(key)
-  if (hit) return hit
+  if (hit) {
+    logger.debug('[buildChatModel] cache hit', {
+      provider: profile.provider,
+      model: profile.model,
+      cacheSize: cache.length
+    })
+    return hit
+  }
+
+  logger.info('[buildChatModel] constructing new model', {
+    provider: profile.provider,
+    model: profile.model,
+    hasApiKey: (profile.apiKey ?? '').length > 0,
+    baseUrl: profile.baseUrl ?? null,
+    temperature: profile.temperature,
+    maxTokens: profile.maxTokens
+  })
 
   const temperature = profile.temperature ?? 0.3
   const maxTokens = profile.maxTokens ?? 800
@@ -95,6 +112,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
     }
   }
   insert(key, model)
+  logger.debug('[buildChatModel] model cached', { cacheSize: cache.length })
   return model
 }
 

@@ -7,7 +7,7 @@ import type {
   BrowserSettings,
   AiProviderProfile,
   AiProviderKind,
-  SettingsNamespace,
+  SettingsTab,
   SettingsByNs
 } from './settings-types'
 
@@ -23,7 +23,7 @@ describe('settings-types module', () => {
     expectTypeOf<BrowserSettings>().toMatchTypeOf<{
       blockAds: boolean
       clipImagesLocalize: boolean
-      searchEngine: 'google' | 'bing' | 'duckduckgo'
+      searchEngine: 'google' | 'bing' | 'duckduckgo' | 'baidu'
     }>()
   })
 
@@ -47,12 +47,13 @@ describe('settings-types module', () => {
 
   it('SettingsByNs maps each known namespace to its concrete type', () => {
     expectTypeOf<SettingsByNs['general']>().toEqualTypeOf<GeneralSettings>()
-    expectTypeOf<SettingsByNs['appearance']>().toEqualTypeOf<AppearanceSettings>()
     expectTypeOf<SettingsByNs['ai']>().toEqualTypeOf<AiSettings>()
     expectTypeOf<SettingsByNs['browser']>().toEqualTypeOf<BrowserSettings>()
   })
 
-  it('SettingsNamespace union has exactly the four known names', () => {
-    expectTypeOf<SettingsNamespace>().toEqualTypeOf<'general' | 'appearance' | 'ai' | 'browser'>()
+  it('SettingsTab is exactly the known set', () => {
+    expectTypeOf<SettingsTab>().toEqualTypeOf<
+      'general' | 'ai' | 'browser' | 'observability' | 'about'
+    >()
   })
 })

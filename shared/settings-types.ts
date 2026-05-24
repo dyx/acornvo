@@ -41,6 +41,8 @@ export interface TelemetrySettings {
   enabled: boolean
 }
 
+export type SettingsTab = 'general' | 'ai' | 'browser' | 'observability' | 'about'
+
 export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'update' | 'telemetry'
 
 export type SettingsByNs = {

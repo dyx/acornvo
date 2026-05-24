@@ -48,8 +48,6 @@ export function Browse(): JSX.Element {
       })
     }
   }, [tabs.length, createTab])
-    }
-  }, [tabs.length, createTab])
 
   // Push viewport bounds whenever the div changes size
   useEffect(() => {

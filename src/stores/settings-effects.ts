@@ -13,7 +13,7 @@ function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
   const effective = theme === 'system' ? resolveSystemTheme() : theme
   document.documentElement.dataset.theme = effective
-  void ipc.window.themeApplied(effective)
+  void ipc.window.themeApplied(theme)
 }
 
 function applyFontScale(scale: number): void {
