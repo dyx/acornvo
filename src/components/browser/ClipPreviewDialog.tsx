@@ -35,14 +35,14 @@ export function ClipPreviewDialog(): JSX.Element | null {
     <Dialog.Root open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[80vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 flex-col rounded-md bg-[color:var(--color-paper)] p-4 shadow-xl">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[90vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-md bg-[color:var(--color-paper)] p-4 shadow-xl">
           <Dialog.Title className="shrink-0 text-base font-semibold">
             {t('browser.clip.preview.title', '剪藏预览')}
           </Dialog.Title>
 
-          <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr_2fr] gap-3 overflow-hidden">
-            {/* Left: meta */}
-            <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2">
+          <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+            {/* Top: meta */}
+            <div className="flex shrink-0 flex-col gap-3">
               <label className="text-xs">
                 {t('browser.clip.preview.title_field', '标题')}
                 <input
@@ -76,10 +76,10 @@ export function ClipPreviewDialog(): JSX.Element | null {
               )}
             </div>
 
-            {/* Right: body preview */}
+            {/* Bottom: body preview */}
             <div
               data-testid="clip-body-preview"
-              className="overflow-y-auto whitespace-pre-wrap rounded border p-3 text-xs"
+              className="flex-1 overflow-y-auto whitespace-pre-wrap rounded border bg-[color:var(--color-paper-2)] p-3 text-xs"
             >
               {bodyPreview}
             </div>
