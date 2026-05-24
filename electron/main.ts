@@ -1,7 +1,11 @@
-import { app, BrowserWindow, nativeTheme, powerMonitor } from 'electron'
+import { app, BrowserWindow, nativeTheme, powerMonitor, protocol, net } from 'electron'
 
 // Enable auto dark mode for WebContents (browser tabs) when themeSource is dark
 app.commandLine.appendSwitch('enable-features', 'WebContentsForceDark')
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'acornvo-local', privileges: { secure: true, standard: true, supportFetchAPI: true, bypassCSP: true } }
+])
 
 import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
@@ -143,6 +147,17 @@ async function bootstrap(): Promise<void> {
   await initLogger()
   startElectronCrashReporter()
   await app.whenReady()
+
+  protocol.handle('acornvo-local', (request) => {
+    const rawUrl = request.url.replace(/^acornvo-local:\/\//i, '')
+    const relPath = decodeURIComponent(rawUrl)
+    const grovePath = dbService.getCurrentGrovePath()
+    if (!grovePath) return new Response('Not Found', { status: 404 })
+    const absolutePath = join(grovePath, relPath)
+    const fileUri = absolutePath.startsWith('/') ? `file://${absolutePath}` : `file:///${absolutePath}`
+    return net.fetch(fileUri)
+  })
+
   initGlobalDb()
   setPerfInstance(createPerf())
   trimPerfSamples()

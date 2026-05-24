@@ -9,7 +9,7 @@ const CSP_BASELINE = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
+  "img-src 'self' data: https: acornvo-local:",
   "font-src 'self' data:",
   "connect-src 'self' ws: http://localhost:* https://localhost:*"
 ].join('; ')
