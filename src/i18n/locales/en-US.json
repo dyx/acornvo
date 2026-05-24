@@ -82,6 +82,7 @@
     "reviewing": "Reviewing",
     "review_pending": "Queued",
     "review_failed": "Review failed",
+    "reviewed": "AI Reviewed",
     "review_retry": "Retry",
     "empty_grove": "No files yet",
     "empty_preview": "Pick one to start",

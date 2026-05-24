@@ -118,7 +118,7 @@ export function VirtualFileList(): JSX.Element {
   }
 
   return (
-    <div className="flex w-full flex-1 flex-col">
+    <div className="flex w-full flex-1 flex-col overflow-hidden">
       <div className="flex border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
         <button
           type="button"

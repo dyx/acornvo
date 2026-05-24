@@ -80,6 +80,8 @@ export function FileRow({
           <span className="text-[color:var(--color-ink-4)]">· {t('library.review_pending')}</span>
         ) : file.review_status === 'failed' ? (
           <span className="text-[color:var(--color-berry)]">· {t('library.review_failed')}</span>
+        ) : file.review_status === 'done' ? (
+          <span className="text-[color:var(--color-acorn-2)]">· {t('library.reviewed')}</span>
         ) : (
           <span className="text-[color:var(--color-ink-4)]">· {t('library.unreviewed')}</span>
         )}

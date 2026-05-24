@@ -83,6 +83,7 @@
     "reviewing": "理果中",
     "review_pending": "排队中",
     "review_failed": "理果失败",
+    "reviewed": "AI 已理果",
     "review_retry": "重试",
     "empty_grove": "还没有文件",
     "empty_preview": "从列表选一篇开始",
