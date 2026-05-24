@@ -18,18 +18,26 @@ export function Browse(): JSX.Element {
   const createTab = useBrowserStore((s) => s.createTab)
   const setViewport = useBrowserStore((s) => s.setViewport)
 
+  // Auto-create the first tab
   const viewportRef = useRef<HTMLDivElement>(null)
+  
+  const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined
+  const isBlank = !activeTab || (activeTab.savedUrl === 'about:blank' && activeTab.title === '')
 
-  // Detach the native WebContentsView when leaving /browser, re-attach on return.
-  // The view is rendered by the OS compositor on top of all HTML — without this
-  // it would cover Settings, Library, and every other page.
   useEffect(() => {
-    void browserPort.showBrowserView()
+    if (!isBlank) {
+      void browserPort.showBrowserView()
+    } else {
+      void browserPort.hideBrowserView()
+    }
+  }, [isBlank])
+
+  // Unmount cleanup
+  useEffect(() => {
     return () => {
       void browserPort.hideBrowserView()
     }
   }, [])
-
   // Auto-create the first tab
   const creatingRef = useRef(false)
   useEffect(() => {
@@ -38,6 +46,8 @@ export function Browse(): JSX.Element {
       createTab().finally(() => {
         creatingRef.current = false
       })
+    }
+  }, [tabs.length, createTab])
     }
   }, [tabs.length, createTab])
 
@@ -77,9 +87,6 @@ export function Browse(): JSX.Element {
       height: rect.height
     })
   }, [bookmarksOpen, setViewport])
-
-  const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined
-  const isBlank = !activeTab || (activeTab.savedUrl === 'about:blank' && activeTab.title === '')
 
   return (
     <div className="flex h-full" data-testid="browse-page">

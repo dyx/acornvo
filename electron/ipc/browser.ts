@@ -53,8 +53,12 @@ export const browserHandlers: H = {
     const id = newTabId()
     const resolved = resolveCreateUrl(url)
     registerNewTabFromUrl(id, resolved)
-    getManager().attach(id)
-    _hiddenTabId = null
+    if (resolved !== 'about:blank') {
+      getManager().attach(id)
+      _hiddenTabId = null
+    } else {
+      _hiddenTabId = id
+    }
     logger.info('browser.createTab', { id, url: resolved })
     return { id, url: resolved }
   },
@@ -62,12 +66,32 @@ export const browserHandlers: H = {
     getManager().destroy(id)
   },
   activateTab(id) {
-    getManager().attach(id)
-    _hiddenTabId = null
+    const tab = getManager().get(id)
+    if (tab && tab.view.webContents.getURL() !== 'about:blank') {
+      getManager().attach(id)
+      _hiddenTabId = null
+    } else {
+      const attachedId = getManager().attachedTabId()
+      if (attachedId) {
+        getManager().detach(attachedId)
+      }
+      _hiddenTabId = id
+    }
   },
   navigate(id, url) {
     const tab = getManager().get(id)
     if (!tab) return
+    if (url === 'about:blank') {
+      if (getManager().attachedTabId() === id) {
+        _hiddenTabId = id
+        getManager().detach(id)
+      }
+    } else {
+      if (getManager().attachedTabId() !== id) {
+        getManager().attach(id)
+        _hiddenTabId = null
+      }
+    }
     void tab.view.webContents.loadURL(url)
   },
   reload(id) {
