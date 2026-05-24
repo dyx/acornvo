@@ -123,6 +123,13 @@ export function useBrowserHotkeys(): void {
     }
 
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    const cleanupReload = window.api?.on('hotkey:reload', () => {
+      if (activeTabId) void useBrowserStore.getState().reload(activeTabId)
+    })
+    
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      cleanupReload?.()
+    }
   }, [tabs, activeTabId, createTab, closeTab, activateTab])
 }

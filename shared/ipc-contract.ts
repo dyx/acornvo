@@ -550,7 +550,7 @@ export type IpcContract = {
     openLogsFolder: () => Promise<void>
   }
   window: {
-    themeApplied: (effective: 'light' | 'dark') => Promise<void>
+    themeApplied: (theme: 'light' | 'dark' | 'system') => Promise<void>
   }
 }
 
@@ -595,6 +595,7 @@ export type IpcEventContract = {
   'update:downloaded': { version: string }
   'update:error': { message: string }
   'crash:detected': { files: string[] }
+  'hotkey:reload': Record<string, never>
 }
 
 // --- chat namespace types (phase-16) ---

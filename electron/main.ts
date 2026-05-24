@@ -105,6 +105,22 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
+app.on('web-contents-created', (event, wc) => {
+  wc.on('before-input-event', (e, input) => {
+    if (
+      input.type === 'keyDown' &&
+      (input.control || input.meta) &&
+      input.key.toLowerCase() === 'r' &&
+      !input.shift
+    ) {
+      e.preventDefault()
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('hotkey:reload', {})
+      }
+    }
+  })
+})
+
 function applyTelemetrySetting(): void {
   let enabled = false
   try {

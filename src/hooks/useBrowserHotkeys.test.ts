@@ -75,7 +75,7 @@ describe('useBrowserHotkeys', () => {
       reset([makeTab('only')], 'only')
       renderHook(() => useBrowserHotkeys())
       fireEvent.keyDown(window, { key: 'w', metaKey: true })
-      expect(port.closeTab).toHaveBeenCalledWith('only')
+      expect(port.navigate).toHaveBeenCalledWith('only', 'about:blank')
     })
   })
 
