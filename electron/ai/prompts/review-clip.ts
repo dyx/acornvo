@@ -29,7 +29,7 @@ export const reviewClip = {
     const system = [
       '你是一位博学的中英双语阅读助手。',
       '你将收到一篇文章，输出对它的结构化评注。',
-      '输出必须匹配指定 schema，由 LangChain 结构化输出机制处理 —— 不要包含任何额外文本，不要使用 markdown code fence。',
+      '输出必须是严格的 JSON 格式，匹配指定 schema，由 LangChain 结构化输出机制处理 —— 不要包含任何额外文本，不要使用 markdown code fence。',
       'tags 必须使用 kebab-case 英文短词。summary 使用原文主语言（若中英混合则以中文为主）。'
     ].join('\n')
 
