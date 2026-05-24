@@ -19,28 +19,17 @@ export function ClipPreviewDialog(): JSX.Element | null {
   useNativeBrowserViewOcclusion(open)
 
   const [title, setTitle] = useState('')
-  const [tagsRaw, setTagsRaw] = useState('')
-  const [excerpt, setExcerpt] = useState('')
 
   const [prevRunId, setPrevRunId] = useState<string | undefined>(undefined)
 
   if (preview?.runId !== prevRunId) {
     setPrevRunId(preview?.runId)
     setTitle(preview?.title ?? '')
-    setTagsRaw((preview?.tags ?? []).join(','))
-    setExcerpt(preview?.excerpt ?? '')
   }
 
   const bodyPreview = useMemo(() => (preview?.body ?? '').slice(0, 2000), [preview?.body])
 
   if (!open || !preview) return null
-
-  function parseTags(raw: string): string[] {
-    return raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-  }
 
   return (
     <Dialog.Root open={open}>
@@ -71,27 +60,6 @@ export function ClipPreviewDialog(): JSX.Element | null {
                   {preview.author && <div className="mt-0.5 opacity-80">作者：{preview.author}</div>}
                   {preview.publishedTime && <div className="mt-0.5 opacity-80">时间：{preview.publishedTime}</div>}
                 </div>
-              </label>
-
-              <label className="text-xs">
-                {t('browser.clip.preview.tags', '标签（逗号分隔）')}
-                <input
-                  aria-label={t('browser.clip.preview.tags', '标签')}
-                  className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
-                  value={tagsRaw}
-                  onChange={(e) => setTagsRaw(e.target.value)}
-                  placeholder="ai,news"
-                />
-              </label>
-
-              <label className="text-xs">
-                {t('browser.clip.preview.excerpt', '摘要')}
-                <textarea
-                  className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
-                  rows={3}
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                />
               </label>
 
               <label className="text-xs text-[color:var(--color-ink-3)] shrink-0">
@@ -137,7 +105,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
               disabled={stage === 'saving'}
               className="rounded bg-[color:var(--color-acorn)] px-3 py-1 text-sm text-white disabled:opacity-50"
               onClick={() =>
-                void save({ runId: preview.runId, title, tags: parseTags(tagsRaw), excerpt })
+                void save({ runId: preview.runId, title, tags: [], excerpt: preview.excerpt })
               }
             >
               {t('browser.clip.preview.save', '保存')}
