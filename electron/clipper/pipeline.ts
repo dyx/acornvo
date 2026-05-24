@@ -260,8 +260,28 @@ export function createPipeline(deps: PipelineDeps) {
       // non-blocking
     }
 
-    // Enqueue ai-review-clip job (phase-14)
+    // Enqueue download-clip-images job
     const queue = getQueueBootstrap()
+    const clipImagesLocalize = settingsStore.get('browser').clipImagesLocalize
+    if (queue && clipImagesLocalize) {
+      try {
+        queue.store.enqueue(
+          'download-clip-images',
+          { clipId: clipResult.id, path },
+          { dedupeKey: `download-images:${clipResult.id}` }
+        )
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        logger().error('clipper', {
+          op: 'enqueue-download',
+          ok: false,
+          msg: 'download-clip-images enqueue failed',
+          meta: { clipId: clipResult.id, error: msg }
+        })
+      }
+    }
+
+    // Enqueue ai-review-clip job (phase-14)
     const profileId = settingsStore.get('ai').defaultProfileId
     if (queue && profileId) {
       try {

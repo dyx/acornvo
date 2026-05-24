@@ -46,7 +46,7 @@ export function BrowserTab(): JSX.Element {
         </label>
       </div>
 
-      <div className="flex items-center space-x-2" title={t('settings.common.comingSoon')}>
+      <div className="flex items-center space-x-2">
         <Switch
           id="clipImagesLocalize"
           checked={browser.clipImagesLocalize}

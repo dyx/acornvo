@@ -5,6 +5,7 @@ import { createQueueRunner, type QueueRunner } from './runner'
 import { createIndexRetryHandler } from './handlers/index-retry'
 import { aiReviewClipHandler } from './handlers/ai-review-clip'
 import { createTelemetryAggregateHandler } from './handlers/telemetry-aggregate'
+import { downloadClipImagesHandler } from './handlers/download-images'
 
 export interface QueueBootstrap {
   store: JobStore
@@ -64,6 +65,14 @@ export function bootstrapQueueRunner(
     concurrency: 1,
     minGapMs: 60_000,
     handler: createTelemetryAggregateHandler()
+  })
+
+  // Register download-clip-images handler
+  runner.register({
+    kind: 'download-clip-images',
+    concurrency: 3,
+    minGapMs: 0,
+    handler: downloadClipImagesHandler
   })
 
   bootstrap = { store, runner }
