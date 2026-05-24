@@ -589,6 +589,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           ...s.frontmatter,
           title: titleNext,
           tags: mergedTags,
+          rating: typeof s.frontmatter.ai_rating === 'number' ? s.frontmatter.ai_rating : s.frontmatter.rating,
+          category: typeof s.frontmatter.ai_category === 'string' && s.frontmatter.ai_category ? s.frontmatter.ai_category : s.frontmatter.category,
           ai_review_accepted_at: new Date().toISOString()
         },
         dirty: true

@@ -18,6 +18,8 @@ export interface FileSummary {
   category: string | null
   /** 1–5 or null when unrated (phase-15 will populate; today `null` means "unreviewed"). */
   rating: number | null
+  /** AI-suggested rating before user accepts it */
+  ai_rating?: number | null
   /** ISO datetime of `clipped_at` or null. */
   clipped_at: string | null
   /** `frontmatter_json.site` or null. */

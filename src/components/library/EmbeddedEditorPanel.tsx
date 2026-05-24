@@ -12,7 +12,7 @@ import { ConflictDialog } from '@/components/editor/ConflictDialog'
 import { cn } from '@/lib/utils'
 import { ipc } from '@/ipc/client'
 import { AiReviewBadge } from '@/components/editor/AiReviewBadge'
-import { useAiDrawer } from '@/components/editor/useAiDrawer'
+import { useAiDialog } from '@/components/editor/useAiDialog'
 
 function EditorPropertiesPanel(props: {
   onOpenAiDrawer: () => void
@@ -183,7 +183,7 @@ export function EmbeddedEditorPanel(): JSX.Element {
 
   const clipId = useEditorStore((s) => (s.state.kind === 'ready' ? (s.state.clipId ?? null) : null))
   const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
-  const { drawer, openDrawer } = useAiDrawer(clipId)
+  const { dialog, openDialog } = useAiDialog(clipId)
 
   const handleTriggerReview = async () => {
     if (clipId === null) return
@@ -253,12 +253,12 @@ export function EmbeddedEditorPanel(): JSX.Element {
       <div className="flex-none">
         <ExternalModifiedBanner />
         <ConflictDialog />
-        <EditorPropertiesPanel onOpenAiDrawer={openDrawer} onTriggerReview={handleTriggerReview} />
+        <EditorPropertiesPanel onOpenAiDrawer={openDialog} onTriggerReview={handleTriggerReview} />
       </div>
       <div className="flex-1 overflow-auto bg-[color:var(--color-bg-1)]">
         <VditorEditor />
       </div>
-      {drawer}
+      {dialog}
     </div>
   )
 }

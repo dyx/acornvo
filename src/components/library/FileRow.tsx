@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FileSummary } from '@shared/ipc-contract'
 import { cn } from '@/lib/utils'
+import { Star } from 'lucide-react'
 
 export interface FileRowProps {
   file: FileSummary
@@ -53,38 +54,47 @@ export function FileRow({
           />
         ) : null}
       </div>
-      <div className="mb-1 flex items-center gap-2 truncate font-mono text-[10.5px] text-[color:var(--color-ink-4)]">
-        {file.path}
-      </div>
       <div className="flex items-center gap-1.5 font-mono text-[10.5px] text-[color:var(--color-ink-3)]">
-        {file.rating !== null ? (
-          <span className="flex gap-px" aria-label={`rating ${file.rating}`}>
+        {(file.rating !== null || file.ai_rating != null) && (
+          <span className="flex gap-0.5" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <span
+              <Star
                 key={i}
                 className={cn(
-                  'h-1.5 w-1.5 rounded-[1px] border-[0.5px] border-[color:var(--color-line)]',
-                  i < (file.rating ?? 0)
-                    ? 'bg-[color:var(--color-acorn)]'
-                    : 'bg-[color:var(--color-paper-3)]'
+                  'h-3.5 w-3.5',
+                  i < ((file.rating ?? file.ai_rating) ?? 0)
+                    ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
+                    : 'text-[color:var(--color-paper-3)]',
+                  file.rating === null && 'opacity-60'
                 )}
               />
             ))}
           </span>
-        ) : file.review_status === 'running' ? (
+        )}
+        
+        {file.review_status === 'running' ? (
           <span className="flex items-center gap-1 text-[color:var(--color-acorn-2)]">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-acorn)]" />
             {t('library.reviewing')}
           </span>
         ) : file.review_status === 'pending' ? (
-          <span className="text-[color:var(--color-ink-4)]">· {t('library.review_pending')}</span>
+          <span className="text-[color:var(--color-ink-4)]">
+            {file.rating !== null || file.ai_rating != null ? '· ' : ''}{t('library.review_pending')}
+          </span>
         ) : file.review_status === 'failed' ? (
-          <span className="text-[color:var(--color-berry)]">· {t('library.review_failed')}</span>
-        ) : file.review_status === 'done' ? (
-          <span className="text-[color:var(--color-acorn-2)]">· {t('library.reviewed')}</span>
-        ) : (
-          <span className="text-[color:var(--color-ink-4)]">· {t('library.unreviewed')}</span>
-        )}
+          <span className="text-[color:var(--color-berry)]">
+            {file.rating !== null || file.ai_rating != null ? '· ' : ''}{t('library.review_failed')}
+          </span>
+        ) : file.review_status === 'done' && file.rating === null ? (
+          <span className="text-[color:var(--color-acorn-2)]">
+            {file.ai_rating != null ? '· ' : ''}{t('library.reviewed')}
+          </span>
+        ) : file.review_status === 'none' && file.rating === null ? (
+          <span className="text-[color:var(--color-ink-4)]">
+            {file.ai_rating != null ? '· ' : ''}{t('library.unreviewed')}
+          </span>
+        ) : null}
+
         <span>·</span>
         <span>{formatClipped(file.clipped_at)}</span>
       </div>

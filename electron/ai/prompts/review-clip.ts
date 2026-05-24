@@ -17,7 +17,9 @@ export const AiReviewSchema = z.object({
   summary: z.string().min(1).describe('150 字以内的中文摘要'),
   suggestedTitle: z.string().min(1).describe('一个更精炼的标题；若原标题足够好可复用'),
   tags: z.array(z.string().describe('kebab-case lowercase')).min(3).max(8),
-  keyQuotes: z.array(z.string().min(1)).min(1).max(3)
+  keyQuotes: z.array(z.string().min(1)).min(1).max(3),
+  rating: z.number().int().min(1).max(5).optional().describe('1到5的评分，基于文章的质量和信息密度'),
+  category: z.string().optional().describe('文章的分类，例如：技术、随笔、新闻等')
 })
 
 export type AiReviewOutput = z.infer<typeof AiReviewSchema>
@@ -42,7 +44,9 @@ export const reviewClip = {
       '1. `summary`：150 字以内的摘要。',
       '2. `suggestedTitle`：一个更精炼、信息密度更高的标题（若原标题已足够好，可复用）。',
       '3. `tags`：3-8 个 kebab-case 英文短标签（如 "deep-learning", "transformer"）。',
-      '4. `keyQuotes`：最重要的 1-3 句原文引用（保持原文语言）。'
+      '4. `keyQuotes`：最重要的 1-3 句原文引用（保持原文语言）。',
+      '5. `rating`：1 到 5 之间的整数评分，评估文章的质量和信息密度。',
+      '6. `category`：一个简短的中文分类词汇（如“技术”、“随笔”、“新闻”等）。'
     ].join('\n')
 
     return { system, user }

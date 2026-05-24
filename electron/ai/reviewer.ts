@@ -195,6 +195,8 @@ export async function reviewClip(
       keyQuotes: Array.isArray(md.frontmatter.ai_key_quotes)
         ? (md.frontmatter.ai_key_quotes as string[])
         : [],
+      rating: typeof md.frontmatter.ai_rating === 'number' ? md.frontmatter.ai_rating : undefined,
+      category: typeof md.frontmatter.ai_category === 'string' ? md.frontmatter.ai_category : undefined,
       reviewedAt: String(md.frontmatter.ai_reviewed_at)
     }
     return { result: cached, cacheHit: true }
@@ -264,6 +266,8 @@ export async function reviewClip(
     suggestedTitle: parsed.suggestedTitle,
     tags: parsed.tags,
     keyQuotes: parsed.keyQuotes,
+    rating: parsed.rating,
+    category: parsed.category,
     reviewedAt: new Date().toISOString()
   }
 
@@ -277,6 +281,8 @@ export async function reviewClip(
     ai_suggested_title: result.suggestedTitle,
     ai_tags: result.tags,
     ai_key_quotes: result.keyQuotes,
+    ai_rating: result.rating,
+    ai_category: result.category,
     ai_reviewed_at: result.reviewedAt
   }
 

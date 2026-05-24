@@ -1,14 +1,14 @@
-import { useState } from 'react'
 import { useEditorStore } from '@/stores/editor'
 import { ipc } from '@/ipc/client'
-import { AiReviewDrawer } from './AiReviewDrawer'
+import { AiReviewDialog } from './AiReviewDialog'
 
 interface Props {
+  open: boolean
   clipId: number | null
   onClose: () => void
 }
 
-export function AiReviewDrawerContainer({ clipId, onClose }: Props) {
+export function AiReviewDialogContainer({ open, clipId, onClose }: Props) {
   const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
 
   const acceptAiReview = useEditorStore((s) => s.acceptAiReview)
@@ -16,21 +16,31 @@ export function AiReviewDrawerContainer({ clipId, onClose }: Props) {
   const mergeAiTags = useEditorStore((s) => s.mergeAiTags)
   const rejectAiReview = useEditorStore((s) => s.rejectAiReview)
   const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
+  const flushSave = useEditorStore((s) => s.flushSave)
 
   if (!fm) return null
 
   return (
-    <AiReviewDrawer
+    <AiReviewDialog
+      open={open}
       frontmatter={fm}
       clipId={clipId}
-      onAcceptAll={() => {
+      onAcceptAll={async () => {
         acceptAiReview()
+        await flushSave()
         onClose()
       }}
-      onUseTitle={() => applyAiSuggestedTitle()}
-      onMergeTags={() => mergeAiTags()}
-      onReject={() => {
+      onUseTitle={async () => {
+        applyAiSuggestedTitle()
+        await flushSave()
+      }}
+      onMergeTags={async () => {
+        mergeAiTags()
+        await flushSave()
+      }}
+      onReject={async () => {
         rejectAiReview()
+        await flushSave()
         onClose()
       }}
       onRerun={async () => {

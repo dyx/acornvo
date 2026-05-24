@@ -129,6 +129,8 @@
       "summary": "摘要",
       "tags": "标签",
       "quotes": "关键引用",
+      "rating": "建议评分",
+      "category": "建议分类",
       "useAsTitle": "用作标题",
       "mergeTags": "合并到标签",
       "accept": "一键接受",

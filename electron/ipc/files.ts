@@ -28,6 +28,7 @@ interface ListRow {
   title: string | null
   category: string | null
   rating: number | null
+  ai_rating: number | null
   clipped_at: string | null
   site: string | null
   has_summary: number
@@ -61,6 +62,7 @@ async function list(
       f.title,
       f.category,
       f.rating,
+      json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
       f.clipped_at,
       json_extract(f.frontmatter_json, '$.site') AS site,
       CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
@@ -131,6 +133,7 @@ async function list(
       title: r.title,
       category: r.category,
       rating: r.rating,
+      ai_rating: r.ai_rating,
       clipped_at: r.clipped_at,
       site: r.site,
       has_summary: hasSummary,
@@ -153,7 +156,9 @@ async function get(path: string): Promise<{
   try {
     row = db
       .prepare(
-        `SELECT f.path, f.title, f.category, f.rating, f.clipped_at,
+        `SELECT f.path, f.title, f.category, f.rating, 
+                json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
+                f.clipped_at,
                 json_extract(f.frontmatter_json, '$.site') AS site,
                 CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
                 GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat,
@@ -194,6 +199,7 @@ async function get(path: string): Promise<{
     title: row.title,
     category: row.category,
     rating: row.rating,
+    ai_rating: row.ai_rating,
     clipped_at: row.clipped_at,
     site: row.site,
     has_summary: hasSummary,
