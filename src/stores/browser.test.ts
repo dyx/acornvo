@@ -150,9 +150,9 @@ describe('browser store — actions', () => {
     expect(port.closeTab).toHaveBeenCalledWith('b')
   })
 
-  it('closeTab on the last remaining tab triggers a fresh blank tab', async () => {
+  it('closeTab on the last remaining tab resets its url to about:blank', async () => {
     const port = makePort({
-      createTab: vi.fn(async () => ({ id: 'fresh', url: 'about:blank' }))
+      navigate: vi.fn(async () => {})
     })
     setBrowserPort(port)
     useBrowserStore.setState({
@@ -160,14 +160,14 @@ describe('browser store — actions', () => {
         {
           id: 'only',
           url: 'https://x',
-          title: '',
-          favicon: null,
+          title: 'My Title',
+          favicon: 'favicon.ico',
           loading: false,
           canGoBack: false,
           canGoForward: false,
           suspended: false,
           savedUrl: 'https://x',
-          isClipped: false
+          isClipped: true
         }
       ],
       activeTabId: 'only'
@@ -177,7 +177,13 @@ describe('browser store — actions', () => {
 
     const s = useBrowserStore.getState()
     expect(s.tabs).toHaveLength(1)
-    expect(s.tabs[0].id).toBe('fresh')
+    expect(s.tabs[0].id).toBe('only')
+    expect(s.tabs[0].url).toBe('about:blank')
+    expect(s.tabs[0].savedUrl).toBe('about:blank')
+    expect(s.tabs[0].title).toBe('')
+    expect(s.tabs[0].favicon).toBeNull()
+    expect(s.tabs[0].isClipped).toBe(false)
+    expect(port.navigate).toHaveBeenCalledWith('only', 'about:blank')
   })
 
   it('activateTab calls port.activateTab and updates state', async () => {
