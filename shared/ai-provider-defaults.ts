@@ -1,19 +1,19 @@
 import type { AiProviderKind } from './settings-types'
 
 export interface ProviderDefaultConfig {
-  model: string
+  models: string[]
   baseUrl?: string
 }
 
 export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderDefaultConfig>> = {
   openai: {
-    model: 'gpt-4o-mini'
+    models: ['gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1-preview']
   },
   anthropic: {
-    model: 'claude-3-5-sonnet-latest'
+    models: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest']
   },
   deepseek: {
-    model: 'deepseek-chat',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
     baseUrl: 'https://api.deepseek.com'
   }
 }

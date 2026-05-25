@@ -12,6 +12,7 @@ import type {
 import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import {
   Select,
@@ -46,7 +47,7 @@ function initialState(profile: AiProviderProfile | null): FormState {
       name: '',
       provider: 'openai',
       baseUrl: defs?.baseUrl ?? '',
-      model: defs?.model ?? '',
+      model: defs?.models?.[0] ?? '',
       temperature: '0.7',
       topP: '1.0',
       maxTokens: '',
@@ -84,7 +85,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
       if (!profile) {
         const defs = AI_PROVIDER_DEFAULTS[p]
         if (defs) {
-          next.model = defs.model
+          next.model = defs.models?.[0] ?? ''
           next.baseUrl = defs.baseUrl ?? ''
         } else {
           next.model = ''
@@ -197,6 +198,20 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
           <div className="space-y-1">
             <span className="block font-medium">{t('settings.ai.model')}</span>
             <Input value={form.model} onChange={(e) => set('model', e.target.value)} />
+            {AI_PROVIDER_DEFAULTS[form.provider]?.models && AI_PROVIDER_DEFAULTS[form.provider]!.models.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {AI_PROVIDER_DEFAULTS[form.provider]!.models.map((m) => (
+                  <Badge
+                    key={m}
+                    variant={form.model === m ? 'default' : 'secondary'}
+                    className="cursor-pointer font-normal"
+                    onClick={() => set('model', m)}
+                  >
+                    {m}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
           <div className="space-y-1">
             <span className="block font-medium">
