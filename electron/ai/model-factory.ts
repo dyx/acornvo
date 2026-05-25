@@ -4,7 +4,6 @@ import { ChatOpenRouter } from '@langchain/openrouter'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatOllama } from '@langchain/ollama'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
-import { createHash } from 'node:crypto'
 import { logger } from '../services/logger'
 
 export interface ResolvedProfile {
@@ -17,51 +16,7 @@ export interface ResolvedProfile {
   maxTokens?: number
 }
 
-interface CacheEntry {
-  key: string
-  model: BaseChatModel
-}
-
-const MAX_CACHE = 8
-const cache: CacheEntry[] = []
-
-function cacheKey(p: ResolvedProfile): string {
-  const apiKeyHash = p.apiKey
-    ? createHash('sha256').update(p.apiKey).digest('hex').slice(0, 12)
-    : 'noauth'
-  return `${p.id}::${p.provider}::${p.model}::${p.baseUrl ?? ''}::${apiKeyHash}`
-}
-
-function lookup(key: string): BaseChatModel | undefined {
-  const idx = cache.findIndex((e) => e.key === key)
-  if (idx === -1) return undefined
-  const [entry] = cache.splice(idx, 1)
-  cache.push(entry)
-  return entry.model
-}
-
-function insert(key: string, model: BaseChatModel): void {
-  cache.push({ key, model })
-  if (cache.length > MAX_CACHE) cache.shift()
-}
-
-export function invalidateByProfile(profileId: string): void {
-  for (let i = cache.length - 1; i >= 0; i--) {
-    if (cache[i].key.startsWith(`${profileId}::`)) cache.splice(i, 1)
-  }
-}
-
 export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
-  const key = cacheKey(profile)
-  const hit = lookup(key)
-  if (hit) {
-    logger.debug('[buildChatModel] cache hit', {
-      provider: profile.provider,
-      model: profile.model,
-      cacheSize: cache.length
-    })
-    return hit
-  }
 
   logger.info('[buildChatModel] constructing new model', {
     provider: profile.provider,
@@ -146,12 +101,5 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
       throw new Error(`unsupported provider: ${_exhaust as string}`)
     }
   }
-  insert(key, model)
-  logger.debug('[buildChatModel] model cached', { cacheSize: cache.length })
   return model
-}
-
-// Test helper — only used by model-factory.test.ts.
-;(buildChatModel as unknown as { __clearCache: () => void }).__clearCache = () => {
-  cache.length = 0
 }

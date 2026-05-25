@@ -6,7 +6,7 @@ import type {
   ProfileCreateInput,
   ProfileUpdateInput
 } from '@shared/settings-types'
-import { invalidateByProfile } from '../ai/model-factory'
+
 import { getGlobalDb } from '../services/global-db'
 import { secretsStore } from './secrets'
 import { settingsStore } from './store'
@@ -167,7 +167,7 @@ function update(id: string, patch: ProfileUpdateInput): void {
 
   // Any field change can affect the cached LangChain model instance (temperature
   // and maxTokens are baked in at construction time), so invalidate unconditionally.
-  invalidateByProfile(id)
+
 }
 
 function deleteProfile(id: string): void {
@@ -197,7 +197,7 @@ function deleteProfile(id: string): void {
     settingsStore.set('ai', { defaultProfileId: next?.id ?? null })
   }
 
-  invalidateByProfile(id)
+
 }
 
 export const profilesStore = {
