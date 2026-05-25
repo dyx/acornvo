@@ -68,7 +68,7 @@ export function createChatHandlers(deps: ChatDeps) {
 
   async function fireResume(pending: PendingInterrupt): Promise<void> {
     const decisions: AgentDecision[] = pending.callIds.map(
-      (cid) => (pending.decisions.get(cid) as AgentDecision) ?? { type: 'approve' }
+      (cid) => (pending.decisions.get(cid) as AgentDecision) ?? { type: 'accept' }
     )
     for (const cid of pending.callIds) pendingInterrupts.delete(cid)
     const profile = resolveProfile(pending.profileId)
@@ -264,12 +264,9 @@ export function createChatHandlers(deps: ChatDeps) {
         opts?.editedArgs !== undefined
           ? {
               type: 'edit',
-              editedAction: {
-                name: 'update_frontmatter',
-                args: opts.editedArgs as Record<string, unknown>
-              }
+              args: opts.editedArgs as Record<string, unknown>
             }
-          : { type: 'approve' }
+          : { type: 'accept' }
       pending.decisions.set(callId, decision)
       if (pending.decisions.size < pending.callIds.length) {
         // Wait for the other actions in this interrupt to be resolved.

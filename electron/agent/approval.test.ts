@@ -58,7 +58,7 @@ function baseArgs(
 }
 
 describe('resumeAgent — HITL decision matrix', () => {
-  it('approve → tool.result(ok) → done; stream invoked with Command(resume:[{approve}])', async () => {
+  it('accept → tool.result(ok) → done; stream invoked with Command(resume:[{accept}])', async () => {
     const events: AgentEvent[] = []
     const tool = new ToolMessage({
       content: JSON.stringify({ ok: true, data: { path: 'a.md' } }),
@@ -75,11 +75,11 @@ describe('resumeAgent — HITL decision matrix', () => {
       ['updates', { model: { messages: [final] } }]
     ])
 
-    await resumeAgent(baseArgs(agent, [{ type: 'approve' }], events))
+    await resumeAgent(baseArgs(agent, [{ type: 'accept' }], events))
 
     expect(agent.stream).toHaveBeenCalledTimes(1)
     const input = agent.stream.mock.calls[0][0] as { resume: { decisions: unknown[] } }
-    expect(input.resume.decisions).toEqual([{ type: 'approve' }])
+    expect(input.resume.decisions).toEqual([{ type: 'accept' }])
     expect(events.some((e) => e.type === 'tool.result')).toBe(true)
     expect(events[events.length - 1].type).toBe('done')
   })
@@ -91,10 +91,10 @@ describe('resumeAgent — HITL decision matrix', () => {
       name: 'update_frontmatter',
       args: { path: 'a.md', patch: { rating: 5 }, reason: 'r' }
     }
-    await resumeAgent(baseArgs(agent, [{ type: 'edit', editedAction: edited }], events))
+    await resumeAgent(baseArgs(agent, [{ type: 'edit', args: edited.args }], events))
 
     const input = agent.stream.mock.calls[0][0] as { resume: { decisions: unknown[] } }
-    expect(input.resume.decisions[0]).toMatchObject({ type: 'edit', editedAction: edited })
+    expect(input.resume.decisions[0]).toMatchObject({ type: 'edit', args: edited.args })
   })
 
   it('reject → stream input carries reject decision; tool.result(ok:false) surfaces if agent returns one', async () => {
@@ -123,7 +123,7 @@ describe('resumeAgent — HITL decision matrix', () => {
     const ctl = new AbortController()
     ctl.abort()
     const agent = makeAgent([['updates', { tools: { messages: [] } }]])
-    await resumeAgent(baseArgs(agent, [{ type: 'approve' }], events, ctl.signal))
+    await resumeAgent(baseArgs(agent, [{ type: 'accept' }], events, ctl.signal))
     expect(events.some((e) => e.type === 'canceled')).toBe(true)
     expect(events.some((e) => e.type === 'done')).toBe(false)
   })
@@ -152,7 +152,7 @@ describe('resumeAgent — HITL decision matrix', () => {
       ]
     ])
     const pendingInterrupts = new Map<string, PendingInterrupt>()
-    const args = baseArgs(agent, [{ type: 'approve' }], events)
+    const args = baseArgs(agent, [{ type: 'accept' }], events)
     await resumeAgent({ ...args, pendingInterrupts, profileId: 'p1' })
 
     expect(pendingInterrupts.get('tc-2')?.interruptId).toBe('int-2')

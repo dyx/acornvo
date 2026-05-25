@@ -273,8 +273,8 @@ export async function runAgent({
 }
 
 export type AgentDecision =
-  | { type: 'approve' }
-  | { type: 'edit'; editedAction: { name: string; args: Record<string, unknown> } }
+  | { type: 'accept' }
+  | { type: 'edit'; args: Record<string, unknown> }
   | { type: 'reject'; message?: string }
 
 export interface ResumeAgentArgs {
