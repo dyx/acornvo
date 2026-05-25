@@ -9,6 +9,7 @@ import type {
   ProfileCreateInput,
   ProfileUpdateInput
 } from '@shared/settings-types'
+import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -40,11 +41,12 @@ interface FormState {
 
 function initialState(profile: AiProviderProfile | null): FormState {
   if (!profile) {
+    const defs = AI_PROVIDER_DEFAULTS['openai']
     return {
       name: '',
       provider: 'openai',
-      baseUrl: '',
-      model: '',
+      baseUrl: defs?.baseUrl ?? '',
+      model: defs?.model ?? '',
       temperature: '0.7',
       topP: '1.0',
       maxTokens: '',
@@ -73,6 +75,24 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]): void {
     setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  function handleProviderChange(value: string) {
+    const p = value as AiProviderKind
+    setForm((f) => {
+      const next = { ...f, provider: p }
+      if (!profile) {
+        const defs = AI_PROVIDER_DEFAULTS[p]
+        if (defs) {
+          next.model = defs.model
+          next.baseUrl = defs.baseUrl ?? ''
+        } else {
+          next.model = ''
+          next.baseUrl = ''
+        }
+      }
+      return next
+    })
   }
 
   async function onSave(): Promise<void> {
@@ -150,7 +170,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
             <span className="block font-medium">{t('settings.ai.provider')}</span>
             <Select
               value={form.provider}
-              onValueChange={(value) => set('provider', value as AiProviderKind)}
+              onValueChange={handleProviderChange}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
