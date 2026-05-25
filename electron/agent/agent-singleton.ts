@@ -1,4 +1,4 @@
-import { createAgent, humanInTheLoopMiddleware } from 'langchain'
+import { createAgent, humanInTheLoopMiddleware, summarizationMiddleware } from 'langchain'
 import { SqliteSaver } from '@langchain/langgraph-checkpoint-sqlite'
 import type { BaseCheckpointSaver } from '@langchain/langgraph'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
@@ -39,17 +39,24 @@ export function getAgentBuilder(): SingletonHandle {
 
   const hitl = humanInTheLoopMiddleware({
     interruptOn: {
-      update_frontmatter: { allowAccept: true, allowEdit: true, allowReject: true }
+      update_frontmatter: { allowedDecisions: ['approve', 'edit', 'reject'] }
     }
   })
 
   handle = {
     buildForProfile: (profile: ResolvedProfile) => {
       const model = buildChatModel(profile) as unknown as BaseChatModel
+      
+      const summarizer = summarizationMiddleware({
+        model,
+        trigger: { messages: 20 },
+        keep: { messages: 6 }
+      })
+      
       return createAgent({
         model,
         tools: agentTools as any,
-        middleware: [hitl],
+        middleware: [hitl, summarizer],
         checkpointer: cp
       }) as any
     }

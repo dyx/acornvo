@@ -4,8 +4,6 @@ import { getAgentBuilder } from './agent-singleton'
 import { getProfileDecryptedKey } from '../settings/profile-key'
 import { createStreamWriter, type RendererTarget } from './streamWriter'
 import { emitInterrupt, type InterruptShape, type TranslatorDeps } from './stream-translator'
-import { pendingInterrupts } from '../ipc/chat'
-import type { PendingInterrupt } from './runner'
 import type { AgentEvent, SessionMessage } from '../../shared/agent-types'
 
 interface ThreadCandidate {
@@ -111,18 +109,6 @@ async function recoverOne(
   for (const task of state.tasks) {
     for (const ir of task.interrupts ?? []) {
       emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds)
-      const reqs = ir.value?.actionRequests ?? ir.actionRequests ?? ir.action_requests ?? []
-      const pending: PendingInterrupt = {
-        sessionId: candidate.sessionId,
-        profileId: candidate.profileId,
-        interruptId: String(ir.id ?? ''),
-        callIds: reqs.map((_, i) => lastAssistantToolCallIds[i] ?? ''),
-        decisions: new Map(),
-        modelName: profile.model
-      }
-      for (const cid of pending.callIds) {
-        if (cid) pendingInterrupts.set(cid, pending)
-      }
       recovered++
     }
   }

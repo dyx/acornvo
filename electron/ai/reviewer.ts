@@ -228,7 +228,7 @@ export async function reviewClip(
     // openai-compatible providers (e.g. DeepSeek) often don't support
     // response_format: { type: "json_schema" } (Structured Outputs).
     // Fall back to jsonMode which uses the widely-supported { type: "json_object" }.
-    const structuredMethod = profile.provider === 'openai-compatible' ? 'jsonMode' as const : undefined
+    const structuredMethod = (profile.provider === 'openai-compatible' || profile.provider === 'openrouter' || profile.provider === 'deepseek') ? 'jsonMode' as const : undefined
     const structured = chatModel.withStructuredOutput(AiReviewSchema, {
       includeRaw: true,
       ...(structuredMethod && { method: structuredMethod })

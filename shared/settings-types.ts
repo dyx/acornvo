@@ -10,7 +10,7 @@
 export type Locale = 'zh-CN' | 'en-US'
 export type Theme = 'system' | 'light' | 'dark'
 export type SearchEngine = 'google' | 'bing' | 'duckduckgo' | 'baidu'
-export type AiProviderKind = 'openai' | 'anthropic' | 'ollama' | 'openai-compatible'
+export type AiProviderKind = 'openai' | 'anthropic' | 'ollama' | 'openai-compatible' | 'openrouter' | 'deepseek'
 
 export interface GeneralSettings {
   locale: Locale

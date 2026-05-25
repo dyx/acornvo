@@ -1,4 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai'
+import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatOpenRouter } from '@langchain/openrouter'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatOllama } from '@langchain/ollama'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
@@ -7,7 +9,7 @@ import { logger } from '../services/logger'
 
 export interface ResolvedProfile {
   id: string
-  provider: 'openai' | 'openai-compatible' | 'anthropic' | 'ollama'
+  provider: 'openai' | 'openai-compatible' | 'anthropic' | 'ollama' | 'openrouter' | 'deepseek'
   model: string
   apiKey: string | null
   baseUrl?: string
@@ -77,13 +79,46 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
   switch (profile.provider) {
     case 'openai':
     case 'openai-compatible':
-      model = new ChatOpenAI({
+      if (profile.model.toLowerCase().includes('deepseek')) {
+        model = new ChatDeepSeek({
+          model: profile.model,
+          apiKey: profile.apiKey ?? '',
+          temperature,
+          maxTokens,
+          timeout: 120_000,
+          maxRetries: 2,
+          configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+        }) as unknown as BaseChatModel
+      } else {
+        model = new ChatOpenAI({
+          model: profile.model,
+          apiKey: profile.apiKey ?? '',
+          temperature,
+          maxTokens,
+          timeout: 120_000,
+          maxRetries: 2,
+          configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+        }) as unknown as BaseChatModel
+      }
+      break
+    case 'openrouter':
+      model = new ChatOpenRouter({
         model: profile.model,
         apiKey: profile.apiKey ?? '',
         temperature,
         maxTokens,
-        timeout: 60_000,
-        maxRetries: 0,
+        maxRetries: 2,
+        baseURL: profile.baseUrl ?? 'https://openrouter.ai/api/v1'
+      }) as unknown as BaseChatModel
+      break
+    case 'deepseek':
+      model = new ChatDeepSeek({
+        model: profile.model,
+        apiKey: profile.apiKey ?? '',
+        temperature,
+        maxTokens,
+        timeout: 120_000,
+        maxRetries: 2,
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
       }) as unknown as BaseChatModel
       break
@@ -93,8 +128,8 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         apiKey: profile.apiKey ?? '',
         temperature,
         maxTokens,
-        timeout: 60_000,
-        maxRetries: 0
+        timeout: 120_000,
+        maxRetries: 2
       }) as unknown as BaseChatModel
       break
     case 'ollama':
@@ -103,7 +138,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         baseUrl: profile.baseUrl ?? 'http://localhost:11434',
         temperature,
         numPredict: maxTokens,
-        maxRetries: 0
+        maxRetries: 2
       }) as unknown as BaseChatModel
       break
     default: {

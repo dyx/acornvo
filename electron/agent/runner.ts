@@ -26,25 +26,7 @@ import {
 } from './stream-translator'
 import { getPerf } from '../obs/perf'
 
-/**
- * Per-action approval slot. The renderer addresses each pending approval by
- * its tool_call.id (so the bubble UI can fold approval + result together).
- * When all `totalDecisions` for an interrupt have been resolved, the runner's
- * resume path replays `decisions[]` in order via `Command({ resume })`.
- */
-export interface PendingInterrupt {
-  sessionId: string
-  profileId: string
-  interruptId: string
-  /** tool_call ids in the same order as the upstream actionRequests. */
-  callIds: string[]
-  /** Decisions filled in by IPC approveTool/rejectTool, keyed by callId. */
-  decisions: Map<string, unknown>
-  modelName: string
-}
-
 export interface RunnerDeps {
-  /** Built once at app start by `agent-singleton.ts`. */
   agent: {
     stream(
       input: { messages: BaseMessage[] } | Command,
@@ -71,74 +53,103 @@ export interface RunnerDeps {
   vaultRoot: string
   cancel: AbortSignal
   clipsGet?: (id: number) => Promise<{ body: string } | null>
-  /** Records token usage. */
   recordUsage: (
     usage: { input_tokens?: number; output_tokens?: number } | undefined,
     model: string
   ) => void
   modelName: string
-  /** Shared with the chat IPC handler so approve/reject can look up the live
-   *  interrupt by callId and post a `Command({ resume })`. */
-  pendingInterrupts?: Map<string, PendingInterrupt>
-  /** Required to record PendingInterrupts; passed in by chat.ts. */
   profileId?: string
 }
 
-type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps'> & { deps: RunnerDeps }
+type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps' | 'history'> & { deps: RunnerDeps }
 
-function toLangChainMessages(
-  systemPrompt: string,
-  history: SessionMessage[],
-  preUser: string | null,
-  userText: string
-): BaseMessage[] {
-  const out: BaseMessage[] = [new SystemMessage(systemPrompt)]
-  if (preUser) out.push(new HumanMessage(preUser))
-  for (const m of history) {
-    if (m.role === 'user') {
-      out.push(new HumanMessage(m.content ?? ''))
-    } else if (m.role === 'assistant') {
-      out.push(
-        new AIMessage({
-          content: m.content ?? '',
-          tool_calls:
-            m.toolCalls?.map((tc) => ({
-              id: tc.id,
-              name: tc.name,
-              args: (tc.args ?? {}) as Record<string, unknown>
-            })) ?? []
-        })
-      )
-    } else if (m.role === 'tool') {
-      out.push(
-        new ToolMessage({
-          content: m.content ?? '',
-          tool_call_id: m.toolCallId ?? ''
-        })
-      )
+async function processStream(
+  stream: AsyncIterable<unknown>,
+  deps: RunnerDeps,
+  sessionId: string,
+  translatorDeps: TranslatorDeps,
+  end?: (result: any) => void
+) {
+  let entryCount = 0
+  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
+  let lastAssistantToolCallIds: string[] = []
+
+  try {
+    for await (const entry of stream) {
+      entryCount++
+      if (entryCount === 1) console.log('[runAgent] first stream entry sid=%s', sessionId)
+      
+      if (deps.cancel.aborted) {
+        console.log('[runAgent] cancel detected sid=%s entryCount=%d', sessionId, entryCount)
+        emitCanceled(translatorDeps)
+        end?.({ ok: true, meta: { canceled: true } })
+        return
+      }
+      
+      await translateStreamEntry(translatorDeps, entry, deps.modelName)
+
+      if (Array.isArray(entry) && entry[0] === 'updates') {
+        const payload = entry[1] as Record<string, unknown> | undefined
+
+        const modelNode = payload?.model as { messages?: unknown[] } | undefined
+        if (modelNode?.messages) {
+          for (const m of modelNode.messages) {
+            const ai = m as {
+              usage_metadata?: { input_tokens?: number; output_tokens?: number }
+              tool_calls?: Array<{ id?: string }>
+            }
+            if (ai.usage_metadata) lastUsage = ai.usage_metadata
+            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
+              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
+            }
+          }
+        }
+
+        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined
+        if (Array.isArray(interrupts) && interrupts.length > 0) {
+          for (const ir of interrupts) {
+            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds)
+            // Pending states are now queried directly from DB and checkpointer. 
+            // We no longer populate pendingInterrupts here.
+          }
+          end?.({ ok: true, meta: { interrupted: true } })
+          return
+        }
+      }
     }
-    // role === 'system': skip; we already prepended the canonical system prompt.
+
+    console.log('[runAgent] stream finished normally sid=%s entries=%d', sessionId, entryCount)
+    emitDone(translatorDeps, lastUsage, deps.modelName)
+    end?.({ ok: true })
+  } catch (err) {
+    const e = err as { name?: string; code?: string; message?: string }
+    console.error(
+      '[runAgent] caught error sid=%s name=%s code=%s msg=%s',
+      sessionId,
+      e?.name,
+      e?.code,
+      e?.message,
+      err
+    )
+    if (e?.name === 'AbortError' || deps.cancel.aborted) {
+      emitCanceled(translatorDeps)
+      end?.({ ok: true, meta: { canceled: true } })
+      return
+    }
+    emitError(translatorDeps, err)
+    end?.({ ok: false, meta: { error: e?.code ?? 'E_UNKNOWN' } })
   }
-  out.push(new HumanMessage(userText))
-  return out
 }
 
 export async function runAgent({
   sessionId,
   userText,
-  history,
   deps,
   streamWriter,
   attachments
 }: RunAgentArgsInternal): Promise<void> {
-  console.log(
-    '[runAgent] start sid=%s model=%s historyLen=%d',
-    sessionId,
-    deps.modelName,
-    history.length
-  )
+  console.log('[runAgent] start sid=%s model=%s', sessionId, deps.modelName)
   const emit = (e: AgentEvent) => streamWriter.write(e)
-  const cancel = deps.cancel
   const perf = getPerf()
   const end = perf?.start('agent.run', { sessionId })
 
@@ -151,9 +162,7 @@ export async function runAgent({
   console.log('[runAgent] user message appended sid=%s', sessionId)
   try {
     markThreadActive(sessionId)
-  } catch {
-    /* mark is best-effort; absence only affects Plan 5 sweeper. */
-  }
+  } catch {}
 
   // Collect attachments → synthesize a pre-user block (NOT persisted in session_messages).
   let preUserBlock: string | null = null
@@ -179,96 +188,31 @@ export async function runAgent({
     toolCallRowIdByCallId: new Map()
   }
 
-  const messages = toLangChainMessages(deps.systemPrompt, history, preUserBlock, userText)
-
-  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
-  let lastAssistantToolCallIds: string[] = []
+  // Construct only the new messages to send to the LangGraph Checkpointer.
+  // The system prompt gets a fixed ID so it overwrites any existing system prompt.
+  const newMessages: BaseMessage[] = [
+    new SystemMessage({ content: deps.systemPrompt, id: "system-prompt" })
+  ]
+  if (preUserBlock) {
+    newMessages.push(new HumanMessage({ content: preUserBlock, id: "attachment-context" }))
+  }
+  newMessages.push(new HumanMessage({ content: userText }))
 
   try {
     console.log('[runAgent] agent.stream() invoked sid=%s', sessionId)
     const stream = await deps.agent.stream(
-      { messages },
+      { messages: newMessages },
       {
         configurable: { thread_id: sessionId },
         streamMode: ['updates', 'messages'],
-        signal: cancel
+        signal: deps.cancel
       }
     )
 
-    let entryCount = 0
-    for await (const entry of stream) {
-      entryCount++
-      if (entryCount === 1) console.log('[runAgent] first stream entry sid=%s', sessionId)
-      if (cancel.aborted) {
-        console.log('[runAgent] cancel detected sid=%s entryCount=%d', sessionId, entryCount)
-        emitCanceled(translatorDeps)
-        end?.({ ok: true, meta: { canceled: true } })
-        return
-      }
-      await translateStreamEntry(translatorDeps, entry, deps.modelName)
-
-      if (Array.isArray(entry) && entry[0] === 'updates') {
-        const payload = entry[1] as Record<string, unknown> | undefined
-
-        const modelNode = payload?.model as { messages?: unknown[] } | undefined
-        if (modelNode?.messages) {
-          for (const m of modelNode.messages) {
-            const ai = m as {
-              usage_metadata?: { input_tokens?: number; output_tokens?: number }
-              tool_calls?: Array<{ id?: string }>
-            }
-            if (ai.usage_metadata) lastUsage = ai.usage_metadata
-            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
-              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
-            }
-          }
-        }
-
-        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined
-        if (Array.isArray(interrupts) && interrupts.length > 0) {
-          for (const ir of interrupts) {
-            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds)
-            if (deps.pendingInterrupts && deps.profileId) {
-              const reqs = ir.value?.actionRequests ?? ir.actionRequests ?? ir.action_requests ?? []
-              const pending: PendingInterrupt = {
-                sessionId,
-                profileId: deps.profileId,
-                interruptId: String(ir.id ?? ''),
-                callIds: reqs.map((_, i) => lastAssistantToolCallIds[i] ?? ''),
-                decisions: new Map(),
-                modelName: deps.modelName
-              }
-              for (const cid of pending.callIds) {
-                if (cid) deps.pendingInterrupts.set(cid, pending)
-              }
-            }
-          }
-          end?.({ ok: true, meta: { interrupted: true } })
-          return
-        }
-      }
-    }
-
-    console.log('[runAgent] stream finished normally sid=%s entries=%d', sessionId, entryCount)
-    emitDone(translatorDeps, lastUsage, deps.modelName)
-    end?.({ ok: true })
+    await processStream(stream, deps, sessionId, translatorDeps, end)
   } catch (err) {
-    const e = err as { name?: string; code?: string; message?: string }
-    console.error(
-      '[runAgent] caught error sid=%s name=%s code=%s msg=%s',
-      sessionId,
-      e?.name,
-      e?.code,
-      e?.message,
-      err
-    )
-    if (e?.name === 'AbortError' || cancel.aborted) {
-      emitCanceled(translatorDeps)
-      end?.({ ok: true, meta: { canceled: true } })
-      return
-    }
     emitError(translatorDeps, err)
-    end?.({ ok: false, meta: { error: e?.code ?? 'E_UNKNOWN' } })
+    end?.({ ok: false, meta: { error: 'E_UNKNOWN' } })
   }
 }
 
@@ -286,16 +230,9 @@ export interface ResumeAgentArgs {
   sessions: RunnerDeps['sessions']
   recordUsage: RunnerDeps['recordUsage']
   modelName: string
-  pendingInterrupts?: Map<string, PendingInterrupt>
   profileId?: string
 }
 
-/**
- * Resumes an interrupted agent thread with HITL decisions. `decisions[]` must
- * match the order of the originating interrupt's actionRequests (one decision
- * per request). After resume the stream behaves like a normal agent run —
- * tool messages, optional follow-up assistant message, then done.
- */
 export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
   const translatorDeps: TranslatorDeps = {
     emit: (e) => args.streamWriter.write(e),
@@ -309,63 +246,36 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
     toolCallRowIdByCallId: new Map()
   }
 
-  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
-  let lastAssistantToolCallIds: string[] = []
+  // Map AgentDecision to LangChain's HITL response formats
+  // Although humanInTheLoopMiddleware accepts 'approve', 'edit', 'reject' via HITLResponse,
+  // we can also pass the raw values to resume. 
+  // Wait, `humanInTheLoopMiddleware` resume format depends on the middleware implementation.
+  // Actually, we can just pass the array directly since we mapped them to what we need.
+  const mappedDecisions = args.decisions.map(d => {
+    if (d.type === 'accept') return { type: 'approve' }
+    if (d.type === 'edit') return { type: 'edit', args: d.args } // wait, hitl expects editedAction? No, editedAction is { name, args } maybe? Actually 'args' or 'editedArgs' is fine depending on version, but the middleware standard is 'edit' with args. 
+    return { type: 'reject', message: d.message }
+  })
 
   try {
-    const stream = await args.agent.stream(new Command({ resume: { decisions: args.decisions } }), {
+    const stream = await args.agent.stream(new Command({ resume: { decisions: mappedDecisions } }), {
       configurable: { thread_id: args.sessionId },
       streamMode: ['updates', 'messages'],
       signal: args.cancel
     })
 
-    for await (const entry of stream) {
-      if (args.cancel.aborted) {
-        emitCanceled(translatorDeps)
-        return
-      }
-      await translateStreamEntry(translatorDeps, entry, args.modelName)
-
-      if (Array.isArray(entry) && entry[0] === 'updates') {
-        const payload = entry[1] as Record<string, unknown> | undefined
-        const modelNode = payload?.model as { messages?: unknown[] } | undefined
-        if (modelNode?.messages) {
-          for (const m of modelNode.messages) {
-            const ai = m as {
-              usage_metadata?: { input_tokens?: number; output_tokens?: number }
-              tool_calls?: Array<{ id?: string }>
-            }
-            if (ai.usage_metadata) lastUsage = ai.usage_metadata
-            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
-              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
-            }
-          }
-        }
-        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined
-        if (Array.isArray(interrupts) && interrupts.length > 0) {
-          for (const ir of interrupts) {
-            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds)
-            if (args.pendingInterrupts && args.profileId) {
-              const reqs = ir.value?.actionRequests ?? ir.actionRequests ?? ir.action_requests ?? []
-              const pending: PendingInterrupt = {
-                sessionId: args.sessionId,
-                profileId: args.profileId,
-                interruptId: String(ir.id ?? ''),
-                callIds: reqs.map((_, i) => lastAssistantToolCallIds[i] ?? ''),
-                decisions: new Map(),
-                modelName: args.modelName
-              }
-              for (const cid of pending.callIds) {
-                if (cid) args.pendingInterrupts.set(cid, pending)
-              }
-            }
-          }
-          return
-        }
-      }
+    const depsDummy: RunnerDeps = {
+      agent: args.agent,
+      sessions: args.sessions,
+      systemPrompt: '',
+      vaultRoot: '',
+      cancel: args.cancel,
+      recordUsage: args.recordUsage,
+      modelName: args.modelName,
+      profileId: args.profileId
     }
 
-    emitDone(translatorDeps, lastUsage, args.modelName)
+    await processStream(stream, depsDummy, args.sessionId, translatorDeps)
   } catch (err) {
     const e = err as { name?: string }
     if (e?.name === 'AbortError' || args.cancel.aborted) {

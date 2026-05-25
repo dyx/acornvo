@@ -149,7 +149,7 @@ export function createSessions(): SessionsDao {
     },
 
     async recordToolCall(sessionId, tc, opts) {
-      const id = randomUUID()
+      const id = tc.id || randomUUID()
       const t = nowIso()
       db()
         .prepare(

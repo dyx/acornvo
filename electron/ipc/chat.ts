@@ -5,8 +5,7 @@ import { createStreamWriter } from '../agent/streamWriter'
 import {
   runAgent as runAgentNew,
   resumeAgent,
-  type AgentDecision,
-  type PendingInterrupt
+  type AgentDecision
 } from '../agent/runner'
 import { getAgentBuilder } from '../agent/agent-singleton'
 import { markThreadCanceled } from '../agent/checkpoint-meta'
@@ -53,45 +52,79 @@ function resolveProfile(profileId: string): ResolvedProfile {
 }
 
 /**
- * Keyed by tool_call.id. Populated by runAgent / resumeAgent when an
- * interrupt fires; consumed by approveTool / rejectTool.
- *
- * Exported at module level so the startup-recovery hook (Task 9) can write
- * recovered entries directly. There is only one chat handler instance per
- * process today; tests that need isolation can re-import this module via
- * `vi.resetModules()`.
+ * No longer keeping an in-memory pendingInterrupts map.
+ * Instead, approvals are written to the database (tool_calls)
+ * and then we query LangGraph to resume.
  */
-export const pendingInterrupts = new Map<string, PendingInterrupt>()
 
 export function createChatHandlers(deps: ChatDeps) {
   const aborts = new Map<string, AbortController>()
 
-  async function fireResume(pending: PendingInterrupt): Promise<void> {
-    const decisions: AgentDecision[] = pending.callIds.map(
-      (cid) => (pending.decisions.get(cid) as AgentDecision) ?? { type: 'accept' }
-    )
-    for (const cid of pending.callIds) pendingInterrupts.delete(cid)
-    const profile = resolveProfile(pending.profileId)
+  async function checkAndResume(sessionId: string) {
+    const db = getGlobalDb()
+    const profileIdRow = db.prepare('SELECT profile_id FROM sessions WHERE id = ?').get(sessionId) as any
+    if (!profileIdRow || !profileIdRow.profile_id) return
+    const profile = resolveProfile(profileIdRow.profile_id)
     const agent = getAgentBuilder().buildForProfile(profile)
-    const ctl = aborts.get(pending.sessionId) ?? new AbortController()
-    aborts.set(pending.sessionId, ctl)
-    const writer = createStreamWriter(pending.sessionId, deps.getTargets)
+    const state = await (agent as any).getState({ thread_id: sessionId })
+    const currentTask = state.tasks?.[0]
+    if (!currentTask || !currentTask.interrupts || currentTask.interrupts.length === 0) return
+
+    const interrupt = currentTask.interrupts[0]
+    const reqs = interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? []
+    if (reqs.length === 0) return
+
+    const messages = state.values?.messages ?? []
+    let lastAssistantToolCallIds: string[] = []
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      if (m._getType() === 'ai' && m.tool_calls?.length > 0) {
+        lastAssistantToolCallIds = m.tool_calls.map((tc: any) => String(tc.id ?? ''))
+        break
+      }
+    }
+
+    const decisions: AgentDecision[] = []
+    let allResolved = true
+
+    for (let i = 0; i < reqs.length; i++) {
+      const callId = lastAssistantToolCallIds[i] ?? ''
+      if (!callId) {
+        allResolved = false; break;
+      }
+      const row = db.prepare('SELECT approved, args_json FROM tool_calls WHERE id = ?').get(callId) as any
+      if (!row || row.approved === null) {
+        allResolved = false
+        break
+      }
+      if (row.approved === 1) {
+        decisions.push({ type: 'edit', args: JSON.parse(row.args_json || '{}') })
+      } else {
+        decisions.push({ type: 'reject', message: 'User rejected the operation' })
+      }
+    }
+
+    if (!allResolved) return
+
+    const ctl = aborts.get(sessionId) ?? new AbortController()
+    aborts.set(sessionId, ctl)
+    const writer = createStreamWriter(sessionId, deps.getTargets)
+    
     void resumeAgent({
-      sessionId: pending.sessionId,
+      sessionId,
       agent: agent as unknown as Parameters<typeof resumeAgent>[0]['agent'],
       decisions,
       cancel: ctl.signal,
       streamWriter: writer,
       sessions: deps.sessions,
-      recordUsage: buildRecordUsage(profile, pending.sessionId),
-      modelName: pending.modelName,
-      pendingInterrupts,
-      profileId: pending.profileId
+      recordUsage: buildRecordUsage(profile, sessionId),
+      modelName: profile.model,
+      profileId: profile.id
     })
-      .catch((err: { code?: string; message?: string }) =>
+      .catch((err: any) =>
         writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message })
       )
-      .finally(() => aborts.delete(pending.sessionId))
+      .finally(() => aborts.delete(sessionId))
   }
 
   function buildRecordUsage(profile: ResolvedProfile, sessionId: string) {
@@ -112,20 +145,11 @@ export function createChatHandlers(deps: ChatDeps) {
     }
   }
 
-  function clearPendingInterrupts(sessionId: string) {
-    for (const [callId, pending] of pendingInterrupts.entries()) {
-      if (pending.sessionId === sessionId) {
-        pendingInterrupts.delete(callId)
-      }
-    }
-  }
-
   return {
     'sessions.list': () => deps.sessions.list(),
     'sessions.create': (opts: { profileId: string | null; title?: string | null }) =>
       deps.sessions.createSession(opts),
     'sessions.delete': async (id: string) => {
-      clearPendingInterrupts(id)
       await deps.sessions.delete(id)
       return { ok: true } as const
     },
@@ -171,8 +195,6 @@ export function createChatHandlers(deps: ChatDeps) {
         writer.channel,
         targets.length
       )
-      const history = await deps.sessions.getMessages(opts.sessionId)
-      console.log('[ipc.chat] sendUserMessage: history messages=%d', history.length)
 
       let profile: ReturnType<typeof resolveProfile>
       let agent: ReturnType<ReturnType<typeof getAgentBuilder>['buildForProfile']>
@@ -200,7 +222,6 @@ export function createChatHandlers(deps: ChatDeps) {
         sessionId: opts.sessionId,
         userText: opts.text,
         profileId,
-        history,
         deps: {
           agent: agent as unknown as Parameters<typeof runAgentNew>[0]['deps']['agent'],
           sessions: deps.sessions,
@@ -213,7 +234,6 @@ export function createChatHandlers(deps: ChatDeps) {
           clipsGet: deps.clipsGet,
           modelName: profile.model,
           recordUsage: buildRecordUsage(profile, opts.sessionId),
-          pendingInterrupts,
           profileId
         },
         streamWriter: writer,
@@ -244,7 +264,6 @@ export function createChatHandlers(deps: ChatDeps) {
     },
 
     cancelStream: async (sessionId: string) => {
-      clearPendingInterrupts(sessionId)
       const ctl = aborts.get(sessionId)
       if (ctl) ctl.abort()
       try {
@@ -256,35 +275,28 @@ export function createChatHandlers(deps: ChatDeps) {
     },
 
     approveTool: async (callId: string, opts?: { editedArgs?: unknown }) => {
-      const pending = pendingInterrupts.get(callId)
-      if (!pending) {
-        throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
+      const db = getGlobalDb()
+      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
+      if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
+      
+      if (opts?.editedArgs !== undefined) {
+        db.prepare('UPDATE tool_calls SET approved = 1, args_json = ? WHERE id = ?').run(JSON.stringify(opts.editedArgs), callId)
+      } else {
+        db.prepare('UPDATE tool_calls SET approved = 1 WHERE id = ?').run(callId)
       }
-      const decision: AgentDecision =
-        opts?.editedArgs !== undefined
-          ? {
-              type: 'edit',
-              args: opts.editedArgs as Record<string, unknown>
-            }
-          : { type: 'accept' }
-      pending.decisions.set(callId, decision)
-      if (pending.decisions.size < pending.callIds.length) {
-        // Wait for the other actions in this interrupt to be resolved.
-        return { ok: true } as const
-      }
-      await fireResume(pending)
+      
+      await checkAndResume(row.session_id)
       return { ok: true } as const
     },
+    
     rejectTool: async (callId: string) => {
-      const pending = pendingInterrupts.get(callId)
-      if (!pending) {
-        throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
-      }
-      pending.decisions.set(callId, { type: 'reject' })
-      if (pending.decisions.size < pending.callIds.length) {
-        return { ok: true } as const
-      }
-      await fireResume(pending)
+      const db = getGlobalDb()
+      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
+      if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
+      
+      db.prepare('UPDATE tool_calls SET approved = 0 WHERE id = ?').run(callId)
+      
+      await checkAndResume(row.session_id)
       return { ok: true } as const
     },
     subscribeStream: async (sessionId: string) => ({

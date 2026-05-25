@@ -25,7 +25,7 @@ interface ProfileDialogProps {
   onClose: () => void
 }
 
-const PROVIDERS: AiProviderKind[] = ['openai', 'anthropic', 'ollama', 'openai-compatible']
+const PROVIDERS: AiProviderKind[] = ['openai', 'anthropic', 'ollama', 'openai-compatible', 'openrouter', 'deepseek']
 
 interface FormState {
   name: string
@@ -164,7 +164,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
               </SelectContent>
             </Select>
           </div>
-          {(form.provider === 'openai-compatible' || form.provider === 'ollama') && (
+          {(form.provider === 'openai-compatible' || form.provider === 'ollama' || form.provider === 'openrouter' || form.provider === 'deepseek') && (
             <div className="space-y-1">
               <span className="block font-medium">{t('settings.ai.baseUrl')}</span>
               <Input
