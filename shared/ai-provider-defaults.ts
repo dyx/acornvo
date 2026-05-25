@@ -10,7 +10,7 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderDefaul
     models: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini']
   },
   anthropic: {
-    models: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest']
+    models: ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5']
   },
   deepseek: {
     models: ['deepseek-v4-flash', 'deepseek-v4-pro'],
