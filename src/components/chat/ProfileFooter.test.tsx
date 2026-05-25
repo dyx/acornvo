@@ -61,7 +61,6 @@ describe('ProfileFooter', () => {
           provider: 'openai',
           model: 'gpt-4o',
           temperature: 0.7,
-          topP: 1,
           maxTokens: 4096,
           apiKeyRef: 'ref-1',
           baseUrl: 'https://api.openai.com/v1',

@@ -65,7 +65,7 @@ export interface AiProviderProfile {
   baseUrl: string | null
   model: string
   temperature: number
-  topP: number
+
   maxTokens: number | null
   apiKeyRef: string | null
   createdAt: string
@@ -80,7 +80,7 @@ export interface ProfileCreateInput {
   baseUrl?: string | null
   model: string
   temperature?: number
-  topP?: number
+
   maxTokens?: number | null
   apiKey?: string
 }
@@ -91,7 +91,7 @@ export interface ProfileUpdateInput {
   baseUrl?: string | null
   model?: string
   temperature?: number
-  topP?: number
+
   maxTokens?: number | null
   /** non-empty string → overwrite secret; '' → delete secret; undefined → leave alone */
   apiKey?: string

@@ -35,7 +35,6 @@ describe('settings-types module', () => {
       baseUrl: string | null
       model: string
       temperature: number
-      topP: number
       maxTokens: number | null
       apiKeyRef: string | null
       createdAt: string

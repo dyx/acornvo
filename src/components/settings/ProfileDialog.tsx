@@ -35,7 +35,7 @@ interface FormState {
   baseUrl: string
   model: string
   temperature: string
-  topP: string
+
   maxTokens: string
   apiKey: string
 }
@@ -49,7 +49,7 @@ function initialState(profile: AiProviderProfile | null): FormState {
       baseUrl: defs?.baseUrl ?? '',
       model: defs?.models?.[0] ?? '',
       temperature: '0.7',
-      topP: '1.0',
+
       maxTokens: '',
       apiKey: ''
     }
@@ -60,7 +60,7 @@ function initialState(profile: AiProviderProfile | null): FormState {
     baseUrl: profile.baseUrl ?? '',
     model: profile.model,
     temperature: String(profile.temperature),
-    topP: String(profile.topP),
+
     maxTokens: profile.maxTokens != null ? String(profile.maxTokens) : '',
     apiKey: ''
   }
@@ -123,7 +123,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
           baseUrl,
           model,
           temperature: Number(form.temperature),
-          topP: Number(form.topP),
+
           maxTokens,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
@@ -135,7 +135,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
           baseUrl,
           model,
           temperature: Number(form.temperature),
-          topP: Number(form.topP),
+
           maxTokens,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
@@ -225,18 +225,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
               onValueChange={([v]) => set('temperature', String(v))}
             />
           </div>
-          <div className="space-y-1">
-            <span className="block font-medium">
-              {t('settings.ai.topP')} ({form.topP})
-            </span>
-            <Slider
-              min={0}
-              max={1}
-              step={0.05}
-              value={[Number(form.topP)]}
-              onValueChange={([v]) => set('topP', String(v))}
-            />
-          </div>
+
           <div className="space-y-1">
             <span className="block font-medium">{t('settings.ai.maxTokens')}</span>
             <Input

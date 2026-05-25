@@ -7,13 +7,13 @@ export interface ProviderDefaultConfig {
 
 export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderDefaultConfig>> = {
   openai: {
-    models: ['gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1-preview']
+    models: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini']
   },
   anthropic: {
     models: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest']
   },
   deepseek: {
-    models: ['deepseek-chat', 'deepseek-reasoner'],
+    models: ['deepseek-v4-flash', 'deepseek-v4-pro'],
     baseUrl: 'https://api.deepseek.com'
   }
 }

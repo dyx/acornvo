@@ -18,7 +18,7 @@ interface ProfileRow {
   base_url: string | null
   model: string
   temperature: number
-  top_p: number
+
   max_tokens: number | null
   api_key_ref: string | null
   created_at: string
@@ -33,7 +33,7 @@ function rowToProfile(row: ProfileRow): AiProviderProfile {
     baseUrl: row.base_url,
     model: row.model,
     temperature: row.temperature,
-    topP: row.top_p,
+
     maxTokens: row.max_tokens,
     apiKeyRef: row.api_key_ref,
     createdAt: row.created_at,
@@ -82,7 +82,7 @@ function create(input: ProfileCreateInput): { id: string } {
       input.baseUrl ?? null,
       input.model,
       input.temperature ?? 0.7,
-      input.topP ?? 1.0,
+      1.0,
       input.maxTokens ?? null,
       apiKeyRef,
       now,
@@ -158,7 +158,7 @@ function update(id: string, patch: ProfileUpdateInput): void {
     patch.baseUrl ?? null,
     patch.model ?? null,
     patch.temperature ?? null,
-    patch.topP ?? null,
+    null,
     patch.maxTokens ?? null,
     newApiKeyRef,
     now,

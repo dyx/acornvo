@@ -32,7 +32,6 @@ const sampleProfile = {
   baseUrl: null,
   model: 'gpt-4o',
   temperature: 0.7,
-  topP: 1.0,
   maxTokens: null,
   apiKeyRef: 'ai.key.a',
   createdAt: '2026-05-03',
