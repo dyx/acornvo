@@ -7,6 +7,7 @@ import { MarkdownText } from '@/components/assistant-ui/markdown-text'
 import { MessageProvider, MessagePrimitive } from '@assistant-ui/react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   BotIcon,
   UserIcon,
@@ -99,7 +100,7 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   )
 }
 
-function AssistantFooter({ messageKey }: { messageKey: string }) {
+function MessageFooter({ item }: { item: BubbleItem }) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -111,64 +112,78 @@ function AssistantFooter({ messageKey }: { messageKey: string }) {
   const truncateMessagesFrom = useChatStore((s) => s.truncateMessagesFrom)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
-  const me = messages.find((m) => m.id === messageKey)
+  const me = messages.find((m) => m.id === item.key)
+  const isUser = item.role === 'user'
   const isLastAssistant =
-    messages[messages.length - 1]?.id === messageKey && me?.role === 'assistant'
+    messages[messages.length - 1]?.id === item.key && me?.role === 'assistant'
   const isErrorTail = isLastAssistant && Boolean(me?.error || me?.status === 'error')
 
-  return (
-    <div className="flex items-center gap-1 mt-2 opacity-50 hover:opacity-100 transition-opacity">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-7"
-        title={t('chat.message.copy')}
-        onClick={async () => {
-          await navigator.clipboard.writeText(me?.text ?? '')
-          toast({ title: t('chat.message.copied') })
-        }}
-      >
-        <CopyIcon className="size-3.5" />
-      </Button>
+  const timeStr = item.createdAt 
+    ? new Date(item.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : ''
 
-      {isErrorTail && (
+  return (
+    <div className={cn(
+      "flex items-center opacity-50 hover:opacity-100 transition-opacity text-[11px] text-muted-foreground",
+      isUser ? "justify-end gap-3 shrink-0" : "justify-between w-full mt-2"
+    )}>
+      {!isUser && timeStr && <span>{timeStr}</span>}
+      <div className="flex items-center gap-1">
+        {isUser && timeStr && <span>{timeStr}</span>}
         <Button
           variant="ghost"
           size="icon"
-          className="size-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-          title={t('chat.message.retry')}
-          onClick={() => {
-            const idx = messages.findIndex((m) => m.id === messageKey)
-            const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
-            if (prior) {
-              truncateMessagesFrom(messageKey)
-              void sendUserMessage({
-                text: prior.text,
-                attachments: prior.attachments ?? []
-              })
-            }
+          className="size-6"
+          title={t('chat.message.copy')}
+          onClick={async () => {
+            await navigator.clipboard.writeText(me?.text ?? '')
+            toast({ title: t('chat.message.copied') })
           }}
         >
-          <RotateCcwIcon className="size-3.5" />
+          <CopyIcon className="size-3" />
         </Button>
-      )}
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-7"
-        title={t('chat.message.quote')}
-        onClick={() => {
-          const quoted = (me?.text ?? '')
-            .split('\n')
-            .map((l) => `> ${l}`)
-            .join('\n')
-          setPendingPromptText(`${quoted}\n\n`)
-          bumpFocusInput()
-        }}
-      >
-        <CornerDownLeftIcon className="size-3.5" />
-      </Button>
+        {isErrorTail && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+            title={t('chat.message.retry')}
+            onClick={() => {
+              const idx = messages.findIndex((m) => m.id === item.key)
+              const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
+              if (prior) {
+                truncateMessagesFrom(item.key)
+                void sendUserMessage({
+                  text: prior.text,
+                  attachments: prior.attachments ?? []
+                })
+              }
+            }}
+          >
+            <RotateCcwIcon className="size-3" />
+          </Button>
+        )}
+
+        {!isUser && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            title={t('chat.message.quote')}
+            onClick={() => {
+              const quoted = (me?.text ?? '')
+                .split('\n')
+                .map((l) => `> ${l}`)
+                .join('\n')
+              setPendingPromptText(`${quoted}\n\n`)
+              bumpFocusInput()
+            }}
+          >
+            <CornerDownLeftIcon className="size-3" />
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
@@ -195,7 +210,7 @@ export function BubbleListAdapter() {
     <div
       ref={containerRef}
       data-testid="bubble-list-container"
-      className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 flex flex-col min-h-0 scroll-smooth"
+      className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col min-h-0 scroll-smooth"
     >
       <div className="flex-1" /> {/* push to bottom if few messages */}
       {items.map((item, index) => {
@@ -206,35 +221,25 @@ export function BubbleListAdapter() {
         return (
           <div
             key={item.key}
-            className={cn(
-              'flex w-full gap-3 md:gap-4 max-w-4xl mx-auto',
-              isUser ? 'flex-row-reverse' : ''
-            )}
+            className="flex w-full max-w-3xl mx-auto"
           >
-            <Avatar className="size-8 border bg-background shrink-0 shadow-sm mt-0.5">
-              <AvatarFallback
-                className={isUser ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'}
-              >
-                {isUser ? <UserIcon className="size-4" /> : <BotIcon className="size-4" />}
-              </AvatarFallback>
-            </Avatar>
 
             <div
-              className={cn('flex flex-col min-w-0 flex-1', isUser ? 'items-end' : 'items-start')}
+              className="flex flex-col min-w-0 flex-1 items-stretch"
             >
               {toolSteps.length > 0 && <ToolStepsChain steps={toolSteps} />}
 
               {contentStr && (
                 <div
                   className={cn(
-                    'px-4 py-3 rounded-2xl max-w-full overflow-hidden shadow-sm',
+                    'w-full max-w-full overflow-hidden relative group pt-1',
                     isUser
-                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                      : 'bg-muted text-foreground rounded-tl-sm w-full prose dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0'
+                      ? 'bg-muted/40 text-foreground rounded-[20px] px-5 py-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1'
+                      : 'bg-transparent text-foreground prose dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0'
                   )}
                 >
                   {isUser ? (
-                    <div className="whitespace-pre-wrap break-words">{contentStr}</div>
+                    <div className="whitespace-pre-wrap break-words text-left text-[15px] max-w-full flex-1 min-w-[50%]">{contentStr}</div>
                   ) : (
                     <MessageProvider
                       index={index}
@@ -253,16 +258,18 @@ export function BubbleListAdapter() {
                       />
                     </MessageProvider>
                   )}
+                  
+                  <div className={cn(isUser ? "ml-auto" : "w-full")}>
+                    <MessageFooter item={item} />
+                  </div>
                 </div>
               )}
 
               {item.loading && !contentStr && toolSteps.length === 0 && (
-                <div className="px-4 py-3 bg-muted rounded-2xl rounded-tl-sm flex items-center justify-center">
+                <div className="px-4 py-3 bg-muted rounded-[20px] flex items-center justify-center mt-1 w-max">
                   <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
                 </div>
               )}
-
-              {!isUser && <AssistantFooter messageKey={item.key} />}
             </div>
           </div>
         )

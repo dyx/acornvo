@@ -139,57 +139,6 @@ function ShortcutsModal() {
   )
 }
 
-function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: string | null }) {
-  const { t } = useTranslation()
-  const profiles = useProfilesStore((s) => s.profiles)
-  const updateSessionProfile = useChatStore((s) => s.updateSessionProfile)
-
-  const current = profiles.find((p) => p.id === profileId) ?? null
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          data-testid="chat-profile-chip"
-          className="h-8 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted inline-flex items-center gap-2 shrink-0 max-w-[280px] min-w-[160px] w-max transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          title={
-            current
-              ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
-              : t('chat.topbar.noProfile')
-          }
-        >
-          {current ? (
-            <div className="flex items-center gap-1.5 overflow-hidden flex-1 text-left">
-              <span className="truncate font-medium">{current.name}</span>
-              <span className="text-[color:var(--color-line-2)] shrink-0">|</span>
-              <span className="text-muted-foreground truncate">{current.model}</span>
-            </div>
-          ) : (
-            <span className="text-muted-foreground flex-1 text-left">{t('chat.topbar.noProfile')}</span>
-          )}
-          <ChevronDownIcon className="size-3 opacity-50 shrink-0" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[160px]">
-        {profiles.length === 0 ? (
-          <DropdownMenuItem asChild>
-            <Link to="/settings/ai">
-              {t('chat.topbar.noProfile')} — {t('chat.error.goToSettings')}
-            </Link>
-          </DropdownMenuItem>
-        ) : (
-          profiles.map((p) => (
-            <DropdownMenuItem key={p.id} onClick={() => void updateSessionProfile(sessionId, p.id)}>
-              <span className="font-medium">{p.name}</span>
-              <span className="text-muted-foreground ml-2 text-xs">{p.model}</span>
-            </DropdownMenuItem>
-          ))
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 function EmptyState() {
   const { t } = useTranslation()
@@ -305,17 +254,13 @@ export function Chat() {
             <SessionsErrorBanner />
             <StreamErrorBanner />
             <MissingProfileBanner />
-            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[color:var(--color-line)] px-5 bg-[color:var(--color-paper-2)] z-10">
-              <h2 className="text-base font-medium m-0 flex-1 truncate text-foreground">
+            <header className="flex h-14 shrink-0 items-center gap-3 px-5 bg-transparent z-10">
+              <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
                 {title}
               </h2>
-              <ProfileChip
-                sessionId={activeSession?.id ?? ''}
-                profileId={activeSession?.profileId ?? null}
-              />
             </header>
 
-            <section className="flex min-h-0 flex-1 flex-col bg-background/50 relative">
+            <section className="flex min-h-0 flex-1 flex-col bg-background/50 relative [mask-image:linear-gradient(to_bottom,transparent_0%,black_3%,black_97%,transparent_100%)]">
               {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
             </section>
 

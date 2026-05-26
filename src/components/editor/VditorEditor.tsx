@@ -21,9 +21,17 @@ export function VditorEditor(): JSX.Element {
 
   useEffect(() => {
     if (!elRef.current) return
+    const isDark = document.documentElement.dataset.theme === 'dark'
     const v = new Vditor(elRef.current, {
       mode: 'ir',
       cdn: '/vditor',
+      theme: isDark ? 'dark' : 'classic',
+      preview: {
+        theme: {
+          current: isDark ? 'dark' : 'classic',
+          path: '/vditor/dist/css/content-theme'
+        }
+      },
       value: initialBody,
       cache: { enable: false },
       counter: { enable: false },
@@ -43,7 +51,15 @@ export function VditorEditor(): JSX.Element {
       }
     })
     vditorRef.current = v
+
+    const observer = new MutationObserver(() => {
+      const dark = document.documentElement.dataset.theme === 'dark'
+      v.setTheme(dark ? 'dark' : 'classic', dark ? 'dark' : 'classic', 'native')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
     return () => {
+      observer.disconnect()
       try {
         v.destroy()
       } catch {

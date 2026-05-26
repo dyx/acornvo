@@ -12,6 +12,7 @@ export type BubbleItem = {
   content: string | { text: string; toolSteps: ToolStep[] }
   streaming?: boolean
   loading?: boolean
+  createdAt?: string
 }
 
 function parseToolResultText(text: string): ToolStep['result'] {
@@ -37,7 +38,7 @@ export function deriveBubbleItems(
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i]
     if (m.role === 'user') {
-      items.push({ key: m.id, role: 'user', content: m.text })
+      items.push({ key: m.id, role: 'user', content: m.text, createdAt: m.createdAt })
       continue
     }
     if (m.role === 'assistant') {
@@ -56,10 +57,11 @@ export function deriveBubbleItems(
           role: 'assistant',
           content: { text: m.text, toolSteps },
           streaming,
-          loading
+          loading,
+          createdAt: m.createdAt
         })
       } else {
-        items.push({ key: m.id, role: 'assistant', content: m.text, streaming, loading })
+        items.push({ key: m.id, role: 'assistant', content: m.text, streaming, loading, createdAt: m.createdAt })
       }
       continue
     }

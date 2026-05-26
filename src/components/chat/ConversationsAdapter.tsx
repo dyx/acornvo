@@ -63,7 +63,7 @@ export function ConversationsAdapter() {
 
   return (
     <>
-      <div className="flex h-14 shrink-0 items-center px-3 border-b border-[color:var(--color-line)] bg-background">
+      <div className="flex h-14 shrink-0 items-center px-3 bg-background">
         <Button
           onClick={() => void createSession()}
           variant="default"
@@ -75,11 +75,11 @@ export function ConversationsAdapter() {
       </div>
 
       <ScrollArea className="flex-1 bg-background">
-        <div className="p-2 pt-4 space-y-6">
+        <div className="p-2 pt-2 space-y-2">
           {Object.entries(itemsByGroup).map(([groupName, groupSessions]) => (
             <div key={groupName}>
               {!narrow && (
-                <h3 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="px-2 py-1 text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest mt-1 mb-1">
                   {t(`chat.group.${groupName}` as const)}
                 </h3>
               )}
@@ -98,8 +98,8 @@ export function ConversationsAdapter() {
                       className={cn(
                         'group flex items-center rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors',
                         isActive
-                          ? 'bg-muted font-medium text-foreground'
-                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          ? 'bg-muted/60 font-medium text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
                       )}
                       onClick={() => !isEditing && selectSession(s.id)}
                     >

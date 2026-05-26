@@ -7,6 +7,7 @@ import { useChatStore, BusyError } from '@/stores/chat'
 import { useToast } from '@/hooks/use-toast'
 import type { Attachment } from '@shared/agent-types'
 import { AttachmentsAdapter, type AttachmentsAdapterHandle } from './AttachmentsAdapter'
+import { ProfileChip } from './ProfileChip'
 
 const EMPTY_ATTACHMENTS: Attachment[] = []
 
@@ -22,6 +23,7 @@ export function ChatInputArea() {
       ? (s.bySession[activeSessionId]?.pendingAttachments ?? EMPTY_ATTACHMENTS)
       : EMPTY_ATTACHMENTS
   )
+  const activeSession = useChatStore((s) => s.sessions.find((sess) => sess.id === activeSessionId))
   const pendingPromptText = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.pendingPromptText ?? '') : ''
   )
@@ -86,16 +88,24 @@ export function ChatInputArea() {
         />
 
         <div className="flex items-center justify-between px-4 pb-4 pt-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            title={t('chat.input.attach')}
-            onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
-            disabled={isStreaming}
-          >
-            <PaperclipIcon className="size-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title={t('chat.input.attach')}
+              onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
+              disabled={isStreaming}
+            >
+              <PaperclipIcon className="size-4" />
+            </Button>
+            {activeSessionId && (
+              <ProfileChip
+                sessionId={activeSessionId}
+                profileId={activeSession?.profileId ?? null}
+              />
+            )}
+          </div>
 
           {isStreaming ? (
             <Button variant="default" size="sm" onClick={cancelStream} className="h-8">

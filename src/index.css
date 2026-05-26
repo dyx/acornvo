@@ -64,8 +64,8 @@ html {
 [data-theme='dark'] {
   --color-paper: oklch(0.2 0.015 60);
   --color-paper-2: oklch(0.22 0.018 60);
-  --color-paper-3: oklch(0.25 0.02 60);
-  --color-paper-4: oklch(0.28 0.02 60);
+  --color-paper-3: oklch(0.28 0.02 60);
+  --color-paper-4: oklch(0.32 0.02 60);
   --color-ink: oklch(0.92 0.005 70);
   --color-ink-2: oklch(0.78 0.008 70);
   --color-ink-3: oklch(0.68 0.01 70);
@@ -76,6 +76,9 @@ html {
   --color-acorn-bg: oklch(0.3 0.03 48);
   --color-leaf-bg: oklch(0.3 0.025 135);
   --color-sky-bg: oklch(0.3 0.03 230);
+  
+  --color-destructive: oklch(0.7 0.15 25);
+  --color-destructive-foreground: oklch(0.2 0.015 60);
 }
 
 html,
@@ -121,7 +124,60 @@ body {
 }
 
 /* Increase Fitts' Law touch targets for the editor toolbar */
+/* Increase Fitts' Law touch targets for the editor toolbar */
 .vditor-toolbar__item {
   margin-right: 4px !important;
   padding: 4px !important;
+}
+
+/* --- Acornvo Vditor Dark Theme Unification --- */
+[data-theme='dark'] .vditor--dark {
+  --border-color: var(--color-line);
+  --panel-background-color: var(--color-paper);
+  --toolbar-background-color: var(--color-paper-2);
+  --textarea-background-color: var(--color-paper);
+  --textarea-text-color: var(--color-ink);
+  --toolbar-icon-color: var(--color-ink-3);
+  --toolbar-icon-hover-color: var(--color-ink);
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .vditor-reset {
+  color: var(--color-ink) !important;
+}
+[data-theme='dark'] .vditor-reset a, 
+[data-theme='dark'] .vditor-ir__link {
+  color: var(--color-acorn) !important;
+}
+[data-theme='dark'] .vditor-reset h1, 
+[data-theme='dark'] .vditor-reset h2 {
+  border-bottom-color: var(--color-line) !important;
+}
+[data-theme='dark'] .vditor-reset hr {
+  background-color: var(--color-line) !important;
+}
+[data-theme='dark'] .vditor-reset blockquote {
+  color: var(--color-ink-3) !important;
+  border-left-color: var(--color-line) !important;
+}
+[data-theme='dark'] .vditor-reset table tr {
+  background-color: var(--color-paper) !important;
+}
+[data-theme='dark'] .vditor-reset table td, 
+[data-theme='dark'] .vditor-reset table th {
+  border-color: var(--color-line) !important;
+}
+[data-theme='dark'] .vditor-reset table tbody tr:nth-child(even),
+[data-theme='dark'] .vditor-reset table tbody tr:nth-child(2n) {
+  background-color: var(--color-paper-2) !important;
+}
+[data-theme='dark'] .vditor-reset code:not(.hljs):not(.highlight-chroma) {
+  background-color: var(--color-paper-3) !important;
+  color: var(--color-ink) !important;
+}
+[data-theme='dark'] .vditor-reset kbd {
+  color: var(--color-ink) !important;
+  background-color: var(--color-paper-3) !important;
+  border-color: var(--color-line) !important;
+  box-shadow: inset 0 -1px 0 var(--color-line) !important;
 }
