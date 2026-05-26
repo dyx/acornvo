@@ -2,6 +2,7 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { XIcon } from 'lucide-react'
 import { useProfilesStore } from '@/stores/profiles'
 import type {
   AiProviderProfile,
@@ -158,8 +159,17 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
     >
-      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
-        <h3 className="mb-4 text-lg font-medium">
+      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg relative">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={busy}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        >
+          <XIcon className="size-4" />
+          <span className="sr-only">Close</span>
+        </button>
+        <h3 className="mb-4 text-lg font-medium pr-8">
           {profile ? t('settings.ai.editProfile') : t('settings.ai.addProfile')}
         </h3>
         <div className="space-y-4 text-sm">
@@ -247,9 +257,6 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-6 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            {t('common.cancel')}
-          </Button>
           <Button type="button" onClick={() => void onSave()} disabled={busy}>
             {t('settings.ai.save')}
           </Button>

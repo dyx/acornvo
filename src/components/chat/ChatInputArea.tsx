@@ -71,7 +71,7 @@ export function ChatInputArea() {
   const attachVisible = pendingAttachments.length > 0
 
   return (
-    <div className="p-4 border-t border-border bg-background">
+    <div className="p-4 bg-background">
       <div className="mx-auto max-w-3xl flex flex-col gap-2 rounded-xl border border-border bg-muted/30 focus-within:ring-1 focus-within:ring-ring">
         <AttachmentsAdapter ref={attachmentsRef} visible={attachVisible} />
 
@@ -81,11 +81,11 @@ export function ChatInputArea() {
           onChange={(e) => setPendingPromptText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t('chat.input.placeholder')}
-          className="min-h-[60px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 p-3 pb-0"
+          className="min-h-[80px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 p-4 pb-2"
           disabled={isStreaming}
         />
 
-        <div className="flex items-center justify-between p-2 pt-0">
+        <div className="flex items-center justify-between px-4 pb-4 pt-0">
           <Button
             variant="ghost"
             size="icon"

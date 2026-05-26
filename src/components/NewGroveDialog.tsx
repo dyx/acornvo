@@ -115,9 +115,6 @@ export function NewGroveDialog({
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t('common.cancel')}
-          </Button>
           <Button onClick={() => void submit()} disabled={busy || !name.trim() || !parentDir}>
             {t('picker.newDialog.create')}
           </Button>

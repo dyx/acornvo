@@ -12,16 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
@@ -84,7 +75,7 @@ export function ConversationsAdapter() {
       </div>
 
       <ScrollArea className="flex-1 bg-background">
-        <div className="p-2 space-y-4">
+        <div className="p-2 pt-4 space-y-6">
           {Object.entries(itemsByGroup).map(([groupName, groupSessions]) => (
             <div key={groupName}>
               {!narrow && (
@@ -187,26 +178,19 @@ export function ConversationsAdapter() {
         </div>
       </ScrollArea>
 
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('chat.session.confirmDeleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('chat.session.confirmDeleteBody')}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deletingId) deleteSession(deletingId)
-                setDeletingId(null)
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('chat.session.confirmDeleteOk')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+        title={t('chat.session.confirmDeleteTitle')}
+        description={t('chat.session.confirmDeleteBody')}
+        cancelText={t('common.cancel')}
+        confirmText={t('chat.session.confirmDeleteOk')}
+        destructive
+        onConfirm={() => {
+          if (deletingId) deleteSession(deletingId)
+          setDeletingId(null)
+        }}
+      />
     </>
   )
 }

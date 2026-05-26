@@ -14,16 +14,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { useState } from 'react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export function BrowserTab(): JSX.Element {
   const { t } = useTranslation()
@@ -83,26 +74,18 @@ export function BrowserTab(): JSX.Element {
           {t('settings.browser.clearCookies')}
         </Button>
 
-        <AlertDialog open={showClearCookies} onOpenChange={setShowClearCookies}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('settings.browser.clearCookiesConfirm')}</AlertDialogTitle>
-              <AlertDialogDescription className="hidden">Confirm clear cookies</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  void ipc.settings.browserClearCookies()
-                  setShowClearCookies(false)
-                }}
-              >
-                {t('common.confirm')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmDialog
+          open={showClearCookies}
+          onOpenChange={setShowClearCookies}
+          title={t('settings.browser.clearCookiesConfirm')}
+          cancelText={t('common.cancel')}
+          confirmText={t('common.confirm')}
+          destructive
+          onConfirm={() => {
+            void ipc.settings.browserClearCookies()
+            setShowClearCookies(false)
+          }}
+        />
       </div>
     </div>
   )

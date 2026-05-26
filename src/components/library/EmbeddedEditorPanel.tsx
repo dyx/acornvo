@@ -50,56 +50,58 @@ function EditorPropertiesPanel(props: {
 
   return (
     <div className="border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-8 py-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 font-mono text-[11px] text-[color:var(--color-ink-3)]">
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex items-center justify-center p-0.5 hover:bg-[color:var(--color-bg-2)] rounded text-[color:var(--color-ink-3)] transition-colors"
-          >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-          </button>
-          {summary.category ? <span>{summary.category}</span> : null}
-          {summary.category && summary.site ? <span>·</span> : null}
-          {summary.site ? <span>{summary.site}</span> : null}
-          {(summary.category || summary.site) && wordCount > 0 ? <span>·</span> : null}
-          {wordCount > 0 ? <span>{wordCount.toLocaleString()} 字</span> : null}
-          {summary.rating !== null ? (
-            <div className="ml-2 flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  size={11}
-                  className={cn(
-                    i < (summary.rating ?? 0)
-                      ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
-                      : 'text-[color:var(--color-line-2)]'
-                  )}
-                />
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <AiReviewBadge
-          frontmatter={fm as Record<string, unknown>}
-          running={useEditorStore((s) =>
-            s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false
-          )}
-          onClick={() => {
-            if (!fm.ai_reviewed_at) onTriggerReview()
-            else onOpenAiDrawer()
-          }}
-        />
+      <div className="flex items-center gap-2 font-mono text-[11px] text-[color:var(--color-ink-3)]">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center justify-center p-0.5 hover:bg-[color:var(--color-bg-2)] rounded text-[color:var(--color-ink-3)] transition-colors"
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {summary.category ? <span>{summary.category}</span> : null}
+        {summary.category && summary.site ? <span>·</span> : null}
+        {summary.site ? <span>{summary.site}</span> : null}
+        {(summary.category || summary.site) && wordCount > 0 ? <span>·</span> : null}
+        {wordCount > 0 ? <span>{wordCount.toLocaleString()} 字</span> : null}
+        {summary.rating !== null ? (
+          <div className="ml-2 flex gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                size={11}
+                className={cn(
+                  i < (summary.rating ?? 0)
+                    ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
+                    : 'text-[color:var(--color-line-2)]'
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
 
-      <h1
-        className={cn(
-          'serif font-semibold leading-tight tracking-tight text-[color:var(--color-ink)]',
-          collapsed ? 'mt-1 mb-0 text-[18px]' : 'mt-2 mb-4 text-[22px]'
-        )}
-      >
-        {summary.title ?? summary.path}
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1
+          className={cn(
+            'serif font-semibold leading-tight tracking-tight text-[color:var(--color-ink)]',
+            collapsed ? 'mt-1 mb-0 text-[18px]' : 'mt-2 mb-4 text-[22px]'
+          )}
+        >
+          {summary.title ?? summary.path}
+        </h1>
+        <div className={cn('shrink-0', collapsed ? 'mt-1' : 'mt-3')}>
+          <AiReviewBadge
+            frontmatter={fm as Record<string, unknown>}
+            running={useEditorStore((s) =>
+              s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false
+            )}
+            onClick={() => {
+              if (!fm.ai_reviewed_at) onTriggerReview()
+              else onOpenAiDrawer()
+            }}
+          />
+        </div>
+      </div>
 
       {!collapsed && (
         <div className="mt-4">

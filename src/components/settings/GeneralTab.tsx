@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import { i18n } from '@/i18n'
 import type { Locale, Theme } from '@shared/settings-types'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import { Slider } from '@/components/ui/slider'
 import {
   Select,
@@ -78,23 +77,26 @@ export function GeneralTab(): JSX.Element {
 
       <div className="space-y-3 pt-2">
         <span className="block text-sm font-medium">{t('settings.appearance.theme')}</span>
-        <RadioGroup
-          value={appearance.theme}
-          onValueChange={(value) => {
-            applyTheme(value as Theme)
-            void setAppearance({ theme: value as Theme })
-          }}
-          className="flex gap-4"
-        >
+        <div className="flex inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-64">
           {(['system', 'light', 'dark'] as const).map((value) => (
-            <div key={value} className="flex items-center space-x-2">
-              <RadioGroupItem value={value} id={`theme-${value}`} />
-              <Label htmlFor={`theme-${value}`} className="font-normal cursor-pointer">
-                {t(`settings.appearance.theme.${value}`)}
-              </Label>
-            </div>
+            <button
+              key={value}
+              type="button"
+              onClick={() => {
+                applyTheme(value as Theme)
+                void setAppearance({ theme: value as Theme })
+              }}
+              className={cn(
+                'flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+                appearance.theme === value
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'hover:bg-background/50 hover:text-foreground'
+              )}
+            >
+              {t(`settings.appearance.theme.${value}`)}
+            </button>
           ))}
-        </RadioGroup>
+        </div>
       </div>
 
       <div className="space-y-3 pt-2">

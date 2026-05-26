@@ -129,9 +129,6 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
                 {t('editor.ai.rerun')}
               </Button>
             )}
-            <Button variant="outline" onClick={() => handleAction(props.onReject)}>
-              {t('editor.ai.reject')}
-            </Button>
             <Button onClick={() => handleAction(props.onAcceptAll)}>{t('editor.ai.accept')}</Button>
           </div>
         </div>

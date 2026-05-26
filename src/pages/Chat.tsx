@@ -152,7 +152,7 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
         <button
           type="button"
           data-testid="chat-profile-chip"
-          className="text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted inline-flex items-center gap-1.5 shrink-0 max-w-[240px] transition-colors"
+          className="h-8 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted inline-flex items-center gap-2 shrink-0 max-w-[280px] min-w-[160px] w-max transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title={
             current
               ? `${current.name} ${t('chat.topbar.modelSeparator')} ${current.model}`
@@ -160,18 +160,18 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
           }
         >
           {current ? (
-            <>
+            <div className="flex items-center gap-1.5 overflow-hidden flex-1 text-left">
               <span className="truncate font-medium">{current.name}</span>
               <span className="text-[color:var(--color-line-2)] shrink-0">|</span>
               <span className="text-muted-foreground truncate">{current.model}</span>
-            </>
+            </div>
           ) : (
-            <span className="text-muted-foreground">{t('chat.topbar.noProfile')}</span>
+            <span className="text-muted-foreground flex-1 text-left">{t('chat.topbar.noProfile')}</span>
           )}
-          <ChevronDownIcon className="size-3 opacity-50 ml-1" />
+          <ChevronDownIcon className="size-3 opacity-50 shrink-0" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[160px]">
         {profiles.length === 0 ? (
           <DropdownMenuItem asChild>
             <Link to="/settings/ai">

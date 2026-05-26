@@ -1,14 +1,6 @@
 import { type JSX, useState, useCallback, useRef } from 'react'
 import { IpcError } from '@shared/ipc-contract'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export interface TrashConfirmDialogProps {
   open: boolean
@@ -83,62 +75,37 @@ export function TrashConfirmDialog({
     onCancel()
   }, [onCancel])
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        {mode === 'confirm' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>移到废纸篓</DialogTitle>
-              <DialogDescription>{path}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
-                取消
-              </Button>
-              <Button variant="destructive" onClick={handleConfirm} disabled={confirming}>
-                移到废纸篓
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+  const isConfirmMode = mode === 'confirm'
 
-        {mode === 'fallback' && (
-          <>
-            <DialogHeader>
-              <DialogTitle>无法移到废纸篓</DialogTitle>
-              <DialogDescription>{errorMessage}</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center gap-2 py-2">
-              <input
-                type="checkbox"
-                id="acknowledge-hard-delete"
-                checked={acknowledged}
-                onChange={(e) => setAcknowledged(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <label
-                htmlFor="acknowledge-hard-delete"
-                className="text-sm text-[color:var(--color-ink-2)] cursor-pointer"
-              >
-                我知道这无法恢复
-              </label>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancel}>
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleHardDelete}
-                disabled={!acknowledged || hardDeleting}
-              >
-                永久删除
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={isConfirmMode ? '移到废纸篓' : '无法移到废纸篓'}
+      description={isConfirmMode ? path : errorMessage}
+      destructive
+      confirmText={isConfirmMode ? '确定' : '永久删除'}
+      disabled={isConfirmMode ? confirming : (!acknowledged || hardDeleting)}
+      onConfirm={isConfirmMode ? handleConfirm : handleHardDelete}
+      onCancel={handleCancel}
+    >
+      {!isConfirmMode && (
+        <div className="flex items-center gap-2 py-2">
+          <input
+            type="checkbox"
+            id="acknowledge-hard-delete"
+            checked={acknowledged}
+            onChange={(e) => setAcknowledged(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <label
+            htmlFor="acknowledge-hard-delete"
+            className="text-sm text-[color:var(--color-ink-2)] cursor-pointer"
+          >
+            我知道这无法恢复
+          </label>
+        </div>
+      )}
+    </ConfirmDialog>
   )
 }

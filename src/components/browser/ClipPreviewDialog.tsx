@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { XIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
@@ -36,7 +37,14 @@ export function ClipPreviewDialog(): JSX.Element | null {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[90vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-md bg-[color:var(--color-paper)] p-4 shadow-xl">
-          <Dialog.Title className="shrink-0 text-base font-semibold">
+          <Dialog.Close
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            onClick={() => void cancel()}
+          >
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </Dialog.Close>
+          <Dialog.Title className="shrink-0 text-base font-semibold pr-8">
             {t('browser.clip.preview.title', '剪藏预览')}
           </Dialog.Title>
 
@@ -92,13 +100,6 @@ export function ClipPreviewDialog(): JSX.Element | null {
               onClick={() => void reextract(activeTabId ?? '')}
             >
               {t('browser.clip.preview.reextract', '重新抽取')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-3 py-1 text-sm"
-              onClick={() => void cancel()}
-            >
-              {t('browser.clip.preview.cancel', '取消')}
             </button>
             <button
               type="button"

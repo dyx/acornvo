@@ -6,16 +6,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useProfilesStore } from '@/stores/profiles'
 import type { AiProviderProfile } from '@shared/settings-types'
 import { ProfileDialog } from './ProfileDialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface AiTabProps {
   keychainAvailable: boolean
@@ -117,28 +108,20 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         />
       )}
 
-      <AlertDialog open={profileToDelete !== null} onOpenChange={(open) => { if (!open) setProfileToDelete(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{profileToDelete ? t('settings.ai.confirmDelete', { name: profileToDelete.name }) : ''}</AlertDialogTitle>
-            <AlertDialogDescription className="hidden">Confirm deletion</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (profileToDelete) {
-                  void remove(profileToDelete.id)
-                  setProfileToDelete(null)
-                }
-              }}
-            >
-              {t('common.confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={profileToDelete !== null}
+        onOpenChange={(open) => { if (!open) setProfileToDelete(null) }}
+        title={profileToDelete ? t('settings.ai.confirmDelete', { name: profileToDelete.name }) : ''}
+        cancelText={t('common.cancel')}
+        confirmText={t('common.confirm')}
+        destructive
+        onConfirm={() => {
+          if (profileToDelete) {
+            void remove(profileToDelete.id)
+            setProfileToDelete(null)
+          }
+        }}
+      />
     </div>
   )
 }

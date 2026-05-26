@@ -82,7 +82,7 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
         </Button>
       </div>
       {tagsAll.length > 0 && (
-        <div className="flex flex-wrap gap-1 border-b border-[color:var(--color-line)] px-2 py-1">
+        <div className="flex flex-wrap gap-2 border-b border-[color:var(--color-line)] px-2 py-2">
           {tagsAll.map((tg) => (
             <Button
               key={tg}
