@@ -16,7 +16,7 @@ export function StatusBar({
   totalDocs = 0
 }: StatusBarProps): JSX.Element {
   return (
-    <div className="flex h-[26px] shrink-0 items-center gap-[14px] border-t border-[color:var(--color-line)] bg-[color:var(--color-paper-3)] px-[14px] font-mono text-[11px] text-[color:var(--color-ink-3)]">
+    <div className="flex h-7 shrink-0 items-center gap-4 border-t border-[color:var(--color-line)] bg-[color:var(--color-paper-3)] px-4 font-mono text-xs text-[color:var(--color-ink-3)]">
       {indexing ? (
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-sky)]" />
@@ -32,7 +32,7 @@ export function StatusBar({
       {reviewing > 0 && (
         <span className="flex items-center gap-1.5">
           {/* Sparkles placeholder */}
-          <span className="text-[11px] text-[color:var(--color-acorn)]">✨</span>
+          <span className="text-xs text-[color:var(--color-acorn)]">✨</span>
           理果中 {reviewing}
         </span>
       )}
@@ -40,7 +40,7 @@ export function StatusBar({
       {conflicts > 0 && (
         <span className="flex items-center gap-1 text-[color:var(--color-berry)]">
           {/* Warn placeholder */}
-          <span className="text-[11px]">⚠️</span>
+          <span className="text-xs">⚠️</span>
           {conflicts} 冲突
         </span>
       )}

@@ -50,7 +50,7 @@ export function ProjectCard({
   return (
     <div
       className={cn(
-        'animate-fade-up group flex items-center gap-3.5 rounded-xl border p-3.5 transition-all',
+        'animate-fade-up group flex items-center gap-4 rounded-xl border p-4 transition-all',
         invalid
           ? 'opacity-60 border-[color:var(--color-line)]'
           : 'border-[color:var(--color-line)] hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
@@ -61,7 +61,7 @@ export function ProjectCard({
         type="button"
         onClick={onOpen}
         disabled={disabled}
-        className="flex flex-1 items-center gap-3.5 bg-transparent text-left min-w-0"
+        className="flex flex-1 items-center gap-4 bg-transparent text-left min-w-0"
       >
         <div
           className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[color:var(--color-line)]"
@@ -71,31 +71,31 @@ export function ProjectCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">
-            <span className="serif text-[15.5px] font-medium text-[color:var(--color-ink)]">
+            <span className="serif text-base font-medium text-[color:var(--color-ink)]">
               {item.name}
             </span>
             {item.pinned ? (
-              <span className="text-[10px] font-mono text-[color:var(--color-acorn-2)]">
+              <span className="text-xs font-mono text-[color:var(--color-acorn-2)]">
                 ·pinned
               </span>
             ) : null}
             {invalid ? (
-              <span className="text-[10px] font-mono text-[color:var(--color-berry)]">
+              <span className="text-xs font-mono text-[color:var(--color-berry)]">
                 · {t('picker.invalid')}
               </span>
             ) : null}
             {locked ? (
-              <span className="text-[10px] font-mono text-[color:var(--color-berry)]">
+              <span className="text-xs font-mono text-[color:var(--color-berry)]">
                 · {t('picker.locked')}
               </span>
             ) : null}
           </div>
-          <div className="mt-0.5 truncate font-mono text-[11px] text-[color:var(--color-ink-3)]">
+          <div className="mt-0.5 truncate font-mono text-xs text-[color:var(--color-ink-3)]">
             {item.path}
           </div>
         </div>
-        <div className="shrink-0 text-right font-mono text-[11px] text-[color:var(--color-ink-3)]">
-          <div className="serif text-[13px] text-[color:var(--color-ink-2)]">
+        <div className="shrink-0 text-right font-mono text-xs text-[color:var(--color-ink-3)]">
+          <div className="serif text-sm text-[color:var(--color-ink-2)]">
             {t('picker.files', { count: item.files_count })}
           </div>
           <div className="mt-0.5">{formatRelative(item.last_opened_at)}</div>

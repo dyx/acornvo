@@ -162,7 +162,7 @@ function ProfileChip({ sessionId, profileId }: { sessionId: string; profileId: s
           {current ? (
             <>
               <span className="truncate font-medium">{current.name}</span>
-              <span className="text-muted-foreground/40 shrink-0">|</span>
+              <span className="text-[color:var(--color-line-2)] shrink-0">|</span>
               <span className="text-muted-foreground truncate">{current.model}</span>
             </>
           ) : (
@@ -230,10 +230,10 @@ function EmptyState() {
             }}
             className="flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors text-left group"
           >
-            <div className="bg-primary/5 p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
-              <item.icon className="size-5 text-primary/70" />
+            <div className="bg-[color:var(--color-paper-2)] p-2 rounded-lg group-hover:bg-[color:var(--color-paper-3)] transition-colors">
+              <item.icon className="size-5 text-[color:var(--color-ink-3)]" />
             </div>
-            <span className="text-sm font-medium text-foreground/80 leading-relaxed mt-0.5">
+            <span className="text-sm font-medium text-[color:var(--color-ink-2)] leading-relaxed mt-0.5">
               {item.label}
             </span>
           </button>
@@ -305,8 +305,8 @@ export function Chat() {
             <SessionsErrorBanner />
             <StreamErrorBanner />
             <MissingProfileBanner />
-            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[color:var(--color-line)] px-5 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-              <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
+            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[color:var(--color-line)] px-5 bg-[color:var(--color-paper-2)] z-10">
+              <h2 className="text-base font-medium m-0 flex-1 truncate text-foreground">
                 {title}
               </h2>
               <ProfileChip

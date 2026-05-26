@@ -38,13 +38,13 @@ export function FileRow({
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'cursor-pointer border-b-[0.5px] border-[color:var(--color-line)] px-3.5 py-2.5',
+        'cursor-pointer border-b border-[color:var(--color-line)] px-4 py-3',
         active &&
           'border-l-2 border-l-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] pl-3'
       )}
     >
       <div className="mb-0.5 flex items-baseline gap-2">
-        <span className="serif flex-1 truncate text-[13.5px] font-medium text-[color:var(--color-ink)]">
+        <span className="serif flex-1 truncate text-sm font-medium text-[color:var(--color-ink)]">
           {file.title ?? file.path}
         </span>
         {file.is_reviewing ? (
@@ -54,7 +54,7 @@ export function FileRow({
           />
         ) : null}
       </div>
-      <div className="flex items-center gap-1.5 font-mono text-[10.5px] text-[color:var(--color-ink-3)]">
+      <div className="flex items-center gap-1 font-mono text-xs text-[color:var(--color-ink-3)]">
         {(file.rating !== null || file.ai_rating != null) && (
           <span className="flex gap-0.5" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
             {Array.from({ length: 5 }).map((_, i) => (

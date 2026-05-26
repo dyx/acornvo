@@ -29,7 +29,7 @@ export function AppRail(): JSX.Element {
   return (
     <nav
       aria-label="app navigation"
-      className="flex w-[72px] shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3"
+      className="flex w-16 shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3"
     >
       <button
         onClick={() => {
@@ -44,9 +44,9 @@ export function AppRail(): JSX.Element {
         }
       >
         {/* Placeholder Acorn Logo */}
-        <span className="text-[24px]">🌰</span>
+        <span className="text-2xl">🌰</span>
       </button>
-      <div className="mb-2.5 h-[1px] w-7 bg-[color:var(--color-line)]" />
+      <div className="mb-3 h-[1px] w-7 bg-[color:var(--color-line)]" />
 
       <div className="flex flex-1 flex-col gap-1 w-full items-center">
         {ENTRIES.filter((e) => !e.bottom).map((entry) => (
@@ -65,7 +65,7 @@ export function AppRail(): JSX.Element {
 function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
   const label = t(entry.labelKey)
   const baseCls =
-    'flex w-14 flex-col items-center gap-[3px] rounded-[10px] border py-2 transition-colors cursor-pointer font-inherit'
+    'flex w-14 flex-col items-center gap-1 rounded-xl border py-2 transition-colors cursor-pointer font-inherit'
 
   if (entry.disabled) {
     return (
@@ -74,7 +74,7 @@ function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
         title={t('settings.common.comingSoon')}
       >
         <entry.Icon size={18} />
-        <span className="text-[11px] font-medium">{label}</span>
+        <span className="text-xs font-medium">{label}</span>
       </div>
     )
   }

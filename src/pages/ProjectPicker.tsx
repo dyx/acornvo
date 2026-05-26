@@ -115,22 +115,22 @@ export function ProjectPicker(): JSX.Element {
           }}
         >
           <div>
-            <div className="mb-6 flex items-center gap-2.5">
+            <div className="mb-6 flex items-center gap-3">
               <AcornLogo size={36} />
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-[color:var(--color-ink-3)]">
+                <div className="font-mono text-xs uppercase tracking-[0.15em] text-[color:var(--color-ink-3)]">
                   Acornvo · v1.0
                 </div>
-                <div className="serif text-[26px] font-semibold leading-none tracking-tight">
+                <div className="serif text-3xl font-semibold leading-none tracking-tight">
                   松言果语
                 </div>
               </div>
             </div>
-            <p className="serif mt-7 max-w-[300px] text-[15px] leading-[1.7] text-[color:var(--color-ink-2)]">
+            <p className="serif mt-7 max-w-[300px] text-base leading-[1.7] text-[color:var(--color-ink-2)]">
               {t('picker.subtitle')}
             </p>
           </div>
-          <div className="mt-9 font-mono text-[10.5px] leading-[1.7] text-[color:var(--color-ink-4)]">
+          <div className="mt-9 font-mono text-xs leading-[1.7] text-[color:var(--color-ink-4)]">
             ~/.acornvo
           </div>
         </aside>
@@ -138,16 +138,16 @@ export function ProjectPicker(): JSX.Element {
         {/* Right list + actions column */}
         <section className="flex-1 overflow-y-auto px-14 py-12">
           <div className="mb-6 flex items-baseline justify-between">
-            <h2 className="serif m-0 text-[22px] font-semibold tracking-tight">
+            <h2 className="serif m-0 text-2xl font-semibold tracking-tight">
               {t('picker.title')}
             </h2>
-            <div className="font-mono text-[11px] text-[color:var(--color-ink-3)]">
+            <div className="font-mono text-xs text-[color:var(--color-ink-3)]">
               {t('picker.recentCount', { count: recent.length })}
             </div>
           </div>
 
           {hasRecent ? (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3">
               {items.map((item, i) => {
                 const locked =
                   lockedFromBootstrap && lockedFromBootstrap.path === item.path
@@ -172,7 +172,7 @@ export function ProjectPicker(): JSX.Element {
             </div>
           )}
 
-          <div className="mt-6 flex gap-2.5">
+          <div className="mt-6 flex gap-3">
             <Button
               className="flex-1"
               size="lg"
@@ -183,7 +183,7 @@ export function ProjectPicker(): JSX.Element {
                 window.dispatchEvent(ev)
               }}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
               {t('picker.new')}
             </Button>
             <Button
@@ -196,12 +196,12 @@ export function ProjectPicker(): JSX.Element {
                 window.dispatchEvent(ev)
               }}
             >
-              <FolderOpen className="h-3.5 w-3.5" />
+              <FolderOpen className="h-4 w-4" />
               {t('picker.open')}
             </Button>
           </div>
 
-          <p className="mt-7 font-mono text-[11px] leading-[1.7] text-[color:var(--color-ink-4)]">
+          <p className="mt-7 font-mono text-xs leading-[1.7] text-[color:var(--color-ink-4)]">
             {t('picker.hint')}
           </p>
         </section>

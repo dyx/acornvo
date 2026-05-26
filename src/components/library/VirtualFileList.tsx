@@ -119,7 +119,7 @@ export function VirtualFileList(): JSX.Element {
 
   return (
     <div className="flex w-full flex-1 flex-col overflow-hidden">
-      <div className="flex border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
+      <div className="flex border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
         <button
           type="button"
           onClick={() =>
@@ -130,7 +130,7 @@ export function VirtualFileList(): JSX.Element {
               rating: undefined
             })
           }
-          className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${!filter.rating ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${!filter.rating ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
         >
           {t('library.all')}
         </button>
@@ -144,20 +144,20 @@ export function VirtualFileList(): JSX.Element {
               tag: undefined
             })
           }
-          className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${filter.rating?.min === 0 ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${filter.rating?.min === 0 ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
         >
           {t('library.unreviewed')}
         </button>
       </div>
-      <div className="flex items-center gap-2 border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3.5 py-2.5">
-        <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5">
+      <div className="flex items-center gap-2 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-4 py-3">
+        <div className="flex h-7 flex-1 items-center gap-1.5 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-3">
           <Search size={12} className="text-[color:var(--color-ink-3)]" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('library.search_ph')}
-            className="flex-1 border-none bg-transparent text-[12px] text-[color:var(--color-ink)] outline-none"
+            className="flex-1 border-none bg-transparent text-xs text-[color:var(--color-ink)] outline-none"
           />
         </div>
       </div>
@@ -211,7 +211,7 @@ export function VirtualFileList(): JSX.Element {
         </div>
       </div>
 
-      <div className="border-t-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-3.5 py-2 font-mono text-[10.5px] text-[color:var(--color-ink-3)]">
+      <div className="border-t border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-4 py-2 font-mono text-xs text-[color:var(--color-ink-3)]">
         {t('library.shown_total', { shown: items.length, total })}
       </div>
 
