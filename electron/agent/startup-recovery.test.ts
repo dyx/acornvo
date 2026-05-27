@@ -52,7 +52,7 @@ describe('recoverPendingApprovals', () => {
     ).run('sess-1', null, 'prof-1', 't0', 't0')
     db.prepare(
       `
-      INSERT INTO ai_provider_profiles (id, name, provider, base_url, model, temperature, top_p, max_tokens, api_key_ref, created_at, updated_at)
+      INSERT INTO ai_provider_profiles (id, name, provider, base_url, model, api_key_ref, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run('prof-1', 'p', 'openai', null, 'gpt-4o-mini', 0, 1, null, null, 't0', 't0')
@@ -126,7 +126,7 @@ describe('recoverPendingApprovals', () => {
   it('one failing thread does not block others (best-effort)', async () => {
     db.prepare(
       `
-      INSERT INTO ai_provider_profiles (id, name, provider, base_url, model, temperature, top_p, max_tokens, api_key_ref, created_at, updated_at)
+      INSERT INTO ai_provider_profiles (id, name, provider, base_url, model, api_key_ref, created_at, updated_at)
       VALUES ('p1', 'p', 'openai', NULL, 'gpt-4o-mini', 0, 1, NULL, NULL, 't0', 't0')
     `
     ).run()

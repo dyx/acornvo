@@ -27,8 +27,6 @@ const sampleProfile = {
   provider: 'openai' as const,
   baseUrl: null,
   model: 'gpt-4o',
-  temperature: 0.7,
-  maxTokens: null,
   apiKeyRef: 'ai.key.a',
   createdAt: '2026-05-03',
   updatedAt: '2026-05-03'
@@ -77,8 +75,6 @@ describe('AiTab', () => {
         provider: 'openai' as const,
         baseUrl: null,
         model: 'gpt-4o',
-        temperature: 0.7,
-        maxTokens: null,
         apiKeyRef: null,
         createdAt: '2026-05-03',
         updatedAt: '2026-05-03'
@@ -98,8 +94,6 @@ describe('AiTab', () => {
         provider: 'openai' as const,
         baseUrl: null,
         model: 'gpt-4o',
-        temperature: 0.7,
-        maxTokens: null,
         apiKeyRef: null,
         createdAt: '2026-05-03',
         updatedAt: '2026-05-03'

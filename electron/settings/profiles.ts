@@ -32,9 +32,7 @@ function rowToProfile(row: ProfileRow): AiProviderProfile {
     provider: row.provider as AiProviderProfile['provider'],
     baseUrl: row.base_url,
     model: row.model,
-    temperature: row.temperature,
 
-    maxTokens: row.max_tokens,
     apiKeyRef: row.api_key_ref,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -81,9 +79,9 @@ function create(input: ProfileCreateInput): { id: string } {
       input.provider,
       input.baseUrl ?? null,
       input.model,
-      input.temperature ?? 0.7,
+      0.7,
       1.0,
-      input.maxTokens ?? null,
+      null,
       apiKeyRef,
       now,
       now
@@ -145,9 +143,6 @@ function update(id: string, patch: ProfileUpdateInput): void {
       provider = COALESCE(?, provider),
       base_url = COALESCE(?, base_url),
       model = COALESCE(?, model),
-      temperature = COALESCE(?, temperature),
-      top_p = COALESCE(?, top_p),
-      max_tokens = COALESCE(?, max_tokens),
       api_key_ref = ?,
       updated_at = ?
     WHERE id = ?
@@ -157,16 +152,12 @@ function update(id: string, patch: ProfileUpdateInput): void {
     patch.provider ?? null,
     patch.baseUrl ?? null,
     patch.model ?? null,
-    patch.temperature ?? null,
-    null,
-    patch.maxTokens ?? null,
     newApiKeyRef,
     now,
     id
   )
 
-  // Any field change can affect the cached LangChain model instance (temperature
-  // and maxTokens are baked in at construction time), so invalidate unconditionally.
+  // Any field change can affect the cached LangChain model instance, so invalidate unconditionally.
 
 }
 

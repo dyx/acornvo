@@ -13,15 +13,13 @@ vi.mock('@langchain/ollama', () => ({
 import { buildChatModel } from './model-factory'
 
 describe('buildChatModel', () => {
-  it('builds ChatOpenAI for provider="openai" with model/apiKey/temperature/maxTokens', () => {
+  it('builds ChatOpenAI for provider="openai" with model/apiKey', () => {
     const m: any = buildChatModel({
       id: 'p1',
       provider: 'openai',
       model: 'gpt-4o-mini',
-      apiKey: 'sk-test',
-      temperature: 0.3,
-      maxTokens: 800
-    })
+      apiKey: 'sk-test'
+    }, { temperature: 0.3, maxTokens: 800 })
     expect(m.__kind).toBe('openai')
     expect(m.opts.model).toBe('gpt-4o-mini')
     expect(m.opts.apiKey).toBe('sk-test')
@@ -37,10 +35,8 @@ describe('buildChatModel — provider coverage', () => {
       id: 'p2',
       provider: 'anthropic',
       model: 'claude-3-5-sonnet-latest',
-      apiKey: 'sk-ant-test',
-      temperature: 0.2,
-      maxTokens: 1000
-    })
+      apiKey: 'sk-ant-test'
+    }, { temperature: 0.2, maxTokens: 1000 })
     expect(m.__kind).toBe('anthropic')
     expect(m.opts).toMatchObject({
       model: 'claude-3-5-sonnet-latest',

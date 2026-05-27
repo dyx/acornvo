@@ -54,7 +54,7 @@ function setupDbWithClip(db: Database.Database): { clipPath: string } {
 function seedProfile(db: Database.Database) {
   db.prepare(
     `INSERT INTO ai_provider_profiles
-       (id, name, provider, model, base_url, temperature, max_tokens, created_at, updated_at)
+       (id, name, provider, model, base_url, created_at, updated_at)
      VALUES ('p1', 'p1', 'openai', 'gpt-4o-mini', NULL, 0.3, 800, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`
   ).run()
 }

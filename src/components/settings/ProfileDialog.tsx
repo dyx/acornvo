@@ -14,7 +14,6 @@ import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -35,9 +34,6 @@ interface FormState {
   provider: AiProviderKind
   baseUrl: string
   model: string
-  temperature: string
-
-  maxTokens: string
   apiKey: string
 }
 
@@ -49,9 +45,6 @@ function initialState(profile: AiProviderProfile | null): FormState {
       provider: 'openai',
       baseUrl: defs?.baseUrl ?? '',
       model: defs?.models?.[0] ?? '',
-      temperature: '0.7',
-
-      maxTokens: '',
       apiKey: ''
     }
   }
@@ -60,9 +53,6 @@ function initialState(profile: AiProviderProfile | null): FormState {
     provider: profile.provider,
     baseUrl: profile.baseUrl ?? '',
     model: profile.model,
-    temperature: String(profile.temperature),
-
-    maxTokens: profile.maxTokens != null ? String(profile.maxTokens) : '',
     apiKey: ''
   }
 }
@@ -116,16 +106,12 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
       }
 
       const baseUrl = form.baseUrl.trim().length > 0 ? form.baseUrl.trim() : null
-      const maxTokens = form.maxTokens.trim().length > 0 ? Number(form.maxTokens) : null
       if (profile === null) {
         const input: ProfileCreateInput = {
           name,
           provider: form.provider,
           baseUrl,
           model,
-          temperature: Number(form.temperature),
-
-          maxTokens,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
         await create(input)
@@ -135,9 +121,6 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
           provider: form.provider,
           baseUrl,
           model,
-          temperature: Number(form.temperature),
-
-          maxTokens,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
         await update(profile.id, patch)
@@ -222,27 +205,6 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
                 ))}
               </div>
             )}
-          </div>
-          <div className="space-y-1">
-            <span className="block font-medium">
-              {t('settings.ai.temperature')} ({form.temperature})
-            </span>
-            <Slider
-              min={0}
-              max={2}
-              step={0.1}
-              value={[Number(form.temperature)]}
-              onValueChange={([v]) => set('temperature', String(v))}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.maxTokens')}</span>
-            <Input
-              type="number"
-              value={form.maxTokens}
-              onChange={(e) => set('maxTokens', e.target.value)}
-            />
           </div>
           <div className="space-y-1">
             <span className="block font-medium">{t('settings.ai.apiKey')}</span>

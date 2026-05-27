@@ -109,8 +109,6 @@ describe.skip('Chat top bar — profile chip', () => {
           provider: 'openai',
           baseUrl: null,
           model: 'gpt-4o',
-          temperature: 0.7,
-          maxTokens: null,
           apiKeyRef: null,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z'
@@ -121,8 +119,6 @@ describe.skip('Chat top bar — profile chip', () => {
           provider: 'ollama',
           baseUrl: 'http://localhost:11434',
           model: 'llama3.1',
-          temperature: 0.7,
-          maxTokens: null,
           apiKeyRef: null,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z'
@@ -384,8 +380,6 @@ describe.skip('ChatBanner — missing profile warning', () => {
           provider: 'openai',
           baseUrl: null,
           model: 'gpt-4o',
-          temperature: 0.7,
-          maxTokens: null,
           apiKeyRef: null,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z'

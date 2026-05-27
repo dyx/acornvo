@@ -45,7 +45,7 @@ export function getAgentBuilder(): SingletonHandle {
 
   handle = {
     buildForProfile: (profile: ResolvedProfile) => {
-      const model = buildChatModel(profile) as unknown as BaseChatModel
+      const model = buildChatModel(profile, { temperature: 0.3, maxTokens: 4096 }) as unknown as BaseChatModel
       
       const summarizer = summarizationMiddleware({
         model,

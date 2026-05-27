@@ -40,8 +40,6 @@ interface ProfileRow {
   provider: string
   model: string
   base_url: string | null
-  temperature: number
-  max_tokens: number | null
 }
 
 type ReviewerErrCode = 'E_CLIP_NOT_FOUND' | 'E_FILE_NOT_FOUND' | 'E_MTIME_CONFLICT' | LlmErrorCode
@@ -138,9 +136,7 @@ function resolveProfile(profileId?: string): ResolvedProfile {
     provider: p.provider,
     model: p.model,
     baseUrl: p.base_url ?? null,
-    hasApiKey: hasKey,
-    temperature: p.temperature,
-    maxTokens: p.max_tokens
+    hasApiKey: hasKey
   })
   if (!hasKey && p.provider !== 'ollama') {
     logger.warn('[resolveProfile] API key is empty — LLM call will likely fail with E_AUTH', {
@@ -153,9 +149,7 @@ function resolveProfile(profileId?: string): ResolvedProfile {
     provider: p.provider as ResolvedProfile['provider'],
     model: p.model,
     baseUrl: p.base_url ?? undefined,
-    apiKey,
-    maxTokens: p.max_tokens ?? undefined,
-    temperature: p.temperature
+    apiKey
   }
 }
 
@@ -224,7 +218,7 @@ export async function reviewClip(
       provider: profile.provider,
       model: profile.model
     })
-    const chatModel = buildChatModel(profile)
+    const chatModel = buildChatModel(profile, { temperature: 0.1, maxTokens: 512 })
     // openai-compatible providers (e.g. DeepSeek) often don't support
     // response_format: { type: "json_schema" } (Structured Outputs).
     // Fall back to jsonMode which uses the widely-supported { type: "json_object" }.

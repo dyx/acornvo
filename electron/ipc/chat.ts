@@ -34,8 +34,6 @@ function resolveProfile(profileId: string): ResolvedProfile {
         provider: string
         model: string
         base_url: string | null
-        temperature: number
-        max_tokens: number | null
       }
     | undefined
   if (!p) throw new IpcError('E_MISSING_PROFILE', `profile not found: ${profileId}`)
@@ -45,9 +43,7 @@ function resolveProfile(profileId: string): ResolvedProfile {
     provider: p.provider as ResolvedProfile['provider'],
     model: p.model,
     apiKey,
-    baseUrl: p.base_url ?? undefined,
-    temperature: p.temperature,
-    maxTokens: p.max_tokens ?? undefined
+    baseUrl: p.base_url ?? undefined
   }
 }
 

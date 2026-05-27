@@ -12,23 +12,21 @@ export interface ResolvedProfile {
   model: string
   apiKey: string | null
   baseUrl?: string
-  temperature?: number
-  maxTokens?: number
 }
 
-export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
+export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: number, maxTokens?: number } = {}): BaseChatModel {
 
   logger.info('[buildChatModel] constructing new model', {
     provider: profile.provider,
     model: profile.model,
     hasApiKey: (profile.apiKey ?? '').length > 0,
     baseUrl: profile.baseUrl ?? null,
-    temperature: profile.temperature,
-    maxTokens: profile.maxTokens
+    temperature: opts.temperature,
+    maxTokens: opts.maxTokens
   })
 
-  const temperature = profile.temperature ?? 0.3
-  const maxTokens = profile.maxTokens ?? 800
+  const temperature = opts.temperature ?? 0.3
+  const maxTokens = opts.maxTokens ?? 800
 
   const debugCallbacks = [{
     handleLLMEnd(output: any) {
