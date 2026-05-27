@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Edit2Icon, Trash2Icon, PlusIcon, MessageSquareIcon, MoreVerticalIcon } from 'lucide-react'
+import { Edit2Icon, Trash2Icon, PlusIcon, MoreVerticalIcon } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { groupSession } from '@/lib/date-utils'
 
@@ -103,8 +103,6 @@ export function ConversationsAdapter() {
                       )}
                       onClick={() => !isEditing && selectSession(s.id)}
                     >
-                      <MessageSquareIcon className="size-4 shrink-0 opacity-70 mr-2" />
-
                       {isEditing ? (
                         <Input
                           autoFocus
