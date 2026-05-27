@@ -543,17 +543,9 @@ function subscribeSessionStream(sid: string): void {
         case 'done': {
           flushTokenBucket(sid)
           const post = useChatStore.getState().bySession[sid] ?? cur
-          const idx = (() => {
-            for (let i = post.messages.length - 1; i >= 0; i--) {
-              const m = post.messages[i]
-              if (m.role === 'assistant' && m.status === 'streaming') return i
-            }
-            return -1
-          })()
-          const nextMessages =
-            idx === -1
-              ? post.messages
-              : post.messages.map((m, i) => (i === idx ? { ...m, status: 'done' as const } : m))
+          const nextMessages = post.messages.map((m) =>
+            m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'done' as const } : m
+          )
           return {
             bySession: {
               ...s.bySession,
@@ -707,7 +699,10 @@ function subscribeSessionStream(sid: string): void {
               [sid]: {
                 ...cur,
                 status: 'error',
-                error: event.error
+                error: event.error,
+                messages: cur.messages.map((m) =>
+                  m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+                )
               }
             }
           }
@@ -715,7 +710,13 @@ function subscribeSessionStream(sid: string): void {
           return {
             bySession: {
               ...s.bySession,
-              [sid]: { ...cur, status: 'idle' }
+              [sid]: {
+                ...cur,
+                status: 'idle',
+                messages: cur.messages.map((m) =>
+                  m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+                )
+              }
             }
           }
         case 'step.start':

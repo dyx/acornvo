@@ -31,6 +31,18 @@ const convertMessage = (msg: ChatMessage): ThreadMessage => {
     if (openThinkMatch) {
       reasoningText = openThinkMatch[1];
       text = text.replace(/<think>[\s\S]*$/, '').trim();
+    } else {
+      // Fix stray </think> tags leaking into subsequent messages
+      text = text.replace(/<\/think>\n*/g, '').trim();
+    }
+  }
+
+  if (msg.role === 'tool' && text) {
+    try {
+      const parsed = JSON.parse(text);
+      text = `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``;
+    } catch {
+      text = `\`\`\`\n${text}\n\`\`\``;
     }
   }
 
@@ -40,6 +52,18 @@ const convertMessage = (msg: ChatMessage): ThreadMessage => {
   }
   if (text || !reasoningText) {
     content.push({ type: 'text', text: text });
+  }
+  
+  if (msg.role === 'assistant' && msg.toolCalls?.length) {
+    msg.toolCalls.forEach(tc => {
+      content.push({
+        type: 'tool-call',
+        toolName: tc.name,
+        toolCallId: tc.id || tc.name,
+        args: tc.args,
+        argsText: JSON.stringify(tc.args)
+      });
+    });
   }
 
   const baseMessage = {
@@ -69,7 +93,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const messages = activeSession?.messages ?? EMPTY_MESSAGES
 
   const isRunning = activeSession ? 
-    activeSession.messages.some(m => m.status === 'running' || m.status === 'pending') : false;
+    activeSession.messages.some(m => m.status === 'running' || m.status === 'pending' || m.status === 'streaming') : false;
 
   const runtime = useExternalStoreRuntime<ChatMessage>({
     messages,
