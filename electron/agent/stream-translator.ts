@@ -59,10 +59,15 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   if (alreadySeen(deps.seenAiMessageIds, msg)) return
 
   const toolCalls = aiMessageToolCalls(msg)
-  const content = (msg as unknown as { content?: unknown }).content
+  let contentStr = typeof msg.content === 'string' ? msg.content : ''
+  const reasoning = msg.additional_kwargs?.reasoning_content
+  if (typeof reasoning === 'string' && reasoning) {
+    contentStr = `<think>\n${reasoning}</think>\n\n${contentStr}`
+  }
+
   const sessionMsg = await deps.persist.appendMessage({
     role: 'assistant',
-    content: typeof content === 'string' ? content : null,
+    content: contentStr || null,
     toolCalls: toolCalls.length > 0 ? toolCalls : undefined
   })
   deps.emit({ type: 'message.appended', message: sessionMsg })
@@ -205,9 +210,9 @@ export async function translateStreamEntry(
     if (typeof reasoning === 'string' && reasoning) {
       if (!state._thinking) {
         state._thinking = true
-        outText += '> ' + reasoning.replace(/\n/g, '\n> ')
+        outText += '<think>\n' + reasoning
       } else {
-        outText += reasoning.replace(/\n/g, '\n> ')
+        outText += reasoning
       }
     }
 
@@ -216,7 +221,7 @@ export async function translateStreamEntry(
     if (actualContent) {
       if (state._thinking) {
         state._thinking = false
-        outText += '\n\n' + actualContent
+        outText += '</think>\n\n' + actualContent
       } else {
         outText += actualContent
       }

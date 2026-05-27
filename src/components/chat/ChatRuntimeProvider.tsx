@@ -18,15 +18,34 @@ const convertMessage = (msg: ChatMessage): ThreadMessage => {
   }
   
   const mappedRole = msg.role === 'tool' ? 'assistant' : msg.role;
+  
+  let text = msg.text || '';
+  let reasoningText = '';
+  
+  const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
+  if (thinkMatch) {
+    reasoningText = thinkMatch[1];
+    text = text.replace(/<think>[\s\S]*?<\/think>\n*/, '').trim();
+  } else {
+    const openThinkMatch = text.match(/<think>([\s\S]*)$/);
+    if (openThinkMatch) {
+      reasoningText = openThinkMatch[1];
+      text = text.replace(/<think>[\s\S]*$/, '').trim();
+    }
+  }
+
+  const content: any[] = [];
+  if (reasoningText) {
+    content.push({ type: 'reasoning', text: reasoningText });
+  }
+  if (text || !reasoningText) {
+    content.push({ type: 'text', text: text });
+  }
+
   const baseMessage = {
     id: msg.id,
     role: mappedRole,
-    content: [
-      {
-        type: 'text',
-        text: msg.text
-      }
-    ],
+    content,
     createdAt: new Date(msg.createdAt)
   };
 
