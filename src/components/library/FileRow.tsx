@@ -2,7 +2,13 @@ import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FileSummary } from '@shared/ipc-contract'
 import { cn } from '@/lib/utils'
-import { Star } from 'lucide-react'
+import { Star, MoreVertical, Folder, Trash2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 
 export interface FileRowProps {
   file: FileSummary
@@ -10,6 +16,8 @@ export interface FileRowProps {
   onClick: () => void
   onDoubleClick?: () => void
   onContextMenu?: (e: React.MouseEvent) => void
+  onReveal?: () => void
+  onTrash?: () => void
 }
 
 function formatClipped(iso: string | null): string {
@@ -26,7 +34,9 @@ export function FileRow({
   active,
   onClick,
   onDoubleClick,
-  onContextMenu
+  onContextMenu,
+  onReveal,
+  onTrash
 }: FileRowProps): JSX.Element {
   const { t } = useTranslation()
   return (
@@ -38,80 +48,112 @@ export function FileRow({
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'cursor-pointer border-b border-[color:var(--color-line)] px-4 py-3',
-        active &&
-          'border-l-2 border-l-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] pl-3'
+        'group relative flex items-center justify-between cursor-pointer px-3 py-2.5 transition-all duration-200 mb-0.5 rounded-md',
+        active
+          ? 'bg-[color:var(--color-acorn)]/10'
+          : 'hover:bg-[color:var(--color-paper-3)]'
       )}
     >
-      <div className="mb-0.5 flex items-baseline gap-2">
-        <span className="serif flex-1 truncate text-sm font-medium text-[color:var(--color-ink)]">
-          {file.title ?? file.path}
-        </span>
-        {file.is_reviewing ? (
-          <span
-            className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-[color:var(--color-acorn)]"
-            aria-label={t('library.reviewing')}
-          />
-        ) : null}
-      </div>
-      <div className="flex items-center gap-1 font-mono text-xs text-[color:var(--color-ink-3)]">
-        {(file.rating !== null || file.ai_rating != null) && (
-          <span className="flex gap-0.5" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  'h-3.5 w-3.5',
-                  i < ((file.rating ?? file.ai_rating) ?? 0)
-                    ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
-                    : 'text-[color:var(--color-paper-3)]',
-                  file.rating === null && 'opacity-60'
-                )}
-              />
-            ))}
+      <div className="flex flex-col flex-1 min-w-0 pr-1">
+        <div className="flex items-center gap-2 mb-[2px]">
+          <span className={cn('truncate text-[13px] tracking-tight', active ? 'font-semibold text-[color:var(--color-ink)]' : 'font-medium text-[color:var(--color-ink-2)] group-hover:text-[color:var(--color-ink)]')}>
+            {file.title ?? file.path}
           </span>
-        )}
-
-        {/* Status: only show for active/error states, or when no rating at all */}
-        {file.review_status === 'running' ? (
-          <span className="flex items-center gap-1 text-[color:var(--color-acorn-2)]">
-            <span className="h-1.5 w-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-[color:var(--color-acorn)]" />
-            {t('library.reviewing')}
-          </span>
-        ) : file.review_status === 'failed' ? (
-          <span className="text-[color:var(--color-berry)]">
-            {file.rating !== null || file.ai_rating != null ? '· ' : ''}{t('library.review_failed')}
-          </span>
-        ) : file.review_status === 'pending' && file.rating === null && file.ai_rating == null ? (
-          <span className="text-[color:var(--color-ink-4)]">
-            {t('library.review_pending')}
-          </span>
-        ) : file.rating === null && file.ai_rating == null ? (
-          <span className="text-[color:var(--color-ink-4)]">
-            {t('library.unreviewed')}
-          </span>
-        ) : null}
-
-        <span>·</span>
-        <span>{formatClipped(file.clipped_at)}</span>
-      </div>
-      {file.tags.length > 0 && (
-        <div className="mt-1 flex items-center gap-1">
-          {file.tags.slice(0, 2).map((tag) => (
+          {file.is_reviewing ? (
             <span
-              key={tag}
-              className="rounded-full border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-leaf-bg)] px-1.5 py-px font-mono text-[10px] text-[color:var(--color-ink-3)]"
-            >
-              #{tag}
+              className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-[color:var(--color-acorn)]"
+              aria-label={t('library.reviewing')}
+            />
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2 mt-1">
+          {/* Rating or Status */}
+          {(file.rating !== null || file.ai_rating != null) ? (
+            <span className="flex gap-[1px]" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    'h-[10px] w-[10px]',
+                    i < ((file.rating ?? file.ai_rating) ?? 0)
+                      ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
+                      : 'text-[color:var(--color-paper-3)]',
+                    file.rating === null && 'opacity-60'
+                  )}
+                />
+              ))}
             </span>
-          ))}
-          {file.tags.length > 2 && (
-            <span className="font-mono text-[10px] text-[color:var(--color-ink-4)]">
-              +{file.tags.length - 2}
+          ) : (
+            <span className={cn('text-[10px] font-medium', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>
+              {file.review_status === 'failed' ? t('library.review_failed', '理果失败') : t('library.unreviewed', '待理果')}
             </span>
           )}
+
+          {/* Tags */}
+          {file.tags.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-[color:var(--color-line-2)] text-[10px]">·</span>
+              {file.tags.slice(0, 2).map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] max-w-[80px] truncate"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {file.tags.length > 2 && (
+                <span className="font-mono text-[9px] text-[color:var(--color-ink-4)]">
+                  +{file.tags.length - 2}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Action Buttons */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className={cn(
+              "absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md shadow-sm transition-all duration-200",
+              "opacity-0 translate-x-1 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 group-hover:translate-x-0 data-[state=open]:translate-x-0",
+              "text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink)]",
+              "bg-[color:var(--color-paper)]/95 backdrop-blur-sm border border-[color:var(--color-line)]/50 hover:bg-[color:var(--color-paper-2)]"
+            )}
+            onClick={(e) => e.stopPropagation()}
+            title={t('common.more', '更多')}
+          >
+            <MoreVertical size={14} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onReveal && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                onReveal()
+              }}
+            >
+              <Folder className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
+              {t('library.reveal', '在 Finder 中显示')}
+            </DropdownMenuItem>
+          )}
+          {onTrash && (
+            <DropdownMenuItem
+              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+              onClick={(e) => {
+                e.stopPropagation()
+                onTrash()
+              }}
+            >
+              <Trash2 className="size-4 mr-2" />
+              {t('library.trash', '移到废纸篓')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

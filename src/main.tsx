@@ -37,7 +37,7 @@ const router = createMemoryRouter([
   {
     element: <App />,
     children: [
-      { index: true, element: <DesignLab /> },
+      { index: true, element: <BootstrapGate /> },
       { path: 'picker', element: <ProjectPicker /> },
       { path: 'library', element: <Library /> },
       { path: 'browser', element: <Browse /> },

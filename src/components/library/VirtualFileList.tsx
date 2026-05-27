@@ -10,7 +10,13 @@ import { useEditorStore } from '@/stores/editor'
 import { FileRow } from './FileRow'
 import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
-import { Search } from 'lucide-react'
+import { Search, SlidersHorizontal, Check } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 
 // First-paint estimate only — actual row height is measured per element so
 // virtualizer.scrollOffsets don't drift even if FileRow content grows.
@@ -117,40 +123,9 @@ export function VirtualFileList(): JSX.Element {
     }
   }
 
-  return (
-    <div className="flex w-full flex-1 flex-col overflow-hidden">
-      <div className="flex border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
-        <button
-          type="button"
-          onClick={() =>
-            setFilter({
-              pathPrefix: undefined,
-              category: undefined,
-              tag: undefined,
-              rating: undefined
-            })
-          }
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${!filter.rating ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
-        >
-          {t('library.all')}
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setFilter({
-              rating: { min: 0, max: 0 },
-              pathPrefix: undefined,
-              category: undefined,
-              tag: undefined
-            })
-          }
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${filter.rating?.min === 0 ? 'text-[color:var(--color-ink)] border-b-2 border-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]'}`}
-        >
-          {t('library.unreviewed')}
-        </button>
-      </div>
-      <div className="flex h-[48px] shrink-0 items-center px-4 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
-        <div className="flex h-[30px] w-full items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
+  return <div className="flex w-full flex-1 flex-col overflow-hidden bg-[color:var(--color-paper-2)]">
+      <div className="flex h-[48px] shrink-0 items-center gap-2 px-3">
+        <div className="flex h-[30px] flex-1 items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
           <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
           <input
             type="search"
@@ -161,6 +136,41 @@ export function VirtualFileList(): JSX.Element {
             className="flex-1 bg-transparent text-[13px] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-4)] min-w-0"
           />
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm text-[color:var(--color-ink-4)] hover:text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)] transition-colors shrink-0"
+              title={t('common.filter', '筛选')}
+            >
+              <SlidersHorizontal size={13} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem 
+              onClick={() => setFilter({ pathPrefix: undefined, category: undefined, tag: undefined, rating: undefined })}
+              className="flex items-center justify-between text-xs"
+            >
+              {t('library.all')}
+              {!filter.rating && <Check size={12} className="text-[color:var(--color-acorn)]" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => setFilter({ rating: { min: 0, max: 0 }, pathPrefix: undefined, category: undefined, tag: undefined })}
+              className="flex items-center justify-between text-xs"
+            >
+              {t('library.unreviewed')}
+              {filter.rating?.min === 0 && <Check size={12} className="text-[color:var(--color-acorn)]" />}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="flex h-8 shrink-0 items-center justify-between px-4 pb-1 pt-2">
+        <span className="text-[11px] font-medium text-[color:var(--color-ink-2)]">
+          {filter.rating?.min === 0 ? t('library.unreviewed') : t('library.all')}
+        </span>
+        <span className="font-mono text-[10px] text-[color:var(--color-ink-4)]">
+          {items.length}
+        </span>
       </div>
 
       <div
@@ -172,24 +182,26 @@ export function VirtualFileList(): JSX.Element {
         role="listbox"
       >
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-          {virtualizer.getVirtualItems().map((vi) => {
-            const file = items[vi.index]
+          {virtualizer.getVirtualItems().map((virtualItem) => {
+            const file = items[virtualItem.index]
             return (
               <div
                 key={file.path}
-                data-index={vi.index}
+                data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: '100%',
-                  transform: `translateY(${vi.start}px)`
+                  transform: `translateY(${virtualItem.start}px)`,
+                  padding: '0 8px',
+                  paddingBottom: '2px'
                 }}
               >
                 <FileRow
                   file={file}
-                  active={file.path === selectedPath}
+                  active={selectedPath === file.path}
                   onClick={async () => {
                     const s = useEditorStore.getState().state
                     if (s.kind === 'ready' && (s.dirty || s.saving)) {
@@ -205,15 +217,15 @@ export function VirtualFileList(): JSX.Element {
                     e.preventDefault()
                     setMenu({ x: e.clientX, y: e.clientY, path: file.path })
                   }}
+                  onReveal={async () => {
+                    await ipc.files.revealInFinder(file.path)
+                  }}
+                  onTrash={() => setTrashTarget(file.path)}
                 />
               </div>
             )
           })}
         </div>
-      </div>
-
-      <div className="border-t border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] px-4 py-2 font-mono text-xs text-[color:var(--color-ink-3)]">
-        {t('library.shown_total', { shown: items.length, total })}
       </div>
 
       {menu ? (
@@ -240,5 +252,4 @@ export function VirtualFileList(): JSX.Element {
         />
       )}
     </div>
-  )
 }
