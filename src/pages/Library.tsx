@@ -34,7 +34,7 @@ export function Library(): JSX.Element {
       <IndexBanner />
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Combined List with Tabs */}
-        <div className="flex w-[280px] flex-shrink-0 flex-col overflow-hidden border-r-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
+        <div className="flex w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
           <VirtualFileList />
         </div>
 
