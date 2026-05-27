@@ -424,7 +424,8 @@
       "helpAria": "Keyboard shortcuts help",
       "noProfile": "No AI configured",
       "switchProfile": "Switch AI",
-      "modelSeparator": "·"
+      "modelSeparator": "·",
+      "modelLocked": "Model cannot be changed after conversation starts"
     },
     "approval": {
       "header": "Approve tool call",

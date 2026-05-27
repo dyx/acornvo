@@ -198,7 +198,7 @@ function ToolFallbackArgs({
       className={cn("aui-tool-fallback-args px-4", className)}
       {...props}
     >
-      <pre className="aui-tool-fallback-args-value whitespace-pre-wrap">
+      <pre className="aui-tool-fallback-args-value whitespace-pre-wrap text-xs text-muted-foreground bg-muted/50 p-3 rounded-md mt-2 font-mono">
         {argsText}
       </pre>
     </div>

@@ -217,7 +217,16 @@ function ReasoningText({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-const ReasoningImpl: ReasoningMessagePartComponent = () => <MarkdownText />;
+import { TextMessagePartProvider } from "@assistant-ui/react";
+
+const ReasoningImpl: ReasoningMessagePartComponent = () => {
+  const part = useAuiState((s) => s.part) as any;
+  return (
+    <TextMessagePartProvider part={{ type: "text", text: part.text || "" }}>
+      <MarkdownText />
+    </TextMessagePartProvider>
+  );
+};
 
 const ReasoningGroupImpl: ReasoningGroupComponent = ({
   children,

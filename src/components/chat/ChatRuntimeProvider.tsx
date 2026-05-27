@@ -61,7 +61,7 @@ const convertMessage = (msg: ChatMessage): ThreadMessage => {
         toolName: tc.name,
         toolCallId: tc.id || tc.name,
         args: tc.args,
-        argsText: JSON.stringify(tc.args)
+        argsText: JSON.stringify(tc.args, null, 2)
       });
     });
   }
@@ -110,6 +110,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       await cancelStream()
     },
     onEdit: async (message: AppendMessage) => {
+      console.log('onEdit called with message:', message);
       if (!message.sourceId) return;
 
       const activeSid = useChatStore.getState().activeSessionId;

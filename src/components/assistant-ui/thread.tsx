@@ -80,9 +80,13 @@ export const Thread: FC = () => {
             data-slot="aui_message-group"
             className="mb-10 flex flex-col gap-y-8 empty:hidden"
           >
-            <ThreadPrimitive.Messages>
-              {() => <ThreadMessage />}
-            </ThreadPrimitive.Messages>
+            <ThreadPrimitive.Messages
+              components={{
+                UserMessage: UserMessage,
+                AssistantMessage: AssistantMessage,
+                EditComposer: EditComposer,
+              }}
+            />
           </div>
 
           <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer bg-background sticky bottom-0 mt-auto flex flex-col gap-4 overflow-visible pb-4 md:pb-6 relative">
@@ -97,14 +101,6 @@ export const Thread: FC = () => {
   );
 };
 
-const ThreadMessage: FC = () => {
-  const role = useAuiState((s) => s.message.role);
-  const isEditing = useAuiState((s) => s.message.composer.isEditing);
-
-  if (isEditing) return <EditComposer />;
-  if (role === "user") return <UserMessage />;
-  return <AssistantMessage />;
-};
 
 const ThreadScrollToBottom: FC = () => {
   return (
@@ -112,7 +108,7 @@ const ThreadScrollToBottom: FC = () => {
       <Button
         variant="outline"
         size="icon"
-        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full disabled:invisible border-border text-muted-foreground bg-background hover:bg-muted shadow-sm size-8"
+        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full disabled:invisible border border-border/50 text-muted-foreground/70 bg-background/80 backdrop-blur-sm hover:bg-muted/80 hover:text-foreground shadow-sm size-8 transition-all"
       >
         <ArrowDownIcon className="size-4" />
       </Button>

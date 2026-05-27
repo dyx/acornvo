@@ -129,10 +129,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({ sessionsLoading: true, sessionsError: null })
     try {
       const list = await ipc.chat['sessions.list']()
+      const targetActiveId = get().activeSessionId ?? list[0]?.id ?? null
       set((s) => ({
         sessions: list.map(toChatSession),
-        activeSessionId: s.activeSessionId ?? list[0]?.id ?? null
+        activeSessionId: targetActiveId
       }))
+      if (targetActiveId) {
+        await get().selectSession(targetActiveId)
+      }
     } catch (err) {
       set({ sessionsError: err instanceof Error ? err.message : String(err) })
     } finally {
@@ -237,10 +241,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async deleteSession(id) {
     try {
       await ipc.chat['sessions.delete'](id)
+      const curActive = get().activeSessionId
+      let nextActive = curActive
+      
       set((s) => {
         const remaining = s.sessions.filter((ses) => ses.id !== id)
-        let nextActive = s.activeSessionId
-        if (s.activeSessionId === id) {
+        if (curActive === id) {
           nextActive = remaining[0]?.id ?? null
         }
         const nextBy = { ...s.bySession }
@@ -251,6 +257,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           bySession: nextBy
         }
       })
+
+      if (nextActive && nextActive !== curActive) {
+        get().selectSession(nextActive)
+      }
     } catch (err) {
       set({ sessionsError: err instanceof Error ? err.message : String(err) })
     }
@@ -301,7 +311,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ...emptySession(),
             ...s.bySession[sid],
             status: 'error',
-            error: err instanceof Error ? err.message : String(err)
+            error: err instanceof Error ? err.message : String(err),
+            messages: s.bySession[sid].messages.map(m =>
+              m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+            )
           }
         }
       }))
@@ -317,7 +330,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       return {
         bySession: {
           ...s.bySession,
-          [sid]: { ...cur, status: 'idle' as const }
+          [sid]: { 
+            ...cur, 
+            status: 'idle' as const,
+            messages: cur.messages.map(m =>
+              m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+            )
+          }
         }
       }
     })

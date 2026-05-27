@@ -28,7 +28,7 @@ function bucketByStatus(status: number, providerMessage?: string): NormalizedLlm
     return build('E_AUTH', `auth failed (HTTP ${status})`, { httpStatus: status, providerMessage })
   }
   if (status === 429) {
-    return build('E_RATE', `rate limited (HTTP ${status})`, { httpStatus: status, providerMessage })
+    return build('E_RATE', providerMessage ? `Rate limited: ${providerMessage}` : `Rate limited (HTTP ${status})`, { httpStatus: status, providerMessage })
   }
   if (status >= 500) {
     return build('E_SERVER', `provider server error (HTTP ${status})`, {
@@ -97,7 +97,7 @@ export function normalizeLLMError(raw: unknown): NormalizedLlmError {
   }
 
   // 4) HTTP status bucket fallback (covers Anthropic/Ollama raw responses).
-  const status = Number(e.status ?? e.response?.status ?? NaN)
+  const status = Number(e.status ?? e.code ?? e.response?.status ?? NaN)
   if (Number.isFinite(status) && status > 0) return bucketByStatus(status, e.message)
 
   // 5) Network errors (fetch TypeError).
