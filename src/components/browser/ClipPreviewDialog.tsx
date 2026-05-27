@@ -35,10 +35,10 @@ export function ClipPreviewDialog(): JSX.Element | null {
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[90vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-md bg-[color:var(--color-paper)] p-4 shadow-xl">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-all" />
+        <Dialog.Content className="fixed right-0 top-0 bottom-0 z-50 flex w-[400px] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl border-l border-[color:var(--color-line)] sm:max-w-sm duration-300 animate-in slide-in-from-right-1/2">
           <Dialog.Close
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 hover:bg-[color:var(--color-paper-3)] p-1 focus:outline-none"
             onClick={() => void cancel()}
           >
             <XIcon className="size-4" />
