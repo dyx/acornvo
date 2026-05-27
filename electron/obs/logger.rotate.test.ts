@@ -13,26 +13,26 @@ vi.mock('electron', () => ({
 import { rotateOnBoot } from './logger'
 
 describe('rotateOnBoot', () => {
-  it('deletes files older than 7 days and trims total to <= 40MB starting from oldest', () => {
+  it('deletes files older than 14 days and trims total to <= 80MB starting from oldest', async () => {
     mkdirSync(logDir, { recursive: true })
     const now = Date.now()
-    // Old file (10 days)
-    const old = join(logDir, 'app-2026-04-29.log')
+    // Old file (15 days)
+    const old = join(logDir, 'app-2026-04-24.log')
     writeFileSync(old, 'x')
-    const tenDaysAgo = (now - 10 * 86400 * 1000) / 1000
-    utimesSync(old, tenDaysAgo, tenDaysAgo)
+    const fifteenDaysAgo = (now - 15 * 86400 * 1000) / 1000
+    utimesSync(old, fifteenDaysAgo, fifteenDaysAgo)
 
-    // 6 fresh files of ~10MB each = 60MB total
-    for (let i = 0; i < 6; i += 1) {
+    // 12 fresh files of ~10MB each = 120MB total
+    for (let i = 0; i < 12; i += 1) {
       writeFileSync(join(logDir, `app-fresh-${i}.log`), Buffer.alloc(10 * 1024 * 1024))
     }
 
-    rotateOnBoot({ now: () => new Date(now) })
+    await rotateOnBoot({ now: () => new Date(now) })
 
     const remaining = readdirSync(logDir)
-    expect(remaining).not.toContain('app-2026-04-29.log')
+    expect(remaining).not.toContain('app-2026-04-24.log')
 
     const total = remaining.reduce((sum, f) => sum + statSync(join(logDir, f)).size, 0)
-    expect(total).toBeLessThanOrEqual(40 * 1024 * 1024)
+    expect(total).toBeLessThanOrEqual(80 * 1024 * 1024)
   })
 })

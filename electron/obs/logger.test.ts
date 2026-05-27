@@ -17,10 +17,12 @@ describe('obs logger (JSON Lines)', () => {
     /* keep tmp dir until process exit */
   })
 
-  it('writes one JSON Line per record with required fields', () => {
+  it('writes one JSON Line per record with required fields', async () => {
     const log = createLogger({ now: () => new Date('2026-05-09T03:04:05.000Z') })
     log.info('clipper', { op: 'save', ok: true, ms: 12, meta: { url: 'https://x' } })
     log.warn('agent', { op: 'step', ok: false, ms: 901, msg: 'rate limited' })
+
+    await log.flush()
 
     const files = readdirSync(join(tempBase, 'logs')).filter((f) => f.endsWith('.log'))
     expect(files).toHaveLength(1)
