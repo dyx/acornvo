@@ -187,7 +187,7 @@ export function AddressBar(): JSX.Element {
       >
         {bookmark ? '★' : '☆'}
       </button>
-      <span className="relative ml-2 flex items-center">
+      <span className="relative flex items-center">
         <button
           type="button"
           data-state={clipState}
