@@ -71,33 +71,47 @@ export function FileRow({
             ))}
           </span>
         )}
-        
+
+        {/* Status: only show for active/error states, or when no rating at all */}
         {file.review_status === 'running' ? (
           <span className="flex items-center gap-1 text-[color:var(--color-acorn-2)]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-acorn)]" />
+            <span className="h-1.5 w-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-[color:var(--color-acorn)]" />
             {t('library.reviewing')}
-          </span>
-        ) : file.review_status === 'pending' ? (
-          <span className="text-[color:var(--color-ink-4)]">
-            {file.rating !== null || file.ai_rating != null ? '· ' : ''}{t('library.review_pending')}
           </span>
         ) : file.review_status === 'failed' ? (
           <span className="text-[color:var(--color-berry)]">
             {file.rating !== null || file.ai_rating != null ? '· ' : ''}{t('library.review_failed')}
           </span>
-        ) : file.review_status === 'done' && file.rating === null ? (
-          <span className="text-[color:var(--color-acorn-2)]">
-            {file.ai_rating != null ? '· ' : ''}{t('library.reviewed')}
-          </span>
-        ) : file.review_status === 'none' && file.rating === null ? (
+        ) : file.review_status === 'pending' && file.rating === null && file.ai_rating == null ? (
           <span className="text-[color:var(--color-ink-4)]">
-            {file.ai_rating != null ? '· ' : ''}{t('library.unreviewed')}
+            {t('library.review_pending')}
+          </span>
+        ) : file.rating === null && file.ai_rating == null ? (
+          <span className="text-[color:var(--color-ink-4)]">
+            {t('library.unreviewed')}
           </span>
         ) : null}
 
         <span>·</span>
         <span>{formatClipped(file.clipped_at)}</span>
       </div>
+      {file.tags.length > 0 && (
+        <div className="mt-1 flex items-center gap-1">
+          {file.tags.slice(0, 2).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-leaf-bg)] px-1.5 py-px font-mono text-[10px] text-[color:var(--color-ink-3)]"
+            >
+              #{tag}
+            </span>
+          ))}
+          {file.tags.length > 2 && (
+            <span className="font-mono text-[10px] text-[color:var(--color-ink-4)]">
+              +{file.tags.length - 2}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
