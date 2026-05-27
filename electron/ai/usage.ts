@@ -6,8 +6,10 @@ export interface AiUsageSummary {
   okCount: number
   errorRate: number
   totalTokens: number
-  byProvider: Record<string, { calls: number; tokens: number }>
-  byGrove: Record<string, { calls: number; tokens: number }>
+  totalCacheReadTokens: number
+  totalReasoningTokens: number
+  byProvider: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }>
+  byGrove: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }>
 }
 
 export interface AiUsageListOpts {
@@ -30,6 +32,8 @@ function rowFromDb(r: any): AiUsageRow {
     model: r.model,
     promptTokens: r.prompt_tokens,
     completionTokens: r.completion_tokens,
+    cacheReadTokens: r.cache_read_tokens,
+    reasoningTokens: r.reasoning_tokens,
     latencyMs: r.latency_ms,
     ok: r.ok,
     error: r.error,
@@ -45,8 +49,8 @@ export const aiUsage = {
     const groveId = getCurrent()?.id ?? null
     db.prepare(
       `
-      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       row.jobId,
@@ -54,6 +58,8 @@ export const aiUsage = {
       row.model,
       row.promptTokens,
       row.completionTokens,
+      row.cacheReadTokens ?? 0,
+      row.reasoningTokens ?? 0,
       row.latencyMs,
       row.ok,
       row.error,
@@ -70,7 +76,7 @@ export const aiUsage = {
     const rows = db
       .prepare(
         `
-      SELECT profile_id, grove_id, ok, prompt_tokens, completion_tokens
+      SELECT profile_id, grove_id, ok, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens
       FROM ai_usage WHERE created_at >= ?
     `
       )
@@ -81,24 +87,32 @@ export const aiUsage = {
       (s, r) => s + (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0),
       0
     )
-    const byProvider: Record<string, { calls: number; tokens: number }> = {}
-    const byGrove: Record<string, { calls: number; tokens: number }> = {}
+    const totalCacheReadTokens = rows.reduce((s, r) => s + (r.cache_read_tokens ?? 0), 0)
+    const totalReasoningTokens = rows.reduce((s, r) => s + (r.reasoning_tokens ?? 0), 0)
+    const byProvider: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
+    const byGrove: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
     for (const r of rows) {
       const pKey = r.profile_id ?? 'unknown'
-      byProvider[pKey] ??= { calls: 0, tokens: 0 }
+      byProvider[pKey] ??= { calls: 0, tokens: 0, cacheReadTokens: 0, reasoningTokens: 0 }
       byProvider[pKey].calls += 1
       byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
+      byProvider[pKey].cacheReadTokens += (r.cache_read_tokens ?? 0)
+      byProvider[pKey].reasoningTokens += (r.reasoning_tokens ?? 0)
 
       const gKey = r.grove_id ?? 'unknown'
-      byGrove[gKey] ??= { calls: 0, tokens: 0 }
+      byGrove[gKey] ??= { calls: 0, tokens: 0, cacheReadTokens: 0, reasoningTokens: 0 }
       byGrove[gKey].calls += 1
       byGrove[gKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
+      byGrove[gKey].cacheReadTokens += (r.cache_read_tokens ?? 0)
+      byGrove[gKey].reasoningTokens += (r.reasoning_tokens ?? 0)
     }
     return {
       totalCalls,
       okCount,
       errorRate: totalCalls === 0 ? 0 : (totalCalls - okCount) / totalCalls,
       totalTokens,
+      totalCacheReadTokens,
+      totalReasoningTokens,
       byProvider,
       byGrove
     }
@@ -137,6 +151,8 @@ export interface UsageInput {
   input_tokens?: number
   output_tokens?: number
   total_tokens?: number
+  input_token_details?: { cache_read?: number }
+  output_token_details?: { reasoning?: number }
 }
 
 export interface WriteUsageArgs {
@@ -152,6 +168,8 @@ export interface WriteUsageArgs {
    *  legacy queue handler reads them off `out.llmCall.{promptTokens,completionTokens}`). */
   promptTokens?: number | null
   completionTokens?: number | null
+  cacheReadTokens?: number | null
+  reasoningTokens?: number | null
 }
 
 /**
@@ -170,6 +188,8 @@ export function rowFromUsageMetadata(
     model: base.model,
     promptTokens: usage.input_tokens ?? 0,
     completionTokens: usage.output_tokens ?? 0,
+    cacheReadTokens: usage.input_token_details?.cache_read ?? 0,
+    reasoningTokens: usage.output_token_details?.reasoning ?? 0,
     latencyMs: base.latencyMs,
     ok: base.ok,
     error: base.error,
@@ -195,6 +215,8 @@ export function writeUsage(args: WriteUsageArgs): void {
     model: args.model,
     promptTokens: args.promptTokens ?? 0,
     completionTokens: args.completionTokens ?? 0,
+    cacheReadTokens: args.cacheReadTokens ?? 0,
+    reasoningTokens: args.reasoningTokens ?? 0,
     latencyMs: args.latencyMs,
     ok: args.ok,
     error: args.error,

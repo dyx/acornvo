@@ -72,7 +72,7 @@ export function ObservabilityTab(): JSX.Element {
 // --- AI Panel ---
 
 interface AiPanelData {
-  totals: { requests: number; tokens: number; costUSD: number }
+  totals: { requests: number; tokens: number }
   byProfile: { profileId: string; requests: number; tokens: number }[]
   byGrove: { groveId: string; requests: number; tokens: number }[]
   byTool: { tool: string; count: number }[]
@@ -130,11 +130,8 @@ function ObservabilityAiPanel(): JSX.Element {
         .map(([day, tokens]) => ({ day, tokens }))
         .sort((a, b) => a.day.localeCompare(b.day))
 
-      // Estimate cost: $2/1M tokens (GPT-4 level)
-      const costUSD = (summary.totalTokens / 1_000_000) * 2
-
       setData({
-        totals: { requests: summary.totalCalls, tokens: summary.totalTokens, costUSD },
+        totals: { requests: summary.totalCalls, tokens: summary.totalTokens },
         byProfile,
         byGrove,
         byTool,
@@ -163,7 +160,7 @@ function ObservabilityAiPanel(): JSX.Element {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <NumberCard
           testId="obs-ai-total-requests"
           label={t('obs.ai.totalRequests')}
@@ -173,11 +170,6 @@ function ObservabilityAiPanel(): JSX.Element {
           testId="obs-ai-total-tokens"
           label={t('obs.ai.totalTokens')}
           value={data?.totals.tokens ?? 0}
-        />
-        <NumberCard
-          testId="obs-ai-cost"
-          label={t('obs.ai.estimatedCost')}
-          value={`$${(data?.totals.costUSD ?? 0).toFixed(2)}`}
         />
       </div>
 

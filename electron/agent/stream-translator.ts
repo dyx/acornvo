@@ -220,7 +220,6 @@ export function emitDone(
   finalUsage: { input_tokens?: number; output_tokens?: number } | undefined,
   modelName: string
 ): void {
-  deps.recordUsage(finalUsage, modelName)
   const promptTokens = finalUsage?.input_tokens ?? 0
   const completionTokens = finalUsage?.output_tokens ?? 0
   deps.emit({

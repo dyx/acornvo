@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   model TEXT,
   prompt_tokens INTEGER,
   completion_tokens INTEGER,
+  cache_read_tokens INTEGER DEFAULT 0,
+  reasoning_tokens INTEGER DEFAULT 0,
   latency_ms INTEGER,
   ok INTEGER NOT NULL,
   error TEXT,
@@ -102,6 +104,12 @@ export function initGlobalDb(): void {
     const aiUsageInfo = db.pragma('table_info(ai_usage)') as { name: string }[]
     if (!aiUsageInfo.some((c) => c.name === 'grove_id')) {
       db.prepare('ALTER TABLE ai_usage ADD COLUMN grove_id TEXT').run()
+    }
+    if (!aiUsageInfo.some((c) => c.name === 'cache_read_tokens')) {
+      db.prepare('ALTER TABLE ai_usage ADD COLUMN cache_read_tokens INTEGER DEFAULT 0').run()
+    }
+    if (!aiUsageInfo.some((c) => c.name === 'reasoning_tokens')) {
+      db.prepare('ALTER TABLE ai_usage ADD COLUMN reasoning_tokens INTEGER DEFAULT 0').run()
     }
   } catch {
     /* ignore */

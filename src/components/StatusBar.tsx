@@ -3,7 +3,6 @@ import type { JSX } from 'react'
 interface StatusBarProps {
   reviewing?: number
   conflicts?: number
-  todayCost?: string
   indexing?: string | null
   totalDocs?: number
 }
@@ -11,7 +10,6 @@ interface StatusBarProps {
 export function StatusBar({
   reviewing = 0,
   conflicts = 0,
-  todayCost = '0.00',
   indexing = null,
   totalDocs = 0
 }: StatusBarProps): JSX.Element {
@@ -47,8 +45,6 @@ export function StatusBar({
 
       <span className="flex-1" />
 
-      <span>今日 ${todayCost}</span>
-      <span>·</span>
       <span>{totalDocs} 篇文档</span>
     </div>
   )

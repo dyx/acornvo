@@ -73,6 +73,7 @@ async function processStream(
   let entryCount = 0
   let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
   let lastAssistantToolCallIds: string[] = []
+  const recordedUsageMsgIds = new Set<string>()
 
   try {
     for await (const entry of stream) {
@@ -95,10 +96,17 @@ async function processStream(
         if (modelNode?.messages) {
           for (const m of modelNode.messages) {
             const ai = m as {
+              id?: string
               usage_metadata?: { input_tokens?: number; output_tokens?: number }
               tool_calls?: Array<{ id?: string }>
             }
-            if (ai.usage_metadata) lastUsage = ai.usage_metadata
+            if (ai.usage_metadata) {
+              lastUsage = ai.usage_metadata
+              if (ai.id && !recordedUsageMsgIds.has(ai.id)) {
+                recordedUsageMsgIds.add(ai.id)
+                deps.recordUsage(ai.usage_metadata, deps.modelName)
+              }
+            }
             if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
               lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
             }

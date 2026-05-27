@@ -56,6 +56,8 @@ export interface AiUsageRow {
   model: string | null
   promptTokens: number | null
   completionTokens: number | null
+  cacheReadTokens: number | null
+  reasoningTokens: number | null
   latencyMs: number | null
   ok: 0 | 1
   error: string | null

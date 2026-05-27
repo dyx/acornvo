@@ -30,12 +30,23 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
   const temperature = profile.temperature ?? 0.3
   const maxTokens = profile.maxTokens ?? 800
 
+  const debugCallbacks = [{
+    handleLLMEnd(output: any) {
+      try {
+        logger.debug('[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' + JSON.stringify(output, null, 2))
+      } catch (e) {
+        logger.debug('[Unified LLM Output] RAW RESPONSE (unstringifiable)', output)
+      }
+    }
+  }]
+
   let model: BaseChatModel
   switch (profile.provider) {
     case 'openai':
     case 'openai-compatible':
       if (profile.model.toLowerCase().includes('deepseek')) {
         model = new ChatDeepSeek({
+          callbacks: debugCallbacks,
           model: profile.model,
           apiKey: profile.apiKey ?? '',
           temperature,
@@ -46,6 +57,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
         }) as unknown as BaseChatModel
       } else {
         model = new ChatOpenAI({
+          callbacks: debugCallbacks,
           model: profile.model,
           apiKey: profile.apiKey ?? '',
           temperature,
@@ -58,6 +70,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
       break
     case 'openrouter':
       model = new ChatOpenRouter({
+        callbacks: debugCallbacks,
         model: profile.model,
         apiKey: profile.apiKey ?? '',
         temperature,
@@ -68,6 +81,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
       break
     case 'deepseek':
       model = new ChatDeepSeek({
+        callbacks: debugCallbacks,
         model: profile.model,
         apiKey: profile.apiKey ?? '',
         temperature,
@@ -79,6 +93,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
       break
     case 'anthropic':
       model = new ChatAnthropic({
+        callbacks: debugCallbacks,
         model: profile.model,
         apiKey: profile.apiKey ?? '',
         temperature,
@@ -89,6 +104,7 @@ export function buildChatModel(profile: ResolvedProfile): BaseChatModel {
       break
     case 'ollama':
       model = new ChatOllama({
+        callbacks: debugCallbacks,
         model: profile.model,
         baseUrl: profile.baseUrl ?? 'http://localhost:11434',
         temperature,

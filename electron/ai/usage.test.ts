@@ -1,19 +1,43 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { runMigrations } from '../services/db/migrations'
 import { migrationsDir } from '../services/db/migrations/index'
 
 vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
 import { dbService } from '../services/db'
+import { __setGlobalDbForTest, __resetGlobalDbForTest, initGlobalDb } from '../services/global-db'
 import { aiUsage, rowFromUsageMetadata, writeUsage } from './usage'
 
 let db: Database.Database
 beforeEach(() => {
   db = new Database(':memory:')
-  runMigrations(db, migrationsDir())
+  __setGlobalDbForTest(db)
+  // Recreate global schema manually for tests since initGlobalDb creates files
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ai_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      job_id TEXT,
+      profile_id TEXT,
+      model TEXT,
+      prompt_tokens INTEGER,
+      completion_tokens INTEGER,
+      cache_read_tokens INTEGER DEFAULT 0,
+      reasoning_tokens INTEGER DEFAULT 0,
+      latency_ms INTEGER,
+      ok INTEGER NOT NULL,
+      error TEXT,
+      created_at TEXT NOT NULL,
+      session_id TEXT,
+      grove_id TEXT
+    );
+  `)
   ;(dbService.requireCurrent as any).mockReturnValue(db)
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-05-04T12:00:00Z'))
+})
+
+afterEach(() => {
+  __resetGlobalDbForTest()
 })
 
 describe('aiUsage.insert', () => {
