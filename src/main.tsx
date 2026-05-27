@@ -25,6 +25,7 @@ import History from '@/pages/History'
 import { Browse } from '@/pages/Browse'
 import './i18n'
 import './index.css'
+import DesignLab from '@/pages/__design_lab'
 
 function BootstrapGate(): JSX.Element | null {
   const payload = useBootstrap()
@@ -36,7 +37,7 @@ const router = createMemoryRouter([
   {
     element: <App />,
     children: [
-      { index: true, element: <BootstrapGate /> },
+      { index: true, element: <DesignLab /> },
       { path: 'picker', element: <ProjectPicker /> },
       { path: 'library', element: <Library /> },
       { path: 'browser', element: <Browse /> },

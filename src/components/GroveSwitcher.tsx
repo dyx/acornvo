@@ -37,6 +37,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
 
   // 缓存最后一次选择的树林，防止加载时闪烁为空
   const [cachedName, setCachedName] = useState(() => localStorage.getItem('lastGroveName') || '')
+  const [cachedId, setCachedId] = useState(() => localStorage.getItem('lastGroveId') || '')
   const [cachedColor, setCachedColor] = useState<GroveColor>(
     () => (localStorage.getItem('lastGroveColor') as GroveColor) || 'acorn'
   )
@@ -44,8 +45,10 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   useEffect(() => {
     if (current) {
       localStorage.setItem('lastGroveName', current.name)
+      localStorage.setItem('lastGroveId', current.id)
       localStorage.setItem('lastGroveColor', current.color)
       setCachedName(current.name)
+      setCachedId(current.id)
       setCachedColor(current.color)
     }
   }, [current])
@@ -54,8 +57,9 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
     void loadRecent()
   }, [loadRecent])
 
-  // 过滤掉当前已经选择的树林
-  const recentFiltered = recent.filter((r) => r.id !== current?.id).slice(0, 5)
+  // 过滤掉当前已经选择的树林（同时使用 current?.id 和 cachedId 进行双重保险）
+  const activeId = current?.id || cachedId
+  const recentFiltered = recent.filter((r) => r.id !== activeId).slice(0, 5)
 
   async function handleSwitch(id: string): Promise<void> {
     const res = await switchTo(id)
