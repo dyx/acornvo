@@ -51,7 +51,12 @@ import { useChatStore } from "@/stores/chat";
 import { ToolStepsChain, MessageFooter } from "@/components/chat/MessageAddons";
 import { ProfileChip } from "@/components/chat/ProfileChip";
 
+import { ScrollToBottomButton } from "@/components/chat/ScrollToBottomButton";
+import { useRef } from "react";
+
 export const Thread: FC = () => {
+  const viewportRef = useRef<HTMLDivElement>(null);
+
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root bg-background @container flex h-full flex-col"
@@ -62,6 +67,7 @@ export const Thread: FC = () => {
       }}
     >
       <ThreadPrimitive.Viewport
+        ref={viewportRef}
         turnAnchor="top"
         data-slot="aui_thread-viewport"
         className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
@@ -88,33 +94,23 @@ export const Thread: FC = () => {
               }}
             />
           </div>
-
-          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer bg-background sticky bottom-0 mt-auto flex flex-col gap-4 overflow-visible pb-4 md:pb-6 relative">
-            {/* Bottom boundary blur */}
-            <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
-            <ThreadScrollToBottom />
-            <Composer />
-          </ThreadPrimitive.ViewportFooter>
         </div>
       </ThreadPrimitive.Viewport>
+
+      <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col px-4 bg-background pb-4 md:pb-6 relative mt-auto">
+        <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
+        <ScrollToBottomButton 
+          containerRef={viewportRef} 
+          threshold={300}
+          className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full border border-border/50 text-muted-foreground/70 bg-background/80 backdrop-blur-sm hover:bg-muted/80 hover:text-foreground shadow-sm size-8 transition-all flex items-center justify-center"
+        />
+        <Composer />
+      </div>
     </ThreadPrimitive.Root>
   );
 };
 
 
-const ThreadScrollToBottom: FC = () => {
-  return (
-    <ThreadPrimitive.ScrollToBottom asChild>
-      <Button
-        variant="outline"
-        size="icon"
-        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full disabled:invisible border border-border/50 text-muted-foreground/70 bg-background/80 backdrop-blur-sm hover:bg-muted/80 hover:text-foreground shadow-sm size-8 transition-all"
-      >
-        <ArrowDownIcon className="size-4" />
-      </Button>
-    </ThreadPrimitive.ScrollToBottom>
-  );
-};
 
 import { EmptyState } from "@/pages/Chat";
 

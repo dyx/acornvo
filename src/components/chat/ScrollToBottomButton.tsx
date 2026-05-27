@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 
 export function ScrollToBottomButton({
   containerRef,
-  threshold = 80
+  threshold = 80,
+  className
 }: {
   containerRef: RefObject<HTMLDivElement | null>
   threshold?: number
+  className?: string
 }) {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
@@ -47,7 +49,7 @@ export function ScrollToBottomButton({
         if (!el) return
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       }}
-      className="absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background hover:bg-muted border"
+      className={className ?? "absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background hover:bg-muted border"}
     >
       <ArrowDownIcon className="size-4" />
     </Button>
