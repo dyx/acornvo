@@ -26,30 +26,10 @@ describe('BrowserTab', () => {
   })
   afterEach(() => cleanup())
 
-  it('renders blockAds toggle reflecting state', () => {
-    useSettingsStore.setState({
-      browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' }
-    })
-    render(<BrowserTab />)
-    const toggle = screen.getByRole('checkbox', { name: /广告拦截/i }) as HTMLInputElement
-    expect(toggle.checked).toBe(false)
-  })
-
-  it('toggling blockAds calls setBrowser({ blockAds: true })', () => {
-    const setBrowser = vi.fn().mockResolvedValue(undefined)
-    useSettingsStore.setState({
-      browser: { blockAds: false, clipImagesLocalize: false, searchEngine: 'google' },
-      setBrowser
-    })
-    render(<BrowserTab />)
-    fireEvent.click(screen.getByRole('checkbox', { name: /广告拦截/i }))
-    expect(setBrowser).toHaveBeenCalledWith({ blockAds: true })
-  })
-
   it('changing search engine calls setBrowser({ searchEngine })', () => {
     const setBrowser = vi.fn().mockResolvedValue(undefined)
     useSettingsStore.setState({
-      browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' },
+      browser: { clipImagesLocalize: false, searchEngine: 'google' },
       setBrowser
     })
     render(<BrowserTab />)

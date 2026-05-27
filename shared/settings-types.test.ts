@@ -21,7 +21,7 @@ describe('settings-types module', () => {
     }>()
     expectTypeOf<AiSettings>().toMatchTypeOf<{ defaultProfileId: string | null }>()
     expectTypeOf<BrowserSettings>().toMatchTypeOf<{
-      blockAds: boolean
+
       clipImagesLocalize: boolean
       searchEngine: 'google' | 'bing' | 'duckduckgo' | 'baidu'
     }>()
@@ -34,8 +34,6 @@ describe('settings-types module', () => {
       provider: AiProviderKind
       baseUrl: string | null
       model: string
-      temperature: number
-      maxTokens: number | null
       apiKeyRef: string | null
       createdAt: string
       updatedAt: string

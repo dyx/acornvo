@@ -28,7 +28,7 @@ export interface AiSettings {
 }
 
 export interface BrowserSettings {
-  blockAds: boolean
+
   clipImagesLocalize: boolean
   searchEngine: SearchEngine
 }
@@ -64,9 +64,6 @@ export interface AiProviderProfile {
   provider: AiProviderKind
   baseUrl: string | null
   model: string
-  temperature: number
-
-  maxTokens: number | null
   apiKeyRef: string | null
   createdAt: string
   updatedAt: string
@@ -79,9 +76,6 @@ export interface ProfileCreateInput {
   provider: AiProviderKind
   baseUrl?: string | null
   model: string
-  temperature?: number
-
-  maxTokens?: number | null
   apiKey?: string
 }
 
@@ -90,9 +84,6 @@ export interface ProfileUpdateInput {
   provider?: AiProviderKind
   baseUrl?: string | null
   model?: string
-  temperature?: number
-
-  maxTokens?: number | null
   /** non-empty string → overwrite secret; '' → delete secret; undefined → leave alone */
   apiKey?: string
 }

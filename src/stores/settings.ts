@@ -15,7 +15,7 @@ const DEFAULTS = {
   general: { locale: 'zh-CN', autoBackup: 'off' } as GeneralSettings,
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' } as AppearanceSettings,
   ai: { defaultProfileId: null } as AiSettings,
-  browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
+  browser: { clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
   update: { autoCheck: true } as UpdateSettings,
   telemetry: { enabled: false } as TelemetrySettings
 }

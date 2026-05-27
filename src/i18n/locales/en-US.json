@@ -297,8 +297,6 @@
       "provider": "Provider",
       "baseUrl": "Base URL",
       "model": "Model",
-      "temperature": "Temperature",
-      "topP": "Top P",
       "maxTokens": "Max tokens",
       "apiKey": "API Key",
       "apiKeyKeepEmpty": "Leave empty to keep existing",
@@ -313,7 +311,7 @@
       "unavailable": "OS keychain unavailable — cannot save API keys"
     },
     "browser": {
-      "blockAds": "Block ads",
+
       "clipImages": "Localize clipped images",
       "searchEngine": "Search engine",
       "clearCookies": "Clear browser cookies",

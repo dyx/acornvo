@@ -15,9 +15,7 @@ export function getInboxPath(): string {
   return INBOX_PATH
 }
 
-export function getBlockAdsEnabled(): boolean {
-  return settingsStore.get('browser').blockAds
-}
+
 
 export function getSearchEngineUrl(query: string): string {
   const engine = settingsStore.get('browser').searchEngine

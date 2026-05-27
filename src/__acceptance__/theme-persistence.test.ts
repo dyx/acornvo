@@ -22,7 +22,7 @@ vi.mock('@/ipc/client', () => {
     appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
     general: { locale: 'zh-CN', autoBackup: 'off' },
     ai: { defaultProfileId: null },
-    browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' }
+    browser: { clipImagesLocalize: false, searchEngine: 'google' }
   }
   return {
     ipc: {

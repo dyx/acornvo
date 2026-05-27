@@ -330,9 +330,8 @@
       "provider": "提供商",
       "baseUrl": "Base URL",
       "model": "模型",
-      "temperature": "温度",
-      "topP": "Top P",
-      "maxTokens": "最大 Token 数",
+      "maxTokens": "最大 token 数",
+      "maxTokensHint": "可选：覆盖模型生成的最大 token 数",
       "apiKey": "API 密钥",
       "apiKeyKeepEmpty": "留空则保留现有密钥",
       "save": "保存",
@@ -346,7 +345,7 @@
       "unavailable": "系统密钥环不可用：无法存储 API 密钥。"
     },
     "browser": {
-      "blockAds": "广告拦截",
+
       "clipImages": "剪藏图片本地化",
       "searchEngine": "搜索引擎",
       "clearCookies": "清除浏览器 Cookie",

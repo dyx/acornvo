@@ -15,7 +15,7 @@ vi.mock('electron', () => ({
 
 import { dbService } from '../services/db'
 import { settingsStore } from './store'
-import { getInboxPath, getSearchEngineUrl, getBlockAdsEnabled } from './runtime-readers'
+import { getInboxPath, getSearchEngineUrl } from './runtime-readers'
 import { initSafeStorageAvailability, __resetForTest as resetSafe } from './safe-storage-state'
 
 const reqCur = dbService.requireCurrent as unknown as ReturnType<typeof vi.fn>
@@ -36,11 +36,7 @@ describe('runtime-readers', () => {
     expect(getInboxPath()).toBe('inbox/')
   })
 
-  it('getBlockAdsEnabled returns the live setting (default true, then toggled)', () => {
-    expect(getBlockAdsEnabled()).toBe(true)
-    settingsStore.set('browser', { blockAds: false })
-    expect(getBlockAdsEnabled()).toBe(false)
-  })
+
 
   it('getSearchEngineUrl returns the URL template for the chosen engine', () => {
     expect(getSearchEngineUrl('cats')).toMatch(/google\.com.*cats/)

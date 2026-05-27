@@ -27,15 +27,7 @@ export function BrowserTab(): JSX.Element {
       <h3 className="text-lg font-medium">{t('settings.tab.browser')}</h3>
 
       <div className="flex items-center space-x-2">
-        <Switch
-          id="blockAds"
-          checked={browser.blockAds}
-          onCheckedChange={(checked) => void setBrowser({ blockAds: checked })}
-        />
-        <label htmlFor="blockAds" className="text-sm cursor-pointer">
-          {t('settings.browser.blockAds')}
-        </label>
-      </div>
+
 
       <div className="flex items-center space-x-2">
         <Switch

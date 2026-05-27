@@ -31,7 +31,7 @@ import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './servi
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { createPerf, setPerfInstance, trimPerfSamples } from './obs/perf'
 import { initBrowserSubsystem } from './browser/init'
-import { initAdBlock, __resetForTest as resetAdBlock } from './browser/adblock'
+
 import { settingsStore } from './settings/store'
 import { initSafeStorageAvailability } from './settings/safe-storage-state'
 import { installSettingsBroadcaster } from './settings/broadcast'
@@ -43,7 +43,7 @@ import { getQueueBootstrap } from './queue'
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
 let queueRunner: QueueRunner | null = null
-let adBlockInstalled = false
+
 let telemetryHandle: { stop: () => void } | null = null
 
 function createMainWindow(): BrowserWindow {
@@ -185,11 +185,7 @@ async function bootstrap(): Promise<void> {
           if (dbService.getCurrentGrovePath() !== payload.path) {
             dbService.openForGrove(payload.path)
           }
-          if (!adBlockInstalled) {
-            adBlockInstalled = true
-            const browser = settingsStore.get('browser')
-            initAdBlock({ initialEnabled: browser.blockAds })
-          }
+
           const db = dbService.getCurrent()
           if (db) {
             setIndexerDb(db)

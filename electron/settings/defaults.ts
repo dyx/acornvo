@@ -21,7 +21,7 @@ export const DEFAULTS: {
   general: { locale: 'zh-CN', autoBackup: 'off' },
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
   ai: { defaultProfileId: null },
-  browser: { blockAds: true, clipImagesLocalize: false, searchEngine: 'google' },
+  browser: { clipImagesLocalize: false, searchEngine: 'google' },
   update: { autoCheck: true },
   telemetry: { enabled: false }
 }
