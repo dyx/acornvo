@@ -39,7 +39,7 @@ export function ScrollToBottomButton({
 
   return (
     <Button
-      variant="secondary"
+      variant="outline"
       size="icon"
       title={t('chat.message.newMessages')}
       onClick={() => {
@@ -47,7 +47,7 @@ export function ScrollToBottomButton({
         if (!el) return
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       }}
-      className="absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background border"
+      className="absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background hover:bg-muted border"
     >
       <ArrowDownIcon className="size-4" />
     </Button>

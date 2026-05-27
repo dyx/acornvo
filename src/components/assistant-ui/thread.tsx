@@ -66,10 +66,15 @@ export const Thread: FC = () => {
         data-slot="aui_thread-viewport"
         className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
-        <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4 pt-4">
-          <AuiIf condition={(s) => s.thread.isEmpty}>
-            <ThreadWelcome />
-          </AuiIf>
+        <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4">
+          {/* Top boundary blur */}
+          <div className="pointer-events-none sticky top-0 z-10 h-8 -mx-4 px-4 bg-gradient-to-b from-background to-transparent" />
+
+          <div className="pt-2">
+            <AuiIf condition={(s) => s.thread.isEmpty}>
+              <ThreadWelcome />
+            </AuiIf>
+          </div>
 
           <div
             data-slot="aui_message-group"
@@ -80,7 +85,9 @@ export const Thread: FC = () => {
             </ThreadPrimitive.Messages>
           </div>
 
-          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer bg-background sticky bottom-0 mt-auto flex flex-col gap-4 overflow-visible rounded-t-(--composer-radius) pb-4 md:pb-6">
+          <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer bg-background sticky bottom-0 mt-auto flex flex-col gap-4 overflow-visible pb-4 md:pb-6 relative">
+            {/* Bottom boundary blur */}
+            <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
             <ThreadScrollToBottom />
             <Composer />
           </ThreadPrimitive.ViewportFooter>
@@ -102,13 +109,13 @@ const ThreadMessage: FC = () => {
 const ThreadScrollToBottom: FC = () => {
   return (
     <ThreadPrimitive.ScrollToBottom asChild>
-      <TooltipIconButton
-        tooltip="Scroll to bottom"
+      <Button
         variant="outline"
-        className="aui-thread-scroll-to-bottom dark:border-border dark:bg-background dark:hover:bg-accent absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible"
+        size="icon"
+        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full disabled:invisible border-border text-muted-foreground bg-background hover:bg-muted shadow-sm size-8"
       >
-        <ArrowDownIcon />
-      </TooltipIconButton>
+        <ArrowDownIcon className="size-4" />
+      </Button>
     </ThreadPrimitive.ScrollToBottom>
   );
 };
