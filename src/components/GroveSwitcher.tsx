@@ -1,4 +1,4 @@
-import { useEffect, type JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, FolderOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 export const dotColor: Record<GroveColor, string> = {
   acorn: 'var(--color-acorn)',
@@ -31,11 +32,30 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   const openExisting = useGroveStore((s) => s.openExisting)
   const navigate = useNavigate()
 
+  const [open, setOpen] = useState(false)
+  useNativeBrowserViewOcclusion(open)
+
+  // 缓存最后一次选择的树林，防止加载时闪烁为空
+  const [cachedName, setCachedName] = useState(() => localStorage.getItem('lastGroveName') || '')
+  const [cachedColor, setCachedColor] = useState<GroveColor>(
+    () => (localStorage.getItem('lastGroveColor') as GroveColor) || 'acorn'
+  )
+
+  useEffect(() => {
+    if (current) {
+      localStorage.setItem('lastGroveName', current.name)
+      localStorage.setItem('lastGroveColor', current.color)
+      setCachedName(current.name)
+      setCachedColor(current.color)
+    }
+  }, [current])
+
   useEffect(() => {
     void loadRecent()
   }, [loadRecent])
 
-  const recentFive = recent.slice(0, 5)
+  // 过滤掉当前已经选择的树林
+  const recentFiltered = recent.filter((r) => r.id !== current?.id).slice(0, 5)
 
   async function handleSwitch(id: string): Promise<void> {
     const res = await switchTo(id)
@@ -68,7 +88,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -83,13 +103,13 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
             className
           )}
         >
-          {current ? (
+          {current || cachedName ? (
             <>
               <span
                 className="h-2 w-2 rounded-[2px]"
-                style={{ background: dotColor[current.color] }}
+                style={{ background: dotColor[current?.color || cachedColor] }}
               />
-              <span>{current.name}</span>
+              <span className={!current ? 'opacity-70' : ''}>{current?.name || cachedName}</span>
             </>
           ) : (
             <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
@@ -98,7 +118,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
-        {recentFive.map((item) => (
+        {recentFiltered.map((item) => (
           <DropdownMenuItem
             key={item.id}
             disabled={!item.valid}
@@ -116,10 +136,11 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
             ) : null}
           </DropdownMenuItem>
         ))}
-        {recentFive.length > 0 ? <DropdownMenuSeparator /> : null}
+        {recentFiltered.length > 0 ? <DropdownMenuSeparator /> : null}
         <DropdownMenuItem
           onSelect={(e) => {
             e.preventDefault()
+            setOpen(false)
             void handleNew()
           }}
         >
@@ -129,6 +150,7 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
         <DropdownMenuItem
           onSelect={(e) => {
             e.preventDefault()
+            setOpen(false)
             void handleOpen()
           }}
         >
