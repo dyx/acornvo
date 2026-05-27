@@ -101,6 +101,7 @@ export interface FullTextResult {
   items: { summary: FileSummary; snippet: string }[]
   total: number
   pending: boolean
+  error?: string
 }
 
 interface FtsHitRow {
@@ -149,7 +150,7 @@ export function fullText(
     const msg = e instanceof Error ? e.message : String(e)
     end?.({ ok: false, meta: { error: msg } })
     log.warn('[search.fullText] FTS5 syntax error', { q, expr, msg })
-    return { items: [], total: 0, pending: false }
+    return { items: [], total: 0, pending: false, error: msg }
   }
 
   if (hits.length === 0) {

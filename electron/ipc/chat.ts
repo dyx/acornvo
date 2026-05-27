@@ -119,7 +119,8 @@ export function createChatHandlers(deps: ChatDeps) {
       sessions: deps.sessions,
       recordUsage: buildRecordUsage(profile, sessionId),
       modelName: profile.model,
-      profileId: profile.id
+      profileId: profile.id,
+      vaultRoot: deps.vaultRoot()
     })
       .catch((err: any) =>
         writer.write({ type: 'error', error: err?.code ?? 'E_AGENT_FAILURE', detail: err?.message })

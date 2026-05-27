@@ -16,6 +16,9 @@ export const searchFilesTool = tool(
     const db = dbService.requireCurrent()
     const cappedLimit = Math.max(1, Math.min(20, limit ?? 8))
     const r = fullText(db, query, { limit: cappedLimit, offset: 0 })
+    if (r.error) {
+      return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
+    }
     return {
       items: r.items.map((i) => ({
         path: i.summary.path,

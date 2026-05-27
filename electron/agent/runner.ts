@@ -31,7 +31,7 @@ export interface RunnerDeps {
     stream(
       input: { messages: BaseMessage[] } | Command,
       config: {
-        configurable: { thread_id: string }
+        configurable: { thread_id: string; vaultRoot?: string }
         streamMode: ['updates', 'messages']
         signal: AbortSignal
       }
@@ -211,7 +211,7 @@ export async function runAgent({
     const stream = await deps.agent.stream(
       { messages: newMessages },
       {
-        configurable: { thread_id: sessionId },
+        configurable: { thread_id: sessionId, vaultRoot: deps.vaultRoot },
         streamMode: ['updates', 'messages'],
         signal: deps.cancel
       }
@@ -239,6 +239,7 @@ export interface ResumeAgentArgs {
   recordUsage: RunnerDeps['recordUsage']
   modelName: string
   profileId?: string
+  vaultRoot: string
 }
 
 export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
@@ -267,7 +268,7 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
 
   try {
     const stream = await args.agent.stream(new Command({ resume: { decisions: mappedDecisions } }), {
-      configurable: { thread_id: args.sessionId },
+      configurable: { thread_id: args.sessionId, vaultRoot: args.vaultRoot },
       streamMode: ['updates', 'messages'],
       signal: args.cancel
     })
@@ -276,7 +277,7 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
       agent: args.agent,
       sessions: args.sessions,
       systemPrompt: '',
-      vaultRoot: '',
+      vaultRoot: args.vaultRoot,
       cancel: args.cancel,
       recordUsage: args.recordUsage,
       modelName: args.modelName,
