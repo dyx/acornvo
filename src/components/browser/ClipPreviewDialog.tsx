@@ -1,5 +1,10 @@
 import type { JSX } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle
+} from '@/components/ui/sheet'
 import { XIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,22 +38,15 @@ export function ClipPreviewDialog(): JSX.Element | null {
   if (!open || !preview) return null
 
   return (
-    <Dialog.Root open={open}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-all" />
-        <Dialog.Content className="fixed right-0 top-0 bottom-0 z-50 flex w-[400px] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl border-l border-[color:var(--color-line)] sm:max-w-sm duration-300 animate-in slide-in-from-right-1/2">
-          <Dialog.Close
-            className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 hover:bg-[color:var(--color-paper-3)] p-1 focus:outline-none"
-            onClick={() => void cancel()}
-          >
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </Dialog.Close>
-          <Dialog.Title className="shrink-0 text-base font-semibold pr-8">
+    <Sheet open={open} onOpenChange={(val) => { if (!val) cancel() }}>
+      <SheetContent className="flex w-[400px] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl border-l border-[color:var(--color-line)] sm:max-w-md">
+        <SheetHeader className="shrink-0 pb-2 text-left">
+          <SheetTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
             {t('browser.clip.preview.title', '剪藏预览')}
-          </Dialog.Title>
+          </SheetTitle>
+        </SheetHeader>
 
-          <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
             {/* Top: meta */}
             <div className="flex shrink-0 flex-col gap-3">
               <label className="text-xs">
@@ -112,8 +110,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
               {t('browser.clip.preview.save', '保存')}
             </button>
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      </SheetContent>
+    </Sheet>
   )
 }
