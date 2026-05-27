@@ -182,49 +182,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   async createSession() {
-    let createdId = ''
-    try {
-      const profiles = useProfilesStore.getState().profiles
-      const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
-      let targetProfileId: string | null = null
-
-      if (profiles.length > 0) {
-        const sortedProfiles = [...profiles].sort((a, b) => {
-          if (a.id === defaultProfileId) return -1
-          if (b.id === defaultProfileId) return 1
-          return 0
-        })
-        targetProfileId = sortedProfiles[0].id
+    set((s) => ({
+      activeSessionId: 'temp-session',
+      bySession: {
+        ...s.bySession,
+        ['temp-session']: { ...emptySession(), loaded: true }
       }
-
-      const cur = get()
-      const existingEmptySession = cur.sessions.find((s) => {
-        const state = cur.bySession[s.id]
-        if (state && state.loaded) {
-          return state.messages.length === 0 && state.status === 'idle'
-        }
-        return s.messageCount === 0
-      })
-      if (existingEmptySession) {
-        await get().selectSession(existingEmptySession.id)
-        return existingEmptySession.id
-      }
-
-      const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
-      const session = toChatSession(raw)
-      createdId = session.id
-      set((s) => ({
-        sessions: [session, ...s.sessions],
-        activeSessionId: session.id,
-        bySession: {
-          ...s.bySession,
-          [session.id]: { ...emptySession(), loaded: true }
-        }
-      }))
-    } catch (err) {
-      set({ sessionsError: err instanceof Error ? err.message : String(err) })
-    }
-    return createdId
+    }))
+    return 'temp-session'
   },
 
   async renameSession(id, title) {
@@ -267,8 +232,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   async sendUserMessage({ text, attachments }) {
-    const cur = get()
-    const sid = cur.activeSessionId
+    let cur = get()
+    let sid = cur.activeSessionId
     console.log(
       '[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d',
       sid,
@@ -278,6 +243,43 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (!sid) {
       console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
       return
+    }
+    if (sid === 'temp-session') {
+      try {
+        const profiles = useProfilesStore.getState().profiles
+        const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
+        let targetProfileId: string | null = null
+
+        if (profiles.length > 0) {
+          const sortedProfiles = [...profiles].sort((a, b) => {
+            if (a.id === defaultProfileId) return -1
+            if (b.id === defaultProfileId) return 1
+            return 0
+          })
+          targetProfileId = sortedProfiles[0].id
+        }
+
+        const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
+        const session = toChatSession(raw)
+        sid = session.id
+        const tempState = cur.bySession['temp-session']
+        set((s) => {
+          const newBySession = { ...s.bySession }
+          delete newBySession['temp-session']
+          return {
+            sessions: [session, ...s.sessions],
+            activeSessionId: session.id,
+            bySession: {
+              ...newBySession,
+              [session.id]: { ...emptySession(), ...tempState, loaded: true }
+            }
+          }
+        })
+        cur = get()
+      } catch (err) {
+        set({ sessionsError: err instanceof Error ? err.message : String(err) })
+        return
+      }
     }
     const state = cur.bySession[sid]
     if (state?.status === 'streaming') {
@@ -390,9 +392,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async updateSessionProfile(id, profileId) {
     try {
       let targetId = id
-      if (!targetId) {
+      if (!targetId || targetId === 'temp-session') {
         targetId = await get().createSession()
-        if (!targetId) return
+        if (!targetId || targetId === 'temp-session') return
       }
       await ipc.chat['sessions.updateProfile'](targetId, profileId)
       set((s) => ({

@@ -52,24 +52,8 @@ export function BookmarkSidebar(): JSX.Element {
   return (
     <div className="flex h-full flex-col bg-[color:var(--color-paper-2)] border-r border-[color:var(--color-line)] font-sans select-none">
       
-      {/* 顶部标题栏 */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <h2 className="text-[15px] font-medium text-[color:var(--color-ink)] flex items-center gap-2">
-          <span>{t('browser.bookmarks.title', '书签')}</span>
-        </h2>
-        <div className="flex gap-1">
-          <button
-            aria-label={t('browser.bookmarks.collapse', 'collapse bookmarks')}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-3)] hover:text-[color:var(--color-ink)] transition-colors"
-            onClick={() => setBookmarksOpen(false)}
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </div>
-
       {/* 搜索栏 */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pt-4 pb-3">
         <div className="flex h-8 items-center gap-1.5 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
           <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
           <input

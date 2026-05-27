@@ -96,7 +96,7 @@ export function ConversationsAdapter() {
                     <div
                       key={s.id}
                       className={cn(
-                        'group flex items-center rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors',
+                        'group relative flex items-center rounded-md px-2 py-1.5 cursor-pointer text-sm transition-colors overflow-hidden',
                         isActive
                           ? 'bg-muted/60 font-medium text-foreground'
                           : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
@@ -139,7 +139,11 @@ export function ConversationsAdapter() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 shrink-0 ml-1"
+                              className={cn(
+                                "size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
+                                "absolute right-1 top-1/2 -translate-y-1/2",
+                                isActive ? "bg-muted shadow-sm" : "bg-background/95 backdrop-blur-sm shadow-sm"
+                              )}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVerticalIcon className="size-3.5" />

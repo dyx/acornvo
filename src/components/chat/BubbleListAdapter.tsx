@@ -277,7 +277,7 @@ export function BubbleListAdapter() {
           </div>
         )
       })}
-      <ScrollToBottomButton containerRef={containerRef} threshold={80} />
+      <ScrollToBottomButton containerRef={containerRef} threshold={300} />
     </div>
   )
 }
