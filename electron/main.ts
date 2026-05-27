@@ -113,6 +113,15 @@ function createMainWindow(): BrowserWindow {
 
 app.on('web-contents-created', (event, wc) => {
   wc.on('before-input-event', (e, input) => {
+    // Disable zoom shortcuts (Cmd/Ctrl + or - or =)
+    if (
+      input.type === 'keyDown' &&
+      (input.control || input.meta) &&
+      (input.key === '+' || input.key === '=' || input.key === '-')
+    ) {
+      e.preventDefault()
+    }
+
     if (
       input.type === 'keyDown' &&
       (input.control || input.meta) &&
