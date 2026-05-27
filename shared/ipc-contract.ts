@@ -490,6 +490,7 @@ export type IpcContract = {
     'sessions.create': (opts: { profileId: string | null; title?: string | null }) => Session
     'sessions.delete': (id: string) => { ok: true }
     'sessions.rename': (id: string, title: string) => { ok: true }
+    'sessions.truncate': (sessionId: string, messageId: string) => { ok: true }
     'sessions.getMessages': (id: string) => SessionMessage[]
     'sessions.updateProfile': (id: string, profileId: string | null) => { ok: true }
     sendUserMessage: (opts: {

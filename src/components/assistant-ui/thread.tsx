@@ -410,17 +410,27 @@ const UserMessageFooterWrapper: FC = () => {
 };
 
 const UserActionBar: FC = () => {
+  const messageId = useAuiState((s) => s.message.id);
+  const isLatestUserMessage = useChatStore((s) => {
+    const session = s.activeSessionId ? s.bySession[s.activeSessionId] : null;
+    if (!session) return false;
+    const userMessages = session.messages.filter((m) => m.role === "user");
+    return userMessages.length > 0 && userMessages[userMessages.length - 1].id.toString() === messageId;
+  });
+
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
       autohide="not-last"
       className="aui-user-action-bar-root flex flex-col items-end"
     >
-      <ActionBarPrimitive.Edit asChild>
-        <TooltipIconButton tooltip="Edit" className="aui-user-action-edit p-4">
-          <PencilIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Edit>
+      {isLatestUserMessage && (
+        <ActionBarPrimitive.Edit asChild>
+          <TooltipIconButton tooltip="Edit" className="aui-user-action-edit p-4">
+            <PencilIcon />
+          </TooltipIconButton>
+        </ActionBarPrimitive.Edit>
+      )}
     </ActionBarPrimitive.Root>
   );
 };

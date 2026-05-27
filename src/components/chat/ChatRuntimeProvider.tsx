@@ -109,7 +109,32 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
     onCancel: async () => {
       await cancelStream()
     },
-    onEdit: async () => {},
+    onEdit: async (message: AppendMessage) => {
+      if (!message.sourceId) return;
+
+      const activeSid = useChatStore.getState().activeSessionId;
+      if (!activeSid) return;
+
+      // 1. Truncate DB messages and clear LangGraph state
+      try {
+        await window.ipc.chat['sessions.truncate'](activeSid, message.sourceId);
+      } catch (err) {
+        console.error('Failed to truncate session:', err);
+        return;
+      }
+
+      // 2. Extract new text
+      const text = message.content
+        .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
+        .map((c) => c.text)
+        .join('');
+
+      // 3. Truncate local store
+      useChatStore.getState().truncateMessagesFrom(message.sourceId);
+
+      // 4. Send the updated message
+      await sendUserMessage({ text });
+    },
     onReload: async () => {},
     onAddToolResult: async () => {}
   })

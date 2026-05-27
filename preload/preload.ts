@@ -144,6 +144,7 @@ const request: IpcClient<IpcContract> = {
       invoke('chat.sessions.create', opts),
     'sessions.delete': (id: string) => invoke('chat.sessions.delete', id),
     'sessions.rename': (id: string, title: string) => invoke('chat.sessions.rename', id, title),
+    'sessions.truncate': (sessionId: string, messageId: string) => invoke('chat.sessions.truncate', sessionId, messageId),
     'sessions.getMessages': (id: string) => invoke('chat.sessions.getMessages', id),
     'sessions.updateProfile': (id: string, profileId: string | null) =>
       invoke('chat.sessions.updateProfile', id, profileId),

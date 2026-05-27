@@ -11,6 +11,7 @@ export interface SessionsDao {
   rename(id: string, title: string): Promise<void>
   updateProfile(id: string, profileId: string | null): Promise<void>
   getMessages(id: string): Promise<SessionMessage[]>
+  truncate(sessionId: string, messageId: number): Promise<void>
   appendMessage(
     sessionId: string,
     m: Omit<SessionMessage, 'id' | 'sessionId' | 'createdAt'>
@@ -106,6 +107,23 @@ export function createSessions(): SessionsDao {
         toolCallId: r.tool_call_id ?? undefined,
         createdAt: r.created_at
       }))
+    },
+
+    async truncate(sessionId, messageId) {
+      const d = db()
+      const tx = d.transaction(() => {
+        const target = d.prepare('SELECT created_at FROM session_messages WHERE id = ? AND session_id = ?').get(messageId, sessionId) as any
+        if (!target) return
+        
+        // Delete messages from target timestamp onwards
+        d.prepare('DELETE FROM session_messages WHERE session_id = ? AND created_at >= ?').run(sessionId, target.created_at)
+        
+        // Delete checkpointer state for this thread to prevent LangGraph from resurrecting deleted messages
+        d.prepare('DELETE FROM checkpoints WHERE thread_id = ?').run(sessionId)
+        d.prepare('DELETE FROM writes WHERE thread_id = ?').run(sessionId)
+        d.prepare('DELETE FROM checkpoint_meta WHERE thread_id = ?').run(sessionId)
+      })
+      tx()
     },
 
     async appendMessage(sessionId, m) {
