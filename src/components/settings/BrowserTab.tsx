@@ -25,10 +25,6 @@ export function BrowserTab(): JSX.Element {
   return (
     <div data-testid="settings-tab-browser" className="space-y-6">
       <h3 className="text-lg font-medium">{t('settings.tab.browser')}</h3>
-
-      <div className="flex items-center space-x-2">
-
-
       <div className="flex items-center space-x-2">
         <Switch
           id="clipImagesLocalize"
