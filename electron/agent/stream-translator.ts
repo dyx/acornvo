@@ -192,11 +192,37 @@ export async function translateStreamEntry(
   if (mode === 'messages') {
     const tuple = payload as [unknown, { langgraph_node?: string }]
     const [chunk, metadata] = tuple
-    if (metadata?.langgraph_node !== 'model') return
+    
+    // allow 'agent' (createReactAgent) or 'model' or 'model_request'
+    if (metadata?.langgraph_node !== 'model' && metadata?.langgraph_node !== 'agent' && metadata?.langgraph_node !== 'model_request') return
     if (!isAIMessageChunk(chunk as never)) return
-    const content = (chunk as AIMessageChunk).content
-    const text = typeof content === 'string' ? content : ''
-    if (text) deps.emit({ type: 'token', text })
+    
+    const chunkMsg = chunk as AIMessageChunk
+    let outText = ''
+    const reasoning = chunkMsg.additional_kwargs?.reasoning_content
+    const state = (deps as any)
+
+    if (typeof reasoning === 'string' && reasoning) {
+      if (!state._thinking) {
+        state._thinking = true
+        outText += '> ' + reasoning.replace(/\n/g, '\n> ')
+      } else {
+        outText += reasoning.replace(/\n/g, '\n> ')
+      }
+    }
+
+    const content = chunkMsg.content
+    const actualContent = typeof content === 'string' ? content : ''
+    if (actualContent) {
+      if (state._thinking) {
+        state._thinking = false
+        outText += '\n\n' + actualContent
+      } else {
+        outText += actualContent
+      }
+    }
+
+    if (outText) deps.emit({ type: 'token', text: outText })
     return
   }
 }
