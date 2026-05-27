@@ -20,13 +20,7 @@ export function createStreamWriter(
     write(e) {
       const targets = getTargets()
       const live = targets.filter((w) => !w.isDestroyed())
-      console.log(
-        '[streamWriter] write channel=%s type=%s targets=%d/%d',
-        channel,
-        (e as { type?: string }).type,
-        live.length,
-        targets.length
-      )
+
       if (live.length === 0) {
         console.warn('[streamWriter] write: NO live targets — event will be dropped')
       }
