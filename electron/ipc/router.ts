@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 import {
   IpcError,
   type IpcContract,
@@ -36,10 +36,13 @@ function wrap(
       return { ok: true, data }
     } catch (err) {
       const error = normalize(err)
-      logger.error(`ipc handler failed: ${channel}`, {
-        code: error.code,
-        message: error.message,
-        stack: err instanceof Error ? err.stack : String(err)
+      logger().error('ipc', {
+        msg: `ipc handler failed: ${channel}`,
+        meta: {
+          code: error.code,
+          message: error.message,
+          stack: err instanceof Error ? err.stack : String(err)
+        }
       })
       return { ok: false, error }
     }

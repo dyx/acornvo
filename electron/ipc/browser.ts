@@ -1,7 +1,7 @@
 // electron/ipc/browser.ts — implemented in Plan 2 task 5.3
 import type { BrowserWindow } from 'electron'
 import type { IpcContract, TabId, SetViewportArgs } from '@shared/ipc-contract'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 import {
   createTabView,
   attachTabEvents,
@@ -59,7 +59,7 @@ export const browserHandlers: H = {
     } else {
       _hiddenTabId = id
     }
-    logger.info('browser.createTab', { id, url: resolved })
+    logger().info('browser', { msg: 'browser.createTab', meta: { id, url: resolved } })
     return { id, url: resolved }
   },
   closeTab(id) {

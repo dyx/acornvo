@@ -1,6 +1,6 @@
 // electron/settings/broadcast.ts
 import { webContents } from 'electron'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 import { settingsStore } from './store'
 
 const CHANNEL = 'settings:changed'
@@ -13,9 +13,9 @@ export function installSettingsBroadcaster(): () => void {
       try {
         wc.send(CHANNEL, payload)
       } catch (err) {
-        logger.warn('settings:changed send failed', {
-          id: wc.id,
-          message: err instanceof Error ? err.message : String(err)
+        logger().warn('settings', {
+          msg: 'settings:changed send failed',
+          meta: { id: wc.id, message: err instanceof Error ? err.message : String(err) }
         })
       }
     }

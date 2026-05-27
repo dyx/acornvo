@@ -3,7 +3,7 @@ import type { RecentItem } from '@shared/grove'
 import { RecentProjectsFileSchema, type RecentProjectsFile } from '@shared/schemas/project'
 import { writeFileAtomic } from './fs-atomic'
 import { recentProjectsFile } from './paths'
-import { logger } from './logger'
+import { logger } from '../obs/logger'
 
 const EMPTY_FILE: RecentProjectsFile = { schema_version: 1, items: [] }
 
@@ -27,8 +27,9 @@ export async function load(): Promise<RecentProjectsFile> {
     parsed = JSON.parse(raw)
   } catch (err) {
     await backupCorrupt(path, raw, 'parse-error')
-    logger.warn('recent-projects.json failed to parse; reset to empty', {
-      message: err instanceof Error ? err.message : String(err)
+    logger().warn('fs', {
+      msg: 'recent-projects.json failed to parse; reset to empty',
+      meta: { message: err instanceof Error ? err.message : String(err) }
     })
     return { ...EMPTY_FILE, items: [] }
   }
@@ -36,8 +37,9 @@ export async function load(): Promise<RecentProjectsFile> {
   const result = RecentProjectsFileSchema.safeParse(parsed)
   if (!result.success) {
     await backupCorrupt(path, raw, 'schema-error')
-    logger.warn('recent-projects.json failed schema validation; reset to empty', {
-      issues: result.error.issues.map((i) => i.path.map(String).join('.') + ':' + i.code)
+    logger().warn('fs', {
+      msg: 'recent-projects.json failed schema validation; reset to empty',
+      meta: { issues: result.error.issues.map((i) => i.path.map(String).join('.') + ':' + i.code) }
     })
     return { ...EMPTY_FILE, items: [] }
   }
@@ -50,8 +52,9 @@ async function backupCorrupt(path: string, raw: string, reason: string): Promise
   try {
     await writeFileAtomic(backup, JSON.stringify({ reason, raw }, null, 2) + '\n')
   } catch (err) {
-    logger.error('failed to backup corrupt recent-projects.json', {
-      message: err instanceof Error ? err.message : String(err)
+    logger().error('fs', {
+      msg: 'failed to backup corrupt recent-projects.json',
+      meta: { message: err instanceof Error ? err.message : String(err) }
     })
   }
 }

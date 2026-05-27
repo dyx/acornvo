@@ -5,8 +5,8 @@ vi.mock('../../ai/usage', () => ({ aiUsage: { insert: vi.fn() }, writeUsage: vi.
 vi.mock('../../settings/store', () => ({
   settingsStore: { get: vi.fn() }
 }))
-vi.mock('../../services/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+vi.mock('../../obs/logger', () => ({
+  logger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
 import { reviewClip } from '../../ai/reviewer'

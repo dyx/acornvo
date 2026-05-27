@@ -78,9 +78,10 @@ export async function writeSnapshot(input: WriteSnapshotInput): Promise<{ id: st
   try {
     await prune()
   } catch (err) {
-    const { logger } = await import('../logger')
-    logger.warn('conflict prune failed (non-fatal)', {
-      message: err instanceof Error ? err.message : String(err)
+    const { logger } = await import('../../obs/logger')
+    logger().warn('fs', {
+      msg: 'conflict prune failed (non-fatal)',
+      meta: { message: err instanceof Error ? err.message : String(err) }
     })
   }
 

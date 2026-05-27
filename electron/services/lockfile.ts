@@ -4,7 +4,7 @@ import type { LockInfo } from '@shared/grove'
 import { LockInfoSchema } from '@shared/schemas/project'
 import { writeFileAtomic } from './fs-atomic'
 import { groveLockFile, groveAcornDir } from './paths'
-import { logger } from './logger'
+import { logger } from '../obs/logger'
 
 export type AcquireOutcome = { status: 'acquired' } | { status: 'held'; holder: LockInfo }
 
@@ -74,7 +74,7 @@ export async function acquire(
     }
   }
   if (existing && opts.force) {
-    logger.warn('force-acquired grove lock', { grove: grovePath, previous: existing })
+    logger().warn('fs', { msg: 'force-acquired grove lock', meta: { grove: grovePath, previous: existing } })
   }
   return { status: 'acquired' }
 }
@@ -86,6 +86,6 @@ export async function release(grovePath: string): Promise<void> {
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException)?.code
     if (code === 'ENOENT') return
-    logger.warn('failed to release lock', { grove: grovePath, code })
+    logger().warn('fs', { msg: 'failed to release lock', meta: { grove: grovePath, code } })
   }
 }

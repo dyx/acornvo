@@ -2,7 +2,7 @@ import type { JobHandler } from '../runner'
 import { getCurrent } from '../../services/grove'
 import { parseFile } from '../../services/frontmatter'
 import { fileHandlers } from '../../ipc/file'
-import { logger } from '../../services/logger'
+import { logger } from '../../obs/logger'
 import path from 'node:path'
 import fs from 'node:fs'
 import crypto from 'node:crypto'
@@ -27,7 +27,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
   const { job, payload, log } = ctx
   const relPath = payload.path as string
 
-  logger.info('[download-clip-images] handler start', { jobId: job.id, path: relPath, attempt: job.attempts })
+  logger().info('queue', { msg: '[download-clip-images] handler start', meta: { jobId: job.id, path: relPath, attempt: job.attempts } })
 
   try {
     const grove = getCurrent()
@@ -81,7 +81,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
         })
 
         if (!resp.ok) {
-          logger.warn('[download-clip-images] failed to fetch image', { url, status: resp.status })
+          logger().warn('queue', { msg: '[download-clip-images] failed to fetch image', meta: { url, status: resp.status } })
           continue
         }
 
@@ -101,7 +101,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
         newBody = newBody.replace(fullMatch, newImgTag)
         downloadedCount++
       } catch (err) {
-        logger.warn('[download-clip-images] error downloading image', { url, error: (err as Error).message })
+        logger().warn('queue', { msg: '[download-clip-images] error downloading image', meta: { url, error: (err as Error).message } })
       }
     }
 

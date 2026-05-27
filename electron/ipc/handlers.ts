@@ -5,7 +5,7 @@ import type { IpcContract } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
 import { join } from 'node:path'
 import { stat } from 'node:fs/promises'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 import { dbHandlers } from './db'
 import { fileHandlers } from './file'
 import { fileQueryHandlers } from './files'
@@ -150,10 +150,10 @@ export const ipcHandlers: HandlerMap = {
     echo: (input: string): string => input
   },
   log: {
-    debug: (msg, ctx) => logger.debug(`[renderer] ${msg}`, ctx),
-    info: (msg, ctx) => logger.info(`[renderer] ${msg}`, ctx),
-    warn: (msg, ctx) => logger.warn(`[renderer] ${msg}`, ctx),
-    error: (msg, ctx) => logger.error(`[renderer] ${msg}`, ctx)
+    debug: (msg, ctx) => logger().debug('renderer', { msg, meta: ctx }),
+    info: (msg, ctx) => logger().info('renderer', { msg, meta: ctx }),
+    warn: (msg, ctx) => logger().warn('renderer', { msg, meta: ctx }),
+    error: (msg, ctx) => logger().error('renderer', { msg, meta: ctx })
   },
   project: projectHandlers,
   db: dbHandlers,

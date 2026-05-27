@@ -12,8 +12,8 @@ vi.mock('electron', () => ({
     decryptString: vi.fn((b: Buffer) => b.toString('utf8').replace(/^enc:/, ''))
   }
 }))
-vi.mock('../services/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+vi.mock('../obs/logger', () => ({
+  logger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
 import { dbService } from '../services/db'

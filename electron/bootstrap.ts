@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import type { IpcEventContract } from '@shared/ipc-contract'
 import * as recent from './services/recent'
 import * as grove from './services/grove'
-import { logger } from './services/logger'
+import { logger } from './obs/logger'
 
 export type BootstrapResult = IpcEventContract['bootstrap:ready']
 
@@ -60,8 +60,9 @@ export async function runBootstrap(): Promise<BootstrapResult> {
     lastResult = result
     return result
   } catch (err) {
-    logger.warn('bootstrap fell back to Picker', {
-      message: err instanceof Error ? err.message : String(err)
+    logger().warn('bootstrap', {
+      msg: 'bootstrap fell back to Picker',
+      meta: { message: err instanceof Error ? err.message : String(err) }
     })
     try {
       const file = await recent.load()

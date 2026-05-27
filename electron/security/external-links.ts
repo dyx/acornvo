@@ -1,5 +1,5 @@
 import { shell, type BrowserWindow } from 'electron'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 
 /**
  * URLs that may be navigated to inside the app window.
@@ -17,7 +17,10 @@ export function installExternalLinkGuards(win: BrowserWindow): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (!isInternalUrl(url)) {
       void shell.openExternal(url).catch((err) => {
-        logger.warn('shell.openExternal failed', { url, error: String(err) })
+        logger().warn('security', {
+          msg: 'shell.openExternal failed',
+          meta: { url, error: String(err) }
+        })
       })
     }
     return { action: 'deny' }
@@ -27,7 +30,10 @@ export function installExternalLinkGuards(win: BrowserWindow): void {
     if (!isInternalUrl(url)) {
       event.preventDefault()
       void shell.openExternal(url).catch((err) => {
-        logger.warn('shell.openExternal failed', { url, error: String(err) })
+        logger().warn('security', {
+          msg: 'shell.openExternal failed',
+          meta: { url, error: String(err) }
+        })
       })
     }
   })

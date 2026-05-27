@@ -9,8 +9,7 @@ protocol.registerSchemesAsPrivileged([
 
 import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
-import { initLogger, logger } from './services/logger'
-import { logger as obsLogger, rotateOnBoot } from './obs/logger'
+import { logger, rotateOnBoot } from './obs/logger'
 import {
   checkLastRun,
   installCrashHooks,
@@ -79,10 +78,13 @@ function createMainWindow(): BrowserWindow {
       win.webContents.send('crash:detected', { files })
     }
     win.show()
-    logger.info('app started', {
-      version: app.getVersion(),
-      platform: process.platform,
-      electron: process.versions.electron
+    logger().info('main', {
+      msg: 'app started',
+      meta: {
+        version: app.getVersion(),
+        platform: process.platform,
+        electron: process.versions.electron
+      }
     })
   })
 
@@ -144,7 +146,6 @@ function applyTelemetrySetting(): void {
 import { initGlobalDb } from './services/global-db'
 
 async function bootstrap(): Promise<void> {
-  await initLogger()
   startElectronCrashReporter()
   await app.whenReady()
 
@@ -164,7 +165,7 @@ async function bootstrap(): Promise<void> {
   installCrashHooks()
   purgeOldAcked()
   rotateOnBoot()
-  obsLogger().info('app', { op: 'boot', meta: { ts: new Date().toISOString() } })
+  logger().info('main', { op: 'boot', meta: { ts: new Date().toISOString() } })
   installCsp()
   initSafeStorageAvailability()
   registerHandlers(ipcHandlers)
@@ -213,8 +214,9 @@ async function bootstrap(): Promise<void> {
           }
         }
       } catch (err) {
-        logger.error('db subscriber failed on project:changed', {
-          message: err instanceof Error ? err.message : String(err)
+        logger().error('main', {
+          msg: 'db subscriber failed on project:changed',
+          meta: { message: err instanceof Error ? err.message : String(err) }
         })
       }
     })()
@@ -239,8 +241,9 @@ async function bootstrap(): Promise<void> {
   })
   app.on('will-quit', () => {
     void groveService.closeGrove().catch((err) => {
-      logger.error('grove close on will-quit failed', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('main', {
+        msg: 'grove close on will-quit failed',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     })
   })
@@ -250,8 +253,9 @@ async function bootstrap(): Promise<void> {
       // "no grove open but stray db handle" edge case.
       dbService.closeCurrent()
     } catch (err) {
-      logger.error('db close on will-quit failed', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('main', {
+        msg: 'db close on will-quit failed',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
   })
@@ -264,7 +268,7 @@ async function bootstrap(): Promise<void> {
   if (process.env.NODE_ENV === 'production') {
     mainWindow.webContents.on('devtools-opened', () => {
       mainWindow!.webContents.closeDevTools()
-      logger.warn('app', { op: 'devtools-blocked' })
+      logger().warn('main', { op: 'devtools-blocked' })
     })
   }
 
@@ -284,7 +288,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  obsLogger().error('app', {
+  logger().error('main', {
     op: 'boot',
     ok: false,
     msg: err instanceof Error ? err.message : String(err)

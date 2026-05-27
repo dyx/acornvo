@@ -1,7 +1,7 @@
 import { webContents } from 'electron'
 import type { GroveSummary } from '@shared/grove'
 import { onChange } from './grove'
-import { logger } from './logger'
+import { logger } from '../obs/logger'
 
 const CHANNEL = 'project:changed'
 
@@ -16,9 +16,9 @@ export function installGroveBroadcaster(): () => void {
       try {
         wc.send(CHANNEL, payload)
       } catch (err) {
-        logger.warn('project:changed send failed', {
-          id: wc.id,
-          message: err instanceof Error ? err.message : String(err)
+        logger().warn('grove', {
+          msg: 'project:changed send failed',
+          meta: { id: wc.id, message: err instanceof Error ? err.message : String(err) }
         })
       }
     }

@@ -19,7 +19,7 @@ vi.mock('electron', () => ({
   }
 }))
 vi.mock('../services/db', () => ({ dbService: { requireCurrent: vi.fn() } }))
-vi.mock('../services/logger', () => ({ logger: { warn: vi.fn(), info: vi.fn() } }))
+vi.mock('../obs/logger', () => ({ logger: () => ({ warn: vi.fn(), info: vi.fn() }) }))
 
 import { dbService } from '../services/db'
 import { settingsStore } from './store'

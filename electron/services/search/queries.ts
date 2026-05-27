@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3'
 import type { FileSummary } from '@shared/file-types'
-import log from 'electron-log'
+import { logger } from '../../obs/logger'
 import { buildFtsQuery } from './queryBuilder'
 import { getPerf } from '../../obs/perf'
 
@@ -149,7 +149,7 @@ export function fullText(
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     end?.({ ok: false, meta: { error: msg } })
-    log.warn('[search.fullText] FTS5 syntax error', { q, expr, msg })
+    logger().warn('search', { msg: '[search.fullText] FTS5 syntax error', meta: { q, expr, msg } })
     return { items: [], total: 0, pending: false, error: msg }
   }
 

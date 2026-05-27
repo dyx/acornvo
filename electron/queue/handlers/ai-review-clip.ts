@@ -3,7 +3,7 @@ import { reviewClip } from '../../ai/reviewer'
 import { writeUsage } from '../../ai/usage'
 import { settingsStore } from '../../settings/store'
 import { getPerf } from '../../obs/perf'
-import { logger } from '../../services/logger'
+import { logger } from '../../obs/logger'
 
 const FAIL_CODES = new Set([
   'E_MISSING_PROFILE',
@@ -26,12 +26,15 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
   const profileId = settingsStore.get('ai').defaultProfileId
   const t0 = Date.now()
 
-  logger.info('[ai-review-clip] handler start', {
-    jobId: job.id,
-    clipId,
-    force,
-    profileId,
-    attempt: job.attempts
+  logger().info('queue', {
+    msg: '[ai-review-clip] handler start',
+    meta: {
+      jobId: job.id,
+      clipId,
+      force,
+      profileId,
+      attempt: job.attempts
+    }
   })
 
   const p = getPerf()
@@ -50,12 +53,15 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       error: null
     })
     end?.({ ok: true, meta: { model: out.llmCall?.model ?? null, cacheHit: out.cacheHit } })
-    logger.info('[ai-review-clip] handler ok', {
-      jobId: job.id,
-      clipId,
-      cacheHit: out.cacheHit,
-      model: out.llmCall?.model ?? null,
-      latencyMs: out.llmCall?.latencyMs ?? Date.now() - t0
+    logger().info('queue', {
+      msg: '[ai-review-clip] handler ok',
+      meta: {
+        jobId: job.id,
+        clipId,
+        cacheHit: out.cacheHit,
+        model: out.llmCall?.model ?? null,
+        latencyMs: out.llmCall?.latencyMs ?? Date.now() - t0
+      }
     })
     log('info', `ai-review-clip ok clipId=${clipId} cacheHit=${out.cacheHit}`)
     return { kind: 'ok' }
@@ -76,40 +82,49 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     log('warn', `ai-review-clip ${code} clipId=${clipId} msg=${msg}`)
 
     if (FAIL_CODES.has(code)) {
-      logger.error('[ai-review-clip] permanent failure', {
-        jobId: job.id,
-        clipId,
-        code,
-        message: msg.slice(0, 500)
+      logger().error('queue', {
+        msg: '[ai-review-clip] permanent failure',
+        meta: {
+          jobId: job.id,
+          clipId,
+          code,
+          message: msg.slice(0, 500)
+        }
       })
       return { kind: 'fail', error: code }
     }
 
     if (code === 'E_RATE') {
-      logger.warn('[ai-review-clip] rate limited, will retry in 60s', { jobId: job.id, clipId })
+      logger().warn('queue', { msg: '[ai-review-clip] rate limited, will retry in 60s', meta: { jobId: job.id, clipId } })
       return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' }
     }
     if (code === 'E_MTIME_CONFLICT') {
-      logger.warn('[ai-review-clip] mtime conflict, will retry in 60s', { jobId: job.id, clipId })
+      logger().warn('queue', { msg: '[ai-review-clip] mtime conflict, will retry in 60s', meta: { jobId: job.id, clipId } })
       return { kind: 'retry', delayMs: 60_000, reason: 'mtime-conflict' }
     }
 
     const delay = nextDelay(job.attempts)
-    logger.warn('[ai-review-clip] transient error, scheduling retry', {
-      jobId: job.id,
-      clipId,
-      code,
-      attempt: job.attempts,
-      nextDelayMs: delay,
-      willGiveUp: delay === null,
-      message: msg.slice(0, 500)
-    })
-    if (delay === null) {
-      logger.error('[ai-review-clip] retries exhausted, giving up', {
+    logger().warn('queue', {
+      msg: '[ai-review-clip] transient error, scheduling retry',
+      meta: {
         jobId: job.id,
         clipId,
         code,
-        attempts: job.attempts
+        attempt: job.attempts,
+        nextDelayMs: delay,
+        willGiveUp: delay === null,
+        message: msg.slice(0, 500)
+      }
+    })
+    if (delay === null) {
+      logger().error('queue', {
+        msg: '[ai-review-clip] retries exhausted, giving up',
+        meta: {
+          jobId: job.id,
+          clipId,
+          code,
+          attempts: job.attempts
+        }
       })
       return { kind: 'fail', error: `${code} (retries exhausted)` }
     }

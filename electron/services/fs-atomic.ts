@@ -164,11 +164,14 @@ export async function writeWithVerify(
   if (opts.force === true) {
     // Audit log: include both old and stated-expected mtimes so we can
     // reconstruct the diff if a user complains about lost remote edits.
-    const { logger } = await import('./logger')
-    logger.info('force-write', {
-      path: abs,
-      old_mtime: preWriteMtime ?? null,
-      expected_mtime: opts.expectedMtime ?? null
+    const { logger } = await import('../obs/logger')
+    logger().info('fs', {
+      msg: 'force-write',
+      meta: {
+        path: abs,
+        old_mtime: preWriteMtime ?? null,
+        expected_mtime: opts.expectedMtime ?? null
+      }
     })
   } else if (opts.expectedMtime !== undefined) {
     if (preWriteMtime === undefined) {

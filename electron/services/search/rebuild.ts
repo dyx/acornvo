@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
-import log from 'electron-log'
+import { logger } from '../../obs/logger'
 import { parseFile } from '../frontmatter'
 import { writeRebuildTimestamp } from './stats'
 
@@ -50,13 +50,13 @@ export async function maybeRebuildFts(db: Database.Database, groveRoot: string):
   const ftsCount = (db.prepare('SELECT COUNT(*) AS c FROM files_fts').get() as FilesCountRow).c
 
   if (filesCount === 0 || ftsCount > 0) {
-    log.info('[search] maybeRebuildFts: skip', { filesCount, ftsCount })
+    logger().info('search', { msg: '[search] maybeRebuildFts: skip', meta: { filesCount, ftsCount } })
     return false
   }
 
-  log.info('[search] fts rebuild start', { total: filesCount })
+  logger().info('search', { msg: '[search] fts rebuild start', meta: { total: filesCount } })
   await rebuildFts(db, groveRoot, filesCount)
-  log.info('[search] fts rebuild done', { total: filesCount })
+  logger().info('search', { msg: '[search] fts rebuild done', meta: { total: filesCount } })
   return true
 }
 
@@ -97,13 +97,13 @@ export async function rebuildFts(
           | { rowid: number }
           | undefined
         if (!rowidRow) {
-          log.warn('[search] rebuild: rowid missing for path', { path: row.path })
+          logger().warn('search', { msg: '[search] rebuild: rowid missing for path', meta: { path: row.path } })
           continue
         }
         readResults.push({ row, rowid: rowidRow.rowid, body })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        log.warn('[search] rebuild: read failed', { path: row.path, msg })
+        logger().warn('search', { msg: '[search] rebuild: read failed', meta: { path: row.path, msg } })
       }
     }
 

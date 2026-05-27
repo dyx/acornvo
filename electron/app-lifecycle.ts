@@ -1,4 +1,4 @@
-import { logger } from './services/logger'
+import { logger } from './obs/logger'
 
 type Handler = () => Promise<void> | void
 
@@ -18,8 +18,9 @@ async function runSerial(list: Handler[], label: string): Promise<void> {
     try {
       await handler()
     } catch (err) {
-      logger.error(`${label} handler threw`, {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('main', {
+        msg: `${label} handler threw`,
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
       // Do not rethrow — one bad subscriber must not block the others.
     }

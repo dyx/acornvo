@@ -4,7 +4,7 @@ import { ChatOpenRouter } from '@langchain/openrouter'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatOllama } from '@langchain/ollama'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 
 export interface ResolvedProfile {
   id: string
@@ -16,24 +16,27 @@ export interface ResolvedProfile {
 
 export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: number, maxTokens?: number } = {}): BaseChatModel {
 
-  logger.info('[buildChatModel] constructing new model', {
-    provider: profile.provider,
-    model: profile.model,
-    hasApiKey: (profile.apiKey ?? '').length > 0,
-    baseUrl: profile.baseUrl ?? null,
-    temperature: opts.temperature,
-    maxTokens: opts.maxTokens
+  logger().info('ai', {
+    msg: '[buildChatModel] constructing new model',
+    meta: {
+      provider: profile.provider,
+      model: profile.model,
+      hasApiKey: (profile.apiKey ?? '').length > 0,
+      baseUrl: profile.baseUrl ?? null,
+      temperature: opts.temperature,
+      maxTokens: opts.maxTokens
+    }
   })
 
   const temperature = opts.temperature ?? 0.3
   const maxTokens = opts.maxTokens ?? 800
 
   const debugCallbacks = [{
-    handleLLMEnd(output: any) {
+      handleLLMEnd(output: any) {
       try {
-        logger.debug('[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' + JSON.stringify(output, null, 2))
+        logger().debug('ai', { msg: '[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' + JSON.stringify(output, null, 2) })
       } catch (e) {
-        logger.debug('[Unified LLM Output] RAW RESPONSE (unstringifiable)', output)
+        logger().debug('ai', { msg: '[Unified LLM Output] RAW RESPONSE (unstringifiable)', meta: output })
       }
     }
   }]

@@ -1,5 +1,5 @@
 import { getCurrent } from '../db'
-import { logger } from '../logger'
+import { logger } from '../../obs/logger'
 import type {
   Op,
   OpsItem,
@@ -50,10 +50,9 @@ export function record(input: OpsLogRecordInput): void {
   try {
     tx(input.op, input.path, ts, metaJson)
   } catch (err) {
-    logger.warn('opsLog.record failed (non-fatal)', {
-      op: input.op,
-      path: input.path,
-      message: err instanceof Error ? err.message : String(err)
+    logger().warn('fs', {
+      msg: 'opsLog.record failed (non-fatal)',
+      meta: { op: input.op, path: input.path, message: err instanceof Error ? err.message : String(err) }
     })
   }
 }
@@ -95,11 +94,9 @@ export function list(opts: OpsLogListOptions): OpsLogListResult {
     }))
     return { items, total: totalRow.n }
   } catch (err) {
-    logger.warn('opsLog.list failed (non-fatal)', {
-      op: opts.op,
-      limit: opts.limit,
-      offset: opts.offset,
-      message: err instanceof Error ? err.message : String(err)
+    logger().warn('fs', {
+      msg: 'opsLog.list failed (non-fatal)',
+      meta: { op: opts.op, limit: opts.limit, offset: opts.offset, message: err instanceof Error ? err.message : String(err) }
     })
     return { items: [], total: 0 }
   }

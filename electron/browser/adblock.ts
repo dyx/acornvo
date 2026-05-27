@@ -3,7 +3,7 @@ import { session } from 'electron'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { settingsStore } from '../settings/store'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 
 const BROWSER_PARTITION = 'persist:browser-default'
 

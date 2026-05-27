@@ -1,6 +1,6 @@
 // electron/browser/init.ts
 import { session, type BrowserWindow } from 'electron'
-import { logger } from '../services/logger'
+import { logger } from '../obs/logger'
 import { configureBounds, getBounds } from './bounds'
 import { setMainWindow, getManager, setBoundsApplier } from './manager'
 import { setMainWindowForBrowser } from '../ipc/browser'
@@ -42,7 +42,8 @@ export function initBrowserSubsystem(mainWindow: BrowserWindow): void {
   // Set a sensible UA suffix so sites can identify the in-app browser if they want
   s.setUserAgent(s.getUserAgent() + ' Acornvo/0.0.0')
 
-  logger.info('browser subsystem initialized', {
-    partition: BROWSER_SESSION_PARTITION
+  logger().info('browser', {
+    msg: 'browser subsystem initialized',
+    meta: { partition: BROWSER_SESSION_PARTITION }
   })
 }

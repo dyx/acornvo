@@ -20,7 +20,7 @@ import {
   groveInboxDir,
   groveProjectFile
 } from './paths'
-import { logger } from './logger'
+import { logger } from '../obs/logger'
 
 const DEFAULT_COLOR: GroveColor = 'acorn'
 
@@ -109,7 +109,7 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
 
   if (existing === 'corrupt') {
     await backupProjectJson(grovePath)
-    logger.warn('project.json corrupt; backing up and rewriting', { grove: grovePath })
+    logger().warn('grove', { msg: 'project.json corrupt; backing up and rewriting', meta: { grove: grovePath } })
   }
 
   if (existing !== 'missing' && existing !== 'corrupt') {
@@ -133,10 +133,9 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
     sync_warning: syncProvider
   }
   await writeFileAtomic(groveProjectFile(grovePath), JSON.stringify(fresh, null, 2) + '\n')
-  logger.info('grove initialized', {
-    grove: grovePath,
-    id: fresh.id,
-    sync_warning: syncProvider
+  logger().info('grove', {
+    msg: 'grove initialized',
+    meta: { grove: grovePath, id: fresh.id, sync_warning: syncProvider }
   })
   return { project: fresh, createdFresh: true, syncProvider }
 }
@@ -193,7 +192,7 @@ export async function createGrove(parentDir: string, name: string): Promise<Grov
   }
   await mkdir(target, { recursive: false })
   const { project } = await initialize(target)
-  logger.info('grove created', { grove: target, id: project.id })
+  logger().info('grove', { msg: 'grove created', meta: { grove: target, id: project.id } })
   return toGrove(target, project)
 }
 
@@ -232,24 +231,27 @@ export async function openGrove(
       const { stop: watcherStop } = await import('./watcher')
       await watcherStop()
     } catch (err) {
-      logger.error('watcher stop during grove switch failed', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('grove', {
+        msg: 'watcher stop during grove switch failed',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
     try {
       const { reset: resetIndexer } = await import('./indexer')
       resetIndexer()
     } catch (err) {
-      logger.error('indexer reset during grove switch failed', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('grove', {
+        msg: 'indexer reset during grove switch failed',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
     try {
       const { dbService } = await import('./db')
       dbService.closeCurrent()
     } catch (err) {
-      logger.error('db close during grove switch failed', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('grove', {
+        msg: 'db close during grove switch failed',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
     // Do NOT fire notifyChange(null) here — we are switching, not closing.
@@ -295,9 +297,9 @@ export async function openGrove(
     })
 
     if (initResult.syncProvider) {
-      logger.warn('grove on cloud-sync path', {
-        grove: path,
-        provider: initResult.syncProvider
+      logger().warn('grove', {
+        msg: 'grove on cloud-sync path',
+        meta: { grove: path, provider: initResult.syncProvider }
       })
     }
 
@@ -308,12 +310,13 @@ export async function openGrove(
       const { prune } = await import('./conflicts/store')
       await prune()
     } catch (err) {
-      logger.warn('conflicts prune at openGrove failed (non-fatal)', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().warn('grove', {
+        msg: 'conflicts prune at openGrove failed (non-fatal)',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
 
-    logger.info('grove opened', { grove: path, id: grove.id })
+    logger().info('grove', { msg: 'grove opened', meta: { grove: path, id: grove.id } })
     return { status: 'opened', grove: toSummary(grove) }
   } catch (err) {
     // Best-effort cleanup: close any partially-opened db, release lock.
@@ -326,9 +329,9 @@ export async function openGrove(
     await lockfile.release(path).catch(() => {
       /* ignore */
     })
-    logger.error('openGrove failed', {
-      grove: path,
-      message: err instanceof Error ? err.message : String(err)
+    logger().error('grove', {
+      msg: 'openGrove failed',
+      meta: { grove: path, message: err instanceof Error ? err.message : String(err) }
     })
     throw err
   }
@@ -345,18 +348,18 @@ export async function closeGrove(): Promise<void> {
     const { stop: watcherStop } = await import('./watcher')
     await watcherStop()
   } catch (err) {
-    logger.error('watcher stop during closeGrove failed', {
-      grove: path,
-      message: err instanceof Error ? err.message : String(err)
+    logger().error('grove', {
+      msg: 'watcher stop during closeGrove failed',
+      meta: { grove: path, message: err instanceof Error ? err.message : String(err) }
     })
   }
   try {
     const { reset: resetIndexer } = await import('./indexer')
     resetIndexer()
   } catch (err) {
-    logger.error('indexer reset during closeGrove failed', {
-      grove: path,
-      message: err instanceof Error ? err.message : String(err)
+    logger().error('grove', {
+      msg: 'indexer reset during closeGrove failed',
+      meta: { grove: path, message: err instanceof Error ? err.message : String(err) }
     })
   }
 
@@ -364,14 +367,14 @@ export async function closeGrove(): Promise<void> {
     const { dbService } = await import('./db')
     dbService.closeCurrent()
   } catch (err) {
-    logger.error('dbService.closeCurrent during closeGrove failed', {
-      grove: path,
-      message: err instanceof Error ? err.message : String(err)
+    logger().error('grove', {
+      msg: 'dbService.closeCurrent during closeGrove failed',
+      meta: { grove: path, message: err instanceof Error ? err.message : String(err) }
     })
   }
   await lockfile.release(path)
   notifyChange(null)
-  logger.info('grove closed', { grove: path })
+  logger().info('grove', { msg: 'grove closed', meta: { grove: path } })
 }
 
 // --- change subscribers ---
@@ -382,8 +385,9 @@ function notifyChange(payload: GroveSummary | null): void {
     try {
       h(payload)
     } catch (err) {
-      logger.error('project:changed handler threw', {
-        message: err instanceof Error ? err.message : String(err)
+      logger().error('grove', {
+        msg: 'project:changed handler threw',
+        meta: { message: err instanceof Error ? err.message : String(err) }
       })
     }
   }
