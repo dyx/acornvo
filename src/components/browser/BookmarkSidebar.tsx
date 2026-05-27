@@ -6,7 +6,7 @@ import { useBrowserStore } from '@/stores/browser'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
 import { Button } from '@/components/ui/button'
-import { MoreVertical, Search, X, Globe, ChevronDown, FolderOpen } from 'lucide-react'
+import { MoreVertical, Search, X, Globe, ChevronDown, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,15 +163,17 @@ export function BookmarkSidebar(): JSX.Element {
                             e.stopPropagation()
                             setEditingBookmark(b)
                           }}>
+                            <Pencil className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
                             {t('common.rename', '编辑...')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                            className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
                             onClick={(e) => {
                               e.stopPropagation()
                               setDeletingBookmark(b)
                             }}
                           >
+                            <Trash2 className="size-4 mr-2" />
                             {t('common.delete', '删除')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>

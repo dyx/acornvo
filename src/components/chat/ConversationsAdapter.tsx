@@ -155,7 +155,7 @@ export function ConversationsAdapter() {
                                 setEditingTitle(baseLabel)
                               }}
                             >
-                              <Edit2Icon className="size-4 mr-2" />
+                              <Edit2Icon className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
                               {t('chat.session.rename')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
