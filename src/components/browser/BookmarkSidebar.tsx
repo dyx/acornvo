@@ -80,13 +80,6 @@ export function BookmarkSidebar(): JSX.Element {
           
           {/* 分组标题与列表项容器 */}
           <div className="flex flex-col gap-[2px]">
-            {/* 所有书签头部 */}
-            <div className="flex items-center px-2 py-1.5 mb-1">
-              <span className="text-[12px] font-medium text-[color:var(--color-ink-3)] flex-1">
-                {t('browser.bookmarks.all', '所有书签')}
-              </span>
-            </div>
-
             {/* 模拟一个默认的“书签栏”文件夹节点，增强树形结构视觉感（可选，这里直接展示列表但也保留一点缩进感） */}
             <div className="flex items-center px-2 py-1.5 group cursor-pointer hover:bg-[color:var(--color-paper-3)] rounded-md transition-colors mb-1">
               <ChevronDown size={14} className="text-[color:var(--color-ink-3)] mr-1 shrink-0" />
