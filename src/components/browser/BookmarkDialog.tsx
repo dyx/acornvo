@@ -41,7 +41,6 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
   const bumpBookmarksRevision = useBrowserStore((s) => s.bumpBookmarksRevision)
   const [url, setUrl] = useState(props.initial.url)
   const [title, setTitle] = useState(props.initial.title ?? '')
-  const [tags, setTags] = useState(props.initial.tags?.join(', ') ?? '')
 
   const [prevUrl, setPrevUrl] = useState(props.initial.url)
   const [prevId, setPrevId] = useState(props.mode === 'edit' ? props.initial.id : undefined)
@@ -51,42 +50,24 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
     setPrevId(props.mode === 'edit' ? props.initial.id : undefined)
     setUrl(props.initial.url)
     setTitle(props.initial.title ?? '')
-    setTags(props.initial.tags?.join(', ') ?? '')
-  }
-
-  function parseTags(s: string): string[] {
-    return s
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean)
   }
 
   async function save(): Promise<void> {
-    const tagList = parseTags(tags)
     if (props.mode === 'new') {
       const bm = await ipc.bookmarks.create({
         url,
         title: title || null,
         favicon: props.initial.favicon ?? null,
-        tags: tagList
+        tags: []
       })
       props.onSaved(bm)
     } else {
       const bm = await ipc.bookmarks.update(props.initial.id, {
         title: title || null,
-        tags: tagList
+        tags: []
       })
       props.onSaved(bm)
     }
-    bumpBookmarksRevision()
-    props.onOpenChange(false)
-  }
-
-  async function remove(): Promise<void> {
-    if (props.mode !== 'edit') return
-    if (!window.confirm(t('browser.bookmark_dialog.delete_confirm', 'Delete this bookmark?'))) return
-    await ipc.bookmarks.delete(props.initial.id)
-    props.onDeleted()
     bumpBookmarksRevision()
     props.onOpenChange(false)
   }
@@ -114,17 +95,8 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
             {t('browser.bookmark_dialog.title', 'Title')}
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
-          <label className="grid gap-1 text-xs">
-            {t('browser.bookmark_dialog.tags', 'Tags (comma-separated)')}
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t('browser.bookmark_dialog.tags_placeholder', 'news, ai')} />
-          </label>
         </div>
         <DialogFooter>
-          {props.mode === 'edit' && (
-            <Button variant="destructive" onClick={() => void remove()}>
-              {t('browser.bookmark_dialog.delete', 'Delete')}
-            </Button>
-          )}
           <Button onClick={() => void save()}>{t('common.save', 'Save')}</Button>
         </DialogFooter>
       </DialogContent>

@@ -74,7 +74,7 @@ export function ConversationsAdapter() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 bg-background">
+      <ScrollArea className="flex-1 min-h-0 bg-background">
         <div className="p-2 pt-2 space-y-2">
           {Object.entries(itemsByGroup).map(([groupName, groupSessions]) => (
             <div key={groupName}>

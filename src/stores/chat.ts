@@ -194,7 +194,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }
 
       const cur = get()
-      const existingEmptySession = cur.sessions.find((s) => s.messageCount === 0)
+      const existingEmptySession = cur.sessions.find((s) => {
+        const state = cur.bySession[s.id]
+        if (state && state.loaded) {
+          return state.messages.length === 0 && state.status === 'idle'
+        }
+        return s.messageCount === 0
+      })
       if (existingEmptySession) {
         await get().selectSession(existingEmptySession.id)
         return existingEmptySession.id

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import {
   AssistantRuntimeProvider,
-  useLocalRuntime,
+  useExternalStoreRuntime,
   type ThreadMessage,
   type AppendMessage
 } from '@assistant-ui/react'
@@ -9,26 +9,35 @@ import { useChatStore, type ChatMessage } from '@/stores/chat'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
-function convertMessage(msg: ChatMessage): ThreadMessage {
-  const statusMap = {
+const convertMessage = (msg: ChatMessage): ThreadMessage => {
+  const statusMap: Record<string, 'running' | 'complete' | 'incomplete'> = {
     pending: 'running',
     streaming: 'running',
-    error: 'error',
-    done: 'complete'
-  } as const
-
-  return {
+    done: 'complete',
+    error: 'incomplete'
+  }
+  
+  const mappedRole = msg.role === 'tool' ? 'assistant' : msg.role;
+  const baseMessage = {
     id: msg.id,
-    role: msg.role === 'tool' ? 'assistant' : msg.role,
+    role: mappedRole,
     content: [
       {
         type: 'text',
         text: msg.text
       }
     ],
-    createdAt: new Date(msg.createdAt),
-    status: statusMap[msg.status ?? 'done'] || 'complete'
+    createdAt: new Date(msg.createdAt)
+  };
+
+  if (mappedRole === 'assistant') {
+    return {
+      ...baseMessage,
+      status: statusMap[msg.status ?? 'done'] || 'complete'
+    } as ThreadMessage;
   }
+
+  return baseMessage as ThreadMessage;
 }
 
 export function ChatRuntimeProvider({ children }: { children: React.ReactNode }) {
@@ -40,26 +49,27 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const activeSession = activeSessionId ? bySession[activeSessionId] : null
   const messages = activeSession?.messages ?? EMPTY_MESSAGES
 
-  // Since useExternalStoreRuntime is removed in v0.14.7, we use useLocalRuntime
-  const runtime = useLocalRuntime(
-    useMemo(
-      () => ({
-        // Map external state to local runtime
-        messages: messages.map(convertMessage),
-        onNew: async (message: AppendMessage) => {
-          const text = message.content
-            .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
-            .map((c) => c.text)
-            .join('')
-          await sendUserMessage({ text })
-        },
-        onCancel: async () => {
-          await cancelStream()
-        }
-      }),
-      [messages, sendUserMessage, cancelStream]
-    )
-  )
+  const isRunning = activeSession ? 
+    activeSession.messages.some(m => m.status === 'running' || m.status === 'pending') : false;
+
+  const runtime = useExternalStoreRuntime<ChatMessage>({
+    messages,
+    isRunning,
+    convertMessage,
+    onNew: async (message: AppendMessage) => {
+      const text = message.content
+        .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
+        .map((c) => c.text)
+        .join('')
+      await sendUserMessage({ text })
+    },
+    onCancel: async () => {
+      await cancelStream()
+    },
+    onEdit: async () => {},
+    onReload: async () => {},
+    onAddToolResult: async () => {}
+  })
 
   return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>
 }

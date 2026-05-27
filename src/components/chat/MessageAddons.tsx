@@ -1,40 +1,34 @@
-import { useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useChatStore, type ChatMessage } from '@/stores/chat'
-import { deriveBubbleItems, type ToolStep } from './bubbleSelectors'
-import { ScrollToBottomButton } from './ScrollToBottomButton'
-import { MarkdownText } from '@/components/assistant-ui/markdown-text'
-import { MessageProvider, MessagePrimitive } from '@assistant-ui/react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import {
-  BotIcon,
-  UserIcon,
-  Loader2Icon,
-  CheckCircleIcon,
-  CheckIcon,
-  XCircleIcon,
-  WrenchIcon,
-  CopyIcon,
-  RotateCcwIcon,
-  CornerDownLeftIcon,
-  ChevronRightIcon,
-  ChevronDownIcon
-} from 'lucide-react'
+import { useChatStore } from '@/stores/chat'
+import { type ToolStep } from './bubbleSelectors'
+import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
-import { ApprovalInlineActions } from './ApprovalInlineActions'
-import { ExternalLinkAnchor } from './ExternalLinkAnchor'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Loader2Icon,
+  CheckCircleIcon,
+  XCircleIcon,
+  WrenchIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CheckIcon,
+  CopyIcon,
+  RotateCcwIcon,
+  CornerDownLeftIcon
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-function stepStatus(s: ToolStep) {
+const EMPTY_MESSAGES: any[] = []
+
+export function stepStatus(s: ToolStep) {
   if (s.pendingApproval) return 'pending'
   if (!s.result) return 'loading'
   return s.result.ok ? 'success' : 'error'
 }
 
-function StepIcon({ s, className }: { s: ToolStep; className?: string }) {
+export function StepIcon({ s, className }: { s: ToolStep; className?: string }) {
   const st = stepStatus(s)
   if (st === 'loading' || st === 'pending')
     return <Loader2Icon className={cn('animate-spin', className)} />
@@ -43,8 +37,10 @@ function StepIcon({ s, className }: { s: ToolStep; className?: string }) {
   return <WrenchIcon className={className} />
 }
 
-function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
+export function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   const { t } = useTranslation()
+  if (!steps || steps.length === 0) return null
+
   return (
     <div className="flex flex-col gap-2 mb-4 w-full max-w-2xl">
       {steps.map((s) => {
@@ -101,27 +97,27 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   )
 }
 
-function MessageFooter({ item }: { item: BubbleItem }) {
+export function MessageFooter({ messageId, isUser }: { messageId: string, isUser: boolean }) {
   const { t } = useTranslation()
-  const { toast } = useToast()
   const [isCopied, setIsCopied] = useState(false)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
+    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   )
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const truncateMessagesFrom = useChatStore((s) => s.truncateMessagesFrom)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
-  const me = messages.find((m) => m.id === item.key)
-  const isUser = item.role === 'user'
-  const isLastAssistant =
-    messages[messages.length - 1]?.id === item.key && me?.role === 'assistant'
-  const isErrorTail = isLastAssistant && Boolean(me?.error || me?.status === 'error')
+  const me = messages.find((m) => m.id === messageId)
+  if (!me) return null
 
-  const timeStr = item.createdAt 
-    ? new Date(item.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const isLastAssistant =
+    messages[messages.length - 1]?.id === messageId && me.role === 'assistant'
+  const isErrorTail = isLastAssistant && Boolean(me.error || me.status === 'error')
+
+  const timeStr = me.createdAt 
+    ? new Date(me.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     : ''
 
   return (
@@ -138,7 +134,7 @@ function MessageFooter({ item }: { item: BubbleItem }) {
           className="size-6"
           title={isCopied ? t('chat.message.copied') : t('chat.message.copy')}
           onClick={async () => {
-            await navigator.clipboard.writeText(me?.text ?? '')
+            await navigator.clipboard.writeText(me.text ?? '')
             setIsCopied(true)
             setTimeout(() => setIsCopied(false), 1500)
           }}
@@ -153,10 +149,10 @@ function MessageFooter({ item }: { item: BubbleItem }) {
             className="size-6 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
             title={t('chat.message.retry')}
             onClick={() => {
-              const idx = messages.findIndex((m) => m.id === item.key)
+              const idx = messages.findIndex((m) => m.id === messageId)
               const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
               if (prior) {
-                truncateMessagesFrom(item.key)
+                truncateMessagesFrom(messageId)
                 void sendUserMessage({
                   text: prior.text,
                   attachments: prior.attachments ?? []
@@ -175,7 +171,7 @@ function MessageFooter({ item }: { item: BubbleItem }) {
             className="size-6"
             title={t('chat.message.quote')}
             onClick={() => {
-              const quoted = (me?.text ?? '')
+              const quoted = (me.text ?? '')
                 .split('\n')
                 .map((l) => `> ${l}`)
                 .join('\n')
@@ -187,97 +183,6 @@ function MessageFooter({ item }: { item: BubbleItem }) {
           </Button>
         )}
       </div>
-    </div>
-  )
-}
-
-const XMARKDOWN_COMPONENTS = { a: ExternalLinkAnchor as any }
-
-export function BubbleListAdapter() {
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const messages = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.messages ?? []) : []
-  )
-  const pendingApprovals = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.pendingApprovals ?? []) : []
-  )
-
-  const items = useMemo(
-    () => deriveBubbleItems(messages, pendingApprovals),
-    [messages, pendingApprovals]
-  )
-
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
-  return (
-    <div
-      ref={containerRef}
-      data-testid="bubble-list-container"
-      className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col min-h-0 scroll-smooth"
-    >
-      <div className="flex-1" /> {/* push to bottom if few messages */}
-      {items.map((item, index) => {
-        const isUser = item.role === 'user'
-        const contentStr = typeof item.content === 'string' ? item.content : item.content.text
-        const toolSteps = typeof item.content !== 'string' ? item.content.toolSteps : []
-
-        return (
-          <div
-            key={item.key}
-            className="flex w-full max-w-3xl mx-auto"
-          >
-
-            <div
-              className="flex flex-col min-w-0 flex-1 items-stretch"
-            >
-              {toolSteps.length > 0 && <ToolStepsChain steps={toolSteps} />}
-
-              {contentStr && (
-                <div
-                  className={cn(
-                    'w-full max-w-full overflow-hidden relative group pt-1',
-                    isUser
-                      ? 'bg-muted/40 text-foreground rounded-xl px-3 py-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1'
-                      : 'bg-transparent text-foreground prose dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 px-3'
-                  )}
-                >
-                  {isUser ? (
-                    <div className="whitespace-pre-wrap break-words text-left text-[15px] max-w-full flex-1 min-w-[50%]">{contentStr}</div>
-                  ) : (
-                    <MessageProvider
-                      index={index}
-                      message={{
-                        id: item.key,
-                        role: 'assistant',
-                        content: [{ type: 'text', text: contentStr }],
-                        status: item.loading ? 'running' : 'complete',
-                        createdAt: new Date()
-                      }}
-                    >
-                      <MessagePrimitive.Content
-                        components={{
-                          Text: (props) => <MarkdownText smooth {...props as any} components={XMARKDOWN_COMPONENTS} />
-                        }}
-                      />
-                    </MessageProvider>
-                  )}
-                  
-                  <div className={cn(isUser ? "ml-auto" : "w-full")}>
-                    <MessageFooter item={item} />
-                  </div>
-                </div>
-              )}
-
-              {item.loading && !contentStr && toolSteps.length === 0 && (
-                <div className="px-4 py-3 bg-muted rounded-[20px] flex items-center justify-center mt-1 w-max">
-                  <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-      <ScrollToBottomButton containerRef={containerRef} threshold={80} />
     </div>
   )
 }

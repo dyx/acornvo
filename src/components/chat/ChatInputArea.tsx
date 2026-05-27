@@ -83,7 +83,7 @@ export function ChatInputArea() {
           onChange={(e) => setPendingPromptText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t('chat.input.placeholder')}
-          className="min-h-[80px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 p-4 pb-2"
+          className="min-h-[40px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 pt-3 pb-2"
           disabled={isStreaming}
         />
 

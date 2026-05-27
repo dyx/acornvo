@@ -30,8 +30,8 @@
     "notarize:mac": "node scripts/notarize-mac.mjs"
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.14.7",
-    "@assistant-ui/react-markdown": "^0.14.0",
+    "@assistant-ui/react": "^0.14.11",
+    "@assistant-ui/react-markdown": "^0.14.1",
     "@langchain/anthropic": "^1.4.0",
     "@langchain/core": "^1.1.48",
     "@langchain/deepseek": "^1.0.27",
@@ -73,10 +73,11 @@
     "tailwindcss-animate": "^1.0.7",
     "turndown": "^7.2.4",
     "turndown-plugin-gfm": "^1.0.2",
+    "tw-shimmer": "^0.4.11",
     "uuid": "^14.0.0",
     "vditor": "^3.11.2",
     "zod": "^4.4.3",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

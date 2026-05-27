@@ -24,8 +24,7 @@ import { Button } from '@/components/ui/button'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 import { ConversationsAdapter } from '@/components/chat/ConversationsAdapter'
-import { BubbleListAdapter } from '@/components/chat/BubbleListAdapter'
-import { ChatInputArea } from '@/components/chat/ChatInputArea'
+import { Thread } from '@/components/assistant-ui/thread'
 import { ChatRuntimeProvider } from '@/components/chat/ChatRuntimeProvider'
 
 function SessionsErrorBanner() {
@@ -140,7 +139,7 @@ function ShortcutsModal() {
 }
 
 
-function EmptyState() {
+export function EmptyState() {
   const { t } = useTranslation()
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
@@ -260,13 +259,9 @@ export function Chat() {
               </h2>
             </header>
 
-            <section className="flex min-h-0 flex-1 flex-col bg-background/50 relative [mask-image:linear-gradient(to_bottom,transparent_0%,black_3%,black_97%,transparent_100%)]">
-              {isEmpty ? <EmptyState /> : <BubbleListAdapter />}
+            <section className="flex min-h-0 flex-1 flex-col relative bg-transparent">
+              <Thread />
             </section>
-
-            <div className="z-10 bg-gradient-to-t from-background via-background to-transparent pt-4">
-              <ChatInputArea />
-            </div>
           </main>
 
           <ShortcutsModal />

@@ -14,6 +14,7 @@ import type { Bookmark } from '@shared/browser-types'
 import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 import { dispatchAddress } from './dispatchAddress'
 import { BookmarkDialog } from './BookmarkDialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export function AddressBar(): JSX.Element {
   const { t } = useTranslation()
@@ -29,18 +30,30 @@ export function AddressBar(): JSX.Element {
   const [value, setValue] = useState(tab?.url === 'about:blank' ? '' : (tab?.url ?? ''))
   const [bookmark, setBookmark] = useState<Bookmark | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [openClippedConfirm, setOpenClippedConfirm] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  useNativeBrowserViewOcclusion(openClippedConfirm)
+  useNativeBrowserViewOcclusion(openClippedConfirm || deleteConfirmOpen)
 
   // --- Clip button state ---
   const url = tab?.url ?? ''
   const isHttp = /^https?:\/\//i.test(url)
   const isClipped = !!tab?.isClipped
-  const busy = clipperStage === 'extracting' || clipperStage === 'saving'
+  const rawBusy = clipperStage === 'extracting' || clipperStage === 'saving'
+  const [showBusy, setShowBusy] = useState(false)
+
+  useEffect(() => {
+    if (rawBusy) {
+      const t = setTimeout(() => setShowBusy(true), 200)
+      return () => clearTimeout(t)
+    } else {
+      setShowBusy(false)
+    }
+  }, [rawBusy])
+
   const clipState: 'disabled' | 'hollow' | 'clipped' | 'busy' = !isHttp
     ? 'disabled'
-    : busy
+    : showBusy
       ? 'busy'
       : isClipped
         ? 'clipped'
@@ -96,12 +109,12 @@ export function AddressBar(): JSX.Element {
   }
 
   async function toggleBookmark(): Promise<void> {
-    if (!tab) return
+    if (!tab || tab.url === 'about:blank') return
     const url = tab.url
     const existing = await ipc.bookmarks.getByUrl(url)
     if (existing) {
       setBookmark(existing)
-      setDialogOpen(true)
+      setDeleteConfirmOpen(true)
       return
     }
     setBookmark(null)
@@ -147,6 +160,7 @@ export function AddressBar(): JSX.Element {
           onChange={(e) => setValue(e.target.value)}
           onFocus={(e) => e.currentTarget.select()}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return
             if (e.key === 'Enter') submit()
             else if (e.key === 'Escape') setValue(tab.url === 'about:blank' ? '' : tab.url)
           }}
@@ -156,7 +170,8 @@ export function AddressBar(): JSX.Element {
       <button
         type="button"
         aria-label={t('browser.bookmark', 'bookmark')}
-        className="flex size-[30px] items-center justify-center rounded-[7px] text-sm text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]"
+        className="flex size-[30px] items-center justify-center rounded-[7px] text-sm text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] disabled:cursor-default disabled:opacity-40"
+        disabled={!tab || tab.url === 'about:blank'}
         onClick={() => void toggleBookmark()}
       >
         {bookmark ? '★' : '☆'}
@@ -184,18 +199,14 @@ export function AddressBar(): JSX.Element {
             clipState === 'hollow' &&
               'bg-[color:var(--color-acorn)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
             clipState === 'clipped' &&
-              'bg-[color:var(--color-leaf)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
+              'bg-[color:var(--color-acorn)] text-white hover:opacity-90 shadow-[0_1px_2px_oklch(0_0_0_/_0.12),inset_0_1px_0_oklch(1_0_0_/_0.18)]',
             clipState === 'busy' && 'bg-[color:var(--color-acorn)] text-white animate-pulse'
           ]
             .filter(Boolean)
             .join(' ')}
         >
-          {clipState === 'busy' ? (
+          {clipState === 'busy' && (
             <div className="size-3 animate-spin rounded-full border-[1.5px] border-white/30 border-t-white" />
-          ) : (
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M5.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 11a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM2 0l5 7-5 7h2l4-5.5L12 14h2L9 7l5-7h-2L8 5.5 4 0H2Z" />
-            </svg>
           )}
           {clipState === 'clipped'
             ? t('browser.clipped_label', '已拾果')
@@ -203,13 +214,19 @@ export function AddressBar(): JSX.Element {
         </button>
       </span>
       {bookmark ? (
-        <BookmarkDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          mode="edit"
-          initial={bookmark}
-          onSaved={(bm) => setBookmark(bm)}
-          onDeleted={() => setBookmark(null)}
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          title={t('browser.bookmark_dialog.delete_confirm', 'Delete this bookmark?')}
+          confirmText={t('common.delete', '删除')}
+          cancelText={t('common.cancel', '取消')}
+          destructive
+          onConfirm={async () => {
+            await ipc.bookmarks.delete(bookmark.id)
+            setBookmark(null)
+            useBrowserStore.getState().bumpBookmarksRevision()
+            setDeleteConfirmOpen(false)
+          }}
         />
       ) : (
         <BookmarkDialog

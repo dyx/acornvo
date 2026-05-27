@@ -7,6 +7,16 @@ import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { MoreVertical } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { BookmarkDialog } from './BookmarkDialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
 export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } = {}): JSX.Element {
   const { t } = useTranslation()
@@ -18,7 +28,10 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
 
   const [items, setItems] = useState<Bookmark[]>([])
   const [q, setQ] = useState('')
-  const [tag, setTag] = useState<string | null>(null)
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null)
+  const [deletingBookmark, setDeletingBookmark] = useState<Bookmark | null>(null)
+
+  useNativeBrowserViewOcclusion(deletingBookmark !== null)
 
   // Debounced query effect — refires on revision bump so new/edited/deleted bookmarks show up.
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -27,22 +40,15 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
     timerRef.current = setTimeout(
       () => {
         void ipc.bookmarks
-          .list({ q: q || undefined, tag: tag ?? undefined, limit: 200, offset: 0 })
+          .list({ q: q || undefined, limit: 200, offset: 0 })
           .then((r) => setItems(r.items))
       },
-      q || tag ? 200 : 0
+      q ? 200 : 0
     )
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [q, tag, bookmarksRevision])
-
-  // Union of tags across loaded items
-  const tagsAll = useMemo(() => {
-    const all = new Set<string>()
-    for (const b of items) for (const tg of b.tags) all.add(tg)
-    return [...all].sort()
-  }, [items])
+  }, [q, bookmarksRevision])
 
   if (collapsed) {
     return (
@@ -81,23 +87,6 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
           ×
         </Button>
       </div>
-      {tagsAll.length > 0 && (
-        <div className="flex flex-wrap gap-2 border-b border-[color:var(--color-line)] px-2 py-2">
-          {tagsAll.map((tg) => (
-            <Button
-              key={tg}
-              variant={tag === tg ? 'default' : 'outline'}
-              size="sm"
-              role="button"
-              aria-label={`tag-${tg}`}
-              className="h-6 rounded-full px-2 text-xs"
-              onClick={() => setTag(tag === tg ? null : tg)}
-            >
-              #{tg}
-            </Button>
-          ))}
-        </div>
-      )}
       {items.length === 0 ? (
         <div className="p-4 text-xs text-[color:var(--color-ink-3)]">
           {t(
@@ -111,31 +100,82 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
             <li
               key={b.id}
               role="listitem"
-              className="cursor-pointer border-b border-[color:var(--color-line)] px-2 py-1.5 hover:bg-[color:var(--color-bg-3)]"
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey) {
-                  void createTab(b.url)
-                  return
-                }
-                if (tab) void navigate(tab.id, b.url)
-              }}
+              className="group flex items-center justify-between border-b border-[color:var(--color-line)] hover:bg-[color:var(--color-bg-3)]"
             >
-              <div className="truncate text-xs font-medium">{b.title || b.url}</div>
-              <div className="truncate text-[10px] text-[color:var(--color-ink-3)]">
-                {new URL(b.url).hostname}
-              </div>
-              {b.tags.length > 0 && (
-                <div className="mt-0.5 flex flex-wrap gap-1">
-                  {b.tags.map((tg) => (
-                    <span key={tg} className="text-[10px] text-[color:var(--color-ink-3)]">
-                      #{tg}
-                    </span>
-                  ))}
+              <div
+                className="flex-1 cursor-pointer overflow-hidden px-2 py-1.5"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey) {
+                    void createTab(b.url)
+                    return
+                  }
+                  if (tab) void navigate(tab.id, b.url)
+                }}
+              >
+                <div className="truncate text-xs font-medium">{b.title || b.url}</div>
+                <div className="truncate text-[10px] text-[color:var(--color-ink-3)]">
+                  {new URL(b.url).hostname}
                 </div>
-              )}
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 mr-1"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditingBookmark(b)}>
+                    {t('common.rename', '重命名')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                    onClick={() => setDeletingBookmark(b)}
+                  >
+                    {t('common.delete', '删除')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </li>
           ))}
         </ul>
+      )}
+
+      {editingBookmark && (
+        <BookmarkDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingBookmark(null)
+          }}
+          mode="edit"
+          initial={editingBookmark}
+          onSaved={() => {
+            setEditingBookmark(null)
+            useBrowserStore.getState().bumpBookmarksRevision()
+          }}
+          onDeleted={() => {}}
+        />
+      )}
+      {deletingBookmark && (
+        <ConfirmDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setDeletingBookmark(null)
+          }}
+          title={t('browser.bookmark_dialog.delete_confirm', 'Delete this bookmark?')}
+          confirmText={t('common.delete', '删除')}
+          cancelText={t('common.cancel', '取消')}
+          destructive
+          onConfirm={async () => {
+            await ipc.bookmarks.delete(deletingBookmark.id)
+            setDeletingBookmark(null)
+            useBrowserStore.getState().bumpBookmarksRevision()
+          }}
+        />
       )}
     </div>
   )
