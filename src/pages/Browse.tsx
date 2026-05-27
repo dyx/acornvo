@@ -88,13 +88,9 @@ export function Browse(): JSX.Element {
 
   return (
     <div className="flex h-full" data-testid="browse-page">
-      {bookmarksOpen ? (
+      {bookmarksOpen && (
         <aside className="flex flex-col w-[280px] shrink-0 border-r border-[color:var(--color-line)] overflow-hidden bg-[color:var(--color-paper-2)]">
           <BookmarkSidebar />
-        </aside>
-      ) : (
-        <aside className="flex flex-col w-12 shrink-0 border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
-          <BookmarkSidebar collapsed />
         </aside>
       )}
       <div className="flex flex-1 flex-col overflow-hidden">

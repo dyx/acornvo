@@ -1,13 +1,12 @@
 // src/components/browser/BookmarkSidebar.tsx
 import type { JSX } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBrowserStore } from '@/stores/browser'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Search, X, Globe, ChevronDown, FolderOpen } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,7 @@ import { BookmarkDialog } from './BookmarkDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
 
-export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } = {}): JSX.Element {
+export function BookmarkSidebar(): JSX.Element {
   const { t } = useTranslation()
   const tab = useBrowserStore((s) => s.getActiveTab())
   const navigate = useBrowserStore((s) => s.navigate)
@@ -50,101 +49,166 @@ export function BookmarkSidebar({ collapsed = false }: { collapsed?: boolean } =
     }
   }, [q, bookmarksRevision])
 
-  if (collapsed) {
-    return (
-      <div className="flex h-full flex-col items-center pt-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('browser.bookmarks.expand', 'expand bookmarks')}
-          className="size-8 rounded hover:bg-[color:var(--color-bg-3)]"
-          onClick={() => setBookmarksOpen(true)}
-        >
-          ☰
-        </Button>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-[42px] shrink-0 items-center justify-between border-b border-[color:var(--color-line)] px-2 gap-2">
-        <Input
-          type="search"
-          role="searchbox"
-          placeholder={t('browser.bookmarks.search', 'search bookmarks')}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="h-8 flex-1 text-xs"
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('browser.bookmarks.collapse', 'collapse bookmarks')}
-          className="size-8 rounded text-sm hover:bg-[color:var(--color-bg-3)]"
-          onClick={() => setBookmarksOpen(false)}
-        >
-          ×
-        </Button>
+    <div className="flex h-full flex-col bg-[color:var(--color-paper-2)] border-r border-[color:var(--color-line)] font-sans select-none">
+      
+      {/* 顶部标题栏 */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <h2 className="text-[15px] font-medium text-[color:var(--color-ink)] flex items-center gap-2">
+          <span>{t('browser.bookmarks.title', '书签')}</span>
+        </h2>
+        <div className="flex gap-1">
+          <button
+            aria-label={t('browser.bookmarks.collapse', 'collapse bookmarks')}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-3)] hover:text-[color:var(--color-ink)] transition-colors"
+            onClick={() => setBookmarksOpen(false)}
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
+
+      {/* 搜索栏 */}
+      <div className="px-3 pb-3">
+        <div className="flex h-8 items-center gap-1.5 rounded-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
+          <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
+          <input
+            type="search"
+            role="searchbox"
+            placeholder={t('browser.bookmarks.search', '搜索书签...')}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1 bg-transparent text-[13px] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-4)] min-w-0"
+          />
+        </div>
+      </div>
+
+      {/* 列表区域 */}
       {items.length === 0 ? (
-        <div className="p-4 text-xs text-[color:var(--color-ink-3)]">
+        <div className="p-4 text-xs text-[color:var(--color-ink-3)] text-center mt-4">
           {t(
             'browser.bookmarks.empty',
             'No bookmarks yet. Click the star while browsing to save a page.'
           )}
         </div>
       ) : (
-        <ul className="flex-1 overflow-auto" role="list">
-          {items.map((b) => (
-            <li
-              key={b.id}
-              role="listitem"
-              className="group flex items-center justify-between border-b border-[color:var(--color-line)] hover:bg-[color:var(--color-bg-3)]"
-            >
-              <div
-                className="flex-1 cursor-pointer overflow-hidden px-2 py-1.5"
-                onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey) {
-                    void createTab(b.url)
-                    return
-                  }
-                  if (tab) void navigate(tab.id, b.url)
-                }}
-              >
-                <div className="truncate text-xs font-medium">{b.title || b.url}</div>
-                <div className="truncate text-[10px] text-[color:var(--color-ink-3)]">
-                  {new URL(b.url).hostname}
-                </div>
-              </div>
+        <div className="flex-1 overflow-y-auto px-2 pb-4">
+          
+          {/* 分组标题与列表项容器 */}
+          <div className="flex flex-col gap-[2px]">
+            {/* 所有书签头部 */}
+            <div className="flex items-center px-2 py-1.5 mb-1">
+              <span className="text-[12px] font-medium text-[color:var(--color-ink-3)] flex-1">
+                {t('browser.bookmarks.all', '所有书签')}
+              </span>
+            </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 mr-1"
+            {/* 模拟一个默认的“书签栏”文件夹节点，增强树形结构视觉感（可选，这里直接展示列表但也保留一点缩进感） */}
+            <div className="flex items-center px-2 py-1.5 group cursor-pointer hover:bg-[color:var(--color-paper-3)] rounded-md transition-colors mb-1">
+              <ChevronDown size={14} className="text-[color:var(--color-ink-3)] mr-1 shrink-0" />
+              <FolderOpen size={14} className="text-[color:var(--color-acorn)] mr-2 shrink-0" />
+              <span className="text-[13px] font-medium text-[color:var(--color-ink-2)] flex-1">
+                书签栏
+              </span>
+              <span className="text-[11px] text-[color:var(--color-ink-4)] tabular-nums px-1">
+                ({items.length})
+              </span>
+            </div>
+
+            {/* 书签项列表 */}
+            <div className="relative flex flex-col gap-[2px]">
+              {items.map((b) => {
+                // 当前标签页如果是这个书签的地址，我们可以让它稍微高亮
+                const isActive = tab?.url === b.url
+                
+                return (
+                  <div
+                    key={b.id}
+                    role="listitem"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) {
+                        void createTab(b.url)
+                        return
+                      }
+                      if (tab) void navigate(tab.id, b.url)
+                    }}
+                    className={`group relative flex items-center justify-between pl-6 pr-1 py-1.5 rounded-md cursor-pointer transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]' 
+                        : 'text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)]'
+                    }`}
                   >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditingBookmark(b)}>
-                    {t('common.rename', '重命名')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                    onClick={() => setDeletingBookmark(b)}
-                  >
-                    {t('common.delete', '删除')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </li>
-          ))}
-        </ul>
+                    {/* 选中状态的左侧指示条 */}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[60%] bg-[color:var(--color-acorn)] rounded-r-md" />
+                    )}
+
+                    {/* 图标与标题 */}
+                    <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+                      {b.favicon ? (
+                        <img 
+                          src={b.favicon} 
+                          alt="" 
+                          className="w-[14px] h-[14px] shrink-0 object-contain rounded-sm shadow-sm" 
+                        />
+                      ) : (
+                        <Globe size={14} className={`shrink-0 ${isActive ? 'text-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)]'}`} />
+                      )}
+                      
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-[13px] truncate">{b.title || b.url}</span>
+                        {/* 如果想的话，可以把域名放小字在下面，不过单行截断更干净，我们可以放在 tooltip 里或者像原来那样 */}
+                        {!isActive && (
+                          <span className="text-[10px] truncate text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)] transition-colors">
+                            {new URL(b.url).hostname}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* 操作按钮区 */}
+                    <div className="flex items-center shrink-0">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button 
+                            className={`flex h-6 w-6 items-center justify-center rounded-sm transition-all duration-200 ${
+                              isActive 
+                                ? 'opacity-100 text-[color:var(--color-acorn)] hover:bg-[color:var(--color-acorn)]/20' 
+                                : 'opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-4)] hover:text-[color:var(--color-ink)]'
+                            }`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical size={14} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingBookmark(b)
+                          }}>
+                            {t('common.rename', '编辑...')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeletingBookmark(b)
+                            }}
+                          >
+                            {t('common.delete', '删除')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
+      {/* 弹窗组件 */}
       {editingBookmark && (
         <BookmarkDialog
           open={true}

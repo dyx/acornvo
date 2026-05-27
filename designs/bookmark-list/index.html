@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Bookmark List Design</title>
+  
+  <!-- Fonts: Outfit for a modern, geometric, and elegant look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Icons: Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      /* Colors */
+      --bg-color: #f0f2f5;
+      --panel-bg: rgba(255, 255, 255, 0.65);
+      --panel-border: rgba(255, 255, 255, 0.8);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      
+      --accent-color: #4f46e5;
+      --accent-hover: #4338ca;
+      --accent-light: rgba(79, 70, 229, 0.08);
+      
+      --item-hover: rgba(255, 255, 255, 0.5);
+      --item-active: rgba(255, 255, 255, 0.8);
+      
+      --shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(255,255,255,0.5) inset;
+      
+      /* Radii */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+      
+      /* Transitions */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: 0.2s var(--ease-out);
+      --transition-base: 0.3s var(--ease-out);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Abstract background to give the glass effect something to blur */
+    .ambient-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: -1;
+      background: #e2e8f0;
+    }
+
+    .ambient-bg::before, .ambient-bg::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: float 20s infinite ease-in-out alternate;
+    }
+
+    .ambient-bg::before {
+      top: -10%;
+      left: 20%;
+      width: 50vw;
+      height: 50vw;
+      background: rgba(147, 197, 253, 0.6); /* Soft blue */
+    }
+
+    .ambient-bg::after {
+      bottom: -10%;
+      right: 10%;
+      width: 60vw;
+      height: 40vw;
+      background: rgba(196, 181, 253, 0.5); /* Soft purple */
+      animation-delay: -5s;
+    }
+    
+    .ambient-bg .blob {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      width: 40vw;
+      height: 40vw;
+      background: rgba(252, 211, 77, 0.3); /* Soft yellow */
+      border-radius: 50%;
+      filter: blur(100px);
+      animation: float 15s infinite ease-in-out alternate-reverse;
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(5%, 10%) scale(1.05); }
+      100% { transform: translate(-5%, -5%) scale(0.95); }
+    }
+
+    /* Main App Container */
+    .app-container {
+      width: 420px;
+      height: 85vh;
+      max-height: 800px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(32px) saturate(180%);
+      -webkit-backdrop-filter: blur(32px) saturate(180%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Top Header */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+      font-size: 1.125rem;
+    }
+
+    .icon-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-main);
+    }
+
+    /* Search Area */
+    .search-container {
+      padding: 0 24px 16px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 16px 0 42px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius-full);
+      font-family: inherit;
+      font-size: 0.9375rem;
+      color: var(--text-main);
+      outline: none;
+      transition: var(--transition-base);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+    }
+    
+    .search-input::placeholder {
+      color: var(--text-light);
+    }
+
+    .search-input:focus {
+      background: rgba(255, 255, 255, 0.8);
+      border-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1), inset 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    /* List Controls Area */
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px 8px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .list-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sort-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-right: 4px;
+      font-weight: 500;
+    }
+
+    .icon-btn.small {
+      width: 28px;
+      height: 28px;
+      font-size: 1rem;
+    }
+
+    /* Tree Container */
+    .tree-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 16px 24px;
+      
+      /* Custom Scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,0.2) transparent;
+    }
+    
+    .tree-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .tree-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .tree-container::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.15);
+      border-radius: 10px;
+    }
+
+    /* Tree Items */
+    .tree-item {
+      position: relative;
+      margin-bottom: 2px;
+    }
+
+    .item-content {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      gap: 12px;
+    }
+
+    .item-content:hover {
+      background: var(--item-hover);
+    }
+
+    .folder-item > .item-content {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .folder-icon {
+      color: #3b82f6; /* Blue folder */
+      font-size: 1.25rem;
+    }
+    
+    .folder-icon-plus {
+      color: var(--text-main);
+      font-size: 1.125rem;
+      margin-left: 20px; /* Aligned past caret */
+    }
+
+    .caret {
+      color: var(--text-light);
+      font-size: 0.875rem;
+      transition: transform var(--transition-fast);
+    }
+    
+    .tree-item:not(.open) > .item-content > .caret {
+      transform: rotate(-90deg);
+    }
+
+    .item-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.9375rem;
+    }
+
+    .item-count {
+      color: var(--text-light);
+      font-size: 0.8125rem;
+    }
+
+    /* Children Items */
+    .tree-children {
+      margin-left: 20px;
+      padding-top: 4px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    /* Subtle indentation line */
+    .tree-children::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -2px;
+      width: 1px;
+      background: rgba(0,0,0,0.06);
+    }
+
+    /* Bookmark Item Specifics */
+    .bookmark-item .item-content {
+      padding-left: 12px;
+      gap: 12px;
+    }
+
+    .favicon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: #fff; /* In case it's transparent */
+      padding: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Fake favicons using CSS gradients for the demo */
+    .fav-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E53); }
+    .fav-2 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+    .fav-3 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+    .fav-4 { background: linear-gradient(135deg, #fa709a, #fee140); }
+    .fav-5 { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .fav-6 { background: linear-gradient(135deg, #13547a, #80d0c7); }
+    .fav-7 { background: #333; }
+    
+    .favicon-fake {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .bookmark-item.active > .item-content {
+      background: var(--item-active);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .active-indicator {
+      position: absolute;
+      left: -8px; /* Offset to the left of the item */
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: var(--accent-color);
+      border-radius: 0 4px 4px 0;
+      opacity: 0;
+      transition: var(--transition-fast);
+    }
+
+    .bookmark-item.active .active-indicator {
+      opacity: 1;
+    }
+
+    /* More button hidden by default, shown on hover/active */
+    .more-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      opacity: 0;
+      transform: translateX(5px);
+      transition: var(--transition-fast);
+    }
+
+    .more-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-main);
+    }
+
+    .bookmark-item:hover .more-btn,
+    .bookmark-item.active .more-btn {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+  </style>
+</head>
+<body>
+
+  <!-- Abstract Background -->
+  <div class="ambient-bg">
+    <div class="blob"></div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="top-header">
+      <h1 class="panel-title">书签</h1>
+      <div class="header-actions">
+        <button class="icon-btn" title="固定"><i class="ph ph-push-pin"></i></button>
+        <button class="icon-btn" title="关闭"><i class="ph ph-x"></i></button>
+      </div>
+    </header>
+
+    <!-- Search Box -->
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <i class="ph ph-magnifying-glass search-icon"></i>
+        <input type="text" class="search-input" placeholder="搜索书签">
+      </div>
+    </div>
+
+    <!-- List Controls -->
+    <div class="list-header">
+      <h2 class="section-title">所有书签</h2>
+      <div class="list-controls">
+        <span class="sort-text">创建时间 (从晚到早)</span>
+        <button class="icon-btn small" title="筛选"><i class="ph ph-funnel"></i></button>
+        <button class="icon-btn small" title="列表视图"><i class="ph ph-list-bullets"></i></button>
+        <button class="icon-btn small" title="编辑"><i class="ph ph-pencil-simple"></i></button>
+      </div>
+    </div>
+
+    <!-- Tree View -->
+    <div class="tree-container">
+      
+      <!-- New Folder Action -->
+      <div class="tree-item folder-item">
+        <div class="item-content">
+          <i class="ph ph-plus folder-icon-plus"></i>
+          <span class="item-text">新建文件夹</span>
+        </div>
+      </div>
+
+      <!-- Main Folder (Open) -->
+      <div class="tree-item folder-item open">
+        <div class="item-content">
+          <i class="ph ph-caret-down caret"></i>
+          <i class="ph-fill ph-folder folder-icon"></i>
+          <span class="item-text">书签栏</span>
+          <span class="item-count">(28)</span>
+        </div>
+        
+        <!-- Bookmarks List -->
+        <div class="tree-children">
+          
+          <!-- Bookmark 1 (Active) -->
+          <div class="tree-item bookmark-item active">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-1">N</div>
+              <span class="item-text">「笔记」小程序备案驳回原因整理 (不定期...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 2 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-2">R</div>
+              <span class="item-text">红色警戒2: 网页版 (个人爱好制作)</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+          
+          <!-- Bookmark 3 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-3">H</div>
+              <span class="item-text">高项十大领域论文范文（高分论文强烈推荐！！...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 4 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-7">CQ</div>
+              <span class="item-text">重庆工商大学人事处</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 5 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-7">N</div>
+              <span class="item-text">ChatGPT Plus官方推荐新手教程</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 6 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-7">HR</div>
+              <span class="item-text">重庆交通人才招聘</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 7 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-4">UI</div>
+              <span class="item-text">GARRYUI|创新体验设计|用户体验设计|产品UI界...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 8 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-7">M</div>
+              <span class="item-text">13 英寸 MacBook Pro 显示屏背光服务计划 - A...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 9 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-5">ZZ</div>
+              <span class="item-text">周志明的软件架构课_软件架构_分布式系统_基...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+
+          <!-- Bookmark 10 -->
+          <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-6">G</div>
+              <span class="item-text">Google Voice号码官方解读 多种自动防止谷歌...</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+          
+           <!-- Bookmark 11 -->
+           <div class="tree-item bookmark-item">
+            <div class="active-indicator"></div>
+            <div class="item-content">
+              <div class="favicon favicon-fake fav-7">EQ</div>
+              <span class="item-text">中国地震台网</span>
+              <button class="more-btn"><i class="ph ph-dots-three-vertical"></i></button>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    // Simple script to toggle active states for the demo
+    const items = document.querySelectorAll('.bookmark-item');
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        items.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+
+    // Toggle folders
+    const folders = document.querySelectorAll('.folder-item');
+    folders.forEach(folder => {
+      folder.addEventListener('click', (e) => {
+        // Prevent if clicking on a bookmark item inside it
+        if(e.target.closest('.bookmark-item')) return;
+        
+        if (folder.classList.contains('open')) {
+          folder.classList.remove('open');
+          const children = folder.nextElementSibling;
+          if(children && children.classList.contains('tree-children')) {
+            children.style.display = 'none';
+          }
+        } else {
+          // If it's the "New Folder", ignore toggle
+          if(folder.querySelector('.folder-icon-plus')) return;
+          
+          folder.classList.add('open');
+          const children = folder.querySelector('.tree-children');
+          if(children) {
+            children.style.display = 'flex';
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
