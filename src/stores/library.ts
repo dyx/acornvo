@@ -24,6 +24,7 @@ export interface LibraryState {
   pagination: Pagination
 
   // --- list view ---
+  allItems: FileSummary[]
   items: FileSummary[]
   total: number
   isLoading: boolean
@@ -49,7 +50,7 @@ export interface LibraryState {
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-  limit: 50,
+  limit: 10000,
   offset: 0,
   orderBy: 'clipped_desc'
 }
@@ -58,6 +59,7 @@ const initialState = {
   filter: {} as FileFilter,
   orderBy: 'clipped_desc' as OrderBy,
   pagination: DEFAULT_PAGINATION,
+  allItems: [] as FileSummary[],
   items: [] as FileSummary[],
   total: 0,
   isLoading: false,
@@ -65,6 +67,123 @@ const initialState = {
   detailsByPath: new Map<string, FullDetail>(),
   categoryTree: [] as CategoryNode[],
   tagCloud: [] as TagCloudItem[]
+}
+
+function applyLocalQuery(
+  allItems: FileSummary[],
+  filter: FileFilter,
+  orderBy: OrderBy
+): FileSummary[] {
+  let items = [...allItems]
+
+  // 1. Parse 'q' for smart syntax like #tag or @category
+  let qText = filter.q?.toLowerCase() ?? ''
+  const qTags: string[] = []
+  const qCategories: string[] = []
+  
+  if (qText) {
+    const tokens = qText.split(/\s+/)
+    const remaining: string[] = []
+    for (const t of tokens) {
+      if (t.startsWith('#') && t.length > 1) {
+        qTags.push(t.substring(1))
+      } else if (t.startsWith('@') && t.length > 1) {
+        qCategories.push(t.substring(1))
+      } else {
+        remaining.push(t)
+      }
+    }
+    qText = remaining.join(' ')
+  }
+
+  // 2. Filter
+  items = items.filter((f) => {
+    // category filter (UI + inline)
+    const categoryFilter = filter.category ?? (qCategories.length > 0 ? qCategories[0] : null)
+    if (categoryFilter && !(f.category === categoryFilter || f.category?.startsWith(categoryFilter + '/'))) {
+      return false
+    }
+
+    // pathPrefix
+    if (filter.pathPrefix && !f.path.startsWith(filter.pathPrefix)) {
+      return false
+    }
+
+    // rating
+    const isUnreviewed = filter.rating?.min === 0 && filter.rating?.max === 0
+    if (isUnreviewed && f.rating !== null) {
+      return false
+    } else if (!isUnreviewed) {
+      if (filter.rating?.min != null && (f.rating == null || f.rating < filter.rating.min)) return false
+      if (filter.rating?.max != null && (f.rating != null && f.rating > filter.rating.max)) return false
+    }
+
+    // tags (UI)
+    if (filter.tags && filter.tags.length > 0) {
+      for (const t of filter.tags) {
+        if (!f.tags.includes(t)) return false
+      }
+    }
+
+    // inline tags
+    if (qTags.length > 0) {
+      for (const t of qTags) {
+        if (!f.tags.includes(t)) return false
+      }
+    }
+
+    // text search
+    if (qText) {
+      const target = ((f.title ?? '') + ' ' + f.path).toLowerCase()
+      if (!target.includes(qText)) return false
+    }
+
+    return true
+  })
+
+  // 3. Sort
+  items.sort((a, b) => {
+    switch (orderBy) {
+      case 'clipped_desc': {
+        const cA = a.clipped_at ?? ''
+        const cB = b.clipped_at ?? ''
+        if (cA !== cB) return cB.localeCompare(cA)
+        return (b.created_at ?? 0) - (a.created_at ?? 0)
+      }
+      case 'clipped_asc': {
+        const cA = a.clipped_at ?? ''
+        const cB = b.clipped_at ?? ''
+        if (cA !== cB) return cA.localeCompare(cB)
+        return (a.created_at ?? 0) - (b.created_at ?? 0)
+      }
+      case 'title_asc': {
+        const tA = a.title || a.path || ''
+        const tB = b.title || b.path || ''
+        const engA = /^[a-zA-Z0-9]/.test(tA)
+        const engB = /^[a-zA-Z0-9]/.test(tB)
+        if (engA && !engB) return -1
+        if (!engA && engB) return 1
+        return tA.localeCompare(tB, 'zh-CN')
+      }
+      case 'title_desc': {
+        const tA = a.title || a.path || ''
+        const tB = b.title || b.path || ''
+        const engA = /^[a-zA-Z0-9]/.test(tA)
+        const engB = /^[a-zA-Z0-9]/.test(tB)
+        if (engA && !engB) return 1
+        if (!engA && engB) return -1
+        return tB.localeCompare(tA, 'zh-CN')
+      }
+      case 'rating_desc':
+        return (b.rating ?? -1) - (a.rating ?? -1)
+      case 'rating_asc':
+        return (a.rating ?? -1) - (b.rating ?? -1)
+      default:
+        return 0
+    }
+  })
+
+  return items
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
@@ -76,27 +195,34 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     for (const [k, v] of Object.entries(merged)) {
       if (v !== undefined) (filter as Record<string, unknown>)[k] = v
     }
+    const { allItems, orderBy } = get()
+    const items = applyLocalQuery(allItems, filter, orderBy)
     set({
       filter,
-      pagination: { ...get().pagination, offset: 0 }
+      pagination: { ...get().pagination, offset: 0 },
+      items,
+      total: items.length
     })
-    await get().load()
   },
 
   async setOrder(orderBy) {
+    const { allItems, filter } = get()
+    const items = applyLocalQuery(allItems, filter, orderBy)
     set({
       orderBy,
-      pagination: { ...get().pagination, orderBy, offset: 0 }
+      pagination: { ...get().pagination, orderBy, offset: 0 },
+      items,
+      total: items.length
     })
-    await get().load()
   },
 
   async load() {
     set({ isLoading: true })
     try {
-      const { filter, pagination } = get()
-      const r = await ipc.files.list(filter, pagination)
-      set({ items: r.items, total: r.total, isLoading: false })
+      const allItems = await ipc.files.getAll()
+      const { filter, orderBy } = get()
+      const items = applyLocalQuery(allItems, filter, orderBy)
+      set({ allItems, items, total: items.length, isLoading: false })
     } catch (err) {
       set({ isLoading: false })
       throw err
@@ -104,19 +230,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   async loadMore() {
-    const { pagination, items } = get()
-    const next: Pagination = {
-      ...pagination,
-      offset: pagination.offset + pagination.limit
-    }
-    set({ pagination: next, isLoading: true })
-    try {
-      const r = await ipc.files.list(get().filter, next)
-      set({ items: [...items, ...r.items], total: r.total, isLoading: false })
-    } catch (err) {
-      set({ isLoading: false })
-      throw err
-    }
+    // In-memory mode does not paginate from backend. VirtualList handles infinite scrolling natively.
+    return Promise.resolve()
   },
 
   async loadCategoryTree() {
@@ -145,12 +260,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ selectedPath: path, detailsByPath: next })
   },
   removeItem(path) {
-    const { items, selectedPath, detailsByPath } = get()
+    const { allItems, filter, orderBy, selectedPath, detailsByPath } = get()
+    const nextAllItems = allItems.filter(i => i.path !== path)
+    const nextItems = applyLocalQuery(nextAllItems, filter, orderBy)
     const nextDetails = new Map(detailsByPath)
     nextDetails.delete(path)
     set({
-      items: items.filter((i) => i.path !== path),
-      total: Math.max(0, items.length - 1),
+      allItems: nextAllItems,
+      items: nextItems,
+      total: nextItems.length,
       selectedPath: selectedPath === path ? null : selectedPath,
       detailsByPath: nextDetails
     })

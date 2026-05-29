@@ -230,7 +230,7 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'a.md', title: 'A', tags: ['attention'] })
     insertFile(db, { path: 'b.md', title: 'B', tags: ['other'] })
     const r = await fileQueryHandlers.list(
-      { tag: 'attention' },
+      { tags: ['attention'] },
       { limit: 50, offset: 0, orderBy: 'clipped_desc' }
     )
     expect(r.items.map((i) => i.path)).toEqual(['a.md'])
@@ -395,7 +395,7 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'b.md', title: 'B', category: '技术', tags: ['other'] })
     insertFile(db, { path: 'c.md', title: 'C', category: '产品', tags: ['attention'] })
     const r = await fileQueryHandlers.list(
-      { category: '技术', tag: 'attention' },
+      { category: '技术', tags: ['attention'] },
       { limit: 50, offset: 0, orderBy: 'clipped_desc' }
     )
     expect(r.items.map((i) => i.path)).toEqual(['a.md'])
@@ -406,7 +406,7 @@ describe('fileQueryHandlers.list', () => {
     insertFile(db, { path: 'b.md', title: 'B', rating: 2, tags: ['attention'] })
     insertFile(db, { path: 'c.md', title: 'C', rating: 5, tags: ['other'] })
     const r = await fileQueryHandlers.list(
-      { tag: 'attention', rating: { min: 4 } },
+      { tags: ['attention'], rating: { min: 4 } },
       { limit: 50, offset: 0, orderBy: 'clipped_desc' }
     )
     expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['a.md']))

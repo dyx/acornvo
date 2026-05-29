@@ -55,6 +55,7 @@ const request: IpcClient<IpcContract> = {
   },
   files: {
     list: (filter, pagination) => invoke('files.list', filter, pagination),
+    getAll: () => invoke('files.getAll'),
     get: (path) => invoke('files.get', path),
     getCategoryTree: () => invoke('files.getCategoryTree'),
     getTagCloud: (opts) => invoke('files.getTagCloud', opts),
@@ -76,6 +77,8 @@ const request: IpcClient<IpcContract> = {
     read: (id) => invoke('conflict.read', id),
     delete: (id) => invoke('conflict.delete', id),
     writeSnapshot: (input) => invoke('conflict.writeSnapshot', input),
+    diff: (id) => invoke('conflict.diff', id),
+    deleteAll: () => invoke('conflict.deleteAll'),
     openSnapshotFile: (id, side) => invoke('conflict.openSnapshotFile', id, side)
   },
   search: {
@@ -154,12 +157,7 @@ const request: IpcClient<IpcContract> = {
     approveTool: (callId: string, opts?: { editedArgs?: unknown }) =>
       invoke('chat.approveTool', callId, opts),
     rejectTool: (callId: string) => invoke('chat.rejectTool', callId),
-    onStream: (sessionId: string, cb: (e: any) => void) => {
-      const channel = `chat:stream:${sessionId}`
-      const listener = (_evt: any, payload: any) => cb(payload)
-      ipcRenderer.on(channel, listener)
-      return () => ipcRenderer.removeListener(channel, listener)
-    }
+    subscribeStream: (sessionId: string) => invoke('chat.subscribeStream', sessionId)
   },
   queue: {
     health: () => invoke('queue.health'),

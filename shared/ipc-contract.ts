@@ -351,6 +351,7 @@ export type IpcContract = {
   }
   files: {
     list: (filter: FileFilter, pagination: Pagination) => { items: FileSummary[]; total: number }
+    getAll: () => FileSummary[]
     get: (path: string) => {
       summary: FileSummary
       frontmatter: Frontmatter

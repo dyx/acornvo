@@ -14,7 +14,7 @@ describe('file-types', () => {
       tags: ['x', 'y'],
       is_reviewing: false,
       review_status: 'done',
-      review_error: null
+      review_error: null, mtime: 0, created_at: 0
     }
     expect(s.path).toBe('notes/a.md')
   })
@@ -31,7 +31,7 @@ describe('file-types', () => {
       tags: [],
       is_reviewing: false,
       review_status: 'none',
-      review_error: null
+      review_error: null, mtime: 0, created_at: 0
     }
     expect(s.tags).toEqual([])
   })
@@ -40,7 +40,7 @@ describe('file-types', () => {
     const f1: FileFilter = {}
     const f2: FileFilter = {
       category: '技术',
-      tag: 'attention',
+      tags: ['attention'],
       pathPrefix: 'inbox/',
       rating: { min: 3, max: 5 },
       q: '注意力'

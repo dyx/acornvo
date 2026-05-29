@@ -22,6 +22,10 @@ export interface FileSummary {
   ai_rating?: number | null
   /** ISO datetime of `clipped_at` or null. */
   clipped_at: string | null
+  /** mtime of the file (Unix timestamp in ms) to use as a fallback sort key */
+  mtime: number
+  /** actual creation time of the file (Unix timestamp in ms) */
+  created_at: number
   /** `frontmatter_json.site` or null. */
   site: string | null
   /** True when `files.summary IS NOT NULL AND length > 0`. */
@@ -52,17 +56,23 @@ export interface FileFilter {
    * (Prefix match across `/` levels.)
    */
   category?: string
-  /** Matches `file_tags.tag = :tag`. */
-  tag?: string
+  /** Matches `file_tags.tag IN (:tags)`. Supports multiple tags in frontend filter. */
+  tags?: string[]
   /** Matches `f.path LIKE :pathPrefix || '%'`. Used for `inbox/` view. */
   pathPrefix?: string
   /** Inclusive bounds. Either side may be omitted. */
   rating?: { min?: number; max?: number }
-  /** Title + path LIKE `'%' || :q || '%'`. NOT FTS5 — phase 8 owns full-text. */
+  /** Title LIKE '%' || :q || '%'. NOT FTS5 — phase 8 owns full-text. */
   q?: string
 }
 
-export type OrderBy = 'clipped_desc' | 'title_asc'
+export type OrderBy = 
+  | 'clipped_desc' 
+  | 'clipped_asc'
+  | 'title_asc'
+  | 'title_desc'
+  | 'rating_desc'
+  | 'rating_asc'
 
 export interface Pagination {
   limit: number

@@ -39,6 +39,7 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
     category: row.category ?? null,
     rating: row.rating ?? null,
     clipped_at: row.clipped_at ?? null,
+    mtime: 0, created_at: 0,
     site,
     has_summary: row.summary !== null && row.summary !== '',
     tags,

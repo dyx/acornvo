@@ -187,7 +187,7 @@ const _getOk: _GetReturn = {
     title: null,
     category: null,
     rating: null,
-    clipped_at: null,
+    clipped_at: null, mtime: 0, created_at: 0,
     site: null,
     has_summary: false,
     tags: [],

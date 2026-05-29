@@ -30,6 +30,8 @@ interface ListRow {
   rating: number | null
   ai_rating: number | null
   clipped_at: string | null
+  mtime: number
+  created_at: number
   site: string | null
   has_summary: number
   tags_concat: string | null
@@ -90,7 +92,7 @@ async function list(
       AND (:isUnreviewed = 0 OR f.rating IS NULL)
       AND (:isUnreviewed = 1 OR :minRating IS NULL OR f.rating >= :minRating)
       AND (:isUnreviewed = 1 OR :maxRating IS NULL OR f.rating <= :maxRating)
-      AND (:q IS NULL OR f.title LIKE '%' || :q || '%' ESCAPE '\\' OR f.path LIKE '%' || :q || '%' ESCAPE '\\')
+      AND (:q IS NULL OR f.title LIKE '%' || :q || '%' ESCAPE '\\')
       AND (:tag IS NULL OR f.path IN (SELECT path FROM file_tags WHERE tag = :tag))
     GROUP BY f.path
     ORDER BY
@@ -104,7 +106,7 @@ async function list(
 
   const params = {
     category: filter.category ?? null,
-    tag: filter.tag ?? null,
+    tag: filter.tags?.[0] ?? null,
     pathPrefix: filter.pathPrefix ?? null,
     isUnreviewed: isUnreviewed ? 1 : 0,
     minRating: filter.rating?.min ?? null,
@@ -135,6 +137,8 @@ async function list(
       rating: r.rating,
       ai_rating: r.ai_rating,
       clipped_at: r.clipped_at,
+      mtime: r.mtime,
+      created_at: r.created_at,
       site: r.site,
       has_summary: hasSummary,
       tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
@@ -144,6 +148,69 @@ async function list(
     }
   })
   return { items, total }
+}
+
+async function getAll(): Promise<FileSummary[]> {
+  const db = dbService.requireCurrent()
+  const sql = `
+    SELECT
+      f.path,
+      f.title,
+      f.category,
+      f.rating,
+      json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
+      f.clipped_at,
+      f.mtime,
+      f.created_at,
+      json_extract(f.frontmatter_json, '$.site') AS site,
+      CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
+      GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1) ORDER BY ft.tag) AS tags_concat,
+      rj.status AS job_status,
+      rj.last_error AS job_error
+    FROM files f
+    LEFT JOIN file_tags ft ON ft.path = f.path
+    LEFT JOIN clips c ON c.path = f.path
+    LEFT JOIN (
+      SELECT
+        json_extract(payload_json, '$.clipId') AS clip_id,
+        status, last_error,
+        ROW_NUMBER() OVER (
+          PARTITION BY json_extract(payload_json, '$.clipId')
+          ORDER BY updated_at DESC
+        ) AS rn
+      FROM jobs
+      WHERE kind = 'ai-review-clip'
+    ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
+    GROUP BY f.path
+  `
+
+  let rows: Omit<ListRow, 'total'>[]
+  try {
+    rows = db.prepare(sql).all() as Omit<ListRow, 'total'>[]
+  } catch (err) {
+    throw new IpcError('E_INTERNAL', `files.getAll: ${(err as Error).message}`)
+  }
+
+  return rows.map((r) => {
+    const hasSummary = r.has_summary === 1
+    const reviewStatus = deriveReviewStatus(r.rating, hasSummary, r.job_status)
+    return {
+      path: r.path,
+      title: r.title,
+      category: r.category,
+      rating: r.rating,
+      ai_rating: r.ai_rating,
+      clipped_at: r.clipped_at,
+      mtime: r.mtime,
+      created_at: r.created_at,
+      site: r.site,
+      has_summary: hasSummary,
+      tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
+      is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
+      review_status: reviewStatus,
+      review_error: reviewStatus === 'failed' ? (r.job_error ?? null) : null
+    }
+  })
 }
 
 async function get(path: string): Promise<{
@@ -159,6 +226,8 @@ async function get(path: string): Promise<{
         `SELECT f.path, f.title, f.category, f.rating, 
                 json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
                 f.clipped_at,
+                f.mtime,
+                f.created_at,
                 json_extract(f.frontmatter_json, '$.site') AS site,
                 CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
                 GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat,
@@ -201,6 +270,8 @@ async function get(path: string): Promise<{
     rating: row.rating,
     ai_rating: row.ai_rating,
     clipped_at: row.clipped_at,
+    mtime: row.mtime,
+    created_at: row.created_at,
     site: row.site,
     has_summary: hasSummary,
     tags: row.tags_concat ? row.tags_concat.split(TAG_SEP).filter(Boolean) : [],
@@ -282,6 +353,7 @@ async function revealInFinder(path: string): Promise<{ ok: true }> {
 
 export const fileQueryHandlers: FileQueryHandlers = {
   list,
+  getAll,
   get,
   getCategoryTree,
   getTagCloud,

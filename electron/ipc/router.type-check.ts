@@ -67,10 +67,14 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
     exists: () => false,
     list: () => [],
     rename: () => undefined,
-    openExternal: () => ({ ok: true as const })
+    openExternal: () => ({ ok: true as const }),
+    openContainingDir: () => ({ ok: true as const }),
+    trash: () => ({ ok: true as const }),
+    hardDelete: () => ({ ok: true as const })
   },
   files: {
     list: () => ({ items: [], total: 0 }),
+    getAll: () => [],
     get: () => ({
       summary: {
         path: '',
@@ -78,6 +82,7 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
         category: null,
         rating: null,
         clipped_at: null,
+        mtime: 0, created_at: 0,
         site: null,
         has_summary: false,
         tags: [],
@@ -106,7 +111,10 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
       baseText: ''
     }),
     delete: async () => ({ ok: true as const }),
-    writeSnapshot: async () => ({ id: '' })
+    writeSnapshot: async () => ({ id: '' }),
+    diff: async () => ({}) as any,
+    deleteAll: async () => ({ ok: true as const, deleted: 0 }),
+    openSnapshotFile: async () => ({ ok: true as const })
   },
   search: {
     rebuild: async () => ({ ok: true }) as const,
