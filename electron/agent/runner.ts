@@ -192,8 +192,7 @@ export async function runAgent({
       finishToolCall: (rowId, fields) => deps.sessions.finishToolCall(rowId, fields)
     },
     recordUsage: deps.recordUsage,
-    seenAiMessageIds: new Set(),
-    toolCallRowIdByCallId: new Map()
+    seenAiMessageIds: new Set()
   }
 
   // Construct only the new messages to send to the LangGraph Checkpointer.
@@ -251,8 +250,7 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
       finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields)
     },
     recordUsage: args.recordUsage,
-    seenAiMessageIds: new Set(),
-    toolCallRowIdByCallId: new Map()
+    seenAiMessageIds: new Set()
   }
 
   // Map AgentDecision to LangChain's HITL response formats

@@ -85,7 +85,13 @@ export async function collectAttachmentContext(
 
 async function readFileSafe(rel: string, root: string): Promise<string> {
   const normalizedRoot = path.resolve(root)
-  const abs = path.resolve(path.join(normalizedRoot, rel))
+  let abs = path.resolve(path.join(normalizedRoot, rel))
+  try {
+    abs = await fs.realpath(abs)
+  } catch {
+    // If realpath fails (e.g. file doesn't exist), fallback to the resolved path.
+    // The subsequent fs.readFile will throw a standard ENOENT error.
+  }
   if (!abs.startsWith(normalizedRoot + path.sep) && abs !== normalizedRoot) {
     throw new Error(`path escape: ${rel}`)
   }

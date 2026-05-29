@@ -187,17 +187,27 @@ export function createSessions(): SessionsDao {
 
     async finishToolCall(rowId, fields) {
       const t = nowIso()
-      db()
-        .prepare(
-          'UPDATE tool_calls SET result_json = ?, approved = ?, finished_at = ?, error = ? WHERE id = ?'
-        )
-        .run(
-          fields.result === undefined ? null : JSON.stringify(fields.result),
-          fields.approved === undefined ? null : fields.approved ? 1 : 0,
-          t,
-          fields.error ?? null,
-          rowId
-        )
+      const hasApproved = fields.approved !== undefined
+      const query = hasApproved
+        ? 'UPDATE tool_calls SET result_json = ?, approved = ?, finished_at = ?, error = ? WHERE id = ?'
+        : 'UPDATE tool_calls SET result_json = ?, finished_at = ?, error = ? WHERE id = ?'
+        
+      const params = hasApproved
+        ? [
+            fields.result === undefined ? null : JSON.stringify(fields.result),
+            fields.approved ? 1 : 0,
+            t,
+            fields.error ?? null,
+            rowId
+          ]
+        : [
+            fields.result === undefined ? null : JSON.stringify(fields.result),
+            t,
+            fields.error ?? null,
+            rowId
+          ]
+          
+      db().prepare(query).run(...params)
     }
   }
 }

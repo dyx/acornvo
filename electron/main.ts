@@ -4,11 +4,12 @@ import { app, BrowserWindow, nativeTheme, powerMonitor, protocol, net } from 'el
 app.commandLine.appendSwitch('enable-features', 'WebContentsForceDark')
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'acornvo-local', privileges: { secure: true, standard: true, supportFetchAPI: true, bypassCSP: true } }
+  { scheme: 'acornvo-local', privileges: { secure: true, standard: true, supportFetchAPI: true } }
 ])
 
 import { getOverlayForTheme } from './window/title-bar-theme'
 import { join } from 'node:path'
+import { safeResolve } from './services/path-safety'
 import { logger, rotateOnBoot } from './obs/logger'
 import {
   checkLastRun,
@@ -163,7 +164,12 @@ async function bootstrap(): Promise<void> {
     const relPath = decodeURIComponent(rawUrl)
     const grovePath = dbService.getCurrentGrovePath()
     if (!grovePath) return new Response('Not Found', { status: 404 })
-    const absolutePath = join(grovePath, relPath)
+    let absolutePath: string
+    try {
+      absolutePath = safeResolve(grovePath, relPath)
+    } catch {
+      return new Response('Not Found', { status: 404 })
+    }
     const fileUri = absolutePath.startsWith('/') ? `file://${absolutePath}` : `file:///${absolutePath}`
     return net.fetch(fileUri)
   })

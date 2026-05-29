@@ -31,8 +31,6 @@ export interface TranslatorDeps {
   ) => void
   /** AIMessage.id values already persisted; used to skip duplicates after HITL resume. */
   seenAiMessageIds: Set<string>
-  /** Map from LangGraph tool_call_id → DB tool_calls row id (for finishing). */
-  toolCallRowIdByCallId: Map<string, string>
 }
 
 function alreadySeen(seen: Set<string>, msg: AIMessage): boolean {
@@ -74,11 +72,10 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
 
   for (const tc of toolCalls) {
     deps.emit({ type: 'tool.start', tool: tc.name, args: tc.args, callId: tc.id })
-    const rowId = await deps.persist.recordToolCall(tc, {
+    await deps.persist.recordToolCall(tc, {
       sideEffect: tc.name === 'update_frontmatter',
       messageId: sessionMsg.id
     })
-    deps.toolCallRowIdByCallId.set(tc.id, rowId)
   }
 }
 
@@ -114,10 +111,8 @@ async function handleToolMessage(deps: TranslatorDeps, msg: ToolMessage): Promis
   deps.emit({ type: 'message.appended', message: persisted })
   deps.emit({ type: 'tool.result', tool: toolName, result, callId })
 
-  const rowId = deps.toolCallRowIdByCallId.get(callId)
-  if (rowId) {
-    await deps.persist.finishToolCall(rowId, { result })
-    deps.toolCallRowIdByCallId.delete(callId)
+  if (callId) {
+    await deps.persist.finishToolCall(callId, { result })
   }
 }
 

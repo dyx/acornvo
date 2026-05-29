@@ -16,6 +16,9 @@ export interface JobsHandlerDeps {
 export function createJobsHandlers(deps: JobsHandlerDeps) {
   return {
     async list(filter: JobListFilter): Promise<JobsListResult> {
+      if (filter.orderBy && !['next_run_at', 'created_at', 'updated_at', 'attempts'].includes(filter.orderBy)) {
+        throw new IpcError('E_INVALID_ARGS', 'Invalid orderBy')
+      }
       if (!Number.isInteger(filter.limit) || filter.limit < 0) {
         throw new IpcError('E_INVALID_ARGS', 'E_INVALID_ARGS: limit must be a non-negative integer')
       }

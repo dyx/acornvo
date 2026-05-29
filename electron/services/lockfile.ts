@@ -41,7 +41,7 @@ function isAlive(pid: number): boolean {
 }
 
 function isStale(lock: LockInfo): boolean {
-  if (lock.hostname !== hostname()) return true // different machine → stale
+  if (lock.hostname !== hostname()) return false // different machine → cannot verify, assume held
   return !isAlive(lock.pid)
 }
 

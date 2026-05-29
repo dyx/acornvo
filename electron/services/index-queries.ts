@@ -49,18 +49,32 @@ export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
   }
 
   db.prepare(
-    `INSERT OR REPLACE INTO files
+    `INSERT INTO files
        (path, title, summary, category, rating, content_hash, mtime, size_bytes, frontmatter_json, created_at, updated_at)
-       VALUES (@path, @title, @summary, @category, @rating, @content_hash, @mtime, @size_bytes, @frontmatter_json, @created_at, @updated_at)`
+       VALUES (@path, @title, @summary, @category, @rating, @content_hash, @mtime, @size_bytes, @frontmatter_json, @created_at, @updated_at)
+     ON CONFLICT(path) DO UPDATE SET
+       title = excluded.title,
+       summary = excluded.summary,
+       category = excluded.category,
+       rating = excluded.rating,
+       content_hash = excluded.content_hash,
+       mtime = excluded.mtime,
+       size_bytes = excluded.size_bytes,
+       frontmatter_json = excluded.frontmatter_json,
+       updated_at = excluded.updated_at`
   ).run(row)
 
   return existing ? 'updated' : 'inserted'
 }
 
 export function deleteFile(db: Database.Database, path: string): void {
-  db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
-  db.prepare('DELETE FROM file_tags WHERE path=?').run(path)
-  db.prepare('DELETE FROM files WHERE path=?').run(path)
+  const tx = db.transaction(() => {
+    db.prepare('UPDATE tags SET usage_count = usage_count - 1 WHERE name IN (SELECT tag FROM file_tags WHERE path=?)').run(path)
+    db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
+    db.prepare('DELETE FROM file_tags WHERE path=?').run(path)
+    db.prepare('DELETE FROM files WHERE path=?').run(path)
+  })
+  tx()
 }
 
 export function renameFile(db: Database.Database, oldPath: string, newPath: string): void {
@@ -80,7 +94,7 @@ export interface FtsRow {
 }
 
 /** Escape HTML-special chars so SQLite snippet wrappers (<mark></mark>) are unambiguous. */
-function escapeForFts(s: string): string {
+export function escapeForFts(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 

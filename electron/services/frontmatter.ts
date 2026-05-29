@@ -30,8 +30,11 @@ export function parseFile(raw: string): ParsedFile {
   }
 }
 
-export function stringify(frontmatter: Frontmatter, body: string): string {
+export function stringify(frontmatter: Frontmatter, body: string, rawYaml?: string): string {
   if (!frontmatter || Object.keys(frontmatter).length === 0) {
+    if (rawYaml && rawYaml.trim()) {
+      return `---\n${rawYaml.trim()}\n---\n${body}`
+    }
     return body
   }
   // gray-matter's stringify takes (content, data) and returns a fenced string.

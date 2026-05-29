@@ -5,6 +5,7 @@ import type Database from 'better-sqlite3'
 import { logger } from '../../obs/logger'
 import { parseFile } from '../frontmatter'
 import { writeRebuildTimestamp } from './stats'
+import { escapeForFts } from './index-queries'
 
 function broadcastEvent(channel: string, payload: unknown): void {
   try {
@@ -109,7 +110,7 @@ export async function rebuildFts(
 
     const tx = db.transaction(() => {
       for (const r of readResults) {
-        insert.run(r.rowid, r.row.path, r.row.title ?? '', r.body)
+        insert.run(r.rowid, r.row.path, r.row.title ?? '', escapeForFts(r.body))
       }
     })
     tx()

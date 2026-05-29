@@ -42,7 +42,10 @@ export function NewTabPage(): JSX.Element {
                 >
                   <div className="truncate font-medium">{b.title || b.url}</div>
                   <div className="truncate text-[10px] text-[color:var(--color-ink-3)]">
-                    {new URL(b.url).hostname}
+                    {(() => {
+                      try { return new URL(b.url).hostname }
+                      catch { return b.url }
+                    })()}
                   </div>
                 </a>
               </li>

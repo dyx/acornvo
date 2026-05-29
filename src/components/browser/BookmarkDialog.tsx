@@ -63,8 +63,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
       props.onSaved(bm)
     } else {
       const bm = await ipc.bookmarks.update(props.initial.id, {
-        title: title || null,
-        tags: []
+        title: title || null
       })
       props.onSaved(bm)
     }

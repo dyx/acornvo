@@ -1,6 +1,6 @@
 import { app, crashReporter as electronCrashReporter } from 'electron'
 import { mkdirSync, writeFileSync, readdirSync, statSync, renameSync, unlinkSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, basename } from 'node:path'
 import { logger } from './logger'
 
 export type CrashKind = 'renderer' | 'main' | 'unhandled-rejection'
@@ -76,8 +76,14 @@ export function checkLastRun(): string[] {
 
 export function ack(file: string): void {
   const acked = getAckedDir()
-  const dest = join(acked, file.split('/').pop() ?? 'unknown.log')
-  renameSync(file, dest)
+  const name = basename(file)
+  const src = join(getCrashesDir(), name)
+  const dest = join(acked, name)
+  try {
+    renameSync(src, dest)
+  } catch {
+    /* ignore missing files */
+  }
 }
 
 const THIRTY_DAYS_MS = 30 * 86400 * 1000

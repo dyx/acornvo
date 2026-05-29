@@ -8,6 +8,7 @@ export type EditorReadyState = {
   kind: 'ready'
   path: string
   clipId?: number | null
+  rawYaml: string
   frontmatter: Frontmatter
   body: string
   savedFrontmatter: Frontmatter
@@ -107,6 +108,7 @@ export function installEditorSubscriber(): () => void {
                 kind: 'ready',
                 path: cur.path,
                 clipId: fresh.clipId ?? null,
+                rawYaml: fresh.rawYaml,
                 frontmatter: fresh.frontmatter,
                 body: fresh.body,
                 savedFrontmatter: fresh.frontmatter,
@@ -183,8 +185,9 @@ async function _doSave(): Promise<void> {
 
   try {
     const r = await ipc.file.writeParsed(path, frontmatter, bodyAtSendTime, {
-      expectedMtime: mtimeAtSendTime
-    })
+      expectedMtime: mtimeAtSendTime,
+      rawYaml: cur.rawYaml
+    } as any)
     const next = useEditorStore.getState().state
     if (next.kind !== 'ready') return
     const newDirty = next.body !== bodyAtSendTime
@@ -352,6 +355,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           kind: 'ready',
           path,
           clipId: r.clipId ?? null,
+          rawYaml: r.rawYaml,
           frontmatter: r.frontmatter,
           body: r.body,
           savedFrontmatter: r.frontmatter,
@@ -430,6 +434,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         kind: 'ready',
         path: cur.path,
         clipId: fresh.clipId ?? null,
+        rawYaml: fresh.rawYaml,
         frontmatter: fresh.frontmatter,
         body: fresh.body,
         savedFrontmatter: fresh.frontmatter,

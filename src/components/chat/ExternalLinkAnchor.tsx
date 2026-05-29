@@ -16,7 +16,7 @@ export function ExternalLinkAnchor({
   const handleClick = (ev: MouseEvent<HTMLAnchorElement>) => {
     if (!href || href.startsWith('#')) return
     ev.preventDefault()
-    ipc.file.openExternal(href)
+    ipc.shell.openExternal(href)
   }
   return (
     <a {...rest} href={href} onClick={handleClick}>

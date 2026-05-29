@@ -98,11 +98,11 @@ export const fileHandlers = {
     rel: string,
     frontmatter: Frontmatter,
     body: string,
-    opts: FileWriteOptions = {}
+    opts: FileWriteOptions & { rawYaml?: string } = {}
   ): Promise<FileWriteResult> {
     const root = requireGroveRoot()
     const abs = safeResolve(root, rel)
-    const md = stringify(frontmatter, body)
+    const md = stringify(frontmatter, body, opts.rawYaml)
     return writeWithVerify(abs, md, opts)
   },
 

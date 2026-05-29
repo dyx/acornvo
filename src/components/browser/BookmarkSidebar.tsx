@@ -137,7 +137,10 @@ export function BookmarkSidebar(): JSX.Element {
                         {/* 如果想的话，可以把域名放小字在下面，不过单行截断更干净，我们可以放在 tooltip 里或者像原来那样 */}
                         {!isActive && (
                           <span className="text-[10px] truncate text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)] transition-colors">
-                            {new URL(b.url).hostname}
+                            {(() => {
+                              try { return new URL(b.url).hostname }
+                              catch { return b.url }
+                            })()}
                           </span>
                         )}
                       </div>
