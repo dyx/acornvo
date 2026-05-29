@@ -182,13 +182,38 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   async createSession() {
-    set((s) => ({
-      activeSessionId: 'temp-session',
-      bySession: {
-        ...s.bySession,
-        ['temp-session']: { ...emptySession(), loaded: true }
+    set((s) => {
+      const profiles = useProfilesStore.getState().profiles
+      const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
+      let targetProfileId: string | null = null
+
+      if (profiles.length > 0) {
+        const sortedProfiles = [...profiles].sort((a, b) => {
+          if (a.id === defaultProfileId) return -1
+          if (b.id === defaultProfileId) return 1
+          return 0
+        })
+        targetProfileId = sortedProfiles[0].id
       }
-    }))
+      
+      const tempSession: ChatSession = {
+        id: 'temp-session',
+        title: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        profileId: targetProfileId,
+        messageCount: 0
+      }
+
+      return {
+        activeSessionId: 'temp-session',
+        sessions: [tempSession, ...s.sessions.filter(x => x.id !== 'temp-session')],
+        bySession: {
+          ...s.bySession,
+          ['temp-session']: { ...emptySession(), loaded: true }
+        }
+      }
+    })
     return 'temp-session'
   },
 
@@ -246,18 +271,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
     if (sid === 'temp-session') {
       try {
-        const profiles = useProfilesStore.getState().profiles
-        const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
-        let targetProfileId: string | null = null
-
-        if (profiles.length > 0) {
-          const sortedProfiles = [...profiles].sort((a, b) => {
-            if (a.id === defaultProfileId) return -1
-            if (b.id === defaultProfileId) return 1
-            return 0
-          })
-          targetProfileId = sortedProfiles[0].id
-        }
+        const tempSessionState = cur.sessions.find(x => x.id === 'temp-session')
+        const targetProfileId = tempSessionState?.profileId ?? null
 
         const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
         const session = toChatSession(raw)
@@ -267,7 +282,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           const newBySession = { ...s.bySession }
           delete newBySession['temp-session']
           return {
-            sessions: [session, ...s.sessions],
+            sessions: [session, ...s.sessions.filter(x => x.id !== 'temp-session')],
             activeSessionId: session.id,
             bySession: {
               ...newBySession,
@@ -391,11 +406,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   async updateSessionProfile(id, profileId) {
     try {
+      if (id === 'temp-session') {
+        set((s) => ({
+          sessions: s.sessions.map((ses) => (ses.id === 'temp-session' ? { ...ses, profileId } : ses))
+        }))
+        return
+      }
+
       let targetId = id
-      if (!targetId || targetId === 'temp-session') {
+      if (!targetId) {
         targetId = await get().createSession()
         if (!targetId || targetId === 'temp-session') return
       }
+      
       await ipc.chat['sessions.updateProfile'](targetId, profileId)
       set((s) => ({
         sessions: s.sessions.map((ses) => (ses.id === targetId ? { ...ses, profileId } : ses))
