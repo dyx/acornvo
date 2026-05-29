@@ -116,6 +116,55 @@ const emptySession = (): SessionState => ({
   lastUserAttachments: []
 })
 
+function revertNewSessionFailure(sid: string, errorMsg: string) {
+  ipc.chat['sessions.delete'](sid).catch(() => {})
+  useChatStore.setState((s) => {
+    const newSessions = s.sessions.filter(x => x.id !== sid)
+    const newBy = { ...s.bySession }
+    const failedState = newBy[sid]
+    delete newBy[sid]
+    
+    let tempSession = newSessions.find(x => x.id === 'temp-session')
+    if (!tempSession) {
+       const profiles = useProfilesStore.getState().profiles
+       const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
+       let targetProfileId: string | null = null
+       if (profiles.length > 0) {
+         const sortedProfiles = [...profiles].sort((a, b) => {
+           if (a.id === defaultProfileId) return -1
+           if (b.id === defaultProfileId) return 1
+           return 0
+         })
+         targetProfileId = sortedProfiles[0].id
+       }
+       tempSession = {
+         id: 'temp-session',
+         title: '',
+         createdAt: Date.now(),
+         updatedAt: Date.now(),
+         profileId: targetProfileId,
+         messageCount: 0
+       }
+       newSessions.unshift(tempSession)
+    }
+    
+    return {
+      activeSessionId: s.activeSessionId === sid ? 'temp-session' : s.activeSessionId,
+      sessions: newSessions,
+      bySession: {
+         ...newBy,
+         ['temp-session']: {
+            ...(newBy['temp-session'] ?? emptySession()),
+            pendingPromptText: failedState?.lastUserText ?? '',
+            pendingAttachments: failedState?.lastUserAttachments ?? [],
+            status: 'idle',
+            error: errorMsg
+         }
+      }
+    }
+  })
+}
+
 export const useChatStore = create<ChatStore>((set, get) => ({
   sessions: [],
   activeSessionId: null,
@@ -258,7 +307,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   async sendUserMessage({ text, attachments }) {
     let cur = get()
-    let sid = cur.activeSessionId
+    const originalSid = cur.activeSessionId
+    let sid = originalSid
     console.log(
       '[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d',
       sid,
@@ -321,6 +371,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.log('[chat-store] sendUserMessage: IPC returned', result)
     } catch (err) {
       console.error('[chat-store] sendUserMessage: IPC threw', err)
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      
+      if (originalSid === 'temp-session') {
+        revertNewSessionFailure(sid, errorMsg)
+        return
+      }
+
       set((s) => ({
         bySession: {
           ...s.bySession,
@@ -328,7 +385,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ...emptySession(),
             ...s.bySession[sid],
             status: 'error',
-            error: err instanceof Error ? err.message : String(err),
+            error: errorMsg,
             messages: s.bySession[sid].messages.map(m =>
               m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
             )
@@ -736,7 +793,13 @@ function subscribeSessionStream(sid: string): void {
               }
             }
           }
-        case 'error':
+        case 'error': {
+          const isFirstTurn = cur.messages.filter(m => m.role !== 'user').length === 0
+          if (isFirstTurn) {
+            setTimeout(() => revertNewSessionFailure(sid, event.error), 0)
+            return s
+          }
+
           return {
             bySession: {
               ...s.bySession,
@@ -750,6 +813,7 @@ function subscribeSessionStream(sid: string): void {
               }
             }
           }
+        }
         case 'canceled':
           return {
             bySession: {
