@@ -451,6 +451,7 @@
     "newSession": "新对话",
     "group": {
       "today": "今天",
+      "yesterday": "昨日",
       "thisWeek": "本周",
       "earlier": "更早"
     },

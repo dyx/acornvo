@@ -417,6 +417,7 @@
     "newSession": "New chat",
     "group": {
       "today": "Today",
+      "yesterday": "Yesterday",
       "thisWeek": "This week",
       "earlier": "Earlier"
     },
