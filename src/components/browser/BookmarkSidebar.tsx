@@ -144,37 +144,35 @@ export function BookmarkSidebar(): JSX.Element {
                     </div>
                     
                     {/* 操作按钮区 */}
-                    <div className="flex items-center shrink-0">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button 
-                            className="flex h-6 w-6 items-center justify-center rounded-sm shadow-sm border border-[color:var(--color-line)]/50 transition-all duration-200 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 bg-[color:var(--color-paper)] text-[color:var(--color-ink-3)]"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical size={14} />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem onClick={(e) => {
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button 
+                          className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-sm shadow-sm border border-[color:var(--color-line)]/50 transition-all duration-200 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 bg-[color:var(--color-paper)] text-[color:var(--color-ink-3)]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-32">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingBookmark(b)
+                        }}>
+                          <Pencil className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
+                          {t('common.rename', '编辑...')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:bg-destructive/15 focus:text-destructive"
+                          onClick={(e) => {
                             e.stopPropagation()
-                            setEditingBookmark(b)
-                          }}>
-                            <Pencil className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
-                            {t('common.rename', '编辑...')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:bg-destructive/15 focus:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDeletingBookmark(b)
-                            }}
-                          >
-                            <Trash2 className="size-4 mr-2" />
-                            {t('common.delete', '删除')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                            setDeletingBookmark(b)
+                          }}
+                        >
+                          <Trash2 className="size-4 mr-2" />
+                          {t('common.delete', '删除')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )
               })}
