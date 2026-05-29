@@ -134,18 +134,17 @@ export function ConversationsAdapter() {
                       {!narrow && !isEditing && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                            <button
                               className={cn(
-                                "size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
-                                "absolute right-1 top-1/2 -translate-y-1/2",
-                                isActive ? "bg-muted shadow-sm" : "bg-background/95 backdrop-blur-sm shadow-sm"
+                                "absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-sm transition-all duration-200",
+                                isActive
+                                  ? 'opacity-100 text-[color:var(--color-acorn)] hover:bg-[color:var(--color-acorn)]/20'
+                                  : 'opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
                               )}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <MoreVerticalIcon className="size-3.5" />
-                            </Button>
+                              <MoreVerticalIcon size={14} />
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
