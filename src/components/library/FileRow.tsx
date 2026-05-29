@@ -117,10 +117,10 @@ export function FileRow({
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-sm transition-all duration-200",
+              "absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-sm shadow-sm border border-[color:var(--color-line)]/50 transition-all duration-200",
               active
-                ? 'opacity-100 text-[color:var(--color-acorn)] hover:bg-[color:var(--color-acorn)]/20'
-                : 'opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-4)] hover:text-[color:var(--color-ink)]'
+                ? 'opacity-100 bg-[color:var(--color-paper)] text-[color:var(--color-acorn)] hover:bg-[color:var(--color-paper-2)]'
+                : 'opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 bg-[color:var(--color-paper)] text-[color:var(--color-ink-3)] hover:bg-[color:var(--color-paper-2)] hover:text-[color:var(--color-ink)]'
             )}
             onClick={(e) => e.stopPropagation()}
             title={t('common.more', '更多')}
