@@ -5,7 +5,7 @@ import type Database from 'better-sqlite3'
 import { logger } from '../../obs/logger'
 import { parseFile } from '../frontmatter'
 import { writeRebuildTimestamp } from './stats'
-import { escapeForFts } from './index-queries'
+import { escapeForFts } from '../index-queries'
 
 function broadcastEvent(channel: string, payload: unknown): void {
   try {

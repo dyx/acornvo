@@ -493,7 +493,7 @@ export function __setChatTokenBatching(enabled: boolean): void {
 }
 
 const pendingTokenBucket = new Map<string, string>()
-const pendingFlushTimer = new Map<string, ReturnType<typeof setTimeout>>()
+const pendingFlushFrame = new Map<string, number>()
 
 function applyToken(sid: string, txt: string): void {
   useChatStore.setState((s) => {
@@ -528,9 +528,9 @@ function applyToken(sid: string, txt: string): void {
 function flushTokenBucket(sid: string): void {
   const txt = pendingTokenBucket.get(sid) ?? ''
   pendingTokenBucket.delete(sid)
-  const tid = pendingFlushTimer.get(sid)
-  if (tid) clearTimeout(tid)
-  pendingFlushTimer.delete(sid)
+  const frameId = pendingFlushFrame.get(sid)
+  if (frameId) cancelAnimationFrame(frameId)
+  pendingFlushFrame.delete(sid)
   if (!txt) return
   applyToken(sid, txt)
 }
@@ -541,9 +541,9 @@ function enqueueToken(sid: string, txt: string): void {
     return
   }
   pendingTokenBucket.set(sid, (pendingTokenBucket.get(sid) ?? '') + txt)
-  if (!pendingFlushTimer.has(sid)) {
-    const tid = setTimeout(() => flushTokenBucket(sid), 16)
-    pendingFlushTimer.set(sid, tid)
+  if (!pendingFlushFrame.has(sid)) {
+    const frameId = requestAnimationFrame(() => flushTokenBucket(sid))
+    pendingFlushFrame.set(sid, frameId)
   }
 }
 
