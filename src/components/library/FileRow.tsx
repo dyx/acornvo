@@ -142,7 +142,7 @@ export function FileRow({
           )}
           {onTrash && (
             <DropdownMenuItem
-              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+              className="text-destructive focus:bg-destructive/15 focus:text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
                 onTrash()

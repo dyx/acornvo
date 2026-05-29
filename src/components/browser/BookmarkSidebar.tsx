@@ -167,7 +167,7 @@ export function BookmarkSidebar(): JSX.Element {
                             {t('common.rename', '编辑...')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                            className="text-destructive focus:bg-destructive/15 focus:text-destructive"
                             onClick={(e) => {
                               e.stopPropagation()
                               setDeletingBookmark(b)

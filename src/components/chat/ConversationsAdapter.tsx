@@ -159,7 +159,7 @@ export function ConversationsAdapter() {
                               {t('chat.session.rename')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                              className="text-destructive focus:bg-destructive/15 focus:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setDeletingId(s.id)
