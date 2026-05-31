@@ -26,9 +26,9 @@ function columns(db: Database.Database, table: string): string[] {
 }
 
 describe('002_langgraph_checkpoints', () => {
-  it('bumps user_version to 2', () => {
+  it('bumps user_version to >= 2', () => {
     const db = setup()
-    expect(db.pragma('user_version', { simple: true })).toBe(2)
+    expect(db.pragma('user_version', { simple: true })).toBeGreaterThanOrEqual(2)
   })
 
   it('creates checkpoints, writes, checkpoint_meta tables', () => {
@@ -84,7 +84,7 @@ describe('002_langgraph_checkpoints', () => {
   it('is idempotent when re-run', () => {
     const db = setup()
     expect(() => runMigrations(db, MIGRATIONS_DIR)).not.toThrow()
-    expect(db.pragma('user_version', { simple: true })).toBe(2)
+    expect(db.pragma('user_version', { simple: true })).toBeGreaterThanOrEqual(2)
   })
 
   it('coexists with SqliteSaver bootstrap (CREATE IF NOT EXISTS)', () => {

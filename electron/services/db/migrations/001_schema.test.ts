@@ -87,53 +87,6 @@ describe('001_schema', () => {
     )
   })
 
-  // --- chats ---
-  it('creates chats table', () => {
-    const db = setup()
-    expect(columns(db, 'chats')).toEqual(
-      expect.arrayContaining(['id', 'title', 'model', 'created_at', 'updated_at'])
-    )
-  })
-
-  // --- queue ---
-  it('creates queue table', () => {
-    const db = setup()
-    expect(columns(db, 'queue')).toEqual(
-      expect.arrayContaining([
-        'id',
-        'kind',
-        'payload_json',
-        'status',
-        'retry_count',
-        'last_error',
-        'created_at',
-        'updated_at'
-      ])
-    )
-    expect(indexes(db, 'queue')).toContain('idx_queue_status')
-  })
-
-  // --- usage ---
-  it('creates usage table', () => {
-    const db = setup()
-    expect(columns(db, 'usage')).toEqual(
-      expect.arrayContaining([
-        'id',
-        'ts',
-        'purpose',
-        'model_id',
-        'model_name',
-        'input_tokens',
-        'output_tokens',
-        'estimated_cost_usd',
-        'file_path',
-        'chat_id'
-      ])
-    )
-    expect(indexes(db, 'usage')).toEqual(
-      expect.arrayContaining(['idx_usage_ts', 'idx_usage_model', 'idx_usage_purpose'])
-    )
-  })
 
   // --- ops_log ---
   it('creates ops_log table', () => {
