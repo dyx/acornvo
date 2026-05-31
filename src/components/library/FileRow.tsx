@@ -67,10 +67,10 @@ export function FileRow({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1 min-w-0">
           {/* Rating or Status */}
           {(file.rating !== null || file.ai_rating != null) ? (
-            <span className="flex gap-[1px]" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
+            <span className="flex gap-[1px] shrink-0" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
@@ -85,25 +85,25 @@ export function FileRow({
               ))}
             </span>
           ) : (
-            <span className={cn('text-[10px] font-medium', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>
+            <span className={cn('text-[10px] font-medium shrink-0', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>
               {file.review_status === 'failed' ? t('library.review_failed', '理果失败') : t('library.unreviewed', '待理果')}
             </span>
           )}
 
           {/* Tags */}
           {file.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              <span className="text-[color:var(--color-line-2)] text-[10px]">·</span>
+            <div className="flex items-center gap-1 min-w-0 shrink">
+              <span className="text-[color:var(--color-line-2)] text-[10px] shrink-0">·</span>
               {file.tags.slice(0, 2).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] max-w-[80px] truncate"
+                  className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] max-w-[80px] truncate shrink min-w-0"
                 >
                   #{tag}
                 </span>
               ))}
               {file.tags.length > 2 && (
-                <span className="font-mono text-[9px] text-[color:var(--color-ink-4)]">
+                <span className="font-mono text-[9px] text-[color:var(--color-ink-4)] shrink-0">
                   +{file.tags.length - 2}
                 </span>
               )}
