@@ -70,7 +70,7 @@ export const Thread: FC = () => {
     >
       <ThreadPrimitive.Viewport
         ref={viewportRef}
-        turnAnchor="top"
+        turnAnchor="bottom"
         data-slot="aui_thread-viewport"
         className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
@@ -86,7 +86,7 @@ export const Thread: FC = () => {
 
           <div
             data-slot="aui_message-group"
-            className="mb-10 flex flex-col gap-y-8 empty:hidden"
+            className="pb-10 flex flex-col gap-y-8 empty:hidden"
           >
             <ThreadPrimitive.Messages
               components={{
