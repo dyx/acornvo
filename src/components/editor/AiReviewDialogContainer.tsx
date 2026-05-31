@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { ipc } from '@/ipc/client'
 import { AiReviewDialog } from './AiReviewDialog'
@@ -9,7 +10,9 @@ interface Props {
 }
 
 export function AiReviewDialogContainer({ open, clipId, onClose }: Props) {
+  const { t } = useTranslation()
   const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
+  const isRunning = useEditorStore((s) => (s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false))
 
   const acceptAiReview = useEditorStore((s) => s.acceptAiReview)
   const applyAiSuggestedTitle = useEditorStore((s) => s.applyAiSuggestedTitle)
@@ -23,6 +26,7 @@ export function AiReviewDialogContainer({ open, clipId, onClose }: Props) {
   return (
     <AiReviewDialog
       open={open}
+      isRunning={isRunning}
       frontmatter={fm}
       clipId={clipId}
       onAcceptAll={async () => {

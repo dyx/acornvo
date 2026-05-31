@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 
 export interface AiReviewDialogProps {
   open: boolean
+  isRunning?: boolean
   frontmatter: Record<string, unknown>
   clipId: number | null
   onAcceptAll: () => Promise<void> | void
@@ -24,9 +25,10 @@ function asStringArray(v: unknown): string[] {
 export function AiReviewDialog(props: AiReviewDialogProps) {
   const { t } = useTranslation()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const showLoader = isSubmitting || props.isRunning
 
   const handleAction = async (action: () => Promise<void> | void) => {
-    if (isSubmitting) return
+    if (showLoader) return
     setIsSubmitting(true)
     try {
       await action()
@@ -52,9 +54,9 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
   }
 
   return (
-    <Dialog open={props.open} onOpenChange={(open) => !open && props.onClose()}>
+    <Dialog open={props.open} onOpenChange={(open) => !open && !showLoader && props.onClose()}>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
-        {isSubmitting && (
+        {showLoader && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
