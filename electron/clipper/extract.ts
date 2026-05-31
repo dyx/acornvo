@@ -149,6 +149,6 @@ export function createExtractor(deps: ExtractorDeps): Extractor {
 // --- singleton convenience ---
 let singleton: Extractor | null = null
 export function getExtractor(): Extractor {
-  if (!singleton) singleton = createExtractor({ timeoutMs: 5000 })
+  if (!singleton) singleton = createExtractor({ timeoutMs: 30000 })
   return singleton
 }
