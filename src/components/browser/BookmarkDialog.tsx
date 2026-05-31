@@ -81,23 +81,21 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-[color:var(--color-ink-2)]">
               {t('browser.bookmark_dialog.url', 'URL')}
             </label>
             <Input
-              className="col-span-3"
               value={url}
               disabled={props.mode === 'edit'}
               onChange={(e) => setUrl(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label className="text-right text-sm">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-[color:var(--color-ink-2)]">
               {t('browser.bookmark_dialog.title', 'Title')}
             </label>
             <Input 
-              className="col-span-3"
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
             />

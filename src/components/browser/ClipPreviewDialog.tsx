@@ -38,7 +38,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
 
   return (
     <Dialog open={open} onOpenChange={(val) => { if (!val) cancel() }}>
-      <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-2xl flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
+      <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-4xl flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
         <DialogHeader className="shrink-0 pb-2 text-left">
           <DialogTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
             {t('browser.clip.preview.title', '剪藏预览')}
