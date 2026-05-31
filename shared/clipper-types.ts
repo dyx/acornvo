@@ -83,6 +83,8 @@ export interface ClipInput {
   tags: string[]
   /** Final, possibly edited excerpt. */
   excerpt?: string
+  /** Final, possibly edited markdown body. */
+  body?: string
 }
 
 /**

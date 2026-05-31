@@ -24,21 +24,21 @@ export function ClipPreviewDialog(): JSX.Element | null {
   useNativeBrowserViewOcclusion(open)
 
   const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
 
   const [prevRunId, setPrevRunId] = useState<string | undefined>(undefined)
 
   if (preview?.runId !== prevRunId) {
     setPrevRunId(preview?.runId)
     setTitle(preview?.title ?? '')
+    setBody(preview?.body ?? '')
   }
-
-  const bodyPreview = useMemo(() => (preview?.body ?? '').slice(0, 2000), [preview?.body])
 
   if (!open || !preview) return null
 
   return (
     <Dialog open={open} onOpenChange={(val) => { if (!val) cancel() }}>
-      <DialogContent className="flex max-h-[90vh] w-[90vw] max-w-[90vw] sm:max-w-[90vw] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
+      <DialogContent className="flex min-h-[75vh] max-h-[90vh] w-[60vw] max-w-[60vw] sm:max-w-[60vw] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
         <DialogHeader className="shrink-0 pb-2 text-left">
           <DialogTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
             {t('browser.clip.preview.title', '剪藏预览')}
@@ -82,12 +82,12 @@ export function ClipPreviewDialog(): JSX.Element | null {
             </div>
 
             {/* Bottom: body preview */}
-            <div
+            <textarea
               data-testid="clip-body-preview"
-              className="flex-1 overflow-y-auto whitespace-pre-wrap rounded border bg-[color:var(--color-paper-2)] p-3 text-xs"
-            >
-              {bodyPreview}
-            </div>
+              className="flex-1 resize-none overflow-y-auto whitespace-pre-wrap rounded border bg-[color:var(--color-paper-2)] p-3 text-xs outline-none focus:ring-1 focus:ring-[color:var(--color-acorn)]"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
           </div>
 
           <div className="mt-4 flex shrink-0 items-center justify-end gap-2">
@@ -103,7 +103,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
               disabled={stage === 'saving'}
               className="rounded bg-[color:var(--color-acorn)] px-3 py-1 text-sm text-white disabled:opacity-50 hover:opacity-90"
               onClick={() =>
-                void save({ runId: preview.runId, title, tags: [], excerpt: preview.excerpt })
+                void save({ runId: preview.runId, title, tags: [], excerpt: preview.excerpt, body })
               }
             >
               {t('browser.clip.preview.save', '保存')}

@@ -188,7 +188,7 @@ export function createPipeline(deps: PipelineDeps) {
 
     const isoDate = deps.nowIso()
     const frontmatter = buildFrontmatter(finalPreview, input.tags, isoDate)
-    const fileContent = frontmatter + state.markdown
+    const fileContent = frontmatter + (input.body ?? state.markdown)
 
     const p = getPerf()
     const end = p?.start('clipper.save', { url: state.url })
