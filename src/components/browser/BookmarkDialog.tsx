@@ -1,4 +1,3 @@
-// src/components/browser/BookmarkDialog.tsx
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -6,12 +5,12 @@ import { ipc } from '@/ipc/client'
 import { useBrowserStore } from '@/stores/browser'
 import type { Bookmark, BookmarkInput } from '@shared/browser-types'
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
@@ -72,35 +71,42 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
   }
 
   return (
-    <Sheet open={props.open} onOpenChange={props.onOpenChange}>
-      <SheetContent className="flex flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl border-l border-[color:var(--color-line)] sm:max-w-sm">
-        <SheetHeader className="mb-4 text-left">
-          <SheetTitle className="text-lg font-semibold text-[color:var(--color-ink)]">
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>
             {props.mode === 'new'
               ? t('browser.bookmark_dialog.save', 'Add bookmark')
               : t('browser.bookmark_dialog.edit', 'Edit bookmark')}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto pr-2 pb-6">
-          <div className="grid gap-5">
-            <label className="grid gap-1 text-xs">
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label className="text-right text-sm">
               {t('browser.bookmark_dialog.url', 'URL')}
-              <Input
-                value={url}
-                disabled={props.mode === 'edit'}
-                onChange={(e) => setUrl(e.target.value)}
-              />
             </label>
-            <label className="grid gap-1 text-xs">
+            <Input
+              className="col-span-3"
+              value={url}
+              disabled={props.mode === 'edit'}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label className="text-right text-sm">
               {t('browser.bookmark_dialog.title', 'Title')}
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </label>
+            <Input 
+              className="col-span-3"
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} 
+            />
           </div>
         </div>
-        <SheetFooter className="mt-auto shrink-0 pt-4">
-          <Button className="w-full bg-[color:var(--color-acorn)] text-white hover:bg-[color:var(--color-acorn)]/90" onClick={() => void save()}>{t('common.save', 'Save')}</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        <DialogFooter>
+          <Button onClick={() => void save()}>{t('common.save', 'Save')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

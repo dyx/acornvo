@@ -1,11 +1,10 @@
 import type { JSX } from 'react'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet'
-import { XIcon } from 'lucide-react'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
@@ -38,13 +37,13 @@ export function ClipPreviewDialog(): JSX.Element | null {
   if (!open || !preview) return null
 
   return (
-    <Sheet open={open} onOpenChange={(val) => { if (!val) cancel() }}>
-      <SheetContent className="flex w-[400px] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl border-l border-[color:var(--color-line)] sm:max-w-md">
-        <SheetHeader className="shrink-0 pb-2 text-left">
-          <SheetTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
+    <Dialog open={open} onOpenChange={(val) => { if (!val) cancel() }}>
+      <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-2xl flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
+        <DialogHeader className="shrink-0 pb-2 text-left">
+          <DialogTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
             {t('browser.clip.preview.title', '剪藏预览')}
-          </SheetTitle>
-        </SheetHeader>
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
             {/* Top: meta */}
@@ -94,7 +93,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
           <div className="mt-4 flex shrink-0 items-center justify-end gap-2">
             <button
               type="button"
-              className="rounded border px-3 py-1 text-sm"
+              className="rounded border px-3 py-1 text-sm hover:bg-[color:var(--color-paper-3)]"
               onClick={() => void reextract(activeTabId ?? '')}
             >
               {t('browser.clip.preview.reextract', '重新抽取')}
@@ -102,7 +101,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
             <button
               type="button"
               disabled={stage === 'saving'}
-              className="rounded bg-[color:var(--color-acorn)] px-3 py-1 text-sm text-white disabled:opacity-50"
+              className="rounded bg-[color:var(--color-acorn)] px-3 py-1 text-sm text-white disabled:opacity-50 hover:opacity-90"
               onClick={() =>
                 void save({ runId: preview.runId, title, tags: [], excerpt: preview.excerpt })
               }
@@ -110,7 +109,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
               {t('browser.clip.preview.save', '保存')}
             </button>
           </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
