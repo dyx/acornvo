@@ -632,7 +632,7 @@ const streamUnsubs = new Map<string, () => void>()
 function subscribeSessionStream(sid: string): void {
   if (streamUnsubs.has(sid)) return
   console.log('[chat-stream] subscribing sid=%s channel=chat:stream:%s', sid, sid)
-  const unsub = (ipc.chat as any).onStream(sid, (event: AgentEvent) => {
+  const unsub = ipc.on(`chat:stream:${sid}` as any, (event: AgentEvent) => {
     console.log('[chat-stream] event sid=%s type=%s', sid, event.type, event)
     if (event.type === 'token') {
       enqueueToken(sid, event.text)
