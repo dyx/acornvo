@@ -55,11 +55,9 @@ const request: IpcClient<IpcContract> = {
     hardDelete: (rel) => invoke('file.hardDelete', rel)
   },
   files: {
-    list: (filter, pagination) => invoke('files.list', filter, pagination),
     getAll: () => invoke('files.getAll'),
     get: (path) => invoke('files.get', path),
     getCategoryTree: () => invoke('files.getCategoryTree'),
-    getTagCloud: (opts) => invoke('files.getTagCloud', opts),
     revealInFinder: (path) => invoke('files.revealInFinder', path)
   },
   index: {

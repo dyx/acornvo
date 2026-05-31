@@ -53,12 +53,6 @@ describe('001_schema', () => {
     )
   })
 
-  // --- tags ---
-  it('creates tags + file_tags tables', () => {
-    const db = setup()
-    expect(columns(db, 'tags')).toEqual(expect.arrayContaining(['name', 'usage_count']))
-    expect(columns(db, 'file_tags')).toEqual(expect.arrayContaining(['path', 'tag']))
-  })
 
   // --- files_fts ---
   it('creates files_fts virtual table with trigram tokenizer', () => {
@@ -123,36 +117,6 @@ describe('001_schema', () => {
     )
   })
 
-  // --- settings ---
-  it('creates settings + settings_secrets tables', () => {
-    const db = setup()
-    expect(columns(db, 'settings')).toEqual(
-      expect.arrayContaining(['ns', 'key', 'value_json', 'updated_at'])
-    )
-    expect(columns(db, 'settings_secrets')).toEqual(
-      expect.arrayContaining(['key', 'encrypted_value', 'updated_at'])
-    )
-  })
-
-  // --- ai_provider_profiles ---
-  it('creates ai_provider_profiles table', () => {
-    const db = setup()
-    expect(columns(db, 'ai_provider_profiles')).toEqual(
-      expect.arrayContaining([
-        'id',
-        'name',
-        'provider',
-        'base_url',
-        'model',
-        'temperature',
-        'top_p',
-        'max_tokens',
-        'api_key_ref',
-        'created_at',
-        'updated_at'
-      ])
-    )
-  })
 
   // --- jobs ---
   it('creates jobs table', () => {
@@ -175,28 +139,6 @@ describe('001_schema', () => {
     )
   })
 
-  // --- ai_usage ---
-  it('creates ai_usage table', () => {
-    const db = setup()
-    expect(columns(db, 'ai_usage')).toEqual(
-      expect.arrayContaining([
-        'id',
-        'job_id',
-        'profile_id',
-        'model',
-        'prompt_tokens',
-        'completion_tokens',
-        'latency_ms',
-        'ok',
-        'error',
-        'created_at',
-        'session_id'
-      ])
-    )
-    expect(indexes(db, 'ai_usage')).toEqual(
-      expect.arrayContaining(['idx_ai_usage_created', 'idx_ai_usage_profile'])
-    )
-  })
 
   // --- sessions ---
   it('creates sessions + session_messages + tool_calls tables', () => {
@@ -236,23 +178,6 @@ describe('001_schema', () => {
     expect(indexes(db, 'tool_calls')).toContain('idx_tool_calls_session')
   })
 
-  // --- perf_samples ---
-  it('creates perf_samples table', () => {
-    const db = setup()
-    expect(columns(db, 'perf_samples')).toEqual(
-      expect.arrayContaining(['id', 'ts', 'area', 'ok', 'ms', 'meta'])
-    )
-    expect(indexes(db, 'perf_samples')).toContain('idx_perf_area_ts')
-  })
-
-  // --- telemetry_local ---
-  it('creates telemetry_local table', () => {
-    const db = setup()
-    expect(columns(db, 'telemetry_local')).toEqual(
-      expect.arrayContaining(['id', 'day', 'metric', 'value', 'meta'])
-    )
-    expect(indexes(db, 'telemetry_local')).toContain('uniq_telemetry_day_metric')
-  })
 
   // --- idempotency ---
   it('is idempotent', () => {

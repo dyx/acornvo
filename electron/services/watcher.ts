@@ -7,7 +7,6 @@ import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
 import {
   upsertFileWithBodyDelta,
-  syncTags,
   upsertFts,
   deleteFile,
   renameFile
@@ -363,10 +362,7 @@ async function flush(): Promise<void> {
         updated_at: Date.now()
       }
       const { bodyChanged } = upsertFileWithBodyDelta(_db!, row)
-      const tags = Array.isArray(ev.frontmatter.tags)
-        ? (ev.frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
-        : []
-      syncTags(_db!, row.path, tags)
+
       if (bodyChanged) {
         const ftsRowid = (
           _db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }

@@ -21,9 +21,7 @@ type FileQueryHandlers = {
     : never
 }
 
-const TAG_SEP = '\x01'
-
-interface ListRow {
+interface FileRow {
   path: string
   title: string | null
   category: string | null
@@ -34,10 +32,9 @@ interface ListRow {
   created_at: number
   site: string | null
   has_summary: number
-  tags_concat: string | null
+  tags_json: string | null
   job_status: string | null
   job_error: string | null
-  total: number
 }
 
 function deriveReviewStatus(
@@ -51,103 +48,6 @@ function deriveReviewStatus(
   if (jobStatus === 'pending') return 'pending'
   if (jobStatus === 'failed') return 'failed'
   return 'none'
-}
-
-async function list(
-  filter: FileFilter,
-  pagination: Pagination
-): Promise<{ items: FileSummary[]; total: number }> {
-  const db = dbService.requireCurrent()
-  const sql = `
-    SELECT
-      f.path,
-      f.title,
-      f.category,
-      f.rating,
-      json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
-      f.clipped_at,
-      json_extract(f.frontmatter_json, '$.site') AS site,
-      CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-      GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1) ORDER BY ft.tag) AS tags_concat,
-      rj.status AS job_status,
-      rj.last_error AS job_error,
-      COUNT(*) OVER() AS total
-    FROM files f
-    LEFT JOIN file_tags ft ON ft.path = f.path
-    LEFT JOIN clips c ON c.path = f.path
-    LEFT JOIN (
-      SELECT
-        json_extract(payload_json, '$.clipId') AS clip_id,
-        status, last_error,
-        ROW_NUMBER() OVER (
-          PARTITION BY json_extract(payload_json, '$.clipId')
-          ORDER BY updated_at DESC
-        ) AS rn
-      FROM jobs
-      WHERE kind = 'ai-review-clip'
-    ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
-    WHERE
-      (:category IS NULL OR f.category = :category OR f.category LIKE :category || '/%')
-      AND (:pathPrefix IS NULL OR f.path LIKE :pathPrefix || '%')
-      AND (:isUnreviewed = 0 OR f.rating IS NULL)
-      AND (:isUnreviewed = 1 OR :minRating IS NULL OR f.rating >= :minRating)
-      AND (:isUnreviewed = 1 OR :maxRating IS NULL OR f.rating <= :maxRating)
-      AND (:q IS NULL OR f.title LIKE '%' || :q || '%' ESCAPE '\\')
-      AND (:tag IS NULL OR f.path IN (SELECT path FROM file_tags WHERE tag = :tag))
-    GROUP BY f.path
-    ORDER BY
-      CASE WHEN :orderBy = 'clipped_desc' THEN f.clipped_at END DESC,
-      CASE WHEN :orderBy = 'title_asc' THEN f.title END ASC
-    LIMIT :limit OFFSET :offset
-  `
-
-  const q = filter.q ? filter.q.replace(/%/g, '\\%').replace(/_/g, '\\_') : null
-  const isUnreviewed = filter.rating?.min === 0 && filter.rating?.max === 0
-
-  const params = {
-    category: filter.category ?? null,
-    tag: filter.tags?.[0] ?? null,
-    pathPrefix: filter.pathPrefix ?? null,
-    isUnreviewed: isUnreviewed ? 1 : 0,
-    minRating: filter.rating?.min ?? null,
-    maxRating: filter.rating?.max ?? null,
-    q,
-    orderBy: pagination.orderBy,
-    limit: pagination.limit,
-    offset: pagination.offset
-  }
-
-  let rows: ListRow[]
-  try {
-    rows = db.prepare(sql).all(params) as ListRow[]
-  } catch (err) {
-    throw new IpcError('E_INTERNAL', `files.list: ${(err as Error).message}`)
-  }
-
-  if (rows.length === 0) return { items: [], total: 0 }
-
-  const total = rows[0].total
-  const items: FileSummary[] = rows.map((r) => {
-    const hasSummary = r.has_summary === 1
-    const reviewStatus = deriveReviewStatus(r.rating, hasSummary, r.job_status)
-    return {
-      path: r.path,
-      title: r.title,
-      category: r.category,
-      rating: r.rating,
-      ai_rating: r.ai_rating,
-      clipped_at: r.clipped_at,
-      mtime: r.mtime,
-      created_at: r.created_at,
-      site: r.site,
-      has_summary: hasSummary,
-      tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
-      is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
-      review_status: reviewStatus,
-      review_error: reviewStatus === 'failed' ? (r.job_error ?? null) : null
-    }
-  })
-  return { items, total }
 }
 
 async function getAll(): Promise<FileSummary[]> {
@@ -164,11 +64,10 @@ async function getAll(): Promise<FileSummary[]> {
       f.created_at,
       json_extract(f.frontmatter_json, '$.site') AS site,
       CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-      GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1) ORDER BY ft.tag) AS tags_concat,
+      json_extract(f.frontmatter_json, '$.tags') AS tags_json,
       rj.status AS job_status,
       rj.last_error AS job_error
     FROM files f
-    LEFT JOIN file_tags ft ON ft.path = f.path
     LEFT JOIN clips c ON c.path = f.path
     LEFT JOIN (
       SELECT
@@ -181,12 +80,11 @@ async function getAll(): Promise<FileSummary[]> {
       FROM jobs
       WHERE kind = 'ai-review-clip'
     ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
-    GROUP BY f.path
   `
 
-  let rows: Omit<ListRow, 'total'>[]
+  let rows: FileRow[]
   try {
-    rows = db.prepare(sql).all() as Omit<ListRow, 'total'>[]
+    rows = db.prepare(sql).all() as FileRow[]
   } catch (err) {
     throw new IpcError('E_INTERNAL', `files.getAll: ${(err as Error).message}`)
   }
@@ -194,6 +92,13 @@ async function getAll(): Promise<FileSummary[]> {
   return rows.map((r) => {
     const hasSummary = r.has_summary === 1
     const reviewStatus = deriveReviewStatus(r.rating, hasSummary, r.job_status)
+    let tags: string[] = []
+    if (r.tags_json) {
+      try {
+        const parsed = JSON.parse(r.tags_json)
+        if (Array.isArray(parsed)) tags = parsed.filter((t) => typeof t === 'string')
+      } catch { /* ignore */ }
+    }
     return {
       path: r.path,
       title: r.title,
@@ -205,7 +110,7 @@ async function getAll(): Promise<FileSummary[]> {
       created_at: r.created_at,
       site: r.site,
       has_summary: hasSummary,
-      tags: r.tags_concat ? r.tags_concat.split(TAG_SEP).filter(Boolean) : [],
+      tags,
       is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
       review_status: reviewStatus,
       review_error: reviewStatus === 'failed' ? (r.job_error ?? null) : null
@@ -219,7 +124,7 @@ async function get(path: string): Promise<{
   body: string
 }> {
   const db = dbService.requireCurrent()
-  let row: Omit<ListRow, 'total'> | undefined
+  let row: FileRow | undefined
   try {
     row = db
       .prepare(
@@ -230,11 +135,10 @@ async function get(path: string): Promise<{
                 f.created_at,
                 json_extract(f.frontmatter_json, '$.site') AS site,
                 CASE WHEN f.summary IS NOT NULL AND length(f.summary) > 0 THEN 1 ELSE 0 END AS has_summary,
-                GROUP_CONCAT(REPLACE(ft.tag, char(1), '?'), char(1)) AS tags_concat,
+                json_extract(f.frontmatter_json, '$.tags') AS tags_json,
                 rj.status AS job_status,
                 rj.last_error AS job_error
          FROM files f
-         LEFT JOIN file_tags ft ON ft.path = f.path
          LEFT JOIN clips c ON c.path = f.path
          LEFT JOIN (
            SELECT
@@ -247,10 +151,9 @@ async function get(path: string): Promise<{
            FROM jobs
            WHERE kind = 'ai-review-clip'
          ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
-         WHERE f.path = ?
-         GROUP BY f.path`
+         WHERE f.path = ?`
       )
-      .get(path) as Omit<ListRow, 'total'> | undefined
+      .get(path) as FileRow | undefined
   } catch (err) {
     throw new IpcError('E_INTERNAL', `files.get: ${(err as Error).message}`)
   }
@@ -262,6 +165,14 @@ async function get(path: string): Promise<{
   const parsed = await fileHandlers.readParsed(path)
   const hasSummary = row.has_summary === 1
   const reviewStatus = deriveReviewStatus(row.rating, hasSummary, row.job_status)
+  
+  let tags: string[] = []
+  if (row.tags_json) {
+    try {
+      const p = JSON.parse(row.tags_json)
+      if (Array.isArray(p)) tags = p.filter((t) => typeof t === 'string')
+    } catch { /* ignore */ }
+  }
 
   const summary: FileSummary = {
     path: row.path,
@@ -274,7 +185,7 @@ async function get(path: string): Promise<{
     created_at: row.created_at,
     site: row.site,
     has_summary: hasSummary,
-    tags: row.tags_concat ? row.tags_concat.split(TAG_SEP).filter(Boolean) : [],
+    tags,
     is_reviewing: reviewStatus === 'pending' || reviewStatus === 'running',
     review_status: reviewStatus,
     review_error: reviewStatus === 'failed' ? (row.job_error ?? null) : null
@@ -319,24 +230,7 @@ async function getCategoryTree(): Promise<CategoryNode[]> {
   return root.children
 }
 
-async function getTagCloud(opts: { limit: number }): Promise<TagCloudItem[]> {
-  const db = dbService.requireCurrent()
-  let rows: TagCloudItem[]
-  try {
-    rows = db
-      .prepare(
-        `SELECT name, usage_count
-         FROM tags
-         WHERE usage_count > 0
-         ORDER BY usage_count DESC, name ASC
-         LIMIT ?`
-      )
-      .all(opts.limit) as TagCloudItem[]
-  } catch (err) {
-    throw new IpcError('E_INTERNAL', `files.getTagCloud: ${(err as Error).message}`)
-  }
-  return rows
-}
+
 
 function requireGroveRoot(): string {
   const grove = groveSvc.getCurrent()
@@ -352,10 +246,8 @@ async function revealInFinder(path: string): Promise<{ ok: true }> {
 }
 
 export const fileQueryHandlers: FileQueryHandlers = {
-  list,
   getAll,
   get,
   getCategoryTree,
-  getTagCloud,
   revealInFinder
 }

@@ -11,18 +11,15 @@ export const getGroveStatsTool = tool(
     const clippedFiles = (
       db.prepare('SELECT COUNT(*) as c FROM files WHERE clipped_at IS NOT NULL').get() as { c: number }
     ).c
-    const totalTags = (db.prepare('SELECT COUNT(*) as c FROM tags').get() as { c: number }).c
-
     return {
       total_files: totalFiles,
-      clipped_files: clippedFiles,
-      total_tags: totalTags
+      clipped_files: clippedFiles
     }
   },
   {
     name: 'get_grove_stats',
     description:
-      'Get basic statistics about the user\'s grove (knowledge base), such as the total number of documents, total tags, and clipped web articles. Use this when the user asks "how many documents do I have?".',
+      'Get basic statistics about the user\'s grove (knowledge base), such as the total number of documents and clipped web articles. Use this when the user asks "how many documents do I have?".',
     schema: GetGroveStatsSchema
   }
 )

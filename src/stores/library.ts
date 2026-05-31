@@ -4,12 +4,16 @@ import type {
   FileFilter,
   FileSummary,
   OrderBy,
-  Pagination,
-  TagCloudItem
+  Pagination
 } from '@shared/ipc-contract'
 import type { GroveSummary } from '@shared/grove'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import { ipc } from '@/ipc/client'
+
+export interface TagCloudItem {
+  name: string
+  usage_count: number
+}
 
 export interface FullDetail {
   summary: FileSummary
@@ -43,7 +47,6 @@ export interface LibraryState {
   load: () => Promise<void>
   loadMore: () => Promise<void>
   loadCategoryTree: () => Promise<void>
-  loadTagCloud: () => Promise<void>
   select: (path: string | null, force?: boolean) => Promise<void>
   removeItem: (path: string) => void
   refresh: () => Promise<void>
@@ -222,7 +225,19 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       const allItems = await ipc.files.getAll()
       const { filter, orderBy } = get()
       const items = applyLocalQuery(allItems, filter, orderBy)
-      set({ allItems, items, total: items.length, isLoading: false })
+      
+      const tagMap = new Map<string, number>()
+      for (const item of allItems) {
+        for (const tag of item.tags) {
+          tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1)
+        }
+      }
+      const tagCloud = Array.from(tagMap.entries())
+        .map(([name, count]) => ({ name, usage_count: count }))
+        .sort((a, b) => b.usage_count - a.usage_count || a.name.localeCompare(b.name))
+        .slice(0, 30)
+
+      set({ allItems, items, total: items.length, tagCloud, isLoading: false })
     } catch (err) {
       set({ isLoading: false })
       throw err
@@ -237,11 +252,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   async loadCategoryTree() {
     const tree = await ipc.files.getCategoryTree()
     set({ categoryTree: tree })
-  },
-
-  async loadTagCloud() {
-    const cloud = await ipc.files.getTagCloud({ limit: 30 })
-    set({ tagCloud: cloud })
   },
 
   async select(path, force = false) {
@@ -279,7 +289,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     await Promise.all([
       state.load(),
       state.loadCategoryTree(),
-      state.loadTagCloud(),
       ...(state.selectedPath ? [state.select(state.selectedPath, true)] : [])
     ])
   }

@@ -12,11 +12,17 @@ interface QuickSwitchRow {
   clipped_at: string | null
   summary: string | null
   frontmatter_json: string | null
-  tags_concat: string | null
+  tags_json: string | null
 }
 
 function rowToFileSummary(row: QuickSwitchRow): FileSummary {
-  const tags = row.tags_concat ? row.tags_concat.split(',').filter(Boolean) : []
+  let tags: string[] = []
+  if (row.tags_json) {
+    try {
+      const parsed = JSON.parse(row.tags_json)
+      if (Array.isArray(parsed)) tags = parsed.filter((t) => typeof t === 'string')
+    } catch { /* ignore */ }
+  }
   let site: string | null = null
   if (row.frontmatter_json) {
     try {
@@ -53,9 +59,8 @@ const QUICK_SWITCH_BASE = `
   SELECT
     files.path, files.title, files.category, files.rating, files.clipped_at,
     files.summary, files.frontmatter_json,
-    GROUP_CONCAT(file_tags.tag, ',') AS tags_concat
+    json_extract(files.frontmatter_json, '$.tags') AS tags_json
   FROM files
-  LEFT JOIN file_tags ON file_tags.path = files.path
 `
 
 export function quickSwitch(
@@ -165,11 +170,9 @@ export function fullText(
       `SELECT
        files.path, files.title, files.category, files.rating, files.clipped_at,
        files.summary, files.frontmatter_json,
-       GROUP_CONCAT(file_tags.tag, ',') AS tags_concat
+       json_extract(files.frontmatter_json, '$.tags') AS tags_json
      FROM files
-     LEFT JOIN file_tags ON file_tags.path = files.path
-     WHERE files.path IN (${placeholders})
-     GROUP BY files.path`
+     WHERE files.path IN (${placeholders})`
     )
     .all(...hits.map((h) => h.path)) as SummaryRow[]
 

@@ -4,9 +4,9 @@ vi.mock('@/ipc/client', () => ({
   ipc: {
     files: {
       list: vi.fn(),
+      getAll: vi.fn(),
       get: vi.fn(),
       getCategoryTree: vi.fn(),
-      getTagCloud: vi.fn(),
       revealInFinder: vi.fn()
     },
     on: vi.fn(() => () => {})
@@ -43,7 +43,7 @@ describe('library store — initial shape', () => {
     const s = useLibraryStore.getState()
     expect(s.filter).toEqual({})
     expect(s.orderBy).toBe('clipped_desc')
-    expect(s.pagination).toEqual({ limit: 50, offset: 0, orderBy: 'clipped_desc' })
+    expect(s.pagination).toEqual({ limit: 10000, offset: 0, orderBy: 'clipped_desc' })
     expect(s.items).toEqual([])
     expect(s.total).toBe(0)
     expect(s.selectedPath).toBeNull()
@@ -61,7 +61,6 @@ describe('library store — initial shape', () => {
     expect(typeof s.load).toBe('function')
     expect(typeof s.loadMore).toBe('function')
     expect(typeof s.loadCategoryTree).toBe('function')
-    expect(typeof s.loadTagCloud).toBe('function')
     expect(typeof s.select).toBe('function')
     expect(typeof s.refresh).toBe('function')
   })
@@ -73,11 +72,11 @@ describe('library store — load / loadMore / order / filter', () => {
     vi.clearAllMocks()
   })
 
-  it('load() sets items + total and toggles isLoading', async () => {
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [makeSummary('a.md'), makeSummary('b.md')],
-      total: 2
-    })
+  it('load() sets items + total, computes tagCloud, and toggles isLoading', async () => {
+    ;(ipc.files.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([
+      makeSummary('a.md', { tags: ['tag1'] }),
+      makeSummary('b.md', { tags: ['tag1', 'tag2'] })
+    ])
     const promise = useLibraryStore.getState().load()
     expect(useLibraryStore.getState().isLoading).toBe(true)
     await promise
@@ -85,34 +84,28 @@ describe('library store — load / loadMore / order / filter', () => {
     expect(s.isLoading).toBe(false)
     expect(s.items.map((i) => i.path)).toEqual(['a.md', 'b.md'])
     expect(s.total).toBe(2)
-    expect(ipc.files.list).toHaveBeenCalledWith(
-      {},
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
+    expect(s.tagCloud).toEqual([
+      { name: 'tag1', usage_count: 2 },
+      { name: 'tag2', usage_count: 1 }
+    ])
+    expect(ipc.files.getAll).toHaveBeenCalled()
   })
 
   it('loadMore() appends with bumped offset', async () => {
     useLibraryStore.setState({
       pagination: { limit: 2, offset: 0, orderBy: 'clipped_desc' }
     })
-    ;(ipc.files.list as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ items: [makeSummary('a.md'), makeSummary('b.md')], total: 4 })
-      .mockResolvedValueOnce({ items: [makeSummary('c.md'), makeSummary('d.md')], total: 4 })
+    ;(ipc.files.getAll as ReturnType<typeof vi.fn>)
+      .mockResolvedValue([makeSummary('a.md'), makeSummary('b.md'), makeSummary('c.md'), makeSummary('d.md')])
     await useLibraryStore.getState().load()
     await useLibraryStore.getState().loadMore()
     const s = useLibraryStore.getState()
     expect(s.items.map((i) => i.path)).toEqual(['a.md', 'b.md', 'c.md', 'd.md'])
-    expect(s.pagination.offset).toBe(2)
-    expect(ipc.files.list).toHaveBeenLastCalledWith(
-      {},
-      { limit: 2, offset: 2, orderBy: 'clipped_desc' }
-    )
   })
 
   it('setFilter() merges, resets offset, and re-loads', async () => {
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [makeSummary('inbox/a.md')],
-      total: 1
+    useLibraryStore.setState({
+      allItems: [makeSummary('inbox/a.md'), makeSummary('other/b.md')]
     })
     await useLibraryStore.getState().setFilter({ pathPrefix: 'inbox/' })
     const s = useLibraryStore.getState()
@@ -122,14 +115,13 @@ describe('library store — load / loadMore / order / filter', () => {
   })
 
   it('setFilter() can clear a key by passing undefined', async () => {
-    useLibraryStore.setState({ filter: { tag: 'attention' } })
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: [], total: 0 })
-    await useLibraryStore.getState().setFilter({ tag: undefined })
-    expect(useLibraryStore.getState().filter.tag).toBeUndefined()
+    useLibraryStore.setState({ filter: { tags: ['attention'] }, allItems: [] })
+    await useLibraryStore.getState().setFilter({ tags: undefined })
+    expect(useLibraryStore.getState().filter.tags).toBeUndefined()
   })
 
   it('setOrder() updates pagination.orderBy and reloads', async () => {
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({ items: [], total: 0 })
+    useLibraryStore.setState({ allItems: [] })
     await useLibraryStore.getState().setOrder('title_asc')
     const s = useLibraryStore.getState()
     expect(s.orderBy).toBe('title_asc')
@@ -147,17 +139,8 @@ describe('library store — load / loadMore / order / filter', () => {
     ])
   })
 
-  it('loadTagCloud() writes tagCloud with default limit 30', async () => {
-    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { name: 'a', usage_count: 5 }
-    ])
-    await useLibraryStore.getState().loadTagCloud()
-    expect(useLibraryStore.getState().tagCloud).toEqual([{ name: 'a', usage_count: 5 }])
-    expect(ipc.files.getTagCloud).toHaveBeenCalledWith({ limit: 30 })
-  })
-
   it('load() flips isLoading back to false on rejection', async () => {
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'))
+    ;(ipc.files.getAll as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'))
     await expect(useLibraryStore.getState().load()).rejects.toThrow('boom')
     expect(useLibraryStore.getState().isLoading).toBe(false)
   })
@@ -184,19 +167,14 @@ describe('library store — refresh + index event subscriptions', () => {
         }
       }
     )
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [],
-      total: 0
-    })
+    ;(ipc.files.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([])
     ;(ipc.files.getCategoryTree as ReturnType<typeof vi.fn>).mockResolvedValue([])
-    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([])
   })
 
-  it('refresh() re-runs list + categoryTree + tagCloud', async () => {
+  it('refresh() re-runs load + categoryTree', async () => {
     await useLibraryStore.getState().refresh()
-    expect(ipc.files.list).toHaveBeenCalledTimes(1)
+    expect(ipc.files.getAll).toHaveBeenCalledTimes(1)
     expect(ipc.files.getCategoryTree).toHaveBeenCalledTimes(1)
-    expect(ipc.files.getTagCloud).toHaveBeenCalledTimes(1)
   })
 
   it('installLibrarySubscriber() subscribes to index events', async () => {
@@ -219,7 +197,7 @@ describe('library store — refresh + index event subscriptions', () => {
     })
     await Promise.resolve()
     await Promise.resolve()
-    expect(ipc.files.list).toHaveBeenCalled()
+    expect(ipc.files.getAll).toHaveBeenCalled()
   })
 
   it('index:fileDeleted → refresh + clears selectedPath if it matches', async () => {
@@ -312,6 +290,7 @@ describe('library store — removeItem', () => {
 
   it('removes the row from items', () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md'), makeSummary('b.md'), makeSummary('c.md')],
       items: [makeSummary('a.md'), makeSummary('b.md'), makeSummary('c.md')],
       total: 3
     })
@@ -322,6 +301,7 @@ describe('library store — removeItem', () => {
 
   it('clears selectedPath when it matches the deleted path', () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md'), makeSummary('b.md')],
       items: [makeSummary('a.md'), makeSummary('b.md')],
       total: 2,
       selectedPath: 'b.md'
@@ -332,6 +312,7 @@ describe('library store — removeItem', () => {
 
   it('preserves selectedPath when deleting a different row', () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md'), makeSummary('b.md')],
       items: [makeSummary('a.md'), makeSummary('b.md')],
       total: 2,
       selectedPath: 'a.md'
@@ -342,6 +323,7 @@ describe('library store — removeItem', () => {
 
   it('removes the detail from detailsByPath cache', () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md')],
       items: [makeSummary('a.md')],
       total: 1,
       detailsByPath: new Map([
@@ -354,6 +336,7 @@ describe('library store — removeItem', () => {
 
   it('decrements total', () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md'), makeSummary('b.md')],
       items: [makeSummary('a.md'), makeSummary('b.md')],
       total: 2
     })
@@ -379,12 +362,8 @@ describe('library store — project:changed reset', () => {
         return () => {}
       }
     )
-    ;(ipc.files.list as ReturnType<typeof vi.fn>).mockResolvedValue({
-      items: [],
-      total: 0
-    })
+    ;(ipc.files.getAll as ReturnType<typeof vi.fn>).mockResolvedValue([])
     ;(ipc.files.getCategoryTree as ReturnType<typeof vi.fn>).mockResolvedValue([])
-    ;(ipc.files.getTagCloud as ReturnType<typeof vi.fn>).mockResolvedValue([])
   })
 
   it('subscribes to project:changed', async () => {
@@ -395,6 +374,7 @@ describe('library store — project:changed reset', () => {
 
   it('project:changed clears items / detailsByPath / selectedPath / categoryTree / tagCloud', async () => {
     useLibraryStore.setState({
+      allItems: [makeSummary('a.md')],
       items: [makeSummary('a.md')],
       total: 1,
       selectedPath: 'a.md',
@@ -409,12 +389,13 @@ describe('library store — project:changed reset', () => {
 
     const { installLibrarySubscriber } = await import('./library')
     installLibrarySubscriber()
-    handlers['project:changed']?.(null)
+    handlers['project:changed']?.({} as any)
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
 
     const s = useLibraryStore.getState()
+    expect(s.allItems).toEqual([])
     expect(s.items).toEqual([])
     expect(s.total).toBe(0)
     expect(s.selectedPath).toBeNull()
@@ -425,15 +406,14 @@ describe('library store — project:changed reset', () => {
     expect(s.pagination.offset).toBe(0)
   })
 
-  it('project:changed triggers reload of list / categoryTree / tagCloud', async () => {
+  it('project:changed triggers reload of list / categoryTree', async () => {
     const { installLibrarySubscriber } = await import('./library')
     installLibrarySubscriber()
-    handlers['project:changed']?.(null)
+    handlers['project:changed']?.({} as any)
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
-    expect(ipc.files.list).toHaveBeenCalled()
+    expect(ipc.files.getAll).toHaveBeenCalled()
     expect(ipc.files.getCategoryTree).toHaveBeenCalled()
-    expect(ipc.files.getTagCloud).toHaveBeenCalled()
   })
 })

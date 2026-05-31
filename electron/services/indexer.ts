@@ -5,7 +5,6 @@ import type Database from 'better-sqlite3'
 import { walk, DEFAULT_SKIP_SET } from './walker'
 import {
   upsertFileWithBodyDelta,
-  syncTags,
   upsertFts,
   listAllPaths,
   deleteFile,
@@ -195,10 +194,7 @@ export async function startScan(groveRoot: string): Promise<void> {
 
       const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
       if (result !== 'unchanged') {
-        const tags = Array.isArray(frontmatter.tags)
-          ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
-          : []
-        syncTags(db, row.path, tags)
+
         if (bodyChanged) {
           const ftsRowid = (
             db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
@@ -269,10 +265,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
 
     const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
     if (result !== 'unchanged') {
-      const tags = Array.isArray(frontmatter.tags)
-        ? (frontmatter.tags as unknown[]).filter((t): t is string => typeof t === 'string')
-        : []
-      syncTags(db, row.path, tags)
+
       if (bodyChanged) {
         const ftsRowid = (
           db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }

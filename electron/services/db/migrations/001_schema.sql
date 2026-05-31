@@ -25,19 +25,6 @@ CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
 CREATE INDEX IF NOT EXISTS idx_files_rating ON files(rating);
 CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 
--- ============================================================
--- tags — many-to-many labels
--- ============================================================
-CREATE TABLE IF NOT EXISTS tags (
-  name TEXT PRIMARY KEY,
-  usage_count INTEGER DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS file_tags (
-  path TEXT NOT NULL,
-  tag TEXT NOT NULL,
-  PRIMARY KEY (path, tag),
-  FOREIGN KEY (path) REFERENCES files(path) ON DELETE CASCADE
-);
 
 -- ============================================================
 -- files_fts — full-text search (trigram tokenizer)
@@ -102,39 +89,6 @@ CREATE TABLE IF NOT EXISTS clips (
 CREATE INDEX IF NOT EXISTS idx_clips_clipped_at ON clips(clipped_at DESC);
 CREATE INDEX IF NOT EXISTS idx_clips_site ON clips(site);
 
--- ============================================================
--- settings — per-grove application settings (phase-13)
--- ============================================================
-CREATE TABLE IF NOT EXISTS settings (
-  ns TEXT NOT NULL,
-  key TEXT NOT NULL,
-  value_json TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  PRIMARY KEY (ns, key)
-);
-CREATE TABLE IF NOT EXISTS settings_secrets (
-  key TEXT PRIMARY KEY,
-  encrypted_value BLOB NOT NULL,
-  updated_at TEXT NOT NULL
-);
-
--- ============================================================
--- ai_provider_profiles — AI provider configurations (phase-13)
--- ============================================================
-CREATE TABLE IF NOT EXISTS ai_provider_profiles (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  provider TEXT NOT NULL,
-  base_url TEXT,
-  model TEXT NOT NULL,
-  temperature REAL NOT NULL DEFAULT 0.7,
-  top_p REAL NOT NULL DEFAULT 1.0,
-  max_tokens INTEGER,
-  api_key_ref TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_profiles_name ON ai_provider_profiles(name);
 
 -- ============================================================
 -- jobs — persistent job queue (phase-14)
@@ -153,24 +107,6 @@ CREATE TABLE IF NOT EXISTS jobs (
 CREATE INDEX IF NOT EXISTS idx_jobs_status_next_run ON jobs(status, next_run_at);
 CREATE INDEX IF NOT EXISTS idx_jobs_kind_status ON jobs(kind, status);
 
--- ============================================================
--- ai_usage — per-LLM-call usage tracking (phase-15)
--- ============================================================
-CREATE TABLE IF NOT EXISTS ai_usage (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  job_id TEXT,
-  profile_id TEXT,
-  model TEXT,
-  prompt_tokens INTEGER,
-  completion_tokens INTEGER,
-  latency_ms INTEGER,
-  ok INTEGER NOT NULL,
-  error TEXT,
-  created_at TEXT NOT NULL,
-  session_id TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_ai_usage_profile ON ai_usage(profile_id);
 
 -- ============================================================
 -- sessions / messages / tool_calls — chat history (phase-16)
@@ -213,26 +149,39 @@ CREATE TABLE IF NOT EXISTS tool_calls (
 CREATE INDEX IF NOT EXISTS idx_tool_calls_session ON tool_calls(session_id);
 
 -- ============================================================
--- perf_samples — performance sampling (phase-18)
+-- LangGraph SqliteSaver tables (Phase 19)
 -- ============================================================
-CREATE TABLE IF NOT EXISTS perf_samples (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts TEXT NOT NULL,
-  area TEXT NOT NULL,
-  ok INTEGER NOT NULL,
-  ms INTEGER NOT NULL,
-  meta TEXT
+CREATE TABLE IF NOT EXISTS checkpoints (
+  thread_id TEXT NOT NULL,
+  checkpoint_ns TEXT NOT NULL DEFAULT '',
+  checkpoint_id TEXT NOT NULL,
+  parent_checkpoint_id TEXT,
+  type TEXT,
+  checkpoint BLOB,
+  metadata BLOB,
+  PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id)
 );
-CREATE INDEX IF NOT EXISTS idx_perf_area_ts ON perf_samples(area, ts);
 
--- ============================================================
--- telemetry_local — local usage telemetry (phase-18)
--- ============================================================
-CREATE TABLE IF NOT EXISTS telemetry_local (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  day TEXT NOT NULL,
-  metric TEXT NOT NULL,
-  value REAL NOT NULL,
-  meta TEXT
+CREATE INDEX IF NOT EXISTS idx_checkpoints_thread ON checkpoints(thread_id);
+
+CREATE TABLE IF NOT EXISTS writes (
+  thread_id TEXT NOT NULL,
+  checkpoint_ns TEXT NOT NULL DEFAULT '',
+  checkpoint_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  idx INTEGER NOT NULL,
+  channel TEXT NOT NULL,
+  type TEXT,
+  value BLOB,
+  PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id, task_id, idx)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(day, metric);
+
+CREATE INDEX IF NOT EXISTS idx_writes_thread ON writes(thread_id);
+
+CREATE TABLE IF NOT EXISTS checkpoint_meta (
+  thread_id TEXT PRIMARY KEY,
+  last_active_at INTEGER NOT NULL,
+  canceled_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_checkpoint_meta_canceled ON checkpoint_meta(canceled_at);

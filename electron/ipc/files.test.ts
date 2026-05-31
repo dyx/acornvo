@@ -35,7 +35,8 @@ function buildSchema(db: Database.Database): void {
     CREATE TABLE files (
       path TEXT PRIMARY KEY, title TEXT, url TEXT, category TEXT,
       rating INTEGER, summary TEXT, clipped_at TEXT, reviewed_at TEXT,
-      mtime INTEGER NOT NULL, content_hash TEXT, frontmatter_json TEXT
+      mtime INTEGER NOT NULL, created_at INTEGER NOT NULL DEFAULT 0,
+      content_hash TEXT, frontmatter_json TEXT
     );
     CREATE TABLE tags (name TEXT PRIMARY KEY, usage_count INTEGER DEFAULT 0);
     CREATE TABLE file_tags (
@@ -78,16 +79,19 @@ function insertFile(
     title: string | null
     category: string | null
     rating: number | null
-    summary: string | null
-    clipped_at: string | null
-    site: string | null
-    tags: string[]
+    summary?: string
+    clipped_at?: string | null
+    site?: string | null
+    tags?: string[]
   }>
 ): void {
-  const fm = row.site ? JSON.stringify({ site: row.site }) : null
+  const fmObj: any = {}
+  if (row.site) fmObj.site = row.site
+  if (row.tags) fmObj.tags = row.tags
+  const fm = Object.keys(fmObj).length > 0 ? JSON.stringify(fmObj) : null
   db.prepare(
-    `INSERT INTO files (path,title,category,rating,summary,clipped_at,mtime,content_hash,frontmatter_json)
-     VALUES (?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO files (path,title,category,rating,summary,clipped_at,mtime,created_at,content_hash,frontmatter_json)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`
   ).run(
     row.path,
     row.title ?? null,
@@ -95,6 +99,7 @@ function insertFile(
     row.rating ?? null,
     row.summary ?? null,
     row.clipped_at ?? null,
+    1,
     1,
     'h',
     fm
@@ -164,301 +169,6 @@ describe('fileQueryHandlers.getCategoryTree', () => {
   })
 })
 
-describe('fileQueryHandlers.list', () => {
-  let dir: string
-  let db: Database.Database
-  beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'libfiles-'))
-    setGroveRoot(dir)
-    db = new Database(':memory:')
-    buildSchema(db)
-    setDb(db)
-  })
-  afterEach(() => {
-    db.close()
-    rmSync(dir, { recursive: true, force: true })
-    setGroveRoot(null)
-    setDb(null)
-  })
-
-  it('returns empty result + total=0 on empty grove', async () => {
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
-    expect(r.items).toEqual([])
-    expect(r.total).toBe(0)
-  })
-
-  it('basic list orders by clipped_at desc and reports correct total', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', clipped_at: '2026-01-01T00:00:00Z' })
-    insertFile(db, { path: 'b.md', title: 'B', clipped_at: '2026-01-03T00:00:00Z' })
-    insertFile(db, { path: 'c.md', title: 'C', clipped_at: '2026-01-02T00:00:00Z' })
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
-    expect(r.items.map((i) => i.path)).toEqual(['b.md', 'c.md', 'a.md'])
-    expect(r.total).toBe(3)
-  })
-
-  it('paginates with limit/offset and total stays the full count', async () => {
-    for (let i = 0; i < 5; i++) {
-      insertFile(db, {
-        path: `f${i}.md`,
-        title: `T${i}`,
-        clipped_at: `2026-01-0${i + 1}T00:00:00Z`
-      })
-    }
-    const p1 = await fileQueryHandlers.list({}, { limit: 2, offset: 0, orderBy: 'clipped_desc' })
-    const p2 = await fileQueryHandlers.list({}, { limit: 2, offset: 2, orderBy: 'clipped_desc' })
-    expect(p1.items.length).toBe(2)
-    expect(p2.items.length).toBe(2)
-    expect(p1.total).toBe(5)
-    expect(p2.total).toBe(5)
-    const p1set = new Set(p1.items.map((i) => i.path))
-    const p2set = new Set(p2.items.map((i) => i.path))
-    expect([...p1set].some((p) => p2set.has(p))).toBe(false)
-  })
-
-  it('filters by category prefix (matches "技术" and "技术/深度学习")', async () => {
-    insertFile(db, { path: 't1.md', title: 'T1', category: '技术' })
-    insertFile(db, { path: 't2.md', title: 'T2', category: '技术/深度学习' })
-    insertFile(db, { path: 'p1.md', title: 'P1', category: '产品' })
-    const r = await fileQueryHandlers.list(
-      { category: '技术' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['t1.md', 't2.md']))
-  })
-
-  it('filters by tag', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', tags: ['attention'] })
-    insertFile(db, { path: 'b.md', title: 'B', tags: ['other'] })
-    const r = await fileQueryHandlers.list(
-      { tags: ['attention'] },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(r.items.map((i) => i.path)).toEqual(['a.md'])
-    expect(r.items[0].tags).toContain('attention')
-  })
-
-  it('filters by rating range', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', rating: 2 })
-    insertFile(db, { path: 'b.md', title: 'B', rating: 4 })
-    insertFile(db, { path: 'c.md', title: 'C', rating: 5 })
-    const r = await fileQueryHandlers.list(
-      { rating: { min: 4 } },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['b.md', 'c.md']))
-  })
-
-  it('filters by q across title and path', async () => {
-    insertFile(db, { path: 'notes/x.md', title: '注意力机制' })
-    insertFile(db, { path: 'misc/zhuyili.md', title: 'Other' })
-    insertFile(db, { path: 'notes/y.md', title: 'Y' })
-    const r = await fileQueryHandlers.list(
-      { q: '注意力' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['notes/x.md']))
-  })
-
-  it('filters by pathPrefix (inbox view)', async () => {
-    insertFile(db, { path: 'inbox/a.md', title: 'A' })
-    insertFile(db, { path: 'inbox/b.md', title: 'B' })
-    insertFile(db, { path: 'notes/c.md', title: 'C' })
-    const r = await fileQueryHandlers.list(
-      { pathPrefix: 'inbox/' },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['inbox/a.md', 'inbox/b.md']))
-  })
-
-  it('orders by title_asc when requested', async () => {
-    insertFile(db, { path: 'c.md', title: 'Carrot' })
-    insertFile(db, { path: 'a.md', title: 'Apple' })
-    insertFile(db, { path: 'b.md', title: 'Banana' })
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
-    expect(r.items.map((i) => i.title)).toEqual(['Apple', 'Banana', 'Carrot'])
-  })
-
-  it('returns FileSummary shape with review_status and has_summary correct', async () => {
-    insertFile(db, {
-      path: 'a.md',
-      title: 'A',
-      rating: 4,
-      summary: 's',
-      site: 'example.com',
-      tags: ['x', 'y']
-    })
-    insertFile(db, { path: 'b.md', title: 'B' })
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
-    const a = r.items.find((i) => i.path === 'a.md')!
-    const b = r.items.find((i) => i.path === 'b.md')!
-    expect(a.has_summary).toBe(true)
-    expect(b.has_summary).toBe(false)
-    expect(a.site).toBe('example.com')
-    expect(new Set(a.tags)).toEqual(new Set(['x', 'y']))
-    // a has rating → done
-    expect(a.review_status).toBe('done')
-    expect(a.is_reviewing).toBe(false)
-    // b has no rating, no job → none
-    expect(b.review_status).toBe('none')
-    expect(b.is_reviewing).toBe(false)
-  })
-
-  it('review_status reflects pending/running/failed jobs from queue', async () => {
-    insertFile(db, { path: 'p.md', title: 'Pending' })
-    insertFile(db, { path: 'r.md', title: 'Running' })
-    insertFile(db, { path: 'f.md', title: 'Failed' })
-    // Create clip rows so JOIN works
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
-      'http://p.example',
-      'p.md',
-      '2026-01-01',
-      '2026-01-01'
-    )
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
-      'http://r.example',
-      'r.md',
-      '2026-01-01',
-      '2026-01-01'
-    )
-    db.prepare(`INSERT INTO clips (url, path, clipped_at, created_at) VALUES (?,?,?,?)`).run(
-      'http://f.example',
-      'f.md',
-      '2026-01-01',
-      '2026-01-01'
-    )
-    // Get clip IDs
-    const pClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'p.md'`).get() as { id: number })
-      .id
-    const rClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'r.md'`).get() as { id: number })
-      .id
-    const fClipId = (db.prepare(`SELECT id FROM clips WHERE path = 'f.md'`).get() as { id: number })
-      .id
-    // Create job rows
-    db.prepare(
-      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
-    ).run(
-      'j1',
-      'ai-review-clip',
-      JSON.stringify({ clipId: pClipId }),
-      'pending',
-      '2026-01-01',
-      '2026-01-01',
-      '2026-01-01'
-    )
-    db.prepare(
-      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
-    ).run(
-      'j2',
-      'ai-review-clip',
-      JSON.stringify({ clipId: rClipId }),
-      'running',
-      '2026-01-01',
-      '2026-01-01',
-      '2026-01-01'
-    )
-    db.prepare(
-      `INSERT INTO jobs (id, kind, payload_json, status, next_run_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?)`
-    ).run(
-      'j3',
-      'ai-review-clip',
-      JSON.stringify({ clipId: fClipId }),
-      'failed',
-      '2026-01-01',
-      '2026-01-01',
-      '2026-01-01T00:00:01'
-    )
-    // Update j3 to have an error
-    db.prepare(`UPDATE jobs SET last_error = 'E_MISSING_PROFILE' WHERE id = 'j3'`).run()
-
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
-    const p = r.items.find((i) => i.path === 'p.md')!
-    const run = r.items.find((i) => i.path === 'r.md')!
-    const f = r.items.find((i) => i.path === 'f.md')!
-    expect(p.review_status).toBe('pending')
-    expect(p.is_reviewing).toBe(true)
-    expect(run.review_status).toBe('running')
-    expect(run.is_reviewing).toBe(true)
-    expect(f.review_status).toBe('failed')
-    expect(f.is_reviewing).toBe(false)
-    expect(f.review_error).toBe('E_MISSING_PROFILE')
-  })
-
-  it('returns empty tags array for file with no tags (NULL tags_concat)', async () => {
-    insertFile(db, { path: 'a.md', title: 'A' })
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'title_asc' })
-    expect(r.items).toHaveLength(1)
-    expect(r.items[0].tags).toEqual([])
-  })
-
-  it('filters by combined category and tag', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', category: '技术', tags: ['attention'] })
-    insertFile(db, { path: 'b.md', title: 'B', category: '技术', tags: ['other'] })
-    insertFile(db, { path: 'c.md', title: 'C', category: '产品', tags: ['attention'] })
-    const r = await fileQueryHandlers.list(
-      { category: '技术', tags: ['attention'] },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(r.items.map((i) => i.path)).toEqual(['a.md'])
-  })
-
-  it('filters by combined tag and rating', async () => {
-    insertFile(db, { path: 'a.md', title: 'A', rating: 4, tags: ['attention'] })
-    insertFile(db, { path: 'b.md', title: 'B', rating: 2, tags: ['attention'] })
-    insertFile(db, { path: 'c.md', title: 'C', rating: 5, tags: ['other'] })
-    const r = await fileQueryHandlers.list(
-      { tags: ['attention'], rating: { min: 4 } },
-      { limit: 50, offset: 0, orderBy: 'clipped_desc' }
-    )
-    expect(new Set(r.items.map((i) => i.path))).toEqual(new Set(['a.md']))
-  })
-
-  it('wraps SQL exceptions in IpcError with E_INTERNAL', async () => {
-    db.exec('DROP TABLE file_tags')
-    db.exec('DROP TABLE files')
-    try {
-      await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
-      expect.unreachable('Expected list() to throw')
-    } catch (err) {
-      expect(err).toBeInstanceOf(IpcError)
-      const ipcErr = err as IpcError
-      expect(ipcErr.code).toBe('E_INTERNAL')
-      expect(ipcErr.message).toContain('files.list:')
-    }
-  })
-})
-
-describe('fileQueryHandlers.getTagCloud', () => {
-  let db: Database.Database
-  beforeEach(() => {
-    db = new Database(':memory:')
-    buildSchema(db)
-    setDb(db)
-  })
-  afterEach(() => {
-    db.close()
-    setDb(null)
-  })
-
-  it('returns empty when no tags', async () => {
-    expect(await fileQueryHandlers.getTagCloud({ limit: 30 })).toEqual([])
-  })
-
-  it('orders by usage_count desc and respects limit', async () => {
-    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('a', 10)
-    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('b', 1)
-    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('c', 5)
-    const r = await fileQueryHandlers.getTagCloud({ limit: 2 })
-    expect(r.map((t) => t.name)).toEqual(['a', 'c'])
-    expect(r[0].usage_count).toBe(10)
-  })
-
-  it('skips tags with usage_count = 0', async () => {
-    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('zero', 0)
-    db.prepare('INSERT INTO tags(name,usage_count) VALUES (?,?)').run('one', 1)
-    const r = await fileQueryHandlers.getTagCloud({ limit: 30 })
-    expect(r.map((t) => t.name)).toEqual(['one'])
-  })
-})
 
 describe('fileQueryHandlers.get', () => {
   let dir: string
@@ -483,7 +193,8 @@ describe('fileQueryHandlers.get', () => {
       title: 'A',
       rating: 4,
       summary: 's',
-      site: 'example.com',
+      clipped_at: null,
+      site: null,
       tags: ['x']
     })
     const md = stringify({ title: 'A', rating: 4 }, '# Hello\n\nbody')
@@ -560,24 +271,8 @@ describe('fileQueryHandlers — error / empty fallbacks', () => {
     setDb(null)
   })
 
-  it('list: empty grove returns total=0 (not E_*)', async () => {
-    const r = await fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
-    expect(r).toEqual({ items: [], total: 0 })
-  })
-
   it('getCategoryTree: empty grove returns []', async () => {
     expect(await fileQueryHandlers.getCategoryTree()).toEqual([])
-  })
-
-  it('getTagCloud: empty grove returns []', async () => {
-    expect(await fileQueryHandlers.getTagCloud({ limit: 30 })).toEqual([])
-  })
-
-  it('list: SQL exception → E_INTERNAL', async () => {
-    db.exec('DROP TABLE files')
-    await expect(
-      fileQueryHandlers.list({}, { limit: 50, offset: 0, orderBy: 'clipped_desc' })
-    ).rejects.toMatchObject({ code: 'E_INTERNAL' })
   })
 
   it('getCategoryTree: SQL exception → E_INTERNAL', async () => {
@@ -586,11 +281,5 @@ describe('fileQueryHandlers — error / empty fallbacks', () => {
       code: 'E_INTERNAL'
     })
   })
-
-  it('getTagCloud: SQL exception → E_INTERNAL', async () => {
-    db.exec('DROP TABLE tags')
-    await expect(fileQueryHandlers.getTagCloud({ limit: 30 })).rejects.toMatchObject({
-      code: 'E_INTERNAL'
-    })
-  })
 })
+

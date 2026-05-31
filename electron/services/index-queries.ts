@@ -69,9 +69,7 @@ export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
 
 export function deleteFile(db: Database.Database, path: string): void {
   const tx = db.transaction(() => {
-    db.prepare('UPDATE tags SET usage_count = usage_count - 1 WHERE name IN (SELECT tag FROM file_tags WHERE path=?)').run(path)
     db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
-    db.prepare('DELETE FROM file_tags WHERE path=?').run(path)
     db.prepare('DELETE FROM files WHERE path=?').run(path)
   })
   tx()
@@ -80,7 +78,6 @@ export function deleteFile(db: Database.Database, path: string): void {
 export function renameFile(db: Database.Database, oldPath: string, newPath: string): void {
   const tx = db.transaction(() => {
     db.prepare('UPDATE files SET path=? WHERE path=?').run(newPath, oldPath)
-    db.prepare('UPDATE file_tags SET path=? WHERE path=?').run(newPath, oldPath)
     db.prepare('UPDATE files_fts SET path=? WHERE path=?').run(newPath, oldPath)
   })
   tx()
@@ -116,50 +113,7 @@ export function listAllPaths(db: Database.Database): Set<string> {
   return new Set(rows.map((r) => r.path))
 }
 
-export interface QueryOptions {
-  category?: string
-  tag?: string
-  rating?: number // minimum rating
-  limit: number
-  offset: number
-  orderBy: 'updated_at_desc' | 'updated_at_asc' | 'created_at_desc' | 'created_at_asc'
-}
 
-const ORDER_BY_SQL: Record<QueryOptions['orderBy'], string> = {
-  updated_at_desc: 'updated_at DESC',
-  updated_at_asc: 'updated_at ASC',
-  created_at_desc: 'created_at DESC',
-  created_at_asc: 'created_at ASC'
-}
-
-export function queryBy(db: Database.Database, opts: QueryOptions): FileRow[] {
-  const where: string[] = []
-  const params: Record<string, unknown> = {}
-
-  if (opts.category !== undefined) {
-    where.push('files.category = @category')
-    params.category = opts.category
-  }
-  if (opts.rating !== undefined) {
-    where.push('files.rating >= @rating')
-    params.rating = opts.rating
-  }
-  let from = 'files'
-  if (opts.tag !== undefined) {
-    from = 'files INNER JOIN file_tags ON file_tags.path = files.path'
-    where.push('file_tags.tag = @tag')
-    params.tag = opts.tag
-  }
-
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
-  const sql = `
-    SELECT files.* FROM ${from}
-    ${whereSql}
-    ORDER BY ${ORDER_BY_SQL[opts.orderBy]}
-    LIMIT @limit OFFSET @offset
-  `
-  return db.prepare(sql).all({ ...params, limit: opts.limit, offset: opts.offset }) as FileRow[]
-}
 
 export interface UpsertWithBodyDelta {
   result: UpsertResult
@@ -177,27 +131,3 @@ export function upsertFileWithBodyDelta(db: Database.Database, row: FileRow): Up
   return { result, bodyChanged }
 }
 
-export function syncTags(db: Database.Database, path: string, tags: string[]): void {
-  const wanted = new Set(tags)
-  const existing = new Set(
-    (db.prepare('SELECT tag FROM file_tags WHERE path=?').all(path) as { tag: string }[]).map(
-      (r) => r.tag
-    )
-  )
-
-  const toAdd = [...wanted].filter((t) => !existing.has(t))
-  const toRemove = [...existing].filter((t) => !wanted.has(t))
-
-  const tx = db.transaction(() => {
-    for (const tag of toAdd) {
-      db.prepare('INSERT OR IGNORE INTO tags(name, usage_count) VALUES (?, 0)').run(tag)
-      db.prepare('INSERT INTO file_tags(path, tag) VALUES (?, ?)').run(path, tag)
-      db.prepare('UPDATE tags SET usage_count = usage_count + 1 WHERE name=?').run(tag)
-    }
-    for (const tag of toRemove) {
-      db.prepare('DELETE FROM file_tags WHERE path=? AND tag=?').run(path, tag)
-      db.prepare('UPDATE tags SET usage_count = usage_count - 1 WHERE name=?').run(tag)
-    }
-  })
-  tx()
-}

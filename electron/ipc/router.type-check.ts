@@ -94,7 +94,6 @@ const _accepts: Parameters<typeof registerHandlers>[0] = {
       body: ''
     }),
     getCategoryTree: () => [],
-    getTagCloud: () => [],
     revealInFinder: () => ({ ok: true as const })
   },
   index: {

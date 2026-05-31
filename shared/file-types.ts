@@ -88,7 +88,3 @@ export interface CategoryNode {
   children: CategoryNode[]
 }
 
-export interface TagCloudItem {
-  name: string
-  usage_count: number
-}

@@ -186,7 +186,7 @@ export type DbVersionInfo = {
 // --- file namespace types (phase-04) ---
 
 import type { Frontmatter } from './frontmatter-schema'
-import type { FileSummary, FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
+import type { FileSummary, FileFilter, Pagination, CategoryNode } from './file-types'
 import type { Op, OpsItem } from './ops-types'
 
 export type {
@@ -194,8 +194,7 @@ export type {
   FileFilter,
   Pagination,
   OrderBy,
-  CategoryNode,
-  TagCloudItem
+  CategoryNode
 } from './file-types'
 
 export type EolStyle = 'lf' | 'crlf' | 'mixed'
@@ -351,7 +350,6 @@ export type IpcContract = {
     hardDelete: (rel: string) => FileTrashResult
   }
   files: {
-    list: (filter: FileFilter, pagination: Pagination) => { items: FileSummary[]; total: number }
     getAll: () => FileSummary[]
     get: (path: string) => {
       summary: FileSummary
@@ -359,7 +357,6 @@ export type IpcContract = {
       body: string
     }
     getCategoryTree: () => CategoryNode[]
-    getTagCloud: (opts: { limit: number }) => TagCloudItem[]
     revealInFinder: (path: string) => { ok: true }
   }
   index: {

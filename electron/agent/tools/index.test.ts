@@ -34,7 +34,7 @@ describe('agentTools', () => {
     const names = agentTools.map((t) => t.name).sort()
     expect(names).toEqual([
       'clip_summary',
-      'list_tags',
+      'get_grove_stats',
       'read_file',
       'search_files',
       'update_frontmatter'

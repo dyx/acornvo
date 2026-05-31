@@ -172,7 +172,7 @@ export type _EventExports = _EventChannelUnion
 
 // ── files namespace (phase-06) ──────────────────────────────────────────
 
-import type { FileFilter, Pagination, CategoryNode, TagCloudItem } from './file-types'
+import type { FileFilter, Pagination, CategoryNode } from './file-types'
 
 // files.list returns { items: FileSummary[]; total: number }
 type _ListReturn = ReturnType<IpcContract['files']['list']>
@@ -219,7 +219,7 @@ void _revealOk
 const _filter: FileFilter = {}
 const _pagination: Pagination = { limit: 50, offset: 0, orderBy: 'clipped_desc' }
 const _node: CategoryNode = { name: 'x', count: 0, children: [] }
-const _tag: TagCloudItem = { name: 'x', usage_count: 0 }
+
 void _filter
 void _pagination
 void _node

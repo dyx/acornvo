@@ -27,10 +27,8 @@ import {
   upsertFile,
   deleteFile,
   renameFile,
-  syncTags,
   upsertFts,
   listAllPaths,
-  queryBy,
   upsertFileWithBodyDelta,
   type FileRow
 } from './index-queries'
@@ -135,47 +133,6 @@ describe('renameFile', () => {
   it('is a no-op when oldPath does not exist', () => {
     expect(() => renameFile(db, 'missing.md', 'new.md')).not.toThrow()
     expect(db.prepare('SELECT COUNT(*) AS n FROM files').get()).toEqual({ n: 0 })
-  })
-})
-
-describe('syncTags', () => {
-  let db: Database.Database
-  beforeEach(() => {
-    db = makeDb()
-    upsertFile(db, baseRow())
-  })
-
-  it('inserts new tag rows and bumps usage_count from 0', () => {
-    syncTags(db, 'notes/a.md', ['attention', 'transformer'])
-    expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
-      { name: 'attention', usage_count: 1 },
-      { name: 'transformer', usage_count: 1 }
-    ])
-    expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 2 })
-  })
-
-  it('decrements usage_count for removed tags and increments for added ones', () => {
-    syncTags(db, 'notes/a.md', ['x', 'y'])
-    syncTags(db, 'notes/a.md', ['y', 'z']) // remove x, keep y, add z
-
-    expect(db.prepare('SELECT name, usage_count FROM tags ORDER BY name').all()).toEqual([
-      { name: 'x', usage_count: 0 },
-      { name: 'y', usage_count: 1 },
-      { name: 'z', usage_count: 1 }
-    ])
-  })
-
-  it('is idempotent when tags do not change', () => {
-    syncTags(db, 'notes/a.md', ['x'])
-    syncTags(db, 'notes/a.md', ['x'])
-    expect(db.prepare('SELECT usage_count FROM tags WHERE name=?').get('x')).toEqual({
-      usage_count: 1
-    })
-  })
-
-  it('handles deduplication of input tags', () => {
-    syncTags(db, 'notes/a.md', ['x', 'x', 'y'])
-    expect(db.prepare('SELECT COUNT(*) AS n FROM file_tags').get()).toEqual({ n: 2 })
   })
 })
 
@@ -370,45 +327,5 @@ describe('renameFile (phase-08 FTS)', () => {
       | { path: string }
       | undefined
     expect(hit?.path).toBe('notes/y.md')
-  })
-})
-
-describe('queryBy', () => {
-  let db: Database.Database
-  beforeEach(() => {
-    db = makeDb()
-    upsertFile(db, baseRow({ path: 'a.md', category: 'note', rating: 3, updated_at: 1 }))
-    upsertFile(db, baseRow({ path: 'b.md', category: 'note', rating: 5, updated_at: 2 }))
-    upsertFile(db, baseRow({ path: 'c.md', category: 'idea', rating: 4, updated_at: 3 }))
-    syncTags(db, 'a.md', ['x'])
-    syncTags(db, 'b.md', ['x', 'y'])
-    syncTags(db, 'c.md', ['y'])
-  })
-
-  it('returns all rows ordered by updated_at desc when no filters', () => {
-    const rows = queryBy(db, { limit: 10, offset: 0, orderBy: 'updated_at_desc' })
-    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md', 'a.md'])
-  })
-
-  it('filters by category', () => {
-    const rows = queryBy(db, { category: 'note', limit: 10, offset: 0, orderBy: 'updated_at_desc' })
-    expect(rows.map((r) => r.path)).toEqual(['b.md', 'a.md'])
-  })
-
-  it('filters by tag (joins file_tags)', () => {
-    const rows = queryBy(db, { tag: 'y', limit: 10, offset: 0, orderBy: 'updated_at_desc' })
-    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md'])
-  })
-
-  it('filters by minimum rating', () => {
-    const rows = queryBy(db, { rating: 4, limit: 10, offset: 0, orderBy: 'updated_at_desc' })
-    expect(rows.map((r) => r.path)).toEqual(['c.md', 'b.md'])
-  })
-
-  it('paginates with limit + offset', () => {
-    const page1 = queryBy(db, { limit: 1, offset: 0, orderBy: 'updated_at_desc' })
-    const page2 = queryBy(db, { limit: 1, offset: 1, orderBy: 'updated_at_desc' })
-    expect(page1.map((r) => r.path)).toEqual(['c.md'])
-    expect(page2.map((r) => r.path)).toEqual(['b.md'])
   })
 })
