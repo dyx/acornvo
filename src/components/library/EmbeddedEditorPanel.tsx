@@ -190,6 +190,7 @@ export function EmbeddedEditorPanel(): JSX.Element {
   const handleTriggerReview = async () => {
     if (clipId === null) return
     try {
+      await useEditorStore.getState().flushSave()
       setAiRerunInflight(true)
       await ipc.ai.reviewClip(clipId, { force: true })
     } catch {

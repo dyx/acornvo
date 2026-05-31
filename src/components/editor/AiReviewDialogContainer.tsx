@@ -50,6 +50,7 @@ export function AiReviewDialogContainer({ open, clipId, onClose }: Props) {
       onRerun={async () => {
         if (clipId === null) return
         try {
+          await flushSave()
           setAiRerunInflight(true)
           await ipc.ai.reviewClip(clipId, { force: true })
         } catch {
