@@ -242,7 +242,15 @@
       "totalTokens": "Tokens",
       "estimatedCost": "Est. Cost",
       "unknownProfile": "Unknown",
-      "unknownModel": "Unknown"
+      "unknownModel": "Unknown",
+      "globalActivity": "Global Activity",
+      "tokenUsageHistory": "Token Usage History",
+      "last6Months": "Last 6 Months",
+      "byProfile": "By Profile",
+      "byProject": "By Project",
+      "modelUsage": "Model Usage",
+      "noData": "No data",
+      "noModelsUsed": "No models used"
     },
     "queue": {
       "pending": "Pending",

@@ -1,6 +1,23 @@
 import { getGlobalDb } from '../services/global-db'
 import { getCurrent } from '../services/grove'
 
+export interface AiUsageRow {
+  id?: number
+  jobId: string | null
+  profileId: string | null
+  model: string | null
+  promptTokens: number | null
+  completionTokens: number | null
+  cacheReadTokens: number | null
+  reasoningTokens: number | null
+  latencyMs: number | null
+  ok: 0 | 1
+  error: string | null
+  sessionId?: string
+  groveId?: string
+  createdAt: string
+}
+
 export interface AiUsageSummary {
   totalCalls: number
   okCount: number
@@ -39,7 +56,7 @@ function rowFromDb(r: any): AiUsageRow {
     error: r.error,
     sessionId: r.session_id ?? undefined,
     groveId: r.grove_id ?? undefined,
-    createdAt: r.created_at
+    createdAt: r.created_at ?? ''
   }
 }
 

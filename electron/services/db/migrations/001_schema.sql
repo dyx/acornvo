@@ -7,19 +7,20 @@
 -- ============================================================
 CREATE TABLE IF NOT EXISTS files (
   path TEXT PRIMARY KEY,
-  title TEXT,
-  url TEXT,
-  category TEXT,
-  rating INTEGER,
-  summary TEXT,
-  clipped_at TEXT,
-  reviewed_at TEXT,
   mtime INTEGER NOT NULL,
-  content_hash TEXT,
-  frontmatter_json TEXT,
   size_bytes INTEGER NOT NULL DEFAULT 0,
+  content_hash TEXT,
   created_at INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL DEFAULT 0
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  frontmatter_json TEXT NOT NULL DEFAULT '{}',
+
+  title TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.title')) VIRTUAL,
+  url TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.url')) VIRTUAL,
+  category TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.category')) VIRTUAL,
+  rating INTEGER GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.rating')) VIRTUAL,
+  summary TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.summary')) VIRTUAL,
+  clipped_at TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.clipped_at')) VIRTUAL,
+  reviewed_at TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.reviewed_at')) VIRTUAL
 );
 CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
 CREATE INDEX IF NOT EXISTS idx_files_rating ON files(rating);
@@ -71,23 +72,9 @@ CREATE INDEX IF NOT EXISTS idx_ops_log_op_ts ON ops_log(op, ts DESC);
 
 -- ============================================================
 -- clips — web clipper captures (phase-12)
+-- REMOVED: Clips are now just .md documents tracked in files table.
 -- ============================================================
-CREATE TABLE IF NOT EXISTS clips (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  url TEXT UNIQUE NOT NULL,
-  path TEXT NOT NULL,
-  title TEXT,
-  site TEXT,
-  author TEXT,
-  published_at TEXT,
-  clipped_at TEXT NOT NULL,
-  excerpt TEXT,
-  content_length INTEGER,
-  degraded INTEGER DEFAULT 0,
-  created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_clips_clipped_at ON clips(clipped_at DESC);
-CREATE INDEX IF NOT EXISTS idx_clips_site ON clips(site);
+DROP TABLE IF EXISTS clips;
 
 
 -- ============================================================

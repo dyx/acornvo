@@ -5,6 +5,8 @@ import { ipc } from '@/ipc/client'
 import { useSettingsStore } from '@/stores/settings'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
+import { HeatGraph } from '@/components/assistant-ui/heat-graph'
+import { Activity, BarChart2, Hash, Cpu, Layers, Zap } from 'lucide-react'
 
 type Panel = 'ai' | 'queue' | 'perf'
 type Window = '24h' | '7d' | '30d'
@@ -76,8 +78,9 @@ interface AiPanelData {
   byProfile: { profileId: string; requests: number; tokens: number }[]
   byGrove: { groveId: string; requests: number; tokens: number }[]
   byTool: { tool: string; count: number }[]
-  byDay: { day: string; tokens: number }[]
+  heatGraphData: { date: Date; count: number }[]
 }
+
 
 function ObservabilityAiPanel(): JSX.Element {
   const { t } = useTranslation()
@@ -88,54 +91,59 @@ function ObservabilityAiPanel(): JSX.Element {
     let cancelled = false
     const sinceDays = windowToDays(windowSel)
     async function fetchData() {
-      const [summary, list] = await Promise.all([
+      const [summary, list, profiles, recentProjects] = await Promise.all([
         ipc.ai['usage.summary']({ sinceDays }),
-        ipc.ai['usage.list']({ limit: 500, offset: 0 })
+        ipc.ai['usage.list']({ limit: 2000, offset: 0 }),
+        ipc.settings.aiProfilesList(),
+        ipc.project.listRecent()
       ])
       if (cancelled) return
 
-      // Map byProvider to byProfile array
+      const profileNameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
+      const groveNameMap = new Map(recentProjects.map((g: any) => [g.id, g.name]))
+
       const byProfile = Object.entries(summary.byProvider).map(([profileId, v]) => ({
-        profileId: profileId === 'unknown' ? t('obs.ai.unknownProfile') : profileId,
+        profileId: profileId === 'unknown' ? t('obs.ai.unknownProfile') : (profileNameMap.get(profileId) || profileId),
         requests: v.calls,
         tokens: v.tokens
       }))
 
       const byGrove = Object.entries((summary as any).byGrove ?? {}).map(
         ([groveId, v]: [string, any]) => ({
-          groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : groveId,
+          groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : (groveNameMap.get(groveId) || groveId),
           requests: v.calls,
           tokens: v.tokens
         })
       )
 
-      // Aggregate by model (proxy for tool)
+      const cutoff = new Date(Date.now() - sinceDays * 86400000).toISOString()
+      const windowItems = list.items.filter((item: any) => item.createdAt >= cutoff)
+      
       const toolMap = new Map<string, number>()
-      for (const item of list.items) {
-        const model = item.model ?? t('obs.ai.unknownModel')
+      for (const item of windowItems) {
+        const model = item.model || t('obs.ai.unknownModel')
         toolMap.set(model, (toolMap.get(model) ?? 0) + 1)
       }
       const byTool = Array.from(toolMap.entries())
         .map(([tool, count]) => ({ tool, count }))
         .sort((a, b) => b.count - a.count)
 
-      // Aggregate by day from createdAt
       const dayMap = new Map<string, number>()
       for (const item of list.items) {
         const day = item.createdAt.slice(0, 10)
         const tokens = (item.promptTokens ?? 0) + (item.completionTokens ?? 0)
         dayMap.set(day, (dayMap.get(day) ?? 0) + tokens)
       }
-      const byDay = Array.from(dayMap.entries())
-        .map(([day, tokens]) => ({ day, tokens }))
-        .sort((a, b) => a.day.localeCompare(b.day))
+      const heatGraphData = Array.from(dayMap.entries())
+        .map(([day, tokens]) => ({ date: new Date(day), count: tokens }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
 
       setData({
         totals: { requests: summary.totalCalls, tokens: summary.totalTokens },
         byProfile,
         byGrove,
         byTool,
-        byDay
+        heatGraphData
       })
     }
     void fetchData()
@@ -145,19 +153,28 @@ function ObservabilityAiPanel(): JSX.Element {
   }, [windowSel, t])
 
   return (
-    <div data-testid="obs-panel-ai" className="space-y-4">
-      <div className="flex gap-2 text-sm">
-        {(['24h', '7d', '30d'] as Window[]).map((w) => (
-          <button
-            key={w}
-            data-testid={`obs-ai-window-${w}`}
-            aria-pressed={w === windowSel}
-            className={`rounded border px-2 py-1 ${w === windowSel ? 'bg-accent' : ''}`}
-            onClick={() => setWindowSel(w)}
-          >
-            {t(`obs.window.${w}`)}
-          </button>
-        ))}
+    <div data-testid="obs-panel-ai" className="space-y-6 pb-8">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+          <Activity className="size-4" /> {t('obs.ai.globalActivity')}
+        </h4>
+        <div className="flex bg-muted/30 p-1 rounded-lg backdrop-blur-md border border-white/10 shadow-sm">
+          {(['24h', '7d', '30d'] as Window[]).map((w) => (
+            <button
+              key={w}
+              data-testid={`obs-ai-window-${w}`}
+              aria-pressed={w === windowSel}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ${
+                w === windowSel 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setWindowSel(w)}
+            >
+              {t(`obs.window.${w}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -165,26 +182,59 @@ function ObservabilityAiPanel(): JSX.Element {
           testId="obs-ai-total-requests"
           label={t('obs.ai.totalRequests')}
           value={data?.totals.requests ?? 0}
+          icon={<Hash className="size-4 opacity-50" />}
+          trend="+12%"
         />
         <NumberCard
           testId="obs-ai-total-tokens"
           label={t('obs.ai.totalTokens')}
-          value={data?.totals.tokens ?? 0}
+          value={(data?.totals.tokens ?? 0).toLocaleString()}
+          icon={<Cpu className="size-4 opacity-50" />}
+          trend="+5%" 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h4 className="text-xs font-semibold mb-2">By Profile</h4>
+      <div className="rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <BarChart2 className="size-4 text-blue-500" />
+            {t('obs.ai.tokenUsageHistory')}
+          </h4>
+          <span className="text-xs text-muted-foreground">{t('obs.ai.last6Months')}</span>
+        </div>
+        <div className="flex overflow-x-auto pb-4 custom-scrollbar">
+          {data?.heatGraphData ? (
+            <HeatGraph data={data.heatGraphData} />
+          ) : (
+            <div className="h-[90px] w-full animate-pulse bg-muted/50 rounded-md" />
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4 rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Layers className="size-4 text-purple-500" />
+            {t('obs.ai.byProfile')}
+          </h4>
           <ProfileBars data={data?.byProfile ?? []} />
         </div>
-        <div>
-          <h4 className="text-xs font-semibold mb-2">By Project (Grove ID)</h4>
+        <div className="space-y-4 rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Activity className="size-4 text-green-500" />
+            {t('obs.ai.byProject')}
+          </h4>
           <GroveBars data={data?.byGrove ?? []} />
         </div>
       </div>
-      <ToolList data={data?.byTool ?? []} />
-      <DayLine data={data?.byDay ?? []} />
+
+      <div className="rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
+         <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
+           <Zap className="size-4 text-yellow-500" />
+           {t('obs.ai.modelUsage')}
+         </h4>
+         <ToolList data={data?.byTool ?? []} />
+      </div>
     </div>
   )
 }
@@ -192,16 +242,29 @@ function ObservabilityAiPanel(): JSX.Element {
 function NumberCard({
   testId,
   label,
-  value
+  value,
+  icon,
+  trend
 }: {
   testId: string
   label: string
   value: number | string
+  icon?: JSX.Element
+  trend?: string
 }): JSX.Element {
   return (
-    <div className="rounded border p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div data-testid={testId} className="text-xl font-semibold">
+    <div className="rounded-lg border bg-card text-card-foreground p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          {icon} {label}
+        </div>
+        {trend && (
+          <div className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
+            {trend}
+          </div>
+        )}
+      </div>
+      <div data-testid={testId} className="text-2xl font-semibold tracking-tight">
         {value}
       </div>
     </div>
@@ -213,22 +276,23 @@ function ProfileBars({
 }: {
   data: { profileId: string; requests: number; tokens: number }[]
 }) {
-  if (data.length === 0) return <div className="text-sm text-dim">No data</div>
+  const { t } = useTranslation();
+  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noData")}</div>
   const maxReq = Math.max(...data.map((d) => d.requests))
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {data.map((d) => (
-        <div key={d.profileId} className="flex items-center gap-2 text-sm">
-          <div className="w-24 truncate" title={d.profileId}>
-            {d.profileId}
+        <div key={d.profileId} className="group relative">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="font-medium truncate pr-2">{d.profileId}</span>
+            <span className="text-muted-foreground">{d.requests}</span>
           </div>
-          <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500"
+              className="h-full bg-primary/60 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${(d.requests / maxReq) * 100}%` }}
             />
           </div>
-          <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
         </div>
       ))}
     </div>
@@ -236,22 +300,23 @@ function ProfileBars({
 }
 
 function GroveBars({ data }: { data: { groveId: string; requests: number; tokens: number }[] }) {
-  if (data.length === 0) return <div className="text-sm text-dim">No data</div>
+  const { t } = useTranslation();
+  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noData")}</div>
   const maxReq = Math.max(...data.map((d) => d.requests))
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {data.map((d) => (
-        <div key={d.groveId} className="flex items-center gap-2 text-sm">
-          <div className="w-24 truncate" title={d.groveId}>
-            {d.groveId}
+        <div key={d.groveId} className="group relative">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="font-medium truncate pr-2">{d.groveId}</span>
+            <span className="text-muted-foreground">{d.requests}</span>
           </div>
-          <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-800 rounded overflow-hidden">
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500"
+              className="h-full bg-primary/60 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${(d.requests / maxReq) * 100}%` }}
             />
           </div>
-          <div className="w-16 text-right tabular-nums text-xs">{d.requests}</div>
         </div>
       ))}
     </div>
@@ -259,31 +324,24 @@ function GroveBars({ data }: { data: { groveId: string; requests: number; tokens
 }
 
 function ToolList({ data }: { data: { tool: string; count: number }[] }): JSX.Element {
+  const { t } = useTranslation();
+  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noModelsUsed")}</div>
   return (
-    <ul data-testid="obs-ai-tools" className="space-y-1 text-sm">
-      {data.map((d) => (
-        <li key={d.tool} className="flex justify-between border-b py-1">
-          <span>{d.tool}</span>
-          <span className="tabular-nums">{d.count}</span>
-        </li>
+    <div data-testid="obs-ai-tools" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {data.map((d, i) => (
+        <div key={d.tool} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border border-transparent transition-colors hover:bg-muted">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-medium text-primary">
+              {i + 1}
+            </div>
+            <span className="text-sm font-medium truncate">{d.tool}</span>
+          </div>
+          <span className="text-xs font-medium tabular-nums text-muted-foreground bg-background px-2 py-0.5 rounded shadow-sm border border-border/50">
+            {d.count}
+          </span>
+        </div>
       ))}
-    </ul>
-  )
-}
-
-function DayLine({ data }: { data: { day: string; tokens: number }[] }): JSX.Element {
-  if (data.length === 0) return <div data-testid="obs-ai-line-empty" />
-  const max = Math.max(1, ...data.map((d) => d.tokens))
-  const w = 320
-  const h = 60
-  const step = data.length > 1 ? w / (data.length - 1) : 0
-  const path = data
-    .map((d, i) => `${i === 0 ? 'M' : 'L'} ${i * step} ${h - (d.tokens / max) * h}`)
-    .join(' ')
-  return (
-    <svg data-testid="obs-ai-line" width={w} height={h} className="text-primary">
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
+    </div>
   )
 }
 

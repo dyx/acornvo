@@ -244,7 +244,7 @@ export function emitCanceled(deps: TranslatorDeps): void {
 export function emitDone(
   deps: TranslatorDeps,
   finalUsage: { input_tokens?: number; output_tokens?: number } | undefined,
-  modelName: string
+  _modelName: string
 ): void {
   const promptTokens = finalUsage?.input_tokens ?? 0
   const completionTokens = finalUsage?.output_tokens ?? 0

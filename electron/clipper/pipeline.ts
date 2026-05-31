@@ -8,7 +8,7 @@ import type {
   ClipErrorCode,
   EnrichedResult
 } from '@shared/clipper-types'
-import type { Clip, ClipCreateInput } from '@shared/clip-types'
+
 import type { Extractor } from './extract'
 import type { Dedupe } from './dedupe'
 import { getQueueBootstrap } from '../queue'
@@ -27,10 +27,7 @@ export interface PipelineDeps {
   dedupe: Dedupe
   writeAtomic: (path: string, data: string) => Promise<void>
   indexUpsert: (path: string, content: string) => Promise<void>
-  clipsDao: {
-    create: (input: ClipCreateInput) => Promise<Clip>
-    getByUrl: (url: string) => Promise<Clip | null>
-  }
+  getFileRowId: (path: string) => Promise<number | null>
   opsLog: (opts: { op: string; path: string; meta?: Record<string, unknown> }) => void
   nowIso: () => string
   nowDate: () => string
@@ -219,43 +216,18 @@ export function createPipeline(deps: PipelineDeps) {
       throw clipError('E_WRITE_FAILED', `atomic write failed after retries: ${path}`)
     }
 
-    // Create DB row
-    const clippedAt = isoDate
-    const clipRow: ClipCreateInput = {
-      url: state.url,
-      path,
-      title: finalPreview.title || null,
-      site: state.enriched.site || null,
-      author: state.enriched.author || null,
-      publishedAt: state.enriched.publishedTime || null,
-      clippedAt,
-      excerpt: finalPreview.excerpt || null,
-      contentLength: state.enriched.length ?? null,
-      degraded: state.enriched.degraded
-    }
-
-    let clipResult: Clip
-    try {
-      clipResult = await deps.clipsDao.create(clipRow)
-    } catch (err) {
-      if (err instanceof IpcError && err.code === 'E_DUPLICATE') {
-        end?.({ ok: false, meta: { error: 'E_DUPLICATE', path } })
-        throw clipError('E_DUPLICATE', err.message, err.context)
-      }
-      end?.({ ok: false, meta: { error: (err as Error).message } })
-      throw err
-    }
-
     // Index (best-effort)
     try {
       await deps.indexUpsert(path, fileContent)
     } catch {
       // non-blocking
     }
+    
+    const rowid = (await deps.getFileRowId(path)) ?? -1
 
     // Ops log (best-effort)
     try {
-      deps.opsLog({ op: 'clip', path, meta: { url: state.url, id: clipResult.id } })
+      deps.opsLog({ op: 'clip', path, meta: { url: state.url, id: rowid } })
     } catch {
       // non-blocking
     }
@@ -263,12 +235,12 @@ export function createPipeline(deps: PipelineDeps) {
     // Enqueue download-clip-images job
     const queue = getQueueBootstrap()
     const clipImagesLocalize = settingsStore.get('browser').clipImagesLocalize
-    if (queue && clipImagesLocalize) {
+    if (queue && clipImagesLocalize && rowid !== -1) {
       try {
         queue.store.enqueue(
           'download-clip-images',
-          { clipId: clipResult.id, path },
-          { dedupeKey: `download-images:${clipResult.id}` }
+          { clipId: rowid, path },
+          { dedupeKey: `download-images:${rowid}` }
         )
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
@@ -276,19 +248,19 @@ export function createPipeline(deps: PipelineDeps) {
           op: 'enqueue-download',
           ok: false,
           msg: 'download-clip-images enqueue failed',
-          meta: { clipId: clipResult.id, error: msg }
+          meta: { clipId: rowid, error: msg }
         })
       }
     }
 
     // Enqueue ai-review-clip job (phase-14)
     const profileId = settingsStore.get('ai').defaultProfileId
-    if (queue && profileId) {
+    if (queue && profileId && rowid !== -1) {
       try {
         queue.store.enqueue(
           'ai-review-clip',
-          { clipId: clipResult.id, path },
-          { dedupeKey: `clip:${clipResult.id}` }
+          { clipId: rowid, path },
+          { dedupeKey: `clip:${rowid}` }
         )
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
@@ -296,7 +268,7 @@ export function createPipeline(deps: PipelineDeps) {
           op: 'enqueue-review',
           ok: false,
           msg: 'ai-review-clip enqueue failed; clip already saved',
-          meta: { clipId: clipResult.id, error: msg }
+          meta: { clipId: rowid, error: msg }
         })
       }
     } else if (!profileId) {
@@ -304,26 +276,26 @@ export function createPipeline(deps: PipelineDeps) {
         op: 'enqueue-review',
         ok: false,
         msg: 'no ai profile configured; skipping ai-review-clip',
-        meta: { clipId: clipResult.id }
+        meta: { clipId: rowid }
       })
     } else {
       logger().warn('clipper', {
         op: 'enqueue-review',
         ok: false,
         msg: 'queue bootstrap unavailable; ai-review-clip not enqueued',
-        meta: { clipId: clipResult.id }
+        meta: { clipId: rowid }
       })
     }
 
-    end?.({ ok: true, meta: { clipId: clipResult.id, path } })
+    end?.({ ok: true, meta: { clipId: rowid, path } })
     flights.delete(input.runId)
 
     return {
-      id: clipResult.id,
-      path: clipResult.path,
-      url: clipResult.url,
-      title: clipResult.title || '',
-      degraded: clipResult.degraded
+      id: rowid,
+      path: path,
+      url: state.url,
+      title: finalPreview.title || '',
+      degraded: state.enriched.degraded
     }
   }
 

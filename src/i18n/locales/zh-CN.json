@@ -275,7 +275,15 @@
       "totalTokens": "Token数",
       "estimatedCost": "预估费用",
       "unknownProfile": "未知",
-      "unknownModel": "未知"
+      "unknownModel": "未知",
+      "globalActivity": "全局动态",
+      "tokenUsageHistory": "Token 消耗热力图",
+      "last6Months": "过去 6 个月",
+      "byProfile": "按配置档",
+      "byProject": "按项目",
+      "modelUsage": "模型使用分布",
+      "noData": "暂无数据",
+      "noModelsUsed": "暂未使用任何模型"
     },
     "queue": {
       "pending": "等待中",

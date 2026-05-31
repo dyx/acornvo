@@ -13,7 +13,7 @@ import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent'
 import { IpcError } from '../../shared/ipc-contract'
 import { type ResolvedProfile } from '../ai/model-factory'
 import { writeUsage } from '../ai/usage'
-import { dbService } from '../services/db'
+
 import { getProfileDecryptedKey } from '../settings/profile-key'
 
 export interface ChatDeps {

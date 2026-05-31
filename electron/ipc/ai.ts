@@ -1,4 +1,4 @@
-import type { IpcContract } from '@shared/ipc-contract'
+
 import { IpcError } from '@shared/ipc-contract'
 import { logger } from '../obs/logger'
 import { aiUsage } from '../ai/usage'
@@ -12,8 +12,8 @@ function requireStore() {
   return b.store
 }
 
-export const aiHandlers: IpcContract['ai'] = {
-  async reviewClip(clipId, opts) {
+export const aiHandlers = {
+  async reviewClip(clipId: number, opts?: { force?: boolean }) {
     logger().info('ai', { msg: '[ai.reviewClip] called', meta: { clipId, opts } })
 
     const profileId = settingsStore.get('ai').defaultProfileId
@@ -24,7 +24,7 @@ export const aiHandlers: IpcContract['ai'] = {
     }
     const row = dbService
       .requireCurrent()
-      .prepare('SELECT path FROM clips WHERE id = ?')
+      .prepare('SELECT path FROM files WHERE rowid = ?')
       .get(clipId) as { path: string } | undefined
     if (!row) {
       logger().error('ai', { msg: '[ai.reviewClip] clip not found', meta: { clipId } })
@@ -43,11 +43,11 @@ export const aiHandlers: IpcContract['ai'] = {
     return { jobId: id }
   },
 
-  async ['usage.summary'](opts) {
+  async ['usage.summary'](opts?: { sinceDays?: number }) {
     return aiUsage.summary(opts)
   },
 
-  async ['usage.list'](opts) {
+  async ['usage.list'](opts: { limit: number; offset: number; profileId?: string; okOnly?: boolean }) {
     return aiUsage.list(opts)
   }
 }

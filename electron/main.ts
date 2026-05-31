@@ -112,7 +112,7 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
-app.on('web-contents-created', (event, wc) => {
+app.on('web-contents-created', (_event, wc) => {
   wc.on('before-input-event', (e, input) => {
     // Disable zoom shortcuts (Cmd/Ctrl + or - or =)
     if (

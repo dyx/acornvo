@@ -77,10 +77,10 @@ const convertMessage = (msg: ChatMessage): ThreadMessage => {
     return {
       ...baseMessage,
       status: statusMap[msg.status ?? 'done'] || 'complete'
-    } as ThreadMessage;
+    } as unknown as ThreadMessage;
   }
 
-  return baseMessage as ThreadMessage;
+  return baseMessage as unknown as ThreadMessage;
 }
 
 export function ChatRuntimeProvider({ children }: { children: React.ReactNode }) {
@@ -93,7 +93,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const messages = activeSession?.messages ?? EMPTY_MESSAGES
 
   const isRunning = activeSession ? 
-    activeSession.messages.some(m => m.status === 'running' || m.status === 'pending' || m.status === 'streaming') : false;
+    activeSession.messages.some(m => m.status === 'pending' || m.status === 'streaming') : false;
 
   const runtime = useExternalStoreRuntime<ChatMessage>({
     messages,
@@ -118,7 +118,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       // 1. Truncate DB messages and clear LangGraph state
       try {
-        await window.ipc.chat['sessions.truncate'](activeSid, message.sourceId);
+        await window.api.chat['sessions.truncate'](activeSid, message.sourceId);
       } catch (err) {
         console.error('Failed to truncate session:', err);
         return;
@@ -150,7 +150,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       if (!parentMessage || parentMessage.role !== 'user') return;
 
       try {
-        await window.ipc.chat['sessions.truncate'](activeSid, parentId);
+        await window.api.chat['sessions.truncate'](activeSid, parentId);
       } catch (err) {
         console.error('Failed to truncate session for reload:', err);
         return;

@@ -1,6 +1,6 @@
 import { IpcError } from '@shared/ipc-contract'
 import { getAggregates } from '../obs/perf'
-import { dbService } from '../services/db'
+
 
 export const perfHandlers = {
   aggregates(
@@ -13,7 +13,6 @@ export const perfHandlers = {
     if (!Number.isFinite(windowMs) || windowMs <= 0) {
       throw new IpcError('E_INVALID_ARGS', 'windowMs must be a positive number')
     }
-    const db = dbService.requireCurrent()
-    return getAggregates({ db, area, windowMs })
+    return getAggregates({ area, windowMs })
   }
 }

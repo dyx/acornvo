@@ -16,8 +16,7 @@ import type {
   ClipRunId,
   ClipInput,
   ClipResult,
-  ClipPreview,
-  ClipErrorEnvelope
+  ClipPreview
 } from './clipper-types'
 import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
@@ -35,8 +34,7 @@ export type {
   ClipRunId,
   ClipInput,
   ClipResult,
-  ClipPreview,
-  ClipErrorEnvelope
+  ClipPreview
 } from './clipper-types'
 export type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 

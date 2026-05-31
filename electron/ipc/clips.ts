@@ -5,89 +5,38 @@ import type {
   Clip,
   ClipCreateInput,
   ClipsListOpts,
-  ClipsListResult,
   IpcContract
 } from '@shared/ipc-contract'
-import { dbService } from '../services/db'
-
 interface ClipDeps {
   getDb: () => Database.Database
   nowIso: () => string
 }
 
-interface ClipRow {
-  id: number
-  url: string
-  path: string
-  title: string | null
-  site: string | null
-  author: string | null
-  published_at: string | null
-  clipped_at: string
-  excerpt: string | null
-  content_length: number | null
-  degraded: number
-  created_at: string
-}
-
-function rowToClip(r: ClipRow): Clip {
+function rowToClip(rowid: number, path: string, created_at: number, frontmatter_json: string): Clip {
+  let fm: any = {}
+  try {
+    fm = JSON.parse(frontmatter_json)
+  } catch {}
   return {
-    id: r.id,
-    url: r.url,
-    path: r.path,
-    title: r.title,
-    site: r.site,
-    author: r.author,
-    publishedAt: r.published_at,
-    clippedAt: r.clipped_at,
-    excerpt: r.excerpt,
-    contentLength: r.content_length,
-    degraded: r.degraded === 1,
-    createdAt: r.created_at
+    id: rowid,
+    url: fm.url ?? '',
+    path: path,
+    title: fm.title ?? null,
+    site: fm.site ?? null,
+    author: fm.author ?? null,
+    publishedAt: fm.published_at ?? null,
+    clippedAt: fm.clipped_at ?? new Date(created_at).toISOString(),
+    excerpt: fm.excerpt ?? fm.summary ?? null,
+    contentLength: fm.contentLength ?? null,
+    degraded: fm.degraded === true || fm.degraded === 1,
+    createdAt: new Date(created_at).toISOString()
   }
 }
 
 export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
-  const insertStmt = (db: Database.Database) =>
-    db.prepare(`
-    INSERT INTO clips (url, path, title, site, author, published_at, clipped_at, excerpt, content_length, degraded, created_at)
-    VALUES (@url, @path, @title, @site, @author, @published_at, @clipped_at, @excerpt, @content_length, @degraded, @created_at)
-  `)
-
   return {
-    create(input: ClipCreateInput) {
-      const db = deps.getDb()
-      const nowIso = deps.nowIso()
-      try {
-        const r = insertStmt(db).run({
-          url: input.url,
-          path: input.path,
-          title: input.title ?? null,
-          site: input.site ?? null,
-          author: input.author ?? null,
-          published_at: input.publishedAt ?? null,
-          clipped_at: input.clippedAt,
-          excerpt: input.excerpt ?? null,
-          content_length: input.contentLength ?? null,
-          degraded: input.degraded ? 1 : 0,
-          created_at: nowIso
-        })
-        const id = Number(r.lastInsertRowid)
-        // Return the full Clip row
-        const row = db.prepare<[number], ClipRow>('SELECT * FROM clips WHERE id = ?').get(id)!
-        return rowToClip(row)
-      } catch (e: any) {
-        if (e && /UNIQUE/i.test(String(e.message))) {
-          throw new IpcError(
-            'E_DUPLICATE',
-            JSON.stringify({
-              message: 'url already clipped',
-              existingUrl: input.url
-            })
-          )
-        }
-        throw new IpcError('E_INTERNAL', e?.message ?? 'insert failed')
-      }
+    create(_input: ClipCreateInput) {
+      throw new IpcError('E_INTERNAL', 'clips:create is deprecated (handled by indexer)')
     },
 
     list(opts: ClipsListOpts) {
@@ -96,48 +45,52 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
       const offset = Math.max(0, opts.offset)
       const orderBy = opts.orderBy === 'title' ? 'title COLLATE NOCASE ASC' : 'clipped_at DESC'
 
-      const where: string[] = []
+      const where: string[] = ["(json_extract(frontmatter_json, '$.source_type') = 'article' OR category = 'inbox')"]
       const params: Record<string, unknown> = {}
       if (opts.q && opts.q.trim().length > 0) {
         where.push(
-          '(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR excerpt LIKE @q COLLATE NOCASE)'
+          '(title LIKE @q COLLATE NOCASE OR url LIKE @q COLLATE NOCASE OR summary LIKE @q COLLATE NOCASE)'
         )
         params.q = `%${opts.q.trim()}%`
       }
       if (opts.site && opts.site.trim().length > 0) {
-        where.push('site = @site')
+        where.push('json_extract(frontmatter_json, \'$.site\') = @site')
         params.site = opts.site.trim()
       }
       const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
 
       const totalRow = db
-        .prepare<typeof params, { n: number }>(`SELECT COUNT(*) as n FROM clips ${whereSql}`)
+        .prepare<typeof params, { n: number }>(`SELECT COUNT(*) as n FROM files ${whereSql}`)
         .get(params)
       const items = db
         .prepare<
           typeof params & { __limit: number; __offset: number },
-          ClipRow
-        >(`SELECT * FROM clips ${whereSql} ORDER BY ${orderBy} LIMIT @__limit OFFSET @__offset`)
+          { rowid: number; path: string; frontmatter_json: string; created_at: number }
+        >(`SELECT rowid, path, frontmatter_json, created_at FROM files ${whereSql} ORDER BY ${orderBy} LIMIT @__limit OFFSET @__offset`)
         .all({ ...params, __limit: limit, __offset: offset })
 
-      return { items: items.map(rowToClip), total: totalRow?.n ?? 0 }
+      return { items: items.map(r => rowToClip(r.rowid, r.path, r.created_at, r.frontmatter_json)), total: totalRow?.n ?? 0 }
     },
 
     getByUrl(url: string) {
       const db = deps.getDb()
-      const row = db.prepare<[string], ClipRow>('SELECT * FROM clips WHERE url = ?').get(url)
-      return row ? rowToClip(row) : null
+      const row = db.prepare<[string], { rowid: number; path: string; frontmatter_json: string; created_at: number }>(
+        'SELECT rowid, path, frontmatter_json, created_at FROM files WHERE url = ?'
+      ).get(url)
+      return row ? rowToClip(row.rowid, row.path, row.created_at, row.frontmatter_json) : null
     },
 
     getById(id: number) {
       const db = deps.getDb()
-      const row = db.prepare<[number], ClipRow>('SELECT * FROM clips WHERE id = ?').get(id)
-      return row ? rowToClip(row) : null
+      const row = db.prepare<[number], { rowid: number; path: string; frontmatter_json: string; created_at: number }>(
+        'SELECT rowid, path, frontmatter_json, created_at FROM files WHERE rowid = ?'
+      ).get(id)
+      return row ? rowToClip(row.rowid, row.path, row.created_at, row.frontmatter_json) : null
     },
 
     delete(id: number) {
       const db = deps.getDb()
-      db.prepare<[number]>('DELETE FROM clips WHERE id = ?').run(id)
+      db.prepare<[number]>('DELETE FROM files WHERE rowid = ?').run(id)
       return { ok: true as const }
     }
   }

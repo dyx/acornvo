@@ -2,10 +2,6 @@ import type Database from 'better-sqlite3'
 
 export interface FileRow {
   path: string
-  title: string | null
-  summary: string | null
-  category: string | null
-  rating: number | null
   content_hash: string
   mtime: number
   size_bytes: number
@@ -19,18 +15,13 @@ export type UpsertResult = 'inserted' | 'updated' | 'unchanged'
 export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
   const existing = db
     .prepare(
-      'SELECT title, summary, category, rating, content_hash, mtime, size_bytes, frontmatter_json FROM files WHERE path=?'
+      'SELECT content_hash, mtime, size_bytes FROM files WHERE path=?'
     )
     .get(row.path) as
     | {
-        title: string | null
-        summary: string | null
-        category: string | null
-        rating: number | null
         content_hash: string
         mtime: number
         size_bytes: number
-        frontmatter_json: string | null
       }
     | undefined
 
@@ -38,25 +29,16 @@ export function upsertFile(db: Database.Database, row: FileRow): UpsertResult {
     existing &&
     existing.content_hash === row.content_hash &&
     existing.mtime === row.mtime &&
-    existing.title === row.title &&
-    existing.summary === row.summary &&
-    existing.category === row.category &&
-    existing.rating === row.rating &&
-    existing.size_bytes === row.size_bytes &&
-    existing.frontmatter_json === row.frontmatter_json
+    existing.size_bytes === row.size_bytes
   ) {
     return 'unchanged'
   }
 
   db.prepare(
     `INSERT INTO files
-       (path, title, summary, category, rating, content_hash, mtime, size_bytes, frontmatter_json, created_at, updated_at)
-       VALUES (@path, @title, @summary, @category, @rating, @content_hash, @mtime, @size_bytes, @frontmatter_json, @created_at, @updated_at)
+       (path, content_hash, mtime, size_bytes, frontmatter_json, created_at, updated_at)
+       VALUES (@path, @content_hash, @mtime, @size_bytes, @frontmatter_json, @created_at, @updated_at)
      ON CONFLICT(path) DO UPDATE SET
-       title = excluded.title,
-       summary = excluded.summary,
-       category = excluded.category,
-       rating = excluded.rating,
        content_hash = excluded.content_hash,
        mtime = excluded.mtime,
        size_bytes = excluded.size_bytes,

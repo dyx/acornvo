@@ -17,7 +17,7 @@ export interface Tab {
 }
 
 export type TabPatch = Partial<
-  Pick<Tab, 'url' | 'title' | 'favicon' | 'loading' | 'canGoBack' | 'canGoForward'>
+  Pick<Tab, 'url' | 'title' | 'favicon' | 'loading' | 'canGoBack' | 'canGoForward' | 'isClipped'>
 >
 
 export interface TabStateChangedPayload {

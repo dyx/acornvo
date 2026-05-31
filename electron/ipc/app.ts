@@ -1,7 +1,7 @@
 import { app } from 'electron'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { getBootstrapResult } from '../bootstrap'
+
+declare const __GIT_HASH__: string | undefined
 
 export const appHandlers = {
   async runtimeInfo() {

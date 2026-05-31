@@ -58,9 +58,7 @@ function loadProfile(profileId: string): ResolvedProfile | null {
     provider: p.provider as ResolvedProfile['provider'],
     model: p.model,
     apiKey: p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id),
-    baseUrl: p.base_url ?? undefined,
-    temperature: p.temperature,
-    maxTokens: p.max_tokens ?? undefined
+    baseUrl: p.base_url ?? undefined
   }
 }
 
@@ -91,8 +89,7 @@ async function recoverOne(
       finishToolCall: async () => {}
     },
     recordUsage: () => {},
-    seenAiMessageIds: new Set<string>(),
-    toolCallRowIdByCallId: new Map<string, string>()
+    seenAiMessageIds: new Set<string>()
   }
 
   // Recover the toolCall ids from the latest assistant message in state.values.messages.

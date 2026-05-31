@@ -2,11 +2,8 @@ import { dbService } from '../services/db'
 import { IpcError } from '@shared/ipc-contract'
 import type {
   FileSummary,
-  FileFilter,
-  Pagination,
   IpcContract,
-  CategoryNode,
-  TagCloudItem
+  CategoryNode
 } from '@shared/ipc-contract'
 import type { ReviewStatus } from '@shared/file-types'
 import { fileHandlers } from './file'
@@ -68,7 +65,6 @@ async function getAll(): Promise<FileSummary[]> {
       rj.status AS job_status,
       rj.last_error AS job_error
     FROM files f
-    LEFT JOIN clips c ON c.path = f.path
     LEFT JOIN (
       SELECT
         json_extract(payload_json, '$.clipId') AS clip_id,
@@ -79,7 +75,7 @@ async function getAll(): Promise<FileSummary[]> {
         ) AS rn
       FROM jobs
       WHERE kind = 'ai-review-clip'
-    ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
+    ) rj ON CAST(rj.clip_id AS INTEGER) = f.rowid AND rj.rn = 1
   `
 
   let rows: FileRow[]
@@ -139,7 +135,6 @@ async function get(path: string): Promise<{
                 rj.status AS job_status,
                 rj.last_error AS job_error
          FROM files f
-         LEFT JOIN clips c ON c.path = f.path
          LEFT JOIN (
            SELECT
              json_extract(payload_json, '$.clipId') AS clip_id,
@@ -150,7 +145,7 @@ async function get(path: string): Promise<{
              ) AS rn
            FROM jobs
            WHERE kind = 'ai-review-clip'
-         ) rj ON CAST(rj.clip_id AS INTEGER) = c.id AND rj.rn = 1
+         ) rj ON CAST(rj.clip_id AS INTEGER) = f.rowid AND rj.rn = 1
          WHERE f.path = ?`
       )
       .get(path) as FileRow | undefined

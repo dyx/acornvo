@@ -54,7 +54,7 @@ function rerr(code: ReviewerErrCode, message: string, extra: Record<string, unkn
 function loadClip(clipId: number): ClipRow {
   const db = dbService.requireCurrent()
   const row = db
-    .prepare('SELECT id, url, path, title, excerpt FROM clips WHERE id = ?')
+    .prepare('SELECT rowid as id, url, path, title, summary as excerpt FROM files WHERE rowid = ?')
     .get(clipId) as ClipRow | undefined
   if (!row) throw rerr('E_CLIP_NOT_FOUND', `clip ${clipId} not found`)
   return row

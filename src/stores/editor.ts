@@ -231,7 +231,7 @@ async function _doSave(): Promise<void> {
               conflictState: {
                 kind: 'saveConflict',
                 remoteMtimeMs:
-                  (err.context?.remoteMtimeMs as number | undefined) ?? fresh.summary.mtimeMs,
+                  (err.context?.remoteMtimeMs as number | undefined) ?? fresh.summary.mtime,
                 remoteBody: fresh.body,
                 remoteFrontmatter: fresh.frontmatter
               }

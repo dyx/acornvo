@@ -23,7 +23,7 @@ export async function handleTelemetryAggregate(input: TelemetryAggregateInput): 
     .get(dayStart, dayEnd) as { requests: number; total_tokens: number }
 
   const clipsCount = db
-    .prepare(`SELECT COUNT(*) AS n FROM clips WHERE created_at >= ? AND created_at <= ?`)
+    .prepare(`SELECT COUNT(*) AS n FROM files WHERE created_at >= ? AND created_at <= ?`)
     .get(dayStart, dayEnd) as { n: number } | undefined
 
   const perfCount = globalDb

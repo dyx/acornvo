@@ -172,17 +172,27 @@ export async function startScan(groveRoot: string): Promise<void> {
     }
     _currentPath = entry.relPath
     try {
+      const stat = await fsStat(entry.absPath)
+      const existing = db.prepare('SELECT mtime, size_bytes FROM files WHERE path=?').get(entry.relPath) as { mtime: number, size_bytes: number } | undefined
+      
+      if (existing && existing.mtime === stat.mtimeMs && existing.size_bytes === stat.size) {
+        // fast path: unchanged
+        seen.add(entry.relPath)
+        _scanned++
+        const now = Date.now()
+        if (_scanned % PROGRESS_FILE_INTERVAL === 0 || now - lastEmit > PROGRESS_TIME_INTERVAL_MS) {
+          progressEmitter.emit('progress', state())
+          lastEmit = now
+        }
+        continue
+      }
+
       const raw = await readFile(entry.absPath, 'utf8')
       const { body, frontmatter } = parseFile(raw)
-      const stat = await fsStat(entry.absPath)
       const content_hash = createHash('sha256').update(body).digest('hex')
 
       const row: FileRow = {
         path: entry.relPath,
-        title: typeof frontmatter.title === 'string' ? frontmatter.title : null,
-        summary: typeof frontmatter.summary === 'string' ? frontmatter.summary : null,
-        category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
-        rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
         content_hash,
         mtime: stat.mtimeMs,
         size_bytes: stat.size,
@@ -199,10 +209,18 @@ export async function startScan(groveRoot: string): Promise<void> {
           const ftsRowid = (
             db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
           ).rowid
+          
+          let extractedTitle = ''
+          if (typeof frontmatter.title === 'string') {
+            extractedTitle = frontmatter.title
+          } else if (frontmatter.title) {
+            extractedTitle = String(frontmatter.title)
+          }
+
           upsertFts(db, {
             rowid: ftsRowid,
             path: row.path,
-            title: row.title ?? '',
+            title: extractedTitle,
             body
           })
         }
@@ -251,10 +269,6 @@ export async function upsertFromFs(relPath: string): Promise<void> {
 
     const row: FileRow = {
       path: relPath,
-      title: typeof frontmatter.title === 'string' ? frontmatter.title : null,
-      summary: typeof frontmatter.summary === 'string' ? frontmatter.summary : null,
-      category: typeof frontmatter.category === 'string' ? frontmatter.category : null,
-      rating: typeof frontmatter.rating === 'number' ? frontmatter.rating : null,
       content_hash,
       mtime: st.mtimeMs,
       size_bytes: st.size,
@@ -270,10 +284,18 @@ export async function upsertFromFs(relPath: string): Promise<void> {
         const ftsRowid = (
           db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
         ).rowid
+        
+        let extractedTitle = ''
+        if (typeof frontmatter.title === 'string') {
+          extractedTitle = frontmatter.title
+        } else if (frontmatter.title) {
+          extractedTitle = String(frontmatter.title)
+        }
+
         upsertFts(db, {
           rowid: ftsRowid,
           path: row.path,
-          title: row.title ?? '',
+          title: extractedTitle,
           body
         })
       }

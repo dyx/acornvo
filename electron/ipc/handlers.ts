@@ -77,7 +77,7 @@ const chatHandlers = createChatHandlers({
   vaultRoot: () => dbService.getCurrentGrovePath() ?? '/vault',
   clipsGet: async (id: number) => {
     const db = dbService.requireCurrent()
-    const row = db.prepare('SELECT path FROM clips WHERE id = ?').get(id) as
+    const row = db.prepare('SELECT path FROM files WHERE rowid = ?').get(id) as
       | { path: string }
       | undefined
     if (!row) return null
@@ -118,9 +118,10 @@ const clipperPipeline = createPipeline({
     await writeFileAtomic(abs, data)
   },
   indexUpsert: (path) => upsertFromFs(path),
-  clipsDao: {
-    create: (input) => Promise.resolve(clipsHandlers.create(input)),
-    getByUrl: (url) => Promise.resolve(clipsHandlers.getByUrl(url))
+  getFileRowId: async (path) => {
+    const db = dbService.requireCurrent()
+    const row = db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number } | undefined
+    return row ? row.rowid : null
   },
   opsLog: (opts) => opsLogRecord({ op: opts.op as any, path: opts.path, meta: opts.meta }),
   nowIso: () => new Date().toISOString(),

@@ -86,7 +86,6 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         apiKey: profile.apiKey ?? '',
         temperature,
         maxTokens,
-        timeout: 120_000,
         maxRetries: 2
       }) as unknown as BaseChatModel
       break
