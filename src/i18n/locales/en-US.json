@@ -455,6 +455,7 @@
       "clip_summary": "Summarize clip"
     },
     "message": {
+      "exportMarkdown": "Export as Markdown",
       "newMessages": "New messages ↓",
       "copy": "Copy",
       "copied": "Copied",
