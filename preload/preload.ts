@@ -44,6 +44,7 @@ const request: IpcClient<IpcContract> = {
     readParsed: (rel) => invoke('file.readParsed', rel),
     write: (rel, content, opts) => invoke('file.write', rel, content, opts),
     writeParsed: (rel, fm, body, opts) => invoke('file.writeParsed', rel, fm, body, opts),
+    writeBinary: (rel, data) => invoke('file.writeBinary', rel, data),
     stat: (rel) => invoke('file.stat', rel),
     exists: (rel) => invoke('file.exists', rel),
     list: (dirRel, opts) => invoke('file.list', dirRel, opts),

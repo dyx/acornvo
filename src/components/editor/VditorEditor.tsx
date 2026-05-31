@@ -38,9 +38,41 @@ export function VditorEditor(): JSX.Element {
       toolbarConfig: { pin: true },
       upload: {
         url: '',
-        handler: () => {
-          toast({ title: t('editor.paste_image_unsupported') })
-          return ''
+        handler: (files: File[]) => {
+          void (async () => {
+            const editorState = useEditorStore.getState().state
+            if (editorState.kind !== 'ready') return
+            const currentDocPath = (editorState as { path: string }).path
+            if (!currentDocPath) return
+
+            const lastSlash = currentDocPath.lastIndexOf('/')
+            const dir = lastSlash === -1 ? '' : currentDocPath.substring(0, lastSlash)
+            const prefix = dir ? `${dir}/` : ''
+
+            const filenameWithExt = currentDocPath.substring(lastSlash + 1)
+            const dot = filenameWithExt.lastIndexOf('.md')
+            const docName = dot > 0 ? filenameWithExt.substring(0, dot) : filenameWithExt
+
+            for (const file of files) {
+              try {
+                const ext = file.name.split('.').pop() || 'png'
+                const timestamp = Date.now()
+                const relImagePath = `${prefix}.assets/${docName}/${timestamp}.${ext}`
+
+                const buf = await file.arrayBuffer()
+                const uint8 = new Uint8Array(buf)
+
+                await window.api.file.writeBinary(relImagePath, uint8)
+
+                const insertText = `![${file.name}](acornvo-local://${relImagePath})\n`
+                v.insertValue(insertText)
+              } catch (err) {
+                console.error('Failed to save image locally:', err)
+                toast({ title: 'Failed to save image locally' })
+              }
+            }
+          })()
+          return 'handled'
         }
       },
       input(value) {

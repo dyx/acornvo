@@ -118,5 +118,5 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
       throw new Error(`unsupported provider: ${_exhaust as string}`)
     }
   }
-  return model
+  return model.bind({ stop: ['</assistant>', '<assistant>', '<|eot_id|>'] }) as unknown as BaseChatModel
 }

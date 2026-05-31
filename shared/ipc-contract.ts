@@ -340,6 +340,7 @@ export type IpcContract = {
       body: string,
       opts?: FileWriteOptions
     ) => FileWriteResult
+    writeBinary: (rel: string, data: Uint8Array) => FileWriteResult
     stat: (rel: string) => FileStat
     exists: (rel: string) => boolean
     list: (dirRel: string, opts?: FileListOptions) => FileListEntry[]

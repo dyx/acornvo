@@ -5,7 +5,8 @@ import { shell } from 'electron'
 import * as groveSvc from '../services/grove'
 import { safeResolve } from '../services/path-safety'
 import { parseFile, stringify } from '../services/frontmatter'
-import { readFileDetect, writeWithVerify } from '../services/fs-atomic'
+import { readFileDetect, writeWithVerify, writeFileAtomic } from '../services/fs-atomic'
+import { createHash } from 'node:crypto'
 import { registerSelfWrite } from '../services/watcher'
 import { dbService } from '../services/db'
 import type { Frontmatter } from '@shared/frontmatter-schema'
@@ -104,6 +105,16 @@ export const fileHandlers = {
     const abs = safeResolve(root, rel)
     const md = stringify(frontmatter, body, opts.rawYaml)
     return writeWithVerify(abs, md, opts)
+  },
+
+  async writeBinary(rel: string, data: Uint8Array): Promise<FileWriteResult> {
+    const root = requireGroveRoot()
+    const abs = safeResolve(root, rel)
+    await writeFileAtomic(abs, data)
+    const expectedSha = createHash('sha256').update(data).digest('hex')
+    const finalStat = await fsStat(abs)
+    registerSelfWrite(abs, finalStat.mtimeMs)
+    return { mtimeMs: finalStat.mtimeMs, sha256: expectedSha }
   },
 
   async stat(rel: string): Promise<FileStat> {
