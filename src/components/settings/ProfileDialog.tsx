@@ -27,7 +27,7 @@ interface ProfileDialogProps {
   onClose: () => void
 }
 
-const PROVIDERS: AiProviderKind[] = ['openai', 'anthropic', 'ollama', 'openai-compatible', 'openrouter', 'deepseek']
+const PROVIDERS: AiProviderKind[] = ['anthropic', 'deepseek', 'openai', 'openai-compatible', 'openrouter', 'ollama']
 
 interface FormState {
   name: string
