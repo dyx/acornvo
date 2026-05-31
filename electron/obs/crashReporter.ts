@@ -50,14 +50,22 @@ export function installCrashHooks(): void {
   })
 
   process.on('uncaughtException', (err) => {
-    const file = writeCrash({ kind: 'main', reason: err.message, details: { stack: err.stack } })
-    logger().error('crash', { op: 'uncaught', meta: { file } })
+    try {
+      const file = writeCrash({ kind: 'main', reason: err.message, details: { stack: err.stack } })
+      logger().error('crash', { op: 'uncaught', meta: { file } })
+    } catch {
+      // Prevent infinite loops if crash reporting itself fails
+    }
   })
 
   process.on('unhandledRejection', (reason) => {
-    const msg = reason instanceof Error ? reason.message : String(reason)
-    const file = writeCrash({ kind: 'unhandled-rejection', reason: msg, details: { reason: msg } })
-    logger().error('crash', { op: 'unhandled-rejection', meta: { file } })
+    try {
+      const msg = reason instanceof Error ? reason.message : String(reason)
+      const file = writeCrash({ kind: 'unhandled-rejection', reason: msg, details: { reason: msg } })
+      logger().error('crash', { op: 'unhandled-rejection', meta: { file } })
+    } catch {
+      // Prevent infinite loops if crash reporting itself fails
+    }
   })
 }
 
