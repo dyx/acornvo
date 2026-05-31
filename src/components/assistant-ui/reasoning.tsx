@@ -222,7 +222,7 @@ import { TextMessagePartProvider } from "@assistant-ui/react";
 const ReasoningImpl: ReasoningMessagePartComponent = () => {
   const part = useAuiState((s) => s.part) as any;
   return (
-    <TextMessagePartProvider part={{ type: "text", text: part.text || "" }}>
+    <TextMessagePartProvider text={part.text || ""} isRunning={part.status?.type === "running"}>
       <MarkdownText />
     </TextMessagePartProvider>
   );

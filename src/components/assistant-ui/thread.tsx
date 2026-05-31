@@ -32,6 +32,7 @@ import {
   SuggestionPrimitive,
   ThreadPrimitive,
   useAuiState,
+  TextMessagePartProvider,
 } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
@@ -270,7 +271,11 @@ const AssistantMessage: FC = () => {
                   </ToolGroupRoot>
                 );
               case "text":
-                return <MarkdownText />;
+                return (
+                  <TextMessagePartProvider text={part.text || ""} isRunning={part.status?.type === "running"}>
+                    <MarkdownText />
+                  </TextMessagePartProvider>
+                );
               case "reasoning":
                 return <Reasoning {...part} />;
               case "tool-call":
