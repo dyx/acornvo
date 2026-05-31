@@ -138,8 +138,12 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
     buffer.push(JSON.stringify(entry))
 
     if (opts.mirrorConsole) {
-      // eslint-disable-next-line no-console
-      console[level === 'debug' ? 'log' : level](`[${area}]`, payload)
+      try {
+        // eslint-disable-next-line no-console
+        console[level === 'debug' ? 'log' : level](`[${area}]`, payload)
+      } catch {
+        // Ignore EIO or other console errors to prevent infinite crash loops
+      }
     }
 
     if (buffer.length >= 50) {
