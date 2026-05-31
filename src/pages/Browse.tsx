@@ -18,6 +18,8 @@ export function Browse(): JSX.Element {
   const createTab = useBrowserStore((s) => s.createTab)
   const setViewport = useBrowserStore((s) => s.setViewport)
 
+  const isOccluded = useBrowserStore((s) => s.isOccluded)
+
   // Auto-create the first tab
   const viewportRef = useRef<HTMLDivElement>(null)
   
@@ -25,12 +27,12 @@ export function Browse(): JSX.Element {
   const isBlank = !activeTab || (activeTab.savedUrl === 'about:blank' && activeTab.title === '')
 
   useEffect(() => {
-    if (!isBlank) {
+    if (!isBlank && !isOccluded) {
       void browserPort.showBrowserView()
     } else {
       void browserPort.hideBrowserView()
     }
-  }, [isBlank])
+  }, [isBlank, isOccluded])
 
   // Unmount cleanup
   useEffect(() => {

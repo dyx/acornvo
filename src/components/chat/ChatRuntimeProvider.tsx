@@ -136,7 +136,31 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       // 4. Send the updated message
       await sendUserMessage({ text });
     },
-    onReload: async () => {},
+    onReload: async (parentId: string | null) => {
+      console.log('onReload called with parentId:', parentId);
+      if (!parentId) return;
+
+      const activeSid = useChatStore.getState().activeSessionId;
+      if (!activeSid) return;
+
+      const session = useChatStore.getState().bySession[activeSid];
+      if (!session) return;
+
+      const parentMessage = session.messages.find(m => String(m.id) === String(parentId));
+      if (!parentMessage || parentMessage.role !== 'user') return;
+
+      try {
+        await window.ipc.chat['sessions.truncate'](activeSid, parentId);
+      } catch (err) {
+        console.error('Failed to truncate session for reload:', err);
+        return;
+      }
+
+      useChatStore.getState().truncateMessagesFrom(parentId);
+      
+      // Resend the text (and attachments if we had them, though they aren't persisted in ChatMessage currently)
+      await sendUserMessage({ text: parentMessage.text });
+    },
     onAddToolResult: async () => {}
   })
 

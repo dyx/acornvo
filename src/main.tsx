@@ -12,6 +12,8 @@ import { installLibrarySubscriber } from '@/stores/library'
 import { installEditorSubscriber } from '@/stores/editor'
 import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
 import { browserPort, browserEventPort } from '@/ipc/browser-port'
+import { ipc } from '@/ipc/client'
+import { useGroveStore } from '@/stores/grove'
 import { Placeholder } from './pages/Placeholder'
 import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
@@ -64,6 +66,16 @@ void (async () => {
 
   installSettingsEffects()
   installGroveSubscriber()
+
+  try {
+    const currentGrove = await ipc.project.getCurrent()
+    if (currentGrove) {
+      useGroveStore.getState()._setCurrent(currentGrove)
+    }
+  } catch (err) {
+    console.error('Failed to load current grove on boot:', err)
+  }
+
   installSettingsSubscriber()
   installChatStreamSubscriber()
   installLibrarySubscriber()

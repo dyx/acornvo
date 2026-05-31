@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react'
-import { browserPort } from '@/ipc/browser-port'
+import { useBrowserStore } from '@/stores/browser'
 
 let occlusionCount = 0
 
@@ -9,13 +9,13 @@ export function useNativeBrowserViewOcclusion(active: boolean): void {
 
     occlusionCount += 1
     if (occlusionCount === 1) {
-      void browserPort.hideBrowserView()
+      useBrowserStore.getState().setOccluded(true)
     }
 
     return () => {
       occlusionCount = Math.max(0, occlusionCount - 1)
       if (occlusionCount === 0) {
-        void browserPort.showBrowserView()
+        useBrowserStore.getState().setOccluded(false)
       }
     }
   }, [active])
@@ -23,4 +23,5 @@ export function useNativeBrowserViewOcclusion(active: boolean): void {
 
 export function _resetNativeBrowserViewOcclusionForTest(): void {
   occlusionCount = 0
+  useBrowserStore.getState().setOccluded(false)
 }

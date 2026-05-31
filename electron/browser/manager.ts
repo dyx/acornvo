@@ -36,13 +36,15 @@ export function createManager(deps: ManagerDeps): Manager {
   function attach(tabId: TabId): void {
     const tab = tabs.get(tabId)
     if (!tab) return
-    if (attachedId && attachedId !== tabId) {
+    tab.lastActiveAt = deps.nowMs()
+    if (attachedId === tabId) return
+    
+    if (attachedId) {
       const prev = tabs.get(attachedId)
       if (prev) deps.getContentView().removeChildView(prev.view)
     }
     deps.getContentView().addChildView(tab.view)
     deps.applyBoundsToView(tab.view)
-    tab.lastActiveAt = deps.nowMs()
     attachedId = tabId
   }
 

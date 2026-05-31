@@ -45,29 +45,16 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
   switch (profile.provider) {
     case 'openai':
     case 'openai-compatible':
-      if (profile.model.toLowerCase().includes('deepseek')) {
-        model = new ChatDeepSeek({
-          callbacks: debugCallbacks,
-          model: profile.model,
-          apiKey: profile.apiKey ?? '',
-          temperature,
-          maxTokens,
-          timeout: 120_000,
-          maxRetries: 2,
-          configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
-        }) as unknown as BaseChatModel
-      } else {
-        model = new ChatOpenAI({
-          callbacks: debugCallbacks,
-          model: profile.model,
-          apiKey: profile.apiKey ?? '',
-          temperature,
-          maxTokens,
-          timeout: 120_000,
-          maxRetries: 2,
-          configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
-        }) as unknown as BaseChatModel
-      }
+      model = new ChatOpenAI({
+        callbacks: debugCallbacks,
+        model: profile.model,
+        apiKey: profile.apiKey ?? '',
+        temperature,
+        maxTokens,
+        timeout: 120_000,
+        maxRetries: 2,
+        configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+      }) as unknown as BaseChatModel
       break
     case 'openrouter':
       model = new ChatOpenRouter({
@@ -118,5 +105,5 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
       throw new Error(`unsupported provider: ${_exhaust as string}`)
     }
   }
-  return model.bind({ stop: ['</assistant>', '<assistant>', '<|eot_id|>'] }) as unknown as BaseChatModel
+  return model
 }

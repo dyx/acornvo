@@ -50,7 +50,7 @@ export function AppRail(): JSX.Element {
 
       <div className="flex flex-1 flex-col gap-1 w-full items-center">
         {ENTRIES.filter((e) => !e.bottom).map((entry) => (
-          <RailBtn key={entry.to} entry={entry} t={t} />
+          <RailBtn key={entry.to} entry={entry} t={t} requireGrove={!current} />
         ))}
       </div>
       <div className="flex flex-col gap-1 w-full items-center">
@@ -62,16 +62,17 @@ export function AppRail(): JSX.Element {
   )
 }
 
-function RailBtn({ entry, t }: { entry: RailEntry; t: any }): JSX.Element {
+function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; requireGrove?: boolean }): JSX.Element {
   const label = t(entry.labelKey)
   const baseCls =
     'flex w-14 flex-col items-center gap-1 rounded-xl border py-2 transition-colors cursor-pointer font-inherit'
 
-  if (entry.disabled) {
+  if (entry.disabled || requireGrove) {
+    const title = requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon')
     return (
       <div
         className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`}
-        title={t('settings.common.comingSoon')}
+        title={title}
       >
         <entry.Icon size={18} />
         <span className="text-xs font-medium">{label}</span>

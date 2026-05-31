@@ -150,6 +150,9 @@ export interface BrowserState {
   setBookmarksOpen(open: boolean): void
   bumpBookmarksRevision(): void
   applyTabPatch(id: TabId, patch: TabPatch): void
+
+  isOccluded: boolean
+  setOccluded(occluded: boolean): void
 }
 
 export const useBrowserStore = create<BrowserState>((set, get) => ({
@@ -158,6 +161,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   bookmarksOpen: false,
   bookmarksRevision: 0,
   viewport: { x: 0, y: 0, width: 0, height: 0 },
+  isOccluded: false,
 
   getActiveTab: () => {
     const id = get().activeTabId
@@ -277,5 +281,9 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       )
     }))
     if (patch.url) scheduleClipCheck(id, patch.url)
+  },
+
+  setOccluded(occluded) {
+    set({ isOccluded: occluded })
   }
 }))
