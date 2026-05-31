@@ -28,8 +28,7 @@ export function createTabView(opts: CreateTabViewOpts): CreatedTabView {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-      // Empty string disables preload entirely.
-      preload: '',
+      // Omit preload property entirely to disable preload.
       session: partitionedSession,
       webSecurity: true,
       spellcheck: false
@@ -141,8 +140,7 @@ export function attachWindowOpenHandler(
           webPreferences: {
             sandbox: true,
             contextIsolation: true,
-            nodeIntegration: false,
-            preload: ''
+            nodeIntegration: false
           }
         },
         outlivesOpener: false
