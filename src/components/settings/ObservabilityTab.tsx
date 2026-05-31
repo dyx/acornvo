@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { HeatGraph } from '@/components/assistant-ui/heat-graph'
-import { Activity, BarChart2, Hash, Cpu, Layers, Zap } from 'lucide-react'
+import { Activity } from 'lucide-react'
 
 type Panel = 'ai' | 'queue' | 'perf'
 type Window = '24h' | '7d' | '30d'
@@ -152,12 +152,19 @@ function ObservabilityAiPanel(): JSX.Element {
     }
   }, [windowSel, t])
 
+  const totals = data?.totals || { requests: 0, tokens: 0 };
+  const heatGraphData = data?.heatGraphData || [];
+  const byTool = data?.byTool || [];
+  const byProject = data?.byGrove || [];
+  const totalRequests = totals.requests || 1;
+  const byToolWithPercentage = byTool.map(item => ({
+    ...item,
+    percentage: Math.round((item.count / totalRequests) * 100)
+  }));
+
   return (
-    <div data-testid="obs-panel-ai" className="space-y-6 pb-8">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Activity className="size-4" /> {t('obs.ai.globalActivity')}
-        </h4>
+    <div data-testid="obs-panel-ai" className="space-y-6">
+      <div className="flex items-center mb-4">
         <div className="flex bg-muted/30 p-1 rounded-lg backdrop-blur-md border border-white/10 shadow-sm">
           {(['24h', '7d', '30d'] as Window[]).map((w) => (
             <button
@@ -177,173 +184,92 @@ function ObservabilityAiPanel(): JSX.Element {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <NumberCard
-          testId="obs-ai-total-requests"
-          label={t('obs.ai.totalRequests')}
-          value={data?.totals.requests ?? 0}
-          icon={<Hash className="size-4 opacity-50" />}
-          trend="+12%"
-        />
-        <NumberCard
-          testId="obs-ai-total-tokens"
-          label={t('obs.ai.totalTokens')}
-          value={(data?.totals.tokens ?? 0).toLocaleString()}
-          icon={<Cpu className="size-4 opacity-50" />}
-          trend="+5%" 
-        />
-      </div>
-
-      <div className="rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <BarChart2 className="size-4 text-blue-500" />
-            {t('obs.ai.tokenUsageHistory')}
-          </h4>
-          <span className="text-xs text-muted-foreground">{t('obs.ai.last6Months')}</span>
-        </div>
-        <div className="flex overflow-x-auto pb-4 custom-scrollbar">
-          {data?.heatGraphData ? (
-            <HeatGraph data={data.heatGraphData} />
-          ) : (
-            <div className="h-[90px] w-full animate-pulse bg-muted/50 rounded-md" />
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4 rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Layers className="size-4 text-purple-500" />
-            {t('obs.ai.byProfile')}
-          </h4>
-          <ProfileBars data={data?.byProfile ?? []} />
-        </div>
-        <div className="space-y-4 rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Activity className="size-4 text-green-500" />
-            {t('obs.ai.byProject')}
-          </h4>
-          <GroveBars data={data?.byGrove ?? []} />
-        </div>
-      </div>
-
-      <div className="rounded-xl border bg-card text-card-foreground p-5 shadow-sm">
-         <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
-           <Zap className="size-4 text-yellow-500" />
-           {t('obs.ai.modelUsage')}
-         </h4>
-         <ToolList data={data?.byTool ?? []} />
-      </div>
-    </div>
-  )
-}
-
-function NumberCard({
-  testId,
-  label,
-  value,
-  icon,
-  trend
-}: {
-  testId: string
-  label: string
-  value: number | string
-  icon?: JSX.Element
-  trend?: string
-}): JSX.Element {
-  return (
-    <div className="rounded-lg border bg-card text-card-foreground p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-          {icon} {label}
-        </div>
-        {trend && (
-          <div className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">
-            {trend}
-          </div>
-        )}
-      </div>
-      <div data-testid={testId} className="text-2xl font-semibold tracking-tight">
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function ProfileBars({
-  data
-}: {
-  data: { profileId: string; requests: number; tokens: number }[]
-}) {
-  const { t } = useTranslation();
-  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noData")}</div>
-  const maxReq = Math.max(...data.map((d) => d.requests))
-  return (
-    <div className="space-y-3">
-      {data.map((d) => (
-        <div key={d.profileId} className="group relative">
-          <div className="flex justify-between text-xs mb-1">
-            <span className="font-medium truncate pr-2">{d.profileId}</span>
-            <span className="text-muted-foreground">{d.requests}</span>
-          </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary/60 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${(d.requests / maxReq) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function GroveBars({ data }: { data: { groveId: string; requests: number; tokens: number }[] }) {
-  const { t } = useTranslation();
-  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noData")}</div>
-  const maxReq = Math.max(...data.map((d) => d.requests))
-  return (
-    <div className="space-y-3">
-      {data.map((d) => (
-        <div key={d.groveId} className="group relative">
-          <div className="flex justify-between text-xs mb-1">
-            <span className="font-medium truncate pr-2">{d.groveId}</span>
-            <span className="text-muted-foreground">{d.requests}</span>
-          </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary/60 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${(d.requests / maxReq) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ToolList({ data }: { data: { tool: string; count: number }[] }): JSX.Element {
-  const { t } = useTranslation();
-  if (data.length === 0) return <div className="text-sm text-muted-foreground italic">{t("obs.ai.noModelsUsed")}</div>
-  return (
-    <div data-testid="obs-ai-tools" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      {data.map((d, i) => (
-        <div key={d.tool} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border border-transparent transition-colors hover:bg-muted">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="flex size-5 items-center justify-center rounded bg-primary/10 text-[10px] font-medium text-primary">
-              {i + 1}
+      <div className="w-full flex flex-col gap-6 font-sans text-sm">
+        {/* Top: Full-Width Heatgraph */}
+        <div className="rounded-xl bg-card border shadow-sm p-4 md:p-5 w-full">
+          <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="size-5 text-primary" />
+            {t('obs.ai.activityTimeline')}
+          </h2>
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <div className="text-4xl font-light tracking-tight">{totals.requests.toLocaleString()}</div>
+              <div className="text-muted-foreground mt-1">{t('obs.ai.totalRequests')}</div>
             </div>
-            <span className="text-sm font-medium truncate">{d.tool}</span>
+            <div className="text-right">
+              <div className="text-4xl font-light tracking-tight text-primary">
+                {totals.tokens >= 1000 ? (totals.tokens / 1000).toFixed(1) + 'k' : totals.tokens}
+              </div>
+              <div className="text-muted-foreground mt-1">{t('obs.ai.totalTokens')}</div>
+            </div>
           </div>
-          <span className="text-xs font-medium tabular-nums text-muted-foreground bg-background px-2 py-0.5 rounded shadow-sm border border-border/50">
-            {d.count}
-          </span>
+          <div className="overflow-x-auto pb-2 custom-scrollbar">
+            {heatGraphData.length > 0 ? (
+              <HeatGraph 
+                data={heatGraphData} 
+                start={new Date(Date.now() - 254 * 86400000)}
+                end={new Date()}
+              />
+            ) : (
+              <div className="h-[120px] w-full animate-pulse bg-muted/50 rounded-md" />
+            )}
+          </div>
         </div>
-      ))}
+
+        {/* Bottom: Split Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          {/* Models */}
+          <div className="rounded-xl bg-card border shadow-sm p-5">
+            <h3 className="font-medium mb-4 flex items-center justify-between">
+              {t('obs.ai.models')}
+              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{byTool.length} {t('obs.ai.active')}</span>
+            </h3>
+            <div className="space-y-4">
+              {byToolWithPercentage.length === 0 && <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>}
+              {byToolWithPercentage.map((item, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="font-medium truncate pr-2" title={item.tool}>{item.tool}</span>
+                    <span className="text-muted-foreground">{item.percentage}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${item.percentage}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Projects */}
+          <div className="rounded-xl bg-card border shadow-sm p-5">
+            <h3 className="font-medium mb-4 flex items-center justify-between">
+              {t('obs.ai.topProjects')}
+              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{t('obs.ai.byTokens')}</span>
+            </h3>
+            <div className="space-y-3">
+              {byProject.length === 0 && <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>}
+              {byProject.sort((a, b) => b.tokens - a.tokens).slice(0, 10).map((proj, i) => (
+                <div key={i} className="flex justify-between items-center group" title={proj.groveId}>
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">
+                      {i + 1}
+                    </div>
+                    <span className="truncate text-sm">{proj.groveId}</span>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground shrink-0 ml-2">
+                    {proj.tokens >= 1000 ? (proj.tokens / 1000).toFixed(1) + 'k' : proj.tokens}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
+
+// Replaced by Variant D layout in ObservabilityAiPanel
 
 // --- Queue Panel ---
 

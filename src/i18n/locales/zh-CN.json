@@ -283,7 +283,12 @@
       "byProject": "按项目",
       "modelUsage": "模型使用分布",
       "noData": "暂无数据",
-      "noModelsUsed": "暂未使用任何模型"
+      "noModelsUsed": "暂未使用任何模型",
+      "activityTimeline": "活动时间线",
+      "models": "模型分布",
+      "active": "活跃",
+      "topProjects": "活跃项目榜单",
+      "byTokens": "按 Token"
     },
     "queue": {
       "pending": "等待中",

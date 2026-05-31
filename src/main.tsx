@@ -27,7 +27,7 @@ import History from '@/pages/History'
 import { Browse } from '@/pages/Browse'
 import './i18n'
 import './index.css'
-import DesignLab from '@/pages/__design_lab'
+
 
 function BootstrapGate(): JSX.Element | null {
   const payload = useBootstrap()

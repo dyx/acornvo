@@ -250,7 +250,12 @@
       "byProject": "By Project",
       "modelUsage": "Model Usage",
       "noData": "No data",
-      "noModelsUsed": "No models used"
+      "noModelsUsed": "No models used",
+      "activityTimeline": "Activity Timeline",
+      "models": "Models",
+      "active": "active",
+      "topProjects": "Top Projects",
+      "byTokens": "By Tokens"
     },
     "queue": {
       "pending": "Pending",

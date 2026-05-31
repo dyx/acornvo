@@ -10,10 +10,20 @@ const COLORS = [
   "var(--color-primary)"
 ];
 
-export function HeatGraph({ data }: { data: HeatGraphPrimitive.DataPoint[] }) {
+export function HeatGraph({ 
+  data,
+  start,
+  end
+}: { 
+  data: HeatGraphPrimitive.DataPoint[]
+  start?: Date
+  end?: Date
+}) {
   return (
     <HeatGraphPrimitive.Root
       data={data}
+      start={start}
+      end={end}
       weekStart="monday"
       colorScale={COLORS}
       className="flex flex-col gap-2 min-w-max"
