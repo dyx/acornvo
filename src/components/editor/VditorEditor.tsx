@@ -6,7 +6,11 @@ import { useEditorStore } from '@/stores/editor'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 
-export function VditorEditor(): JSX.Element {
+interface VditorEditorProps {
+  isPreviewMode?: boolean
+}
+
+export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.Element {
   const elRef = useRef<HTMLDivElement | null>(null)
   const vditorRef = useRef<Vditor | null>(null)
   const { t } = useTranslation()
@@ -20,6 +24,59 @@ export function VditorEditor(): JSX.Element {
   const initialBody = rewriteImagesToLocal(initialBodyRaw, docPath)
 
   useEffect(() => {
+    if (!vditorRef.current) return;
+    const vditorInternal = (vditorRef.current as any).vditor;
+    if (!vditorInternal) return;
+    
+    if (isPreviewMode) {
+      vditorInternal.preview.element.style.display = "block";
+      if (vditorInternal.currentMode === "sv") {
+        vditorInternal.sv.element.style.display = "none";
+      } else {
+        vditorInternal[vditorInternal.currentMode].element.parentElement.style.display = "none";
+      }
+      vditorInternal.preview.render(vditorInternal);
+    } else {
+      if (vditorInternal.currentMode === "sv") {
+        vditorInternal.sv.element.style.display = "block";
+      } else {
+        vditorInternal[vditorInternal.currentMode].element.parentElement.style.display = "block";
+      }
+      vditorInternal.preview.element.style.display = "none";
+    }
+  }, [isPreviewMode]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!isPreviewMode) return
+      if (e.key.toLowerCase() === 'a' && (e.metaKey || e.ctrlKey)) {
+        if (!vditorRef.current) return
+        const vditorInternal = (vditorRef.current as any).vditor
+        if (!vditorInternal) return
+
+        const previewElement = vditorInternal.preview?.element
+        if (!previewElement) return
+
+        const contentElement = previewElement.querySelector('.vditor-reset') || previewElement
+
+        e.preventDefault()
+        const range = document.createRange()
+        range.selectNodeContents(contentElement)
+        const selection = window.getSelection()
+        if (selection) {
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isPreviewMode])
+
+  useEffect(() => {
     if (!elRef.current) return
     const isDark = document.documentElement.dataset.theme === 'dark'
     const v = new Vditor(elRef.current, {
@@ -27,6 +84,8 @@ export function VditorEditor(): JSX.Element {
       cdn: '/vditor',
       theme: isDark ? 'dark' : 'classic',
       preview: {
+        mode: 'editor',
+        actions: [],
         theme: {
           current: isDark ? 'dark' : 'classic',
           path: '/vditor/dist/css/content-theme'
@@ -35,7 +94,43 @@ export function VditorEditor(): JSX.Element {
       value: initialBody,
       cache: { enable: false },
       counter: { enable: false },
-      toolbarConfig: { pin: true },
+      toolbarConfig: { hide: true, pin: true },
+      toolbar: [
+        'headings', 'bold', 'italic', 'strike', 'link', '|',
+        'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+        'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
+        'upload', 'table', '|',
+        'undo', 'redo', '|',
+        {
+          name: 'mode-wysiwyg',
+          tip: '所见即所得',
+          tipPosition: 's',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>',
+          click(_event: Event, vditor: any) {
+            vditor.toolbar.elements["edit-mode"]?.querySelector('button[data-mode="wysiwyg"]')?.click();
+          }
+        },
+        {
+          name: 'mode-ir',
+          tip: '即时渲染',
+          tipPosition: 's',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>',
+          click(_event: Event, vditor: any) {
+            vditor.toolbar.elements["edit-mode"]?.querySelector('button[data-mode="ir"]')?.click();
+          }
+        },
+        {
+          name: 'mode-sv',
+          tip: '分屏预览',
+          tipPosition: 's',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>',
+          click(_event: Event, vditor: any) {
+            vditor.toolbar.elements["edit-mode"]?.querySelector('button[data-mode="sv"]')?.click();
+          }
+        },
+        { name: 'edit-mode', className: 'hidden' },
+        'fullscreen', 'preview'
+      ],
       upload: {
         url: '',
         handler: (files: File[]) => {
@@ -75,6 +170,19 @@ export function VditorEditor(): JSX.Element {
           return 'handled'
         }
       },
+      after() {
+        useEditorStore.getState().setBody(v.getValue())
+        if (isPreviewMode) {
+          const vditorInternal = (v as any).vditor;
+          vditorInternal.preview.element.style.display = "block";
+          if (vditorInternal.currentMode === "sv") {
+            vditorInternal.sv.element.style.display = "none";
+          } else {
+            vditorInternal[vditorInternal.currentMode].element.parentElement.style.display = "none";
+          }
+          vditorInternal.preview.render(vditorInternal);
+        }
+      },
       input(value) {
         useEditorStore.getState().setBody(rewriteImagesToRelative(value, docPath))
       },
@@ -99,12 +207,9 @@ export function VditorEditor(): JSX.Element {
       }
       vditorRef.current = null
     }
-    // We deliberately do NOT depend on `initialBody` — Vditor owns its own
-    // editable buffer once instantiated. setBody flows the other direction.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return <div ref={elRef} className="h-full w-full" data-testid="vditor-host" />
+  return <div ref={elRef} className="h-full w-full !border-none [&_.vditor-toolbar]:!hidden [&_.vditor]:!bg-transparent [&_.vditor-ir]:!bg-transparent [&_.vditor-wysiwyg]:!bg-transparent [&_.vditor-preview]:!bg-transparent [&_.vditor-reset]:!bg-transparent [&_.vditor-sv]:!bg-transparent [&_.vditor-textarea]:!bg-transparent" data-testid="vditor-host" />
 }
 
 function rewriteImagesToLocal(markdown: string, docPath: string): string {

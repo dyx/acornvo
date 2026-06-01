@@ -1,0 +1,28 @@
+{
+  "scope": "component",
+  "isRedesign": true,
+  "targetPath": "src/components/library/EmbeddedEditorPanel.tsx",
+  "targetName": "AiReviewSidebar",
+  "painPoints": ["Top panel too cluttered", "Need dedicated space for AI review results"],
+  "inspiration": {
+    "visual": ["Stripe", "Linear", "Notion"],
+    "functional": ["Collapsible sidebar", "Split panes"]
+  },
+  "brand": {
+    "adjectives": ["minimal", "distinctive", "structured", "refined"],
+    "density": "comfortable",
+    "darkMode": true
+  },
+  "persona": {
+    "primary": "Writer / Developer",
+    "context": "desktop-first",
+    "keyTasks": ["Write document", "Review AI feedback"]
+  },
+  "constraints": {
+    "mustKeep": ["VditorEditor", "AI status information"],
+    "technical": ["Use existing CSS variables", "React Router MemoryRouter"]
+  },
+  "framework": "vite-react",
+  "packageManager": "npm",
+  "stylingSystem": "tailwind"
+}
