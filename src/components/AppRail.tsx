@@ -1,10 +1,11 @@
 // src/components/AppRail.tsx
 import type { JSX } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Globe, Library, MessageSquare, Settings as SettingsIcon } from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
 import { dotColor } from './GroveSwitcher'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface RailEntry {
   to: string
@@ -27,72 +28,89 @@ export function AppRail(): JSX.Element {
   const navigate = useNavigate()
 
   return (
-    <nav
-      aria-label="app navigation"
-      className="flex w-16 shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3"
-    >
-      <button
-        onClick={() => {
-          navigate('/picker')
-        }}
-        title={current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
-        className="mb-3 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity"
-        style={
-          current
-            ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
-            : undefined
-        }
+    <TooltipProvider delayDuration={1500}>
+      <nav
+        aria-label="app navigation"
+        className="flex w-12 shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-3"
       >
-        {/* Placeholder Acorn Logo */}
-        <span className="text-2xl">🌰</span>
-      </button>
-      <div className="mb-3 h-[1px] w-7 bg-[color:var(--color-line)]" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => {
+                navigate('/picker')
+              }}
+              className="mb-3 flex size-8 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity shrink-0"
+              style={
+                current
+                  ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
+                  : undefined
+              }
+            >
+              <span className="text-lg">🌰</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
+          </TooltipContent>
+        </Tooltip>
+        <div className="mb-3 h-[1px] w-6 bg-[color:var(--color-line)]" />
 
-      <div className="flex flex-1 flex-col gap-1 w-full items-center">
-        {ENTRIES.filter((e) => !e.bottom).map((entry) => (
-          <RailBtn key={entry.to} entry={entry} t={t} requireGrove={!current} />
-        ))}
-      </div>
-      <div className="flex flex-col gap-1 w-full items-center">
-        {ENTRIES.filter((e) => e.bottom).map((entry) => (
-          <RailBtn key={entry.to} entry={entry} t={t} />
-        ))}
-      </div>
-    </nav>
+        <div className="flex flex-1 flex-col gap-2 w-full items-center">
+          {ENTRIES.filter((e) => !e.bottom).map((entry) => (
+            <RailBtn key={entry.to} entry={entry} t={t} requireGrove={!current} />
+          ))}
+        </div>
+        <div className="flex flex-col gap-2 w-full items-center">
+          {ENTRIES.filter((e) => e.bottom).map((entry) => (
+            <RailBtn key={entry.to} entry={entry} t={t} />
+          ))}
+        </div>
+      </nav>
+    </TooltipProvider>
   )
 }
 
 function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; requireGrove?: boolean }): JSX.Element {
   const label = t(entry.labelKey)
+  const location = useLocation()
+  const isActive = location.pathname.startsWith(entry.to)
+  
   const baseCls =
-    'flex w-14 flex-col items-center gap-1 rounded-xl border py-2 transition-colors cursor-pointer font-inherit'
+    'flex size-8 shrink-0 items-center justify-center rounded-xl border transition-colors cursor-pointer'
 
+  let content = null
   if (entry.disabled || requireGrove) {
     const title = requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon')
-    return (
+    content = (
       <div
         className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`}
-        title={title}
       >
-        <entry.Icon size={18} />
-        <span className="text-xs font-medium">{label}</span>
+        <entry.Icon size={20} />
       </div>
+    )
+  } else {
+    const activeCls = isActive
+      ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]'
+      : 'border-transparent text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'
+
+    content = (
+      <NavLink
+        to={entry.to}
+        className={`${baseCls} ${activeCls}`}
+      >
+        <entry.Icon size={20} />
+      </NavLink>
     )
   }
 
   return (
-    <NavLink
-      to={entry.to}
-      className={({ isActive }) =>
-        `${baseCls} ${
-          isActive
-            ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]'
-            : 'border-transparent text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'
-        }`
-      }
-    >
-      <entry.Icon size={18} />
-      <span className="text-[11px] font-medium">{label}</span>
-    </NavLink>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {content}
+      </TooltipTrigger>
+      <TooltipContent side="right">
+        {entry.disabled || requireGrove ? requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon') : label}
+      </TooltipContent>
+    </Tooltip>
   )
 }
