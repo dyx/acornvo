@@ -113,6 +113,12 @@
       "save_failed": "Save failed: {{code}}",
       "save_failed_persistent": "Persistent save failure — tried 3 times",
       "open_logs": "View logs"
+    },
+    "ai": {
+      "title": "AI Analysis",
+      "words": "Words",
+      "accept": "Accept",
+      "rerun": "Rerun"
     }
   },
   "conflict": {

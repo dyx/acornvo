@@ -1,7 +1,8 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Star, Sparkles, RefreshCw, Check, X } from 'lucide-react'
+import { FileText, Star, Sparkles, RefreshCw, Check } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
 import { useSettingsStore } from '@/stores/settings'
@@ -29,7 +30,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const isRunning = useEditorStore((s) => (s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false))
 
   const acceptAiReview = useEditorStore((s) => s.acceptAiReview)
-  const rejectAiReview = useEditorStore((s) => s.rejectAiReview)
   const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
   const flushSave = useEditorStore((s) => s.flushSave)
 
@@ -94,11 +94,51 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
         collapsed ? "w-0 opacity-0 border-l-0" : "w-[340px] opacity-100"
       )}
     >
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-5 py-6">
         {/* Header section */}
-        <div className="flex items-center gap-2 mb-6">
-          <FileText size={18} className="text-[color:var(--color-acorn)]" />
-          <span className="font-serif text-lg text-[color:var(--color-ink)] font-semibold tracking-tight">{t('editor.ai.title', { defaultValue: 'AI Analysis' })}</span>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <FileText size={18} className="text-[color:var(--color-acorn)]" />
+            <span className="font-serif text-lg text-[color:var(--color-ink)] font-semibold tracking-tight">
+              {t('editor.ai.title', { defaultValue: 'AI Analysis' })}
+            </span>
+          </div>
+          {fm.ai_reviewed_at && (
+            <div className="flex items-center gap-1">
+              {(!fm.ai_review_accepted_at || String(fm.ai_review_accepted_at) < String(fm.ai_reviewed_at)) && (
+                <TooltipProvider delayDuration={500}>
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      onClick={() => handleAction(handleAcceptAll)}
+                      disabled={showLoader}
+                      className="flex size-[28px] items-center justify-center rounded-md hover:bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-2)] transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      <Check size={15} />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{t('editor.ai.accept', { defaultValue: 'Accept' })}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <TooltipProvider delayDuration={500}>
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    onClick={() => handleAction(handleRerun)}
+                    disabled={showLoader}
+                    className="flex size-[28px] items-center justify-center rounded-md hover:bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-2)] transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw size={15} className={cn(showLoader && "animate-spin")} />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{t('editor.ai.rerun', { defaultValue: 'Rerun' })}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
 
         {/* Metadata section */}
@@ -205,7 +245,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="mb-8">
+          <div>
             <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--color-ink-3)] border-b border-[color:var(--color-line)] pb-2 mb-4">
               {t('editor.ai.tags')}
             </h4>
@@ -222,27 +262,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           </div>
         )}
       </div>
-
-      {fm.ai_reviewed_at && (
-        <div className="p-4 border-t border-[color:var(--color-line)] bg-[color:var(--color-paper)] flex flex-col gap-2">
-          {(!fm.ai_review_accepted_at || String(fm.ai_review_accepted_at) < String(fm.ai_reviewed_at)) && (
-            <button
-              onClick={() => handleAction(handleAcceptAll)}
-              disabled={showLoader}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md bg-[color:var(--color-acorn)] text-white text-[13px] font-medium hover:bg-[color:var(--color-acorn-2)] transition-colors disabled:opacity-50 shadow-sm"
-            >
-              <Check size={14} /> {t('editor.ai.accept')}
-            </button>
-          )}
-          <button
-            onClick={() => handleAction(handleRerun)}
-            disabled={showLoader}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-transparent hover:bg-[color:var(--color-bg-2)] text-[color:var(--color-ink-3)] text-[12px] font-medium transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={12} className={cn(showLoader && "animate-spin")} /> {t('editor.ai.rerun')}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

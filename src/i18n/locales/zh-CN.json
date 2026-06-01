@@ -125,6 +125,8 @@
       "drawer": {
         "title": "AI 审读结果"
       },
+      "title": "AI 审读分析",
+      "words": "字",
       "suggestedTitle": "建议标题",
       "summary": "摘要",
       "tags": "标签",

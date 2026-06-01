@@ -25,7 +25,6 @@ import type { JSX } from 'react'
 import Search from '@/pages/Search'
 import History from '@/pages/History'
 import { Browse } from '@/pages/Browse'
-import DesignLabPage from '@/pages/__design_lab/index'
 import './i18n'
 import './index.css'
 
@@ -48,8 +47,7 @@ const router = createMemoryRouter([
       { path: 'settings/*', element: <Settings /> },
       { path: 'history', element: <Navigate to="/history/trash" replace /> },
       { path: 'history/:tab', element: <History /> },
-      { path: 'search', element: <Search /> },
-      { path: 'design-lab', element: <DesignLabPage /> }
+      { path: 'search', element: <Search /> }
     ]
   }
 ])
