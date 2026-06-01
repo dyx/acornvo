@@ -584,16 +584,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const s = get().state
     if (s.kind !== 'ready') return
     const titleNext = String(s.frontmatter.ai_suggested_title ?? s.frontmatter.title ?? '')
-    const aiTags = Array.isArray(s.frontmatter.ai_tags) ? (s.frontmatter.ai_tags as string[]) : []
-    const curTags = Array.isArray(s.frontmatter.tags) ? (s.frontmatter.tags as string[]) : []
-    const mergedTags = Array.from(new Set([...curTags, ...aiTags]))
+    const tagsNext = Array.isArray(s.frontmatter.ai_tags) ? (s.frontmatter.ai_tags as string[]) : (Array.isArray(s.frontmatter.tags) ? (s.frontmatter.tags as string[]) : [])
     set({
       state: {
         ...s,
         frontmatter: {
           ...s.frontmatter,
           title: titleNext,
-          tags: mergedTags,
+          tags: tagsNext,
           rating: typeof s.frontmatter.ai_rating === 'number' ? s.frontmatter.ai_rating : s.frontmatter.rating,
           category: typeof s.frontmatter.ai_category === 'string' && s.frontmatter.ai_category ? s.frontmatter.ai_category : s.frontmatter.category,
           ai_review_accepted_at: new Date().toISOString()

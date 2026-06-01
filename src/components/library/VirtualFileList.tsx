@@ -119,7 +119,7 @@ function ControlCenterMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button 
-          className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm text-[color:var(--color-ink-4)] hover:text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)] transition-colors shrink-0"
+          className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm text-[color:var(--color-ink-4)] hover:text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)] transition-colors shrink-0 cursor-pointer"
           title={t('common.filter', '筛选/排序')}
         >
           <SlidersHorizontal size={13} />
