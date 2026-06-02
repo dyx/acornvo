@@ -41,6 +41,7 @@ export function EditorTitleBar({
 
       <div className="flex items-center gap-1 shrink-0">
         <TooltipProvider delayDuration={500}>
+
           <Tooltip>
             <TooltipTrigger
               type="button"

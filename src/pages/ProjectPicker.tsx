@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
+import { CozyWindowShade } from '@/components/library/CozyWindowShade'
+
 export function ProjectPicker(): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -105,8 +107,9 @@ export function ProjectPicker(): JSX.Element {
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[color:var(--color-paper)]">
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex h-full w-full flex-col bg-[color:var(--color-paper)] relative">
+      <CozyWindowShade active={true} />
+      <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Left brand column */}
         <aside
           className="flex w-[420px] shrink-0 flex-col justify-between border-r border-[color:var(--color-line)] px-14 py-12"
@@ -136,8 +139,8 @@ export function ProjectPicker(): JSX.Element {
         </aside>
 
         {/* Right list + actions column */}
-        <section className="flex-1 overflow-y-auto px-14 py-12">
-          <div className="mb-6 flex items-baseline justify-between">
+        <section className="flex-1 flex flex-col overflow-hidden px-14 py-12 relative">
+          <div className="flex-none mb-6 flex items-baseline justify-between">
             <h2 className="serif m-0 text-2xl font-semibold tracking-tight">
               {t('picker.title')}
             </h2>
@@ -146,64 +149,66 @@ export function ProjectPicker(): JSX.Element {
             </div>
           </div>
 
-          {hasRecent ? (
-            <div className="flex flex-col gap-3">
-              {items.map((item, i) => {
-                const locked =
-                  lockedFromBootstrap && lockedFromBootstrap.path === item.path
-                    ? lockedFromBootstrap.holder
-                    : undefined
-                return (
-                  <ProjectCard
-                    key={item.id}
-                    item={item}
-                    index={i}
-                    locked={locked}
-                    onOpen={() => void handleOpen(item.id)}
-                    onRemove={() => void removeFromRecent(item.id)}
-                    onTakeover={locked ? () => requestTakeover(item.path, locked) : undefined}
-                  />
-                )
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-[color:var(--color-line-2)] px-6 py-10 text-center text-[color:var(--color-ink-3)]">
-              {t('picker.empty')}
-            </div>
-          )}
-
-          <div className="mt-6 flex gap-3">
-            <Button
-              className="flex-1"
-              size="lg"
-              data-testid="picker-new"
-              // Task 7 wires this to the new-grove dialog
-              onClick={() => {
-                const ev = new CustomEvent('acorn:picker:new')
-                window.dispatchEvent(ev)
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              {t('picker.new')}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              size="lg"
-              data-testid="picker-open"
-              onClick={() => {
-                const ev = new CustomEvent('acorn:picker:open')
-                window.dispatchEvent(ev)
-              }}
-            >
-              <FolderOpen className="h-4 w-4" />
-              {t('picker.open')}
-            </Button>
+          <div className="flex-initial overflow-y-auto min-h-0 pr-2 -mr-2 pb-6">
+            {hasRecent ? (
+              <div className="flex flex-col gap-3">
+                {items.map((item, i) => {
+                  const locked =
+                    lockedFromBootstrap && lockedFromBootstrap.path === item.path
+                      ? lockedFromBootstrap.holder
+                      : undefined
+                  return (
+                    <ProjectCard
+                      key={item.id}
+                      item={item}
+                      index={i}
+                      locked={locked}
+                      onOpen={() => void handleOpen(item.id)}
+                      onRemove={() => void removeFromRecent(item.id)}
+                      onTakeover={locked ? () => requestTakeover(item.path, locked) : undefined}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[color:var(--color-line-2)] px-6 py-10 text-center text-[color:var(--color-ink-3)]">
+                {t('picker.empty')}
+              </div>
+            )}
           </div>
 
-          <p className="mt-7 font-mono text-xs leading-[1.7] text-[color:var(--color-ink-4)]">
-            {t('picker.hint')}
-          </p>
+          <div className="flex-none pt-4">
+            <div className="flex gap-3">
+              <Button
+                className="flex-1"
+                size="lg"
+                data-testid="picker-new"
+                onClick={() => {
+                  const ev = new CustomEvent('acorn:picker:new')
+                  window.dispatchEvent(ev)
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {t('picker.new')}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                size="lg"
+                data-testid="picker-open"
+                onClick={() => {
+                  const ev = new CustomEvent('acorn:picker:open')
+                  window.dispatchEvent(ev)
+                }}
+              >
+                <FolderOpen className="h-4 w-4" />
+                {t('picker.open')}
+              </Button>
+            </div>
+            <p className="mt-7 font-mono text-xs leading-[1.7] text-[color:var(--color-ink-4)]">
+              {t('picker.hint')}
+            </p>
+          </div>
         </section>
       </div>
       <NewGroveDialog

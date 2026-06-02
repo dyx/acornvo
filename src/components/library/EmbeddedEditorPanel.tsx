@@ -10,12 +10,12 @@ import { ConflictDialog } from '@/components/editor/ConflictDialog'
 import { ipc } from '@/ipc/client'
 import { EditorTitleBar } from '@/components/library/EditorTitleBar'
 import { AiReviewSidebar } from '@/components/library/AiReviewSidebar'
+import { CozyWindowShade } from '@/components/library/CozyWindowShade'
 
 export function EmbeddedEditorPanel(): JSX.Element {
   const { t } = useTranslation()
   const selectedPath = useLibraryStore((s) => s.selectedPath)
   const kind = useEditorStore((s) => s.state.kind)
-
   const [collapsed, setCollapsed] = useState(false)
   const [isPreviewMode, setIsPreviewMode] = useState(true)
 
@@ -88,7 +88,7 @@ export function EmbeddedEditorPanel(): JSX.Element {
 
   return (
     <div className="flex h-full overflow-hidden relative">
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden relative z-10">
         <div className="flex-none">
           <ExternalModifiedBanner />
           <ConflictDialog />
@@ -100,7 +100,7 @@ export function EmbeddedEditorPanel(): JSX.Element {
             onOpenSidebar={() => setCollapsed(false)}
           />
         </div>
-        <div className="flex-1 overflow-auto bg-[color:var(--color-bg-1)]">
+        <div className="flex-1 overflow-auto">
           <VditorEditor isPreviewMode={isPreviewMode} />
         </div>
       </div>

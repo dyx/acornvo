@@ -615,9 +615,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     _scheduleSave()
   },
 
-  setAiRerunInflight: (v: boolean) => {
-    const s = get().state
-    if (s.kind !== 'ready') return
-    set({ state: { ...s, aiRerunInflight: v } })
+  setAiRerunInflight: (v) => {
+    const st = get().state
+    if (st.kind === 'ready') {
+      set({ state: { ...st, aiRerunInflight: v } })
+    }
   }
 }))
