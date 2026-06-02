@@ -70,19 +70,18 @@ export function FileRow({
         <div className="flex items-center gap-2 mt-1 min-w-0">
           {/* Rating or Status */}
           {(file.rating !== null || file.ai_rating != null) ? (
-            <span className="flex gap-[1px] shrink-0" aria-label={`rating ${file.rating ?? file.ai_rating}`}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={cn(
-                    'h-[10px] w-[10px]',
-                    i < ((file.rating ?? file.ai_rating) ?? 0)
-                      ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
-                      : 'text-[color:var(--color-paper-3)]',
-                    file.rating === null && 'opacity-60'
-                  )}
-                />
-              ))}
+            <span 
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded px-1.5 py-[1px] shrink-0 border",
+                file.rating !== null 
+                  ? "bg-[color:var(--color-bg-2)] border-[color:var(--color-line-1)]" 
+                  : "bg-[color:var(--color-paper-3)] border-transparent opacity-70"
+              )} 
+              aria-label={`rating ${file.rating ?? file.ai_rating}`}
+            >
+              <span className="text-[10px] font-bold text-[color:var(--color-accent)] leading-none">
+                {Number(file.rating ?? file.ai_rating).toFixed(1)}
+              </span>
             </span>
           ) : (
             <span className={cn('text-[10px] font-medium shrink-0', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>

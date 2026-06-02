@@ -152,18 +152,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           {rating !== null && (
             <div className="flex items-center gap-0.5">
               <span>·</span>
-              <div className="ml-1 flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    size={11}
-                    className={cn(
-                      i < (rating ?? 0)
-                        ? 'fill-[color:var(--color-acorn)] text-[color:var(--color-acorn)]'
-                        : 'text-[color:var(--color-line-2)]'
-                    )}
-                  />
-                ))}
+              <div className="ml-1 inline-flex items-center gap-1 rounded-full bg-[color:var(--color-bg-2)] px-2 py-0.5 border border-[color:var(--color-line-1)]">
+                <span className="font-semibold text-[color:var(--color-accent)] leading-none">{rating.toFixed(1)}</span>
+                <span className="text-[10px] text-[color:var(--color-ink-3)] leading-none">/ 10</span>
               </div>
             </div>
           )}

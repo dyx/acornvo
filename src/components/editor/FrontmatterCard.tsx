@@ -4,17 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { ipc } from '@/ipc/client'
 
-function StarRow({ rating }: { rating: number }): JSX.Element {
-  const filled = Math.max(0, Math.min(5, Math.round(rating)))
+function ScoreBadge({ rating }: { rating: number }): JSX.Element {
   return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) =>
-        i <= filled ? (
-          <Star key={i} data-testid="star-filled" className="h-3.5 w-3.5 fill-current" />
-        ) : (
-          <Star key={i} data-testid="star-empty" className="h-3.5 w-3.5" />
-        )
-      )}
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--color-bg-2)] px-2.5 py-0.5 border border-[color:var(--color-line-1)] w-fit">
+      <span className="text-xs font-semibold text-[color:var(--color-accent)]">{rating.toFixed(1)}</span>
+      <span className="text-[10px] text-[color:var(--color-ink-3)]">/ 10</span>
     </div>
   )
 }
@@ -54,7 +48,7 @@ export function FrontmatterCard(): JSX.Element {
         {site && <span>{site}</span>}
       </div>
       {title && <h2 className="text-base font-semibold">{title}</h2>}
-      {typeof rating === 'number' && <StarRow rating={rating} />}
+      {typeof rating === 'number' && <ScoreBadge rating={rating} />}
       {summary && <p className="text-[color:var(--color-ink-2)]">{summary}</p>}
       {aiSummary && (
         <div
