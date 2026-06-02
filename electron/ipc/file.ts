@@ -7,7 +7,6 @@ import { safeResolve } from '../services/path-safety'
 import { parseFile, stringify } from '../services/frontmatter'
 import { readFileDetect, writeWithVerify, writeFileAtomic } from '../services/fs-atomic'
 import { createHash } from 'node:crypto'
-import { registerSelfWrite } from '../services/watcher'
 import { dbService } from '../services/db'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import {

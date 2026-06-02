@@ -54,8 +54,8 @@ const PREVIEW_EXCERPT_LEN = 200
 function buildFrontmatter(preview: ClipPreview, tags: string[], isoDate: string): string {
   const lines: string[] = ['---']
   lines.push(`title: "${escapeYaml(preview.title)}"`)
-  lines.push(`source: ${preview.url}`)
-  lines.push(`site: ${preview.site}`)
+  if (preview.url) lines.push(`source: ${preview.url}`)
+  if (preview.site) lines.push(`site: "${escapeYaml(preview.site)}"`)
   if (preview.author) lines.push(`author: "${escapeYaml(preview.author)}"`)
   if (preview.publishedTime) lines.push(`published: ${preview.publishedTime}`)
   if (preview.lang) lines.push(`lang: ${preview.lang}`)
