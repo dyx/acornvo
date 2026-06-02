@@ -80,7 +80,7 @@ export function FileRow({
               aria-label={`rating ${file.rating ?? file.ai_rating}`}
             >
               <span className="text-[10px] font-bold text-[color:var(--color-acorn)] leading-none">
-                {Number(file.rating ?? file.ai_rating).toFixed(1)}
+                {file.rating ?? file.ai_rating}
               </span>
             </span>
           ) : (

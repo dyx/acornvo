@@ -7,7 +7,7 @@ import { ipc } from '@/ipc/client'
 function ScoreBadge({ rating }: { rating: number }): JSX.Element {
   return (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--color-paper-2)] px-2.5 py-0.5 border border-[color:var(--color-line)] w-fit">
-      <span className="text-xs font-semibold text-[color:var(--color-acorn)]">{rating.toFixed(1)}</span>
+      <span className="text-[11px] font-bold text-[color:var(--color-acorn)] leading-none">{rating}</span>
       <span className="text-[10px] text-[color:var(--color-ink-3)]">/ 10</span>
     </div>
   )

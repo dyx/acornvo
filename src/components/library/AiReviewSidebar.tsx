@@ -153,7 +153,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
             <div className="flex items-center gap-0.5">
               <span>·</span>
               <div className="ml-1 inline-flex items-center gap-1 rounded-full bg-[color:var(--color-paper-2)] px-2 py-0.5 border border-[color:var(--color-line)]">
-                <span className="font-semibold text-[color:var(--color-acorn)] leading-none">{rating.toFixed(1)}</span>
+                <span className="font-semibold text-[color:var(--color-acorn)] leading-none">{rating}</span>
                 <span className="text-[10px] text-[color:var(--color-ink-3)] leading-none">/ 10</span>
               </div>
             </div>
