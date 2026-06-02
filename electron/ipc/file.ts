@@ -90,8 +90,6 @@ export const fileHandlers = {
     // opts.force / opts.expectedMtime / opts.eol all flow through to writeWithVerify,
     // which is responsible for the mtime guard and force-write audit.
     const result = await writeWithVerify(abs, content, opts)
-    const finalStat = await fsStat(abs)
-    registerSelfWrite(abs, finalStat.mtimeMs)
     return result
   },
 
@@ -113,7 +111,6 @@ export const fileHandlers = {
     await writeFileAtomic(abs, data)
     const expectedSha = createHash('sha256').update(data).digest('hex')
     const finalStat = await fsStat(abs)
-    registerSelfWrite(abs, finalStat.mtimeMs)
     return { mtimeMs: finalStat.mtimeMs, sha256: expectedSha }
   },
 
@@ -223,9 +220,6 @@ export const fileHandlers = {
     await mkdir(dirname(absNew), { recursive: true })
     try {
       await fsRename(absOld, absNew)
-      const newStat = await fsStat(absNew)
-      registerSelfWrite(absOld, 0) // suppress unlink event
-      registerSelfWrite(absNew, newStat.mtimeMs) // suppress add event
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
         throw new IpcError('E_NOT_FOUND', `${oldRel}: not found`)
