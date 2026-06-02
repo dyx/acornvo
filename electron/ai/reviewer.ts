@@ -277,17 +277,17 @@ export async function reviewClip(
 
   const nextFrontmatter = {
     ...md.frontmatter,
-    summary:
-      typeof md.frontmatter.summary === 'string' && md.frontmatter.summary.trim().length > 0
-        ? md.frontmatter.summary
-        : result.summary,
-    ai_summary: result.summary,
+    // 以 AI 为准，直接覆盖正式字段
+    summary: result.summary,
+    rating: result.rating,
+    category: result.category,
+    tags: result.tags,
+    highlights: result.keyQuotes, // keyQuotes 映射到 highlights
+
+    // 保留 AI 专属或元数据字段
     ai_suggested_title: result.suggestedTitle,
-    ai_tags: result.tags,
-    ai_key_quotes: result.keyQuotes,
-    ai_rating: result.rating,
-    ai_category: result.category,
-    ai_reviewed_at: result.reviewedAt
+    ai_reviewed_at: result.reviewedAt,
+    ai_review_accepted_at: result.reviewedAt // 自动采纳
   }
 
   try {
