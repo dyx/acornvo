@@ -47,10 +47,10 @@ export const AiReviewSchema = z.object({
   _reasoning: z.string().describe('分析文章的核心论点、写作深度以及是否有实际参考价值。'),
   summary: z.string().min(1).describe('用 1-2 句话直接总结文章结论，不使用任何客套话。'),
   suggestedTitle: z.string().min(1).describe('如果原标题是无意义的默认标题或标题党，请提供一个高信息密度的替换标题；否则复用原标题。'),
-  tags: z.array(z.string()).min(2).max(5).describe('请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'),
-  keyQuotes: z.array(z.string().min(1)).min(1).max(3).describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
-  rating: z.number().int().min(1).max(10).optional().describe('1到10的整数评分：1-4为水文/软文，5-6为普通资讯，7-8为优秀教程/干货，9-10为深度洞察/专业研究。'),
-  category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise']).optional().describe('必须选择最符合的一个大类')
+  tags: z.array(z.string()).describe('请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'),
+  keyQuotes: z.array(z.string()).describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
+  rating: z.number().optional().describe('1到10的整数评分：1-4为水文/软文，5-6为普通资讯，7-8为优秀教程/干货，9-10为深度洞察/专业研究。'),
+  category: z.string().optional().describe('必须选择最符合的一个大类: Tutorial, Insight, News, Resource, Noise')
 })
 
 export type AiReviewOutput = z.infer<typeof AiReviewSchema>

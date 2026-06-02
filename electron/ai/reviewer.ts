@@ -234,7 +234,12 @@ export async function reviewClip(
     const out = (await structured.invoke([
       { role: 'system', content: system },
       { role: 'user', content: user }
-    ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> }
+    ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null }
+    
+    if (!out.parsed) {
+      throw new Error(`LLM output failed to parse against schema. Raw: ${JSON.stringify(out.raw)}`)
+    }
+    
     parsed = out.parsed
     usage = readUsage(out.raw)
     logger().info('ai', {
@@ -244,8 +249,8 @@ export async function reviewClip(
         latencyMs: Date.now() - t0,
         inputTokens: usage?.input_tokens ?? null,
         outputTokens: usage?.output_tokens ?? null,
-        tagsCount: parsed.tags.length,
-        summaryLen: parsed.summary.length
+        tagsCount: parsed.tags?.length ?? 0,
+        summaryLen: parsed.summary?.length ?? 0
       }
     })
   } catch (err) {
