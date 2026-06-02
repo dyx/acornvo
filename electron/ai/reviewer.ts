@@ -283,6 +283,7 @@ export async function reviewClip(
   const nextFrontmatter = {
     ...md.frontmatter,
     // 以 AI 为准，直接覆盖正式字段
+    title: result.suggestedTitle,
     summary: result.summary,
     rating: result.rating,
     category: result.category,
