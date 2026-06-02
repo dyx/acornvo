@@ -72,14 +72,15 @@ export function FileRow({
           {(file.rating !== null || file.ai_rating != null) ? (
             <span 
               className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1.5 py-[1px] shrink-0",
+                "inline-flex items-center gap-1 rounded px-1.5 py-[1px] shrink-0 text-[color:var(--color-acorn)]",
                 file.rating !== null 
                   ? "bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)]" 
                   : "bg-[color:var(--color-paper-3)] border border-dashed border-[color:var(--color-line)] opacity-80"
               )} 
               aria-label={`rating ${file.rating ?? file.ai_rating}`}
             >
-              <span className="text-[10px] font-bold text-[color:var(--color-acorn)] leading-none">
+              <Star size={9} className="fill-current opacity-80 -mt-[0.5px]" />
+              <span className="text-[10px] font-bold leading-none">
                 {file.rating ?? file.ai_rating}
               </span>
             </span>
