@@ -55,8 +55,8 @@ export const AiReviewSchema = z.object({
     .describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
   rating: z.number().int().min(1).max(10).optional().catch(undefined)
     .describe('1到10的整数评分：1-4为水文/软文，5-6为普通资讯，7-8为优秀教程/干货，9-10为深度洞察/专业研究。'),
-  category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise']).optional().catch(undefined)
-    .describe('必须选择最符合的一个大类')
+  category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other']).optional().catch('Other')
+    .describe('必须选择最符合的一个大类，如果都不符合请选 Other')
 })
 
 export type AiReviewOutput = z.infer<typeof AiReviewSchema>
