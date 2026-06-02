@@ -222,7 +222,7 @@ export async function reviewClip(
       msg: '[reviewClip] invoking LLM',
       meta: { clipId, provider: profile.provider, model: profile.model }
     })
-    const chatModel = buildChatModel(profile, { temperature: 0.1, maxTokens: 512 })
+    const chatModel = buildChatModel(profile, { temperature: 0.1, maxTokens: 2048 })
     // openai-compatible providers (e.g. DeepSeek) often don't support
     // response_format: { type: "json_schema" } (Structured Outputs).
     // Fall back to jsonMode which uses the widely-supported { type: "json_object" }.
