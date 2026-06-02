@@ -72,10 +72,10 @@ export function FileRow({
           {(file.rating !== null || file.ai_rating != null) ? (
             <span 
               className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1.5 py-[1px] shrink-0 border",
+                "inline-flex items-center gap-0.5 rounded px-1.5 py-[1px] shrink-0",
                 file.rating !== null 
-                  ? "bg-[color:var(--color-paper-2)] border-[color:var(--color-line)]" 
-                  : "bg-[color:var(--color-paper-3)] border-transparent opacity-70"
+                  ? "bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)]" 
+                  : "bg-[color:var(--color-paper-3)] border border-dashed border-[color:var(--color-line)] opacity-80"
               )} 
               aria-label={`rating ${file.rating ?? file.ai_rating}`}
             >
