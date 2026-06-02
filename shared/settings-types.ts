@@ -25,6 +25,7 @@ export interface AppearanceSettings {
 
 export interface AiSettings {
   defaultProfileId: string | null
+  bodyMax: number
 }
 
 export interface BrowserSettings {

@@ -301,6 +301,7 @@
       "appearance": "Appearance",
       "ai": "AI",
       "browser": "Browser",
+      "library": "Library",
       "observability": "Observability",
       "about": "About"
     },
@@ -317,6 +318,8 @@
       "baseUrl": "Base URL",
       "model": "Model",
       "maxTokens": "Max tokens",
+      "bodyMax": "Max Body Length",
+      "bodyMaxHint": "Long articles will be truncated at the head and tail. Higher values retain more details but consume more tokens.",
       "apiKey": "API Key",
       "apiKeyKeepEmpty": "Leave empty to keep existing",
       "save": "Save",

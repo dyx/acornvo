@@ -330,6 +330,7 @@
       "appearance": "外观",
       "ai": "AI 提供商",
       "browser": "浏览器",
+      "library": "理果",
       "observability": "可观测",
       "about": "关于"
     },
@@ -347,6 +348,8 @@
       "model": "模型",
       "maxTokens": "最大 token 数",
       "maxTokensHint": "可选：覆盖模型生成的最大 token 数",
+      "bodyMax": "最大正文字符数",
+      "bodyMaxHint": "超长文章将被首尾截断。调高此值可保留更多细节，但更消耗 Token。",
       "apiKey": "API 密钥",
       "apiKeyKeepEmpty": "留空则保留现有密钥",
       "save": "保存",

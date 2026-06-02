@@ -13,6 +13,7 @@ const TABS: TabDef[] = [
   { to: '/settings/general', labelKey: 'settings.tab.general', testId: 'settings-rail-general' },
   { to: '/settings/ai', labelKey: 'settings.tab.ai', testId: 'settings-rail-ai' },
   { to: '/settings/browser', labelKey: 'settings.tab.browser', testId: 'settings-rail-browser' },
+  { to: '/settings/library', labelKey: 'settings.tab.library', testId: 'settings-rail-library' },
   {
     to: '/settings/observability',
     labelKey: 'settings.tab.observability',

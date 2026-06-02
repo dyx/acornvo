@@ -1,6 +1,5 @@
 import { z } from 'zod'
-
-const BODY_MAX = 16000
+import { settingsStore } from '../../settings/store'
 
 interface RenderVars {
   title: string
@@ -8,9 +7,40 @@ interface RenderVars {
   body: string
 }
 
+function denoiseBody(body: string): string {
+  let text = body
+  
+  // 1. 清除 HTML 注释
+  text = text.replace(/<!--[\s\S]*?-->/g, '')
+
+  // 2. 替换图片：![alt](url) -> [图片: alt]
+  text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, (match, alt) => {
+    return alt.trim() ? `[图片: ${alt}]` : '[图片]'
+  })
+
+  // 3. 压缩普通链接：[text](url) -> text
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+
+  // 4. 清除裸链接（http://... 或 https://...）
+  text = text.replace(/(?<![a-zA-Z0-9])https?:\/\/[^\s]+/g, '[链接]')
+
+  // 5. 压缩连续换行
+  text = text.replace(/\n{3,}/g, '\n\n')
+  
+  return text
+}
+
 function truncateBody(body: string): string {
-  if (body.length <= BODY_MAX) return body
-  return body.slice(0, BODY_MAX) + '\n\n...(内容过长已截断)'
+  const bodyMax = settingsStore.get('ai').bodyMax || 20000
+  const cleanedBody = denoiseBody(body)
+  
+  if (cleanedBody.length <= bodyMax) return cleanedBody
+  
+  const half = Math.floor(bodyMax / 2)
+  const head = cleanedBody.slice(0, half)
+  const tail = cleanedBody.slice(-half)
+  
+  return `${head}\n\n...(中间内容过长已截断)...\n\n${tail}`
 }
 
 export const AiReviewSchema = z.object({
