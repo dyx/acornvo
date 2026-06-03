@@ -34,6 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 DROP TABLE IF EXISTS files_fts;
 CREATE VIRTUAL TABLE files_fts USING fts5(
   path UNINDEXED,
+  heading_path,
   title,
   body,
   tokenize='trigram'
