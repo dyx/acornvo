@@ -1,6 +1,7 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { ipc } from '@/ipc/client'
+import { Badge } from '@/components/ui/badge'
 
 type Status = 'unknown' | 'ok' | 'error'
 
@@ -50,12 +51,13 @@ export function DbHealthBadge(): JSX.Element {
   const label = state.user_version != null ? `db v${state.user_version}` : 'db ?'
 
   return (
-    <span
-      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+    <Badge
+      variant="outline"
+      className="gap-1.5 text-xs text-muted-foreground font-normal border-transparent bg-transparent"
       title={state.message ?? label}
     >
       {dot}
       {label}
-    </span>
+    </Badge>
   )
 }

@@ -1,6 +1,8 @@
 import type { JSX } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { useTranslation } from 'react-i18next'
+import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogHeader } from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
 
 export interface IndexProgressOverlayProps {
   visible: boolean
@@ -22,42 +24,36 @@ export function IndexProgressOverlay(props: IndexProgressOverlayProps): JSX.Elem
     : ''
 
   return (
-    <Dialog.Root open modal>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Dialog.Content
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-        >
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl p-8 max-w-md w-full">
-            <Dialog.Title className="text-lg font-semibold mb-2">
-              {t('index.progress.title', '索引中…')}
-            </Dialog.Title>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              {props.scanned} / {props.total}
-            </div>
-            <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden mb-4">
-              <div className="h-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
-            </div>
-            {truncatedPath && (
-              <div
-                className="text-xs text-zinc-500 truncate mb-4 font-mono"
-                title={props.currentPath}
-              >
-                {truncatedPath}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={props.onCancel}
-              className="px-4 py-2 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200"
-            >
-              {t('index.progress.background', '后台继续')}
-            </button>
+    <Dialog open modal>
+      <DialogContent 
+        className="max-w-md"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        showCloseButton={false}
+      >
+        <DialogHeader>
+          <DialogTitle>{t('index.progress.title', '索引中…')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="text-sm text-muted-foreground">
+            {props.scanned} / {props.total}
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <Progress value={pct} className="h-2" />
+          {truncatedPath && (
+            <div
+              className="text-xs text-muted-foreground truncate font-mono"
+              title={props.currentPath}
+            >
+              {truncatedPath}
+            </div>
+          )}
+        </div>
+        <DialogFooter className="mt-2">
+          <Button variant="secondary" onClick={props.onCancel}>
+            {t('index.progress.background', '后台继续')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

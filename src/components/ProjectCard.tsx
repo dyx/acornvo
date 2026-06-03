@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { RecentItemView, GroveColor } from '@shared/grove'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 const colorMap: Record<GroveColor, { dot: string; bg: string }> = {
   acorn: { dot: 'var(--color-acorn)', bg: 'var(--color-acorn-bg)' },
@@ -48,12 +49,12 @@ export function ProjectCard({
   const disabled = invalid
 
   return (
-    <div
+    <Card
       className={cn(
-        'animate-fade-up group flex items-center gap-4 rounded-xl border p-4 transition-all',
+        'animate-fade-up group flex items-center gap-4 p-4 transition-all shadow-none',
         invalid
-          ? 'opacity-60 border-[color:var(--color-line)]'
-          : 'border-[color:var(--color-line)] hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
+          ? 'opacity-60 border-[color:var(--color-line)] bg-transparent'
+          : 'border-[color:var(--color-line)] bg-transparent hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
       )}
       style={{ animationDelay: `${index * 50}ms` }}
     >
@@ -117,6 +118,6 @@ export function ProjectCard({
           {t('picker.takeover')}
         </Button>
       ) : null}
-    </div>
+    </Card>
   )
 }

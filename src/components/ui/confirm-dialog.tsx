@@ -1,13 +1,14 @@
 import * as React from 'react'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -42,28 +43,28 @@ export function ConfirmDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
         {(title || description) && (
-          <DialogHeader>
-            {title && <DialogTitle>{title}</DialogTitle>}
-            {description && <DialogDescription>{description}</DialogDescription>}
-          </DialogHeader>
+          <AlertDialogHeader>
+            {title && <AlertDialogTitle>{title}</AlertDialogTitle>}
+            {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
+          </AlertDialogHeader>
         )}
         {children}
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={disabled}>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel} disabled={disabled}>
             {cancelText}
-          </Button>
-          <Button
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant={destructive ? 'destructive' : 'default'}
             onClick={onConfirm}
             disabled={disabled}
           >
             {confirmText}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

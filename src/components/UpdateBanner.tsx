@@ -2,6 +2,8 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 export function UpdateBanner(): JSX.Element | null {
   const { t } = useTranslation()
@@ -16,27 +18,32 @@ export function UpdateBanner(): JSX.Element | null {
   if (!version || dismissed) return null
 
   return (
-    <div
+    <Alert
       data-testid="update-banner"
-      className="flex items-center gap-3 border-b bg-accent px-4 py-2 text-sm"
+      className="rounded-none border-x-0 border-t-0 px-4 py-2 bg-accent"
     >
-      <span className="flex-1">{t('update.newVersion', { version })}</span>
-      <button
-        data-testid="update-banner-install"
-        className="rounded border bg-background px-3 py-1"
-        onClick={() => {
-          void ipc.update.installNow()
-        }}
-      >
-        {t('update.installNow')}
-      </button>
-      <button
-        data-testid="update-banner-later"
-        className="rounded px-2 py-1 text-muted-foreground"
-        onClick={() => setDismissed(true)}
-      >
-        {t('update.later')}
-      </button>
-    </div>
+      <AlertDescription className="flex items-center gap-3 mt-0">
+        <span className="flex-1">{t('update.newVersion', { version })}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          data-testid="update-banner-install"
+          onClick={() => {
+            void ipc.update.installNow()
+          }}
+        >
+          {t('update.installNow')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid="update-banner-later"
+          className="text-muted-foreground"
+          onClick={() => setDismissed(true)}
+        >
+          {t('update.later')}
+        </Button>
+      </AlertDescription>
+    </Alert>
   )
 }

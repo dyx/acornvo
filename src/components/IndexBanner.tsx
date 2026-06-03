@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useIndexBannerStore } from '@/stores/indexBanner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function IndexBanner(): JSX.Element | null {
   const { t } = useTranslation()
@@ -14,12 +15,15 @@ export function IndexBanner(): JSX.Element | null {
 
   if (!visible) return null
   return (
-    <div
-      className="border-b border-amber-300 bg-amber-50 text-amber-900 px-4 py-2 text-sm"
+    <Alert
+      variant="warning"
+      className="rounded-none border-x-0 border-t-0 px-4 py-2"
       role="status"
       aria-live="polite"
     >
-      {t('search.rebuilding', { done, total })}
-    </div>
+      <AlertDescription className="mt-0">
+        {t('search.rebuilding', { done, total })}
+      </AlertDescription>
+    </Alert>
   )
 }
