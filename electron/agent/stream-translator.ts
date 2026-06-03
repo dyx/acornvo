@@ -73,7 +73,7 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   for (const tc of toolCalls) {
     deps.emit({ type: 'tool.start', tool: tc.name, args: tc.args, callId: tc.id })
     await deps.persist.recordToolCall(tc, {
-      sideEffect: tc.name === 'update_frontmatter',
+      sideEffect: false,
       messageId: sessionMsg.id
     })
   }

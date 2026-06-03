@@ -184,13 +184,11 @@ export type DbVersionInfo = {
 // --- file namespace types (phase-04) ---
 
 import type { Frontmatter } from './frontmatter-schema'
-import type { FileSummary, FileFilter, Pagination, CategoryNode } from './file-types'
+import type { FileSummary, CategoryNode } from './file-types'
 import type { Op, OpsItem } from './ops-types'
 
 export type {
   FileSummary,
-  FileFilter,
-  Pagination,
   OrderBy,
   CategoryNode
 } from './file-types'
@@ -391,7 +389,7 @@ export type IpcContract = {
       q: string,
       opts?: { limit?: number; offset?: number }
     ) => {
-      items: { summary: FileSummary; snippet: string }[]
+      items: { summary: FileSummary; body: string; heading_path: string }[]
       total: number
       pending: boolean
     }

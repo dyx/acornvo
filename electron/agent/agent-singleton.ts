@@ -38,9 +38,7 @@ export function getAgentBuilder(): SingletonHandle {
   const cp = getCheckpointer()
 
   const hitl = humanInTheLoopMiddleware({
-    interruptOn: {
-      update_frontmatter: { allowedDecisions: ['approve', 'edit', 'reject'] }
-    }
+    interruptOn: {}
   })
 
   handle = {
