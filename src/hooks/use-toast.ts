@@ -17,6 +17,14 @@ function emit(): void {
 }
 
 export function toast(input: Omit<ToastItem, 'id' | 'open'>): void {
+  // Deduplicate: If there is already an open toast with the same title and description, ignore it.
+  const isDuplicate = items.some(
+    (t) => t.open && t.title === input.title && t.description === input.description
+  )
+  if (isDuplicate) {
+    return
+  }
+
   const id = ++counter
   items = [...items, { ...input, id, open: true }]
   emit()

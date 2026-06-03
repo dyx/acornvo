@@ -7,6 +7,7 @@ import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
 import { useSettingsStore } from '@/stores/settings'
 import { ipc } from '@/ipc/client'
+import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
 export interface AiReviewSidebarProps {
@@ -26,6 +27,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   )
   const defaultProfileId = useSettingsStore((s) => s.ai.defaultProfileId)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const isRunning = useEditorStore((s) => (s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false))
 
@@ -82,8 +84,13 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
       await flushSave()
       setAiRerunInflight(true)
       await ipc.ai.reviewClip(clipId, { force: true })
-    } catch {
+    } catch (e) {
       setAiRerunInflight(false)
+      toast({
+        variant: 'destructive',
+        title: t('common.error', { defaultValue: 'Error' }),
+        description: e instanceof Error ? e.message : String(e)
+      })
     }
   }
 

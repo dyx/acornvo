@@ -51,7 +51,7 @@ export function ProjectCard({
   return (
     <Card
       className={cn(
-        'animate-fade-up group flex items-center gap-4 p-4 transition-all shadow-none',
+        'animate-fade-up group flex flex-row items-center gap-4 p-4 transition-all shadow-none',
         invalid
           ? 'opacity-60 border-[color:var(--color-line)] bg-transparent'
           : 'border-[color:var(--color-line)] bg-transparent hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
