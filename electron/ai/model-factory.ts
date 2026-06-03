@@ -1,14 +1,12 @@
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenRouter } from '@langchain/openrouter'
-import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatOllama } from '@langchain/ollama'
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { logger } from '../obs/logger'
 
 export interface ResolvedProfile {
   id: string
-  provider: 'openai' | 'openai-compatible' | 'anthropic' | 'ollama' | 'openrouter' | 'deepseek'
+  provider: 'openai-compatible' | 'ollama' | 'openrouter' | 'deepseek'
   model: string
   apiKey: string | null
   baseUrl?: string
@@ -43,7 +41,6 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
 
   let model: BaseChatModel
   switch (profile.provider) {
-    case 'openai':
     case 'openai-compatible':
       model = new ChatOpenAI({
         callbacks: debugCallbacks,
@@ -56,7 +53,6 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
       }) as unknown as BaseChatModel
       break
-    case 'openrouter':
       model = new ChatOpenRouter({
         callbacks: debugCallbacks,
         model: profile.model,
@@ -77,16 +73,6 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         timeout: 120_000,
         maxRetries: 2,
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
-      }) as unknown as BaseChatModel
-      break
-    case 'anthropic':
-      model = new ChatAnthropic({
-        callbacks: debugCallbacks,
-        model: profile.model,
-        apiKey: profile.apiKey ?? '',
-        temperature,
-        maxTokens,
-        maxRetries: 2
       }) as unknown as BaseChatModel
       break
     case 'ollama':

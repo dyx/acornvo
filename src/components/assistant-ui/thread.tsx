@@ -54,6 +54,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useChatStore } from "@/stores/chat";
+import { useProfilesStore } from "@/stores/profiles";
 import { ToolStepsChain, MessageFooter } from "@/components/chat/MessageAddons";
 import { ProfileChip } from "@/components/chat/ProfileChip";
 
@@ -127,7 +128,7 @@ const ThreadWelcome: FC = () => {
 
 const MissingProfileBanner: FC = () => {
   const { t } = useTranslation();
-  const hasProfiles = useChatStore((s) => s.profiles.length > 0);
+  const hasProfiles = useProfilesStore((s) => (s.profiles?.length ?? 0) > 0);
   
   if (hasProfiles) return null;
   
