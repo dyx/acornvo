@@ -74,29 +74,7 @@ function StreamErrorBanner() {
   )
 }
 
-function MissingProfileBanner() {
-  const { t } = useTranslation()
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const sessions = useChatStore((s) => s.sessions)
-  const profiles = useProfilesStore((s) => s.profiles)
-  if (profiles.length > 0) return null
-  const active = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null
-  if (!active || active.profileId) return null
-  return (
-    <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
-      <AlertDescription className="flex justify-between items-center w-full">
-        <span>{t('chat.error.missingProfile')}</span>
-        <Link
-          to="/settings/ai"
-          data-testid="chat-banner-settings-link"
-          className="underline font-medium"
-        >
-          {t('chat.error.goToSettings')}
-        </Link>
-      </AlertDescription>
-    </Alert>
-  )
-}
+
 
 function ShortcutsModal() {
   const { t } = useTranslation()
@@ -252,7 +230,6 @@ export function Chat() {
           >
             <SessionsErrorBanner />
             <StreamErrorBanner />
-            <MissingProfileBanner />
             <header className="flex h-14 shrink-0 items-center gap-3 px-5 bg-transparent z-10">
               <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
                 {title}

@@ -27,7 +27,7 @@ interface ProfileDialogProps {
   onClose: () => void
 }
 
-const PROVIDERS: AiProviderKind[] = ['anthropic', 'deepseek', 'openai', 'openai-compatible', 'openrouter', 'ollama']
+const PROVIDERS: AiProviderKind[] = ['deepseek', 'openai-compatible', 'openrouter', 'ollama']
 
 interface FormState {
   name: string
@@ -39,10 +39,10 @@ interface FormState {
 
 function initialState(profile: AiProviderProfile | null): FormState {
   if (!profile) {
-    const defs = AI_PROVIDER_DEFAULTS['openai']
+    const defs = AI_PROVIDER_DEFAULTS['deepseek']
     return {
       name: '',
-      provider: 'openai',
+      provider: 'deepseek',
       baseUrl: defs?.baseUrl ?? '',
       model: defs?.models?.[0] ?? '',
       apiKey: ''

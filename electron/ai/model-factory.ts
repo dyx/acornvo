@@ -2,6 +2,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenRouter } from '@langchain/openrouter'
 import { ChatOllama } from '@langchain/ollama'
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { logger } from '../obs/logger'
 
 export interface ResolvedProfile {
@@ -53,6 +54,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
       }) as unknown as BaseChatModel
       break
+    case 'openrouter':
       model = new ChatOpenRouter({
         callbacks: debugCallbacks,
         model: profile.model,
