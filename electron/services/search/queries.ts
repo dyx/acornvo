@@ -104,7 +104,7 @@ export interface FullTextOpts {
   offset?: number
 }
 export interface FullTextResult {
-  items: { summary: FileSummary; snippet: string; heading_path: string }[]
+  items: { summary: FileSummary; body: string; heading_path: string }[]
   total: number
   pending: boolean
   error?: string
@@ -113,7 +113,7 @@ export interface FullTextResult {
 interface FtsHitRow {
   path: string
   heading_path: string
-  snippet: string
+  body: string
   rank: number
 }
 
@@ -145,16 +145,16 @@ export function fullText(
       .get(expr) as { c: number }
 
     hits = db
-      .prepare(
-        `SELECT path,
-              heading_path,
-              snippet(files_fts, 3, '<mark>', '</mark>', '…', 32) AS snippet,
-              rank
-       FROM files_fts
-       WHERE files_fts MATCH ?
-       ORDER BY rank
-       LIMIT ? OFFSET ?`
-      )
+        .prepare(
+          `SELECT path,
+                heading_path,
+                body,
+                rank
+         FROM files_fts
+         WHERE files_fts MATCH ?
+         ORDER BY rank
+         LIMIT ? OFFSET ?`
+        )
       .all(expr, limit, offset) as FtsHitRow[]
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
@@ -185,9 +185,9 @@ export function fullText(
     .map((hit) => {
       const row = byPath.get(hit.path)
       if (!row) return null
-      return { summary: rowToFileSummary(row), snippet: hit.snippet, heading_path: hit.heading_path }
+      return { summary: rowToFileSummary(row), body: hit.body, heading_path: hit.heading_path }
     })
-    .filter((x): x is { summary: FileSummary; snippet: string; heading_path: string } => x !== null)
+    .filter((x): x is { summary: FileSummary; body: string; heading_path: string } => x !== null)
 
   end?.({ ok: true, meta: { total: totalRow?.c ?? items.length, returned: items.length } })
   return { items, total: totalRow?.c ?? items.length, pending: false }

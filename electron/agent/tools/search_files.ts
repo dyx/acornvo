@@ -17,7 +17,7 @@ const SearchFilesSchema = z.object({
 export const searchFilesTool = tool(
   async ({ queries, limit }) => {
     const db = dbService.requireCurrent()
-    const cappedLimit = Math.max(1, Math.min(100, limit ?? 8))
+    const cappedLimit = Math.max(1, Math.min(100, limit ?? 10))
     const r = fullText(db, queries, { limit: cappedLimit, offset: 0 })
     if (r.error) {
       return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
@@ -27,7 +27,7 @@ export const searchFilesTool = tool(
         path: i.summary.path,
         heading_path: i.heading_path,
         title: i.summary.title ?? i.summary.path,
-        snippet: i.snippet
+        body: i.body
       }))
     }
   },
