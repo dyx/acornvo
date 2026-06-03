@@ -1,15 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PaperclipIcon, SendIcon, SquareIcon } from 'lucide-react'
+import { SendIcon, SquareIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useChatStore, BusyError } from '@/stores/chat'
 import { useToast } from '@/hooks/use-toast'
-import type { Attachment } from '@shared/agent-types'
-import { AttachmentsAdapter, type AttachmentsAdapterHandle } from './AttachmentsAdapter'
 import { ProfileChip } from './ProfileChip'
-
-const EMPTY_ATTACHMENTS: Attachment[] = []
 
 export function ChatInputArea() {
   const { t } = useTranslation()
@@ -17,11 +13,6 @@ export function ChatInputArea() {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const status = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.status ?? 'idle') : 'idle'
-  )
-  const pendingAttachments = useChatStore((s) =>
-    activeSessionId
-      ? (s.bySession[activeSessionId]?.pendingAttachments ?? EMPTY_ATTACHMENTS)
-      : EMPTY_ATTACHMENTS
   )
   const activeSession = useChatStore((s) => s.sessions.find((sess) => sess.id === activeSessionId))
   const pendingPromptText = useChatStore((s) =>
@@ -33,7 +24,6 @@ export function ChatInputArea() {
   const focusInputBump = useChatStore((s) => s.focusInputBump)
 
   const isStreaming = status === 'streaming'
-  const attachmentsRef = useRef<AttachmentsAdapterHandle | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -42,9 +32,9 @@ export function ChatInputArea() {
   }, [focusInputBump])
 
   const handleSubmit = useCallback(async () => {
-    if (!pendingPromptText.trim() && pendingAttachments.length === 0) return
+    if (!pendingPromptText.trim()) return
     try {
-      await sendUserMessage({ text: pendingPromptText, attachments: pendingAttachments })
+      await sendUserMessage({ text: pendingPromptText })
       setPendingPromptText('')
     } catch (err) {
       if (err instanceof BusyError) {
@@ -53,7 +43,7 @@ export function ChatInputArea() {
         toast({ title: err instanceof Error ? err.message : String(err), variant: 'destructive' })
       }
     }
-  }, [pendingPromptText, pendingAttachments, sendUserMessage, setPendingPromptText, t, toast])
+  }, [pendingPromptText, sendUserMessage, setPendingPromptText, t, toast])
 
   const handleKeyDown = useCallback(
     (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -70,13 +60,9 @@ export function ChatInputArea() {
     [isStreaming, cancelStream, handleSubmit]
   )
 
-  const attachVisible = pendingAttachments.length > 0
-
   return (
     <div className="p-4 bg-background">
       <div className="mx-auto max-w-3xl flex flex-col gap-2 rounded-xl border border-border bg-muted/30 focus-within:ring-1 focus-within:ring-ring">
-        <AttachmentsAdapter ref={attachmentsRef} visible={attachVisible} />
-
         <Textarea
           ref={textareaRef}
           value={pendingPromptText}
@@ -89,16 +75,6 @@ export function ChatInputArea() {
 
         <div className="flex items-center justify-between px-4 pb-4 pt-0">
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              title={t('chat.input.attach')}
-              onClick={() => attachmentsRef.current?.select?.({ multiple: true })}
-              disabled={isStreaming}
-            >
-              <PaperclipIcon className="size-4" />
-            </Button>
             {activeSessionId && (
               <ProfileChip
                 sessionId={activeSessionId}
@@ -118,7 +94,7 @@ export function ChatInputArea() {
               size="icon"
               className="size-8 rounded-lg"
               onClick={handleSubmit}
-              disabled={!pendingPromptText.trim() && pendingAttachments.length === 0}
+              disabled={!pendingPromptText.trim()}
             >
               <SendIcon className="size-4" />
             </Button>

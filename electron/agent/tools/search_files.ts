@@ -23,12 +23,15 @@ export const searchFilesTool = tool(
       return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
     }
     return {
-      items: r.items.map((i) => ({
-        path: i.summary.path,
-        heading_path: i.heading_path,
-        title: i.summary.title ?? i.summary.path,
-        body: i.body
-      }))
+      ok: true as const,
+      data: {
+        items: r.items.map((i) => ({
+          path: i.summary.path,
+          heading_path: i.heading_path,
+          title: i.summary.title ?? i.summary.path,
+          body: i.body
+        }))
+      }
     }
   },
   {

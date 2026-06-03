@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChatStore, type PendingApproval } from '@/stores/chat'
 import { JsonArgsEditor } from './JsonArgsEditor'
-import { FrontmatterDiff } from './FrontmatterDiff'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -14,8 +13,6 @@ type Props = {
   approval: PendingApproval
   callId: string
 }
-
-type FrontmatterArgs = { before?: unknown; after?: unknown }
 
 export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
   const { t } = useTranslation()
@@ -32,8 +29,6 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
     setEditedArgs(approval.args)
     setJsonValid(true)
   }
-
-  const isFrontmatter = approval.toolName === 'update_frontmatter'
 
   const handleSubmit = async () => {
     if (!jsonValid) {
@@ -73,20 +68,13 @@ export function ApprovalDrawer({ open, onClose, approval, callId }: Props) {
           )}
 
           <div>
-            {isFrontmatter ? (
-              <FrontmatterDiff
-                before={(approval.args as FrontmatterArgs)?.before}
-                after={(approval.args as FrontmatterArgs)?.after}
-              />
-            ) : (
-              <JsonArgsEditor
-                initialArgs={approval.args}
-                onChange={(_text, valid, parsed) => {
-                  setJsonValid(valid)
-                  if (valid) setEditedArgs(parsed)
-                }}
-              />
-            )}
+            <JsonArgsEditor
+              initialArgs={approval.args}
+              onChange={(_text, valid, parsed) => {
+                setJsonValid(valid)
+                if (valid) setEditedArgs(parsed)
+              }}
+            />
           </div>
         </div>
 

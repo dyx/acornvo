@@ -463,7 +463,6 @@
       "pendingTag": "Pending",
       "submit": "Submit",
       "tools": {
-        "update_frontmatter": "Update frontmatter",
         "write_file": "Write file",
         "delete_file": "Delete file",
         "default": "Tool call"
@@ -473,7 +472,6 @@
       "search_files": "Search files",
       "read_file": "Read file",
       "list_tags": "List tags",
-      "update_frontmatter": "Update frontmatter",
       "clip_summary": "Summarize clip"
     },
     "message": {

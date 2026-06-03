@@ -12,8 +12,11 @@ export const getGroveStatsTool = tool(
       db.prepare('SELECT COUNT(*) as c FROM files WHERE clipped_at IS NOT NULL').get() as { c: number }
     ).c
     return {
-      total_files: totalFiles,
-      clipped_files: clippedFiles
+      ok: true as const,
+      data: {
+        total_files: totalFiles,
+        clipped_files: clippedFiles
+      }
     }
   },
   {
