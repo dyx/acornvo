@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { AlertCircle } from 'lucide-react'
 
 export function CrashBanner(): JSX.Element | null {
   const { t } = useTranslation()
@@ -22,12 +23,14 @@ export function CrashBanner(): JSX.Element | null {
       data-testid="crash-banner"
       className="rounded-none border-x-0 border-t-0 px-4 py-2"
     >
-      <AlertDescription className="flex items-center gap-3 mt-0">
+      <AlertCircle className="size-4" />
+      <AlertDescription className="flex items-center gap-3">
         <span className="flex-1">{t('crash.detectedLastRun', { count: files.length })}</span>
         <Button
           variant="outline"
           size="sm"
           data-testid="crash-banner-logs"
+          className="border-[color:var(--color-berry)]/50 text-[color:var(--color-berry)] hover:bg-[color:var(--color-berry)]/10 bg-transparent h-7 text-xs"
           onClick={() => {
             void ipc.crash.openLogsFolder()
           }}
@@ -38,6 +41,7 @@ export function CrashBanner(): JSX.Element | null {
           variant="outline"
           size="sm"
           data-testid="crash-banner-export"
+          className="border-[color:var(--color-berry)]/50 text-[color:var(--color-berry)] hover:bg-[color:var(--color-berry)]/10 bg-transparent h-7 text-xs"
           onClick={() => {
             void ipc.ops.exportDiagnostic()
           }}
@@ -48,7 +52,7 @@ export function CrashBanner(): JSX.Element | null {
           variant="ghost"
           size="sm"
           data-testid="crash-banner-ignore"
-          className="text-muted-foreground"
+          className="text-[color:var(--color-berry)] hover:bg-[color:var(--color-berry)]/10 h-7 text-xs"
           onClick={async () => {
             for (const f of files) await ipc.crash.ack(f)
             setFiles(null)

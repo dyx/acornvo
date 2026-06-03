@@ -209,7 +209,11 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
     }
   }, [])
 
-  return <div ref={elRef} className="h-full w-full !border-none [&_.vditor-toolbar]:!hidden [&_.vditor]:!bg-transparent [&_.vditor-ir]:!bg-transparent [&_.vditor-wysiwyg]:!bg-transparent [&_.vditor-preview]:!bg-transparent [&_.vditor-reset]:!bg-transparent [&_.vditor-sv]:!bg-transparent [&_.vditor-textarea]:!bg-transparent" data-testid="vditor-host" />
+  return (
+    <div className="flex flex-col h-full w-full relative">
+      <div ref={elRef} className="flex-1 w-full !border-none [&_.vditor-toolbar]:!hidden [&_.vditor]:!bg-transparent [&_.vditor-ir]:!bg-transparent [&_.vditor-wysiwyg]:!bg-transparent [&_.vditor-preview]:!bg-transparent [&_.vditor-reset]:!bg-transparent [&_.vditor-sv]:!bg-transparent [&_.vditor-textarea]:!bg-transparent" data-testid="vditor-host" />
+    </div>
+  )
 }
 
 function rewriteImagesToLocal(markdown: string, docPath: string): string {

@@ -10,27 +10,29 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
   )
   if (conflictState.kind !== 'externalModified') return null
   return (
-    <div
-      role="alert"
-      className="border-l-4 border-yellow-300 bg-yellow-50 px-4 py-2 text-yellow-900 flex items-center justify-between gap-4"
+    <Alert
+      variant="warning"
+      className="rounded-none border-x-0 border-t-0 border-l-4 border-l-[color:var(--color-acorn)] px-4 py-2"
     >
-      <span>{t('conflict.banner.external_modified')}</span>
-      <div className="flex gap-2">
-        <button
-          data-testid="banner-reload"
-          className="text-sm underline"
-          onClick={() => useEditorStore.getState().reloadFromDisk()}
-        >
-          {t('conflict.banner.reload')}
-        </button>
-        <button
-          data-testid="banner-ignore"
-          className="text-sm underline"
-          onClick={() => useEditorStore.getState().ignoreExternalChange()}
-        >
-          {t('conflict.banner.ignore')}
-        </button>
-      </div>
-    </div>
+      <AlertDescription className="flex items-center justify-between gap-4">
+        <span>📝 {t('conflict.banner.external_modified')}</span>
+        <div className="flex gap-3 font-medium">
+          <button
+            data-testid="banner-reload"
+            className="underline underline-offset-2 text-[color:var(--color-acorn)] hover:text-[color:var(--color-acorn-2)]"
+            onClick={() => useEditorStore.getState().reloadFromDisk()}
+          >
+            {t('conflict.banner.reload')}
+          </button>
+          <button
+            data-testid="banner-ignore"
+            className="underline underline-offset-2 text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]"
+            onClick={() => useEditorStore.getState().ignoreExternalChange()}
+          >
+            {t('conflict.banner.ignore')}
+          </button>
+        </div>
+      </AlertDescription>
+    </Alert>
   )
 }

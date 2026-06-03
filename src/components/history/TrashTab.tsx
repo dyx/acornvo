@@ -29,7 +29,7 @@ function opBadgeColor(op: Op): string {
     case 'trash':
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
     case 'hard_delete':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+      return 'bg-[color:var(--color-berry-bg)] text-[color:var(--color-berry)]'
     default:
       return 'bg-muted text-muted-foreground'
   }

@@ -19,6 +19,7 @@ import {
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import {
   ActionBarMorePrimitive,
@@ -46,9 +47,12 @@ import {
   PencilIcon,
   RefreshCwIcon,
   SquareIcon,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { useChatStore } from "@/stores/chat";
 import { ToolStepsChain, MessageFooter } from "@/components/chat/MessageAddons";
 import { ProfileChip } from "@/components/chat/ProfileChip";
@@ -79,6 +83,7 @@ export const Thread: FC = () => {
           <div className="pointer-events-none sticky top-0 z-10 h-8 -mx-4 px-4 bg-gradient-to-b from-background to-transparent" />
 
           <div className="pt-2">
+            <MissingProfileBanner />
             <AuiIf condition={(s) => s.thread.isEmpty}>
               <ThreadWelcome />
             </AuiIf>
@@ -118,6 +123,27 @@ import { EmptyState } from "@/pages/Chat";
 
 const ThreadWelcome: FC = () => {
   return <EmptyState />;
+};
+
+const MissingProfileBanner: FC = () => {
+  const { t } = useTranslation();
+  const hasProfiles = useChatStore((s) => s.profiles.length > 0);
+  
+  if (hasProfiles) return null;
+  
+  return (
+    <div className="mb-4 mt-2">
+      <Alert variant="default" className="rounded-lg overflow-hidden border border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm border-l-4 border-l-[color:var(--color-berry)]">
+        <AlertCircle className="size-4 text-[color:var(--color-berry)]" />
+        <AlertDescription className="flex items-center gap-3 mt-0">
+          <span className="flex-1 text-[color:var(--color-ink)] font-medium">由于未配置 AI 模型，无法使用当前对话功能。</span>
+          <Link to="/settings/ai" className="px-3 py-1 bg-[color:var(--color-berry)] text-white text-xs rounded hover:bg-opacity-90 transition-opacity">
+            {t("chat.error.goToSettings", "前往设置")}
+          </Link>
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
 };
 
 const ThreadSuggestions: FC = () => {
@@ -213,8 +239,20 @@ const ComposerAction: FC = () => {
 const MessageError: FC = () => {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="aui-message-error-root border-destructive bg-destructive/10 text-destructive dark:bg-destructive/5 mt-2 rounded-md border p-3 text-sm dark:text-red-200">
-        <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2" />
+      <ErrorPrimitive.Root asChild>
+        <Alert variant="destructive" className="px-3 py-2 mt-1 rounded-lg bg-background shadow-sm max-w-full">
+          <XCircle className="size-3 shrink-0" />
+          <AlertDescription className="flex items-center justify-between gap-2 text-[12px] w-full">
+            <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2 flex-1" />
+            <ActionBarPrimitive.Root hideWhenRunning>
+              <ActionBarPrimitive.Reload asChild>
+                <button className="shrink-0 hover:bg-[color:var(--color-berry)]/10 p-1 rounded transition-colors text-[color:var(--color-berry)]" title="重试">
+                  <RefreshCwIcon className="size-3" />
+                </button>
+              </ActionBarPrimitive.Reload>
+            </ActionBarPrimitive.Root>
+          </AlertDescription>
+        </Alert>
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
   );

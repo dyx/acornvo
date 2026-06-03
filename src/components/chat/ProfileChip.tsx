@@ -64,7 +64,7 @@ export function ProfileChip({
         {profiles.length === 0 ? (
           <DropdownMenuItem asChild>
             <Link to="/settings/ai">
-              {t('chat.topbar.noProfile')} — {t('chat.error.goToSettings')}
+              {t('chat.topbar.noProfile')}
             </Link>
           </DropdownMenuItem>
         ) : (

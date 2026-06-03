@@ -27,6 +27,7 @@ html {
   --color-leaf: oklch(0.52 0.08 135);
   --color-leaf-bg: oklch(0.94 0.025 130);
   --color-berry: oklch(0.5 0.14 25);
+  --color-berry-bg: oklch(0.94 0.03 25);
   --color-sky: oklch(0.55 0.06 230);
   --color-sky-bg: oklch(0.93 0.02 230);
 
@@ -76,6 +77,7 @@ html {
 
   --color-acorn-bg: oklch(0.3 0.03 48);
   --color-leaf-bg: oklch(0.3 0.025 135);
+  --color-berry-bg: oklch(0.3 0.03 25);
   --color-sky-bg: oklch(0.3 0.03 230);
 
   --color-destructive: oklch(0.7 0.15 25);

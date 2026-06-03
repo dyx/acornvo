@@ -27,7 +27,7 @@ export function ApprovalInlineActions({
           variant="outline"
           size="sm"
           onClick={() => void approveTool(activeSessionId, callId)}
-          className="h-8 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-900"
+          className="h-8 bg-[color:var(--color-leaf-bg)] text-[color:var(--color-leaf)] hover:bg-[color:var(--color-leaf)]/20 border-transparent shadow-none"
         >
           <CheckIcon className="size-3.5 mr-1.5" />
           {t('chat.approval.approve')}
@@ -36,7 +36,7 @@ export function ApprovalInlineActions({
           variant="outline"
           size="sm"
           onClick={() => void rejectTool(activeSessionId, callId)}
-          className="h-8 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900"
+          className="h-8 bg-[color:var(--color-berry-bg)] text-[color:var(--color-berry)] hover:bg-[color:var(--color-berry)]/20 border-transparent shadow-none"
         >
           <XIcon className="size-3.5 mr-1.5" />
           {t('chat.approval.reject')}

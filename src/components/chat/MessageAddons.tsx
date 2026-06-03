@@ -142,27 +142,6 @@ export function MessageFooter({ messageId, isUser }: { messageId: string, isUser
           {isCopied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
         </Button>
 
-        {isErrorTail && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-            title={t('chat.message.retry')}
-            onClick={() => {
-              const idx = messages.findIndex((m) => m.id === messageId)
-              const prior = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user')
-              if (prior) {
-                truncateMessagesFrom(messageId)
-                void sendUserMessage({
-                  text: prior.text,
-                  attachments: prior.attachments ?? []
-                })
-              }
-            }}
-          >
-            <RotateCcwIcon className="size-3" />
-          </Button>
-        )}
 
         {!isUser && (
           <Button

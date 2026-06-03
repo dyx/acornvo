@@ -1,8 +1,9 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Star, Sparkles, RefreshCw, Check } from 'lucide-react'
+import { FileText, Star, Sparkles, RefreshCw, Check, XCircle } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
 import { useSettingsStore } from '@/stores/settings'
@@ -36,6 +37,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const flushSave = useEditorStore((s) => s.flushSave)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const showLoader = isSubmitting || isRunning
 
   useEffect(() => {
@@ -80,19 +82,18 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
 
   const handleRerun = async () => {
     if (clipId === null) return
+    setLocalError(null)
     try {
       await flushSave()
       setAiRerunInflight(true)
       await ipc.ai.reviewClip(clipId, { force: true })
     } catch (e) {
       setAiRerunInflight(false)
-      toast({
-        variant: 'destructive',
-        title: t('common.error', { defaultValue: 'Error' }),
-        description: e instanceof Error ? e.message : String(e)
-      })
+      setLocalError(e instanceof Error ? e.message : String(e))
     }
   }
+
+  const errorMessage = localError || summary.review_error;
 
   return (
     <div
@@ -195,17 +196,38 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           <div className="mb-8 p-5 rounded-lg border border-dashed border-[color:var(--color-line)] text-center flex flex-col items-center justify-center min-h-[100px] gap-3">
             <span className="text-[color:var(--color-ink-3)] font-serif text-[15px]">{t('library.review_pending')}</span>
           </div>
-        ) : summary.review_status === 'failed' ? (
-          <div className="mb-8 p-5 rounded-lg border border-dashed border-[color:var(--color-berry)] bg-[color:var(--color-berry)]/5 text-center flex flex-col items-center gap-3">
-            <span className="text-[color:var(--color-berry)] font-serif text-sm">⚠️ {t('library.review_failed')}</span>
-            <button
-              onClick={() => handleAction(handleRerun)}
-              disabled={isRunning}
-              className="mt-1 flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[color:var(--color-berry)] text-white text-xs font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 shadow-sm"
-            >
-              <RefreshCw size={12} className={cn(isRunning && "animate-spin")} />
-              {t('editor.ai.badge.noneTooltip', { defaultValue: '重新理果' })}
-            </button>
+        ) : summary.review_status === 'failed' || localError ? (
+          <div className="mb-8">
+            <Alert variant="destructive" className="w-full border-dashed bg-[color:var(--color-berry)]/5 shadow-sm px-4 py-4 flex flex-col items-center justify-center text-center [&>svg]:hidden">
+              <AlertTitle className="text-[13px] mb-3 leading-snug flex items-center justify-center gap-1.5 w-full">
+                <XCircle className="size-4 shrink-0 text-[color:var(--color-berry)]" />
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="truncate cursor-default">
+                        <span>{t('library.review_failed', { defaultValue: '理果失败' })}</span>
+                        {errorMessage && <span className="opacity-80 font-normal ml-1">: {errorMessage}</span>}
+                      </div>
+                    </TooltipTrigger>
+                    {errorMessage && (
+                      <TooltipContent side="top" className="max-w-[260px] text-xs">
+                        <p>{errorMessage}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </AlertTitle>
+              <AlertDescription className="flex justify-center w-full">
+                <button
+                  onClick={() => handleAction(handleRerun)}
+                  disabled={isRunning}
+                  className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded bg-[color:var(--color-berry)] text-white text-xs font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  <RefreshCw size={12} className={cn(isRunning && "animate-spin")} />
+                  {t('editor.ai.badge.noneTooltip', { defaultValue: '重新理果' })}
+                </button>
+              </AlertDescription>
+            </Alert>
           </div>
         ) : rating === null ? (
           <div className="mb-8 p-6 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-paper)] text-center flex flex-col items-center gap-3 shadow-sm">
