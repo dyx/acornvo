@@ -6,6 +6,8 @@ import {
   type AppendMessage
 } from '@assistant-ui/react'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
+import { useProfilesStore } from '@/stores/profiles'
+import { useToast } from '@/hooks/use-toast'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
@@ -88,6 +90,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const bySession = useChatStore((s) => s.bySession)
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const cancelStream = useChatStore((s) => s.cancelStream)
+  const { toast } = useToast()
 
   const activeSession = activeSessionId ? bySession[activeSessionId] : null
   const messages = activeSession?.messages ?? EMPTY_MESSAGES
@@ -95,21 +98,43 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const isRunning = activeSession ? 
     activeSession.messages.some(m => m.status === 'pending' || m.status === 'streaming') : false;
 
+  const checkProfilesOrToast = () => {
+    const profiles = useProfilesStore.getState().profiles;
+    if (profiles.length === 0) {
+      toast({
+        variant: 'destructive',
+        description: '由于未配置 AI 模型，无法使用当前对话功能。'
+      });
+      return false;
+    }
+    return true;
+  };
+
   const runtime = useExternalStoreRuntime<ChatMessage>({
     messages,
     isRunning,
     convertMessage,
     onNew: async (message: AppendMessage) => {
+      if (!checkProfilesOrToast()) return;
       const text = message.content
         .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
         .map((c) => c.text)
         .join('')
-      await sendUserMessage({ text })
+      try {
+        await sendUserMessage({ text })
+      } catch (err) {
+        toast({
+          variant: 'destructive',
+          title: '发送失败',
+          description: err instanceof Error ? err.message : String(err)
+        });
+      }
     },
     onCancel: async () => {
       await cancelStream()
     },
     onEdit: async (message: AppendMessage) => {
+      if (!checkProfilesOrToast()) return;
       console.log('onEdit called with message:', message);
       if (!message.sourceId) return;
 
@@ -121,6 +146,11 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         await window.api.chat['sessions.truncate'](activeSid, message.sourceId);
       } catch (err) {
         console.error('Failed to truncate session:', err);
+        toast({
+          variant: 'destructive',
+          title: '编辑失败',
+          description: err instanceof Error ? err.message : String(err)
+        });
         return;
       }
 
@@ -134,9 +164,18 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       useChatStore.getState().truncateMessagesFrom(message.sourceId);
 
       // 4. Send the updated message
-      await sendUserMessage({ text });
+      try {
+        await sendUserMessage({ text });
+      } catch (err) {
+        toast({
+          variant: 'destructive',
+          title: '发送失败',
+          description: err instanceof Error ? err.message : String(err)
+        });
+      }
     },
     onReload: async (parentId: string | null) => {
+      if (!checkProfilesOrToast()) return;
       console.log('onReload called with parentId:', parentId);
       if (!parentId) return;
 
@@ -153,13 +192,26 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         await window.api.chat['sessions.truncate'](activeSid, parentId);
       } catch (err) {
         console.error('Failed to truncate session for reload:', err);
+        toast({
+          variant: 'destructive',
+          title: '重试失败',
+          description: err instanceof Error ? err.message : String(err)
+        });
         return;
       }
 
       useChatStore.getState().truncateMessagesFrom(parentId);
       
-      // Resend the text (and attachments if we had them, though they aren't persisted in ChatMessage currently)
-      await sendUserMessage({ text: parentMessage.text });
+      // Resend the text
+      try {
+        await sendUserMessage({ text: parentMessage.text });
+      } catch (err) {
+        toast({
+          variant: 'destructive',
+          title: '发送失败',
+          description: err instanceof Error ? err.message : String(err)
+        });
+      }
     },
     onAddToolResult: async () => {}
   })

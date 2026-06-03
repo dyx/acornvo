@@ -19,7 +19,7 @@ export function Toaster(): JSX.Element {
             {title ? <ToastTitle>{title}</ToastTitle> : null}
             {description ? <ToastDescription>{description}</ToastDescription> : null}
           </div>
-          <ToastClose />
+          <ToastClose variant={variant} />
         </Toast>
       ))}
       <ToastViewport />

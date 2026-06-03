@@ -84,7 +84,6 @@ export const Thread: FC = () => {
           <div className="pointer-events-none sticky top-0 z-10 h-8 -mx-4 px-4 bg-gradient-to-b from-background to-transparent" />
 
           <div className="pt-2">
-            <MissingProfileBanner />
             <AuiIf condition={(s) => s.thread.isEmpty}>
               <ThreadWelcome />
             </AuiIf>
@@ -126,26 +125,7 @@ const ThreadWelcome: FC = () => {
   return <EmptyState />;
 };
 
-const MissingProfileBanner: FC = () => {
-  const { t } = useTranslation();
-  const hasProfiles = useProfilesStore((s) => (s.profiles?.length ?? 0) > 0);
-  
-  if (hasProfiles) return null;
-  
-  return (
-    <div className="mb-4 mt-2">
-      <Alert variant="default" className="rounded-lg overflow-hidden border border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm border-l-4 border-l-[color:var(--color-berry)]">
-        <AlertCircle className="size-4 text-[color:var(--color-berry)]" />
-        <AlertDescription className="flex items-center gap-3 mt-0">
-          <span className="flex-1 text-[color:var(--color-ink)] font-medium">由于未配置 AI 模型，无法使用当前对话功能。</span>
-          <Link to="/settings/ai" className="px-3 py-1 bg-[color:var(--color-berry)] text-white text-xs rounded hover:bg-opacity-90 transition-opacity">
-            {t("chat.error.goToSettings", "前往设置")}
-          </Link>
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
-};
+
 
 const ThreadSuggestions: FC = () => {
   return (
