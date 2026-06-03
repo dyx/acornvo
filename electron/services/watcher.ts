@@ -12,6 +12,7 @@ import {
   renameFile
 } from './index-queries'
 import { parseFile } from './frontmatter'
+import { chunkMarkdown } from './chunker'
 import { _setStateForTest as _indexerSetState } from './indexer'
 import * as opsLog from './ops/log'
 
@@ -364,10 +365,14 @@ async function flush(): Promise<void> {
       const { bodyChanged } = upsertFileWithBodyDelta(_db!, row)
 
       if (bodyChanged) {
-        const ftsRowid = (
-          _db!.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
-        ).rowid
-        upsertFts(_db!, { rowid: ftsRowid, path: row.path, title: row.title ?? '', body: ev.body! })
+        const chunks = chunkMarkdown(ev.body!)
+        let extractedTitle = ''
+        if (typeof ev.frontmatter.title === 'string') {
+          extractedTitle = ev.frontmatter.title
+        } else if (ev.frontmatter.title) {
+          extractedTitle = String(ev.frontmatter.title)
+        }
+        upsertFts(_db!, row.path, extractedTitle, chunks)
       }
     }
   })

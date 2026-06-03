@@ -104,7 +104,7 @@ export interface FullTextOpts {
   offset?: number
 }
 export interface FullTextResult {
-  items: { summary: FileSummary; snippet: string }[]
+  items: { summary: FileSummary; snippet: string; heading_path: string }[]
   total: number
   pending: boolean
   error?: string
@@ -112,6 +112,7 @@ export interface FullTextResult {
 
 interface FtsHitRow {
   path: string
+  heading_path: string
   snippet: string
   rank: number
 }
@@ -120,13 +121,15 @@ type SummaryRow = QuickSwitchRow
 
 export function fullText(
   db: Database.Database,
-  q: string,
+  q: string | string[],
   opts: FullTextOpts = {}
 ): FullTextResult {
-  const expr = buildFtsQuery(q)
-  if (expr.length === 0) {
+  const queries = Array.isArray(q) ? q : [q]
+  const exprs = queries.map(query => buildFtsQuery(query)).filter(e => e.length > 0)
+  if (exprs.length === 0) {
     return { items: [], total: 0, pending: false }
   }
+  const expr = exprs.map(e => `(${e})`).join(' OR ')
 
   const limit = opts.limit ?? 50
   const offset = opts.offset ?? 0
@@ -144,7 +147,8 @@ export function fullText(
     hits = db
       .prepare(
         `SELECT path,
-              snippet(files_fts, 2, '<mark>', '</mark>', '…', 16) AS snippet,
+              heading_path,
+              snippet(files_fts, 3, '<mark>', '</mark>', '…', 32) AS snippet,
               rank
        FROM files_fts
        WHERE files_fts MATCH ?
@@ -181,9 +185,9 @@ export function fullText(
     .map((hit) => {
       const row = byPath.get(hit.path)
       if (!row) return null
-      return { summary: rowToFileSummary(row), snippet: hit.snippet }
+      return { summary: rowToFileSummary(row), snippet: hit.snippet, heading_path: hit.heading_path }
     })
-    .filter((x): x is { summary: FileSummary; snippet: string } => x !== null)
+    .filter((x): x is { summary: FileSummary; snippet: string; heading_path: string } => x !== null)
 
   end?.({ ok: true, meta: { total: totalRow?.c ?? items.length, returned: items.length } })
   return { items, total: totalRow?.c ?? items.length, pending: false }

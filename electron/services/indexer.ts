@@ -11,6 +11,7 @@ import {
   type FileRow
 } from './index-queries'
 import { parseFile } from './frontmatter'
+import { chunkMarkdown } from './chunker'
 import { getQueueBootstrap } from '../queue'
 import { logger } from '../obs/logger'
 import { getPerf } from '../obs/perf'
@@ -206,9 +207,7 @@ export async function startScan(groveRoot: string): Promise<void> {
       if (result !== 'unchanged') {
 
         if (bodyChanged) {
-          const ftsRowid = (
-            db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
-          ).rowid
+          const chunks = chunkMarkdown(body)
           
           let extractedTitle = ''
           if (typeof frontmatter.title === 'string') {
@@ -217,12 +216,7 @@ export async function startScan(groveRoot: string): Promise<void> {
             extractedTitle = String(frontmatter.title)
           }
 
-          upsertFts(db, {
-            rowid: ftsRowid,
-            path: row.path,
-            title: extractedTitle,
-            body
-          })
+          upsertFts(db, row.path, extractedTitle, chunks)
         }
       }
       seen.add(entry.relPath)
@@ -281,9 +275,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
     if (result !== 'unchanged') {
 
       if (bodyChanged) {
-        const ftsRowid = (
-          db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as { rowid: number }
-        ).rowid
+        const chunks = chunkMarkdown(body)
         
         let extractedTitle = ''
         if (typeof frontmatter.title === 'string') {
@@ -292,12 +284,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
           extractedTitle = String(frontmatter.title)
         }
 
-        upsertFts(db, {
-          rowid: ftsRowid,
-          path: row.path,
-          title: extractedTitle,
-          body
-        })
+        upsertFts(db, row.path, extractedTitle, chunks)
       }
     }
     end?.({ ok: true, meta: { result } })

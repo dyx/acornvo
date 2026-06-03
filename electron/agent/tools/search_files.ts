@@ -4,24 +4,28 @@ import { dbService } from '../../services/db'
 import { fullText } from '../../services/search/queries'
 
 const SearchFilesSchema = z.object({
-  query: z
-    .string()
+  queries: z
+    .array(z.string())
     .min(1)
-    .describe("FTS5 query — use words from the user's question; for phrases use double quotes."),
+    .max(5)
+    .describe(
+      "Provide 1-5 different search queries (synonyms, different angles) to maximize search recall. FTS5 query — use words from the user's question; for phrases use double quotes."
+    ),
   limit: z.number().int().min(1).max(100).optional().describe('Max number of hits (1–100).')
 })
 
 export const searchFilesTool = tool(
-  async ({ query, limit }) => {
+  async ({ queries, limit }) => {
     const db = dbService.requireCurrent()
     const cappedLimit = Math.max(1, Math.min(100, limit ?? 8))
-    const r = fullText(db, query, { limit: cappedLimit, offset: 0 })
+    const r = fullText(db, queries, { limit: cappedLimit, offset: 0 })
     if (r.error) {
       return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
     }
     return {
       items: r.items.map((i) => ({
         path: i.summary.path,
+        heading_path: i.heading_path,
         title: i.summary.title ?? i.summary.path,
         snippet: i.snippet
       }))
@@ -30,7 +34,7 @@ export const searchFilesTool = tool(
   {
     name: 'search_files',
     description:
-      "Full-text search the user's grove. Returns matching markdown files with a highlighted snippet. Use this BEFORE answering questions about the user's notes.",
+      "Full-text multi-query search the user's grove. Returns matching markdown chunks with their heading context. Provide multiple queries to maximize recall.",
     schema: SearchFilesSchema
   }
 )

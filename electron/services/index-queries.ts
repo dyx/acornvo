@@ -65,27 +65,20 @@ export function renameFile(db: Database.Database, oldPath: string, newPath: stri
   tx()
 }
 
-export interface FtsRow {
-  rowid: number
-  path: string
-  title: string
-  body: string
-}
+import { MarkdownChunk } from './chunker'
 
 /** Escape HTML-special chars so SQLite snippet wrappers (<mark></mark>) are unambiguous. */
 export function escapeForFts(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-export function upsertFts(db: Database.Database, row: FtsRow): void {
+export function upsertFts(db: Database.Database, path: string, title: string, chunks: MarkdownChunk[]): void {
   const tx = db.transaction(() => {
-    db.prepare('DELETE FROM files_fts WHERE rowid=?').run(row.rowid)
-    db.prepare('INSERT INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)').run(
-      row.rowid,
-      row.path,
-      row.title,
-      escapeForFts(row.body)
-    )
+    db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
+    const insertStmt = db.prepare('INSERT INTO files_fts(path, heading_path, title, body) VALUES (?, ?, ?, ?)')
+    for (const chunk of chunks) {
+      insertStmt.run(path, chunk.heading_path, title, escapeForFts(chunk.body))
+    }
   })
   tx()
 }
