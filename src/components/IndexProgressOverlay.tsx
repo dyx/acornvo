@@ -25,7 +25,7 @@ export function IndexProgressOverlay(props: IndexProgressOverlayProps): JSX.Elem
 
   return (
     <Dialog open modal>
-      <DialogContent 
+      <DialogContent
         className="max-w-md"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
