@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
 import { useProfilesStore } from './profiles'
 import { useSettingsStore } from './settings'
-import type { AgentEvent, Attachment, Session, SessionMessage } from '@shared/agent-types'
+import type { AgentEvent, Session, SessionMessage } from '@shared/agent-types'
 
 export interface ChatSession {
   id: string
@@ -19,7 +19,7 @@ export interface ChatMessage {
   text: string
   toolCalls?: { id: string; name: string; args: unknown }[]
   toolCallId?: string
-  attachments?: Attachment[]
+
   createdAt: number
   error?: string
   status?: 'pending' | 'streaming' | 'done' | 'error'
@@ -40,12 +40,10 @@ export interface SessionState {
   loaded: boolean
   messages: ChatMessage[]
   pendingApprovals: PendingApproval[]
-  pendingAttachments: Attachment[]
   pendingPromptText: string
   status: SessionStatus
   error: string | null
   lastUserText: string
-  lastUserAttachments: Attachment[]
 }
 
 function toChatSession(s: Session): ChatSession {
@@ -91,14 +89,13 @@ interface ChatStore {
   createSession: () => Promise<string>
   renameSession: (id: string, title: string) => Promise<void>
   deleteSession: (id: string) => Promise<void>
-  sendUserMessage: (args: { text: string; attachments?: Attachment[] }) => Promise<void>
+  sendUserMessage: (args: { text: string }) => Promise<void>
   cancelStream: () => Promise<void>
   approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>
   rejectTool: (sessionId: string, callId: string) => Promise<void>
   updateSessionProfile: (id: string, profileId: string | null) => Promise<void>
   setPendingPromptText: (text: string) => void
-  pushAttachment: (att: Attachment) => void
-  removeAttachment: (index: number) => void
+
   bumpFocusInput: () => void
   bumpShowShortcuts: () => void
   truncateMessagesFrom: (messageId: string) => void
@@ -108,12 +105,10 @@ const emptySession = (): SessionState => ({
   loaded: false,
   messages: [],
   pendingApprovals: [],
-  pendingAttachments: [],
   pendingPromptText: '',
   status: 'idle',
   error: null,
-  lastUserText: '',
-  lastUserAttachments: []
+  lastUserText: ''
 })
 
 function revertNewSessionFailure(sid: string, errorMsg: string) {
@@ -156,7 +151,6 @@ function revertNewSessionFailure(sid: string, errorMsg: string) {
          ['temp-session']: {
             ...(newBy['temp-session'] ?? emptySession()),
             pendingPromptText: failedState?.lastUserText ?? '',
-            pendingAttachments: failedState?.lastUserAttachments ?? [],
             status: 'idle',
             error: errorMsg
          }
@@ -305,15 +299,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  async sendUserMessage({ text, attachments }) {
+  async sendUserMessage({ text }) {
     let cur = get()
     const originalSid = cur.activeSessionId
     let sid = originalSid
     console.log(
-      '[chat-store] sendUserMessage: sid=%s textLen=%d attachments=%d',
+      '[chat-store] sendUserMessage: sid=%s textLen=%d',
       sid,
-      text.length,
-      attachments?.length ?? 0
+      text.length
     )
     if (!sid) {
       console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
@@ -359,15 +352,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           ...s.bySession[sid],
           status: 'streaming',
           error: null,
-          pendingAttachments: [],
-          lastUserText: text,
-          lastUserAttachments: attachments ?? []
+          lastUserText: text
         }
       }
     }))
     try {
       console.log('[chat-store] sendUserMessage: calling ipc.chat.sendUserMessage…')
-      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
+      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text })
       console.log('[chat-store] sendUserMessage: IPC returned', result)
     } catch (err) {
       console.error('[chat-store] sendUserMessage: IPC threw', err)
@@ -500,37 +491,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }))
   },
 
-  pushAttachment(att) {
-    const sid = get().activeSessionId
-    if (!sid) return
-    set((s) => ({
-      bySession: {
-        ...s.bySession,
-        [sid]: {
-          ...emptySession(),
-          ...s.bySession[sid],
-          pendingAttachments: [...(s.bySession[sid]?.pendingAttachments ?? []), att]
-        }
-      }
-    }))
-  },
-
-  removeAttachment(index) {
-    const sid = get().activeSessionId
-    if (!sid) return
-    set((s) => ({
-      bySession: {
-        ...s.bySession,
-        [sid]: {
-          ...emptySession(),
-          ...s.bySession[sid],
-          pendingAttachments: (s.bySession[sid]?.pendingAttachments ?? []).filter(
-            (_, i) => i !== index
-          )
-        }
-      }
-    }))
-  },
 
   bumpFocusInput() {
     set((s) => ({ focusInputBump: s.focusInputBump + 1 }))

@@ -555,7 +555,6 @@
       "stop": "停止",
       "noProfile": "未配置 AI profile",
       "goToSettings": "前往设置",
-      "attach": "添加附件",
       "busy": "会话正在响应，请稍候"
     },
     "messages": {

@@ -158,8 +158,7 @@ function MessageFooter({ item }: { item: BubbleItem }) {
               if (prior) {
                 truncateMessagesFrom(item.key)
                 void sendUserMessage({
-                  text: prior.text,
-                  attachments: prior.attachments ?? []
+                  text: prior.text
                 })
               }
             }}

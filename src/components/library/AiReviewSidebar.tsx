@@ -6,6 +6,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
+import { useProfilesStore } from '@/stores/profiles'
 import { useSettingsStore } from '@/stores/settings'
 import { ipc } from '@/ipc/client'
 import { useToast } from '@/hooks/use-toast'
@@ -82,6 +83,14 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
 
   const handleRerun = async () => {
     if (clipId === null) return
+    const profiles = useProfilesStore.getState().profiles
+    if (profiles.length === 0) {
+      toast({
+        variant: 'destructive',
+        description: t('editor.ai.noProfileToast', { defaultValue: '由于未配置 AI 模型，无法使用理果功能。' })
+      })
+      return
+    }
     setLocalError(null)
     try {
       await flushSave()

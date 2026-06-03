@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SendIcon, SquareIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
