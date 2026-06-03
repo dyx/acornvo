@@ -5,20 +5,6 @@ import { settingsStore } from '../../settings/store'
 import { getPerf } from '../../obs/perf'
 import { logger } from '../../obs/logger'
 
-const FAIL_CODES = new Set([
-  'E_MISSING_PROFILE',
-  'E_CONFIG',
-  'E_AUTH',
-  'E_CLIP_NOT_FOUND',
-  'E_FILE_NOT_FOUND'
-])
-
-const BACKOFF_MS = [5_000, 30_000, 120_000]
-function nextDelay(attempts: number): number | null {
-  if (attempts >= BACKOFF_MS.length) return null
-  return BACKOFF_MS[attempts]
-}
-
 export const aiReviewClipHandler: JobHandler = async (ctx) => {
   const { job, payload, log } = ctx
   const clipId = payload.clipId as number
@@ -81,21 +67,9 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     end?.({ ok: false, meta: { error: code } })
     log('warn', `ai-review-clip ${code} clipId=${clipId} msg=${msg}`)
 
-    if (FAIL_CODES.has(code)) {
-      logger().error('queue', {
-        msg: '[ai-review-clip] permanent failure',
-        meta: {
-          jobId: job.id,
-          clipId,
-          code,
-          message: msg.slice(0, 500)
-        }
-      })
-      return { kind: 'fail', error: code }
-    }
-
+    // Only 429 / 503 (both mapped to E_RATE) are retryable
     if (code === 'E_RATE') {
-      logger().warn('queue', { msg: '[ai-review-clip] rate limited, will retry in 60s', meta: { jobId: job.id, clipId } })
+      logger().warn('queue', { msg: '[ai-review-clip] rate limited / server busy, will retry in 60s', meta: { jobId: job.id, clipId } })
       return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' }
     }
     if (code === 'E_MTIME_CONFLICT') {
@@ -103,35 +77,16 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       return { kind: 'retry', delayMs: 60_000, reason: 'mtime-conflict' }
     }
 
-    const delay = nextDelay(job.attempts)
-    logger().warn('queue', {
-      msg: '[ai-review-clip] transient error, scheduling retry',
+    // All other errors are permanent failures (400/401/402/422/500 etc.)
+    logger().error('queue', {
+      msg: '[ai-review-clip] permanent failure',
       meta: {
         jobId: job.id,
         clipId,
         code,
-        attempt: job.attempts,
-        nextDelayMs: delay,
-        willGiveUp: delay === null,
         message: msg.slice(0, 500)
       }
     })
-    if (delay === null) {
-      logger().error('queue', {
-        msg: '[ai-review-clip] retries exhausted, giving up',
-        meta: {
-          jobId: job.id,
-          clipId,
-          code,
-          attempts: job.attempts
-        }
-      })
-      return { kind: 'fail', error: `${code} (retries exhausted)` }
-    }
-    return {
-      kind: 'retry',
-      delayMs: delay,
-      reason: code === 'E_UNKNOWN' ? code : msg
-    }
+    return { kind: 'fail', error: code }
   }
 }

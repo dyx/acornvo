@@ -70,6 +70,7 @@ export type LlmErrorCode =
   | 'E_CONFIG'
   | 'E_MISSING_PROFILE'
   | 'E_AUTH'
+  | 'E_BALANCE'
   | 'E_RATE'
   | 'E_NETWORK'
   | 'E_SERVER'

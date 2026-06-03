@@ -24,11 +24,20 @@ function isAbort(e: unknown): boolean {
 }
 
 function bucketByStatus(status: number, providerMessage?: string): NormalizedLlmError {
+  if (status === 400 || status === 422) {
+    return build('E_CONFIG', `bad request (HTTP ${status})`, { httpStatus: status, providerMessage })
+  }
   if (status === 401 || status === 403) {
     return build('E_AUTH', `auth failed (HTTP ${status})`, { httpStatus: status, providerMessage })
   }
+  if (status === 402) {
+    return build('E_BALANCE', providerMessage ? `Insufficient balance: ${providerMessage}` : `Insufficient balance (HTTP ${status})`, { httpStatus: status, providerMessage })
+  }
   if (status === 429) {
     return build('E_RATE', providerMessage ? `Rate limited: ${providerMessage}` : `Rate limited (HTTP ${status})`, { httpStatus: status, providerMessage })
+  }
+  if (status === 503) {
+    return build('E_RATE', providerMessage ? `Server busy: ${providerMessage}` : `Server busy (HTTP ${status})`, { httpStatus: status, providerMessage })
   }
   if (status >= 500) {
     return build('E_SERVER', `provider server error (HTTP ${status})`, {
@@ -41,6 +50,7 @@ function bucketByStatus(status: number, providerMessage?: string): NormalizedLlm
 
 const PASSTHROUGH_CODES = new Set<LlmErrorCode>([
   'E_AUTH',
+  'E_BALANCE',
   'E_RATE',
   'E_SERVER',
   'E_NETWORK',

@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Star, Sparkles, RefreshCw, Check, XCircle } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
@@ -55,6 +55,18 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
       .catch(() => setProfileName(null))
   }, [defaultProfileId])
 
+  const reviewError = detail?.summary.review_error ?? null
+  const prevReviewError = useRef<string | null>(null)
+  useEffect(() => {
+    if (reviewError && reviewError !== prevReviewError.current) {
+      toast({
+        variant: 'destructive',
+        description: reviewError
+      })
+    }
+    prevReviewError.current = reviewError
+  }, [reviewError, toast])
+
   if (!detail || !fm) return null
 
   const { summary } = detail
@@ -98,11 +110,12 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
       await ipc.ai.reviewClip(clipId, { force: true })
     } catch (e) {
       setAiRerunInflight(false)
-      setLocalError(e instanceof Error ? e.message : String(e))
+      toast({
+        variant: 'destructive',
+        description: e instanceof Error ? e.message : String(e)
+      })
     }
   }
-
-  const errorMessage = localError || summary.review_error;
 
   return (
     <div
@@ -210,21 +223,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
             <Alert variant="destructive" className="w-full border-dashed bg-[color:var(--color-berry)]/5 shadow-sm px-4 py-4 flex flex-col items-center justify-center text-center [&>svg]:hidden">
               <AlertTitle className="text-[13px] mb-3 leading-snug flex items-center justify-center gap-1.5 w-full">
                 <XCircle className="size-4 shrink-0 text-[color:var(--color-berry)]" />
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="truncate cursor-default">
-                        <span>{t('library.review_failed', { defaultValue: '理果失败' })}</span>
-                        {errorMessage && <span className="opacity-80 font-normal ml-1">: {errorMessage}</span>}
-                      </div>
-                    </TooltipTrigger>
-                    {errorMessage && (
-                      <TooltipContent side="top" className="max-w-[260px] text-xs">
-                        <p>{errorMessage}</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <span>{t('library.review_failed', { defaultValue: '理果失败' })}</span>
               </AlertTitle>
               <AlertDescription className="flex justify-center w-full">
                 <button
