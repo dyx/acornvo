@@ -29,6 +29,11 @@ function parseToolResultText(text: string): ToolStep['result'] {
   return undefined
 }
 
+function cleanAssistantText(text: string | undefined): string {
+  if (!text) return ''
+  return text.replace(/<details[\s\S]*?(?:<\/details>|$)/ig, '')
+}
+
 export function deriveBubbleItems(
   messages: ChatMessage[],
   pendingApprovals: PendingApproval[]
@@ -55,13 +60,13 @@ export function deriveBubbleItems(
         items.push({
           key: m.id,
           role: 'assistant',
-          content: { text: m.text, toolSteps },
+          content: { text: cleanAssistantText(m.text), toolSteps },
           streaming,
           loading,
           createdAt: m.createdAt
         })
       } else {
-        items.push({ key: m.id, role: 'assistant', content: m.text, streaming, loading, createdAt: m.createdAt })
+        items.push({ key: m.id, role: 'assistant', content: cleanAssistantText(m.text), streaming, loading, createdAt: m.createdAt })
       }
       continue
     }
