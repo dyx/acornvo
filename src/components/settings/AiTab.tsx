@@ -187,8 +187,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       <div className="flex-1 overflow-y-auto py-4 outline-none">
         {panel === 'providers' && (
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
+            <div className="flex items-center justify-end mb-6 mt-2">
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
@@ -327,13 +326,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         )}
 
         {panel === 'defaults' && (
-          <div className="max-w-4xl space-y-8">
-            <div>
-              <h3 className="text-lg font-medium mb-4">
-                {t('settings.ai.defaultModelsTab', '默认模型配置')}
-              </h3>
-            </div>
-
+          <div className="max-w-4xl space-y-8 pt-4">
             <div className="grid grid-cols-2 gap-6">
               <div className="grid gap-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
