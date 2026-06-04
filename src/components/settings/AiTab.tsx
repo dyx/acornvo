@@ -187,7 +187,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       <div className="flex-1 overflow-y-auto py-4 outline-none">
         {panel === 'providers' && (
           <div className="flex-1">
-            <div className="flex items-center justify-end mb-6 mt-2">
+            <div className="flex items-center justify-start mb-6 mt-2">
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"

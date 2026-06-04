@@ -206,27 +206,6 @@ const ComposerAction: FC = () => {
   );
 };
 
-const MessageError: FC = () => {
-  return (
-    <MessagePrimitive.Error>
-      <ErrorPrimitive.Root asChild>
-        <Alert variant="destructive" className="px-3 py-2 mt-1 rounded-lg bg-background shadow-sm max-w-full">
-          <XCircle className="size-3 shrink-0" />
-          <AlertDescription className="flex items-center justify-between gap-2 text-[12px] w-full">
-            <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2 flex-1" />
-            <ActionBarPrimitive.Root hideWhenRunning>
-              <ActionBarPrimitive.Reload asChild>
-                <button className="shrink-0 hover:bg-[color:var(--color-berry)]/10 p-1 rounded transition-colors text-[color:var(--color-berry)]" title="重试">
-                  <RefreshCwIcon className="size-3" />
-                </button>
-              </ActionBarPrimitive.Reload>
-            </ActionBarPrimitive.Root>
-          </AlertDescription>
-        </Alert>
-      </ErrorPrimitive.Root>
-    </MessagePrimitive.Error>
-  );
-};
 
 const AssistantMessage: FC = () => {
   // reserves space for action bar and compensates with `-mb` for consistent msg spacing
@@ -294,7 +273,6 @@ const AssistantMessage: FC = () => {
             }
           }}
         </MessagePrimitive.GroupedParts>
-        <MessageError />
       </div>
 
       <div
@@ -342,13 +320,11 @@ const AssistantActionBar: FC = () => {
           </AuiIf>
         </Button>
       </ActionBarPrimitive.Copy>
-      {/* 
       <ActionBarPrimitive.Reload asChild>
         <Button variant="ghost" size="icon" className="aui-button-icon size-6 p-1">
           <RefreshCwIcon />
         </Button>
       </ActionBarPrimitive.Reload>
-      */}
       <ActionBarMorePrimitive.Root>
         <ActionBarMorePrimitive.Trigger asChild>
           <Button variant="ghost" size="icon" className="aui-button-icon size-6 p-1 data-[state=open]:bg-accent">
