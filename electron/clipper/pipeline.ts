@@ -254,8 +254,8 @@ export function createPipeline(deps: PipelineDeps) {
     }
 
     // Enqueue ai-review-clip job (phase-14)
-    const profileId = settingsStore.get('ai').defaultProfileId
-    if (queue && profileId && rowid !== -1) {
+    const modelId = settingsStore.get('ai').defaultReviewerModelId
+    if (queue && modelId && rowid !== -1) {
       try {
         queue.store.enqueue(
           'ai-review-clip',
@@ -271,7 +271,7 @@ export function createPipeline(deps: PipelineDeps) {
           meta: { clipId: rowid, error: msg }
         })
       }
-    } else if (!profileId) {
+    } else if (!modelId) {
       logger().info('clipper', {
         op: 'enqueue-review',
         ok: false,

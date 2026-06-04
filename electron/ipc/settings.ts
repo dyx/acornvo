@@ -2,7 +2,7 @@
 import { session } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { settingsStore } from '../settings/store'
-import { profilesStore } from '../settings/profiles'
+import { providersStore } from '../settings/providers'
 import { isSafeStorageAvailable } from '../settings/safe-storage-state'
 
 const BROWSER_PARTITION = 'persist:browser-default'
@@ -21,14 +21,24 @@ export const settingsHandlers = {
     settingsStore.set(ns, patch)
     return { ok: true }
   },
-  aiProfilesList: () => profilesStore.list(),
-  aiProfilesCreate: (input) => profilesStore.create(input),
-  aiProfilesUpdate: (id, patch) => {
-    profilesStore.update(id, patch)
+  aiProvidersList: () => providersStore.listProviders(),
+  aiProvidersCreate: (input) => providersStore.createProvider(input),
+  aiProvidersUpdate: (id, patch) => {
+    providersStore.updateProvider(id, patch)
     return { ok: true }
   },
-  aiProfilesDelete: (id) => {
-    profilesStore.delete(id)
+  aiProvidersDelete: (id) => {
+    providersStore.deleteProvider(id)
+    return { ok: true }
+  },
+  aiModelsList: () => providersStore.listModels(),
+  aiModelsCreate: (input) => providersStore.createModel(input),
+  aiModelsUpdate: (id, patch) => {
+    providersStore.updateModel(id, patch)
+    return { ok: true }
+  },
+  aiModelsDelete: (id) => {
+    providersStore.deleteModel(id)
     return { ok: true }
   },
   browserClearCookies: async () => {

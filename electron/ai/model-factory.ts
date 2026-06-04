@@ -11,6 +11,7 @@ export interface ResolvedProfile {
   model: string
   apiKey: string | null
   baseUrl?: string
+  dbModelId: string
 }
 
 export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: number, maxTokens?: number } = {}): BaseChatModel {

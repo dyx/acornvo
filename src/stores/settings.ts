@@ -14,7 +14,7 @@ import type {
 const DEFAULTS = {
   general: { locale: 'zh-CN', autoBackup: 'off' } as GeneralSettings,
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' } as AppearanceSettings,
-  ai: { defaultProfileId: null } as AiSettings,
+  ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 } as AiSettings,
   browser: { clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
   update: { autoCheck: true } as UpdateSettings,
   telemetry: { enabled: false } as TelemetrySettings

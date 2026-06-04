@@ -31,7 +31,7 @@ interface QuickSwitcherSlice {
 
 interface FullTextSlice {
   q: string
-  items: { summary: FileSummary; snippet: string }[]
+  items: { summary: FileSummary; body: string; heading_path: string }[]
   total: number
   pending: boolean
   syntaxError: boolean

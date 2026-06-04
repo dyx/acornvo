@@ -1,19 +1,18 @@
-// src/components/settings/ProfileDialog.tsx
+// src/components/settings/ProviderDialog.tsx
 import type { JSX } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { XIcon } from 'lucide-react'
-import { useProfilesStore } from '@/stores/profiles'
+import { useProvidersStore } from '@/stores/providers'
 import type {
-  AiProviderProfile,
+  AiProvider,
   AiProviderKind,
-  ProfileCreateInput,
-  ProfileUpdateInput
+  ProviderCreateInput,
+  ProviderUpdateInput
 } from '@shared/settings-types'
 import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -22,8 +21,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-interface ProfileDialogProps {
-  profile: AiProviderProfile | null
+interface ProviderDialogProps {
+  provider: AiProvider | null
   onClose: () => void
 }
 
@@ -31,37 +30,34 @@ const PROVIDERS: AiProviderKind[] = ['deepseek', 'openai-compatible', 'openroute
 
 interface FormState {
   name: string
-  provider: AiProviderKind
+  type: AiProviderKind
   baseUrl: string
-  model: string
   apiKey: string
 }
 
-function initialState(profile: AiProviderProfile | null): FormState {
-  if (!profile) {
+function initialState(provider: AiProvider | null): FormState {
+  if (!provider) {
     const defs = AI_PROVIDER_DEFAULTS['deepseek']
     return {
       name: '',
-      provider: 'deepseek',
+      type: 'deepseek',
       baseUrl: defs?.baseUrl ?? '',
-      model: defs?.models?.[0] ?? '',
       apiKey: ''
     }
   }
   return {
-    name: profile.name,
-    provider: profile.provider,
-    baseUrl: profile.baseUrl ?? '',
-    model: profile.model,
+    name: provider.name,
+    type: provider.type,
+    baseUrl: provider.baseUrl ?? '',
     apiKey: ''
   }
 }
 
-export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Element {
+export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.Element {
   const { t } = useTranslation()
-  const create = useProfilesStore((s) => s.create)
-  const update = useProfilesStore((s) => s.update)
-  const [form, setForm] = useState<FormState>(() => initialState(profile))
+  const create = useProvidersStore((s) => s.createProvider)
+  const update = useProvidersStore((s) => s.updateProvider)
+  const [form, setForm] = useState<FormState>(() => initialState(provider))
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -69,17 +65,15 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  function handleProviderChange(value: string) {
+  function handleTypeChange(value: string) {
     const p = value as AiProviderKind
     setForm((f) => {
-      const next = { ...f, provider: p }
-      if (!profile) {
+      const next = { ...f, type: p }
+      if (!provider) {
         const defs = AI_PROVIDER_DEFAULTS[p]
         if (defs) {
-          next.model = defs.models?.[0] ?? ''
           next.baseUrl = defs.baseUrl ?? ''
         } else {
-          next.model = ''
           next.baseUrl = ''
         }
       }
@@ -92,38 +86,29 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
     setError(null)
     try {
       const name = form.name.trim()
-      const model = form.model.trim()
       
       if (!name) {
         setError(t('settings.ai.errorNameRequired', 'Provider name is required'))
         setBusy(false)
         return
       }
-      if (!model) {
-        setError(t('settings.ai.errorModelRequired', 'Model name is required'))
-        setBusy(false)
-        return
-      }
 
       const baseUrl = form.baseUrl.trim().length > 0 ? form.baseUrl.trim() : null
-      if (profile === null) {
-        const input: ProfileCreateInput = {
+      if (provider === null) {
+        const input: ProviderCreateInput = {
           name,
-          provider: form.provider,
+          type: form.type,
           baseUrl,
-          model,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
         await create(input)
       } else {
-        const patch: ProfileUpdateInput = {
+        const patch: ProviderUpdateInput = {
           name,
-          provider: form.provider,
           baseUrl,
-          model,
           ...(form.apiKey.length > 0 ? { apiKey: form.apiKey } : {})
         }
-        await update(profile.id, patch)
+        await update(provider.id, patch)
       }
       onClose()
     } catch (err) {
@@ -153,7 +138,7 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
           <span className="sr-only">Close</span>
         </button>
         <h3 className="mb-4 text-lg font-medium pr-8">
-          {profile ? t('settings.ai.editProfile') : t('settings.ai.addProfile')}
+          {provider ? t('settings.ai.editProvider', 'Edit Provider') : t('settings.ai.addProvider', 'Add Provider')}
         </h3>
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
@@ -161,10 +146,11 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
             <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
           </div>
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.provider')}</span>
+            <span className="block font-medium">{t('settings.ai.providerType', 'Type')}</span>
             <Select
-              value={form.provider}
-              onValueChange={handleProviderChange}
+              value={form.type}
+              onValueChange={handleTypeChange}
+              disabled={!!provider} // Disable changing type after creation
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -178,41 +164,23 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps): JSX.Ele
               </SelectContent>
             </Select>
           </div>
-          {(form.provider === 'openai-compatible' || form.provider === 'ollama' || form.provider === 'openrouter' || form.provider === 'deepseek') && (
+          {(form.type === 'openai-compatible' || form.type === 'ollama' || form.type === 'openrouter' || form.type === 'deepseek') && (
             <div className="space-y-1">
               <span className="block font-medium">{t('settings.ai.baseUrl')}</span>
               <Input
                 value={form.baseUrl}
-                placeholder={form.provider === 'ollama' ? 'http://localhost:11434' : ''}
+                placeholder={form.type === 'ollama' ? 'http://localhost:11434' : ''}
                 onChange={(e) => set('baseUrl', e.target.value)}
               />
             </div>
           )}
-          <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.model')}</span>
-            <Input value={form.model} onChange={(e) => set('model', e.target.value)} />
-            {AI_PROVIDER_DEFAULTS[form.provider]?.models && AI_PROVIDER_DEFAULTS[form.provider]!.models.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {AI_PROVIDER_DEFAULTS[form.provider]!.models.map((m) => (
-                  <Badge
-                    key={m}
-                    variant={form.model === m ? 'default' : 'secondary'}
-                    className="cursor-pointer font-normal"
-                    onClick={() => set('model', m)}
-                  >
-                    {m}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="space-y-1">
             <span className="block font-medium">{t('settings.ai.apiKey')}</span>
             <Input
               type="password"
               autoComplete="off"
               value={form.apiKey}
-              placeholder={profile ? t('settings.ai.apiKeyKeepEmpty') : ''}
+              placeholder={provider ? t('settings.ai.apiKeyKeepEmpty') : ''}
               onChange={(e) => set('apiKey', e.target.value)}
             />
           </div>

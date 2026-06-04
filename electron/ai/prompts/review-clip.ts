@@ -14,7 +14,7 @@ function denoiseBody(body: string): string {
   text = text.replace(/<!--[\s\S]*?-->/g, '')
 
   // 2. 替换图片：![alt](url) -> [图片: alt]
-  text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, (match, alt) => {
+  text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, (_match, alt) => {
     return alt.trim() ? `[图片: ${alt}]` : '[图片]'
   })
 

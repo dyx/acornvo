@@ -6,7 +6,7 @@ import {
   type AppendMessage
 } from '@assistant-ui/react'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
-import { useProfilesStore } from '@/stores/profiles'
+import { useProvidersStore } from '@/stores/providers'
 import { useToast } from '@/hooks/use-toast'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
@@ -99,8 +99,8 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
     activeSession.messages.some(m => m.status === 'pending' || m.status === 'streaming') : false;
 
   const checkProfilesOrToast = () => {
-    const profiles = useProfilesStore.getState().profiles;
-    if (profiles.length === 0) {
+    const models = useProvidersStore.getState().models;
+    if (models.length === 0) {
       toast({
         variant: 'destructive',
         description: '由于未配置 AI 模型，无法使用当前对话功能。'

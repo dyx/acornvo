@@ -19,20 +19,28 @@ CREATE TABLE IF NOT EXISTS settings_secrets (
   updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS ai_provider_profiles (
+CREATE TABLE IF NOT EXISTS ai_provider (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  provider TEXT NOT NULL,
+  type TEXT NOT NULL,
   base_url TEXT,
-  model TEXT NOT NULL,
-  temperature REAL NOT NULL DEFAULT 0.7,
-  top_p REAL NOT NULL DEFAULT 1.0,
-  max_tokens INTEGER,
   api_key_ref TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_profiles_name ON ai_provider_profiles(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_provider_name ON ai_provider(name);
+
+CREATE TABLE IF NOT EXISTS ai_model (
+  id TEXT PRIMARY KEY,
+  provider_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(provider_id) REFERENCES ai_provider(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_ai_model_provider ON ai_model(provider_id);
 
 CREATE TABLE IF NOT EXISTS perf_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,8 +65,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(d
 CREATE TABLE IF NOT EXISTS ai_usage (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   job_id TEXT,
-  profile_id TEXT,
-  model TEXT,
+  model_id TEXT,
   prompt_tokens INTEGER,
   completion_tokens INTEGER,
   cache_read_tokens INTEGER DEFAULT 0,
@@ -71,7 +78,7 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   grove_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_ai_usage_profile ON ai_usage(profile_id);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_model ON ai_usage(model_id);
 `
 
 function applyPragmas(db: Database.Database): void {
@@ -88,6 +95,16 @@ export function initGlobalDb(): void {
   const dbPath = join(dir, 'global.db')
   const db = new Database(dbPath)
   applyPragmas(db)
+  try {
+    const tableInfo = db.pragma('table_info(ai_provider_profiles)') as { name: string }[]
+    if (tableInfo.length > 0) {
+      db.exec('DROP TABLE ai_provider_profiles')
+      db.exec('DROP TABLE ai_usage')
+    }
+  } catch {
+    /* ignore */
+  }
+
   db.exec(GLOBAL_SCHEMA)
 
   // Migration: Add grove_id if schema already existed without it

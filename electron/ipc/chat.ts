@@ -14,7 +14,9 @@ import { IpcError } from '../../shared/ipc-contract'
 import { type ResolvedProfile } from '../ai/model-factory'
 import { writeUsage } from '../ai/usage'
 
-import { getProfileDecryptedKey } from '../settings/profile-key'
+import { getProviderDecryptedKey } from '../settings/provider-key'
+import { getGlobalDb } from '../services/global-db'
+import { settingsStore } from '../settings/store'
 
 export interface ChatDeps {
   concurrency: ConcurrencyGate
@@ -24,26 +26,57 @@ export interface ChatDeps {
   clipsGet?: (id: number) => Promise<{ body: string } | null>
 }
 
-import { getGlobalDb } from '../services/global-db'
-
-function resolveProfile(profileId: string): ResolvedProfile {
+function resolveProfile(modelIdParam?: string): ResolvedProfile {
   const db = getGlobalDb()
-  const p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(profileId) as
-    | {
-        id: string
-        provider: string
-        model: string
-        base_url: string | null
-      }
-    | undefined
-  if (!p) throw new IpcError('E_MISSING_PROFILE', `profile not found: ${profileId}`)
-  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id)
+  let id = modelIdParam
+  if (!id) {
+    const ai = settingsStore.get('ai')
+    id = ai?.defaultChatModelId ?? undefined
+  }
+  if (!id) throw new IpcError('E_MISSING_PROFILE', 'no modelId; settings.ai.defaultChatModelId is null')
+
+  const query = `
+    SELECT
+      p.id as provider_id,
+      p.type as provider_type,
+      p.base_url,
+      m.model_id
+    FROM ai_model m
+    JOIN ai_provider p ON m.provider_id = p.id
+    WHERE m.id = ?
+  `
+  let p = db.prepare(query).get(id) as any | undefined
+
+  if (!p && !modelIdParam) {
+    p = db.prepare(`
+      SELECT
+        p.id as provider_id,
+        p.type as provider_type,
+        p.base_url,
+        m.id as db_model_id,
+        m.model_id
+      FROM ai_model m
+      JOIN ai_provider p ON m.provider_id = p.id
+      WHERE m.enabled = 1
+      ORDER BY m.created_at ASC LIMIT 1
+    `).get() as any | undefined
+
+    if (p) {
+      settingsStore.set('ai', { defaultChatModelId: p.db_model_id })
+      id = p.db_model_id
+    }
+  }
+
+  if (!p) throw new IpcError('E_MISSING_PROFILE', `model not found: ${id}`)
+
+  const apiKey = p.provider_type === 'ollama' ? null : getProviderDecryptedKey(p.provider_id)
   return {
-    id: p.id,
-    provider: p.provider as ResolvedProfile['provider'],
-    model: p.model,
+    id: p.provider_id,
+    provider: p.provider_type as ResolvedProfile['provider'],
+    model: p.model_id,
     apiKey,
-    baseUrl: p.base_url ?? undefined
+    baseUrl: p.base_url ?? undefined,
+    dbModelId: id!
   }
 }
 
@@ -125,13 +158,12 @@ export function createChatHandlers(deps: ChatDeps) {
   }
 
   function buildRecordUsage(profile: ResolvedProfile, sessionId: string) {
-    return (u: { input_tokens?: number; output_tokens?: number } | undefined, model: string) => {
+    return (u: { input_tokens?: number; output_tokens?: number } | undefined) => {
       try {
         writeUsage({
-          profileId: profile.id,
-          model,
-          usage: u,
+          modelId: profile.dbModelId,
           latencyMs: 0,
+          usage: u,
           ok: 1,
           error: null,
           sessionId
@@ -179,7 +211,6 @@ export function createChatHandlers(deps: ChatDeps) {
       }
       const profileId = opts.profileId ?? sess.profileId ?? undefined
       console.log('[ipc.chat] sendUserMessage: resolved profileId=%s', profileId)
-      if (!profileId) throw new IpcError('E_MISSING_PROFILE', 'no profile bound to session')
 
       const ack = deps.concurrency.tryAcquire(opts.sessionId)
       console.log('[ipc.chat] sendUserMessage: concurrency ack=%s', ack)
@@ -201,6 +232,9 @@ export function createChatHandlers(deps: ChatDeps) {
       let agent: ReturnType<ReturnType<typeof getAgentBuilder>['buildForProfile']>
       try {
         profile = resolveProfile(profileId)
+        if (!sess.profileId) {
+          await deps.sessions.updateProfile(opts.sessionId, profile.dbModelId)
+        }
         console.log(
           '[ipc.chat] sendUserMessage: profile=%s provider=%s model=%s baseUrl=%s hasKey=%s',
           profile.id,
@@ -222,7 +256,7 @@ export function createChatHandlers(deps: ChatDeps) {
       void runAgentNew({
         sessionId: opts.sessionId,
         userText: opts.text,
-        profileId,
+        profileId: profile.dbModelId,
         deps: {
           agent: agent as unknown as Parameters<typeof runAgentNew>[0]['deps']['agent'],
           sessions: deps.sessions,
@@ -235,7 +269,7 @@ export function createChatHandlers(deps: ChatDeps) {
           clipsGet: deps.clipsGet,
           modelName: profile.model,
           recordUsage: buildRecordUsage(profile, opts.sessionId),
-          profileId
+          profileId: profile.dbModelId
         },
         streamWriter: writer,
         attachments: opts.attachments

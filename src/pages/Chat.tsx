@@ -10,7 +10,7 @@ import {
   TerminalIcon
 } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
-import { useProfilesStore } from '@/stores/profiles'
+import { useProvidersStore } from '@/stores/providers'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -176,7 +176,7 @@ export function Chat() {
   const bySession = useChatStore((s) => s.bySession)
   const loadSessions = useChatStore((s) => s.loadSessions)
   const createSession = useChatStore((s) => s.createSession)
-  const refreshProfiles = useProfilesStore((s) => s.refresh)
+  const refreshProviders = useProvidersStore((s) => s.refresh)
 
   const didInit = useRef(false)
   useEffect(() => {
@@ -184,7 +184,7 @@ export function Chat() {
     didInit.current = true
     const init = async () => {
       console.log('[Chat] init: loading sessions and profiles…')
-      await Promise.all([loadSessions(), refreshProfiles()])
+      await Promise.all([loadSessions(), refreshProviders()])
       const state = useChatStore.getState()
       console.log(
         '[Chat] init: sessions=%d, activeSessionId=%s, sessionsError=%s',
@@ -192,7 +192,7 @@ export function Chat() {
         state.activeSessionId,
         state.sessionsError
       )
-      console.log('[Chat] init: profiles=%d', useProfilesStore.getState().profiles.length)
+      console.log('[Chat] init: providers=%d', useProvidersStore.getState().providers.length)
       if (state.sessions.length === 0) {
         console.log('[Chat] init: no sessions, creating one…')
         await createSession()
@@ -206,7 +206,7 @@ export function Chat() {
       }
     }
     void init()
-  }, [loadSessions, createSession, refreshProfiles])
+  }, [loadSessions, createSession, refreshProviders])
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null
   const activeSlot = activeSessionId ? bySession[activeSessionId] : null

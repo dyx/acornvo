@@ -20,7 +20,7 @@ export const DEFAULTS: {
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off' },
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
-  ai: { defaultProfileId: null, bodyMax: 20000 },
+  ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 },
   browser: { clipImagesLocalize: false, searchEngine: 'google' },
   update: { autoCheck: true },
   telemetry: { enabled: false }

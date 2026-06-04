@@ -91,19 +91,21 @@ function ObservabilityAiPanel(): JSX.Element {
     let cancelled = false
     const sinceDays = windowToDays(windowSel)
     async function fetchData() {
-      const [summary, list, profiles, recentProjects] = await Promise.all([
+      const [summary, list, providers, models, recentProjects] = await Promise.all([
         ipc.ai['usage.summary']({ sinceDays }),
         ipc.ai['usage.list']({ limit: 2000, offset: 0 }),
-        ipc.settings.aiProfilesList(),
+        ipc.settings.aiProvidersList(),
+        ipc.settings.aiModelsList(),
         ipc.project.listRecent()
       ])
       if (cancelled) return
 
-      const profileNameMap = new Map(profiles.map((p: any) => [p.id, p.name]))
+      const providerNameMap = new Map(providers.map((p: any) => [p.id, p.name]))
+      const modelNameMap = new Map(models.map((m: any) => [m.id, m.displayName]))
       const groveNameMap = new Map(recentProjects.map((g: any) => [g.id, g.name]))
 
-      const byProfile = Object.entries(summary.byProvider).map(([profileId, v]) => ({
-        profileId: profileId === 'unknown' ? t('obs.ai.unknownProfile') : (profileNameMap.get(profileId) || profileId),
+      const byProfile = Object.entries(summary.byProvider).map(([modelId, v]) => ({
+        profileId: modelId === 'unknown' ? t('obs.ai.unknownProfile') : (modelNameMap.get(modelId) || modelId),
         requests: v.calls,
         tokens: v.tokens
       }))
@@ -121,7 +123,7 @@ function ObservabilityAiPanel(): JSX.Element {
       
       const toolMap = new Map<string, number>()
       for (const item of windowItems) {
-        const model = item.model || t('obs.ai.unknownModel')
+        const model = item.modelId || t('obs.ai.unknownModel')
         toolMap.set(model, (toolMap.get(model) ?? 0) + 1)
       }
       const byTool = Array.from(toolMap.entries())

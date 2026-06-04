@@ -9,7 +9,6 @@ import { fileHandlers } from '../ipc/file'
 import { buildChatModel, type ResolvedProfile } from './model-factory'
 import { normalizeLLMError } from './normalize-errors'
 import { settingsStore } from '../settings/store'
-import { getProfileDecryptedKey } from '../settings/profile-key'
 import { logger } from '../obs/logger'
 
 export interface ReviewClipOpts {
@@ -19,6 +18,7 @@ export interface ReviewClipOpts {
 export interface ReviewClipOutput {
   result: AiReviewResult
   llmCall?: {
+    modelId: string
     model: string
     latencyMs: number
     promptTokens: number | null
@@ -35,12 +35,7 @@ interface ClipRow {
   excerpt: string | null
 }
 
-interface ProfileRow {
-  id: string
-  provider: string
-  model: string
-  base_url: string | null
-}
+
 
 type ReviewerErrCode = 'E_CLIP_NOT_FOUND' | 'E_FILE_NOT_FOUND' | 'E_MTIME_CONFLICT' | LlmErrorCode
 
@@ -90,69 +85,100 @@ function loadMd(rel: string): {
 
 import { getGlobalDb } from '../services/global-db'
 
-function resolveProfile(profileId?: string): ResolvedProfile {
-  logger().debug('ai', { msg: '[resolveProfile] start', meta: { profileId } })
+import { getProviderDecryptedKey } from '../settings/provider-key'
+
+interface ModelProviderRow {
+  provider_id: string
+  provider_type: string
+  base_url: string | null
+  model_id: string
+}
+
+function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: string } {
+  logger().debug('ai', { msg: '[resolveProfile] start', meta: { modelId: modelIdParam } })
   const db = getGlobalDb()
-  let id = profileId
+  let id = modelIdParam
   if (!id) {
     const ai = settingsStore.get('ai')
-    id = ai?.defaultProfileId ?? undefined
-    logger().debug('ai', { msg: '[resolveProfile] using defaultProfileId from settings', meta: { defaultProfileId: id } })
+    id = ai?.defaultReviewerModelId ?? undefined
+    logger().debug('ai', { msg: '[resolveProfile] using defaultReviewerModelId from settings', meta: { defaultReviewerModelId: id } })
   }
   if (!id) {
-    logger().error('ai', { msg: '[resolveProfile] no profileId available' })
-    throw rerr('E_MISSING_PROFILE', 'no profileId; settings.ai.defaultProfileId is null')
+    logger().error('ai', { msg: '[resolveProfile] no modelId available' })
+    throw rerr('E_MISSING_PROFILE', 'no modelId; settings.ai.defaultReviewerModelId is null')
   }
 
-  let p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(id) as
-    | ProfileRow
-    | undefined
-  if (!p && !profileId) {
-    logger().warn('ai', { msg: '[resolveProfile] default profile not found, falling back to first', meta: { id } })
-    p = db.prepare('SELECT * FROM ai_provider_profiles ORDER BY created_at ASC LIMIT 1').get() as
-      | ProfileRow
-      | undefined
+  const query = `
+    SELECT
+      p.id as provider_id,
+      p.type as provider_type,
+      p.base_url,
+      m.model_id
+    FROM ai_model m
+    JOIN ai_provider p ON m.provider_id = p.id
+    WHERE m.id = ?
+  `
+  let p = db.prepare(query).get(id) as ModelProviderRow | undefined
+
+  if (!p && !modelIdParam) {
+    logger().warn('ai', { msg: '[resolveProfile] default model not found, falling back to first enabled', meta: { id } })
+    p = db.prepare(`
+      SELECT
+        p.id as provider_id,
+        p.type as provider_type,
+        p.base_url,
+        m.id as db_model_id,
+        m.model_id
+      FROM ai_model m
+      JOIN ai_provider p ON m.provider_id = p.id
+      WHERE m.enabled = 1
+      ORDER BY m.created_at ASC LIMIT 1
+    `).get() as (ModelProviderRow & { db_model_id: string }) | undefined
+
     if (p) {
-      settingsStore.set('ai', { defaultProfileId: p.id })
-      logger().info('ai', { msg: '[resolveProfile] auto-fixed defaultProfileId', meta: { newId: p.id } })
+      settingsStore.set('ai', { defaultReviewerModelId: (p as any).db_model_id })
+      id = (p as any).db_model_id
+      logger().info('ai', { msg: '[resolveProfile] auto-fixed defaultReviewerModelId', meta: { newId: id } })
     }
   }
+  
   if (!p) {
-    logger().error('ai', { msg: '[resolveProfile] profile not found in DB', meta: { id } })
-    throw rerr('E_MISSING_PROFILE', `profile not found: ${id}`)
+    logger().error('ai', { msg: '[resolveProfile] model not found in DB', meta: { id } })
+    throw rerr('E_MISSING_PROFILE', `model not found: ${id}`)
   }
-  if (!p.model) {
-    logger().error('ai', { msg: '[resolveProfile] profile has empty model', meta: { id: p.id, name: p.provider } })
-    throw rerr('E_CONFIG', `profile ${id} has empty model`)
+
+  if (p.provider_type === 'openai-compatible' && !p.base_url) {
+    logger().error('ai', { msg: '[resolveProfile] openai-compatible missing baseUrl', meta: { id: p.provider_id } })
+    throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on provider ${p.provider_id}`)
   }
-  if (p.provider === 'openai-compatible' && !p.base_url) {
-    logger().error('ai', { msg: '[resolveProfile] openai-compatible missing baseUrl', meta: { id: p.id } })
-    throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on profile ${id}`)
-  }
-  const apiKey = p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id)
+
+  const apiKey = p.provider_type === 'ollama' ? null : getProviderDecryptedKey(p.provider_id)
   const hasKey = apiKey != null && apiKey.length > 0
   logger().info('ai', {
     msg: '[resolveProfile] resolved',
     meta: {
-      id: p.id,
-      provider: p.provider,
-      model: p.model,
+      providerId: p.provider_id,
+      provider: p.provider_type,
+      model: p.model_id,
       baseUrl: p.base_url ?? null,
       hasApiKey: hasKey
     }
   })
-  if (!hasKey && p.provider !== 'ollama') {
+  
+  if (!hasKey && p.provider_type !== 'ollama') {
     logger().warn('ai', {
       msg: '[resolveProfile] API key is empty — LLM call will likely fail with E_AUTH',
-      meta: { id: p.id, provider: p.provider }
+      meta: { providerId: p.provider_id, provider: p.provider_type }
     })
   }
+
   return {
-    id: p.id,
-    provider: p.provider as ResolvedProfile['provider'],
-    model: p.model,
+    id: p.provider_id,
+    provider: p.provider_type as ResolvedProfile['provider'],
+    model: p.model_id,
     baseUrl: p.base_url ?? undefined,
-    apiKey
+    apiKey,
+    dbModelId: id!
   }
 }
 
@@ -323,6 +349,7 @@ export async function reviewClip(
     result,
     cacheHit: false,
     llmCall: {
+      modelId: profile.dbModelId,
       model: profile.model,
       latencyMs,
       promptTokens: usage?.input_tokens ?? null,

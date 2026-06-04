@@ -24,7 +24,8 @@ export interface AppearanceSettings {
 }
 
 export interface AiSettings {
-  defaultProfileId: string | null
+  defaultChatModelId: string | null
+  defaultReviewerModelId: string | null
   bodyMax: number
 }
 
@@ -55,38 +56,50 @@ export type SettingsByNs = {
   telemetry: TelemetrySettings
 }
 
-/**
- * Profile shape over the IPC boundary. NEVER contains apiKey plaintext —
- * only the opaque apiKeyRef pointer into settings_secrets.
- */
-export interface AiProviderProfile {
+export interface AiProvider {
   id: string
   name: string
-  provider: AiProviderKind
+  type: AiProviderKind
   baseUrl: string | null
-  model: string
   apiKeyRef: string | null
   createdAt: string
   updatedAt: string
 }
 
-/** Input shape for profiles.create / profiles.update. Plaintext apiKey IS
- *  allowed here (renderer → main only); main encrypts before storage. */
-export interface ProfileCreateInput {
+export interface AiModel {
+  id: string
+  providerId: string
+  modelId: string
+  displayName: string
+  enabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProviderCreateInput {
   name: string
-  provider: AiProviderKind
+  type: AiProviderKind
   baseUrl?: string | null
-  model: string
   apiKey?: string
 }
 
-export interface ProfileUpdateInput {
+export interface ProviderUpdateInput {
   name?: string
-  provider?: AiProviderKind
   baseUrl?: string | null
-  model?: string
   /** non-empty string → overwrite secret; '' → delete secret; undefined → leave alone */
   apiKey?: string
+}
+
+export interface ModelCreateInput {
+  providerId: string
+  modelId: string
+  displayName: string
+}
+
+export interface ModelUpdateInput {
+  modelId?: string
+  displayName?: string
+  enabled?: boolean
 }
 
 /** Payload for the 'settings:changed' IPC event. */

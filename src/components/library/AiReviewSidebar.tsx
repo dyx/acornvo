@@ -6,7 +6,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
-import { useProfilesStore } from '@/stores/profiles'
+import { useProvidersStore } from '@/stores/providers'
 import { useSettingsStore } from '@/stores/settings'
 import { ipc } from '@/ipc/client'
 import { useToast } from '@/hooks/use-toast'
@@ -27,8 +27,8 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const detail = useLibraryStore((s) =>
     s.selectedPath ? (s.detailsByPath.get(s.selectedPath) ?? null) : null
   )
-  const defaultProfileId = useSettingsStore((s) => s.ai.defaultProfileId)
-  const [profileName, setProfileName] = useState<string | null>(null)
+  const defaultModelId = useSettingsStore((s) => s.ai.defaultReviewerModelId)
+  const [modelName, setModelName] = useState<string | null>(null)
   const { toast } = useToast()
 
   const isRunning = useEditorStore((s) => (s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false))
@@ -42,18 +42,18 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const showLoader = isSubmitting || isRunning
 
   useEffect(() => {
-    if (!defaultProfileId) {
-      setProfileName(null)
+    if (!defaultModelId) {
+      setModelName(null)
       return
     }
     void ipc.settings
-      .aiProfilesList()
-      .then((profiles) => {
-        const p = profiles.find((pr) => pr.id === defaultProfileId)
-        setProfileName(p?.name ?? null)
+      .aiModelsList()
+      .then((models) => {
+        const m = models.find((md) => md.id === defaultModelId)
+        setModelName(m?.displayName ?? null)
       })
-      .catch(() => setProfileName(null))
-  }, [defaultProfileId])
+      .catch(() => setModelName(null))
+  }, [defaultModelId])
 
   const reviewError = detail?.summary.review_error ?? null
   const prevReviewError = useRef<string | null>(null)
@@ -95,8 +95,8 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
 
   const handleRerun = async () => {
     if (clipId === null) return
-    const profiles = useProfilesStore.getState().profiles
-    if (profiles.length === 0) {
+    const models = useProvidersStore.getState().models
+    if (models.length === 0) {
       toast({
         variant: 'destructive',
         description: t('editor.ai.noProfileToast', { defaultValue: '由于未配置 AI 模型，无法使用理果功能。' })
@@ -211,7 +211,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           <div className="mb-8 p-5 rounded-lg border border-dashed border-[color:var(--color-acorn)] bg-[color:var(--color-acorn-bg)] flex flex-col items-center justify-center text-center gap-3">
             <span className="h-5 w-5 animate-spin rounded-full border-[2px] border-[color:var(--color-acorn)] border-t-transparent" />
             <span className="font-serif text-sm text-[color:var(--color-acorn)]">
-              {t('library.reviewing')} · {profileName ?? 'AI'}
+              {t('library.reviewing')} · {modelName ?? 'AI'}
             </span>
           </div>
         ) : summary.review_status === 'pending' ? (

@@ -1,14 +1,14 @@
 import { dbService } from '../services/db'
 import { buildChatModel, type ResolvedProfile } from '../ai/model-factory'
 import { getAgentBuilder } from './agent-singleton'
-import { getProfileDecryptedKey } from '../settings/profile-key'
+
 import { createStreamWriter, type RendererTarget } from './streamWriter'
 import { emitInterrupt, type InterruptShape, type TranslatorDeps } from './stream-translator'
 import type { AgentEvent, SessionMessage } from '../../shared/agent-types'
 
 interface ThreadCandidate {
   sessionId: string
-  profileId: string
+  modelId: string
 }
 
 interface InterruptTaskShape {
@@ -28,37 +28,44 @@ function listSessionsWithCheckpoints(): ThreadCandidate[] {
   const db = dbService.requireCurrent()
   const rows = db
     .prepare(
-      `SELECT s.id AS session_id, s.profile_id AS profile_id
+      `SELECT s.id AS session_id, s.model_id AS model_id
        FROM sessions s
        WHERE EXISTS (SELECT 1 FROM checkpoints c WHERE c.thread_id = s.id)`
     )
-    .all() as Array<{ session_id: string; profile_id: string | null }>
+    .all() as Array<{ session_id: string; model_id: string | null }>
   return rows
-    .filter((r): r is { session_id: string; profile_id: string } => r.profile_id !== null)
-    .map((r) => ({ sessionId: r.session_id, profileId: r.profile_id }))
+    .filter((r): r is { session_id: string; model_id: string } => r.model_id !== null)
+    .map((r) => ({ sessionId: r.session_id, modelId: r.model_id }))
 }
 
 import { getGlobalDb } from '../services/global-db'
 
-function loadProfile(profileId: string): ResolvedProfile | null {
+import { getProviderDecryptedKey } from '../settings/provider-key'
+
+function loadProfile(modelId: string): ResolvedProfile | null {
   const db = getGlobalDb()
-  const p = db.prepare('SELECT * FROM ai_provider_profiles WHERE id = ?').get(profileId) as
-    | {
-        id: string
-        provider: string
-        model: string
-        base_url: string | null
-        temperature: number
-        max_tokens: number | null
-      }
-    | undefined
-  if (!p) return null
+  const row = db.prepare(`
+    SELECT m.model_id as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref
+    FROM ai_model m
+    JOIN ai_provider p ON m.provider_id = p.id
+    WHERE m.id = ?
+  `).get(modelId) as {
+    db_model_id: string
+    provider_id: string
+    provider: string
+    base_url: string | null
+    api_key_ref: string | null
+  } | undefined
+
+  if (!row) return null
+
   return {
-    id: p.id,
-    provider: p.provider as ResolvedProfile['provider'],
-    model: p.model,
-    apiKey: p.provider === 'ollama' ? null : getProfileDecryptedKey(p.id),
-    baseUrl: p.base_url ?? undefined
+    id: row.provider_id,
+    provider: row.provider as ResolvedProfile['provider'],
+    model: row.db_model_id,
+    dbModelId: modelId,
+    apiKey: row.provider === 'ollama' ? null : getProviderDecryptedKey(row.provider_id),
+    baseUrl: row.base_url ?? undefined
   }
 }
 
@@ -66,7 +73,7 @@ async function recoverOne(
   target: { getTargets: () => RendererTarget[] },
   candidate: ThreadCandidate
 ): Promise<number> {
-  const profile = loadProfile(candidate.profileId)
+  const profile = loadProfile(candidate.modelId)
   if (!profile) return 0
   // buildChatModel is profile-validating; bail fast on misconfig.
   try {

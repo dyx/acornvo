@@ -5,7 +5,8 @@ import type { FileSummary } from '@shared/file-types'
 
 interface ResultItem {
   summary: FileSummary
-  snippet: string
+  body: string
+  heading_path: string
 }
 
 export function FullTextResultList({
@@ -57,7 +58,7 @@ export function FullTextResultList({
             <div
               className="mt-2 text-sm leading-relaxed text-foreground"
               // eslint-disable-next-line react/no-danger
-              dangerouslySetInnerHTML={{ __html: it.snippet }}
+              dangerouslySetInnerHTML={{ __html: it.body }}
             />
           </li>
         ))}

@@ -4,8 +4,7 @@ import { getCurrent } from '../services/grove'
 export interface AiUsageRow {
   id?: number
   jobId: string | null
-  profileId: string | null
-  model: string | null
+  modelId: string | null
   promptTokens: number | null
   completionTokens: number | null
   cacheReadTokens: number | null
@@ -45,8 +44,7 @@ function rowFromDb(r: any): AiUsageRow {
   return {
     id: r.id,
     jobId: r.job_id,
-    profileId: r.profile_id,
-    model: r.model,
+    modelId: r.model_id,
     promptTokens: r.prompt_tokens,
     completionTokens: r.completion_tokens,
     cacheReadTokens: r.cache_read_tokens,
@@ -66,13 +64,12 @@ export const aiUsage = {
     const groveId = getCurrent()?.id ?? null
     db.prepare(
       `
-      INSERT INTO ai_usage (job_id, profile_id, model, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ai_usage (job_id, model_id, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       row.jobId,
-      row.profileId,
-      row.model,
+      row.modelId,
       row.promptTokens,
       row.completionTokens,
       row.cacheReadTokens ?? 0,
@@ -93,7 +90,7 @@ export const aiUsage = {
     const rows = db
       .prepare(
         `
-      SELECT profile_id, grove_id, ok, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens
+      SELECT model_id, grove_id, ok, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens
       FROM ai_usage WHERE created_at >= ?
     `
       )
@@ -109,7 +106,7 @@ export const aiUsage = {
     const byProvider: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
     const byGrove: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
     for (const r of rows) {
-      const pKey = r.profile_id ?? 'unknown'
+      const pKey = r.model_id ?? 'unknown'
       byProvider[pKey] ??= { calls: 0, tokens: 0, cacheReadTokens: 0, reasoningTokens: 0 }
       byProvider[pKey].calls += 1
       byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
@@ -140,7 +137,7 @@ export const aiUsage = {
     const where: string[] = []
     const params: unknown[] = []
     if (opts.profileId) {
-      where.push('profile_id = ?')
+      where.push('model_id = ?')
       params.push(opts.profileId)
     }
     if (opts.okOnly) {
@@ -174,8 +171,7 @@ export interface UsageInput {
 
 export interface WriteUsageArgs {
   usage?: UsageInput
-  profileId: string | null
-  model: string | null
+  modelId: string | null
   latencyMs: number
   ok: 0 | 1
   error: string | null
@@ -201,8 +197,7 @@ export function rowFromUsageMetadata(
   if (!usage) return null
   return {
     jobId: base.jobId ?? null,
-    profileId: base.profileId,
-    model: base.model,
+    modelId: base.modelId,
     promptTokens: usage.input_tokens ?? 0,
     completionTokens: usage.output_tokens ?? 0,
     cacheReadTokens: usage.input_token_details?.cache_read ?? 0,
@@ -228,8 +223,7 @@ export function writeUsage(args: WriteUsageArgs): void {
   }
   aiUsage.insert({
     jobId: args.jobId ?? null,
-    profileId: args.profileId,
-    model: args.model,
+    modelId: args.modelId,
     promptTokens: args.promptTokens ?? 0,
     completionTokens: args.completionTokens ?? 0,
     cacheReadTokens: args.cacheReadTokens ?? 0,

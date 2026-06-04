@@ -39,19 +39,25 @@ export type {
 export type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 import type {
-  AiProviderProfile,
-  ProfileCreateInput,
-  ProfileUpdateInput,
+  AiProvider,
+  AiModel,
+  ProviderCreateInput,
+  ProviderUpdateInput,
+  ModelCreateInput,
+  ModelUpdateInput,
   SettingsByNs,
   SettingsNamespace,
   SettingsChangedPayload
 } from './settings-types'
 
 export type {
-  AiProviderProfile,
+  AiProvider,
+  AiModel,
   AiProviderKind,
-  ProfileCreateInput,
-  ProfileUpdateInput,
+  ProviderCreateInput,
+  ProviderUpdateInput,
+  ModelCreateInput,
+  ModelUpdateInput,
   SettingsByNs,
   SettingsNamespace,
   SettingsChangedPayload,
@@ -437,10 +443,14 @@ export type IpcContract = {
   settings: {
     get: <NS extends SettingsNamespace>(ns: NS) => SettingsByNs[NS]
     set: <NS extends SettingsNamespace>(ns: NS, patch: Partial<SettingsByNs[NS]>) => { ok: true }
-    aiProfilesList: () => AiProviderProfile[]
-    aiProfilesCreate: (input: ProfileCreateInput) => { id: string }
-    aiProfilesUpdate: (id: string, patch: ProfileUpdateInput) => { ok: true }
-    aiProfilesDelete: (id: string) => { ok: true }
+    aiProvidersList: () => AiProvider[]
+    aiProvidersCreate: (input: ProviderCreateInput) => { id: string }
+    aiProvidersUpdate: (id: string, patch: ProviderUpdateInput) => { ok: true }
+    aiProvidersDelete: (id: string) => { ok: true }
+    aiModelsList: () => AiModel[]
+    aiModelsCreate: (input: ModelCreateInput) => { id: string }
+    aiModelsUpdate: (id: string, patch: ModelUpdateInput) => { ok: true }
+    aiModelsDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
     keychainAvailable: () => boolean
   }
@@ -462,14 +472,13 @@ export type IpcContract = {
     'usage.list': (opts: {
       limit: number
       offset: number
-      profileId?: string
+      modelId?: string
       okOnly?: boolean
     }) => {
       items: Array<{
         id?: number
         jobId: string | null
-        profileId: string | null
-        model: string | null
+        modelId: string | null
         promptTokens: number | null
         completionTokens: number | null
         latencyMs: number | null

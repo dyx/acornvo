@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import { useProfilesStore } from './profiles'
 import { useSettingsStore } from './settings'
 import type { AgentEvent, Session, SessionMessage } from '@shared/agent-types'
 
@@ -121,23 +120,12 @@ function revertNewSessionFailure(sid: string, errorMsg: string) {
     
     let tempSession = newSessions.find(x => x.id === 'temp-session')
     if (!tempSession) {
-       const profiles = useProfilesStore.getState().profiles
-       const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
-       let targetProfileId: string | null = null
-       if (profiles.length > 0) {
-         const sortedProfiles = [...profiles].sort((a, b) => {
-           if (a.id === defaultProfileId) return -1
-           if (b.id === defaultProfileId) return 1
-           return 0
-         })
-         targetProfileId = sortedProfiles[0].id
-       }
        tempSession = {
          id: 'temp-session',
          title: '',
          createdAt: Date.now(),
          updatedAt: Date.now(),
-         profileId: targetProfileId,
+         profileId: null,
          messageCount: 0
        }
        newSessions.unshift(tempSession)
@@ -226,25 +214,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   async createSession() {
     set((s) => {
-      const profiles = useProfilesStore.getState().profiles
-      const defaultProfileId = useSettingsStore.getState().ai.defaultProfileId
-      let targetProfileId: string | null = null
-
-      if (profiles.length > 0) {
-        const sortedProfiles = [...profiles].sort((a, b) => {
-          if (a.id === defaultProfileId) return -1
-          if (b.id === defaultProfileId) return 1
-          return 0
-        })
-        targetProfileId = sortedProfiles[0].id
-      }
-      
       const tempSession: ChatSession = {
         id: 'temp-session',
         title: '',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        profileId: targetProfileId,
+        profileId: null,
         messageCount: 0
       }
 

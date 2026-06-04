@@ -16,11 +16,11 @@ export const aiHandlers = {
   async reviewClip(clipId: number, opts?: { force?: boolean }) {
     logger().info('ai', { msg: '[ai.reviewClip] called', meta: { clipId, opts } })
 
-    const profileId = settingsStore.get('ai').defaultProfileId
-    logger().debug('ai', { msg: '[ai.reviewClip] defaultProfileId resolved', meta: { profileId } })
-    if (!profileId) {
-      logger().error('ai', { msg: '[ai.reviewClip] no AI profile configured' })
-      throw new IpcError('E_MISSING_PROFILE', 'No AI provider profile configured')
+    const modelId = settingsStore.get('ai').defaultReviewerModelId
+    logger().debug('ai', { msg: '[ai.reviewClip] defaultReviewerModelId resolved', meta: { modelId } })
+    if (!modelId) {
+      logger().error('ai', { msg: '[ai.reviewClip] no AI model configured' })
+      throw new IpcError('E_MISSING_PROFILE', 'No AI provider model configured')
     }
     const row = dbService
       .requireCurrent()
@@ -47,7 +47,7 @@ export const aiHandlers = {
     return aiUsage.summary(opts)
   },
 
-  async ['usage.list'](opts: { limit: number; offset: number; profileId?: string; okOnly?: boolean }) {
+  async ['usage.list'](opts: { limit: number; offset: number; modelId?: string; okOnly?: boolean }) {
     return aiUsage.list(opts)
   }
 }

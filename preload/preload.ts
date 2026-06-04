@@ -128,10 +128,14 @@ const request: IpcClient<IpcContract> = {
   settings: {
     get: (ns) => invoke('settings.get', ns),
     set: (ns, patch) => invoke('settings.set', ns, patch),
-    aiProfilesList: () => invoke('settings.aiProfilesList'),
-    aiProfilesCreate: (input) => invoke('settings.aiProfilesCreate', input),
-    aiProfilesUpdate: (id, patch) => invoke('settings.aiProfilesUpdate', id, patch),
-    aiProfilesDelete: (id) => invoke('settings.aiProfilesDelete', id),
+    aiProvidersList: () => invoke('settings.aiProvidersList'),
+    aiProvidersCreate: (input) => invoke('settings.aiProvidersCreate', input),
+    aiProvidersUpdate: (id, patch) => invoke('settings.aiProvidersUpdate', id, patch),
+    aiProvidersDelete: (id) => invoke('settings.aiProvidersDelete', id),
+    aiModelsList: () => invoke('settings.aiModelsList'),
+    aiModelsCreate: (input) => invoke('settings.aiModelsCreate', input),
+    aiModelsUpdate: (id, patch) => invoke('settings.aiModelsUpdate', id, patch),
+    aiModelsDelete: (id) => invoke('settings.aiModelsDelete', id),
     browserClearCookies: () => invoke('settings.browserClearCookies'),
     keychainAvailable: () => invoke('settings.keychainAvailable')
   },

@@ -50,9 +50,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useChatStore } from "@/stores/chat";
-import { useProfilesStore } from "@/stores/profiles";
 import { ToolStepsChain, MessageFooter } from "@/components/chat/MessageAddons";
-import { ProfileChip } from "@/components/chat/ProfileChip";
 
 import { ScrollToBottomButton } from "@/components/chat/ScrollToBottomButton";
 import { useRef } from "react";
@@ -173,7 +171,6 @@ const ComposerAction: FC = () => {
   return (
     <div className="aui-composer-action-wrapper relative flex items-center justify-between mt-1">
       <div className="flex items-center gap-2">
-        <ProfileChipWrapper />
       </div>
       <div className="flex items-center gap-1">
         <AuiIf condition={(s) => !s.thread.isRunning}>
@@ -498,16 +495,3 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   );
 };
 
-const ProfileChipWrapper: FC = () => {
-  const activeSessionId = useChatStore((s) => s.activeSessionId);
-  const activeSession = useChatStore((s) => s.sessions.find(x => x.id === activeSessionId));
-
-  if (!activeSessionId) return null;
-
-  return (
-    <ProfileChip
-      sessionId={activeSessionId}
-      profileId={activeSession?.profileId ?? null}
-    />
-  );
-};

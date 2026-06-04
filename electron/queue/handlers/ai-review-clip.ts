@@ -9,7 +9,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
   const { job, payload, log } = ctx
   const clipId = payload.clipId as number
   const force = payload.force as boolean | undefined
-  const profileId = settingsStore.get('ai').defaultProfileId
+  const modelId = settingsStore.get('ai').defaultReviewerModelId
   const t0 = Date.now()
 
   logger().info('queue', {
@@ -18,7 +18,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
       jobId: job.id,
       clipId,
       force,
-      profileId,
+      modelId,
       attempt: job.attempts
     }
   })
@@ -30,8 +30,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     const out = await reviewClip(clipId, { force })
     writeUsage({
       jobId: job.id,
-      profileId: profileId ?? null,
-      model: out.llmCall?.model ?? null,
+      modelId: out.llmCall?.modelId ?? modelId ?? null,
       promptTokens: out.llmCall?.promptTokens ?? null,
       completionTokens: out.llmCall?.completionTokens ?? null,
       latencyMs: out.llmCall?.latencyMs ?? Date.now() - t0,
@@ -58,8 +57,7 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
 
     writeUsage({
       jobId: job.id,
-      profileId: profileId ?? null,
-      model: null,
+      modelId: modelId ?? null,
       latencyMs: Date.now() - t0,
       ok: 0,
       error: code
