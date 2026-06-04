@@ -379,7 +379,12 @@ export async function checkBalance(providerId: string): Promise<{ ok: boolean; m
       const info = body.balance_infos?.[0]
       if (info && info.total_balance && info.currency) {
         const val = parseFloat(info.total_balance)
-        return { ok: true, balance: `¥${isNaN(val) ? info.total_balance : val.toFixed(2)}` }
+        let symbol = ''
+        if (info.currency === 'CNY') symbol = '¥'
+        else if (info.currency === 'USD') symbol = '$'
+        else symbol = info.currency + ' '
+        
+        return { ok: true, balance: `${symbol}${isNaN(val) ? info.total_balance : val.toFixed(2)}` }
       }
     } else if (type === 'openrouter') {
       const credits = body.data?.total_credits
