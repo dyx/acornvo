@@ -27,11 +27,15 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [balance, setBalance] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [lastCheckTime, setLastCheckTime] = useState<number>(0)
 
   // Only openrouter and deepseek are natively supported right now
   if (type !== 'deepseek' && type !== 'openrouter') return null
 
   async function fetchBalance() {
+    const now = Date.now()
+    if (now - lastCheckTime < 2000) return
+    setLastCheckTime(now)
     setStatus('loading')
     try {
       const res = await checkBalance(providerId)

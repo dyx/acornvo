@@ -378,12 +378,13 @@ export async function checkBalance(providerId: string): Promise<{ ok: boolean; m
     if (type === 'deepseek') {
       const info = body.balance_infos?.[0]
       if (info && info.total_balance && info.currency) {
-        return { ok: true, balance: `${info.total_balance} ${info.currency}` }
+        const val = parseFloat(info.total_balance)
+        return { ok: true, balance: `¥${isNaN(val) ? info.total_balance : val.toFixed(2)}` }
       }
     } else if (type === 'openrouter') {
       const credits = body.data?.total_credits
       if (typeof credits === 'number') {
-        return { ok: true, balance: `$${credits.toFixed(4)}` }
+        return { ok: true, balance: `$${credits.toFixed(2)}` }
       }
     }
 

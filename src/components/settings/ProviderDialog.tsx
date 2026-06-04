@@ -62,6 +62,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   const [busy, setBusy] = useState(false)
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [testMessage, setTestMessage] = useState<string | null>(null)
+  const [lastTestTime, setLastTestTime] = useState<number>(0)
   const testConnection = useProvidersStore((s) => s.testConnection)
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]): void {
@@ -85,6 +86,10 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   }
 
   async function handleTestConnection(): Promise<void> {
+    const now = Date.now()
+    if (now - lastTestTime < 2000) return
+    setLastTestTime(now)
+    
     setTestStatus('testing')
     setTestMessage(null)
     const defs = AI_PROVIDER_DEFAULTS[form.type]
