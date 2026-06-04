@@ -7,11 +7,7 @@ import {
   ReasoningText,
   ReasoningTrigger,
 } from "@/components/assistant-ui/reasoning";
-import {
-  ToolGroupContent,
-  ToolGroupRoot,
-  ToolGroupTrigger,
-} from "@/components/assistant-ui/tool-group";
+
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
@@ -217,7 +213,6 @@ const AssistantMessage: FC = () => {
       data-role="assistant"
       className="fade-in slide-in-from-bottom-1 animate-in relative duration-150"
     >
-      <AssistantMessageAddons />
       <div
         data-slot="aui_assistant-message-content"
         // [contain-intrinsic-size:auto_24px] fixes issue #4104, don't change without checking for regressions
@@ -232,28 +227,25 @@ const AssistantMessage: FC = () => {
         >
           {({ part, children }) => {
             switch (part.type) {
-              case "group-chainOfThought":
-                return <div data-slot="aui_chain-of-thought">{children}</div>;
-              case "group-reasoning": {
+              case "group-chainOfThought": {
                 const running = part.status.type === "running";
                 return (
-                  <ReasoningRoot defaultOpen={running}>
+                  <ReasoningRoot defaultOpen={running} className="mb-4 w-full">
                     <ReasoningTrigger active={running} />
                     <ReasoningContent aria-busy={running}>
-                      <ReasoningText>{children}</ReasoningText>
+                      {children}
+                      <AssistantMessageAddons />
                     </ReasoningContent>
                   </ReasoningRoot>
                 );
               }
+              case "group-reasoning":
+                return <ReasoningText>{children}</ReasoningText>;
               case "group-tool":
                 return (
-                  <ToolGroupRoot>
-                    <ToolGroupTrigger
-                      count={part.indices.length}
-                      active={part.status.type === "running"}
-                    />
-                    <ToolGroupContent>{children}</ToolGroupContent>
-                  </ToolGroupRoot>
+                  <div className="border-t mt-3 pt-3 px-6 pb-4 flex flex-col gap-2">
+                    {children}
+                  </div>
                 );
               case "text":
                 return (

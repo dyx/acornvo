@@ -11,79 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
-const convertMessage = (msg: ChatMessage): ThreadMessage => {
-  const statusMap: Record<string, 'running' | 'complete' | 'incomplete'> = {
-    pending: 'running',
-    streaming: 'running',
-    done: 'complete',
-    error: 'incomplete'
-  }
-  
-  const mappedRole = msg.role === 'tool' ? 'assistant' : msg.role;
-  
-  let text = msg.text || '';
-  let reasoningText = '';
-  
-  const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
-  if (thinkMatch) {
-    reasoningText = thinkMatch[1];
-    text = text.replace(/<think>[\s\S]*?<\/think>\n*/, '').trim();
-  } else {
-    const openThinkMatch = text.match(/<think>([\s\S]*)$/);
-    if (openThinkMatch) {
-      reasoningText = openThinkMatch[1];
-      text = text.replace(/<think>[\s\S]*$/, '').trim();
-    } else {
-      // Fix stray </think> tags leaking into subsequent messages
-      text = text.replace(/<\/think>\n*/g, '').trim();
-    }
-  }
-
-  if (msg.role === 'tool' && text) {
-    try {
-      const parsed = JSON.parse(text);
-      text = `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``;
-    } catch {
-      text = `\`\`\`\n${text}\n\`\`\``;
-    }
-  }
-
-  const content: any[] = [];
-  if (reasoningText) {
-    content.push({ type: 'reasoning', text: reasoningText });
-  }
-  if (text || !reasoningText) {
-    content.push({ type: 'text', text: text });
-  }
-  
-  if (msg.role === 'assistant' && msg.toolCalls?.length) {
-    msg.toolCalls.forEach(tc => {
-      content.push({
-        type: 'tool-call',
-        toolName: tc.name,
-        toolCallId: tc.id || tc.name,
-        args: tc.args,
-        argsText: JSON.stringify(tc.args, null, 2)
-      });
-    });
-  }
-
-  const baseMessage = {
-    id: msg.id,
-    role: mappedRole,
-    content,
-    createdAt: new Date(msg.createdAt)
-  };
-
-  if (mappedRole === 'assistant') {
-    return {
-      ...baseMessage,
-      status: statusMap[msg.status ?? 'done'] || 'complete'
-    } as unknown as ThreadMessage;
-  }
-
-  return baseMessage as unknown as ThreadMessage;
-}
+// convertMessage is no longer used, as we pre-process messages in useMemo now.
 
 export function ChatRuntimeProvider({ children }: { children: React.ReactNode }) {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -98,6 +26,99 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const isRunning = activeSession ? 
     activeSession.messages.some(m => m.status === 'pending' || m.status === 'streaming') : false;
 
+  const threadMessages = useMemo(() => {
+    const result: ThreadMessage[] = [];
+    
+    for (const msg of messages) {
+      if (msg.role === 'tool') {
+        if (!msg.toolCalls || msg.toolCalls.length === 0) {
+          // It's a tool result message. Attach result to the previous assistant's tool-call part.
+          const parsedResult = (() => {
+            try { return JSON.parse(msg.text); }
+            catch { return msg.text; }
+          })();
+          
+          for (let i = result.length - 1; i >= 0; i--) {
+            const rm = result[i];
+            if (rm.role === 'assistant') {
+              const part = rm.content.find((c: any) => c.type === 'tool-call' && c.toolCallId === msg.toolCallId);
+              if (part && part.type === 'tool-call') {
+                (part as any).result = parsedResult;
+                break;
+              }
+            }
+          }
+        }
+        // We DO NOT push a separate message for 'tool' roles, because the
+        // original assistant message already contains the tool-calls.
+        continue;
+      }
+      
+      const mappedRole = msg.role;
+      let text = msg.text || '';
+      let reasoningText = '';
+      
+      const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch) {
+        reasoningText = thinkMatch[1];
+        text = text.replace(/<think>[\s\S]*?<\/think>\n*/, '').trim();
+      } else {
+        const openThinkMatch = text.match(/<think>([\s\S]*)$/);
+        if (openThinkMatch) {
+          reasoningText = openThinkMatch[1];
+          text = text.replace(/<think>[\s\S]*$/, '').trim();
+        } else {
+          text = text.replace(/<\/think>\n*/g, '').trim();
+        }
+      }
+
+      const content: any[] = [];
+      if (reasoningText) {
+        content.push({ type: 'reasoning', text: reasoningText });
+      }
+      
+      if (text || !reasoningText) {
+        content.push({ type: 'text', text: text });
+      }
+      
+      if (msg.toolCalls && msg.toolCalls.length > 0) {
+        msg.toolCalls.forEach(tc => {
+          content.push({
+            type: 'tool-call',
+            toolName: tc.name,
+            toolCallId: tc.id || tc.name,
+            args: tc.args,
+            argsText: JSON.stringify(tc.args, null, 2)
+          });
+        });
+      }
+
+      const statusMap: Record<string, 'running' | 'complete' | 'incomplete'> = {
+        pending: 'running',
+        streaming: 'running',
+        done: 'complete',
+        error: 'incomplete'
+      };
+
+      const threadMsg = {
+        id: msg.id,
+        role: mappedRole,
+        content,
+        createdAt: new Date(msg.createdAt)
+      };
+
+      if (mappedRole === 'assistant') {
+        result.push({
+          ...threadMsg,
+          status: statusMap[msg.status ?? 'done'] || 'complete'
+        } as unknown as ThreadMessage);
+      } else {
+        result.push(threadMsg as unknown as ThreadMessage);
+      }
+    }
+    return result;
+  }, [messages]);
+
   const checkProfilesOrToast = () => {
     const models = useProvidersStore.getState().models;
     if (models.length === 0) {
@@ -110,10 +131,10 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
     return true;
   };
 
-  const runtime = useExternalStoreRuntime<ChatMessage>({
-    messages,
+  const runtime = useExternalStoreRuntime<ThreadMessage>({
+    messages: threadMessages,
     isRunning,
-    convertMessage,
+    convertMessage: (m) => m,
     onNew: async (message: AppendMessage) => {
       if (!checkProfilesOrToast()) return;
       const text = message.content
