@@ -41,6 +41,7 @@ export const settingsHandlers = {
     providersStore.deleteModel(id)
     return { ok: true }
   },
+  aiProvidersTestConnection: (input) => providersStore.testConnection(input),
   browserClearCookies: async () => {
     const ses = session.fromPartition(BROWSER_PARTITION)
     await ses.clearStorageData({ storages: ['cookies'] })

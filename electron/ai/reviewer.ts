@@ -91,7 +91,7 @@ interface ModelProviderRow {
   provider_id: string
   provider_type: string
   base_url: string | null
-  model_id: string
+  name: string
 }
 
 function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: string } {
@@ -113,7 +113,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
       p.id as provider_id,
       p.type as provider_type,
       p.base_url,
-      m.model_id
+      m.name
     FROM ai_model m
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
@@ -128,7 +128,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
         p.type as provider_type,
         p.base_url,
         m.id as db_model_id,
-        m.model_id
+        m.name
       FROM ai_model m
       JOIN ai_provider p ON m.provider_id = p.id
       WHERE m.enabled = 1
@@ -159,7 +159,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
     meta: {
       providerId: p.provider_id,
       provider: p.provider_type,
-      model: p.model_id,
+      model: p.name,
       baseUrl: p.base_url ?? null,
       hasApiKey: hasKey
     }
@@ -175,7 +175,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
   return {
     id: p.provider_id,
     provider: p.provider_type as ResolvedProfile['provider'],
-    model: p.model_id,
+    model: p.name,
     baseUrl: p.base_url ?? undefined,
     apiKey,
     dbModelId: id!

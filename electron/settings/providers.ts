@@ -14,6 +14,7 @@ import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { getGlobalDb } from '../services/global-db'
 import { secretsStore } from './secrets'
 import { settingsStore } from './store'
+import { getProviderDecryptedKey } from './provider-key'
 
 interface ProviderRow {
   id: string
@@ -28,7 +29,7 @@ interface ProviderRow {
 interface ModelRow {
   id: string
   provider_id: string
-  model_id: string
+  name: string
   display_name: string
   enabled: number
   created_at: string
@@ -51,7 +52,7 @@ function rowToModel(row: ModelRow): AiModel {
   return {
     id: row.id,
     providerId: row.provider_id,
-    modelId: row.model_id,
+    name: row.name,
     displayName: row.display_name,
     enabled: row.enabled === 1,
     createdAt: row.created_at,
@@ -96,11 +97,11 @@ function createProvider(input: ProviderCreateInput): { id: string } {
       const defs = AI_PROVIDER_DEFAULTS[input.type]
       if (defs && defs.models && defs.models.length > 0) {
         const insertModel = db.prepare(
-          `INSERT INTO ai_model (id, provider_id, model_id, display_name, enabled, created_at, updated_at)
+          `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, created_at, updated_at)
            VALUES (?, ?, ?, ?, 1, ?, ?)`
         )
         for (const m of defs.models) {
-          insertModel.run(uuidv4(), id, m.id, m.displayName, now, now)
+          insertModel.run(uuidv4(), id, m.name, m.displayName, now, now)
         }
       }
     })()
@@ -208,30 +209,54 @@ function createModel(input: ModelCreateInput): { id: string } {
   const db = getGlobalDb()
   const id = uuidv4()
   const now = new Date().toISOString()
-  db.prepare(
-    `INSERT INTO ai_model (id, provider_id, model_id, display_name, enabled, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 1, ?, ?)`
-  ).run(id, input.providerId, input.modelId, input.displayName, now, now)
+  try {
+    db.prepare(
+      `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 1, ?, ?)`
+    ).run(id, input.providerId, input.name, input.displayName, now, now)
+  } catch (err: any) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      if (err.message.includes('idx_ai_model_provider_name')) {
+        throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: model name "${input.name}" is already in use`)
+      }
+      if (err.message.includes('idx_ai_model_provider_display_name')) {
+        throw new IpcError('E_DUPLICATE_DISPLAY_NAME', `E_DUPLICATE_DISPLAY_NAME: display name "${input.displayName}" is already in use`)
+      }
+    }
+    throw err
+  }
   return { id }
 }
 
 function updateModel(id: string, patch: ModelUpdateInput): void {
   const db = getGlobalDb()
   const now = new Date().toISOString()
-  db.prepare(
-    `UPDATE ai_model SET
-       model_id = COALESCE(?, model_id),
-       display_name = COALESCE(?, display_name),
-       enabled = COALESCE(?, enabled),
-       updated_at = ?
-     WHERE id = ?`
-  ).run(
-    patch.modelId ?? null,
-    patch.displayName ?? null,
-    patch.enabled !== undefined ? (patch.enabled ? 1 : 0) : null,
-    now,
-    id
-  )
+  try {
+    db.prepare(
+      `UPDATE ai_model SET
+         name = COALESCE(?, name),
+         display_name = COALESCE(?, display_name),
+         enabled = COALESCE(?, enabled),
+         updated_at = ?
+       WHERE id = ?`
+    ).run(
+      patch.name ?? null,
+      patch.displayName ?? null,
+      patch.enabled !== undefined ? (patch.enabled ? 1 : 0) : null,
+      now,
+      id
+    )
+  } catch (err: any) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      if (err.message.includes('idx_ai_model_provider_name')) {
+        throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: model name "${patch.name}" is already in use`)
+      }
+      if (err.message.includes('idx_ai_model_provider_display_name')) {
+        throw new IpcError('E_DUPLICATE_DISPLAY_NAME', `E_DUPLICATE_DISPLAY_NAME: display name "${patch.displayName}" is already in use`)
+      }
+    }
+    throw err
+  }
 }
 
 function deleteModel(id: string): void {
@@ -258,6 +283,51 @@ function deleteModel(id: string): void {
   })()
 }
 
+async function testConnection(input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }): Promise<{ ok: boolean; message?: string }> {
+  try {
+    let key = input.apiKey
+    if (!key && input.providerId) {
+      key = getProviderDecryptedKey(input.providerId) ?? undefined
+    }
+    
+    if (!input.baseUrl) {
+      return { ok: false, message: 'Base URL is required for testing connection' }
+    }
+    
+    // Construct the test URL
+    let url = input.baseUrl
+    if (input.testPath) {
+      // Ensure no double slashes
+      url = url.replace(/\/$/, '') + (input.testPath.startsWith('/') ? input.testPath : '/' + input.testPath)
+    }
+
+    const headers: Record<string, string> = {}
+    if (key) {
+      headers['Authorization'] = `Bearer ${key}`
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers
+    })
+
+    if (res.ok) {
+      return { ok: true }
+    } else {
+      let bodyStr = ''
+      try {
+        const body = await res.json()
+        bodyStr = body.error?.message || body.message || JSON.stringify(body)
+      } catch {
+        bodyStr = await res.text().catch(() => '')
+      }
+      return { ok: false, message: `HTTP ${res.status} ${res.statusText} ${bodyStr ? '- ' + bodyStr : ''}`.trim() }
+    }
+  } catch (err: any) {
+    return { ok: false, message: err.message || String(err) }
+  }
+}
+
 export const providersStore = {
   listProviders,
   createProvider,
@@ -266,5 +336,6 @@ export const providersStore = {
   listModels,
   createModel,
   updateModel,
-  deleteModel
+  deleteModel,
+  testConnection
 }

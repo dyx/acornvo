@@ -2,7 +2,7 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { XIcon } from 'lucide-react'
+import { XIcon, ExternalLinkIcon, CheckCircleIcon, XCircleIcon, Loader2Icon } from 'lucide-react'
 import { useProvidersStore } from '@/stores/providers'
 import type {
   AiProvider,
@@ -60,6 +60,9 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   const [form, setForm] = useState<FormState>(() => initialState(provider))
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
+  const [testMessage, setTestMessage] = useState<string | null>(null)
+  const testConnection = useProvidersStore((s) => s.testConnection)
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]): void {
     setForm((f) => ({ ...f, [key]: value }))
@@ -79,6 +82,32 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
       }
       return next
     })
+  }
+
+  async function handleTestConnection(): Promise<void> {
+    setTestStatus('testing')
+    setTestMessage(null)
+    const defs = AI_PROVIDER_DEFAULTS[form.type]
+    const baseUrl = form.baseUrl.trim().length > 0 ? form.baseUrl.trim() : undefined
+    
+    try {
+      const res = await testConnection({
+        baseUrl,
+        apiKey: form.apiKey.trim() || undefined,
+        providerId: provider?.id,
+        testPath: defs?.testConnectionPath
+      })
+      if (res.ok) {
+        setTestStatus('success')
+        setTestMessage(t('settings.ai.testSuccess', 'Connection successful'))
+      } else {
+        setTestStatus('error')
+        setTestMessage(res.message || t('settings.ai.testError', 'Connection failed'))
+      }
+    } catch (err: any) {
+      setTestStatus('error')
+      setTestMessage(err.message || String(err))
+    }
   }
 
   async function onSave(): Promise<void> {
@@ -175,7 +204,20 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
             </div>
           )}
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.apiKey')}</span>
+            <div className="flex items-center justify-between">
+              <span className="block font-medium">{t('settings.ai.apiKey')}</span>
+              {AI_PROVIDER_DEFAULTS[form.type]?.apiKeyHelpUrl && (
+                <a
+                  href={AI_PROVIDER_DEFAULTS[form.type]?.apiKeyHelpUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs flex items-center text-muted-foreground hover:text-foreground"
+                >
+                  {t('settings.ai.getApiKey', 'Get API Key')}
+                  <ExternalLinkIcon className="ml-1 size-3" />
+                </a>
+              )}
+            </div>
             <Input
               type="password"
               autoComplete="off"
@@ -186,7 +228,31 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
           </div>
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void handleTestConnection()}
+              disabled={busy || testStatus === 'testing' || (!form.baseUrl && !AI_PROVIDER_DEFAULTS[form.type]?.baseUrl)}
+            >
+              {testStatus === 'testing' && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              {t('settings.ai.testConnection', 'Test Connection')}
+            </Button>
+            {testStatus === 'success' && (
+              <span className="ml-3 flex items-center text-sm text-green-600 dark:text-green-500">
+                <CheckCircleIcon className="mr-1 size-4" />
+                {testMessage}
+              </span>
+            )}
+            {testStatus === 'error' && (
+              <span className="ml-3 flex items-center text-sm text-destructive" title={testMessage ?? ''}>
+                <XCircleIcon className="mr-1 size-4" />
+                <span className="max-w-[150px] truncate">{testMessage}</span>
+              </span>
+            )}
+          </div>
           <Button type="button" onClick={() => void onSave()} disabled={busy}>
             {t('settings.ai.save')}
           </Button>

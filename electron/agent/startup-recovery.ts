@@ -45,7 +45,7 @@ import { getProviderDecryptedKey } from '../settings/provider-key'
 function loadProfile(modelId: string): ResolvedProfile | null {
   const db = getGlobalDb()
   const row = db.prepare(`
-    SELECT m.model_id as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref
+    SELECT m.name as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref
     FROM ai_model m
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?

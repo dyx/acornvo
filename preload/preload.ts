@@ -137,7 +137,8 @@ const request: IpcClient<IpcContract> = {
     aiModelsUpdate: (id, patch) => invoke('settings.aiModelsUpdate', id, patch),
     aiModelsDelete: (id) => invoke('settings.aiModelsDelete', id),
     browserClearCookies: () => invoke('settings.browserClearCookies'),
-    keychainAvailable: () => invoke('settings.keychainAvailable')
+    keychainAvailable: () => invoke('settings.keychainAvailable'),
+    aiProvidersTestConnection: (input) => invoke('settings.aiProvidersTestConnection', input)
   },
   ai: {
     reviewClip: (clipId, opts) => invoke('ai.reviewClip', clipId, opts),

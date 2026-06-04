@@ -69,7 +69,7 @@ export interface AiProvider {
 export interface AiModel {
   id: string
   providerId: string
-  modelId: string
+  name: string
   displayName: string
   enabled: boolean
   createdAt: string
@@ -92,12 +92,12 @@ export interface ProviderUpdateInput {
 
 export interface ModelCreateInput {
   providerId: string
-  modelId: string
+  name: string
   displayName: string
 }
 
 export interface ModelUpdateInput {
-  modelId?: string
+  name?: string
   displayName?: string
   enabled?: boolean
 }

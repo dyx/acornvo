@@ -21,6 +21,7 @@ interface ProvidersState {
   createModel: (input: ModelCreateInput) => Promise<{ id: string }>
   updateModel: (id: string, patch: ModelUpdateInput) => Promise<void>
   removeModel: (id: string) => Promise<void>
+  testConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
 }
 
 export const useProvidersStore = create<ProvidersState>((set, get) => ({
@@ -71,5 +72,9 @@ export const useProvidersStore = create<ProvidersState>((set, get) => ({
   async removeModel(id) {
     await ipc.settings.aiModelsDelete(id)
     await get().refresh()
+  },
+
+  async testConnection(input) {
+    return await ipc.settings.aiProvidersTestConnection(input)
   }
 }))

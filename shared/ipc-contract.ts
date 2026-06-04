@@ -109,6 +109,7 @@ export type IpcErrorCode =
   | 'E_KEYCHAIN_UNAVAILABLE'
   | 'E_UNKNOWN_NAMESPACE'
   | 'E_DUPLICATE_NAME'
+  | 'E_DUPLICATE_DISPLAY_NAME'
   | 'E_PROFILE_NOT_FOUND'
   | 'E_BUSY'
   | 'E_GLOBAL_BUSY'
@@ -138,6 +139,7 @@ export const IPC_ERROR_CODES = {
   E_KEYCHAIN_UNAVAILABLE: 'E_KEYCHAIN_UNAVAILABLE',
   E_UNKNOWN_NAMESPACE: 'E_UNKNOWN_NAMESPACE',
   E_DUPLICATE_NAME: 'E_DUPLICATE_NAME',
+  E_DUPLICATE_DISPLAY_NAME: 'E_DUPLICATE_DISPLAY_NAME',
   E_PROFILE_NOT_FOUND: 'E_PROFILE_NOT_FOUND',
   E_BUSY: 'E_BUSY',
   E_GLOBAL_BUSY: 'E_GLOBAL_BUSY',
@@ -453,6 +455,7 @@ export type IpcContract = {
     aiModelsDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
     keychainAvailable: () => boolean
+    aiProvidersTestConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
   }
   jobs: {
     list: (filter: JobListFilter) => JobsListResult

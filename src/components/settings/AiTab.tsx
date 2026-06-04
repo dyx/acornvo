@@ -201,7 +201,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                                     )}
                                   </span>
                                   <span className="text-xs text-muted-foreground truncate">
-                                    {m.modelId}
+                                    {m.name}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">

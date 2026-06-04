@@ -21,7 +21,7 @@ interface ModelDialogProps {
 }
 
 interface FormState {
-  modelId: string
+  name: string
   displayName: string
 }
 
@@ -37,12 +37,12 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
     if (!model) {
       const defs = provider ? AI_PROVIDER_DEFAULTS[provider.type] : null
       return {
-        modelId: defs?.models?.[0]?.id ?? '',
+        name: defs?.models?.[0]?.name ?? '',
         displayName: defs?.models?.[0]?.displayName ?? ''
       }
     }
     return {
-      modelId: model.modelId,
+      name: model.name,
       displayName: model.displayName
     }
   })
@@ -57,37 +57,38 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
     setBusy(true)
     setError(null)
     try {
-      const modelId = form.modelId.trim()
+      const name = form.name.trim()
       let displayName = form.displayName.trim()
       
-      if (!modelId) {
-        setError(t('settings.ai.errorModelIdRequired', 'Model ID is required'))
+      if (!name) {
+        setError(t('settings.ai.errorNameRequired', 'Model Name is required'))
         setBusy(false)
         return
       }
       
       if (!displayName) {
-        displayName = modelId
+        displayName = name
       }
 
       if (model === null) {
         const input: ModelCreateInput = {
           providerId,
-          modelId,
+          name,
           displayName
         }
         await create(input)
       } else {
         const patch: ModelUpdateInput = {
-          modelId,
+          name,
           displayName
         }
         await update(model.id, patch)
       }
       onClose()
     } catch (err) {
-      const code = (err as { code?: string })?.code
-      if (code === 'E_DUPLICATE_MODEL') setError(t('settings.ai.errorDuplicateModel', 'Model already exists'))
+      const code = (err as { message?: string })?.message ?? ''
+      if (code.includes('E_DUPLICATE_NAME')) setError(t('settings.ai.errorDuplicateName', 'Model name already exists'))
+      else if (code.includes('E_DUPLICATE_DISPLAY_NAME')) setError(t('settings.ai.errorDuplicateDisplayName', 'Display name already exists'))
       else setError(err instanceof Error ? err.message : String(err))
     } finally {
       setBusy(false)
@@ -117,17 +118,17 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
         </h3>
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.modelId', 'Model ID')}</span>
-            <Input value={form.modelId} onChange={(e) => set('modelId', e.target.value)} placeholder="e.g. gpt-4" />
+            <span className="block font-medium">{t('settings.ai.modelName', 'Model Name (e.g. gpt-4)')}</span>
+            <Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. gpt-4" />
             {defaultModels && defaultModels.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {defaultModels.map((m) => (
                   <Badge
-                    key={m.id}
-                    variant={form.modelId === m.id ? 'default' : 'secondary'}
+                    key={m.name}
+                    variant={form.name === m.name ? 'default' : 'secondary'}
                     className="cursor-pointer font-normal"
                     onClick={() => {
-                      set('modelId', m.id)
+                      set('name', m.name)
                       set('displayName', m.displayName)
                     }}
                   >
@@ -142,7 +143,7 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
             <Input 
               value={form.displayName} 
               onChange={(e) => set('displayName', e.target.value)} 
-              placeholder={form.modelId || 'Leave empty to use Model ID'}
+              placeholder={form.name || 'Leave empty to use Model Name'}
             />
           </div>
         </div>

@@ -33,7 +33,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_provider_name ON ai_provider(name);
 CREATE TABLE IF NOT EXISTS ai_model (
   id TEXT PRIMARY KEY,
   provider_id TEXT NOT NULL,
-  model_id TEXT NOT NULL,
+  name TEXT NOT NULL,
   display_name TEXT NOT NULL,
   enabled INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS ai_model (
   FOREIGN KEY(provider_id) REFERENCES ai_provider(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_ai_model_provider ON ai_model(provider_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_model_provider_name ON ai_model(provider_id, name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_model_provider_display_name ON ai_model(provider_id, display_name);
 
 CREATE TABLE IF NOT EXISTS perf_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +114,16 @@ export function initGlobalDb(): void {
     const tableInfo = db.pragma('table_info(perf_samples)') as { name: string }[]
     if (!tableInfo.some((c) => c.name === 'grove_id')) {
       db.prepare('ALTER TABLE perf_samples ADD COLUMN grove_id TEXT').run()
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // Migration: Rename model_id to name in ai_model
+  try {
+    const aiModelInfo = db.pragma('table_info(ai_model)') as { name: string }[]
+    if (aiModelInfo.some((c) => c.name === 'model_id')) {
+      db.prepare('ALTER TABLE ai_model RENAME COLUMN model_id TO name').run()
     }
   } catch {
     /* ignore */
