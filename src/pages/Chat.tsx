@@ -45,35 +45,6 @@ function SessionsErrorBanner() {
   )
 }
 
-function StreamErrorBanner() {
-  const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const streamError = useChatStore((s) =>
-    activeSessionId ? (s.bySession[activeSessionId]?.error ?? null) : null
-  )
-  if (!streamError) return null
-  return (
-    <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 border-b">
-      <AlertDescription className="flex justify-between items-center w-full">
-        <span>{streamError}</span>
-        <button
-          onClick={() => {
-            const sid = useChatStore.getState().activeSessionId
-            if (!sid) return
-            useChatStore.setState((s) => {
-              const cur = s.bySession[sid]
-              if (!cur) return s
-              return { bySession: { ...s.bySession, [sid]: { ...cur, error: null } } }
-            })
-          }}
-          className="underline text-xs"
-        >
-          Close
-        </button>
-      </AlertDescription>
-    </Alert>
-  )
-}
-
 
 
 function ShortcutsModal() {
@@ -229,7 +200,6 @@ export function Chat() {
             className="flex min-w-0 flex-1 flex-col overflow-hidden relative"
           >
             <SessionsErrorBanner />
-            <StreamErrorBanner />
             <header className="flex h-14 shrink-0 items-center gap-3 px-5 bg-transparent z-10">
               <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
                 {title}

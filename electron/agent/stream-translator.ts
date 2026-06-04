@@ -230,7 +230,7 @@ export async function translateStreamEntry(
 export function emitError(deps: TranslatorDeps, err: unknown): void {
   try {
     const norm = normalizeLLMError(err)
-    deps.emit({ type: 'error', error: norm.code, detail: norm.message })
+    deps.emit({ type: 'error', error: norm.code, detail: { message: norm.message, httpStatus: norm.httpStatus } })
   } catch {
     // AbortError fell through normalizeLLMError's throw — runner should call emitCanceled instead.
     deps.emit({ type: 'canceled' })

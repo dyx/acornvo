@@ -15,7 +15,7 @@ import {
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { cn } from "@/lib/utils";
 import {
   ActionBarMorePrimitive,
@@ -23,7 +23,6 @@ import {
   AuiIf,
   BranchPickerPrimitive,
   ComposerPrimitive,
-  ErrorPrimitive,
   groupPartByType,
   MessagePrimitive,
   SuggestionPrimitive,
@@ -43,8 +42,6 @@ import {
   PencilIcon,
   RefreshCwIcon,
   SquareIcon,
-  AlertCircle,
-  XCircle,
 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

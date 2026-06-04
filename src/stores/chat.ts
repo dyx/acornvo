@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
 import { useSettingsStore } from './settings'
+import { toast } from '@/hooks/use-toast'
 import type { AgentEvent, Session, SessionMessage } from '@shared/agent-types'
 
 export interface ChatSession {
@@ -730,6 +731,33 @@ function subscribeSessionStream(sid: string): void {
           }
         case 'error': {
           const isFirstTurn = cur.messages.filter(m => m.role !== 'user').length === 0
+          
+          let displayMsg = event.error;
+          const detail = event.detail as { message?: string, httpStatus?: number } | undefined;
+          
+          if (detail && typeof detail === 'object') {
+            switch (detail.httpStatus) {
+              case 400: displayMsg = '格式错误：请根据错误信息提示修改请求体'; break;
+              case 401: displayMsg = '认证失败：请检查您的 API key 是否正确'; break;
+              case 402: displayMsg = '余额不足'; break;
+              case 422: displayMsg = '参数错误：请根据错误信息提示修改相关参数'; break;
+              case 429: displayMsg = '请求速率达到上限，请稍后重试'; break;
+              case 500: displayMsg = '服务器故障：请稍后重试'; break;
+              case 503: displayMsg = '服务器繁忙：请稍后重试'; break;
+              default: displayMsg = detail.message || event.error;
+            }
+          } else if (typeof event.detail === 'string') {
+            displayMsg = event.detail;
+          }
+
+          setTimeout(() => {
+            toast({
+              variant: 'destructive',
+              title: '松语错误',
+              description: displayMsg
+            });
+          }, 0);
+
           if (isFirstTurn) {
             setTimeout(() => revertNewSessionFailure(sid, event.error), 0)
             return s
