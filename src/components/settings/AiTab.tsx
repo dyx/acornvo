@@ -12,7 +12,9 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
@@ -50,6 +52,17 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
   const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
 
   const [panel, setPanel] = useState<'providers' | 'defaults'>('providers')
+
+  const groupedModels = useMemo(() => {
+    const groups: { providerName: string; models: AiModel[] }[] = []
+    for (const provider of providers) {
+      const pModels = enabledModels.filter((m) => m.providerId === provider.id)
+      if (pModels.length > 0) {
+        groups.push({ providerName: provider.name, models: pModels })
+      }
+    }
+    return groups
+  }, [enabledModels, providers])
 
   return (
     <div data-testid="settings-tab-ai" className="h-full flex flex-col">
@@ -233,14 +246,14 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         )}
 
         {panel === 'defaults' && (
-          <div className="max-w-2xl space-y-8">
+          <div className="max-w-4xl space-y-8">
             <div>
               <h3 className="text-lg font-medium mb-4">
                 {t('settings.ai.defaultModelsTab', '默认模型配置')}
               </h3>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div className="grid gap-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {t('settings.ai.defaultChatModel', '松语')}
@@ -253,22 +266,21 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                     <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {enabledModels.length === 0 ? (
+                    {groupedModels.length === 0 ? (
                       <SelectItem value="none" disabled>
                         {t('settings.ai.noEnabledModels', '没有可用的模型')}
                       </SelectItem>
                     ) : (
-                      enabledModels.map((m) => {
-                        const provider = providers.find((p) => p.id === m.providerId)
-                        return (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.displayName}{' '}
-                            <span className="text-muted-foreground text-xs ml-1">
-                              ({provider?.name})
-                            </span>
-                          </SelectItem>
-                        )
-                      })
+                      groupedModels.map((group) => (
+                        <SelectGroup key={group.providerName}>
+                          <SelectLabel>{group.providerName}</SelectLabel>
+                          {group.models.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))
                     )}
                   </SelectContent>
                 </Select>
@@ -286,22 +298,21 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                     <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {enabledModels.length === 0 ? (
+                    {groupedModels.length === 0 ? (
                       <SelectItem value="none" disabled>
                         {t('settings.ai.noEnabledModels', '没有可用的模型')}
                       </SelectItem>
                     ) : (
-                      enabledModels.map((m) => {
-                        const provider = providers.find((p) => p.id === m.providerId)
-                        return (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.displayName}{' '}
-                            <span className="text-muted-foreground text-xs ml-1">
-                              ({provider?.name})
-                            </span>
-                          </SelectItem>
-                        )
-                      })
+                      groupedModels.map((group) => (
+                        <SelectGroup key={group.providerName}>
+                          <SelectLabel>{group.providerName}</SelectLabel>
+                          {group.models.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))
                     )}
                   </SelectContent>
                 </Select>
