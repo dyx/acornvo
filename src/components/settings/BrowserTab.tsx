@@ -25,17 +25,6 @@ export function BrowserTab(): JSX.Element {
   return (
     <div data-testid="settings-tab-browser" className="space-y-6">
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="clipImagesLocalize"
-          checked={browser.clipImagesLocalize}
-          onCheckedChange={(checked) => void setBrowser({ clipImagesLocalize: checked })}
-        />
-        <label htmlFor="clipImagesLocalize" className="text-sm cursor-pointer">
-          {t('settings.browser.clipImages')}
-        </label>
-      </div>
-
       <div className="space-y-1">
         <span className="block text-sm font-medium">{t('settings.browser.searchEngine')}</span>
         <Select
@@ -52,6 +41,17 @@ export function BrowserTab(): JSX.Element {
             <SelectItem value="baidu">Baidu</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex items-center space-x-2 pt-2">
+        <Switch
+          id="clipImagesLocalize"
+          checked={browser.clipImagesLocalize}
+          onCheckedChange={(checked) => void setBrowser({ clipImagesLocalize: checked })}
+        />
+        <label htmlFor="clipImagesLocalize" className="text-sm cursor-pointer">
+          {t('settings.browser.clipImages')}
+        </label>
       </div>
 
       <div>
