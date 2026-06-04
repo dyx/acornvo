@@ -13,7 +13,7 @@ export function LibraryTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-library" className="space-y-6">
-      <h3 className="text-lg font-medium">{t('settings.tab.library')}</h3>
+
 
       <div className="space-y-3 pt-2">
         <div className="flex items-center gap-2">

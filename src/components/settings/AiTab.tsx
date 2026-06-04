@@ -78,7 +78,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         </div>
       )}
 
-      <h3 className="text-lg font-medium">{t('settings.ai.title', 'AI 配置')}</h3>
+
 
       <div role="tablist" className="mt-4 flex gap-2 border-b">
         <button

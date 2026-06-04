@@ -53,7 +53,7 @@ export function GeneralTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-general" className="space-y-6">
-      <h3 className="text-lg font-medium">{t('settings.tab.general')}</h3>
+
 
       <div className="space-y-1">
         <span className="block text-sm font-medium">{t('settings.general.locale')}</span>

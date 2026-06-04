@@ -31,7 +31,7 @@ export function ObservabilityTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-observability" className="flex h-full flex-col">
-      <h3 className="text-lg font-medium">{t('obs.title')}</h3>
+
 
       <div role="tablist" className="mt-4 flex gap-2 border-b">
         {(['ai', 'queue', 'perf'] as Panel[]).map((p) => (
