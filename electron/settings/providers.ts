@@ -216,10 +216,10 @@ function createModel(input: ModelCreateInput): { id: string } {
     ).run(id, input.providerId, input.name, input.displayName, now, now)
   } catch (err: any) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      if (err.message.includes('idx_ai_model_provider_name')) {
+      if (err.message.includes('ai_model.name') || err.message.includes('idx_ai_model_provider_name')) {
         throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: model name "${input.name}" is already in use`)
       }
-      if (err.message.includes('idx_ai_model_provider_display_name')) {
+      if (err.message.includes('ai_model.display_name') || err.message.includes('idx_ai_model_provider_display_name')) {
         throw new IpcError('E_DUPLICATE_DISPLAY_NAME', `E_DUPLICATE_DISPLAY_NAME: display name "${input.displayName}" is already in use`)
       }
     }
@@ -248,10 +248,10 @@ function updateModel(id: string, patch: ModelUpdateInput): void {
     )
   } catch (err: any) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      if (err.message.includes('idx_ai_model_provider_name')) {
+      if (err.message.includes('ai_model.name') || err.message.includes('idx_ai_model_provider_name')) {
         throw new IpcError('E_DUPLICATE_NAME', `E_DUPLICATE_NAME: model name "${patch.name}" is already in use`)
       }
-      if (err.message.includes('idx_ai_model_provider_display_name')) {
+      if (err.message.includes('ai_model.display_name') || err.message.includes('idx_ai_model_provider_display_name')) {
         throw new IpcError('E_DUPLICATE_DISPLAY_NAME', `E_DUPLICATE_DISPLAY_NAME: display name "${patch.displayName}" is already in use`)
       }
     }
