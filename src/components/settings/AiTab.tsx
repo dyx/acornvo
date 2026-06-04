@@ -169,7 +169,6 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
           onClick={() => setPanel('providers')}
         >
           <div className="flex items-center">
-            <Settings2Icon className="mr-2 h-4 w-4" />
             {t('settings.ai.providersTab', '供应商')}
           </div>
         </button>
@@ -180,7 +179,6 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
           onClick={() => setPanel('defaults')}
         >
           <div className="flex items-center">
-            <BrainCircuitIcon className="mr-2 h-4 w-4" />
             {t('settings.ai.defaultModelsTab', '默认模型')}
           </div>
         </button>
