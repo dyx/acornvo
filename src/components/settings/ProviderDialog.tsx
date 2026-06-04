@@ -248,8 +248,8 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
             )}
             {testStatus === 'error' && (
               <span className="ml-3 flex items-center text-sm text-destructive" title={testMessage ?? ''}>
-                <XCircleIcon className="mr-1 size-4" />
-                <span className="max-w-[150px] truncate">{testMessage}</span>
+                <XCircleIcon className="mr-1 size-4 flex-shrink-0" />
+                <span className="max-w-[250px] line-clamp-2 leading-tight">{testMessage}</span>
               </span>
             )}
           </div>

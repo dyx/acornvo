@@ -321,9 +321,19 @@ async function testConnection(input: { baseUrl?: string; apiKey?: string; provid
       } catch {
         bodyStr = await res.text().catch(() => '')
       }
-      return { ok: false, message: `HTTP ${res.status} ${res.statusText} ${bodyStr ? '- ' + bodyStr : ''}`.trim() }
+      
+      let errMsg = `HTTP ${res.status} ${res.statusText}`
+      if (res.status === 401 || res.status === 403) {
+        errMsg = `鉴权失败 (HTTP ${res.status})，请检查 API Key 是否正确`
+      } else if (res.status === 404) {
+        errMsg = `地址不存在 (HTTP 404)，请检查 Base URL`
+      }
+      return { ok: false, message: `${errMsg}${bodyStr ? ' - ' + bodyStr : ''}`.trim() }
     }
   } catch (err: any) {
+    if (err.message === 'fetch failed') {
+      return { ok: false, message: '网络请求失败，请检查网络或 Base URL 是否正确' }
+    }
     return { ok: false, message: err.message || String(err) }
   }
 }
