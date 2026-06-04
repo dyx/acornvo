@@ -374,7 +374,10 @@
       "getApiKey": "获取 API Key",
       "testConnection": "测试连接",
       "testSuccess": "连接成功",
-      "testError": "连接失败"
+      "testError": "连接失败",
+      "checkBalance": "查看余额",
+      "refreshBalance": "刷新余额",
+      "balanceError": "查询失败"
     },
     "secret": {
       "saved": "已保存",

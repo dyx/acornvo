@@ -22,6 +22,7 @@ interface ProvidersState {
   updateModel: (id: string, patch: ModelUpdateInput) => Promise<void>
   removeModel: (id: string) => Promise<void>
   testConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
+  checkBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
 }
 
 export const useProvidersStore = create<ProvidersState>((set, get) => ({
@@ -76,5 +77,9 @@ export const useProvidersStore = create<ProvidersState>((set, get) => ({
 
   async testConnection(input) {
     return await ipc.settings.aiProvidersTestConnection(input)
+  },
+
+  async checkBalance(providerId) {
+    return await ipc.settings.aiProvidersCheckBalance(providerId)
   }
 }))

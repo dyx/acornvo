@@ -338,6 +338,61 @@ async function testConnection(input: { baseUrl?: string; apiKey?: string; provid
   }
 }
 
+export async function checkBalance(providerId: string): Promise<{ ok: boolean; message?: string; balance?: string }> {
+  try {
+    const db = getGlobalDb()
+    const row = db.prepare('SELECT type, base_url FROM ai_provider WHERE id = ?').get(providerId) as { type: string, base_url: string | null } | undefined
+    if (!row) {
+      return { ok: false, message: 'Provider not found' }
+    }
+
+    const type = row.type as AiProviderKind
+    const defs = AI_PROVIDER_DEFAULTS[type]
+    const balancePath = defs?.balancePath
+    if (!balancePath) {
+      return { ok: false, message: 'Balance check not supported' }
+    }
+
+    const key = getProviderDecryptedKey(providerId)
+    if (!key) {
+      return { ok: false, message: 'API Key not configured' }
+    }
+
+    const baseUrl = row.base_url || defs.baseUrl
+    if (!baseUrl) {
+      return { ok: false, message: 'Base URL not configured' }
+    }
+
+    const url = baseUrl.replace(/\/$/, '') + (balancePath.startsWith('/') ? balancePath : '/' + balancePath)
+
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${key}`
+    }
+
+    const res = await fetch(url, { method: 'GET', headers })
+    if (!res.ok) {
+      return { ok: false, message: `HTTP ${res.status}` }
+    }
+
+    const body = await res.json()
+    if (type === 'deepseek') {
+      const info = body.balance_infos?.[0]
+      if (info && info.total_balance && info.currency) {
+        return { ok: true, balance: `${info.total_balance} ${info.currency}` }
+      }
+    } else if (type === 'openrouter') {
+      const credits = body.data?.total_credits
+      if (typeof credits === 'number') {
+        return { ok: true, balance: `$${credits.toFixed(4)}` }
+      }
+    }
+
+    return { ok: false, message: 'Failed to parse balance response' }
+  } catch (err: any) {
+    return { ok: false, message: err.message || String(err) }
+  }
+}
+
 export const providersStore = {
   listProviders,
   createProvider,
@@ -347,5 +402,6 @@ export const providersStore = {
   createModel,
   updateModel,
   deleteModel,
-  testConnection
+  testConnection,
+  checkBalance
 }

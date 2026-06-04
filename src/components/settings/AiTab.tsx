@@ -18,8 +18,85 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Settings2Icon, BrainCircuitIcon, PlusIcon, PencilIcon, TrashIcon } from 'lucide-react'
+import { Settings2Icon, BrainCircuitIcon, PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
+
+function ProviderBalance({ providerId, type }: { providerId: string, type: AiProvider['type'] }) {
+  const { t } = useTranslation()
+  const checkBalance = useProvidersStore((s) => s.checkBalance)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [balance, setBalance] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // Only openrouter and deepseek are natively supported right now
+  if (type !== 'deepseek' && type !== 'openrouter') return null
+
+  async function fetchBalance() {
+    setStatus('loading')
+    try {
+      const res = await checkBalance(providerId)
+      if (res.ok && res.balance) {
+        setBalance(res.balance)
+        setStatus('success')
+      } else {
+        setErrorMsg(res.message || 'Error')
+        setStatus('error')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || String(err))
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div className="flex items-center text-sm mr-2 text-muted-foreground">
+      {status === 'idle' && (
+        <button
+          onClick={fetchBalance}
+          className="flex items-center hover:text-foreground transition-colors group"
+          title={t('settings.ai.checkBalance', 'Check Balance')}
+        >
+          <WalletIcon className="h-4 w-4 mr-1.5 group-hover:text-primary transition-colors" />
+          <span className="text-xs font-medium">{t('settings.ai.checkBalance', 'Check Balance')}</span>
+        </button>
+      )}
+      {status === 'loading' && (
+        <div className="flex items-center text-muted-foreground">
+          <Loader2Icon className="h-4 w-4 mr-1.5 animate-spin" />
+          <span className="text-xs">{t('common.loading', 'Loading...')}</span>
+        </div>
+      )}
+      {status === 'success' && (
+        <div className="flex items-center text-foreground font-medium bg-muted/50 px-2 py-1 rounded-md">
+          <WalletIcon className="h-3.5 w-3.5 mr-1.5 text-primary" />
+          <span className="text-xs">{balance}</span>
+          <button
+            onClick={fetchBalance}
+            className="ml-2 text-muted-foreground hover:text-foreground transition-colors"
+            title={t('settings.ai.refreshBalance', 'Refresh Balance')}
+          >
+            <RefreshCwIcon className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="flex items-center text-destructive">
+          <AlertCircleIcon className="h-4 w-4 mr-1.5" />
+          <span className="text-xs max-w-[120px] truncate" title={errorMsg || ''}>
+            {t('settings.ai.balanceError', 'Check failed')}
+          </span>
+          <button
+            onClick={fetchBalance}
+            className="ml-1.5 hover:opacity-80 transition-opacity"
+            title={t('settings.ai.refreshBalance', 'Refresh')}
+          >
+            <RefreshCwIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface AiTabProps {
   keychainAvailable: boolean
@@ -145,7 +222,9 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                             <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
                           )}
                         </div>
-                        <div className="flex gap-1.5 text-sm">
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <ProviderBalance providerId={p.id} type={p.type} />
+                          <div className="w-px h-4 bg-border mx-1"></div>
                           <button
                             type="button"
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"

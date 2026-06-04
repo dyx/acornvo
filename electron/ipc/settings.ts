@@ -42,6 +42,7 @@ export const settingsHandlers = {
     return { ok: true }
   },
   aiProvidersTestConnection: (input) => providersStore.testConnection(input),
+  aiProvidersCheckBalance: (providerId) => providersStore.checkBalance(providerId),
   browserClearCookies: async () => {
     const ses = session.fromPartition(BROWSER_PARTITION)
     await ses.clearStorageData({ storages: ['cookies'] })

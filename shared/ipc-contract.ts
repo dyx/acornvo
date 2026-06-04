@@ -456,6 +456,7 @@ export type IpcContract = {
     browserClearCookies: () => { ok: true }
     keychainAvailable: () => boolean
     aiProvidersTestConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
+    aiProvidersCheckBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
   }
   jobs: {
     list: (filter: JobListFilter) => JobsListResult

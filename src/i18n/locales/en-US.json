@@ -345,7 +345,10 @@
       "getApiKey": "Get API Key",
       "testConnection": "Test Connection",
       "testSuccess": "Connection successful",
-      "testError": "Connection failed"
+      "testError": "Connection failed",
+      "checkBalance": "Check Balance",
+      "refreshBalance": "Refresh Balance",
+      "balanceError": "Check failed"
     },
     "secret": {
       "saved": "Saved",
