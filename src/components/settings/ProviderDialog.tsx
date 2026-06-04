@@ -171,10 +171,6 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
         </h3>
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.name')}</span>
-            <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
-          </div>
-          <div className="space-y-1">
             <span className="block font-medium">{t('settings.ai.providerType', 'Type')}</span>
             <Select
               value={form.type}
@@ -192,6 +188,10 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="block font-medium">{t('settings.ai.name')}</span>
+            <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
           </div>
           {(form.type === 'openai-compatible' || form.type === 'ollama' || form.type === 'openrouter' || form.type === 'deepseek') && (
             <div className="space-y-1">
