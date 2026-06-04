@@ -50,7 +50,7 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
           </NavLink>
         ))}
       </nav>
-      <section className="flex-1 overflow-y-auto px-[40px] py-[32px] pb-[60px]">
+      <section className="flex-1 overflow-y-auto px-[40px] pt-[16px] pb-[60px]">
         <div className="max-w-[640px]">{children}</div>
       </section>
     </div>

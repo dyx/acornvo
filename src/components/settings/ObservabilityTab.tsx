@@ -33,7 +33,7 @@ export function ObservabilityTab(): JSX.Element {
     <div data-testid="settings-tab-observability" className="flex h-full flex-col">
 
 
-      <div role="tablist" className="mt-4 flex gap-2 border-b">
+      <div role="tablist" className="flex gap-2 border-b">
         {(['ai', 'queue', 'perf'] as Panel[]).map((p) => (
           <button
             key={p}
