@@ -8,7 +8,7 @@ import type { AiProvider, AiModel } from '@shared/settings-types'
 import { ProviderDialog } from './ProviderDialog'
 import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 import {
   Select,
   SelectContent,
@@ -49,6 +49,8 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
 
   const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
 
+  const [panel, setPanel] = useState<'providers' | 'defaults'>('providers')
+
   return (
     <div data-testid="settings-tab-ai" className="h-full flex flex-col">
       {!keychainAvailable && (
@@ -63,162 +65,174 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         </div>
       )}
 
-      <Tabs defaultValue="providers" className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-6 py-0 h-12 space-x-6">
-          <TabsTrigger
-            value="providers"
-            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-0 py-3 rounded-none bg-transparent shadow-none font-medium transition-none text-muted-foreground data-[state=active]:text-foreground"
-          >
+      <h3 className="text-lg font-medium">{t('settings.ai.title', 'AI 配置')}</h3>
+
+      <div role="tablist" className="mt-4 flex gap-2 border-b">
+        <button
+          role="tab"
+          aria-selected={panel === 'providers'}
+          className={`px-3 py-2 text-sm ${panel === 'providers' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground'}`}
+          onClick={() => setPanel('providers')}
+        >
+          <div className="flex items-center">
             <Settings2Icon className="mr-2 h-4 w-4" />
             {t('settings.ai.providersTab', '供应商')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="defaults"
-            className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent px-0 py-3 rounded-none bg-transparent shadow-none font-medium transition-none text-muted-foreground data-[state=active]:text-foreground"
-          >
+          </div>
+        </button>
+        <button
+          role="tab"
+          aria-selected={panel === 'defaults'}
+          className={`px-3 py-2 text-sm ${panel === 'defaults' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground'}`}
+          onClick={() => setPanel('defaults')}
+        >
+          <div className="flex items-center">
             <BrainCircuitIcon className="mr-2 h-4 w-4" />
             {t('settings.ai.defaultModelsTab', '默认模型')}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="providers" className="flex-1 p-6 m-0 outline-none overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
-              onClick={() => setDialogProvider('new')}
-              disabled={!keychainAvailable}
-            >
-              <PlusIcon className="mr-1.5 h-4 w-4" />
-              {t('settings.ai.addProvider', '添加供应商')}
-            </button>
           </div>
+        </button>
+      </div>
 
-          {providers.length === 0 ? (
-            <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30">
-              <p className="text-sm text-muted-foreground">
-                {t('settings.ai.emptyProviders', '暂无供应商')}
-              </p>
+      <div className="flex-1 overflow-y-auto py-4 outline-none">
+        {panel === 'providers' && (
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
+                onClick={() => setDialogProvider('new')}
+                disabled={!keychainAvailable}
+              >
+                <PlusIcon className="mr-1.5 h-4 w-4" />
+                {t('settings.ai.addProvider', '添加供应商')}
+              </button>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {providers.map((p) => {
-                const providerModels = models.filter((m) => m.providerId === p.id)
-                return (
-                  <div key={p.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between bg-muted/40 px-4 py-3 border-b">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-base text-card-foreground flex items-center gap-2">
-                          {p.name}
-                          <span className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
-                            {p.type}
+
+            {providers.length === 0 ? (
+              <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30">
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.ai.emptyProviders', '暂无供应商')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {providers.map((p) => {
+                  const providerModels = models.filter((m) => m.providerId === p.id)
+                  return (
+                    <div key={p.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                      <div className="flex items-center justify-between bg-muted/40 px-4 py-3 border-b">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-base text-card-foreground flex items-center gap-2">
+                            {p.name}
+                            <span className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+                              {p.type}
+                            </span>
                           </span>
-                        </span>
-                        {p.baseUrl && (
-                          <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
+                          {p.baseUrl && (
+                            <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
+                          )}
+                        </div>
+                        <div className="flex gap-1.5 text-sm">
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                            onClick={() => setDialogProvider(p)}
+                            title={t('settings.ai.editProvider', '编辑供应商')}
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setProviderToDelete(p)}
+                            title={t('settings.ai.deleteProvider', '删除供应商')}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-muted-foreground">
+                            {t('settings.ai.models', '模型')}
+                          </h4>
+                          <button
+                            type="button"
+                            className="inline-flex items-center text-xs font-medium text-primary hover:underline"
+                            onClick={() => setDialogModel({ isNew: true, providerId: p.id })}
+                          >
+                            <PlusIcon className="mr-1 h-3 w-3" />
+                            {t('settings.ai.addModel', '添加模型')}
+                          </button>
+                        </div>
+
+                        {providerModels.length === 0 ? (
+                          <p className="text-sm text-muted-foreground py-2 text-center bg-muted/20 rounded-md border border-dashed border-border/50">
+                            {t('settings.ai.emptyModels', '该供应商下暂无模型')}
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {providerModels.map((m) => (
+                              <li
+                                key={m.id}
+                                className="flex items-center justify-between p-2.5 rounded-md hover:bg-muted/40 group border border-transparent hover:border-border/50 transition-colors"
+                              >
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-sm font-medium truncate text-foreground flex items-center gap-2">
+                                    {m.displayName}
+                                    {!m.enabled && (
+                                      <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
+                                        {t('settings.ai.disabled', '已禁用')}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground truncate">
+                                    {m.modelId}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex items-center gap-2 mr-2">
+                                    <Switch
+                                      checked={m.enabled}
+                                      onCheckedChange={(checked) =>
+                                        updateModel(m.id, { enabled: checked })
+                                      }
+                                      className="scale-75 data-[state=checked]:bg-primary"
+                                      title={t('settings.ai.toggleModel', '切换模型状态')}
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    onClick={() => setDialogModel(m)}
+                                    title={t('settings.ai.editModel', '编辑模型')}
+                                  >
+                                    <PencilIcon className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-destructive"
+                                    onClick={() => setModelToDelete(m)}
+                                    title={t('settings.ai.deleteModel', '删除模型')}
+                                  >
+                                    <TrashIcon className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </div>
-                      <div className="flex gap-1.5 text-sm">
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                          onClick={() => setDialogProvider(p)}
-                          title={t('settings.ai.editProvider', '编辑供应商')}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => setProviderToDelete(p)}
-                          title={t('settings.ai.deleteProvider', '删除供应商')}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
                     </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-muted-foreground">
-                          {t('settings.ai.models', '模型')}
-                        </h4>
-                        <button
-                          type="button"
-                          className="inline-flex items-center text-xs font-medium text-primary hover:underline"
-                          onClick={() => setDialogModel({ isNew: true, providerId: p.id })}
-                        >
-                          <PlusIcon className="mr-1 h-3 w-3" />
-                          {t('settings.ai.addModel', '添加模型')}
-                        </button>
-                      </div>
-
-                      {providerModels.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-2 text-center bg-muted/20 rounded-md border border-dashed border-border/50">
-                          {t('settings.ai.emptyModels', '该供应商下暂无模型')}
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {providerModels.map((m) => (
-                            <li
-                              key={m.id}
-                              className="flex items-center justify-between p-2.5 rounded-md hover:bg-muted/40 group border border-transparent hover:border-border/50 transition-colors"
-                            >
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-medium truncate text-foreground flex items-center gap-2">
-                                  {m.displayName}
-                                  {!m.enabled && (
-                                    <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
-                                      {t('settings.ai.disabled', '已禁用')}
-                                    </span>
-                                  )}
-                                </span>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {m.modelId}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="flex items-center gap-2 mr-2">
-                                  <Switch
-                                    checked={m.enabled}
-                                    onCheckedChange={(checked) =>
-                                      updateModel(m.id, { enabled: checked })
-                                    }
-                                    className="scale-75 data-[state=checked]:bg-primary"
-                                    title={t('settings.ai.toggleModel', '切换模型状态')}
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  className="text-muted-foreground hover:text-foreground"
-                                  onClick={() => setDialogModel(m)}
-                                  title={t('settings.ai.editModel', '编辑模型')}
-                                >
-                                  <PencilIcon className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="text-muted-foreground hover:text-destructive"
-                                  onClick={() => setModelToDelete(m)}
-                                  title={t('settings.ai.deleteModel', '删除模型')}
-                                >
-                                  <TrashIcon className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="defaults" className="flex-1 p-6 m-0 outline-none">
+        {panel === 'defaults' && (
           <div className="max-w-2xl space-y-8">
             <div>
               <h3 className="text-lg font-medium mb-4">
@@ -294,8 +308,8 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
               </div>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {dialogProvider !== null && (
         <ProviderDialog
