@@ -37,7 +37,7 @@ export const searchFilesTool = tool(
   {
     name: 'search_files',
     description:
-      "Full-text multi-query search the user's grove. Returns matching markdown chunks with their heading context. Provide multiple queries to maximize recall.",
+      "Full-text multi-query search the user's grove. Use this ONLY when the user is explicitly or implicitly asking about contents in their collection. Do NOT use this for general conversational queries. Returns matching markdown chunks with their heading context. Provide multiple queries to maximize recall.",
     schema: SearchFilesSchema
   }
 )
