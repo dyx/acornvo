@@ -7,8 +7,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { Badge } from '@/components/ui/badge'
 
 export interface FileRowProps {
   file: FileSummary
@@ -95,12 +95,12 @@ export function FileRow({
             <div className="flex items-center gap-1 min-w-0 shrink">
               <span className="text-[color:var(--color-line-2)] text-[10px] shrink-0">·</span>
               {file.tags.slice(0, 2).map((tag) => (
-                <span
+                <Badge
                   key={tag}
-                  className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] max-w-[80px] truncate shrink min-w-0"
+                  className="max-w-[80px] truncate shadow-none"
                 >
-                  #{tag}
-                </span>
+                  {tag}
+                </Badge>
               ))}
               {file.tags.length > 2 && (
                 <span className="font-mono text-[9px] text-[color:var(--color-ink-4)] shrink-0">

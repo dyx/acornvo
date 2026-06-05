@@ -10,6 +10,7 @@ import { useProvidersStore } from '@/stores/providers'
 import { useSettingsStore } from '@/stores/settings'
 import { ipc } from '@/ipc/client'
 import { useToast } from '@/hooks/use-toast'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 export interface AiReviewSidebarProps {
@@ -279,12 +280,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
             </h4>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded bg-[color:var(--color-paper)] border border-[color:var(--color-line)] px-2.5 py-1 font-mono text-[11px] text-[color:var(--color-ink-2)] shadow-sm"
-                >
-                  #{tag}
-                </span>
+                <Badge key={tag} className="shadow-none">
+                  {tag}
+                </Badge>
               ))}
             </div>
           </div>
