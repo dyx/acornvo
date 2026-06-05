@@ -144,11 +144,11 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
   }, [enabledModels, providers])
 
   return (
-    <div data-testid="settings-tab-ai" className="h-full flex flex-col">
+    <div data-testid="settings-tab-ai" className="space-y-8">
       {!keychainAvailable && (
         <div
           role="alert"
-          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive mb-4"
+          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
           {t(
             'settings.secret.unavailable',
@@ -157,14 +157,8 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
         </div>
       )}
 
-
-
-      <div className="flex-1 overflow-y-auto py-4 outline-none">
-        <div className="flex-1 space-y-8">
-
-
-          <div>
-            <div className="flex items-center justify-between mb-6">
+      <div>
+        <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
               <button
                 type="button"
@@ -301,8 +295,6 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
               </div>
             )}
           </div>
-        </div>
-      </div>
 
       {dialogProvider !== null && (
         <ProviderDialog

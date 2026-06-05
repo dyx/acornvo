@@ -15,7 +15,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-const FONT_FALLBACK = ['system-ui', 'Georgia', 'SF Mono', 'Courier New']
+
 
 function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
@@ -146,27 +146,7 @@ export function GeneralTab(): JSX.Element {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <span className="block text-sm font-medium">{t('settings.appearance.editorFont')}</span>
-        <Select
-          value={appearance.editorFont}
-          onValueChange={(value) => {
-            void setAppearance({ editorFont: value })
-            document.documentElement.style.setProperty('--editor-font', value)
-          }}
-        >
-          <SelectTrigger className="w-64">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONT_FALLBACK.map((font) => (
-              <SelectItem key={font} value={font}>
-                {font}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+
     </div>
   )
 }
