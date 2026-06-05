@@ -41,8 +41,8 @@ export function ChatTab(): JSX.Element {
   }, [enabledModels, providers])
 
   return (
-    <div data-testid="settings-tab-chat" className="space-y-6">
-      <div className="space-y-1 pt-2">
+    <div data-testid="settings-tab-chat" className="space-y-8">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">
           {t('settings.ai.defaultChatModel', '默认模型')}
         </span>

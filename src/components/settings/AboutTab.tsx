@@ -28,7 +28,7 @@ export function AboutTab(): JSX.Element {
   }, [])
 
   return (
-    <div data-testid="settings-tab-about" className="space-y-6">
+    <div data-testid="settings-tab-about" className="space-y-8">
       <h3 className="text-lg font-medium">{t('about.title')}</h3>
 
       <dl className="grid grid-cols-[160px_1fr] gap-y-2 text-sm">
@@ -48,7 +48,7 @@ export function AboutTab(): JSX.Element {
         <dd data-testid="about-platform">{info ? `${info.platform} / ${info.arch}` : '—'}</dd>
       </dl>
 
-      <footer className="flex gap-3 pt-4 border-t">
+      <footer className="flex gap-3 pt-6 border-t">
         <CheckUpdateButton />
         <WebsiteLinkButton />
       </footer>
@@ -129,7 +129,7 @@ function AutoCheckToggle(): JSX.Element | null {
   return (
     <label
       data-testid="about-auto-check"
-      className="flex items-center gap-2 pt-3 text-sm cursor-pointer"
+      className="flex items-center gap-3 text-sm cursor-pointer"
     >
       <input
         type="checkbox"

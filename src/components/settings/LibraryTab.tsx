@@ -44,8 +44,8 @@ export function LibraryTab(): JSX.Element {
   }, [enabledModels, providers])
 
   return (
-    <div data-testid="settings-tab-library" className="space-y-6">
-      <div className="space-y-1 pt-2 mb-8">
+    <div data-testid="settings-tab-library" className="space-y-8">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">
           {t('settings.ai.defaultReviewerModel', '默认模型')}
         </span>
@@ -77,7 +77,7 @@ export function LibraryTab(): JSX.Element {
         </Select>
       </div>
 
-      <div className="space-y-3 pt-2">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="block text-sm font-medium">{t('settings.ai.bodyMax')}</span>
           <TooltipProvider>
@@ -91,7 +91,7 @@ export function LibraryTab(): JSX.Element {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex items-center gap-4 w-64 pt-2">
+        <div className="flex items-center gap-4 w-64 mt-2">
           <div className="relative flex-1 flex items-center h-5">
             <button
               type="button"

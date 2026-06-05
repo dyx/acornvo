@@ -23,9 +23,9 @@ export function BrowserTab(): JSX.Element {
   const [showClearCookies, setShowClearCookies] = useState(false)
 
   return (
-    <div data-testid="settings-tab-browser" className="space-y-6">
+    <div data-testid="settings-tab-browser" className="space-y-8">
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.browser.searchEngine')}</span>
         <Select
           value={browser.searchEngine}
@@ -43,7 +43,7 @@ export function BrowserTab(): JSX.Element {
         </Select>
       </div>
 
-      <div className="flex items-center space-x-2 pt-2">
+      <div className="flex items-center gap-3">
         <Switch
           id="clipImagesLocalize"
           checked={browser.clipImagesLocalize}

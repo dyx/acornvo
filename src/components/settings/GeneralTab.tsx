@@ -52,10 +52,10 @@ export function GeneralTab(): JSX.Element {
   }, [appearance.fontScale])
 
   return (
-    <div data-testid="settings-tab-general" className="space-y-6">
+    <div data-testid="settings-tab-general" className="space-y-8">
 
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.general.locale')}</span>
         <Select
           value={general.locale}
@@ -75,7 +75,7 @@ export function GeneralTab(): JSX.Element {
         </Select>
       </div>
 
-      <div className="space-y-3 pt-2">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.appearance.theme')}</span>
         <div className="flex inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-64">
           {(['system', 'light', 'dark'] as const).map((value) => (
@@ -99,7 +99,7 @@ export function GeneralTab(): JSX.Element {
         </div>
       </div>
 
-      <div className="space-y-3 pt-2">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.appearance.fontScale')}</span>
         <div className="flex items-center gap-4 w-64">
           <div className="relative flex-1 flex items-center h-5">
@@ -146,7 +146,7 @@ export function GeneralTab(): JSX.Element {
         </div>
       </div>
 
-      <div className="space-y-1 pt-2">
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.appearance.editorFont')}</span>
         <Select
           value={appearance.editorFont}
