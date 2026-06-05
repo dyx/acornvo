@@ -5,15 +5,71 @@ import { useSettingsStore } from '@/stores/settings'
 import { Slider } from '@/components/ui/slider'
 import { InfoIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useProvidersStore } from '@/stores/providers'
+import { useMemo } from 'react'
+import type { AiModel } from '@shared/settings-types'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 
 export function LibraryTab(): JSX.Element {
   const { t } = useTranslation()
   const ai = useSettingsStore((s) => s.ai)
   const setAi = useSettingsStore((s) => s.setAi)
 
+  const providers = useProvidersStore((s) => s.providers)
+  const models = useProvidersStore((s) => s.models)
+  const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
+  const groupedModels = useMemo(() => {
+    const groups: { providerName: string; models: AiModel[] }[] = []
+    for (const provider of providers) {
+      const pModels = enabledModels.filter((m) => m.providerId === provider.id)
+      if (pModels.length > 0) {
+        groups.push({ providerName: provider.name, models: pModels })
+      }
+    }
+    return groups
+  }, [enabledModels, providers])
+
   return (
     <div data-testid="settings-tab-library" className="space-y-6">
-
+      <div className="space-y-3 pt-2 max-w-sm mb-8">
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          {t('settings.ai.defaultReviewerModel', '默认模型')}
+        </label>
+        <Select
+          value={ai.defaultReviewerModelId ?? undefined}
+          onValueChange={(val) => setAi({ defaultReviewerModelId: val })}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
+          </SelectTrigger>
+          <SelectContent>
+            {groupedModels.length === 0 ? (
+              <SelectItem value="none" disabled>
+                {t('settings.ai.noEnabledModels', '没有可用的模型')}
+              </SelectItem>
+            ) : (
+              groupedModels.map((group) => (
+                <SelectGroup key={group.providerName}>
+                  <SelectLabel>{group.providerName}</SelectLabel>
+                  {group.models.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-3 pt-2">
         <div className="flex items-center gap-2">

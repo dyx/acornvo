@@ -132,8 +132,6 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
 
   const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
 
-  const [panel, setPanel] = useState<'providers' | 'defaults'>('providers')
-
   const groupedModels = useMemo(() => {
     const groups: { providerName: string; models: AiModel[] }[] = []
     for (const provider of providers) {
@@ -161,33 +159,79 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
 
 
 
-      <div role="tablist" className="flex gap-2 border-b">
-        <button
-          role="tab"
-          aria-selected={panel === 'providers'}
-          className={`px-3 py-2 text-sm ${panel === 'providers' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground'}`}
-          onClick={() => setPanel('providers')}
-        >
-          <div className="flex items-center">
-            {t('settings.ai.providersTab', '供应商')}
-          </div>
-        </button>
-        <button
-          role="tab"
-          aria-selected={panel === 'defaults'}
-          className={`px-3 py-2 text-sm ${panel === 'defaults' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground'}`}
-          onClick={() => setPanel('defaults')}
-        >
-          <div className="flex items-center">
-            {t('settings.ai.defaultModelsTab', '默认模型')}
-          </div>
-        </button>
-      </div>
-
       <div className="flex-1 overflow-y-auto py-4 outline-none">
-        {panel === 'providers' && (
-          <div className="flex-1">
-            <div className="flex items-center justify-start mb-6 mt-2">
+        <div className="flex-1 space-y-8">
+          <div className="max-w-4xl space-y-8 pt-2">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {t('settings.ai.defaultChatModel', '松语')}
+                </label>
+                <Select
+                  value={ai.defaultChatModelId ?? undefined}
+                  onValueChange={(val) => setAi({ defaultChatModelId: val })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupedModels.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
+                      </SelectItem>
+                    ) : (
+                      groupedModels.map((group) => (
+                        <SelectGroup key={group.providerName}>
+                          <SelectLabel>{group.providerName}</SelectLabel>
+                          {group.models.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {t('settings.ai.defaultReviewerModel', '理果')}
+                </label>
+                <Select
+                  value={ai.defaultReviewerModelId ?? undefined}
+                  onValueChange={(val) => setAi({ defaultReviewerModelId: val })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupedModels.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
+                      </SelectItem>
+                    ) : (
+                      groupedModels.map((group) => (
+                        <SelectGroup key={group.providerName}>
+                          <SelectLabel>{group.providerName}</SelectLabel>
+                          {group.models.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
@@ -323,77 +367,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
               </div>
             )}
           </div>
-        )}
-
-        {panel === 'defaults' && (
-          <div className="max-w-4xl space-y-8 pt-4">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="grid gap-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {t('settings.ai.defaultChatModel', '松语')}
-                </label>
-                <Select
-                  value={ai.defaultChatModelId ?? undefined}
-                  onValueChange={(val) => setAi({ defaultChatModelId: val })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupedModels.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
-                      </SelectItem>
-                    ) : (
-                      groupedModels.map((group) => (
-                        <SelectGroup key={group.providerName}>
-                          <SelectLabel>{group.providerName}</SelectLabel>
-                          {group.models.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {t('settings.ai.defaultReviewerModel', '理果')}
-                </label>
-                <Select
-                  value={ai.defaultReviewerModelId ?? undefined}
-                  onValueChange={(val) => setAi({ defaultReviewerModelId: val })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupedModels.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
-                      </SelectItem>
-                    ) : (
-                      groupedModels.map((group) => (
-                        <SelectGroup key={group.providerName}>
-                          <SelectLabel>{group.providerName}</SelectLabel>
-                          {group.models.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {dialogProvider !== null && (
