@@ -240,10 +240,10 @@ const AssistantMessage: FC = () => {
                 return (
                   <ReasoningRoot defaultOpen={running} className="mb-2 w-full ml-1" variant="ghost">
                     <ReasoningTrigger active={running} />
-                    <ReasoningContent aria-busy={running} className="relative pl-6 mt-3">
-                      {/* Timeline vertical line */}
-                      <div className="absolute left-[9px] top-2 bottom-4 w-[2px] bg-border/60" />
-                      {children}
+                    <ReasoningContent aria-busy={running} className="relative mt-3">
+                      <div className="flex flex-col">
+                        {children}
+                      </div>
                       <AssistantMessageAddons />
                     </ReasoningContent>
                   </ReasoningRoot>
@@ -251,25 +251,31 @@ const AssistantMessage: FC = () => {
               }
               case "group-reasoning":
                 return (
-                  <div className="relative mb-5 group/reasoning-item">
+                  <div className="relative pb-5 pl-8 group/item">
+                    {/* Timeline vertical line */}
+                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
                     {/* Timeline dot */}
-                    <div className="absolute -left-[27px] top-2.5 w-2 h-2 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                    <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
                     <ReasoningText className="text-muted-foreground">{children}</ReasoningText>
                   </div>
                 );
               case "group-text":
                 return (
-                  <div className="relative mb-5 group/text-item">
+                  <div className="relative pb-5 pl-8 group/item">
+                    {/* Timeline vertical line */}
+                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
                     {/* Timeline dot */}
-                    <div className="absolute -left-[27px] top-2.5 w-2 h-2 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                    <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
                     <div className="text-muted-foreground opacity-80">{children}</div>
                   </div>
                 );
               case "group-tool":
                 return (
-                  <div className="relative mb-5 flex flex-col gap-2">
+                  <div className="relative pb-5 pl-8 flex flex-col gap-2 group/item">
+                    {/* Timeline vertical line */}
+                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
                     {/* Timeline dot */}
-                    <div className="absolute -left-[27px] top-4 w-2 h-2 rounded-full bg-blue-500/50 ring-4 ring-background" />
+                    <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
                     {children}
                   </div>
                 );
