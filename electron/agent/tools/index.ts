@@ -1,9 +1,9 @@
 import { searchFilesTool } from './search_files'
-import { getGroveStatsTool } from './get_grove_stats'
+import { listFilesTool } from './list_files'
 
 export const agentTools = [
   searchFilesTool,
-  getGroveStatsTool
+  listFilesTool
 ] as const
 
 export type AgentTool = (typeof agentTools)[number]
