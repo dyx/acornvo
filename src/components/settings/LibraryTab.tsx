@@ -6,7 +6,7 @@ import { Slider } from '@/components/ui/slider'
 import { InfoIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useProvidersStore } from '@/stores/providers'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import type { AiModel } from '@shared/settings-types'
 import {
   Select,
@@ -25,6 +25,12 @@ export function LibraryTab(): JSX.Element {
 
   const providers = useProvidersStore((s) => s.providers)
   const models = useProvidersStore((s) => s.models)
+  const refresh = useProvidersStore((s) => s.refresh)
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
   const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
   const groupedModels = useMemo(() => {
     const groups: { providerName: string; models: AiModel[] }[] = []
@@ -39,15 +45,15 @@ export function LibraryTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-library" className="space-y-6">
-      <div className="space-y-3 pt-2 max-w-sm mb-8">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+      <div className="space-y-1 pt-2 mb-8">
+        <span className="block text-sm font-medium">
           {t('settings.ai.defaultReviewerModel', '默认模型')}
-        </label>
+        </span>
         <Select
           value={ai.defaultReviewerModelId ?? undefined}
           onValueChange={(val) => setAi({ defaultReviewerModelId: val })}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-64">
             <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
           </SelectTrigger>
           <SelectContent>

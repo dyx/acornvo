@@ -1,6 +1,6 @@
 // src/components/settings/ChatTab.tsx
 import type { JSX } from 'react'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import { useProvidersStore } from '@/stores/providers'
@@ -22,6 +22,12 @@ export function ChatTab(): JSX.Element {
 
   const providers = useProvidersStore((s) => s.providers)
   const models = useProvidersStore((s) => s.models)
+  const refresh = useProvidersStore((s) => s.refresh)
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
   const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
   const groupedModels = useMemo(() => {
     const groups: { providerName: string; models: AiModel[] }[] = []
@@ -36,15 +42,15 @@ export function ChatTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-chat" className="space-y-6">
-      <div className="space-y-3 pt-2 max-w-sm">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+      <div className="space-y-1 pt-2">
+        <span className="block text-sm font-medium">
           {t('settings.ai.defaultChatModel', '默认模型')}
-        </label>
+        </span>
         <Select
           value={ai.defaultChatModelId ?? undefined}
           onValueChange={(val) => setAi({ defaultChatModelId: val })}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-64">
             <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
           </SelectTrigger>
           <SelectContent>
