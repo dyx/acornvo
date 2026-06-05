@@ -205,6 +205,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
                 value={form.baseUrl}
                 placeholder={form.type === 'ollama' ? 'http://localhost:11434' : ''}
                 onChange={(e) => set('baseUrl', e.target.value)}
+                disabled={form.type === 'deepseek'}
               />
             </div>
           )}
