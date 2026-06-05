@@ -58,18 +58,23 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       let text = msg.text || '';
       let reasoningText = '';
       
-      const thinkMatch = text.match(/<think>([\s\S]*?)<\/think>/);
-      if (thinkMatch) {
-        reasoningText = thinkMatch[1];
-        text = text.replace(/<think>[\s\S]*?<\/think>\n*/, '').trim();
-      } else {
-        const openThinkMatch = text.match(/<think>([\s\S]*)$/);
-        if (openThinkMatch) {
-          reasoningText = openThinkMatch[1];
-          text = text.replace(/<think>[\s\S]*$/, '').trim();
-        } else {
-          text = text.replace(/<\/think>\n*/g, '').trim();
-        }
+      const thinkMatches = [...text.matchAll(/<think>([\s\S]*?)<\/think>/g)];
+      if (thinkMatches.length > 0) {
+        reasoningText = thinkMatches.map(m => m[1]).join('\n\n');
+        text = text.replace(/<think>[\s\S]*?<\/think>\n*/g, '').trim();
+      }
+
+      const openThinkMatch = text.match(/<think>([\s\S]*)$/);
+      if (openThinkMatch) {
+        reasoningText = reasoningText ? reasoningText + '\n\n' + openThinkMatch[1] : openThinkMatch[1];
+        text = text.replace(/<think>[\s\S]*$/, '').trim();
+      } else if (thinkMatches.length === 0) {
+        text = text.replace(/<\/think>\n*/g, '').trim();
+      }
+
+      const partialThinkMatch = text.match(/<(?:t(?:h(?:i(?:n(?:k(?:>)?)?)?)?)?)?$/i);
+      if (partialThinkMatch) {
+        text = text.substring(0, partialThinkMatch.index).trim();
       }
 
       const content: any[] = [];
@@ -108,10 +113,16 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       };
 
       if (mappedRole === 'assistant') {
-        result.push({
-          ...threadMsg,
-          status: statusMap[msg.status ?? 'done'] || 'complete'
-        } as unknown as ThreadMessage);
+        const lastResult = result[result.length - 1];
+        if (lastResult && lastResult.role === 'assistant') {
+          (lastResult.content as any[]).push(...content);
+          lastResult.status = statusMap[msg.status ?? 'done'] || 'complete';
+        } else {
+          result.push({
+            ...threadMsg,
+            status: statusMap[msg.status ?? 'done'] || 'complete'
+          } as unknown as ThreadMessage);
+        }
       } else {
         result.push(threadMsg as unknown as ThreadMessage);
       }

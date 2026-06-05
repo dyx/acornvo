@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 const ANIMATION_DURATION = 200;
 
-const reasoningVariants = cva("aui-reasoning-root mb-4 w-full", {
+const reasoningVariants = cva("aui-reasoning-root mb-2 w-full", {
   variants: {
     variant: {
       outline: "rounded-lg border px-3 py-2",
@@ -28,7 +28,7 @@ const reasoningVariants = cva("aui-reasoning-root mb-4 w-full", {
     },
   },
   defaultVariants: {
-    variant: "outline",
+    variant: "ghost",
   },
 });
 
@@ -200,7 +200,7 @@ function ReasoningText({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="reasoning-text"
       className={cn(
-        "aui-reasoning-text relative z-0 max-h-64 space-y-4 overflow-y-auto ps-6 pt-2 pb-2 leading-relaxed",
+        "aui-reasoning-text relative z-0 max-h-64 space-y-4 overflow-y-auto pt-2 pb-2 leading-relaxed",
         "transform-gpu transition-[transform,opacity]",
         "group-data-[state=open]/collapsible-content:animate-in",
         "group-data-[state=closed]/collapsible-content:animate-out",

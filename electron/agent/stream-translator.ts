@@ -202,6 +202,11 @@ export async function translateStreamEntry(
     const reasoning = chunkMsg.additional_kwargs?.reasoning_content
     const state = (deps as any)
 
+    if (state._lastMsgId !== chunkMsg.id) {
+      state._thinking = false
+      state._lastMsgId = chunkMsg.id
+    }
+
     if (typeof reasoning === 'string' && reasoning) {
       if (!state._thinking) {
         state._thinking = true

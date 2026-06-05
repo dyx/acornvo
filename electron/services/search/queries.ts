@@ -148,10 +148,11 @@ export function fullText(
         .prepare(
           `SELECT path,
                 heading_path,
-                body,
+                snippet(files_fts, -1, '<mark>', '</mark>', '...', 64) AS body,
                 rank
          FROM files_fts
          WHERE files_fts MATCH ?
+           AND rank MATCH 'bm25(0.0, 5.0, 10.0, 1.0)'
          ORDER BY rank
          LIMIT ? OFFSET ?`
         )

@@ -19,7 +19,6 @@ import {
   AuiIf,
   BranchPickerPrimitive,
   ComposerPrimitive,
-  groupPartByType,
   MessagePrimitive,
   SuggestionPrimitive,
   ThreadPrimitive,
@@ -204,8 +203,9 @@ const AssistantMessage: FC = () => {
   // reserves space for action bar and compensates with `-mb` for consistent msg spacing
   // keeps hovered action bar from shifting layout (autohide doesn't support absolute positioning well)
   // for pt-[n] use -mb-[n + 6] & min-h-[n + 6] to preserve compensation
-  const ACTION_BAR_PT = "pt-1.5";
-  const ACTION_BAR_HEIGHT = `-mb-7.5 min-h-7.5 ${ACTION_BAR_PT}`;
+  // removed unused action bar constants
+
+  const parts = useAuiState((s) => s.message.parts);
 
   return (
     <MessagePrimitive.Root
@@ -219,20 +219,30 @@ const AssistantMessage: FC = () => {
         className="text-foreground px-2 leading-relaxed wrap-break-word [contain-intrinsic-size:auto_24px] [content-visibility:auto]"
       >
         <MessagePrimitive.GroupedParts
-          groupBy={groupPartByType({
-            reasoning: ["group-chainOfThought", "group-reasoning"],
-            "tool-call": ["group-chainOfThought", "group-tool"],
-            "mcp-app": [],
-          })}
+          groupBy={(part) => {
+            if (part.type === "reasoning") return ["group-chainOfThought", "group-reasoning"];
+            if (part.type === "tool-call") return ["group-chainOfThought", "group-tool"];
+            if (part.type === "text") {
+              const index = parts.indexOf(part);
+              if (index === -1) return [];
+              const hasToolCallAfter = parts.slice(index + 1).some((p: any) => p.type === "tool-call");
+              const hasReasoningAfter = parts.slice(index + 1).some((p: any) => p.type === "reasoning");
+              if (hasToolCallAfter || hasReasoningAfter) return ["group-chainOfThought", "group-text"];
+              return [];
+            }
+            return [];
+          }}
         >
           {({ part, children }) => {
             switch (part.type) {
               case "group-chainOfThought": {
                 const running = part.status.type === "running";
                 return (
-                  <ReasoningRoot defaultOpen={running} className="mb-4 w-full">
+                  <ReasoningRoot defaultOpen={running} className="mb-2 w-full ml-1" variant="ghost">
                     <ReasoningTrigger active={running} />
-                    <ReasoningContent aria-busy={running}>
+                    <ReasoningContent aria-busy={running} className="relative pl-6 mt-3">
+                      {/* Timeline vertical line */}
+                      <div className="absolute left-[9px] top-2 bottom-4 w-[2px] bg-border/60" />
                       {children}
                       <AssistantMessageAddons />
                     </ReasoningContent>
@@ -240,10 +250,26 @@ const AssistantMessage: FC = () => {
                 );
               }
               case "group-reasoning":
-                return <ReasoningText>{children}</ReasoningText>;
+                return (
+                  <div className="relative mb-5 group/reasoning-item">
+                    {/* Timeline dot */}
+                    <div className="absolute -left-[27px] top-2.5 w-2 h-2 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                    <ReasoningText className="text-muted-foreground">{children}</ReasoningText>
+                  </div>
+                );
+              case "group-text":
+                return (
+                  <div className="relative mb-5 group/text-item">
+                    {/* Timeline dot */}
+                    <div className="absolute -left-[27px] top-2.5 w-2 h-2 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                    <div className="text-muted-foreground opacity-80">{children}</div>
+                  </div>
+                );
               case "group-tool":
                 return (
-                  <div className="border-t mt-3 pt-3 px-6 pb-4 flex flex-col gap-2">
+                  <div className="relative mb-5 flex flex-col gap-2">
+                    {/* Timeline dot */}
+                    <div className="absolute -left-[27px] top-4 w-2 h-2 rounded-full bg-blue-500/50 ring-4 ring-background" />
                     {children}
                   </div>
                 );
@@ -264,14 +290,23 @@ const AssistantMessage: FC = () => {
         </MessagePrimitive.GroupedParts>
       </div>
 
-      <div
-        data-slot="aui_assistant-message-footer"
-        className={cn("ms-2 flex items-center", ACTION_BAR_HEIGHT)}
-      >
-        <BranchPicker />
-        <AssistantActionBar />
-      </div>
+      <AssistantMessageFooter />
     </MessagePrimitive.Root>
+  );
+};
+
+const AssistantMessageFooter: FC = () => {
+  const ACTION_BAR_PT = "pt-1.5";
+  const ACTION_BAR_HEIGHT = `-mb-7.5 min-h-7.5 ${ACTION_BAR_PT}`;
+
+  return (
+    <div
+      data-slot="aui_assistant-message-footer"
+      className={cn("ms-2 flex items-center", ACTION_BAR_HEIGHT)}
+    >
+      <BranchPicker />
+      <AssistantActionBar />
+    </div>
   );
 };
 
