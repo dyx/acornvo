@@ -75,7 +75,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         maxTokens,
         timeout: 120_000,
         maxRetries: 2,
-        configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+        configuration: { baseURL: profile.baseUrl || 'https://api.deepseek.com/beta' }
       }) as unknown as BaseChatModel
       break
     case 'ollama':

@@ -3,11 +3,11 @@ import { z } from 'zod'
 import { dbService } from '../../services/db'
 
 const ListFilesSchema = z.object({
-  limit: z.number().optional().default(10).describe('返回的文档最大数量。需根据用户的要求（如“20篇”、“30篇”）灵活调整，未指定时默认10。'),
-  offset: z.number().optional().default(0).describe('分页偏移量。用于翻页，默认0。'),
-  sort_by: z.enum(['created_at', 'updated_at', 'title', 'size_bytes']).optional().default('created_at')
+  limit: z.number().describe('返回的文档最大数量。需根据用户的要求（如“20篇”、“30篇”）灵活提取，未指定时请固定传入 10。'),
+  offset: z.number().describe('分页偏移量。用于翻页，第一页请固定传入 0。'),
+  sort_by: z.enum(['created_at', 'updated_at', 'title', 'size_bytes'])
     .describe('排序依据。若用户想看"最新/最旧"选 created_at；"最近修改"选 updated_at；"最大/最小"选 size_bytes。'),
-  sort_order: z.enum(['DESC', 'ASC']).optional().default('DESC')
+  sort_order: z.enum(['DESC', 'ASC'])
     .describe('排序方向。DESC：降序（适用于最新、最近修改、最大）；ASC：升序（适用于最旧、最小）。')
 })
 

@@ -45,8 +45,16 @@ export function getAgentBuilder(): SingletonHandle {
     buildForProfile: (profile: ResolvedProfile) => {
       const model = buildChatModel(profile, { temperature: 0.3, maxTokens: 4096 }) as unknown as BaseChatModel
       
+      let finalModel = model
+      if (profile.provider === 'deepseek') {
+        const originalBindTools = finalModel.bindTools.bind(finalModel)
+        finalModel.bindTools = (tools: any, kwargs: any) => {
+          return originalBindTools(tools, { ...kwargs, strict: true })
+        }
+      }
+      
       const summarizer = summarizationMiddleware({
-        model,
+        model: finalModel,
         trigger: { messages: 20 },
         keep: { messages: 6 }
       })
@@ -58,7 +66,7 @@ export function getAgentBuilder(): SingletonHandle {
       })
       
       return createAgent({
-        model,
+        model: finalModel,
         tools: agentTools as any,
         middleware: [hitl, summarizer, searchLimiter],
         checkpointer: cp
