@@ -56,20 +56,23 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       
       const mappedRole = msg.role;
       let text = msg.text || '';
-      let reasoningText = '';
+      let reasoningText = msg.reasoningText || '';
       
-      const thinkMatches = [...text.matchAll(/<think>([\s\S]*?)<\/think>/g)];
-      if (thinkMatches.length > 0) {
-        reasoningText = thinkMatches.map(m => m[1]).join('\n\n');
-        text = text.replace(/<think>[\s\S]*?<\/think>\n*/g, '').trim();
-      }
+      // Fallback parsing for historical messages from DB that haven't been split yet
+      if (!reasoningText && text.includes('<think>')) {
+        const thinkMatches = [...text.matchAll(/<think>([\s\S]*?)<\/think>/g)];
+        if (thinkMatches.length > 0) {
+          reasoningText = thinkMatches.map(m => m[1]).join('\n\n');
+          text = text.replace(/<think>[\s\S]*?<\/think>\n*/g, '').trim();
+        }
 
-      const openThinkMatch = text.match(/<think>([\s\S]*)$/);
-      if (openThinkMatch) {
-        reasoningText = reasoningText ? reasoningText + '\n\n' + openThinkMatch[1] : openThinkMatch[1];
-        text = text.replace(/<think>[\s\S]*$/, '').trim();
-      } else if (thinkMatches.length === 0) {
-        text = text.replace(/<\/think>\n*/g, '').trim();
+        const openThinkMatch = text.match(/<think>([\s\S]*)$/);
+        if (openThinkMatch) {
+          reasoningText = reasoningText ? reasoningText + '\n\n' + openThinkMatch[1] : openThinkMatch[1];
+          text = text.replace(/<think>[\s\S]*$/, '').trim();
+        } else if (thinkMatches.length === 0) {
+          text = text.replace(/<\/think>\n*/g, '').trim();
+        }
       }
 
       const partialThinkMatch = text.match(/<(?:t(?:h(?:i(?:n(?:k(?:>)?)?)?)?)?)?$/i);

@@ -1,4 +1,4 @@
-import { createAgent, humanInTheLoopMiddleware, summarizationMiddleware } from 'langchain'
+import { createAgent, humanInTheLoopMiddleware, summarizationMiddleware, toolCallLimitMiddleware } from 'langchain'
 import { SqliteSaver } from '@langchain/langgraph-checkpoint-sqlite'
 import type { BaseCheckpointSaver } from '@langchain/langgraph'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
@@ -51,10 +51,16 @@ export function getAgentBuilder(): SingletonHandle {
         keep: { messages: 6 }
       })
       
+      const searchLimiter = toolCallLimitMiddleware({
+        toolName: 'search_files',
+        runLimit: 2,
+        exitBehavior: 'continue'
+      })
+      
       return createAgent({
         model,
         tools: agentTools as any,
-        middleware: [hitl, summarizer],
+        middleware: [hitl, summarizer, searchLimiter],
         checkpointer: cp
       }) as any
     }

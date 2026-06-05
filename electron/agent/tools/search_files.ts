@@ -7,18 +7,16 @@ const SearchFilesSchema = z.object({
   queries: z
     .array(z.string())
     .min(1)
-    .max(5)
     .describe(
       "Provide 1-5 different search queries (synonyms, different angles) to maximize search recall. FTS5 query — use words from the user's question; for phrases use double quotes."
-    ),
-  limit: z.number().int().min(1).max(100).optional().describe('Max number of hits (1–100).')
+    )
 })
 
 export const searchFilesTool = tool(
-  async ({ queries, limit }) => {
+  async ({ queries }) => {
     const db = dbService.requireCurrent()
-    const cappedLimit = Math.max(1, Math.min(100, limit ?? 10))
-    const r = fullText(db, queries, { limit: cappedLimit, offset: 0 })
+    const cappedQueries = queries.slice(0, 5)
+    const r = fullText(db, cappedQueries, { limit: 20, offset: 0 })
     if (r.error) {
       return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
     }

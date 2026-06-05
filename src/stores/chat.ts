@@ -17,6 +17,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'tool' | 'system'
   text: string
+  reasoningText?: string
   toolCalls?: { id: string; name: string; args: unknown }[]
   toolCallId?: string
 
@@ -511,7 +512,7 @@ export function __setChatTokenBatching(enabled: boolean): void {
 const pendingTokenBucket = new Map<string, string>()
 const pendingFlushFrame = new Map<string, number>()
 
-function applyToken(sid: string, txt: string): void {
+function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'text'): void {
   useChatStore.setState((s) => {
     const cur = s.bySession[sid] ?? emptySession()
     const lastIdx = cur.messages.length - 1
@@ -519,14 +520,22 @@ function applyToken(sid: string, txt: string): void {
     const isStreamingAssistant = last && last.role === 'assistant' && last.status === 'streaming'
     let nextMessages: ChatMessage[]
     if (isStreamingAssistant) {
-      nextMessages = cur.messages.map((m, i) => (i === lastIdx ? { ...m, text: m.text + txt } : m))
+      nextMessages = cur.messages.map((m, i) => {
+        if (i !== lastIdx) return m
+        if (target === 'reasoning') {
+          return { ...m, reasoningText: (m.reasoningText || '') + txt }
+        } else {
+          return { ...m, text: m.text + txt }
+        }
+      })
     } else {
       nextMessages = [
         ...cur.messages,
         {
           id: nextMsgId(),
           role: 'assistant' as const,
-          text: txt,
+          text: target === 'text' ? txt : '',
+          reasoningText: target === 'reasoning' ? txt : undefined,
           status: 'streaming' as const,
           createdAt: Date.now()
         }
@@ -542,21 +551,24 @@ function applyToken(sid: string, txt: string): void {
 }
 
 function flushTokenBucket(sid: string): void {
-  const txt = pendingTokenBucket.get(sid) ?? ''
-  pendingTokenBucket.delete(sid)
+  const tTxt = pendingTokenBucket.get(sid + ':t') ?? ''
+  const rTxt = pendingTokenBucket.get(sid + ':r') ?? ''
+  pendingTokenBucket.delete(sid + ':t')
+  pendingTokenBucket.delete(sid + ':r')
   const frameId = pendingFlushFrame.get(sid)
   if (frameId) cancelAnimationFrame(frameId)
   pendingFlushFrame.delete(sid)
-  if (!txt) return
-  applyToken(sid, txt)
+  if (tTxt) applyToken(sid, tTxt, 'text')
+  if (rTxt) applyToken(sid, rTxt, 'reasoning')
 }
 
-function enqueueToken(sid: string, txt: string): void {
+function enqueueToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'text'): void {
   if (!__chatTokenBatching) {
-    applyToken(sid, txt)
+    applyToken(sid, txt, target)
     return
   }
-  pendingTokenBucket.set(sid, (pendingTokenBucket.get(sid) ?? '') + txt)
+  const key = target === 'text' ? sid + ':t' : sid + ':r'
+  pendingTokenBucket.set(key, (pendingTokenBucket.get(key) ?? '') + txt)
   if (!pendingFlushFrame.has(sid)) {
     const frameId = requestAnimationFrame(() => flushTokenBucket(sid))
     pendingFlushFrame.set(sid, frameId)
@@ -571,7 +583,15 @@ function subscribeSessionStream(sid: string): void {
   const unsub = ipc.on(`chat:stream:${sid}` as any, (event: AgentEvent) => {
     console.log('[chat-stream] event sid=%s type=%s', sid, event.type, event)
     if (event.type === 'token') {
-      enqueueToken(sid, event.text)
+      enqueueToken(sid, event.text, 'text')
+      return
+    }
+    if (event.type === 'text-delta') {
+      enqueueToken(sid, event.text, 'text')
+      return
+    }
+    if (event.type === 'reasoning-delta') {
+      enqueueToken(sid, event.text, 'reasoning')
       return
     }
     useChatStore.setState((s) => {

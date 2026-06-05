@@ -49,7 +49,13 @@ export function deriveBubbleItems(
     if (m.role === 'assistant') {
       const status = m.status ?? 'done'
       const streaming = status === 'streaming'
-      const loading = streaming && !m.text && (!m.toolCalls || m.toolCalls.length === 0)
+      
+      let fullText = m.text || ''
+      if (m.reasoningText) {
+        fullText = `<think>\n${m.reasoningText}\n</think>\n\n${fullText}`
+      }
+      
+      const loading = streaming && !fullText && (!m.toolCalls || m.toolCalls.length === 0)
       if (m.toolCalls && m.toolCalls.length > 0) {
         const toolSteps: ToolStep[] = m.toolCalls.map((tc) => {
           const pa = pendingApprovals.find((p) => p.callId === tc.id)
@@ -60,13 +66,13 @@ export function deriveBubbleItems(
         items.push({
           key: m.id,
           role: 'assistant',
-          content: { text: cleanAssistantText(m.text), toolSteps },
+          content: { text: cleanAssistantText(fullText), toolSteps },
           streaming,
           loading,
-          createdAt: m.createdAt
+          createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined
         })
       } else {
-        items.push({ key: m.id, role: 'assistant', content: cleanAssistantText(m.text), streaming, loading, createdAt: m.createdAt })
+        items.push({ key: m.id, role: 'assistant', content: cleanAssistantText(fullText), streaming, loading, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
       }
       continue
     }
