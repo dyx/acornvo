@@ -161,73 +161,7 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
 
       <div className="flex-1 overflow-y-auto py-4 outline-none">
         <div className="flex-1 space-y-8">
-          <div className="max-w-4xl space-y-8 pt-2">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="grid gap-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {t('settings.ai.defaultChatModel', '松语')}
-                </label>
-                <Select
-                  value={ai.defaultChatModelId ?? undefined}
-                  onValueChange={(val) => setAi({ defaultChatModelId: val })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupedModels.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
-                      </SelectItem>
-                    ) : (
-                      groupedModels.map((group) => (
-                        <SelectGroup key={group.providerName}>
-                          <SelectLabel>{group.providerName}</SelectLabel>
-                          {group.models.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="grid gap-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  {t('settings.ai.defaultReviewerModel', '理果')}
-                </label>
-                <Select
-                  value={ai.defaultReviewerModelId ?? undefined}
-                  onValueChange={(val) => setAi({ defaultReviewerModelId: val })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('settings.ai.selectModel', '选择模型')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {groupedModels.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        {t('settings.ai.noEnabledModels', '没有可用的模型')}
-                      </SelectItem>
-                    ) : (
-                      groupedModels.map((group) => (
-                        <SelectGroup key={group.providerName}>
-                          <SelectLabel>{group.providerName}</SelectLabel>
-                          {group.models.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
 
           <div>
             <div className="flex items-center justify-between mb-6">
