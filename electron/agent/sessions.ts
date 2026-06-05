@@ -25,6 +25,7 @@ export interface SessionsDao {
     rowId: string,
     fields: { result?: ToolResult; approved?: boolean | null; error?: string }
   ): Promise<void>
+  hasToolCall(id: string): Promise<boolean>
 }
 
 export function createSessions(): SessionsDao {
@@ -208,6 +209,11 @@ export function createSessions(): SessionsDao {
           ]
           
       db().prepare(query).run(...params)
+    },
+
+    async hasToolCall(id) {
+      const row = db().prepare('SELECT id FROM tool_calls WHERE id = ?').get(id)
+      return !!row
     }
   }
 }

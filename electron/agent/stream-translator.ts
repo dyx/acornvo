@@ -20,6 +20,7 @@ export interface TranslatorPersistence {
     opts: { sideEffect: boolean; messageId?: number }
   ) => Promise<string>
   finishToolCall: (rowId: string, fields: { result: ToolResult }) => Promise<void>
+  hasToolCall?: (id: string) => Promise<boolean>
 }
 
 export interface TranslatorDeps {
@@ -61,6 +62,15 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   const reasoning = msg.additional_kwargs?.reasoning_content
   if (typeof reasoning === 'string' && reasoning) {
     contentStr = `<think>\n${reasoning}</think>\n\n${contentStr}`
+  }
+
+  // Deduplicate replayed historical messages across runs by checking if the tool call already exists.
+  if (toolCalls.length > 0 && deps.persist.hasToolCall) {
+    const exists = await deps.persist.hasToolCall(toolCalls[0].id)
+    if (exists) {
+      console.log(`[translator] skipping duplicate historical message with tool call ${toolCalls[0].id}`)
+      return
+    }
   }
 
   const sessionMsg = await deps.persist.appendMessage({

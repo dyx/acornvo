@@ -46,6 +46,7 @@ export interface RunnerDeps {
       opts: { sideEffect: boolean; messageId?: number }
     ) => Promise<string>
     finishToolCall: (rowId: string, fields: { result: ToolResult }) => Promise<void>
+    hasToolCall?: (id: string) => Promise<boolean>
   }
   systemPrompt: string
   vaultRoot: string
@@ -187,7 +188,8 @@ export async function runAgent({
     persist: {
       appendMessage: (m) => deps.sessions.appendMessage(sessionId, m),
       recordToolCall: (tc, opts) => deps.sessions.recordToolCall(sessionId, tc, opts),
-      finishToolCall: (rowId, fields) => deps.sessions.finishToolCall(rowId, fields)
+      finishToolCall: (rowId, fields) => deps.sessions.finishToolCall(rowId, fields),
+      hasToolCall: (id) => typeof deps.sessions.hasToolCall === 'function' ? deps.sessions.hasToolCall(id) : Promise.resolve(false)
     },
     recordUsage: deps.recordUsage,
     seenAiMessageIds: new Set()
@@ -245,7 +247,8 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
     persist: {
       appendMessage: (m) => args.sessions.appendMessage(args.sessionId, m),
       recordToolCall: (tc, opts) => args.sessions.recordToolCall(args.sessionId, tc, opts),
-      finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields)
+      finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields),
+      hasToolCall: (id) => typeof args.sessions.hasToolCall === 'function' ? args.sessions.hasToolCall(id) : Promise.resolve(false)
     },
     recordUsage: args.recordUsage,
     seenAiMessageIds: new Set()
