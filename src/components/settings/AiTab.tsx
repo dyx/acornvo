@@ -8,6 +8,7 @@ import type { AiProvider, AiModel } from '@shared/settings-types'
 import { ProviderDialog } from './ProviderDialog'
 import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Badge } from '@/components/ui/badge'
 
 import {
   Select,
@@ -187,9 +188,9 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                         <div className="flex flex-col">
                           <span className="font-medium text-base text-card-foreground flex items-center gap-2">
                             {p.name}
-                            <span className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+                            <Badge>
                               {p.type}
-                            </span>
+                            </Badge>
                           </span>
                           {p.baseUrl && (
                             <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
@@ -247,9 +248,9 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                                   <span className="text-sm font-medium truncate text-foreground flex items-center gap-2">
                                     {m.displayName}
                                     {!m.enabled && (
-                                      <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
+                                      <Badge variant="secondary">
                                         {t('settings.ai.disabled', '已禁用')}
-                                      </span>
+                                      </Badge>
                                     )}
                                   </span>
                                   <span className="text-xs text-muted-foreground truncate">
