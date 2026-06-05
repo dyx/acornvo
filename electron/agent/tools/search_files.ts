@@ -3,20 +3,23 @@ import { z } from 'zod'
 import { dbService } from '../../services/db'
 import { fullText } from '../../services/search/queries'
 
+const MAX_QUERIES = 5
+const MAX_LIMIT = 20
+
 const SearchFilesSchema = z.object({
   queries: z
     .array(z.string())
     .min(1)
     .describe(
-      "Provide 1-5 different search queries (synonyms, different angles) to maximize search recall. FTS5 query — use words from the user's question; for phrases use double quotes."
+      `Provide 1-${MAX_QUERIES} different search queries (synonyms, different angles) to maximize search recall. FTS5 query — use words from the user's question; for phrases use double quotes.`
     )
 })
 
 export const searchFilesTool = tool(
   async ({ queries }) => {
     const db = dbService.requireCurrent()
-    const cappedQueries = queries.slice(0, 5)
-    const r = fullText(db, cappedQueries, { limit: 20, offset: 0 })
+    const cappedQueries = queries.slice(0, MAX_QUERIES)
+    const r = fullText(db, cappedQueries, { limit: MAX_LIMIT, offset: 0 })
     if (r.error) {
       return { ok: false, error: 'E_INVALID_QUERY', detail: r.error }
     }
