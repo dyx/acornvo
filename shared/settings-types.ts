@@ -15,6 +15,7 @@ export type AiProviderKind = 'deepseek' | 'openai-compatible' | 'openrouter' | '
 export interface GeneralSettings {
   locale: Locale
   autoBackup: 'off' | 'daily' | 'weekly'
+  defaultMenu: '/browser' | '/library' | '/chat'
 }
 
 export interface AppearanceSettings {

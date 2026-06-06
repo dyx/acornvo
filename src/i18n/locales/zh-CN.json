@@ -314,7 +314,8 @@
     "general": {
       "locale": "语言",
       "autoBackup": "自动备份",
-      "vaultPath": "知识库路径"
+      "vaultPath": "知识库路径",
+      "defaultMenu": "默认选中菜单"
     },
     "appearance": {
       "theme": "主题",

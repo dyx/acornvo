@@ -286,7 +286,8 @@
     "general": {
       "locale": "Language",
       "autoBackup": "Auto-backup",
-      "vaultPath": "Vault path"
+      "vaultPath": "Vault path",
+      "defaultMenu": "Default selected menu"
     },
     "appearance": {
       "theme": "Theme",

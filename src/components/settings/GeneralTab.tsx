@@ -75,6 +75,26 @@ export function GeneralTab(): JSX.Element {
       </div>
 
       <div className="space-y-2">
+        <span className="block text-sm font-medium">{t('settings.general.defaultMenu')}</span>
+        <Select
+          value={general.defaultMenu || '/browser'}
+          onValueChange={(value) => {
+            const next = value as '/browser' | '/library' | '/chat'
+            void setGeneral({ defaultMenu: next })
+          }}
+        >
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="/browser">{t('nav.browser')}</SelectItem>
+            <SelectItem value="/library">{t('nav.library')}</SelectItem>
+            <SelectItem value="/chat">{t('nav.chat')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.appearance.theme')}</span>
         <div className="flex inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-64">
           {(['system', 'light', 'dark'] as const).map((value) => (

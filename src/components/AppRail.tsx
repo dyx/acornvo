@@ -4,6 +4,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Globe, Library, MessageSquare, Settings as SettingsIcon } from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
+import { useRootStore } from '@/stores/root'
 import { dotColor } from './GroveSwitcher'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -75,6 +76,7 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
   const label = t(entry.labelKey)
   const location = useLocation()
   const isActive = location.pathname.startsWith(entry.to)
+  const toggleSidebar = useRootStore((s) => s.toggleSidebar)
   
   const baseCls =
     'flex size-8 shrink-0 items-center justify-center rounded-xl border transition-colors cursor-pointer'
@@ -98,6 +100,11 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
       <NavLink
         to={entry.to}
         className={`${baseCls} ${activeCls}`}
+        onDoubleClick={() => {
+          if (!entry.bottom) {
+            toggleSidebar()
+          }
+        }}
       >
         <entry.Icon size={20} />
       </NavLink>

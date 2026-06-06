@@ -31,8 +31,15 @@ import './index.css'
 
 function BootstrapGate(): JSX.Element | null {
   const payload = useBootstrap()
+  const general = useSettingsStore((s) => s.general)
   if (!payload) return null
-  return <Navigate to={payload.initialRoute} replace />
+
+  let initial = payload.initialRoute
+  if (initial === '/library') {
+    initial = general.defaultMenu || '/browser'
+  }
+
+  return <Navigate to={initial} replace />
 }
 
 const router = createMemoryRouter([
