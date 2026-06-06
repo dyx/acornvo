@@ -119,6 +119,9 @@ export function createSessions(): SessionsDao {
         const target = d.prepare('SELECT created_at FROM session_messages WHERE id = ? AND session_id = ?').get(numId, sessionId) as any
         if (!target) return
         
+        // Delete dependent tool_calls first to avoid FOREIGN KEY constraint violation
+        d.prepare('DELETE FROM tool_calls WHERE message_id IN (SELECT id FROM session_messages WHERE session_id = ? AND created_at >= ?)').run(sessionId, target.created_at)
+
         // Delete messages from target timestamp onwards
         d.prepare('DELETE FROM session_messages WHERE session_id = ? AND created_at >= ?').run(sessionId, target.created_at)
         
