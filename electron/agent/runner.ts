@@ -103,6 +103,7 @@ async function processStream(
           }
         }
         if (modelNode?.messages) {
+          let latestAi: any = null
           for (const m of modelNode.messages) {
             const ai = m as {
               id?: string
@@ -111,34 +112,39 @@ async function processStream(
               tool_calls?: Array<{ id?: string }>
             }
             if (ai.usage_metadata || ai.response_metadata?.usage) {
-              let finalUsage = ai.usage_metadata
-              const rawUsage = ai.response_metadata?.usage
-              let rawUsageJson: string | undefined
-              
-              if (rawUsage) {
-                try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
-                if (typeof rawUsage.prompt_tokens === 'number') {
-                  finalUsage = {
-                    input_tokens: rawUsage.prompt_tokens,
-                    output_tokens: rawUsage.completion_tokens,
-                    input_token_details: {
-                      cache_read: rawUsage.prompt_tokens_details?.cached_tokens ?? rawUsage.prompt_cache_hit_tokens ?? 0
-                    },
-                    output_token_details: {
-                      reasoning: rawUsage.completion_tokens_details?.reasoning_tokens ?? 0
-                    }
-                  } as any
-                }
-              }
-              lastUsage = finalUsage
-              const msgId = ai.id || `anon-${entryCount}`
-              if (!recordedUsageMsgIds.has(msgId)) {
-                recordedUsageMsgIds.add(msgId)
-                deps.recordUsage(finalUsage, deps.modelName, rawUsageJson)
-              }
+              latestAi = ai
             }
             if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
               lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
+            }
+          }
+
+          if (latestAi) {
+            let finalUsage = latestAi.usage_metadata
+            const rawUsage = latestAi.response_metadata?.usage
+            let rawUsageJson: string | undefined
+            
+            if (rawUsage) {
+              try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
+              if (typeof rawUsage.prompt_tokens === 'number') {
+                finalUsage = {
+                  input_tokens: rawUsage.prompt_tokens,
+                  output_tokens: rawUsage.completion_tokens,
+                  total_tokens: rawUsage.total_tokens,
+                  input_token_details: rawUsage.prompt_tokens_details ? {
+                    cache_read: rawUsage.prompt_tokens_details.cached_tokens
+                  } : undefined,
+                  output_token_details: rawUsage.completion_tokens_details ? {
+                    reasoning: rawUsage.completion_tokens_details.reasoning_tokens
+                  } : undefined
+                } as any
+              }
+            }
+            lastUsage = finalUsage
+            const msgId = latestAi.id || `anon-${entryCount}`
+            if (!recordedUsageMsgIds.has(msgId)) {
+              recordedUsageMsgIds.add(msgId)
+              deps.recordUsage(finalUsage, deps.modelName, rawUsageJson)
             }
           }
         }
