@@ -40,7 +40,6 @@ export function GeneralTab(): JSX.Element {
   const appearance = useSettingsStore((s) => s.appearance)
   const setAppearance = useSettingsStore((s) => s.setAppearance)
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [localScale, setLocalScale] = useState(appearance.fontScale)
 
   useEffect(() => {
@@ -112,7 +111,6 @@ export function GeneralTab(): JSX.Element {
               onClick={() => {
                 setLocalScale(1.0)
                 applyFontScale(1.0)
-                if (debounceRef.current) clearTimeout(debounceRef.current)
                 void setAppearance({ fontScale: 1.0 })
               }}
             />
@@ -124,9 +122,10 @@ export function GeneralTab(): JSX.Element {
               className="z-10"
               onValueChange={([value]) => {
                 setLocalScale(value)
+              }}
+              onValueCommit={([value]) => {
                 applyFontScale(value)
-                if (debounceRef.current) clearTimeout(debounceRef.current)
-                debounceRef.current = setTimeout(() => void setAppearance({ fontScale: value }), 300)
+                void setAppearance({ fontScale: value })
               }}
             />
           </div>
@@ -137,7 +136,6 @@ export function GeneralTab(): JSX.Element {
             onClick={() => {
               setLocalScale(1.0)
               applyFontScale(1.0)
-              if (debounceRef.current) clearTimeout(debounceRef.current)
               void setAppearance({ fontScale: 1.0 })
             }}
           >

@@ -321,7 +321,7 @@
       "theme.system": "跟随系统",
       "theme.light": "浅色",
       "theme.dark": "深色",
-      "fontScale": "字体大小",
+      "fontScale": "UI字号",
       "editorFont": "编辑器字体"
     },
     "tab": {
