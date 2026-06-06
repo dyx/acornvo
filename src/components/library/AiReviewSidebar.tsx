@@ -120,7 +120,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   return (
     <div
       className={cn(
-        "transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[color:var(--color-paper-2)] border-l border-[color:var(--color-line)] flex flex-col h-full overflow-hidden shrink-0 relative",
+        "font-review transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[color:var(--color-paper-2)] border-l border-[color:var(--color-line)] flex flex-col h-full overflow-hidden shrink-0 relative",
         collapsed ? "w-0 opacity-0 border-l-0" : "w-[340px] opacity-100"
       )}
     >
