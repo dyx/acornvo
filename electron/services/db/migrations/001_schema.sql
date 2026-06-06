@@ -109,13 +109,15 @@ CREATE INDEX IF NOT EXISTS idx_sessions_updated ON sessions(updated_at DESC);
 CREATE TABLE IF NOT EXISTS session_messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT NOT NULL,
+  parent_id INTEGER,
   role TEXT NOT NULL,
   content TEXT,
   tool_calls_json TEXT,
   tool_call_id TEXT,
   usage_json TEXT,
   created_at TEXT NOT NULL,
-  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES session_messages(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_session_messages_session ON session_messages(session_id, id);
 
