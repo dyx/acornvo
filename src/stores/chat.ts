@@ -529,11 +529,26 @@ function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'te
           const reasoningStartTime = m.reasoningStartTime || Date.now()
           return { ...m, reasoningText: (m.reasoningText || '') + txt, reasoningStartTime }
         } else {
-          let reasoningDuration = m.reasoningDuration
-          if (m.reasoningStartTime && !m.reasoningDuration) {
-            reasoningDuration = Math.round((Date.now() - m.reasoningStartTime) / 1000)
+          const newText = m.text + txt;
+          let reasoningStartTime = m.reasoningStartTime;
+          let reasoningDuration = m.reasoningDuration;
+
+          // If provider sends <think> via text-delta and we haven't started yet
+          if (!reasoningStartTime && newText.includes('<think')) {
+            reasoningStartTime = Date.now();
           }
-          return { ...m, text: m.text + txt, reasoningDuration }
+
+          // If reasoning was started (either via reasoning-delta or the <think> check above)
+          if (reasoningStartTime && !reasoningDuration) {
+            // If the text contains </think>, or if it's a standard provider starting actual text
+            if (m.reasoningText && m.reasoningText.length > 0) {
+               reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000));
+            } else if (newText.includes('</think>')) {
+               reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000));
+            }
+          }
+
+          return { ...m, text: newText, reasoningStartTime, reasoningDuration }
         }
       })
     } else {

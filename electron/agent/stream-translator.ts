@@ -33,6 +33,7 @@ export interface TranslatorDeps {
   /** AIMessage.id values already persisted; used to skip duplicates after HITL resume. */
   seenAiMessageIds: Set<string>
   reasoningState?: { startTime: number; duration?: number; isStandardProvider?: boolean }
+  accumulatedText?: string
 }
 
 function alreadySeen(seen: Set<string>, msg: AIMessage): boolean {
@@ -228,7 +229,9 @@ export async function translateStreamEntry(
     const content = chunkMsg.content
     const actualContent = typeof content === 'string' ? content : ''
     if (actualContent) {
-      if (actualContent.includes('<think')) {
+      deps.accumulatedText = (deps.accumulatedText || '') + actualContent
+
+      if (deps.accumulatedText.includes('<think')) {
         if (!deps.reasoningState) {
           deps.reasoningState = { startTime: Date.now() }
         }
@@ -236,11 +239,11 @@ export async function translateStreamEntry(
 
       if (deps.reasoningState && deps.reasoningState.duration === undefined) {
         // Stop timer if we see </think>
-        if (actualContent.includes('</think>')) {
-          deps.reasoningState.duration = Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+        if (deps.accumulatedText.includes('</think>')) {
+          deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
         } else if (deps.reasoningState.isStandardProvider) {
           // It's a standard provider (we saw reasoning-delta earlier), and this is the first text-delta!
-          deps.reasoningState.duration = Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+          deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
         }
       }
       deps.emit({ type: 'text-delta', text: actualContent })

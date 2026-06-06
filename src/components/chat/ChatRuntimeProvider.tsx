@@ -87,7 +87,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       const content: any[] = [];
       if (reasoningText) {
-        content.push({ type: 'reasoning', text: reasoningText, duration: msg.reasoningDuration || reasoningDuration || undefined });
+        content.push({ type: 'reasoning', text: reasoningText, duration: msg.reasoningDuration !== undefined ? msg.reasoningDuration : (reasoningDuration !== undefined ? reasoningDuration : undefined) });
       }
       
       if (text || !reasoningText) {

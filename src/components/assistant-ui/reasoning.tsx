@@ -123,7 +123,7 @@ function ReasoningTrigger({
   active?: boolean;
   duration?: number;
 }) {
-  const durationText = duration ? ` (${duration}s)` : "";
+  const durationText = duration !== undefined ? ` (${duration}s)` : "";
 
   return (
     <CollapsibleTrigger
