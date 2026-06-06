@@ -3,6 +3,7 @@ import type { AiProviderKind } from './settings-types'
 export interface ProviderConfigModel {
   name: string
   displayName: string
+  contextWindow?: number
 }
 
 export interface ProviderConfig {
@@ -24,8 +25,8 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig
     balancePath: '/user/balance',
     baseUrl: 'https://api.deepseek.com/beta',
     models: [
-      { name: 'deepseek-v4-flash', displayName: 'DeepSeek-V4-Flash' },
-      { name: 'deepseek-v4-pro', displayName: 'DeepSeek-V4-Pro' }
+      { name: 'deepseek-v4-flash', displayName: 'DeepSeek-V4-Flash', contextWindow: 1000000 },
+      { name: 'deepseek-v4-pro', displayName: 'DeepSeek-V4-Pro', contextWindow: 1000000 }
     ]
   },
   'openai-compatible': {

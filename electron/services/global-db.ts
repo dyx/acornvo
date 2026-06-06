@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS ai_model (
   name TEXT NOT NULL,
   display_name TEXT NOT NULL,
   enabled INTEGER NOT NULL DEFAULT 1,
+  context_window INTEGER DEFAULT 128000,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY(provider_id) REFERENCES ai_provider(id) ON DELETE CASCADE
@@ -80,6 +81,16 @@ export function initGlobalDb(): void {
   const db = new Database(dbPath)
   applyPragmas(db)
   db.exec(GLOBAL_SCHEMA)
+
+  // Migration: add context_window if it doesn't exist
+  try {
+    const columns = db.pragma('table_info(ai_model)') as any[]
+    if (!columns.find((c) => c.name === 'context_window')) {
+      db.exec('ALTER TABLE ai_model ADD COLUMN context_window INTEGER DEFAULT 128000')
+    }
+  } catch (err) {
+    console.error('Failed to migrate ai_model context_window', err)
+  }
 
   globalDb = db
 }

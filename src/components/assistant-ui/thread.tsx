@@ -8,6 +8,8 @@ import {
   ReasoningTrigger,
 } from "@/components/assistant-ui/reasoning";
 
+import { ChatModelPicker } from "@/components/settings/chat-model-picker";
+import { ContextDisplay } from "./context-display";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,8 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useChatStore } from "@/stores/chat";
+import { useProvidersStore } from "@/stores/providers";
+import { useSettingsStore } from "@/stores/settings";
 import { ToolStepsChain, MessageFooter } from "@/components/chat/MessageAddons";
 
 import { ScrollToBottomButton } from "@/components/chat/ScrollToBottomButton";
@@ -160,11 +164,30 @@ const Composer: FC = () => {
 };
 
 const ComposerAction: FC = () => {
+  const activeSessionId = useChatStore((s) => s.activeSessionId);
+  const currentSession = useChatStore((s) => s.sessions.find(ses => ses.id === activeSessionId));
+  const models = useProvidersStore((s) => s.models);
+  const defaultChatModelId = useSettingsStore((s) => s.ai.defaultChatModelId);
+
+  const lastAssistantMessage = useChatStore((s) => {
+    if (!activeSessionId) return null;
+    const messages = s.bySession[activeSessionId]?.messages || [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return messages[i];
+    }
+    return null;
+  });
+
+  const profileId = currentSession?.profileId || defaultChatModelId;
+  const activeModel = models.find(m => m.id === profileId);
+  const modelContextWindow = activeModel?.contextWindow || 128000;
+
   return (
     <div className="aui-composer-action-wrapper relative flex items-center justify-between mt-1">
       <div className="flex items-center gap-2">
       </div>
       <div className="flex items-center gap-1">
+        <ContextDisplay.Ring modelContextWindow={modelContextWindow} usage={lastAssistantMessage?.usage as any} />
         <AuiIf condition={(s) => !s.thread.isRunning}>
           <ComposerPrimitive.Send asChild>
             <TooltipIconButton

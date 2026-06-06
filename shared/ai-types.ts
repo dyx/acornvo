@@ -9,6 +9,8 @@ export interface TokenUsage {
   promptTokens: number
   completionTokens: number
   totalTokens: number
+  reasoningTokens?: number
+  cachedTokens?: number
 }
 
 export interface ChatOptions {

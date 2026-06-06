@@ -2,8 +2,9 @@
 import type { JSX } from 'react'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { XIcon } from 'lucide-react'
+import { XIcon, InfoIcon } from 'lucide-react'
 import { useProvidersStore } from '@/stores/providers'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type {
   AiModel,
   ModelCreateInput,
@@ -23,6 +24,7 @@ interface ModelDialogProps {
 interface FormState {
   name: string
   displayName: string
+  contextWindow: string
 }
 
 export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): JSX.Element {
@@ -38,12 +40,14 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
       const defs = provider ? AI_PROVIDER_DEFAULTS[provider.type] : null
       return {
         name: defs?.models?.[0]?.name ?? '',
-        displayName: defs?.models?.[0]?.displayName ?? ''
+        displayName: defs?.models?.[0]?.displayName ?? '',
+        contextWindow: String(defs?.models?.[0]?.contextWindow ?? 128000)
       }
     }
     return {
       name: model.name,
-      displayName: model.displayName
+      displayName: model.displayName,
+      contextWindow: String(model.contextWindow)
     }
   })
   const [error, setError] = useState<string | null>(null)
@@ -69,18 +73,27 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
       if (!displayName) {
         displayName = name
       }
+      
+      const cw = Number(form.contextWindow)
+      if (isNaN(cw) || cw < 128000 || cw > 1000000) {
+        setError(t('settings.ai.errorContextWindowRange', 'Context Window must be between 128,000 and 1,000,000'))
+        setBusy(false)
+        return
+      }
 
       if (model === null) {
         const input: ModelCreateInput = {
           providerId,
           name,
-          displayName
+          displayName,
+          contextWindow: Number(form.contextWindow) || 128000
         }
         await create(input)
       } else {
         const patch: ModelUpdateInput = {
           name,
-          displayName
+          displayName,
+          contextWindow: Number(form.contextWindow) || 128000
         }
         await update(model.id, patch)
       }
@@ -130,6 +143,7 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
                     onClick={() => {
                       set('name', m.name)
                       set('displayName', m.displayName)
+                      set('contextWindow', String(m.contextWindow ?? 128000))
                     }}
                   >
                     {m.displayName}
@@ -144,6 +158,36 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
               value={form.displayName} 
               onChange={(e) => set('displayName', e.target.value)} 
               placeholder={form.name || 'Leave empty to use Model Name'}
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="flex items-center gap-1 font-medium">
+              {t('settings.ai.modelContextWindow', 'Context Window (Tokens)')}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoIcon className="size-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Min: 128000, Max: 1000000</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
+            <Input 
+              type="number"
+              min="128000"
+              max="1000000"
+              step="1000"
+              value={form.contextWindow} 
+              onChange={(e) => set('contextWindow', e.target.value)} 
+              onBlur={() => {
+                let cw = Number(form.contextWindow)
+                if (isNaN(cw) || cw < 128000) cw = 128000
+                if (cw > 1000000) cw = 1000000
+                set('contextWindow', String(cw))
+              }}
+              placeholder="e.g. 128000"
             />
           </div>
         </div>

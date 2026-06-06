@@ -357,6 +357,7 @@
       "noEnabledModels": "没有可用的模型",
       "modelName": "模型名称 (例如 gpt-4)",
       "modelDisplayName": "显示名称",
+      "modelContextWindow": "最大上下文 (Tokens)",
       "maxTokens": "最大 token 数",
       "maxTokensHint": "可选：覆盖模型生成的最大 token 数",
       "bodyMax": "最大正文字符数",
@@ -367,10 +368,10 @@
       "confirmDeleteProvider": "确定要删除供应商「{{name}}」吗？",
       "confirmDeleteProviderDesc": "删除后该配置及相关模型将被清空，且无法恢复。",
       "confirmDeleteModel": "确定要删除模型「{{name}}」吗？",
-      "errorDuplicateName": "该名称已被占用",
+      "errorDuplicateName": "模型名称已存在",
       "errorNameRequired": "名称不能为空",
-      "errorDuplicateModel": "该模型已被添加",
-      "errorDuplicateDisplayName": "该显示名称已被占用",
+      "errorDuplicateDisplayName": "显示名称已存在",
+      "errorContextWindowRange": "上下文大小必须在 128,000 到 1,000,000 之间",
       "getApiKey": "获取 API Key",
       "testConnection": "测试连接",
       "testSuccess": "连接成功",
@@ -486,6 +487,14 @@
     "clearDone": "清除已完成"
   },
   "chat": {
+    "contextDisplay": {
+      "usage": "用量",
+      "input": "输入",
+      "cached": "缓存",
+      "output": "输出",
+      "reasoning": "推理",
+      "total": "总计"
+    },
     "untitled": "未命名对话",
     "newSession": "新对话",
     "group": {

@@ -55,6 +55,7 @@ export interface SessionMessage {
   content: string | null
   toolCalls?: ToolCall[]
   toolCallId?: string
+  usage?: TokenUsage
   createdAt: string
 }
 

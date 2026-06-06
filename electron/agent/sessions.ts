@@ -26,6 +26,7 @@ export interface SessionsDao {
     fields: { result?: ToolResult; approved?: boolean | null; error?: string }
   ): Promise<void>
   hasToolCall(id: string): Promise<boolean>
+  updateLastAssistantUsage(sessionId: string, usage: any): Promise<void>
 }
 
 export function createSessions(): SessionsDao {
@@ -96,7 +97,7 @@ export function createSessions(): SessionsDao {
     async getMessages(sessionId) {
       const rows = db()
         .prepare(
-          'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
+          'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, usage_json, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
         )
         .all(sessionId) as any[]
       return rows.map((r) => ({
@@ -106,6 +107,7 @@ export function createSessions(): SessionsDao {
         content: r.content,
         toolCalls: r.tool_calls_json ? JSON.parse(r.tool_calls_json) : undefined,
         toolCallId: r.tool_call_id ?? undefined,
+        usage: r.usage_json ? JSON.parse(r.usage_json) : undefined,
         createdAt: r.created_at
       }))
     },
@@ -132,7 +134,7 @@ export function createSessions(): SessionsDao {
       const tx = db().transaction(() => {
         const info = db()
           .prepare(
-            'INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, usage_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
           )
           .run(
             sessionId,
@@ -140,6 +142,7 @@ export function createSessions(): SessionsDao {
             m.content ?? null,
             m.toolCalls ? JSON.stringify(m.toolCalls) : null,
             m.toolCallId ?? null,
+            m.usage ? JSON.stringify(m.usage) : null,
             t
           )
         db().prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(t, sessionId)
@@ -163,8 +166,22 @@ export function createSessions(): SessionsDao {
         content: m.content ?? null,
         toolCalls: m.toolCalls,
         toolCallId: m.toolCallId,
+        usage: m.usage,
         createdAt: t
       }
+    },
+
+    async updateLastAssistantUsage(sessionId, usage) {
+      if (!usage) return
+      db().prepare(`
+        UPDATE session_messages 
+        SET usage_json = ? 
+        WHERE id = (
+          SELECT id FROM session_messages 
+          WHERE session_id = ? AND role = 'assistant' 
+          ORDER BY id DESC LIMIT 1
+        )
+      `).run(JSON.stringify(usage), sessionId)
     },
 
     async recordToolCall(sessionId, tc, opts) {

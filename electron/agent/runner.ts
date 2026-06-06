@@ -46,13 +46,14 @@ export interface RunnerDeps {
     ) => Promise<string>
     finishToolCall: (rowId: string, fields: { result: ToolResult }) => Promise<void>
     hasToolCall?: (id: string) => Promise<boolean>
+    updateLastAssistantUsage?: (sessionId: string, usage: any) => Promise<void>
   }
   systemPrompt: string
   vaultRoot: string
   cancel: AbortSignal
   clipsGet?: (id: number) => Promise<{ body: string } | null>
   recordUsage: (
-    usage: { input_tokens?: number; output_tokens?: number } | undefined,
+    usage: any,
     model: string,
     rawUsageJson?: string
   ) => void
@@ -69,7 +70,7 @@ async function processStream(
   translatorDeps: TranslatorDeps
 ) {
   let entryCount = 0
-  let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
+  let lastUsage: any
   let lastAssistantToolCallIds: string[] = []
   const recordedUsageMsgIds = new Set<string>()
 
@@ -220,7 +221,8 @@ export async function runAgent({
       appendMessage: (m) => deps.sessions.appendMessage(sessionId, m),
       recordToolCall: (tc, opts) => deps.sessions.recordToolCall(sessionId, tc, opts),
       finishToolCall: (rowId, fields) => deps.sessions.finishToolCall(rowId, fields),
-      hasToolCall: (id) => typeof deps.sessions.hasToolCall === 'function' ? deps.sessions.hasToolCall(id) : Promise.resolve(false)
+      hasToolCall: (id) => typeof deps.sessions.hasToolCall === 'function' ? deps.sessions.hasToolCall(id) : Promise.resolve(false),
+      updateLastAssistantUsage: (usage) => typeof deps.sessions.updateLastAssistantUsage === 'function' ? deps.sessions.updateLastAssistantUsage(sessionId, usage) : Promise.resolve()
     },
     recordUsage: deps.recordUsage,
     seenAiMessageIds: new Set()
@@ -278,7 +280,8 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
       appendMessage: (m) => args.sessions.appendMessage(args.sessionId, m),
       recordToolCall: (tc, opts) => args.sessions.recordToolCall(args.sessionId, tc, opts),
       finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields),
-      hasToolCall: (id) => typeof args.sessions.hasToolCall === 'function' ? args.sessions.hasToolCall(id) : Promise.resolve(false)
+      hasToolCall: (id) => typeof args.sessions.hasToolCall === 'function' ? args.sessions.hasToolCall(id) : Promise.resolve(false),
+      updateLastAssistantUsage: (usage) => typeof args.sessions.updateLastAssistantUsage === 'function' ? args.sessions.updateLastAssistantUsage(args.sessionId, usage) : Promise.resolve()
     },
     recordUsage: args.recordUsage,
     seenAiMessageIds: new Set()

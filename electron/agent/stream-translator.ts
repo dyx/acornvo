@@ -21,13 +21,14 @@ export interface TranslatorPersistence {
   ) => Promise<string>
   finishToolCall: (rowId: string, fields: { result: ToolResult }) => Promise<void>
   hasToolCall?: (id: string) => Promise<boolean>
+  updateLastAssistantUsage?: (usage: any) => Promise<void>
 }
 
 export interface TranslatorDeps {
   emit: (e: AgentEvent) => void
   persist: TranslatorPersistence
   recordUsage: (
-    usage: { input_tokens?: number; output_tokens?: number } | undefined,
+    usage: any,
     model: string
   ) => void
   /** AIMessage.id values already persisted; used to skip duplicates after HITL resume. */
@@ -269,15 +270,30 @@ export function emitCanceled(deps: TranslatorDeps): void {
 
 export function emitDone(
   deps: TranslatorDeps,
-  finalUsage: { input_tokens?: number; output_tokens?: number } | undefined,
+  finalUsage: any,
   _modelName: string
 ): void {
   const promptTokens = finalUsage?.input_tokens ?? 0
   const completionTokens = finalUsage?.output_tokens ?? 0
+  
+  const usageShape = finalUsage
+    ? { 
+        promptTokens, 
+        completionTokens, 
+        totalTokens: promptTokens + completionTokens,
+        cachedTokens: finalUsage.input_token_details?.cache_read,
+        reasoningTokens: finalUsage.output_token_details?.reasoning
+      }
+    : undefined
+
+  if (usageShape && deps.persist.updateLastAssistantUsage) {
+    deps.persist.updateLastAssistantUsage(usageShape).catch(err => {
+      console.error('[emitDone] failed to update usage in db', err)
+    })
+  }
+
   deps.emit({
     type: 'done',
-    usage: finalUsage
-      ? { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens }
-      : undefined
-  })
+    usage: usageShape
+  } as AgentEvent)
 }

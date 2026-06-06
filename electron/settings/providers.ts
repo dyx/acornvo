@@ -33,6 +33,7 @@ interface ModelRow {
   name: string
   display_name: string
   enabled: number
+  context_window: number
   created_at: string
   updated_at: string
 }
@@ -56,6 +57,7 @@ function rowToModel(row: ModelRow): AiModel {
     name: row.name,
     displayName: row.display_name,
     enabled: row.enabled === 1,
+    contextWindow: row.context_window,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -98,11 +100,11 @@ function createProvider(input: ProviderCreateInput): { id: string } {
       const defs = AI_PROVIDER_DEFAULTS[input.type]
       if (defs && defs.models && defs.models.length > 0) {
         const insertModel = db.prepare(
-          `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, created_at, updated_at)
-           VALUES (?, ?, ?, ?, 1, ?, ?)`
+          `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, context_window, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 1, ?, ?, ?)`
         )
         for (const m of defs.models) {
-          insertModel.run(uuidv4(), id, m.name, m.displayName, now, now)
+          insertModel.run(uuidv4(), id, m.name, m.displayName, m.contextWindow ?? 128000, now, now)
         }
       }
     })()
@@ -212,9 +214,9 @@ function createModel(input: ModelCreateInput): { id: string } {
   const now = new Date().toISOString()
   try {
     db.prepare(
-      `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 1, ?, ?)`
-    ).run(id, input.providerId, input.name, input.displayName, now, now)
+      `INSERT INTO ai_model (id, provider_id, name, display_name, enabled, context_window, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 1, ?, ?, ?)`
+    ).run(id, input.providerId, input.name, input.displayName, input.contextWindow ?? 128000, now, now)
   } catch (err: any) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       if (err.message.includes('ai_model.name') || err.message.includes('idx_ai_model_provider_name')) {
@@ -238,12 +240,14 @@ function updateModel(id: string, patch: ModelUpdateInput): void {
          name = COALESCE(?, name),
          display_name = COALESCE(?, display_name),
          enabled = COALESCE(?, enabled),
+         context_window = COALESCE(?, context_window),
          updated_at = ?
        WHERE id = ?`
     ).run(
       patch.name ?? null,
       patch.displayName ?? null,
       patch.enabled !== undefined ? (patch.enabled ? 1 : 0) : null,
+      patch.contextWindow ?? null,
       now,
       id
     )

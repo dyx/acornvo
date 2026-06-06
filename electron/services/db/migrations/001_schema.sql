@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS session_messages (
   content TEXT,
   tool_calls_json TEXT,
   tool_call_id TEXT,
+  usage_json TEXT,
   created_at TEXT NOT NULL,
   FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );

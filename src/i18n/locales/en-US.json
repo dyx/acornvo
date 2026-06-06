@@ -328,6 +328,7 @@
       "noEnabledModels": "No enabled models available",
       "modelName": "Model Name (e.g. gpt-4)",
       "modelDisplayName": "Display Name",
+      "modelContextWindow": "Context Window (Tokens)",
       "maxTokens": "Max tokens",
       "maxTokensHint": "Optional: Override maximum tokens generated",
       "bodyMax": "Max Body Length",
@@ -338,10 +339,10 @@
       "confirmDeleteProvider": "Delete provider \"{{name}}\"?",
       "confirmDeleteProviderDesc": "All configuration and models under this provider will be deleted and cannot be recovered.",
       "confirmDeleteModel": "Delete model \"{{name}}\"?",
-      "errorDuplicateName": "Name already in use",
+      "errorDuplicateName": "Model name already exists",
       "errorNameRequired": "Name is required",
-      "errorDuplicateModel": "Model already added",
-      "errorDuplicateDisplayName": "Display name already in use",
+      "errorDuplicateDisplayName": "Display name already exists",
+      "errorContextWindowRange": "Context Window must be between 128,000 and 1,000,000",
       "getApiKey": "Get API Key",
       "testConnection": "Test Connection",
       "testSuccess": "Connection successful",
@@ -457,6 +458,14 @@
     "clearDone": "Clear completed"
   },
   "chat": {
+    "contextDisplay": {
+      "usage": "Usage",
+      "input": "Input",
+      "cached": "Cached",
+      "output": "Output",
+      "reasoning": "Reasoning",
+      "total": "Total"
+    },
     "untitled": "Untitled chat",
     "newSession": "New chat",
     "group": {

@@ -68,6 +68,7 @@ export interface AiModel {
   name: string
   displayName: string
   enabled: boolean
+  contextWindow: number
   createdAt: string
   updatedAt: string
 }
@@ -90,12 +91,14 @@ export interface ModelCreateInput {
   providerId: string
   name: string
   displayName: string
+  contextWindow?: number
 }
 
 export interface ModelUpdateInput {
   name?: string
   displayName?: string
   enabled?: boolean
+  contextWindow?: number
 }
 
 /** Payload for the 'settings:changed' IPC event. */

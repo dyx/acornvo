@@ -3,6 +3,7 @@ import { ipc } from '@/ipc/client'
 import { useSettingsStore } from './settings'
 import { toast } from '@/hooks/use-toast'
 import type { AgentEvent, Session, SessionMessage } from '@shared/agent-types'
+import type { TokenUsage } from '@shared/ai-types'
 
 export interface ChatSession {
   id: string
@@ -23,6 +24,7 @@ export interface ChatMessage {
 
   reasoningStartTime?: number
   reasoningDuration?: number
+  usage?: TokenUsage
 
   createdAt: number
   error?: string
@@ -68,6 +70,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
     text: m.content ?? '',
     toolCalls: m.toolCalls,
     toolCallId: m.toolCallId,
+    usage: m.usage,
     createdAt: new Date(m.createdAt).getTime(),
     status: 'done'
   }
@@ -624,9 +627,12 @@ function subscribeSessionStream(sid: string): void {
         case 'done': {
           flushTokenBucket(sid)
           const post = useChatStore.getState().bySession[sid] ?? cur
-          const nextMessages = post.messages.map((m) =>
-            m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'done' as const } : m
-          )
+          const nextMessages = post.messages.map((m) => {
+            if (m.status === 'streaming' || m.status === 'pending') {
+              return { ...m, status: 'done' as const, usage: event.usage ?? m.usage }
+            }
+            return m
+          })
           return {
             bySession: {
               ...s.bySession,
