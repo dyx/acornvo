@@ -24,7 +24,7 @@ import { createJobsHandlers } from './jobs'
 import { aiHandlers } from './ai'
 import { createChatHandlers } from './chat'
 import { createQueueHandlers } from './queue'
-import { perfHandlers as perfIpcHandlers } from './perf'
+
 import { appHandlers } from './app'
 import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
@@ -173,7 +173,7 @@ export const ipcHandlers: HandlerMap = {
   ai: aiHandlers,
   chat: chatHandlers,
   queue: queueHandlers,
-  perf: perfIpcHandlers,
+
   app: appHandlers,
   update: updateHandlers,
   shell: shellHandlers,

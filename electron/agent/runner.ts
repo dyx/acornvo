@@ -22,7 +22,6 @@ import {
   type InterruptShape,
   type TranslatorDeps
 } from './stream-translator'
-import { getPerf } from '../obs/perf'
 
 export interface RunnerDeps {
   agent: {
@@ -54,7 +53,8 @@ export interface RunnerDeps {
   clipsGet?: (id: number) => Promise<{ body: string } | null>
   recordUsage: (
     usage: { input_tokens?: number; output_tokens?: number } | undefined,
-    model: string
+    model: string,
+    rawUsageJson?: string
   ) => void
   modelName: string
   profileId?: string
@@ -66,8 +66,7 @@ async function processStream(
   stream: AsyncIterable<unknown>,
   deps: RunnerDeps,
   sessionId: string,
-  translatorDeps: TranslatorDeps,
-  end?: (result: any) => void
+  translatorDeps: TranslatorDeps
 ) {
   let entryCount = 0
   let lastUsage: { input_tokens?: number; output_tokens?: number } | undefined
@@ -82,7 +81,6 @@ async function processStream(
       if (deps.cancel.aborted) {
         console.log('[runAgent] cancel detected sid=%s entryCount=%d', sessionId, entryCount)
         emitCanceled(translatorDeps)
-        end?.({ ok: true, meta: { canceled: true } })
         return
       }
       
@@ -97,13 +95,34 @@ async function processStream(
             const ai = m as {
               id?: string
               usage_metadata?: { input_tokens?: number; output_tokens?: number }
+              response_metadata?: { usage?: any }
               tool_calls?: Array<{ id?: string }>
             }
-            if (ai.usage_metadata) {
-              lastUsage = ai.usage_metadata
-              if (ai.id && !recordedUsageMsgIds.has(ai.id)) {
-                recordedUsageMsgIds.add(ai.id)
-                deps.recordUsage(ai.usage_metadata, deps.modelName)
+            if (ai.usage_metadata || ai.response_metadata?.usage) {
+              let finalUsage = ai.usage_metadata
+              const rawUsage = ai.response_metadata?.usage
+              let rawUsageJson: string | undefined
+              
+              if (rawUsage) {
+                try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
+                if (typeof rawUsage.prompt_tokens === 'number') {
+                  finalUsage = {
+                    input_tokens: rawUsage.prompt_tokens,
+                    output_tokens: rawUsage.completion_tokens,
+                    input_token_details: {
+                      cache_read: rawUsage.prompt_tokens_details?.cached_tokens ?? rawUsage.prompt_cache_hit_tokens ?? 0
+                    },
+                    output_token_details: {
+                      reasoning: rawUsage.completion_tokens_details?.reasoning_tokens ?? 0
+                    }
+                  } as any
+                }
+              }
+              lastUsage = finalUsage
+              const msgId = ai.id || `anon-${entryCount}`
+              if (!recordedUsageMsgIds.has(msgId)) {
+                recordedUsageMsgIds.add(msgId)
+                deps.recordUsage(finalUsage, deps.modelName, rawUsageJson)
               }
             }
             if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
@@ -119,7 +138,6 @@ async function processStream(
             // Pending states are now queried directly from DB and checkpointer. 
             // We no longer populate pendingInterrupts here.
           }
-          end?.({ ok: true, meta: { interrupted: true } })
           return
         }
       }
@@ -127,7 +145,6 @@ async function processStream(
 
     console.log('[runAgent] stream finished normally sid=%s entries=%d', sessionId, entryCount)
     emitDone(translatorDeps, lastUsage, deps.modelName)
-    end?.({ ok: true })
   } catch (err) {
     const e = err as { name?: string; code?: string; message?: string }
     console.error(
@@ -140,11 +157,9 @@ async function processStream(
     )
     if (e?.name === 'AbortError' || deps.cancel.aborted) {
       emitCanceled(translatorDeps)
-      end?.({ ok: true, meta: { canceled: true } })
       return
     }
     emitError(translatorDeps, err)
-    end?.({ ok: false, meta: { error: e?.code ?? 'E_UNKNOWN' } })
   }
 }
 
@@ -157,8 +172,6 @@ export async function runAgent({
 }: RunAgentArgsInternal): Promise<void> {
   console.log('[runAgent] start sid=%s model=%s', sessionId, deps.modelName)
   const emit = (e: AgentEvent) => streamWriter.write(e)
-  const perf = getPerf()
-  const end = perf?.start('agent.run', { sessionId })
 
   // Persist + emit the user message immediately (truth source).
   const userMsg = await deps.sessions.appendMessage(sessionId, {
@@ -216,10 +229,9 @@ export async function runAgent({
       }
     )
 
-    await processStream(stream, deps, sessionId, translatorDeps, end)
+    await processStream(stream, deps, sessionId, translatorDeps)
   } catch (err) {
     emitError(translatorDeps, err)
-    end?.({ ok: false, meta: { error: 'E_UNKNOWN' } })
   }
 }
 

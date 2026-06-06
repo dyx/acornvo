@@ -7,7 +7,8 @@ import type {
   ProviderCreateInput,
   ProviderUpdateInput,
   ModelCreateInput,
-  ModelUpdateInput
+  ModelUpdateInput,
+  AiProviderKind
 } from '@shared/settings-types'
 import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 

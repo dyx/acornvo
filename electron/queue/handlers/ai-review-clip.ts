@@ -2,7 +2,6 @@ import type { JobHandler } from '../runner'
 import { reviewClip } from '../../ai/reviewer'
 import { writeUsage } from '../../ai/usage'
 import { settingsStore } from '../../settings/store'
-import { getPerf } from '../../obs/perf'
 import { logger } from '../../obs/logger'
 
 export const aiReviewClipHandler: JobHandler = async (ctx) => {
@@ -23,21 +22,17 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     }
   })
 
-  const p = getPerf()
-  const end = p?.start('clipper.ai-review', { clipId, force })
-
   try {
     const out = await reviewClip(clipId, { force })
     writeUsage({
       jobId: job.id,
       modelId: out.llmCall?.modelId ?? modelId ?? null,
-      promptTokens: out.llmCall?.promptTokens ?? null,
-      completionTokens: out.llmCall?.completionTokens ?? null,
+      usage: out.llmCall?.usage,
+      rawUsageJson: out.llmCall?.rawUsageJson ?? null,
       latencyMs: out.llmCall?.latencyMs ?? Date.now() - t0,
       ok: 1,
       error: null
     })
-    end?.({ ok: true, meta: { model: out.llmCall?.model ?? null, cacheHit: out.cacheHit } })
     logger().info('queue', {
       msg: '[ai-review-clip] handler ok',
       meta: {
@@ -51,18 +46,19 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
     log('info', `ai-review-clip ok clipId=${clipId} cacheHit=${out.cacheHit}`)
     return { kind: 'ok' }
   } catch (e) {
-    const err = e as { code?: string; message?: string }
+    const err = e as { code?: string; message?: string; llmCall?: any }
     const code = err.code ?? 'E_UNKNOWN'
     const msg = err.message || code
 
     writeUsage({
       jobId: job.id,
-      modelId: modelId ?? null,
-      latencyMs: Date.now() - t0,
+      modelId: err.llmCall?.modelId ?? modelId ?? null,
+      usage: err.llmCall?.usage,
+      rawUsageJson: err.llmCall?.rawUsageJson ?? null,
+      latencyMs: err.llmCall?.latencyMs ?? Date.now() - t0,
       ok: 0,
       error: code
     })
-    end?.({ ok: false, meta: { error: code } })
     log('warn', `ai-review-clip ${code} clipId=${clipId} msg=${msg}`)
 
     // Only 429 / 503 (both mapped to E_RATE) are retryable

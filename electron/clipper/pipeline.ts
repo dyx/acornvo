@@ -13,7 +13,6 @@ import type { Extractor } from './extract'
 import type { Dedupe } from './dedupe'
 import { getQueueBootstrap } from '../queue'
 import { logger } from '../obs/logger'
-import { getPerf } from '../obs/perf'
 import { enrich } from './enrich'
 import { buildSlug } from './slug'
 import type { WebContents } from 'electron'
@@ -187,9 +186,6 @@ export function createPipeline(deps: PipelineDeps) {
     const frontmatter = buildFrontmatter(finalPreview, input.tags, isoDate)
     const fileContent = frontmatter + (input.body ?? state.markdown)
 
-    const p = getPerf()
-    const end = p?.start('clipper.save', { url: state.url })
-
     // Build path with EEXIST retry logic
     let path = finalPreview.suggestedPath
     let writeErr: unknown
@@ -205,14 +201,12 @@ export function createPipeline(deps: PipelineDeps) {
       } catch (err) {
         writeErr = err
         if (!isEexist(err)) {
-          end?.({ ok: false, meta: { error: (err as Error).message } })
           throw err
         }
       }
     }
     if (writeErr) {
       // All retries exhausted
-      end?.({ ok: false, meta: { error: 'write retries exhausted', path } })
       throw clipError('E_WRITE_FAILED', `atomic write failed after retries: ${path}`)
     }
 
@@ -283,11 +277,9 @@ export function createPipeline(deps: PipelineDeps) {
         op: 'enqueue-review',
         ok: false,
         msg: 'queue bootstrap unavailable; ai-review-clip not enqueued',
-        meta: { clipId: rowid }
       })
     }
 
-    end?.({ ok: true, meta: { clipId: rowid, path } })
     flights.delete(input.runId)
 
     return {

@@ -523,12 +523,7 @@ export type IpcContract = {
     retry: (id: string) => void
     discard: (id: string) => void
   }
-  perf: {
-    aggregates: (
-      area: string,
-      windowMs: number
-    ) => { count: number; p50: number; p95: number; successRate: number }
-  }
+
   app: {
     runtimeInfo: () => {
       appVersion: string

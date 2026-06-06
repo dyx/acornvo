@@ -46,7 +46,7 @@ export function getAgentBuilder(): SingletonHandle {
       const model = buildChatModel(profile, { temperature: 0.3, maxTokens: 4096 }) as unknown as BaseChatModel
       
       let finalModel = model
-      if (profile.provider === 'deepseek') {
+      if (profile.provider === 'deepseek' && finalModel.bindTools) {
         const originalBindTools = finalModel.bindTools.bind(finalModel)
         finalModel.bindTools = (tools: any, kwargs: any) => {
           return originalBindTools(tools, { ...kwargs, strict: true })

@@ -223,7 +223,7 @@ export async function translateStreamEntry(
         deps.reasoningState = { startTime: Date.now(), isStandardProvider: true }
       }
       deps.reasoningState.isStandardProvider = true
-      deps.emit({ type: 'reasoning-delta', text: reasoning })
+      deps.emit({ type: 'reasoning-delta', text: reasoning } as AgentEvent)
     }
 
     const content = chunkMsg.content
@@ -246,7 +246,7 @@ export async function translateStreamEntry(
           deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
         }
       }
-      deps.emit({ type: 'text-delta', text: actualContent })
+      deps.emit({ type: 'text-delta', text: actualContent } as AgentEvent)
     }
 
     return

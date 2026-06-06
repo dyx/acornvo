@@ -62,6 +62,8 @@ export type AgentEvent =
   | { type: 'message.appended'; message: SessionMessage }
   | { type: 'step.start'; step: number }
   | { type: 'token'; text: string }
+  | { type: 'text-delta'; text: string }
+  | { type: 'reasoning-delta'; text: string }
   | { type: 'tool.approval-needed'; callId: string; tool: string; args: unknown; reason?: string }
   | { type: 'tool.start'; tool: string; args: unknown; callId?: string }
   | { type: 'tool.result'; tool: string; result: ToolResult; callId?: string }

@@ -39,13 +39,10 @@ export interface UpdateSettings {
   autoCheck: boolean
 }
 
-export interface TelemetrySettings {
-  enabled: boolean
-}
 
 export type SettingsTab = 'general' | 'ai' | 'browser' | 'observability' | 'about'
 
-export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'update' | 'telemetry'
+export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'update'
 
 export type SettingsByNs = {
   general: GeneralSettings
@@ -53,7 +50,6 @@ export type SettingsByNs = {
   ai: AiSettings
   browser: BrowserSettings
   update: UpdateSettings
-  telemetry: TelemetrySettings
 }
 
 export interface AiProvider {

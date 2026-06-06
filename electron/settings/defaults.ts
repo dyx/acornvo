@@ -5,7 +5,6 @@ import type {
   AiSettings,
   BrowserSettings,
   UpdateSettings,
-  TelemetrySettings,
   SettingsNamespace,
   SettingsByNs
 } from '@shared/settings-types'
@@ -16,14 +15,12 @@ export const DEFAULTS: {
   ai: AiSettings
   browser: BrowserSettings
   update: UpdateSettings
-  telemetry: TelemetrySettings
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off' },
   appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 },
   browser: { clipImagesLocalize: false, searchEngine: 'google' },
-  update: { autoCheck: true },
-  telemetry: { enabled: false }
+  update: { autoCheck: true }
 }
 
 const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = [
@@ -31,8 +28,7 @@ const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = [
   'appearance',
   'ai',
   'browser',
-  'update',
-  'telemetry'
+  'update'
 ]
 
 export function isKnownNamespace(value: unknown): value is SettingsNamespace {

@@ -2,13 +2,12 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
-import { useSettingsStore } from '@/stores/settings'
-import { Switch } from '@/components/ui/switch'
+
 import { Button } from '@/components/ui/button'
 import { HeatGraph } from '@/components/assistant-ui/heat-graph'
 import { Activity } from 'lucide-react'
 
-type Panel = 'ai' | 'queue' | 'perf'
+type Panel = 'ai' | 'queue'
 type Window = '24h' | '7d' | '30d'
 
 function windowToDays(w: Window): number {
@@ -34,7 +33,7 @@ export function ObservabilityTab(): JSX.Element {
 
 
       <div role="tablist" className="flex gap-2 border-b">
-        {(['ai', 'queue', 'perf'] as Panel[]).map((p) => (
+        {(['ai', 'queue'] as Panel[]).map((p) => (
           <button
             key={p}
             role="tab"
@@ -51,7 +50,7 @@ export function ObservabilityTab(): JSX.Element {
       <div className="flex-1 overflow-y-auto py-4">
         {panel === 'ai' && <ObservabilityAiPanel />}
         {panel === 'queue' && <ObservabilityQueuePanel />}
-        {panel === 'perf' && <ObservabilityPerfPanel />}
+
       </div>
 
       <footer className="mt-4 border-t pt-4">
@@ -65,7 +64,7 @@ export function ObservabilityTab(): JSX.Element {
         >
           {exporting ? t('obs.export.diagnosticBusy') : t('obs.export.diagnostic')}
         </Button>
-        <TelemetryToggle />
+
       </footer>
     </div>
   )
@@ -369,100 +368,3 @@ function ObservabilityQueuePanel(): JSX.Element {
   )
 }
 
-// --- Perf Panel ---
-
-const PERF_AREAS = [
-  'search.query',
-  'agent.step',
-  'clipper.save',
-  'clipper.ai-review',
-  'indexer.scan',
-  'indexer.update',
-  'project.open'
-] as const
-
-const THRESHOLDS_MS: Record<string, number> = {
-  'search.query': 500,
-  'agent.step': 30_000,
-  'clipper.save': 10_000,
-  'clipper.ai-review': 30_000,
-  'indexer.scan': 5_000,
-  'indexer.update': 1_000,
-  'project.open': 5_000
-}
-
-function ObservabilityPerfPanel(): JSX.Element {
-  const { t } = useTranslation()
-  const [rows, setRows] = useState<
-    { area: string; count: number; p50: number; p95: number; successRate: number }[]
-  >([])
-
-  useEffect(() => {
-    let cancelled = false
-    Promise.all(
-      PERF_AREAS.map((a) => ipc.perf.aggregates(a, 86400_000).then((agg) => ({ area: a, ...agg })))
-    ).then((r) => {
-      if (!cancelled) setRows(r)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return (
-    <table data-testid="obs-panel-perf" className="w-full text-sm">
-      <thead>
-        <tr className="text-left text-muted-foreground">
-          <th>{t('obs.perf.area')}</th>
-          <th className="text-right">{t('obs.perf.count')}</th>
-          <th className="text-right">{t('obs.perf.p50')}</th>
-          <th className="text-right">{t('obs.perf.p95')}</th>
-          <th className="text-right">{t('obs.perf.successRate')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => {
-          const over = r.p95 > (THRESHOLDS_MS[r.area] ?? 999_999)
-          return (
-            <tr
-              key={r.area}
-              data-testid={`obs-perf-row-${r.area}`}
-              data-threshold={over ? 'over' : 'ok'}
-              className={over ? 'text-red-600' : ''}
-            >
-              <td>{r.area}</td>
-              <td className="text-right tabular-nums">{r.count}</td>
-              <td className="text-right tabular-nums">{r.p50}</td>
-              <td className="text-right tabular-nums">{r.p95}</td>
-              <td className="text-right tabular-nums">{(r.successRate * 100).toFixed(0)}%</td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
-  )
-}
-
-// --- Telemetry Toggle ---
-
-function TelemetryToggle(): JSX.Element {
-  const { t } = useTranslation()
-  const telemetry = useSettingsStore((s) => s.telemetry)
-  const setTelemetry = useSettingsStore((s) => s.setTelemetry)
-  return (
-    <div className="mt-4 flex items-start space-x-3 text-xs text-muted-foreground">
-      <Switch
-        id="obs-telemetry-toggle"
-        data-testid="obs-telemetry-toggle"
-        checked={telemetry.enabled}
-        onCheckedChange={(checked) => {
-          void setTelemetry({ enabled: checked })
-        }}
-      />
-      <label htmlFor="obs-telemetry-toggle" className="cursor-pointer space-y-1">
-        <strong className="block text-foreground">{t('telemetry.enable')}</strong>
-        <span className="block">{t('telemetry.description')}</span>
-      </label>
-    </div>
-  )
-}

@@ -158,7 +158,7 @@ export function createChatHandlers(deps: ChatDeps) {
   }
 
   function buildRecordUsage(profile: ResolvedProfile, sessionId: string) {
-    return (u: { input_tokens?: number; output_tokens?: number } | undefined) => {
+    return (u: { input_tokens?: number; output_tokens?: number } | undefined, _model: string, rawUsageJson?: string) => {
       try {
         writeUsage({
           modelId: profile.dbModelId,
@@ -166,6 +166,7 @@ export function createChatHandlers(deps: ChatDeps) {
           usage: u,
           ok: 1,
           error: null,
+          rawUsageJson,
           sessionId
         })
       } catch {

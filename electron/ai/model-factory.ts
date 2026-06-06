@@ -52,6 +52,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         maxTokens,
         timeout: 120_000,
         maxRetries: 2,
+        streamUsage: true,
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
       }) as unknown as BaseChatModel
       break
@@ -75,6 +76,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         maxTokens,
         timeout: 120_000,
         maxRetries: 2,
+        streamUsage: true,
         configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
       }) as unknown as BaseChatModel
       break

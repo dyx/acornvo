@@ -170,9 +170,7 @@ const request: IpcClient<IpcContract> = {
     retry: (id) => invoke('queue.retry', id),
     discard: (id) => invoke('queue.discard', id)
   },
-  perf: {
-    aggregates: (area, windowMs) => invoke('perf.aggregates', area, windowMs)
-  },
+
   app: {
     runtimeInfo: () => invoke('app.runtimeInfo'),
     getBootstrap: () => invoke('app.getBootstrap')

@@ -21,8 +21,8 @@ export interface ReviewClipOutput {
     modelId: string
     model: string
     latencyMs: number
-    promptTokens: number | null
-    completionTokens: number | null
+    usage?: any
+    rawUsageJson: string | null
   }
   cacheHit: boolean
 }
@@ -182,9 +182,9 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
   }
 }
 
-function readUsage(raw: unknown): { input_tokens?: number; output_tokens?: number } | undefined {
+function readUsage(raw: unknown): any | undefined {
   if (!raw || typeof raw !== 'object') return undefined
-  const m = raw as { usage_metadata?: { input_tokens?: number; output_tokens?: number } }
+  const m = raw as { usage_metadata?: any }
   return m.usage_metadata
 }
 
@@ -241,6 +241,7 @@ export async function reviewClip(
   const t0 = Date.now()
   let parsed: ReturnType<typeof AiReviewSchema.parse>
   let usage: { input_tokens?: number; output_tokens?: number } | undefined
+  let rawUsageJson: string | undefined
 
   try {
     logger().info('ai', {
@@ -267,6 +268,14 @@ export async function reviewClip(
     
     parsed = out.parsed
     usage = readUsage(out.raw)
+    
+    const rawAi = out.raw as any
+    if (rawAi?.response_metadata?.usage) {
+      try { rawUsageJson = JSON.stringify(rawAi.response_metadata.usage) } catch {}
+    } else if (rawAi?.usage_metadata) {
+      try { rawUsageJson = JSON.stringify(rawAi.usage_metadata) } catch {}
+    }
+
     logger().info('ai', {
       msg: '[reviewClip] LLM call succeeded',
       meta: {
@@ -319,6 +328,15 @@ export async function reviewClip(
     ai_review_accepted_at: result.reviewedAt // 自动采纳
   }
 
+  const latencyMs = Date.now() - t0
+  const llmCall = {
+    modelId: profile.dbModelId,
+    model: profile.model,
+    latencyMs,
+    usage,
+    rawUsageJson: rawUsageJson ?? null
+  }
+
   try {
     logger().debug('ai', {
       msg: '[reviewClip] writing back frontmatter',
@@ -335,22 +353,16 @@ export async function reviewClip(
       meta: { clipId, path: clip.path, code, message: (e as Error)?.message?.slice(0, 300) }
     })
     if (code === 'E_MTIME_MISMATCH') {
-      throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback')
+      throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback', { llmCall })
     }
+    Object.assign(e as any, { llmCall })
     throw e
   }
 
-  const latencyMs = Date.now() - t0
   logger().info('ai', { msg: '[reviewClip] completed', meta: { clipId, latencyMs, model: profile.model } })
   return {
     result,
     cacheHit: false,
-    llmCall: {
-      modelId: profile.dbModelId,
-      model: profile.model,
-      latencyMs,
-      promptTokens: usage?.input_tokens ?? null,
-      completionTokens: usage?.output_tokens ?? null
-    }
+    llmCall
   }
 }

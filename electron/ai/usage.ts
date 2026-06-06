@@ -12,6 +12,7 @@ export interface AiUsageRow {
   latencyMs: number | null
   ok: 0 | 1
   error: string | null
+  rawUsageJson?: string | null
   sessionId?: string
   groveId?: string
   createdAt: string
@@ -64,8 +65,8 @@ export const aiUsage = {
     const groveId = getCurrent()?.id ?? null
     db.prepare(
       `
-      INSERT INTO ai_usage (job_id, model_id, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens, latency_ms, ok, error, session_id, created_at, grove_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO ai_usage (job_id, model_id, prompt_tokens, completion_tokens, cache_read_tokens, reasoning_tokens, latency_ms, ok, error, raw_usage_json, session_id, created_at, grove_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       row.jobId,
@@ -77,6 +78,7 @@ export const aiUsage = {
       row.latencyMs,
       row.ok,
       row.error,
+      row.rawUsageJson ?? null,
       row.sessionId ?? null,
       row.createdAt ?? new Date().toISOString(),
       groveId
@@ -175,6 +177,7 @@ export interface WriteUsageArgs {
   latencyMs: number
   ok: 0 | 1
   error: string | null
+  rawUsageJson?: string | null
   sessionId?: string
   jobId?: string | null
   /** Pre-known token counts when the call site already has them (e.g. the
@@ -218,6 +221,7 @@ export function rowFromUsageMetadata(
 export function writeUsage(args: WriteUsageArgs): void {
   const row = rowFromUsageMetadata(args.usage, args)
   if (row) {
+    row.rawUsageJson = args.rawUsageJson
     aiUsage.insert(row)
     return
   }
@@ -231,6 +235,7 @@ export function writeUsage(args: WriteUsageArgs): void {
     latencyMs: args.latencyMs,
     ok: args.ok,
     error: args.error,
+    rawUsageJson: args.rawUsageJson,
     sessionId: args.sessionId
   })
 }

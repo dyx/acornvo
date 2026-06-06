@@ -38,8 +38,8 @@ export function TabBar({ sidebarOpen = true }: { sidebarOpen?: boolean }): JSX.E
       className={`flex h-10 shrink-0 items-end gap-2 border-b border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] pr-3 overflow-x-auto [-webkit-app-region:drag]`}
       data-testid="tabbar"
     >
-      <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[76px]'}`} />
-      <div className={`shrink-0 transition-[width] duration-300 ${sidebarOpen ? 'w-1' : 'w-0'}`} />
+      <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[52px]'}`} />
+      <div className={`shrink-0 transition-[width] duration-300 ${sidebarOpen ? 'w-2' : 'w-0'}`} />
       {tabs.map((tab) => {
         const active = tab.id === activeTabId
         return (

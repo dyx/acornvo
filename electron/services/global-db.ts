@@ -44,25 +44,6 @@ CREATE INDEX IF NOT EXISTS idx_ai_model_provider ON ai_model(provider_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_model_provider_name ON ai_model(provider_id, name);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_model_provider_display_name ON ai_model(provider_id, display_name);
 
-CREATE TABLE IF NOT EXISTS perf_samples (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts TEXT NOT NULL,
-  area TEXT NOT NULL,
-  ok INTEGER NOT NULL,
-  ms INTEGER NOT NULL,
-  meta TEXT,
-  grove_id TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_perf_area_ts ON perf_samples(area, ts);
-
-CREATE TABLE IF NOT EXISTS telemetry_local (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  day TEXT NOT NULL,
-  metric TEXT NOT NULL,
-  value REAL NOT NULL,
-  meta TEXT
-);
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_telemetry_day_metric ON telemetry_local(day, metric);
 
 CREATE TABLE IF NOT EXISTS ai_usage (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,9 +56,10 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   latency_ms INTEGER,
   ok INTEGER NOT NULL,
   error TEXT,
-  created_at TEXT NOT NULL,
+  raw_usage_json TEXT,
   session_id TEXT,
-  grove_id TEXT
+  grove_id TEXT,
+  created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_model ON ai_usage(model_id);
@@ -97,52 +79,7 @@ export function initGlobalDb(): void {
   const dbPath = join(dir, 'global.db')
   const db = new Database(dbPath)
   applyPragmas(db)
-  try {
-    const tableInfo = db.pragma('table_info(ai_provider_profiles)') as { name: string }[]
-    if (tableInfo.length > 0) {
-      db.exec('DROP TABLE ai_provider_profiles')
-      db.exec('DROP TABLE ai_usage')
-    }
-  } catch {
-    /* ignore */
-  }
-
   db.exec(GLOBAL_SCHEMA)
-
-  // Migration: Add grove_id if schema already existed without it
-  try {
-    const tableInfo = db.pragma('table_info(perf_samples)') as { name: string }[]
-    if (!tableInfo.some((c) => c.name === 'grove_id')) {
-      db.prepare('ALTER TABLE perf_samples ADD COLUMN grove_id TEXT').run()
-    }
-  } catch {
-    /* ignore */
-  }
-
-  // Migration: Rename model_id to name in ai_model
-  try {
-    const aiModelInfo = db.pragma('table_info(ai_model)') as { name: string }[]
-    if (aiModelInfo.some((c) => c.name === 'model_id')) {
-      db.prepare('ALTER TABLE ai_model RENAME COLUMN model_id TO name').run()
-    }
-  } catch {
-    /* ignore */
-  }
-
-  try {
-    const aiUsageInfo = db.pragma('table_info(ai_usage)') as { name: string }[]
-    if (!aiUsageInfo.some((c) => c.name === 'grove_id')) {
-      db.prepare('ALTER TABLE ai_usage ADD COLUMN grove_id TEXT').run()
-    }
-    if (!aiUsageInfo.some((c) => c.name === 'cache_read_tokens')) {
-      db.prepare('ALTER TABLE ai_usage ADD COLUMN cache_read_tokens INTEGER DEFAULT 0').run()
-    }
-    if (!aiUsageInfo.some((c) => c.name === 'reasoning_tokens')) {
-      db.prepare('ALTER TABLE ai_usage ADD COLUMN reasoning_tokens INTEGER DEFAULT 0').run()
-    }
-  } catch {
-    /* ignore */
-  }
 
   globalDb = db
 }
