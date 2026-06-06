@@ -48,18 +48,6 @@ export function EditorTitleBar({
       <div className="flex items-center gap-1 shrink-0">
         <TooltipProvider delayDuration={500}>
 
-          <Tooltip>
-            <TooltipTrigger
-              type="button"
-              onClick={onTogglePreview}
-              className="flex size-[28px] items-center justify-center rounded-md text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] transition-colors cursor-pointer"
-            >
-              {isPreviewMode ? <Edit3 size={15} /> : <Eye size={15} />}
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">{isPreviewMode ? "进入编辑模式" : "预览文档"}</p>
-            </TooltipContent>
-          </Tooltip>
           {!isPreviewMode && (
             <Dialog>
               <Tooltip>
@@ -107,6 +95,19 @@ export function EditorTitleBar({
               </DialogContent>
             </Dialog>
           )}
+
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              onClick={onTogglePreview}
+              className="flex size-[28px] items-center justify-center rounded-md text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] transition-colors cursor-pointer"
+            >
+              {isPreviewMode ? <Edit3 size={15} /> : <Eye size={15} />}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">{isPreviewMode ? "进入编辑模式" : "预览文档"}</p>
+            </TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger
