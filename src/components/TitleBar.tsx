@@ -4,13 +4,13 @@ import { GroveSwitcher } from './GroveSwitcher'
 export function TitleBar(): JSX.Element {
   return (
     <header
-      className="relative flex h-10 shrink-0 items-center justify-center
-                 bg-[color:var(--color-paper-2)]
-                 border-b border-[color:var(--color-line)]
-                 [-webkit-app-region:drag]"
+      className="absolute top-0 left-0 h-10 w-[328px] flex items-center pl-[76px]
+                 z-50 pointer-events-none [-webkit-app-region:drag]"
       data-testid="titlebar"
     >
-      <GroveSwitcher />
+      <div className="pointer-events-auto [-webkit-app-region:no-drag]">
+        <GroveSwitcher />
+      </div>
     </header>
   )
 }

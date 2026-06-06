@@ -1,13 +1,11 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useSearchStore } from '@/stores/search'
 import { useChatStore } from '@/stores/chat'
 import { useGroveStore } from '@/stores/grove'
 
 /**
  * Global hotkey listener. Registers once per app lifetime — call this from <App />.
  *
- * - Cmd/Ctrl+P → open QuickSwitcher (preventDefault to override browser/system print)
  * - Cmd/Ctrl+Shift+F → open /search or select all if already there
  * - Cmd/Ctrl+, → navigate to /settings
  * - Cmd/Ctrl+N → create new chat session (when on /chat)
@@ -15,7 +13,6 @@ import { useGroveStore } from '@/stores/grove'
  * - Cmd/Ctrl+/ → open shortcuts dialog (when on /chat)
  */
 export function useGlobalHotkeys(): void {
-  const openQuickSwitcher = useSearchStore((s) => s.quickSwitcher.open)
   const navigate = useNavigate()
   const location = useLocation()
   const current = useGroveStore((s) => s.current)
@@ -26,11 +23,6 @@ export function useGlobalHotkeys(): void {
       if (!mod) return
       const key = ev.key.toLowerCase()
 
-      if (key === 'p' && !ev.shiftKey) {
-        ev.preventDefault()
-        if (current) openQuickSwitcher()
-        return
-      }
       if (key === 'f' && ev.shiftKey) {
         ev.preventDefault()
         if (!current) return
@@ -70,5 +62,5 @@ export function useGlobalHotkeys(): void {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [openQuickSwitcher, navigate, location.pathname, current])
+  }, [navigate, location.pathname, current])
 }

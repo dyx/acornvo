@@ -4,7 +4,7 @@ import { logger } from '../../obs/logger'
 import { buildFtsQuery } from './queryBuilder'
 import { getPerf } from '../../obs/perf'
 
-interface QuickSwitchRow {
+interface SummaryRow {
   path: string
   title: string | null
   category: string | null
@@ -14,7 +14,7 @@ interface QuickSwitchRow {
   tags_json: string | null
 }
 
-function rowToFileSummary(row: QuickSwitchRow): FileSummary {
+function rowToFileSummary(row: SummaryRow): FileSummary {
   let tags: string[] = []
   if (row.tags_json) {
     try {
@@ -53,7 +53,7 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
   }
 }
 
-const QUICK_SWITCH_BASE = `
+const SUMMARY_BASE = `
   SELECT
     files.path, files.title, files.category, files.clipped_at,
     files.summary, files.frontmatter_json,
@@ -61,41 +61,6 @@ const QUICK_SWITCH_BASE = `
   FROM files
 `
 
-export function quickSwitch(
-  db: Database.Database,
-  q: string,
-  opts: { limit?: number } = {}
-): FileSummary[] {
-  if (q.length === 0) return []
-  const limit = opts.limit ?? 10
-
-  // Priority tiers: 1=title equals q; 2=title starts with q; 3=title contains q; 4=path contains q
-  const sql = `
-    ${QUICK_SWITCH_BASE}
-    WHERE files.title = @q COLLATE NOCASE
-       OR files.title LIKE @startsWith
-       OR files.title LIKE @contains
-       OR files.path  LIKE @contains
-    GROUP BY files.path
-    ORDER BY
-      CASE
-        WHEN files.title = @q COLLATE NOCASE THEN 1
-        WHEN files.title LIKE @startsWith   THEN 2
-        WHEN files.title LIKE @contains     THEN 3
-        ELSE 4
-      END,
-      files.clipped_at DESC
-    LIMIT @limit
-  `
-  const rows = db.prepare(sql).all({
-    q,
-    startsWith: `${q}%`,
-    contains: `%${q}%`,
-    limit
-  }) as QuickSwitchRow[]
-
-  return rows.map(rowToFileSummary)
-}
 
 export interface FullTextOpts {
   limit?: number
@@ -115,7 +80,6 @@ interface FtsHitRow {
   rank: number
 }
 
-type SummaryRow = QuickSwitchRow
 
 export function fullText(
   db: Database.Database,
@@ -195,12 +159,12 @@ export function fullText(
 export function suggest(db: Database.Database, q: string): FileSummary[] {
   if (q.length === 0) return []
   const sql = `
-    ${QUICK_SWITCH_BASE}
+    ${SUMMARY_BASE}
     WHERE files.title LIKE @q
     GROUP BY files.path
     ORDER BY files.clipped_at DESC
     LIMIT 5
   `
-  const rows = db.prepare(sql).all({ q: `%${q}%` }) as QuickSwitchRow[]
+  const rows = db.prepare(sql).all({ q: `%${q}%` }) as SummaryRow[]
   return rows.map(rowToFileSummary)
 }

@@ -8,7 +8,6 @@ import { AppRail } from '@/components/AppRail'
 import { StatusBar } from '@/components/StatusBar'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
-import { QuickSwitcher } from '@/components/search/QuickSwitcher'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { CrashBanner } from '@/components/CrashBanner'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
@@ -76,12 +75,12 @@ export function App(): JSX.Element {
   return (
     <>
       <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
-        <TitleBar />
         <CrashBanner />
         <UpdateBanner />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
+          <TitleBar />
           <AppRail />
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 overflow-hidden relative">
             <Outlet />
           </main>
         </div>
@@ -92,7 +91,6 @@ export function App(): JSX.Element {
 
         <IndexBanner />
         <DbRebuildOverlay visible={isRebuilding} />
-        <QuickSwitcher />
         <IndexProgressOverlay
           visible={indexState === 'scanning'}
           scanned={progress.scanned}

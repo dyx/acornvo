@@ -3,7 +3,7 @@
  * `phase-06-virtual-library-view` (specs `file-query-api` + `file-summary-dto`).
  *
  * `FileSummary` is the single DTO source for any IPC that returns a row of
- * `files` to the renderer. Phase 8 (QuickSwitcher) and phase 17 (`@` mention
+ * `files` to the renderer. Phase 17 (`@` mention
  * picker) MUST reuse this type — do not create a parallel shape.
  */
 

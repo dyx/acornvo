@@ -2,7 +2,7 @@ import { IpcError, type IpcContract } from '@shared/ipc-contract'
 import { requireCurrent, getCurrentGrovePath } from '../services/db'
 import { rebuildFts } from '../services/search/rebuild'
 import { isRebuilding, _setRebuildingForTest } from '../services/search/index'
-import { quickSwitch, fullText, suggest } from '../services/search/queries'
+import { fullText, suggest } from '../services/search/queries'
 import { stats } from '../services/search/stats'
 import type { FileSummary } from '@shared/file-types'
 
@@ -27,10 +27,6 @@ export const searchHandlers: SearchHandlers = {
       _setRebuildingForTest(false)
     }
     return { ok: true } as const
-  },
-  quickSwitch: (q: string, opts?: { limit?: number }): FileSummary[] => {
-    const db = requireCurrent()
-    return quickSwitch(db, q, opts ?? {})
   },
   fullText: (
     q: string,

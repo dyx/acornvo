@@ -127,14 +127,7 @@ export function AddressBar(): JSX.Element {
   return (
     <div className="flex h-[48px] shrink-0 items-center gap-[10px] border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-[14px]">
       <div className="flex gap-[2px]">
-        <button
-          type="button"
-          aria-label={t('browser.bookmarks.toggle', 'Toggle Bookmarks')}
-          className={`flex size-[30px] items-center justify-center rounded-[7px] transition-colors mr-1 ${bookmarksOpen ? 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]' : 'text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'}`}
-          onClick={() => setBookmarksOpen(!bookmarksOpen)}
-        >
-          <PanelLeft size={16} />
-        </button>
+
         <button
           type="button"
           aria-label={t('browser.back', 'back')}

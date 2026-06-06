@@ -394,7 +394,7 @@ export type IpcContract = {
     openSnapshotFile: (id: string, side: 'local' | 'remote' | 'base') => { ok: true }
   }
   search: {
-    quickSwitch: (q: string, opts?: { limit?: number }) => FileSummary[]
+
     fullText: (
       q: string,
       opts?: { limit?: number; offset?: number }
