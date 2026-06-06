@@ -89,7 +89,19 @@ async function processStream(
       if (Array.isArray(entry) && entry[0] === 'updates') {
         const payload = entry[1] as Record<string, unknown> | undefined
 
-        const modelNode = payload?.model as { messages?: unknown[] } | undefined
+        let modelNode: { messages?: unknown[] } | undefined
+        if (payload) {
+          if (payload.model) modelNode = payload.model as any
+          else if (payload.agent) modelNode = payload.agent as any
+          else {
+            for (const val of Object.values(payload)) {
+              if (val && typeof val === 'object' && Array.isArray((val as any).messages)) {
+                modelNode = val as any
+                break
+              }
+            }
+          }
+        }
         if (modelNode?.messages) {
           for (const m of modelNode.messages) {
             const ai = m as {
