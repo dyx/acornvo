@@ -31,10 +31,11 @@ html {
   --color-sky: oklch(0.55 0.06 230);
   --color-sky-bg: oklch(0.93 0.02 230);
 
-  --font-serif: 'Noto Serif SC', 'Source Han Serif', 'Songti SC', Georgia, serif;
-  --font-sans:
-    'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  --font-serif: var(--font-editor-text, 'Noto Serif SC', 'Source Han Serif', 'Songti SC', Georgia, serif);
+  --font-sans: var(--font-ui-text, 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif);
+  --font-mono: var(--font-editor-code, 'JetBrains Mono', 'SF Mono', Menlo, monospace);
+  --font-chat: var(--font-chat-text, var(--font-sans));
+  --font-review: var(--font-review-text, 'Nunito', 'LXGW WenKai', sans-serif);
 
   /* shadcn/ui mappings to acorn theme */
   --color-background: var(--color-paper);
@@ -105,6 +106,14 @@ body {
   font-family: var(--font-mono);
 }
 
+.font-chat {
+  font-family: var(--font-chat);
+}
+
+.font-review {
+  font-family: var(--font-review);
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -143,6 +152,13 @@ body {
   --toolbar-icon-color: var(--color-ink-3);
   --toolbar-icon-hover-color: var(--color-ink);
   --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.vditor-reset {
+  font-family: var(--font-serif) !important;
+}
+.vditor-reset code, .vditor-reset pre, .vditor-textarea {
+  font-family: var(--font-mono) !important;
 }
 
 [data-theme='dark'] .vditor-reset {

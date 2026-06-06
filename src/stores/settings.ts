@@ -12,7 +12,7 @@ import type {
 
 const DEFAULTS = {
   general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser' } as GeneralSettings,
-  appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' } as AppearanceSettings,
+  appearance: { theme: 'system', fontScale: 1.0 } as AppearanceSettings,
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 } as AiSettings,
   browser: { clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
   update: { autoCheck: true } as UpdateSettings

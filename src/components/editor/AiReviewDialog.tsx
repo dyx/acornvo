@@ -54,7 +54,7 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
 
   return (
     <Dialog open={props.open} onOpenChange={(open) => !open && !showLoader && props.onClose()}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="font-review sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         {showLoader && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

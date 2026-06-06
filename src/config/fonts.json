@@ -1,0 +1,15 @@
+{
+  "editor": {
+    "text": ["'Lora'", "'Noto Serif SC'", "serif"],
+    "code": ["'JetBrains Mono'", "monospace"]
+  },
+  "chat": {
+    "text": ["'Inter'", "'Noto Sans SC'", "sans-serif"]
+  },
+  "ui": {
+    "text": ["'Inter'", "'Noto Sans SC'", "sans-serif"]
+  },
+  "review": {
+    "text": ["'Nunito'", "'LXGW WenKai'", "sans-serif"]
+  }
+}

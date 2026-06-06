@@ -17,7 +17,7 @@ export const DEFAULTS: {
   update: UpdateSettings
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off' },
-  appearance: { theme: 'system', fontScale: 1.0, editorFont: 'system-ui' },
+  appearance: { theme: 'system', fontScale: 1.0 },
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 },
   browser: { clipImagesLocalize: false, searchEngine: 'google' },
   update: { autoCheck: true }

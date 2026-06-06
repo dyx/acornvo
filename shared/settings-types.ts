@@ -21,7 +21,6 @@ export interface GeneralSettings {
 export interface AppearanceSettings {
   theme: Theme
   fontScale: number
-  editorFont: string
 }
 
 export interface AiSettings {

@@ -18,7 +18,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-const FONT_FALLBACK = ['system-ui', 'Georgia', 'SF Mono', 'Courier New']
 
 export function LibraryTab(): JSX.Element {
   const { t } = useTranslation()
@@ -123,28 +122,6 @@ export function LibraryTab(): JSX.Element {
             {ai.bodyMax || 20000}
           </button>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <span className="block text-sm font-medium">{t('settings.appearance.editorFont', '编辑器字体')}</span>
-        <Select
-          value={appearance.editorFont}
-          onValueChange={(value) => {
-            void setAppearance({ editorFont: value })
-            document.documentElement.style.setProperty('--editor-font', value)
-          }}
-        >
-          <SelectTrigger className="w-64">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONT_FALLBACK.map((font) => (
-              <SelectItem key={font} value={font}>
-                {font}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
     </div>
   )

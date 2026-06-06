@@ -21,10 +21,6 @@ function applyFontScale(scale: number): void {
   document.documentElement.style.setProperty('--font-scale', String(scale))
 }
 
-function applyEditorFont(font: string): void {
-  if (typeof document === 'undefined') return
-  document.documentElement.style.setProperty('--editor-font', font)
-}
 
 function applyLocale(locale: Locale): void {
   if (i18n.language !== locale) {
@@ -56,12 +52,10 @@ export function installSettingsEffects(): () => void {
 
   applyTheme(appearance.theme)
   applyFontScale(appearance.fontScale)
-  applyEditorFont(appearance.editorFont)
   applyLocale(general.locale)
 
   let prevTheme = appearance.theme
   let prevFontScale = appearance.fontScale
-  let prevEditorFont = appearance.editorFont
   let prevLocale = general.locale
 
   unsubscribe = useSettingsStore.subscribe((state) => {
@@ -72,10 +66,6 @@ export function installSettingsEffects(): () => void {
     if (state.appearance.fontScale !== prevFontScale) {
       prevFontScale = state.appearance.fontScale
       applyFontScale(state.appearance.fontScale)
-    }
-    if (state.appearance.editorFont !== prevEditorFont) {
-      prevEditorFont = state.appearance.editorFont
-      applyEditorFont(state.appearance.editorFont)
     }
     if (state.general.locale !== prevLocale) {
       prevLocale = state.general.locale
