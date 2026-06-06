@@ -20,15 +20,6 @@ export interface FileRowProps {
   onTrash?: () => void
 }
 
-function formatClipped(iso: string | null): string {
-  if (!iso) return ''
-  try {
-    return new Date(iso).toLocaleDateString()
-  } catch {
-    return iso
-  }
-}
-
 export function FileRow({
   file,
   active,

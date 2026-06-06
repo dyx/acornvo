@@ -1,6 +1,5 @@
 import type { JSX } from 'react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { formatRelativeTime } from '@/lib/date-utils'
 import type { OpsItem, Op } from '@shared/ops-types'
 
 function opLabel(op: Op): string {
@@ -39,7 +38,7 @@ function opBadgeColor(op: Op): string {
 
 function formatTime(ts: string): string {
   try {
-    return formatDistanceToNow(new Date(ts), { addSuffix: true, locale: zhCN })
+    return formatRelativeTime(ts)
   } catch {
     return ts
   }

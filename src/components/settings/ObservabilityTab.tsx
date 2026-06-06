@@ -6,6 +6,7 @@ import { ipc } from '@/ipc/client'
 import { Button } from '@/components/ui/button'
 import { HeatGraph } from '@/components/assistant-ui/heat-graph'
 import { Activity } from 'lucide-react'
+import { formatDate } from '@/lib/date-utils'
 
 type Panel = 'ai' | 'queue'
 type Window = '24h' | '7d' | '30d'
@@ -131,7 +132,7 @@ function ObservabilityAiPanel(): JSX.Element {
 
       const dayMap = new Map<string, number>()
       for (const item of list.items) {
-        const day = item.createdAt.slice(0, 10)
+        const day = formatDate(item.createdAt)
         const tokens = (item.promptTokens ?? 0) + (item.completionTokens ?? 0)
         dayMap.set(day, (dayMap.get(day) ?? 0) + tokens)
       }

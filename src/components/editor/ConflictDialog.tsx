@@ -2,9 +2,10 @@ import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useEditorStore } from '@/stores/editor'
+import { formatDateTime } from '@/lib/date-utils'
 
 function formatRemote(ts: number): string {
-  return new Date(ts).toLocaleString()
+  return formatDateTime(ts)
 }
 
 function wordsCount(s: string): number {

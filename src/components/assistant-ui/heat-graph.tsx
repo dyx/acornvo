@@ -1,6 +1,7 @@
 "use client";
 
 import * as HeatGraphPrimitive from "heat-graph";
+import { formatDate } from '@/lib/date-utils';
 
 const COLORS = [
   "var(--color-paper-3)",
@@ -88,11 +89,7 @@ function CellTooltip() {
       {({ cell }) => (
         <>
           <strong>{cell.count} tokens</strong> on{" "}
-          {cell.date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {formatDate(cell.date)}
         </>
       )}
     </HeatGraphPrimitive.Tooltip>

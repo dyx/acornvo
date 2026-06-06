@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Loader2 } from 'lucide-react'
-import { format } from 'date-fns'
+import { formatDateTime } from '@/lib/date-utils'
 
 export interface AiReviewDialogProps {
   open: boolean
@@ -46,7 +46,7 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
   let reviewedAt = String(fm.ai_reviewed_at ?? '')
   if (reviewedAt) {
     try {
-      reviewedAt = format(new Date(reviewedAt), 'yyyy-MM-dd HH:mm:ss')
+      reviewedAt = formatDateTime(reviewedAt)
     } catch {
       // ignore parsing errors
     }

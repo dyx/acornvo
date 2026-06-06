@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChatStore } from '@/stores/chat'
 import { type ToolStep } from './bubbleSelectors'
+import { formatChatTime } from '@/lib/date-utils'
 import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -117,7 +118,7 @@ export function MessageFooter({ messageId, isUser }: { messageId: string, isUser
   const isErrorTail = isLastAssistant && Boolean(me.error || me.status === 'error')
 
   const timeStr = me.createdAt 
-    ? new Date(me.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    ? formatChatTime(me.createdAt)
     : ''
 
   return (

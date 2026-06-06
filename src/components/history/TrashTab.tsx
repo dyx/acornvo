@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { formatRelativeTime } from '@/lib/date-utils'
 import { ipc } from '@/ipc/client'
 import { EmptyState } from './EmptyState'
 import type { OpsItem, Op } from '@shared/ops-types'
@@ -37,7 +36,7 @@ function opBadgeColor(op: Op): string {
 
 function formatTime(ts: string): string {
   try {
-    return formatDistanceToNow(new Date(ts), { addSuffix: true, locale: zhCN })
+    return formatRelativeTime(ts)
   } catch {
     return ts
   }

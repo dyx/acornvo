@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
 import { deriveBubbleItems, type ToolStep } from './bubbleSelectors'
+import { formatChatTime } from '@/lib/date-utils'
 import { ScrollToBottomButton } from './ScrollToBottomButton'
 import { MarkdownText } from '@/components/assistant-ui/markdown-text'
 import { MessageProvider, MessagePrimitive } from '@assistant-ui/react'
@@ -121,7 +122,7 @@ function MessageFooter({ item }: { item: BubbleItem }) {
   const isErrorTail = isLastAssistant && Boolean(me?.error || me?.status === 'error')
 
   const timeStr = item.createdAt 
-    ? new Date(item.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    ? formatChatTime(item.createdAt)
     : ''
 
   return (
