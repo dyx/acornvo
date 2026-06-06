@@ -60,9 +60,7 @@ function ReasoningRoot({
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open) {
-        lockScroll();
-      }
+      lockScroll();
       if (!isControlled) {
         setUncontrolledOpen(open);
       }
@@ -178,19 +176,12 @@ function ReasoningContent({
       data-slot="reasoning-content"
       className={cn(
         "aui-reasoning-content text-muted-foreground relative overflow-hidden text-sm outline-none",
-        "group/collapsible-content ease-out",
-        "data-[state=closed]:animate-collapsible-up",
-        "data-[state=open]:animate-collapsible-down",
-        "data-[state=closed]:fill-mode-forwards",
         "data-[state=closed]:pointer-events-none",
-        "data-[state=open]:duration-(--animation-duration)",
-        "data-[state=closed]:duration-(--animation-duration)",
         className,
       )}
       {...props}
     >
       {children}
-      <ReasoningFade />
     </CollapsibleContent>
   );
 }
@@ -200,16 +191,7 @@ function ReasoningText({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="reasoning-text"
       className={cn(
-        "aui-reasoning-text relative z-0 max-h-64 space-y-4 overflow-y-auto pt-2 pb-2 leading-relaxed",
-        "transform-gpu transition-[transform,opacity]",
-        "group-data-[state=open]/collapsible-content:animate-in",
-        "group-data-[state=closed]/collapsible-content:animate-out",
-        "group-data-[state=open]/collapsible-content:fade-in-0",
-        "group-data-[state=closed]/collapsible-content:fade-out-0",
-        "group-data-[state=open]/collapsible-content:slide-in-from-top-4",
-        "group-data-[state=closed]/collapsible-content:slide-out-to-top-4",
-        "group-data-[state=open]/collapsible-content:duration-(--animation-duration)",
-        "group-data-[state=closed]/collapsible-content:duration-(--animation-duration)",
+        "aui-reasoning-text relative z-0 max-h-64 space-y-4 overflow-y-auto pt-2 leading-relaxed",
         className,
       )}
       {...props}

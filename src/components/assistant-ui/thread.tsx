@@ -63,11 +63,11 @@ export const Thread: FC = () => {
         ref={viewportRef}
         turnAnchor="bottom"
         data-slot="aui_thread-viewport"
-        className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
+        className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll"
       >
         <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4">
           {/* Top boundary blur */}
-          <div className="pointer-events-none sticky top-0 z-10 h-8 -mx-4 px-4 bg-gradient-to-b from-background to-transparent" />
+          <div className="pointer-events-none sticky top-0 z-10 h-4 -mx-4 px-4 bg-gradient-to-b from-background to-transparent" />
 
           <div className="pt-2">
             <AuiIf condition={(s) => s.thread.isEmpty}>
@@ -90,8 +90,8 @@ export const Thread: FC = () => {
         </div>
       </ThreadPrimitive.Viewport>
 
-      <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col px-4 bg-background pb-4 md:pb-6 relative mt-auto">
-        <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
+      <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col px-4 bg-background pt-4 pb-2 relative mt-auto">
+        <div className="pointer-events-none absolute inset-x-0 -top-4 h-4 bg-gradient-to-t from-background to-transparent" />
         <ScrollToBottomButton 
           containerRef={viewportRef} 
           threshold={300}
@@ -148,7 +148,7 @@ const Composer: FC = () => {
       >
         <ComposerPrimitive.Input
           placeholder="Send a message..."
-          className="aui-composer-input placeholder:text-muted-foreground/80 max-h-32 min-h-10 w-full resize-none bg-transparent px-1.75 py-1 text-sm outline-none"
+          className="aui-composer-input placeholder:text-muted-foreground/80 max-h-64 w-full resize-none bg-transparent px-1.75 py-1 text-base outline-none"
           rows={1}
           autoFocus
           aria-label="Message input"
@@ -206,6 +206,7 @@ const AssistantMessage: FC = () => {
   // removed unused action bar constants
 
   const parts = useAuiState((s) => s.message.parts);
+  const isRunning = useAuiState((s) => s.message.status?.type === "running");
 
   return (
     <MessagePrimitive.Root
@@ -216,7 +217,10 @@ const AssistantMessage: FC = () => {
       <div
         data-slot="aui_assistant-message-content"
         // [contain-intrinsic-size:auto_24px] fixes issue #4104, don't change without checking for regressions
-        className="text-foreground px-2 leading-relaxed wrap-break-word [contain-intrinsic-size:auto_24px] [content-visibility:auto]"
+        className={cn(
+          "text-foreground px-2 leading-relaxed wrap-break-word",
+          !isRunning && "[contain-intrinsic-size:auto_24px] [content-visibility:auto]"
+        )}
       >
         <MessagePrimitive.GroupedParts
           groupBy={(part) => {
@@ -251,9 +255,9 @@ const AssistantMessage: FC = () => {
               }
               case "group-reasoning":
                 return (
-                  <div className="relative pb-5 pl-8 group/item">
+                  <div className="relative pb-2 pl-8 group/item">
                     {/* Timeline vertical line */}
-                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
+                    <div className="absolute left-[7.5px] top-[33px] bottom-[-3px] w-[1px] bg-border/60" />
                     {/* Timeline dot */}
                     <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
                     <ReasoningText className="text-muted-foreground">{children}</ReasoningText>
@@ -261,22 +265,22 @@ const AssistantMessage: FC = () => {
                 );
               case "group-text":
                 return (
-                  <div className="relative pb-5 pl-8 group/item">
+                  <div className="relative pb-2 pl-8 group/item">
                     {/* Timeline vertical line */}
-                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
+                    <div className="absolute left-[7.5px] top-[33px] bottom-[-3px] w-[1px] bg-border/60" />
                     {/* Timeline dot */}
                     <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
-                    <div className="text-muted-foreground opacity-80">{children}</div>
+                    <div className="text-muted-foreground opacity-80 pt-2">{children}</div>
                   </div>
                 );
               case "group-tool":
                 return (
-                  <div className="relative pb-5 pl-8 flex flex-col gap-2 group/item">
+                  <div className="relative pb-2 pl-8 flex flex-col gap-2 group/item">
                     {/* Timeline vertical line */}
-                    <div className="absolute left-[7px] top-[18px] bottom-[-18px] border-l-2 border-solid border-border/60 group-last/item:hidden" />
+                    <div className="absolute left-[7.5px] top-[33px] bottom-[-3px] w-[1px] bg-border/60" />
                     {/* Timeline dot */}
                     <div className="absolute left-[5px] top-[15px] w-1.5 h-1.5 rounded-full bg-muted-foreground/70 ring-[6px] ring-background z-10" />
-                    {children}
+                    <div className="pt-2 flex flex-col gap-2">{children}</div>
                   </div>
                 );
               case "text":
