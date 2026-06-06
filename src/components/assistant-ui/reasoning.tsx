@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useRef, useState } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { BrainIcon, ChevronDownIcon } from "lucide-react";
+import { SparklesIcon, ChevronDownIcon } from "lucide-react";
 import {
   useScrollLock,
   useAuiState,
@@ -134,7 +134,7 @@ function ReasoningTrigger({
       )}
       {...props}
     >
-      <BrainIcon
+      <SparklesIcon
         data-slot="reasoning-trigger-icon"
         className="aui-reasoning-trigger-icon size-4 shrink-0"
       />

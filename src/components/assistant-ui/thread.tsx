@@ -206,6 +206,9 @@ const AssistantMessage: FC = () => {
   // removed unused action bar constants
 
   const parts = useAuiState((s) => s.message.parts);
+  const content = useAuiState((s) => s.message.content) as any[];
+  const messageId = useAuiState((s) => s.message.id);
+  const originalMessage = useChatStore((s) => s.activeSessionId ? s.bySession[s.activeSessionId]?.messages.find(m => String(m.id) === messageId) : null);
   const isRunning = useAuiState((s) => s.message.status?.type === "running");
 
   return (
@@ -241,9 +244,12 @@ const AssistantMessage: FC = () => {
             switch (part.type) {
               case "group-chainOfThought": {
                 const running = part.status.type === "running";
+                const reasoningContent = content?.find((c: any) => c.type === 'reasoning');
+                const duration = reasoningContent?.duration || originalMessage?.reasoningDuration;
+                
                 return (
                   <ReasoningRoot defaultOpen={running} className="mb-2 w-full ml-1" variant="ghost">
-                    <ReasoningTrigger active={running} />
+                    <ReasoningTrigger active={running} duration={duration} />
                     <ReasoningContent aria-busy={running} className="relative mt-3">
                       <div className="flex flex-col">
                         {children}

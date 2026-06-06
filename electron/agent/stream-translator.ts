@@ -32,6 +32,7 @@ export interface TranslatorDeps {
   ) => void
   /** AIMessage.id values already persisted; used to skip duplicates after HITL resume. */
   seenAiMessageIds: Set<string>
+  reasoningState?: { startTime: number; duration?: number; isStandardProvider?: boolean }
 }
 
 function alreadySeen(seen: Set<string>, msg: AIMessage): boolean {
@@ -61,7 +62,13 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   let contentStr = typeof msg.content === 'string' ? msg.content : ''
   const reasoning = msg.additional_kwargs?.reasoning_content
   if (typeof reasoning === 'string' && reasoning) {
-    contentStr = `<think>\n${reasoning}</think>\n\n${contentStr}`
+    const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
+    contentStr = `<think${durationAttr}>\n${reasoning}</think>\n\n${contentStr}`
+  } else if (contentStr.includes('<think')) {
+    const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
+    if (durationAttr) {
+      contentStr = contentStr.replace(/<think>/, `<think${durationAttr}>`)
+    }
   }
 
   // Deduplicate replayed historical messages across runs by checking if the tool call already exists.
@@ -211,12 +218,31 @@ export async function translateStreamEntry(
     const reasoning = chunkMsg.additional_kwargs?.reasoning_content
 
     if (typeof reasoning === 'string' && reasoning) {
+      if (!deps.reasoningState) {
+        deps.reasoningState = { startTime: Date.now(), isStandardProvider: true }
+      }
+      deps.reasoningState.isStandardProvider = true
       deps.emit({ type: 'reasoning-delta', text: reasoning })
     }
 
     const content = chunkMsg.content
     const actualContent = typeof content === 'string' ? content : ''
     if (actualContent) {
+      if (actualContent.includes('<think')) {
+        if (!deps.reasoningState) {
+          deps.reasoningState = { startTime: Date.now() }
+        }
+      }
+
+      if (deps.reasoningState && deps.reasoningState.duration === undefined) {
+        // Stop timer if we see </think>
+        if (actualContent.includes('</think>')) {
+          deps.reasoningState.duration = Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+        } else if (deps.reasoningState.isStandardProvider) {
+          // It's a standard provider (we saw reasoning-delta earlier), and this is the first text-delta!
+          deps.reasoningState.duration = Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+        }
+      }
       deps.emit({ type: 'text-delta', text: actualContent })
     }
 

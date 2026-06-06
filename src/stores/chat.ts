@@ -21,6 +21,9 @@ export interface ChatMessage {
   toolCalls?: { id: string; name: string; args: unknown }[]
   toolCallId?: string
 
+  reasoningStartTime?: number
+  reasoningDuration?: number
+
   createdAt: number
   error?: string
   status?: 'pending' | 'streaming' | 'done' | 'error'
@@ -523,9 +526,14 @@ function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'te
       nextMessages = cur.messages.map((m, i) => {
         if (i !== lastIdx) return m
         if (target === 'reasoning') {
-          return { ...m, reasoningText: (m.reasoningText || '') + txt }
+          const reasoningStartTime = m.reasoningStartTime || Date.now()
+          return { ...m, reasoningText: (m.reasoningText || '') + txt, reasoningStartTime }
         } else {
-          return { ...m, text: m.text + txt }
+          let reasoningDuration = m.reasoningDuration
+          if (m.reasoningStartTime && !m.reasoningDuration) {
+            reasoningDuration = Math.round((Date.now() - m.reasoningStartTime) / 1000)
+          }
+          return { ...m, text: m.text + txt, reasoningDuration }
         }
       })
     } else {
@@ -536,6 +544,7 @@ function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'te
           role: 'assistant' as const,
           text: target === 'text' ? txt : '',
           reasoningText: target === 'reasoning' ? txt : undefined,
+          reasoningStartTime: target === 'reasoning' ? Date.now() : undefined,
           status: 'streaming' as const,
           createdAt: Date.now()
         }

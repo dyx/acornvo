@@ -58,18 +58,23 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       let text = msg.text || '';
       let reasoningText = msg.reasoningText || '';
       
-      // Fallback parsing for historical messages from DB that haven't been split yet
-      if (!reasoningText && text.includes('<think>')) {
-        const thinkMatches = [...text.matchAll(/<think>([\s\S]*?)<\/think>/g)];
+      // Fallback parsing for historical messages from DB that haven't been split yet,
+      // or for models that leak <think> tags into regular content chunks.
+      let reasoningDuration = 0;
+      if (text.includes('<think') || text.includes('</think>')) {
+        const thinkMatches = [...text.matchAll(/<think(?:\s+duration="(\d+)")?>([\s\S]*?)<\/think>/g)];
         if (thinkMatches.length > 0) {
-          reasoningText = thinkMatches.map(m => m[1]).join('\n\n');
-          text = text.replace(/<think>[\s\S]*?<\/think>\n*/g, '').trim();
+          const extracted = thinkMatches.map(m => m[2]).join('\n\n');
+          reasoningText = reasoningText ? reasoningText + '\n\n' + extracted : extracted;
+          reasoningDuration = thinkMatches.reduce((acc, m) => acc + (parseInt(m[1] || '0', 10)), 0);
+          text = text.replace(/<think(?:\s+duration="\d+")?>[\s\S]*?<\/think>\n*/g, '').trim();
         }
 
-        const openThinkMatch = text.match(/<think>([\s\S]*)$/);
+        const openThinkMatch = text.match(/<think(?:\s+duration="(\d+)")?>([\s\S]*)$/);
         if (openThinkMatch) {
-          reasoningText = reasoningText ? reasoningText + '\n\n' + openThinkMatch[1] : openThinkMatch[1];
-          text = text.replace(/<think>[\s\S]*$/, '').trim();
+          reasoningText = reasoningText ? reasoningText + '\n\n' + openThinkMatch[2] : openThinkMatch[2];
+          reasoningDuration += parseInt(openThinkMatch[1] || '0', 10);
+          text = text.replace(/<think(?:\s+duration="\d+")?>[\s\S]*$/, '').trim();
         } else if (thinkMatches.length === 0) {
           text = text.replace(/<\/think>\n*/g, '').trim();
         }
@@ -82,7 +87,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       const content: any[] = [];
       if (reasoningText) {
-        content.push({ type: 'reasoning', text: reasoningText });
+        content.push({ type: 'reasoning', text: reasoningText, duration: msg.reasoningDuration || reasoningDuration || undefined });
       }
       
       if (text || !reasoningText) {

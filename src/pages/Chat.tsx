@@ -207,7 +207,7 @@ export function Chat() {
             </header>
 
             <section className="flex min-h-0 flex-1 flex-col relative bg-transparent">
-              <Thread />
+              <Thread key={activeSessionId} />
             </section>
           </main>
 
