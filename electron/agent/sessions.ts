@@ -115,7 +115,8 @@ export function createSessions(): SessionsDao {
     async truncate(sessionId, messageId) {
       const d = db()
       const tx = d.transaction(() => {
-        const target = d.prepare('SELECT created_at FROM session_messages WHERE id = ? AND session_id = ?').get(messageId, sessionId) as any
+        const numId = Number(messageId)
+        const target = d.prepare('SELECT created_at FROM session_messages WHERE id = ? AND session_id = ?').get(numId, sessionId) as any
         if (!target) return
         
         // Delete messages from target timestamp onwards

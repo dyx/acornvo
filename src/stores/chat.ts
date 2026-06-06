@@ -489,7 +489,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set((s) => {
       const cur = s.bySession[sid]
       if (!cur) return s
-      const idx = cur.messages.findIndex((m) => m.id === messageId)
+      const idx = cur.messages.findIndex((m) => String(m.id) === String(messageId))
       if (idx === -1) return s
       return {
         bySession: {
@@ -737,7 +737,9 @@ function subscribeSessionStream(sid: string): void {
           if (last && last.role === 'assistant' && last.status === 'streaming') {
             const merged: ChatMessage = {
               ...last,
-              id: incoming.id,
+              // Keep last.id (temp ID) — changing to incoming.id (DB ID) causes
+              // assistant-ui's MessageRepository to create a duplicate branch
+              // under the same parent, inflating BranchPicker counts.
               toolCalls: incoming.toolCalls ?? last.toolCalls,
               text: last.text || incoming.text,
               status: last.status
