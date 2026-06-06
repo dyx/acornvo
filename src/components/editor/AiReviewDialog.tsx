@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Loader2 } from 'lucide-react'
 import { formatDateTime } from '@/lib/date-utils'
 
@@ -53,16 +53,16 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
   }
 
   return (
-    <Sheet open={props.open} onOpenChange={(open) => !open && !showLoader && props.onClose()}>
-      <SheetContent className="font-review sm:max-w-xl overflow-y-auto">
+    <Dialog open={props.open} onOpenChange={(open) => !open && !showLoader && props.onClose()}>
+      <DialogContent className="font-review sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         {showLoader && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
-        <SheetHeader>
-          <SheetTitle>{t('editor.ai.drawer.title')}</SheetTitle>
-        </SheetHeader>
+        <DialogHeader>
+          <DialogTitle>{t('editor.ai.drawer.title')}</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-6 py-4">
           <section className="space-y-2">
@@ -127,7 +127,7 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
             <Button onClick={() => handleAction(props.onAcceptAll)}>{t('editor.ai.accept')}</Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
