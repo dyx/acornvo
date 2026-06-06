@@ -9,9 +9,11 @@ import { NewTabPage } from '@/components/browser/NewTabPage'
 import { ClipPreviewDialog } from '@/components/browser/ClipPreviewDialog'
 import { ClipErrorToast } from '@/components/browser/ClipErrorToast'
 import { useBrowserHotkeys } from '@/hooks/useBrowserHotkeys'
+import { useRootStore } from '@/stores/root'
 
 export function Browse(): JSX.Element {
   useBrowserHotkeys()
+  const sidebarOpen = useRootStore((s) => s.sidebarOpen)
   const tabs = useBrowserStore((s) => s.tabs)
   const activeTabId = useBrowserStore((s) => s.activeTabId)
   const bookmarksOpen = useBrowserStore((s) => s.bookmarksOpen)
@@ -86,17 +88,19 @@ export function Browse(): JSX.Element {
       width: rect.width,
       height: rect.height
     })
-  }, [bookmarksOpen, setViewport])
+  }, [bookmarksOpen, setViewport, sidebarOpen])
 
   return (
     <div className="flex h-full" data-testid="browse-page">
-      {bookmarksOpen && (
-        <aside className="flex flex-col w-[280px] shrink-0 border-r border-[color:var(--color-line)] overflow-hidden bg-[color:var(--color-paper-2)]">
+      <aside className={`flex flex-col shrink-0 overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+        sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+      }`}>
+        <div className="w-[280px] h-full flex flex-col">
           <BookmarkSidebar />
-        </aside>
-      )}
+        </div>
+      </aside>
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TabBar />
+        <TabBar sidebarOpen={sidebarOpen} />
         <AddressBar />
         <div className="relative flex-1">
           <div

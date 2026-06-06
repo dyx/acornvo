@@ -6,8 +6,10 @@ export type Locale = 'zh-CN' | 'en-US'
 export type RootState = {
   theme: Theme
   locale: Locale
+  sidebarOpen: boolean
   setTheme: (theme: Theme) => void
   setLocale: (locale: Locale) => void
+  toggleSidebar: () => void
 }
 
 function resolveSystemTheme(): 'light' | 'dark' {
@@ -38,11 +40,13 @@ function bindSystemThemeListener(store: { getState: () => RootState }): void {
 export const useRootStore = create<RootState>((set) => ({
   theme: 'system',
   locale: 'zh-CN',
+  sidebarOpen: true,
   setTheme: (theme) => {
     set({ theme })
     applyThemeToDocument(theme)
   },
-  setLocale: (locale) => set({ locale })
+  setLocale: (locale) => set({ locale }),
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen }))
 }))
 
 // One-time setup — called from src/main.tsx after store is imported.

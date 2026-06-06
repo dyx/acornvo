@@ -31,8 +31,9 @@ export function AppRail(): JSX.Element {
     <TooltipProvider delayDuration={1500}>
       <nav
         aria-label="app navigation"
-        className="flex w-12 shrink-0 flex-col items-center border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] pt-10 pb-3"
+        className="relative flex w-12 shrink-0 flex-col items-center bg-[color:var(--color-paper-2)] pt-10 pb-3"
       >
+        <div className="absolute right-0 top-[40px] bottom-0 w-[1px] bg-[color:var(--color-line)]" />
         <Tooltip>
           <TooltipTrigger asChild>
             <button

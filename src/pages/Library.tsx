@@ -3,12 +3,14 @@ import type { JSX } from 'react'
 import { useBlocker } from 'react-router-dom'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
+import { useRootStore } from '@/stores/root'
 import { VirtualFileList } from '@/components/library/VirtualFileList'
 import { EmbeddedEditorPanel } from '@/components/library/EmbeddedEditorPanel'
 import { IndexBanner } from '@/components/library/IndexBanner'
 
 export function Library(): JSX.Element {
   const refresh = useLibraryStore((s) => s.refresh)
+  const sidebarOpen = useRootStore((s) => s.sidebarOpen)
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     if (currentLocation.pathname === nextLocation.pathname) return false
@@ -34,8 +36,14 @@ export function Library(): JSX.Element {
       <IndexBanner />
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Combined List with Tabs */}
-        <div className="flex w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)]">
-          <VirtualFileList />
+        <div
+          className={`flex flex-shrink-0 flex-col overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+            sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+          }`}
+        >
+          <div className="w-[280px] h-full flex flex-col">
+            <VirtualFileList />
+          </div>
         </div>
 
         {/* Right Column: Editor */}

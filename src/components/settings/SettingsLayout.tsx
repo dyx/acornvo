@@ -29,11 +29,8 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
     <div className="flex h-full w-full bg-[color:var(--color-paper)]">
       <nav
         aria-label="settings"
-        className="flex w-52 shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-4"
+        className="flex w-[280px] shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-4 pt-10"
       >
-        <h2 className="px-3 pb-3 text-[10px] font-mono font-semibold uppercase tracking-[0.1em] text-[color:var(--color-ink-4)]">
-          {t('settings.title')}
-        </h2>
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}

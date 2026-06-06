@@ -12,6 +12,7 @@ import {
 import { useChatStore } from '@/stores/chat'
 import { useProvidersStore } from '@/stores/providers'
 import { useSettingsStore } from '@/stores/settings'
+import { useRootStore } from '@/stores/root'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -151,6 +152,7 @@ export function Chat() {
   const refreshProviders = useProvidersStore((s) => s.refresh)
   const defaultChatModelId = useSettingsStore((s) => s.ai.defaultChatModelId)
   const models = useProvidersStore((s) => s.models)
+  const sidebarOpen = useRootStore((s) => s.sidebarOpen)
 
   const didInit = useRef(false)
   useEffect(() => {
@@ -194,9 +196,13 @@ export function Chat() {
         <div className="flex h-full w-full bg-background" data-testid="chat-page-root">
           <aside
             data-testid="chat-session-list"
-            className="flex shrink-0 flex-col border-r border-[color:var(--color-line)] bg-muted/20 overflow-hidden w-[280px]"
+            className={`flex shrink-0 flex-col bg-muted/20 overflow-hidden pt-10 transition-all duration-300 ${
+              sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+            }`}
           >
-            <ConversationsAdapter />
+            <div className="w-[280px] h-full flex flex-col">
+              <ConversationsAdapter />
+            </div>
           </aside>
 
           <main
@@ -204,8 +210,9 @@ export function Chat() {
             className="flex min-w-0 flex-1 flex-col overflow-hidden relative"
           >
             <SessionsErrorBanner />
-            <header className="flex h-14 shrink-0 items-center gap-3 px-5 bg-transparent z-10">
-              <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
+            <header className={`flex h-14 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag] border-b border-[color:var(--color-line)]`}>
+              <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[180px]'}`} />
+              <h2 className={`text-[15px] font-medium m-0 flex-1 truncate text-foreground [-webkit-app-region:no-drag] transition-[padding] duration-300 ${sidebarOpen ? 'pl-5' : 'pl-0'}`}>
                 {title}
               </h2>
               {displayModelId && (
