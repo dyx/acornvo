@@ -26,6 +26,7 @@ export interface LibraryState {
   filter: FileFilter
   orderBy: OrderBy
   pagination: Pagination
+  ftsMatchedPaths?: Set<string>
 
   // --- list view ---
   allItems: FileSummary[]
@@ -75,7 +76,8 @@ const initialState = {
 function applyLocalQuery(
   allItems: FileSummary[],
   filter: FileFilter,
-  orderBy: OrderBy
+  orderBy: OrderBy,
+  ftsMatchedPaths?: Set<string>
 ): FileSummary[] {
   let items = [...allItems]
 
@@ -137,8 +139,12 @@ function applyLocalQuery(
 
     // text search
     if (qText) {
-      const target = ((f.title ?? '') + ' ' + f.path).toLowerCase()
-      if (!target.includes(qText)) return false
+      if (ftsMatchedPaths) {
+        if (!ftsMatchedPaths.has(f.path)) return false
+      } else {
+        const target = ((f.title ?? '') + ' ' + f.path).toLowerCase()
+        if (!target.includes(qText)) return false
+      }
     }
 
     return true
@@ -189,6 +195,27 @@ function applyLocalQuery(
   return items
 }
 
+async function fetchFtsPaths(qText: string): Promise<Set<string> | undefined> {
+  if (!qText) return undefined
+  const tokens = qText.split(/\s+/)
+  const remaining: string[] = []
+  for (const t of tokens) {
+    if (!t.startsWith('#') && !t.startsWith('@')) {
+      remaining.push(t)
+    }
+  }
+  const cleanQ = remaining.join(' ')
+  if (!cleanQ) return undefined
+
+  try {
+    const res = await ipc.search.fullText(cleanQ, { limit: 1000 })
+    return new Set(res.items.map(i => i.summary.path))
+  } catch (err) {
+    console.warn('FTS failed', err)
+    return undefined
+  }
+}
+
 export const useLibraryStore = create<LibraryState>((set, get) => ({
   ...initialState,
 
@@ -198,10 +225,17 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     for (const [k, v] of Object.entries(merged)) {
       if (v !== undefined) (filter as Record<string, unknown>)[k] = v
     }
+    
+    let ftsMatchedPaths = get().ftsMatchedPaths
+    if (partial.q !== undefined) {
+      ftsMatchedPaths = await fetchFtsPaths(partial.q || '')
+    }
+
     const { allItems, orderBy } = get()
-    const items = applyLocalQuery(allItems, filter, orderBy)
+    const items = applyLocalQuery(allItems, filter, orderBy, ftsMatchedPaths)
     set({
       filter,
+      ftsMatchedPaths,
       pagination: { ...get().pagination, offset: 0 },
       items,
       total: items.length
@@ -209,8 +243,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   async setOrder(orderBy) {
-    const { allItems, filter } = get()
-    const items = applyLocalQuery(allItems, filter, orderBy)
+    const { allItems, filter, ftsMatchedPaths } = get()
+    const items = applyLocalQuery(allItems, filter, orderBy, ftsMatchedPaths)
     set({
       orderBy,
       pagination: { ...get().pagination, orderBy, offset: 0 },
@@ -224,7 +258,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     try {
       const allItems = await ipc.files.getAll()
       const { filter, orderBy } = get()
-      const items = applyLocalQuery(allItems, filter, orderBy)
+      const ftsMatchedPaths = await fetchFtsPaths(filter.q || '')
+      const items = applyLocalQuery(allItems, filter, orderBy, ftsMatchedPaths)
       
       const tagMap = new Map<string, number>()
       for (const item of allItems) {
@@ -237,7 +272,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         .sort((a, b) => b.usage_count - a.usage_count || a.name.localeCompare(b.name))
         .slice(0, 30)
 
-      set({ allItems, items, total: items.length, tagCloud, isLoading: false })
+      set({ allItems, items, total: items.length, tagCloud, isLoading: false, ftsMatchedPaths })
     } catch (err) {
       set({ isLoading: false })
       throw err
@@ -270,9 +305,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ selectedPath: path, detailsByPath: next })
   },
   removeItem(path) {
-    const { allItems, filter, orderBy, selectedPath, detailsByPath } = get()
+    const { allItems, filter, orderBy, selectedPath, detailsByPath, ftsMatchedPaths } = get()
     const nextAllItems = allItems.filter(i => i.path !== path)
-    const nextItems = applyLocalQuery(nextAllItems, filter, orderBy)
+    const nextItems = applyLocalQuery(nextAllItems, filter, orderBy, ftsMatchedPaths)
     const nextDetails = new Map(detailsByPath)
     nextDetails.delete(path)
     set({

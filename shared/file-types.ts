@@ -16,10 +16,6 @@ export interface FileSummary {
   /** `frontmatter.title` or basename without `.md`. */
   title: string | null
   category: string | null
-  /** 1–5 or null when unrated (phase-15 will populate; today `null` means "unreviewed"). */
-  rating: number | null
-  /** AI-suggested rating before user accepts it */
-  ai_rating?: number | null
   /** ISO datetime of `clipped_at` or null. */
   clipped_at: string | null
   /** mtime of the file (Unix timestamp in ms) to use as a fallback sort key */
@@ -43,7 +39,7 @@ export interface FileSummary {
    * - `'pending'` — review job is waiting in the queue
    * - `'running'` — review job is actively executing
    * - `'failed'`  — last review job failed
-   * - `'done'`    — review completed (rating is populated)
+   * - `'done'`    — review completed
    */
   review_status: ReviewStatus
   /** Error message from the last failed review job, or null. */
@@ -60,8 +56,6 @@ export interface FileFilter {
   tags?: string[]
   /** Matches `f.path LIKE :pathPrefix || '%'`. Used for `inbox/` view. */
   pathPrefix?: string
-  /** Inclusive bounds. Either side may be omitted. */
-  rating?: { min?: number; max?: number }
   /** Title LIKE '%' || :q || '%'. NOT FTS5 — phase 8 owns full-text. */
   q?: string
 }
@@ -71,8 +65,6 @@ export type OrderBy =
   | 'clipped_asc'
   | 'title_asc'
   | 'title_desc'
-  | 'rating_desc'
-  | 'rating_asc'
 
 export interface Pagination {
   limit: number

@@ -76,7 +76,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const suggestedTitle = String(fm.ai_suggested_title ?? '')
   const tags = asStringArray(fm.ai_tags ?? fm.tags)
   const quotes = asStringArray(fm.ai_key_quotes ?? fm.highlights)
-  const rating = typeof fm.ai_rating === 'number' ? fm.ai_rating : summary.rating
   const category = String(fm.ai_category ?? summary.category ?? '')
 
   const handleAction = async (action: () => Promise<void> | void) => {
@@ -180,15 +179,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
               <span>·</span><span className="ml-1">{category}</span>
             </div>
           )}
-          {rating !== null && (
-            <div className="flex items-center gap-0.5">
-              <span>·</span>
-              <div className="ml-1 inline-flex items-center gap-1 rounded-full bg-[color:var(--color-paper-2)] px-2 py-0.5 border border-[color:var(--color-line)]">
-                <span className="font-semibold text-[color:var(--color-acorn)] leading-none">{rating}</span>
-                <span className="text-[10px] text-[color:var(--color-ink-3)] leading-none">/ 10</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Actionable Suggested Title */}
@@ -238,7 +228,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
               </AlertDescription>
             </Alert>
           </div>
-        ) : rating === null ? (
+        ) : summary.review_status === 'none' ? (
           <div className="mb-8 p-6 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-paper)] text-center flex flex-col items-center gap-3 shadow-sm">
             <Sparkles size={20} className="text-[color:var(--color-ink-4)]" />
             <span className="font-serif text-[15px] text-[color:var(--color-ink-3)]">

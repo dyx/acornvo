@@ -17,13 +17,11 @@ CREATE TABLE IF NOT EXISTS files (
   title TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.title')) VIRTUAL,
   url TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.url')) VIRTUAL,
   category TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.category')) VIRTUAL,
-  rating INTEGER GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.rating')) VIRTUAL,
   summary TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.summary')) VIRTUAL,
   clipped_at TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.clipped_at')) VIRTUAL,
   reviewed_at TEXT GENERATED ALWAYS AS (json_extract(frontmatter_json, '$.reviewed_at')) VIRTUAL
 );
 CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
-CREATE INDEX IF NOT EXISTS idx_files_rating ON files(rating);
 CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 
 

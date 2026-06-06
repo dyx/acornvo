@@ -22,8 +22,6 @@ interface FileRow {
   path: string
   title: string | null
   category: string | null
-  rating: number | null
-  ai_rating: number | null
   clipped_at: string | null
   mtime: number
   created_at: number
@@ -35,11 +33,9 @@ interface FileRow {
 }
 
 function deriveReviewStatus(
-  rating: number | null,
   hasSummary: boolean,
   jobStatus: string | null
 ): ReviewStatus {
-  if (rating !== null) return 'done'
   if (hasSummary) return 'done'
   if (jobStatus === 'running') return 'running'
   if (jobStatus === 'pending') return 'pending'
@@ -54,8 +50,6 @@ async function getAll(): Promise<FileSummary[]> {
       f.path,
       f.title,
       f.category,
-      f.rating,
-      json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
       f.clipped_at,
       f.mtime,
       f.created_at,
@@ -87,7 +81,7 @@ async function getAll(): Promise<FileSummary[]> {
 
   return rows.map((r) => {
     const hasSummary = r.has_summary === 1
-    const reviewStatus = deriveReviewStatus(r.rating, hasSummary, r.job_status)
+    const reviewStatus = deriveReviewStatus(hasSummary, r.job_status)
     let tags: string[] = []
     if (r.tags_json) {
       try {
@@ -99,8 +93,6 @@ async function getAll(): Promise<FileSummary[]> {
       path: r.path,
       title: r.title,
       category: r.category,
-      rating: r.rating,
-      ai_rating: r.ai_rating,
       clipped_at: r.clipped_at,
       mtime: r.mtime,
       created_at: r.created_at,
@@ -124,8 +116,7 @@ async function get(path: string): Promise<{
   try {
     row = db
       .prepare(
-        `SELECT f.path, f.title, f.category, f.rating, 
-                json_extract(f.frontmatter_json, '$.ai_rating') AS ai_rating,
+        `SELECT f.path, f.title, f.category, 
                 f.clipped_at,
                 f.mtime,
                 f.created_at,
@@ -159,7 +150,7 @@ async function get(path: string): Promise<{
 
   const parsed = await fileHandlers.readParsed(path)
   const hasSummary = row.has_summary === 1
-  const reviewStatus = deriveReviewStatus(row.rating, hasSummary, row.job_status)
+  const reviewStatus = deriveReviewStatus(hasSummary, row.job_status)
   
   let tags: string[] = []
   if (row.tags_json) {
@@ -173,8 +164,6 @@ async function get(path: string): Promise<{
     path: row.path,
     title: row.title,
     category: row.category,
-    rating: row.rating,
-    ai_rating: row.ai_rating,
     clipped_at: row.clipped_at,
     mtime: row.mtime,
     created_at: row.created_at,

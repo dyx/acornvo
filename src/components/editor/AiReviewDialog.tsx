@@ -42,7 +42,6 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
   const summary = String(fm.ai_summary ?? '')
   const tags = asStringArray(fm.ai_tags)
   const quotes = asStringArray(fm.ai_key_quotes)
-  const rating = typeof fm.ai_rating === 'number' ? fm.ai_rating : null
   const category = String(fm.ai_category ?? '')
   let reviewedAt = String(fm.ai_reviewed_at ?? '')
   if (reviewedAt) {
@@ -80,12 +79,6 @@ export function AiReviewDialog(props: AiReviewDialogProps) {
           </section>
 
           <div className="flex gap-12">
-            {rating !== null && (
-              <section className="space-y-2">
-                <h3 className="text-sm font-medium">{t('editor.ai.rating')}</h3>
-                <p className="text-sm text-muted-foreground">{rating} / 5</p>
-              </section>
-            )}
 
             {category && (
               <section className="space-y-2">

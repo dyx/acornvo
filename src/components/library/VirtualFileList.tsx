@@ -10,7 +10,7 @@ import { useEditorStore } from '@/stores/editor'
 import { FileRow } from './FileRow'
 import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
-import { Search, SlidersHorizontal, Check, Folder, Hash, ArrowDownAZ, ArrowUpAZ, Clock, Star } from 'lucide-react'
+import { Search, SlidersHorizontal, Check, Folder, Hash, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,10 +135,6 @@ function ControlCenterMenu() {
           <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> 最早创建</div>
           {orderBy === 'clipped_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void setOrder('rating_desc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><Star size={12} className="text-[color:var(--color-ink-4)]"/> 最高评分</div>
-          {orderBy === 'rating_desc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => void setOrder('title_asc')} className="text-xs flex justify-between cursor-default">
           <div className="flex items-center gap-2"><ArrowDownAZ size={12} className="text-[color:var(--color-ink-4)]"/> 标题 A-Z</div>
           {orderBy === 'title_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
@@ -217,7 +213,7 @@ function ControlCenterMenu() {
         
         <div className="h-px bg-[color:var(--color-line)] my-1" />
         <DropdownMenuItem 
-          onClick={() => void setFilter({ rating: undefined, pathPrefix: undefined, category: undefined, tags: [] })}
+          onClick={() => void setFilter({ pathPrefix: undefined, category: undefined, tags: [] })}
           className="text-xs flex items-center justify-center text-[color:var(--color-ink-3)] py-1.5 cursor-default"
         >
           重置所有条件
@@ -337,19 +333,16 @@ export function VirtualFileList(): JSX.Element {
     switch (order) {
       case 'clipped_desc': return '最新创建'
       case 'clipped_asc': return '最早创建'
-      case 'rating_desc': return '最高评分'
       case 'title_asc': return '标题 A-Z'
       default: return '排序'
     }
   }
 
   const SortIcon = orderBy === 'clipped_desc' || orderBy === 'clipped_asc' 
-    ? Clock 
-    : orderBy === 'rating_desc' 
-      ? Star 
-      : ArrowDownAZ
+    ? Clock
+    : ArrowDownAZ
 
-  const hasFilters = (filter.tags && filter.tags.length > 0) || filter.category || (filter.rating?.min === 0)
+  const hasFilters = (filter.tags && filter.tags.length > 0) || filter.category
   
   return <div className="flex w-full flex-1 flex-col overflow-hidden bg-[color:var(--color-paper-2)]">
       <div className="flex h-[48px] shrink-0 items-center gap-2 px-3">
@@ -373,9 +366,6 @@ export function VirtualFileList(): JSX.Element {
             <SortIcon size={10} className="text-[color:var(--color-ink-4)]"/> {getSortLabel(orderBy)}
           </span>
           
-          {filter.rating?.min === 0 && (
-            <span className="text-[10px] text-[color:var(--color-ink-2)] whitespace-nowrap shrink-0">未复习</span>
-          )}
           {filter.category && (
             <TruncatedTooltip 
               className="text-[10px] text-[color:var(--color-ink-2)] flex items-center gap-1 shrink min-w-0 cursor-default"

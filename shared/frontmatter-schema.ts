@@ -23,7 +23,6 @@ export const FrontmatterSchema = z
     // 理果 (review) phase
     summary: z.string().optional(),
     highlights: z.array(z.string()).optional(),
-    rating: z.number().int().min(1).max(10).optional(),
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),
     reviewed_at: z.string().datetime().optional(),
@@ -36,7 +35,6 @@ export const FrontmatterSchema = z
     ai_suggested_title: z.string().optional(),
     ai_tags: z.array(z.string()).optional(),
     ai_key_quotes: z.array(z.string()).optional(),
-    ai_rating: z.number().int().min(1).max(10).optional(),
     ai_category: z.string().optional(),
     ai_reviewed_at: z.string().optional(),
     ai_review_accepted_at: z.string().optional(),

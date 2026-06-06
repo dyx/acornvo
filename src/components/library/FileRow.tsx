@@ -2,7 +2,7 @@ import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FileSummary } from '@shared/ipc-contract'
 import { cn } from '@/lib/utils'
-import { Star, MoreVertical, Folder, Trash2 } from 'lucide-react'
+import { MoreVertical, Folder, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,21 +69,10 @@ export function FileRow({
         </div>
 
         <div className="flex items-center gap-2 mt-1 min-w-0">
-          {/* Rating or Status */}
-          {(file.rating !== null || file.ai_rating != null) ? (
-            <span 
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-1.5 py-[1px] shrink-0 text-[color:var(--color-acorn)]",
-                file.rating !== null 
-                  ? "bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)]" 
-                  : "bg-[color:var(--color-paper-3)] border border-dashed border-[color:var(--color-line)] opacity-80"
-              )} 
-              aria-label={`rating ${file.rating ?? file.ai_rating}`}
-            >
-              <Star size={9} className="fill-current opacity-80 -mt-[0.5px]" />
-              <span className="text-[10px] font-bold leading-none">
-                {file.rating ?? file.ai_rating}
-              </span>
+          {/* Status */}
+          {file.review_status === 'done' ? (
+            <span className="text-[10px] font-medium shrink-0 text-[color:var(--color-acorn)]">
+              {t('library.reviewed', 'AI 已理果')}
             </span>
           ) : (
             <span className={cn('text-[10px] font-medium shrink-0', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>
@@ -91,25 +80,7 @@ export function FileRow({
             </span>
           )}
 
-          {/* Tags */}
-          {file.tags.length > 0 && (
-            <div className="flex items-center gap-1 min-w-0 shrink">
-              <span className="text-[color:var(--color-line-2)] text-[10px] shrink-0">·</span>
-              {file.tags.slice(0, 2).map((tag) => (
-                <Badge
-                  key={tag}
-                  className="max-w-[80px] truncate shadow-none"
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {file.tags.length > 2 && (
-                <span className="font-mono text-[9px] text-[color:var(--color-ink-4)] shrink-0">
-                  +{file.tags.length - 2}
-                </span>
-              )}
-            </div>
-          )}
+
         </div>
       </div>
 

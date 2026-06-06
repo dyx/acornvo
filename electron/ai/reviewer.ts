@@ -221,7 +221,6 @@ export async function reviewClip(
       keyQuotes: Array.isArray(md.frontmatter.ai_key_quotes)
         ? (md.frontmatter.ai_key_quotes as string[])
         : [],
-      rating: typeof md.frontmatter.ai_rating === 'number' ? md.frontmatter.ai_rating : undefined,
       category: typeof md.frontmatter.ai_category === 'string' ? md.frontmatter.ai_category : undefined,
       reviewedAt: String(md.frontmatter.ai_reviewed_at)
     }
@@ -301,7 +300,6 @@ export async function reviewClip(
     suggestedTitle: parsed.suggestedTitle,
     tags: parsed.tags,
     keyQuotes: parsed.keyQuotes,
-    rating: parsed.rating,
     category: parsed.category,
     reviewedAt: new Date().toISOString()
   }
@@ -311,7 +309,6 @@ export async function reviewClip(
     // 以 AI 为准，直接覆盖正式字段
     title: result.suggestedTitle,
     summary: result.summary,
-    rating: result.rating,
     category: result.category,
     tags: result.tags,
     highlights: result.keyQuotes, // keyQuotes 映射到 highlights

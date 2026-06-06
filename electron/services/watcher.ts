@@ -353,7 +353,6 @@ async function flush(): Promise<void> {
         title: typeof ev.frontmatter.title === 'string' ? ev.frontmatter.title : null,
         summary: typeof ev.frontmatter.summary === 'string' ? ev.frontmatter.summary : null,
         category: typeof ev.frontmatter.category === 'string' ? ev.frontmatter.category : null,
-        rating: typeof ev.frontmatter.rating === 'number' ? ev.frontmatter.rating : null,
         content_hash: ev.content_hash,
         mtime: ev.mtimeMs!,
         size_bytes: ev.size!,

@@ -44,7 +44,6 @@ export interface AiReviewResult {
   suggestedTitle: string
   tags: string[]
   keyQuotes: string[]
-  rating?: number
   category?: string
   reviewedAt: string
 }

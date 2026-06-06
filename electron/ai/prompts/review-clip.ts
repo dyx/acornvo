@@ -53,8 +53,6 @@ export const AiReviewSchema = z.object({
   keyQuotes: z.array(z.string()).catch([])
     .transform(quotes => quotes.filter(q => q.trim().length > 0).slice(0, 3))
     .describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
-  rating: z.number().int().min(1).max(10).optional().catch(undefined)
-    .describe('1到10的整数评分：1-4为水文/软文，5-6为普通资讯，7-8为优秀教程/干货，9-10为深度洞察/专业研究。'),
   category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other']).optional().catch('Other')
     .describe('必须选择最符合的一个大类，如果都不符合请选 Other')
 })
@@ -83,7 +81,6 @@ export const reviewClip = {
       '  "suggestedTitle": "OpenAI 发布支持实时多模态的 GPT-4o 模型",',
       '  "tags": ["openai", "gpt-4o", "llm", "multimodal", "artificial-intelligence"],',
       '  "keyQuotes": ["原生支持实时音频和视觉输入，极大地降低了对话延迟。"],',
-      '  "rating": 8,',
       '  "category": "News"',
       '}'
     ].join('\n')
@@ -99,8 +96,7 @@ export const reviewClip = {
       '3. 生成高密度的 `suggestedTitle`。',
       '4. 提取 2-5 个 `tags`，必须是 kebab-case 的纯英文。',
       '5. 摘录 1-3 句一字不差的原文作为 `keyQuotes`。',
-      '6. 给出 `rating`（1-10分，参照水文到神作的标准）。',
-      '7. 给出 `category`（从 Enum 中严格选择一项）。'
+      '6. 给出 `category`（从 Enum 中严格选择一项）。'
     ].join('\n')
 
     return { system, user }

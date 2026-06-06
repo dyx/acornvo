@@ -8,7 +8,6 @@ interface QuickSwitchRow {
   path: string
   title: string | null
   category: string | null
-  rating: number | null
   clipped_at: string | null
   summary: string | null
   frontmatter_json: string | null
@@ -43,21 +42,20 @@ function rowToFileSummary(row: QuickSwitchRow): FileSummary {
     path: row.path,
     title: row.title ?? null,
     category: row.category ?? null,
-    rating: row.rating ?? null,
     clipped_at: row.clipped_at ?? null,
     mtime: 0, created_at: 0,
     site,
     has_summary: row.summary !== null && row.summary !== '',
     tags,
     is_reviewing: false,
-    review_status: row.rating !== null ? 'done' : 'none',
+    review_status: row.summary !== null && row.summary !== '' ? 'done' : 'none',
     review_error: null
   }
 }
 
 const QUICK_SWITCH_BASE = `
   SELECT
-    files.path, files.title, files.category, files.rating, files.clipped_at,
+    files.path, files.title, files.category, files.clipped_at,
     files.summary, files.frontmatter_json,
     json_extract(files.frontmatter_json, '$.tags') AS tags_json
   FROM files
@@ -173,7 +171,7 @@ export function fullText(
   const rows = db
     .prepare(
       `SELECT
-       files.path, files.title, files.category, files.rating, files.clipped_at,
+       files.path, files.title, files.category, files.clipped_at,
        files.summary, files.frontmatter_json,
        json_extract(files.frontmatter_json, '$.tags') AS tags_json
      FROM files
