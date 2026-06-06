@@ -23,7 +23,6 @@ import { useBootstrap } from './hooks/useBootstrap'
 import { Navigate } from 'react-router-dom'
 import type { JSX } from 'react'
 import Search from '@/pages/Search'
-import History from '@/pages/History'
 import { Browse } from '@/pages/Browse'
 import './i18n'
 import './index.css'
@@ -52,8 +51,6 @@ const router = createMemoryRouter([
       { path: 'browser', element: <Browse /> },
       { path: 'chat', element: <Chat /> },
       { path: 'settings/*', element: <Settings /> },
-      { path: 'history', element: <Navigate to="/history/trash" replace /> },
-      { path: 'history/:tab', element: <History /> },
       { path: 'search', element: <Search /> }
     ]
   }
