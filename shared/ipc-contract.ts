@@ -198,7 +198,9 @@ import type { Op, OpsItem } from './ops-types'
 export type {
   FileSummary,
   OrderBy,
-  CategoryNode
+  CategoryNode,
+  FileFilter,
+  Pagination
 } from './file-types'
 
 export type EolStyle = 'lf' | 'crlf' | 'mixed'

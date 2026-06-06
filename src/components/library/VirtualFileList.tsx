@@ -10,7 +10,7 @@ import { useEditorStore } from '@/stores/editor'
 import { FileRow } from './FileRow'
 import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
-import { Search, SlidersHorizontal, Check, Folder, Hash, ArrowDownAZ, ArrowUpAZ, Clock } from 'lucide-react'
+import { Search, SlidersHorizontal, Check, Folder, Hash, ArrowDownAZ, Clock } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -235,22 +235,24 @@ export function VirtualFileList(): JSX.Element {
   const removeItem = useLibraryStore((s) => s.removeItem)
   const setFilter = useLibraryStore((s) => s.setFilter)
   const [query, setQuery] = useState('')
+  const [isComposing, setIsComposing] = useState(false)
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null)
   const [trashTarget, setTrashTarget] = useState<string | null>(null)
 
-  // Use the local q from store if available, otherwise query state
+  // Only sync when filter.q is externally cleared (e.g. switching groves)
   useEffect(() => {
-    if (filter.q !== undefined && filter.q !== query) {
-      setQuery(filter.q)
+    if (filter.q === undefined) {
+      setQuery('')
     }
   }, [filter.q])
 
   useEffect(() => {
+    if (isComposing) return
     const id = setTimeout(() => {
       void setFilter({ q: query.length > 0 ? query : undefined })
     }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [query, setFilter])
+  }, [query, setFilter, isComposing])
 
   const parentRef = useRef<HTMLDivElement | null>(null)
   const virtualizer = useVirtualizer({
@@ -353,6 +355,8 @@ export function VirtualFileList(): JSX.Element {
             role="searchbox"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             placeholder="搜索标题或内容..."
             className="flex-1 bg-transparent text-[13px] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-4)] min-w-0"
           />

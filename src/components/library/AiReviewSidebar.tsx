@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Star, Sparkles, RefreshCw, Check, XCircle } from 'lucide-react'
+import { FileText, Sparkles, RefreshCw, Check, XCircle } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { useLibraryStore } from '@/stores/library'

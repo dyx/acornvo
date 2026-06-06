@@ -3,7 +3,6 @@ import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
-import { AiReviewBadge } from './AiReviewBadge'
 import { useAiDialog } from './useAiDialog'
 
 function isMac(): boolean {
@@ -16,7 +15,7 @@ export function EditorTitleBar(): JSX.Element {
   const ready = useEditorStore((s) => (s.state.kind === 'ready' ? s.state : null))
 
   const clipId = useEditorStore((s) => (s.state.kind === 'ready' ? (s.state.clipId ?? null) : null))
-  const { dialog, openDialog } = useAiDialog(clipId)
+  const { dialog } = useAiDialog(clipId)
 
   if (!ready) return <div className="h-10 border-b border-[color:var(--color-line-1)]" />
 
@@ -52,11 +51,7 @@ export function EditorTitleBar(): JSX.Element {
             </span>
           )}
         </div>
-        <AiReviewBadge
-          frontmatter={ready.frontmatter as Record<string, unknown>}
-          running={!!ready.aiRerunInflight}
-          onClick={openDialog}
-        />
+
         <span className="text-xs text-[color:var(--color-ink-3)]">
           {isMac() ? t('editor.shortcut_save') : t('editor.shortcut_save_win')}
         </span>

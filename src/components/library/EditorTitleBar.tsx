@@ -1,10 +1,17 @@
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Star, Sparkles, RefreshCw, Check, X, Edit3, Eye, PanelRightOpen, PanelRightClose } from 'lucide-react'
+import { Edit3, Eye, PanelRightOpen, PanelRightClose, CircleHelp } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
-import { cn } from '@/lib/utils'
 
 export interface EditorTitleBarProps {
   collapsed: boolean
@@ -18,8 +25,7 @@ export function EditorTitleBar({
   collapsed,
   isPreviewMode,
   onTogglePreview,
-  onToggleCollapse,
-  onOpenSidebar
+  onToggleCollapse
 }: EditorTitleBarProps): JSX.Element | null {
   const { t } = useTranslation()
   const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
@@ -54,6 +60,70 @@ export function EditorTitleBar({
               <p className="text-xs">{isPreviewMode ? "进入编辑模式" : "预览文档"}</p>
             </TooltipContent>
           </Tooltip>
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex size-[28px] items-center justify-center rounded-md text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] transition-colors cursor-pointer"
+                  >
+                    <CircleHelp size={15} />
+                  </button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">{t('editor.markdown_help', { defaultValue: 'Markdown 语法说明' })}</p>
+              </TooltipContent>
+            </Tooltip>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Markdown 语法指南</DialogTitle>
+                <DialogDescription>基础 Markdown 语法与快捷输入</DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 text-sm mt-2 text-[color:var(--color-ink)]">
+                <div>
+                  <h3 className="font-semibold mb-2">标题</h3>
+                  <pre className="text-xs bg-[color:var(--color-bg-2)] border border-[color:var(--color-line-1)] p-2 rounded"># 一级标题
+## 二级标题
+### 三级标题</pre>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">文本样式</h3>
+                  <pre className="text-xs bg-[color:var(--color-bg-2)] border border-[color:var(--color-line-1)] p-2 rounded">**粗体**
+*斜体*
+~~删除线~~
+`行内代码`</pre>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">列表</h3>
+                  <pre className="text-xs bg-[color:var(--color-bg-2)] border border-[color:var(--color-line-1)] p-2 rounded">- 无序列表项
+* 无序列表项
+
+1. 有序列表项
+2. 有序列表项
+
+- [ ] 待办事项
+- [x] 已完成事项</pre>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">块级元素</h3>
+                  <pre className="text-xs bg-[color:var(--color-bg-2)] border border-[color:var(--color-line-1)] p-2 rounded">&gt; 引用文字
+
+```语言
+代码块
+```
+
+--- (分隔线)</pre>
+                </div>
+                <div className="col-span-2">
+                  <h3 className="font-semibold mb-2">链接与图片</h3>
+                  <pre className="text-xs bg-[color:var(--color-bg-2)] border border-[color:var(--color-line-1)] p-2 rounded">[链接文本](https://example.com)
+![图片描述](https://example.com/image.jpg)</pre>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Tooltip>
             <TooltipTrigger

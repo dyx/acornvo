@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 
 export interface FileRowProps {
   file: FileSummary
