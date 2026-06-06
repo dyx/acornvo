@@ -353,7 +353,7 @@ export function VirtualFileList(): JSX.Element {
             role="searchbox"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索标题..."
+            placeholder="搜索标题或内容..."
             className="flex-1 bg-transparent text-[13px] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-4)] min-w-0"
           />
         </div>

@@ -1,17 +1,7 @@
 import type { JSX } from 'react'
-import { Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
 import { ipc } from '@/ipc/client'
-
-function ScoreBadge({ rating }: { rating: number }): JSX.Element {
-  return (
-    <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--color-paper-2)] px-2.5 py-0.5 border border-[color:var(--color-line)] w-fit">
-      <span className="text-[11px] font-bold text-[color:var(--color-acorn)] leading-none">{rating}</span>
-      <span className="text-[10px] text-[color:var(--color-ink-3)]">/ 10</span>
-    </div>
-  )
-}
 
 export function FrontmatterCard(): JSX.Element {
   const fm = useEditorStore((s) => (s.state.kind === 'ready' ? s.state.frontmatter : null))
@@ -33,7 +23,6 @@ export function FrontmatterCard(): JSX.Element {
   const category = get('category') as string | undefined
   const site = get('site') as string | undefined
   const title = get('title') as string | undefined
-  const rating = get('rating')
   const summary = get('summary') as string | undefined
   const highlights = (get('highlights') as string[] | undefined) ?? []
   const tags = (get('tags') as string[] | undefined) ?? []
@@ -48,7 +37,6 @@ export function FrontmatterCard(): JSX.Element {
         {site && <span>{site}</span>}
       </div>
       {title && <h2 className="text-base font-semibold">{title}</h2>}
-      {typeof rating === 'number' && <ScoreBadge rating={rating} />}
       {summary && <p className="text-[color:var(--color-ink-2)]">{summary}</p>}
       {aiSummary && (
         <div

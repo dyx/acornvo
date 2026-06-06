@@ -114,15 +114,6 @@ function applyLocalQuery(
       return false
     }
 
-    // rating
-    const isUnreviewed = filter.rating?.min === 0 && filter.rating?.max === 0
-    if (isUnreviewed && f.rating !== null) {
-      return false
-    } else if (!isUnreviewed) {
-      if (filter.rating?.min != null && (f.rating == null || f.rating < filter.rating.min)) return false
-      if (filter.rating?.max != null && (f.rating != null && f.rating > filter.rating.max)) return false
-    }
-
     // tags (UI)
     if (filter.tags && filter.tags.length > 0) {
       for (const t of filter.tags) {
@@ -183,10 +174,6 @@ function applyLocalQuery(
         if (!engA && engB) return -1
         return tB.localeCompare(tA, 'zh-CN')
       }
-      case 'rating_desc':
-        return (b.rating ?? -1) - (a.rating ?? -1)
-      case 'rating_asc':
-        return (a.rating ?? -1) - (b.rating ?? -1)
       default:
         return 0
     }
