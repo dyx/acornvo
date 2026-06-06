@@ -196,11 +196,11 @@ export function Chat() {
         <div className="flex h-full w-full bg-background" data-testid="chat-page-root">
           <aside
             data-testid="chat-session-list"
-            className={`flex shrink-0 flex-col bg-muted/20 overflow-hidden pt-10 transition-all duration-300 ${
-              sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+            className={`relative flex shrink-0 flex-col bg-muted/20 overflow-hidden pt-10 transition-all duration-300 ${
+              sidebarOpen ? 'w-[280px]' : 'w-0'
             }`}
           >
-            <div className="w-[280px] h-full flex flex-col">
+            <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
               <ConversationsAdapter />
             </div>
           </aside>
@@ -210,8 +210,8 @@ export function Chat() {
             className="flex min-w-0 flex-1 flex-col overflow-hidden relative"
           >
             <SessionsErrorBanner />
-            <header className={`flex h-14 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag] border-b border-[color:var(--color-line)]`}>
-              <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[180px]'}`} />
+            <header className={`flex h-10 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag] border-b border-[color:var(--color-line)]`}>
+              <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[76px]'}`} />
               <h2 className={`text-[15px] font-medium m-0 flex-1 truncate text-foreground [-webkit-app-region:no-drag] transition-[padding] duration-300 ${sidebarOpen ? 'pl-5' : 'pl-0'}`}>
                 {title}
               </h2>

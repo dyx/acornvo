@@ -40,8 +40,8 @@ export function EditorTitleBar({
   const { summary } = detail
 
   return (
-    <div className={`flex-none h-11 bg-[color:var(--color-paper)] flex items-center pr-4 relative z-10 after:content-[''] after:absolute after:top-full after:inset-x-0 after:h-6 after:bg-gradient-to-b after:from-[color:var(--color-paper)] after:to-transparent after:pointer-events-none [-webkit-app-region:drag]`}>
-      <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[180px]'}`} />
+    <div className={`flex-none h-10 bg-[color:var(--color-paper)] flex items-center pr-4 relative z-10 border-b border-[color:var(--color-line)] after:content-[''] after:absolute after:top-full after:inset-x-0 after:h-6 after:bg-gradient-to-b after:from-[color:var(--color-paper)] after:to-transparent after:pointer-events-none [-webkit-app-region:drag]`}>
+      <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[76px]'}`} />
       <div className={`flex flex-1 items-center justify-between transition-[padding] duration-300 ${sidebarOpen ? 'pl-4' : 'pl-0'}`}>
         <div className="flex items-center gap-3 overflow-hidden [-webkit-app-region:no-drag]">
         <h1 className="font-serif text-[16px] font-semibold text-[color:var(--color-ink)] truncate tracking-tight">

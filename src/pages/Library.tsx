@@ -37,11 +37,11 @@ export function Library(): JSX.Element {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Combined List with Tabs */}
         <div
-          className={`flex flex-shrink-0 flex-col overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
-            sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+          className={`relative flex flex-shrink-0 flex-col overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+            sidebarOpen ? 'w-[280px]' : 'w-0'
           }`}
         >
-          <div className="w-[280px] h-full flex flex-col">
+          <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
             <VirtualFileList />
           </div>
         </div>

@@ -29,8 +29,10 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
     <div className="flex h-full w-full bg-[color:var(--color-paper)]">
       <nav
         aria-label="settings"
-        className="flex w-[280px] shrink-0 flex-col border-r border-[color:var(--color-line)] bg-[color:var(--color-paper-2)] py-4 pt-10"
+        className="relative flex w-[280px] shrink-0 flex-col bg-[color:var(--color-paper-2)] py-4 pt-10"
       >
+        <div className="absolute right-0 top-[40px] bottom-0 w-[1px] bg-[color:var(--color-line)] pointer-events-none z-10" />
+        <div className="h-[9px] shrink-0" /> {/* Spacer to match bookmark search box top margin */}
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}

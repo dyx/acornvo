@@ -92,10 +92,10 @@ export function Browse(): JSX.Element {
 
   return (
     <div className="flex h-full" data-testid="browse-page">
-      <aside className={`flex flex-col shrink-0 overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
-        sidebarOpen ? 'w-[280px] border-r border-[color:var(--color-line)]' : 'w-0 border-r-0'
+      <aside className={`relative flex flex-col shrink-0 overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+        sidebarOpen ? 'w-[280px]' : 'w-0'
       }`}>
-        <div className="w-[280px] h-full flex flex-col">
+        <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
           <BookmarkSidebar />
         </div>
       </aside>
