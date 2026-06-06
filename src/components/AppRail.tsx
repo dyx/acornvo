@@ -31,7 +31,7 @@ export function AppRail(): JSX.Element {
     <TooltipProvider delayDuration={1500}>
       <nav
         aria-label="app navigation"
-        className="relative flex w-12 shrink-0 flex-col items-center bg-[color:var(--color-paper-2)] pt-10 pb-3"
+        className="relative flex w-12 shrink-0 flex-col items-center bg-[color:var(--color-paper-2)] pt-10 pb-2"
       >
         <div className="absolute right-0 top-[40px] bottom-0 w-[1px] bg-[color:var(--color-line)]" />
         <Tooltip>
@@ -40,7 +40,7 @@ export function AppRail(): JSX.Element {
               onClick={() => {
                 navigate('/picker')
               }}
-              className="mb-3 flex size-8 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity shrink-0"
+              className="mt-2 mb-2 flex size-8 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity shrink-0"
               style={
                 current
                   ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
@@ -54,7 +54,7 @@ export function AppRail(): JSX.Element {
             {current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
           </TooltipContent>
         </Tooltip>
-        <div className="mb-3 h-[1px] w-6 bg-[color:var(--color-line)]" />
+        <div className="mb-2 h-[1px] w-6 bg-[color:var(--color-line)]" />
 
         <div className="flex flex-1 flex-col gap-2 w-full items-center">
           {ENTRIES.filter((e) => !e.bottom).map((entry) => (

@@ -63,7 +63,7 @@ export function ConversationsAdapter() {
 
   return (
     <>
-      <div className="flex h-14 shrink-0 items-center px-3 bg-background">
+      <div className="flex h-[52px] shrink-0 items-center px-3 bg-background">
         <Button
           onClick={() => void createSession()}
           variant="default"
