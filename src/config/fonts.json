@@ -1,15 +1,15 @@
 {
   "editor": {
-    "text": ["'Lora'", "'Noto Serif SC'", "serif"],
-    "code": ["'JetBrains Mono'", "monospace"]
+    "text": ["Lora", "\"Noto Serif SC\"", "\"Source Han Serif\"", "\"Songti SC\"", "Georgia", "serif"],
+    "code": ["\"JetBrains Mono\"", "\"SF Mono\"", "Menlo", "monospace"]
   },
   "chat": {
-    "text": ["'Inter'", "'Noto Sans SC'", "sans-serif"]
+    "text": ["Inter", "\"Noto Sans SC\"", "-apple-system", "BlinkMacSystemFont", "\"Helvetica Neue\"", "\"PingFang SC\"", "sans-serif"]
   },
   "ui": {
-    "text": ["'Inter'", "'Noto Sans SC'", "sans-serif"]
+    "text": ["Inter", "\"Noto Sans SC\"", "-apple-system", "BlinkMacSystemFont", "\"Helvetica Neue\"", "\"PingFang SC\"", "sans-serif"]
   },
   "review": {
-    "text": ["'Nunito'", "'LXGW WenKai'", "sans-serif"]
+    "text": ["Nunito", "\"LXGW WenKai\"", "sans-serif"]
   }
 }

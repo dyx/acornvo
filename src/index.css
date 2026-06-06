@@ -107,11 +107,11 @@ body {
 }
 
 .font-chat {
-  font-family: var(--font-chat);
+  font-family: var(--font-chat) !important;
 }
 
 .font-review {
-  font-family: var(--font-review);
+  font-family: var(--font-review) !important;
 }
 
 @keyframes fade-up {
