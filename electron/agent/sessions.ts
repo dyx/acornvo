@@ -116,14 +116,12 @@ export function createSessions(): SessionsDao {
       const d = db()
       const tx = d.transaction(() => {
         const numId = Number(messageId)
-        const target = d.prepare('SELECT created_at FROM session_messages WHERE id = ? AND session_id = ?').get(numId, sessionId) as any
-        if (!target) return
         
         // Delete dependent tool_calls first to avoid FOREIGN KEY constraint violation
-        d.prepare('DELETE FROM tool_calls WHERE message_id IN (SELECT id FROM session_messages WHERE session_id = ? AND created_at >= ?)').run(sessionId, target.created_at)
+        d.prepare('DELETE FROM tool_calls WHERE message_id IN (SELECT id FROM session_messages WHERE session_id = ? AND id >= ?)').run(sessionId, numId)
 
-        // Delete messages from target timestamp onwards
-        d.prepare('DELETE FROM session_messages WHERE session_id = ? AND created_at >= ?').run(sessionId, target.created_at)
+        // Delete messages from target ID onwards
+        d.prepare('DELETE FROM session_messages WHERE session_id = ? AND id >= ?').run(sessionId, numId)
         
         // Delete checkpointer state for this thread to prevent LangGraph from resurrecting deleted messages
         d.prepare('DELETE FROM checkpoints WHERE thread_id = ?').run(sessionId)
