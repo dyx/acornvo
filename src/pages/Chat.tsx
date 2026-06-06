@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useChatStore } from '@/stores/chat'
 import { useProvidersStore } from '@/stores/providers'
+import { useSettingsStore } from '@/stores/settings'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -148,6 +149,8 @@ export function Chat() {
   const loadSessions = useChatStore((s) => s.loadSessions)
   const createSession = useChatStore((s) => s.createSession)
   const refreshProviders = useProvidersStore((s) => s.refresh)
+  const defaultChatModelId = useSettingsStore((s) => s.ai.defaultChatModelId)
+  const models = useProvidersStore((s) => s.models)
 
   const didInit = useRef(false)
   useEffect(() => {
@@ -183,6 +186,7 @@ export function Chat() {
   const activeSlot = activeSessionId ? bySession[activeSessionId] : null
   const isEmpty = !activeSlot || activeSlot.messages.length === 0
   const title = activeSession?.title || t('chat.untitled')
+  const displayModelId = activeSession?.profileId || defaultChatModelId
 
   return (
     <ChatRuntimeProvider>
@@ -204,6 +208,12 @@ export function Chat() {
               <h2 className="text-[15px] font-medium m-0 flex-1 truncate text-foreground">
                 {title}
               </h2>
+              {displayModelId && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border/50">
+                  <SparklesIcon className="w-3 h-3" />
+                  {models.find((m) => m.id === displayModelId)?.name || t('chat.unknownModel', '未知模型')}
+                </div>
+              )}
             </header>
 
             <section className="flex min-h-0 flex-1 flex-col relative bg-transparent">
