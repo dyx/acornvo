@@ -8,7 +8,6 @@ import { ipc } from '@/ipc/client'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
 import { FileRow } from './FileRow'
-import { FileRowContextMenu } from './FileRowContextMenu'
 import { TrashConfirmDialog } from './TrashConfirmDialog'
 import { Search, SlidersHorizontal, Check, Folder, Hash, ArrowDownAZ, Clock } from 'lucide-react'
 import {
@@ -236,7 +235,6 @@ export function VirtualFileList(): JSX.Element {
   const setFilter = useLibraryStore((s) => s.setFilter)
   const [query, setQuery] = useState('')
   const [isComposing, setIsComposing] = useState(false)
-  const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null)
   const [trashTarget, setTrashTarget] = useState<string | null>(null)
 
   // Only sync when filter.q is externally cleared (e.g. switching groves)
@@ -442,10 +440,6 @@ export function VirtualFileList(): JSX.Element {
                     e.preventDefault()
                     // File is already selected and displayed in EmbeddedEditorPanel
                   }}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    setMenu({ x: e.clientX, y: e.clientY, path: file.path })
-                  }}
                   onReveal={async () => {
                     await ipc.files.revealInFinder(file.path)
                   }}
@@ -456,20 +450,6 @@ export function VirtualFileList(): JSX.Element {
           })}
         </div>
       </div>
-
-      {menu ? (
-        <FileRowContextMenu
-          open
-          x={menu.x}
-          y={menu.y}
-          path={menu.path}
-          onClose={() => setMenu(null)}
-          onTrash={(path) => {
-            setTrashTarget(path)
-            setMenu(null)
-          }}
-        />
-      ) : null}
 
       {trashTarget && (
         <TrashConfirmDialog

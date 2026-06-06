@@ -15,7 +15,6 @@ export interface FileRowProps {
   active: boolean
   onClick: () => void
   onDoubleClick?: () => void
-  onContextMenu?: (e: React.MouseEvent) => void
   onReveal?: () => void
   onTrash?: () => void
 }
@@ -25,7 +24,6 @@ export function FileRow({
   active,
   onClick,
   onDoubleClick,
-  onContextMenu,
   onReveal,
   onTrash
 }: FileRowProps): JSX.Element {
@@ -37,7 +35,6 @@ export function FileRow({
       aria-selected={active}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
-      onContextMenu={onContextMenu}
       className={cn(
         'group relative flex items-center justify-between cursor-pointer px-3 py-2.5 transition-all duration-200 mb-0.5 rounded-md',
         active
