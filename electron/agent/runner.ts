@@ -195,7 +195,8 @@ export async function runAgent({
   // Persist + emit the user message immediately (truth source).
   const userMsg = await deps.sessions.appendMessage(sessionId, {
     role: 'user',
-    content: userText
+    content: userText,
+    attachments
   })
   emit({ type: 'message.appended', message: userMsg })
   console.log('[runAgent] user message appended sid=%s', sessionId)

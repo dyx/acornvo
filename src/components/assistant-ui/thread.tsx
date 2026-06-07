@@ -25,8 +25,13 @@ import {
   SuggestionPrimitive,
   ThreadPrimitive,
   useAuiState,
+  useComposer,
   TextMessagePartProvider,
 } from "@assistant-ui/react";
+import { ComposerTriggerPopover } from "@/components/assistant-ui/composer-trigger-popover";
+import { useFileMentionAdapter, useFileMentionStore } from "@/components/assistant-ui/file-mention-adapter";
+import { File } from "@/components/assistant-ui/file";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -144,22 +149,63 @@ const ThreadSuggestionItem: FC = () => {
 };
 
 const Composer: FC = () => {
+  const fileMention = useFileMentionAdapter();
+  const mentionedFiles = useFileMentionStore(s => s.files);
+  const removeFile = useFileMentionStore(s => s.removeFile);
+  const addFile = useFileMentionStore(s => s.addFile);
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
   return (
-    <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
-      <div
-        data-slot="aui_composer-shell"
-        className="bg-background focus-within:border-ring/75 focus-within:ring-ring/20 flex w-full flex-col gap-2 rounded-(--composer-radius) border p-(--composer-padding) transition-shadow focus-within:ring-2"
-      >
-        <ComposerPrimitive.Input
-          placeholder="Send a message..."
-          className="aui-composer-input placeholder:text-muted-foreground/80 max-h-64 w-full resize-none bg-transparent px-1.75 py-1 text-base outline-none"
-          rows={1}
-          autoFocus
-          aria-label="Message input"
-        />
-        <ComposerAction />
-      </div>
-    </ComposerPrimitive.Root>
+    <ComposerPrimitive.Unstable_TriggerPopoverRoot>
+      <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
+        <div
+          data-slot="aui_composer-shell"
+          className="bg-background focus-within:border-ring/75 focus-within:ring-ring/20 flex w-full flex-col gap-2 rounded-(--composer-radius) border p-(--composer-padding) transition-shadow focus-within:ring-2"
+        >
+          <div className="flex flex-wrap gap-2 px-1 empty:hidden pb-1">
+            {mentionedFiles.map(att => (
+              <div key={att.path} className="relative group">
+                <File 
+                  filename={att.title || att.path.split('/').pop()} 
+                  mimeType="text/plain" 
+                  data="" 
+                  size="sm" 
+                  variant="outline" 
+                />
+                <button
+                  type="button"
+                  className="absolute -top-2 -right-2 bg-background border rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => removeFile(att.path)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+          <ComposerPrimitive.Input
+            placeholder={t("chat.input.placeholder", "Type a message... (Type @ to mention files, Cmd+Enter to send)")}
+            className="aui-composer-input placeholder:text-muted-foreground/80 max-h-64 w-full resize-none bg-transparent px-1.75 py-1 text-base outline-none"
+            rows={1}
+            autoFocus
+            aria-label="Message input"
+          />
+          <ComposerTriggerPopover
+            char="@"
+            {...fileMention}
+            action={{
+              onExecute: (item) => {
+                if (item.metadata?.fileInfo) {
+                  addFile(item.metadata.fileInfo as any, toast);
+                }
+              },
+              removeOnExecute: true
+            }}
+          />
+          <ComposerAction />
+        </div>
+      </ComposerPrimitive.Root>
+    </ComposerPrimitive.Unstable_TriggerPopoverRoot>
   );
 };
 
@@ -427,10 +473,35 @@ const UserMessage: FC = () => {
       className="fade-in slide-in-from-bottom-1 animate-in grid auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] content-start gap-y-2 px-2 duration-150 [contain-intrinsic-size:auto_60px] [content-visibility:auto] [&:where(>*)]:col-start-2"
       data-role="user"
     >
-      <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0">
-        <div className="aui-user-message-content peer bg-muted text-foreground rounded-2xl px-4 py-2.5 wrap-break-word empty:hidden">
-          <MessagePrimitive.Parts />
-        </div>
+      <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0 flex flex-col gap-2 items-end">
+        <MessagePrimitive.GroupedParts groupBy={part => part.type === "file" ? ["group-file"] : ["group-content"]}>
+          {({ part, children }) => {
+            if (part.type === "group-file") {
+              return <div className="flex flex-col gap-2 w-full items-end">{children}</div>;
+            }
+            if (part.type === "group-content") {
+              return (
+                <div className="aui-user-message-content peer bg-muted text-foreground rounded-2xl px-4 py-2.5 wrap-break-word empty:hidden">
+                  {children}
+                </div>
+              );
+            }
+            if (part.type === "file") {
+              const p = part as any;
+              const name = p.file?.name || p.name || p.filename;
+              return <File {...part} filename={name} />;
+            }
+            if (part.type === "text") {
+              return (
+                <TextMessagePartProvider text={part.text || ""} isRunning={part.status?.type === "running"}>
+                  <MarkdownText />
+                </TextMessagePartProvider>
+              );
+            }
+            return null;
+          }}
+        </MessagePrimitive.GroupedParts>
+
         <div className="aui-user-action-bar-wrapper absolute start-0 top-1/2 -translate-x-full -translate-y-1/2 pe-2 peer-empty:hidden rtl:translate-x-full">
           <UserActionBar />
         </div>

@@ -97,7 +97,7 @@ export function createSessions(): SessionsDao {
     async getMessages(sessionId) {
       const rows = db()
         .prepare(
-          'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, usage_json, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
+          'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, usage_json, attachments_json, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
         )
         .all(sessionId) as any[]
       return rows.map((r) => ({
@@ -108,6 +108,7 @@ export function createSessions(): SessionsDao {
         toolCalls: r.tool_calls_json ? JSON.parse(r.tool_calls_json) : undefined,
         toolCallId: r.tool_call_id ?? undefined,
         usage: r.usage_json ? JSON.parse(r.usage_json) : undefined,
+        attachments: r.attachments_json ? JSON.parse(r.attachments_json) : undefined,
         createdAt: r.created_at
       }))
     },
@@ -136,7 +137,7 @@ export function createSessions(): SessionsDao {
       const tx = db().transaction(() => {
         const info = db()
           .prepare(
-            'INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, usage_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO session_messages (session_id, role, content, tool_calls_json, tool_call_id, usage_json, attachments_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
           )
           .run(
             sessionId,
@@ -145,6 +146,7 @@ export function createSessions(): SessionsDao {
             m.toolCalls ? JSON.stringify(m.toolCalls) : null,
             m.toolCallId ?? null,
             m.usage ? JSON.stringify(m.usage) : null,
+            m.attachments ? JSON.stringify(m.attachments) : null,
             t
           )
         db().prepare('UPDATE sessions SET updated_at = ? WHERE id = ?').run(t, sessionId)
@@ -169,6 +171,7 @@ export function createSessions(): SessionsDao {
         toolCalls: m.toolCalls,
         toolCallId: m.toolCallId,
         usage: m.usage,
+        attachments: m.attachments,
         createdAt: t
       }
     },

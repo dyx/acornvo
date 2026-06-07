@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
 import { useSettingsStore } from './settings'
 import { toast } from '@/hooks/use-toast'
-import type { AgentEvent, Session, SessionMessage } from '@shared/agent-types'
+import type { AgentEvent, Session, SessionMessage, Attachment } from '@shared/agent-types'
 import type { TokenUsage } from '@shared/ai-types'
 
 export interface ChatSession {
@@ -25,6 +25,7 @@ export interface ChatMessage {
   reasoningStartTime?: number
   reasoningDuration?: number
   usage?: TokenUsage
+  attachments?: Attachment[]
 
   createdAt: number
   error?: string
@@ -71,6 +72,7 @@ function toChatMessage(m: SessionMessage): ChatMessage {
     toolCalls: m.toolCalls,
     toolCallId: m.toolCallId,
     usage: m.usage,
+    attachments: m.attachments,
     createdAt: new Date(m.createdAt).getTime(),
     status: 'done'
   }
@@ -96,7 +98,7 @@ interface ChatStore {
   createSession: () => Promise<string>
   renameSession: (id: string, title: string) => Promise<void>
   deleteSession: (id: string) => Promise<void>
-  sendUserMessage: (args: { text: string }) => Promise<void>
+  sendUserMessage: (args: { text: string; attachments?: Attachment[] }) => Promise<void>
   cancelStream: () => Promise<void>
   approveTool: (sessionId: string, callId: string, editedArgs?: unknown) => Promise<void>
   rejectTool: (sessionId: string, callId: string) => Promise<void>
@@ -282,7 +284,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  async sendUserMessage({ text }) {
+  async sendUserMessage({ text, attachments }) {
     let cur = get()
     const originalSid = cur.activeSessionId
     let sid = originalSid
@@ -341,7 +343,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }))
     try {
       console.log('[chat-store] sendUserMessage: calling ipc.chat.sendUserMessage…')
-      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text })
+      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
       console.log('[chat-store] sendUserMessage: IPC returned', result)
     } catch (err) {
       console.error('[chat-store] sendUserMessage: IPC threw', err)

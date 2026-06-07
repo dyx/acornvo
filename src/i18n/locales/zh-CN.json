@@ -581,7 +581,7 @@
       "retry": "重试"
     },
     "input": {
-      "placeholder": "输入消息…（Cmd+Enter 发送，Esc 取消）",
+      "placeholder": "输入消息…（输入 @ 关联文件，Enter 发送）",
       "send": "发送",
       "stop": "停止",
       "noProfile": "未配置 AI profile",

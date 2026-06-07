@@ -150,13 +150,28 @@ export function fullText(
 }
 
 export function suggest(db: Database.Database, q: string): FileSummary[] {
-  if (q.length === 0) return []
+  if (q.length === 0) {
+    const sql = `
+      ${SUMMARY_BASE}
+      ORDER BY files.updated_at DESC, files.clipped_at DESC
+      LIMIT 10
+    `
+    const rows = db.prepare(sql).all() as SummaryRow[]
+    return rows.map(rowToFileSummary)
+  }
+  
+  // Use files_fts with trigram tokenizer for ultra-fast substring matching
   const sql = `
-    ${SUMMARY_BASE}
-    WHERE files.title LIKE @q
+    SELECT
+      files.path, files.title, files.category, files.clipped_at,
+      files.summary, files.frontmatter_json,
+      json_extract(files.frontmatter_json, '$.tags') AS tags_json
+    FROM files_fts
+    JOIN files ON files.path = files_fts.path
+    WHERE files_fts.title LIKE @q OR files_fts.path LIKE @q
     GROUP BY files.path
-    ORDER BY files.clipped_at DESC
-    LIMIT 5
+    ORDER BY files.updated_at DESC
+    LIMIT 10
   `
   const rows = db.prepare(sql).all({ q: `%${q}%` }) as SummaryRow[]
   return rows.map(rowToFileSummary)

@@ -53,7 +53,7 @@ export async function collectAttachmentContext(
     let singleTruncated = false
 
     if (body.length > SINGLE_LIMIT) {
-      body = body.slice(0, SINGLE_LIMIT) + '\n(已截断)'
+      body = body.slice(0, SINGLE_LIMIT) + '\n(当前文本已截断。如果需要探索该文件中未包含的部分，请使用 search_files 工具对该文件进行检索查询。)'
       singleTruncated = true
     }
 

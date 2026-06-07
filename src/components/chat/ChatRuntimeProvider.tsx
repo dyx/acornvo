@@ -8,6 +8,7 @@ import {
 import { useChatStore, type ChatMessage } from '@/stores/chat'
 import { useProvidersStore } from '@/stores/providers'
 import { useToast } from '@/hooks/use-toast'
+import { useFileMentionStore } from '@/components/assistant-ui/file-mention-adapter'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
@@ -90,6 +91,22 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         content.push({ type: 'reasoning', text: reasoningText, duration: msg.reasoningDuration !== undefined ? msg.reasoningDuration : (reasoningDuration !== undefined ? reasoningDuration : undefined) });
       }
       
+      if (msg.attachments && msg.attachments.length > 0) {
+        msg.attachments.forEach(att => {
+          if (att.type === 'file') {
+            const fileName = att.title || att.path.split('/').pop();
+            content.push({
+              type: 'file',
+              file: { name: fileName },
+              name: fileName,
+              filename: fileName,
+              mimeType: 'text/plain',
+              data: ''
+            });
+          }
+        });
+      }
+
       if (text || !reasoningText) {
         content.push({ type: 'text', text: text });
       }
@@ -160,8 +177,26 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
         .map((c) => c.text)
         .join('')
+
+      const mentionedFiles = useFileMentionStore.getState().files;
+      useFileMentionStore.getState().clearFiles();
+
+      const customAttachments = mentionedFiles.map(f => ({
+        type: 'file' as const,
+        path: f.path,
+        title: f.title || f.path.split('/').pop() || f.path
+      }));
+
+      const standardAttachments = (message.attachments || []).map(a => ({
+        type: 'file' as const,
+        path: a.id,
+        title: a.name
+      }));
+
+      const attachments = [...standardAttachments, ...customAttachments];
+
       try {
-        await sendUserMessage({ text })
+        await sendUserMessage({ text, attachments })
       } catch (err) {
         toast({
           variant: 'destructive',

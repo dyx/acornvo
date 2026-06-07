@@ -56,6 +56,7 @@ export interface SessionMessage {
   toolCalls?: ToolCall[]
   toolCallId?: string
   usage?: TokenUsage
+  attachments?: Attachment[]
   createdAt: string
 }
 

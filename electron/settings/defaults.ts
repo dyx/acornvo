@@ -16,7 +16,7 @@ export const DEFAULTS: {
   browser: BrowserSettings
   update: UpdateSettings
 } = {
-  general: { locale: 'zh-CN', autoBackup: 'off' },
+  general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser' },
   appearance: { theme: 'system', fontScale: 1.0 },
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 },
   browser: { clipImagesLocalize: false, searchEngine: 'google' },
