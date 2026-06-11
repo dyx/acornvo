@@ -1,6 +1,6 @@
 // src/components/settings/GeneralTab.tsx
 import type { JSX } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import { i18n } from '@/i18n'

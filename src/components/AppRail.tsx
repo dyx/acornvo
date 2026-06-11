@@ -101,9 +101,8 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
   const baseCls =
     'flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors cursor-pointer'
 
-  let content = null
+  let content: JSX.Element | null = null
   if (entry.disabled || requireGrove) {
-    const title = requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon')
     content = (
       <div
         className={`${baseCls} text-muted-foreground/50 cursor-not-allowed`}

@@ -8,7 +8,7 @@ import {
   ReasoningTrigger,
 } from "@/components/assistant-ui/reasoning";
 
-import { ChatModelPicker } from "@/components/settings/chat-model-picker";
+
 import { ContextDisplay } from "./context-display";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -22,10 +22,8 @@ import {
   BranchPickerPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
-  SuggestionPrimitive,
   ThreadPrimitive,
   useAuiState,
-  useComposer,
   TextMessagePartProvider,
 } from "@assistant-ui/react";
 import { ComposerTriggerPopover } from "@/components/assistant-ui/composer-trigger-popover";
@@ -33,7 +31,6 @@ import { useFileMentionAdapter, useFileMentionStore } from "@/components/assista
 import { File } from "@/components/assistant-ui/file";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
   ChevronLeftIcon,
@@ -47,7 +44,7 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+
 import { useChatStore } from "@/stores/chat";
 import { useProvidersStore } from "@/stores/providers";
 import { useSettingsStore } from "@/stores/settings";
@@ -122,31 +119,6 @@ const ThreadWelcome: FC = () => {
 
 
 
-const ThreadSuggestions: FC = () => {
-  return (
-    <div className="aui-thread-welcome-suggestions grid w-full gap-2 pb-4 @md:grid-cols-2">
-      <ThreadPrimitive.Suggestions>
-        {() => <ThreadSuggestionItem />}
-      </ThreadPrimitive.Suggestions>
-    </div>
-  );
-};
-
-const ThreadSuggestionItem: FC = () => {
-  return (
-    <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200 nth-[n+3]:hidden @md:nth-[n+3]:block">
-      <SuggestionPrimitive.Trigger send asChild>
-        <Button
-          variant="ghost"
-          className="aui-thread-welcome-suggestion bg-background hover:bg-muted h-auto w-full flex-wrap items-start justify-start gap-1 rounded-3xl border px-4 py-3 text-start text-sm transition-colors @md:flex-col"
-        >
-          <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 font-medium" />
-          <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 text-muted-foreground empty:hidden" />
-        </Button>
-      </SuggestionPrimitive.Trigger>
-    </div>
-  );
-};
 
 const Composer: FC = () => {
   const fileMention = useFileMentionAdapter();
@@ -170,8 +142,8 @@ const Composer: FC = () => {
                   filename={att.title || att.path.split('/').pop()} 
                   mimeType="text/plain" 
                   data="" 
-                  size="sm" 
-                  variant="outline" 
+                  type="file"
+                  status={{ type: 'complete' } as any}
                 />
                 <button
                   type="button"
@@ -400,7 +372,7 @@ const AssistantMessageAddons: FC = () => {
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const storeMsg = useChatStore((s) => 
     activeSessionId ? s.bySession[activeSessionId]?.messages.find(m => m.id === messageId) : null
-  );
+  ) as any;
   
   if (!storeMsg || !storeMsg.toolSteps || storeMsg.toolSteps.length === 0) return null;
   
@@ -457,14 +429,6 @@ const AssistantActionBar: FC = () => {
   );
 };
 
-const AssistantActionBarWithFooter: FC = () => {
-  const messageId = useAuiState((s) => s.message.id);
-  return (
-    <div className="flex items-center justify-between w-full mt-2 pe-4">
-      <MessageFooter messageId={messageId} isUser={false} />
-    </div>
-  );
-};
 
 const UserMessage: FC = () => {
   return (

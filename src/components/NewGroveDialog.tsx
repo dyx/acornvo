@@ -1,6 +1,6 @@
-import { useState, useEffect, type JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
-import { IpcError, isIpcError } from '@shared/ipc-contract'
+import { isIpcError } from '@shared/ipc-contract'
 import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
 import {

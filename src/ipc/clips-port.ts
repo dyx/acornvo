@@ -1,6 +1,6 @@
 // src/ipc/clips-port.ts
 import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from '@shared/clip-types'
-import { IpcError, isIpcError, type IpcResult } from '@shared/ipc-contract'
+import { isIpcError, type IpcResult } from '@shared/ipc-contract'
 
 export interface ClipsPort {
   create(input: ClipCreateInput): Promise<IpcResult<{ id: number }>>

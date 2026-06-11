@@ -172,10 +172,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       const list = await ipc.chat['sessions.list']()
       const targetActiveId = get().activeSessionId ?? list[0]?.id ?? null
-      set((s) => ({
+      set({
         sessions: list.map(toChatSession),
         activeSessionId: targetActiveId
-      }))
+      })
       if (targetActiveId) {
         await get().selectSession(targetActiveId)
       }

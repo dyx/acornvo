@@ -125,11 +125,11 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         });
       }
 
-      const statusMap: Record<string, 'running' | 'complete' | 'incomplete'> = {
-        pending: 'running',
-        streaming: 'running',
-        done: 'complete',
-        error: 'incomplete'
+      const statusMap: Record<string, any> = {
+        pending: { type: 'running' },
+        streaming: { type: 'running' },
+        done: { type: 'complete', reason: 'unknown' },
+        error: { type: 'incomplete', reason: 'error' }
       };
 
       const threadMsg = {
@@ -143,11 +143,11 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         const lastResult = result[result.length - 1];
         if (lastResult && lastResult.role === 'assistant') {
           (lastResult.content as any[]).push(...content);
-          lastResult.status = statusMap[msg.status ?? 'done'] || 'complete';
+          (lastResult as any).status = statusMap[msg.status ?? 'done'] || { type: 'complete', reason: 'unknown' };
         } else {
           result.push({
             ...threadMsg,
-            status: statusMap[msg.status ?? 'done'] || 'complete'
+            status: statusMap[msg.status ?? 'done'] || { type: 'complete', reason: 'unknown' }
           } as unknown as ThreadMessage);
         }
       } else {
@@ -220,7 +220,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       // 1. Truncate DB messages and clear LangGraph state
       try {
-        await window.api.chat['sessions.truncate'](activeSid, message.sourceId);
+        await (window as any).api.chat['sessions.truncate'](activeSid, message.sourceId);
       } catch (err) {
         console.error('Failed to truncate session:', err);
         toast({
@@ -266,7 +266,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       if (!parentMessage || parentMessage.role !== 'user') return;
 
       try {
-        await window.api.chat['sessions.truncate'](activeSid, parentId);
+        await (window as any).api.chat['sessions.truncate'](activeSid, parentId);
       } catch (err) {
         console.error('Failed to truncate session for reload:', err);
         toast({

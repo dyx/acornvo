@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import leavesVideo from '@/assets/leaves.mp4'
 
@@ -189,7 +189,7 @@ function MoonlightOverlay({ active }: { active: boolean }): JSX.Element | null {
       [230, 195, 175]
     ]
 
-    const stars = []
+    const stars: any[] = []
     for (let i = 0; i < 150; i++) {
       const isBright = Math.random() < 0.12
       const c = colors[Math.floor(Math.random() * colors.length)]!

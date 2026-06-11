@@ -1,17 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useChatStore, type ChatMessage } from '@/stores/chat'
-import { deriveBubbleItems, type ToolStep } from './bubbleSelectors'
+import { useChatStore } from '@/stores/chat'
+import { deriveBubbleItems, type ToolStep, type BubbleItem } from './bubbleSelectors'
 import { formatChatTime } from '@/lib/date-utils'
 import { ScrollToBottomButton } from './ScrollToBottomButton'
 import { MarkdownText } from '@/components/assistant-ui/markdown-text'
 import { MessageProvider, MessagePrimitive } from '@assistant-ui/react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
-  BotIcon,
-  UserIcon,
   Loader2Icon,
   CheckCircleIcon,
   CheckIcon,
@@ -24,7 +20,6 @@ import {
   ChevronDownIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
 import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { ExternalLinkAnchor } from './ExternalLinkAnchor'
 import { cn } from '@/lib/utils'
@@ -49,7 +44,6 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   return (
     <div className="flex flex-col gap-2 mb-4 w-full max-w-2xl">
       {steps.map((s) => {
-        const st = stepStatus(s)
         const [open, setOpen] = useState(false)
         return (
           <Collapsible
@@ -104,7 +98,6 @@ function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
 
 function MessageFooter({ item }: { item: BubbleItem }) {
   const { t } = useTranslation()
-  const { toast } = useToast()
   const [isCopied, setIsCopied] = useState(false)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
   const messages = useChatStore((s) =>
@@ -250,9 +243,9 @@ export function BubbleListAdapter() {
                         id: item.key,
                         role: 'assistant',
                         content: [{ type: 'text', text: contentStr }],
-                        status: item.loading ? 'running' : 'complete',
-                        createdAt: new Date()
-                      }}
+                        status: item.loading ? { type: 'running' } : { type: 'complete', reason: 'unknown' },
+                        createdAt: new Date(),
+                      } as any}
                     >
                       <MessagePrimitive.Content
                         components={{

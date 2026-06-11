@@ -1,8 +1,8 @@
 // src/components/settings/AiTab.tsx
 import type { JSX } from 'react'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSettingsStore } from '@/stores/settings'
+
 import { useProvidersStore } from '@/stores/providers'
 import type { AiProvider, AiModel } from '@shared/settings-types'
 import { ProviderDialog } from './ProviderDialog'
@@ -10,16 +10,7 @@ import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Settings2Icon, BrainCircuitIcon, PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
+import { PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
 function ProviderBalance({ providerId, type }: { providerId: string, type: AiProvider['type'] }) {
@@ -116,8 +107,6 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
   const updateModel = useProvidersStore((s) => s.updateModel)
   const removeModel = useProvidersStore((s) => s.removeModel)
 
-  const ai = useSettingsStore((s) => s.ai)
-  const setAi = useSettingsStore((s) => s.setAi)
 
   const [dialogProvider, setDialogProvider] = useState<AiProvider | null | 'new'>(null)
   const [providerToDelete, setProviderToDelete] = useState<AiProvider | null>(null)
@@ -131,18 +120,8 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
     void refresh()
   }, [refresh])
 
-  const enabledModels = useMemo(() => models.filter((m) => m.enabled), [models])
 
-  const groupedModels = useMemo(() => {
-    const groups: { providerName: string; models: AiModel[] }[] = []
-    for (const provider of providers) {
-      const pModels = enabledModels.filter((m) => m.providerId === provider.id)
-      if (pModels.length > 0) {
-        groups.push({ providerName: provider.name, models: pModels })
-      }
-    }
-    return groups
-  }, [enabledModels, providers])
+
 
   return (
     <div data-testid="settings-tab-ai" className="space-y-8">

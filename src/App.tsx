@@ -32,7 +32,7 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 }
 
 export function App(): JSX.Element {
-  const { i18n } = useTranslation()
+  const { t } = useTranslation()
   const { toast } = useToast()
   const navigate = useNavigate()
   useGlobalHotkeys()

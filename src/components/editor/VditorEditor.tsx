@@ -186,7 +186,9 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
                   await window.api.file.writeBinary(relImagePath, uint8)
 
                   const insertText = `![${file.name}](acornvo-local://${relImagePath})\n`
-                  v.insertValue(insertText)
+                  if (v) {
+                    v.insertValue(insertText)
+                  }
                 } catch (err) {
                   console.error('Failed to save image locally:', err)
                   toast({ title: 'Failed to save image locally' })

@@ -1,6 +1,6 @@
 // src/ipc/clipper-port.ts
 import type { ClipInput, ClipPreview, ClipResult, ClipRunId } from '@shared/clipper-types'
-import { IpcError, isIpcError, type IpcResult } from '@shared/ipc-contract'
+import { isIpcError, type IpcResult } from '@shared/ipc-contract'
 
 export interface ClipperPort {
   clip(args: { tabId: string }): Promise<IpcResult<ClipPreview>>

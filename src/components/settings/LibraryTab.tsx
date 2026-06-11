@@ -23,8 +23,6 @@ export function LibraryTab(): JSX.Element {
   const { t } = useTranslation()
   const ai = useSettingsStore((s) => s.ai)
   const setAi = useSettingsStore((s) => s.setAi)
-  const appearance = useSettingsStore((s) => s.appearance)
-  const setAppearance = useSettingsStore((s) => s.setAppearance)
 
   const providers = useProvidersStore((s) => s.providers)
   const models = useProvidersStore((s) => s.models)

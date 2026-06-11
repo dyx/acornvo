@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@/components/ui/button'
-import { PanelLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'
 import { useBrowserStore } from '@/stores/browser'
@@ -24,8 +23,6 @@ export function AddressBar(): JSX.Element {
   const goBack = useBrowserStore((s) => s.goBack)
   const goForward = useBrowserStore((s) => s.goForward)
   const reload = useBrowserStore((s) => s.reload)
-  const bookmarksOpen = useBrowserStore((s) => s.bookmarksOpen)
-  const setBookmarksOpen = useBrowserStore((s) => s.setBookmarksOpen)
   const reactNavigate = useNavigate()
   const clipperStage = useClipperStore((s) => s.stage)
   const startClip = useClipperStore((s) => s.start)
@@ -51,6 +48,7 @@ export function AddressBar(): JSX.Element {
       return () => clearTimeout(t)
     } else {
       setShowBusy(false)
+      return undefined
     }
   }, [rawBusy])
 
@@ -80,6 +78,7 @@ export function AddressBar(): JSX.Element {
       }, 50)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [tab?.id, tab?.url])
 
   // Refresh bookmark state when active URL changes

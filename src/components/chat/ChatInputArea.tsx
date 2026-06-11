@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useChatStore, BusyError } from '@/stores/chat'
 import { useToast } from '@/hooks/use-toast'
-import { ProfileChip } from './ProfileChip'
+
 
 export function ChatInputArea() {
   const { t } = useTranslation()
@@ -14,7 +14,6 @@ export function ChatInputArea() {
   const status = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.status ?? 'idle') : 'idle'
   )
-  const activeSession = useChatStore((s) => s.sessions.find((sess) => sess.id === activeSessionId))
   const pendingPromptText = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.pendingPromptText ?? '') : ''
   )
@@ -75,12 +74,7 @@ export function ChatInputArea() {
 
         <div className="flex items-center justify-between px-4 pb-4 pt-0">
           <div className="flex items-center gap-1">
-            {activeSessionId && (
-              <ProfileChip
-                sessionId={activeSessionId}
-                profileId={activeSession?.profileId ?? null}
-              />
-            )}
+
           </div>
 
           {isStreaming ? (

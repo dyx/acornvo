@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import {
-  ChevronDownIcon,
-  HelpCircleIcon,
   MessageSquareIcon,
   SparklesIcon,
   FileTextIcon,
@@ -16,13 +13,7 @@ import { useRootStore } from '@/stores/root'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
+
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 import { ConversationsAdapter } from '@/components/chat/ConversationsAdapter'
@@ -146,7 +137,6 @@ export function Chat() {
   const { t } = useTranslation()
   const sessions = useChatStore((s) => s.sessions)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
-  const bySession = useChatStore((s) => s.bySession)
   const loadSessions = useChatStore((s) => s.loadSessions)
   const createSession = useChatStore((s) => s.createSession)
   const refreshProviders = useProvidersStore((s) => s.refresh)
@@ -185,8 +175,6 @@ export function Chat() {
   }, [loadSessions, createSession, refreshProviders])
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null
-  const activeSlot = activeSessionId ? bySession[activeSessionId] : null
-  const isEmpty = !activeSlot || activeSlot.messages.length === 0
   const title = activeSession?.title || t('chat.untitled')
   const displayModelId = activeSession?.profileId || defaultChatModelId
 

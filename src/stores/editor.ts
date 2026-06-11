@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import type { ConflictState } from '@shared/conflict-types'
 import { ipc } from '@/ipc/client'
-import { IpcError, isIpcError } from '@shared/ipc-contract'
+import { isIpcError } from '@shared/ipc-contract'
 
 export type EditorReadyState = {
   kind: 'ready'

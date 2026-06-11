@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
 import { useBrowserStore } from '@/stores/browser'

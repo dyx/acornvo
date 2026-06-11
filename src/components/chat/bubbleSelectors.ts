@@ -43,7 +43,7 @@ export function deriveBubbleItems(
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i]
     if (m.role === 'user') {
-      items.push({ key: m.id, role: 'user', content: m.text, createdAt: m.createdAt })
+      items.push({ key: m.id.toString(), role: 'user', content: m.text, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
       continue
     }
     if (m.role === 'assistant') {
@@ -64,7 +64,7 @@ export function deriveBubbleItems(
           return step
         })
         items.push({
-          key: m.id,
+          key: m.id.toString(),
           role: 'assistant',
           content: { text: cleanAssistantText(fullText), toolSteps },
           streaming,
@@ -72,7 +72,7 @@ export function deriveBubbleItems(
           createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined
         })
       } else {
-        items.push({ key: m.id, role: 'assistant', content: cleanAssistantText(fullText), streaming, loading, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
+        items.push({ key: m.id.toString(), role: 'assistant', content: cleanAssistantText(fullText), streaming, loading, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
       }
       continue
     }

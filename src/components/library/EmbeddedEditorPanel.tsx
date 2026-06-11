@@ -7,10 +7,10 @@ import { VditorEditor } from '@/components/editor/VditorEditor'
 import { EditorErrorState } from '@/components/editor/EditorErrorState'
 import { ExternalModifiedBanner } from '@/components/editor/ExternalModifiedBanner'
 import { ConflictDialog } from '@/components/editor/ConflictDialog'
-import { ipc } from '@/ipc/client'
+
 import { EditorTitleBar } from '@/components/library/EditorTitleBar'
 import { AiReviewSidebar } from '@/components/library/AiReviewSidebar'
-import { CozyWindowShade } from '@/components/library/CozyWindowShade'
+
 import { LoadingSquirrel } from '@/components/ui/LoadingSquirrel'
 
 export function EmbeddedEditorPanel(): JSX.Element {
@@ -20,19 +20,7 @@ export function EmbeddedEditorPanel(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false)
   const [isPreviewMode, setIsPreviewMode] = useState(true)
 
-  const clipId = useEditorStore((s) => (s.state.kind === 'ready' ? (s.state.clipId ?? null) : null))
-  const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
 
-  const handleTriggerReview = async () => {
-    if (clipId === null) return
-    try {
-      await useEditorStore.getState().flushSave()
-      setAiRerunInflight(true)
-      await ipc.ai.reviewClip(clipId, { force: true })
-    } catch {
-      setAiRerunInflight(false)
-    }
-  }
 
   useEffect(() => {
     if (!selectedPath) return

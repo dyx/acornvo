@@ -1,5 +1,5 @@
 import { type JSX, useState, useCallback, useRef } from 'react'
-import { IpcError } from '@shared/ipc-contract'
+
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 export interface TrashConfirmDialogProps {
@@ -54,8 +54,7 @@ export function TrashConfirmDialog({
       setConfirming(false)
     } catch (err) {
       setConfirming(false)
-      const errCode =
-        err && typeof err === 'object' && 'code' in err ? (err as any).code : undefined
+
       setMode('fallback')
       setErrorMessage(err instanceof Error ? err.message : String(err))
     }

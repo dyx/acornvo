@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { unstable_useMentionAdapter, type Unstable_TriggerAdapter } from '@assistant-ui/react';
+import { unstable_useMentionAdapter } from '@assistant-ui/react';
 import type { FileSummary } from '@shared/file-types';
 import { create } from 'zustand';
 import i18next from 'i18next';
@@ -64,14 +64,14 @@ export function useFileMentionAdapter() {
   }, [files]);
 
   // Use the built-in mention adapter to handle basic formatting and item wrapping
-  const baseAdapter = unstable_useMentionAdapter({ items });
+  const baseAdapter = unstable_useMentionAdapter({ items: items as any });
 
   // Override the search method to capture the query text to trigger our async fetch
-  const adapter: Unstable_TriggerAdapter = {
+  const adapter: any = {
     ...baseAdapter.adapter,
-    search: (q) => {
+    search: (q: string) => {
       setQuery(q);
-      return baseAdapter.adapter.search(q); // let base adapter also filter if needed
+      return baseAdapter.adapter.search?.(q); // let base adapter also filter if needed
     }
   };
 

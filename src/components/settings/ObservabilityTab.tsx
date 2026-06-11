@@ -91,16 +91,15 @@ function ObservabilityAiPanel(): JSX.Element {
     let cancelled = false
     const sinceDays = windowToDays(windowSel)
     async function fetchData() {
-      const [summary, list, providers, models, recentProjects] = await Promise.all([
+      const [summary, list, models, recentProjects] = await Promise.all([
         ipc.ai['usage.summary']({ sinceDays }),
         ipc.ai['usage.list']({ limit: 2000, offset: 0 }),
-        ipc.settings.aiProvidersList(),
         ipc.settings.aiModelsList(),
         ipc.project.listRecent()
       ])
       if (cancelled) return
 
-      const providerNameMap = new Map(providers.map((p: any) => [p.id, p.name]))
+
       const modelNameMap = new Map(models.map((m: any) => [m.id, m.displayName]))
       const groveNameMap = new Map(recentProjects.map((g: any) => [g.id, g.name]))
 

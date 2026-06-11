@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useEditorStore } from '@/stores/editor'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const NONE_STATE = { kind: 'none' as const }
 

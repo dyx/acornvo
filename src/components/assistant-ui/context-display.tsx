@@ -2,8 +2,49 @@
 
 import { useTranslation } from "react-i18next";
 import { useAuiState } from "@assistant-ui/react";
-import { useThreadTokenUsage } from "@assistant-ui/react-ai-sdk";
-import type { ThreadTokenUsage } from "@assistant-ui/react-ai-sdk";
+import { useChatStore } from "@/stores/chat";
+
+export interface ThreadTokenUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  cachedTokens?: number;
+  reasoningTokens?: number;
+}
+
+function useThreadTokenUsage(): ThreadTokenUsage | undefined {
+  const activeSessionId = useChatStore((s) => s.activeSessionId);
+  const bySession = useChatStore((s) => s.bySession);
+  
+  const messages = activeSessionId ? bySession[activeSessionId]?.messages : undefined;
+  if (!messages || messages.length === 0) return undefined;
+
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let totalTokens = 0;
+  let cachedTokens = 0;
+  let reasoningTokens = 0;
+
+  for (const m of messages) {
+    if (m.usage) {
+      promptTokens += m.usage.promptTokens ?? 0;
+      completionTokens += m.usage.completionTokens ?? 0;
+      totalTokens += m.usage.totalTokens ?? 0;
+      cachedTokens += m.usage.cachedTokens ?? 0;
+      reasoningTokens += m.usage.reasoningTokens ?? 0;
+    }
+  }
+
+  if (totalTokens === 0) return undefined;
+
+  return {
+    promptTokens,
+    completionTokens,
+    totalTokens,
+    cachedTokens: cachedTokens > 0 ? cachedTokens : undefined,
+    reasoningTokens: reasoningTokens > 0 ? reasoningTokens : undefined
+  };
+}
 import {
   Tooltip,
   TooltipContent,

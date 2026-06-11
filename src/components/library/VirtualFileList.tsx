@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { IpcError } from '@shared/ipc-contract'
 import { ipc } from '@/ipc/client'
@@ -224,9 +224,7 @@ function ControlCenterMenu() {
 
 export function VirtualFileList(): JSX.Element {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const items = useLibraryStore((s) => s.items)
-  const total = useLibraryStore((s) => s.total)
   const filter = useLibraryStore((s) => s.filter)
   const orderBy = useLibraryStore((s) => s.orderBy)
   const selectedPath = useLibraryStore((s) => s.selectedPath)
@@ -436,8 +434,7 @@ export function VirtualFileList(): JSX.Element {
                     }
                     void select(file.path)
                   }}
-                  onDoubleClick={(e) => {
-                    e.preventDefault()
+                  onDoubleClick={() => {
                     // File is already selected and displayed in EmbeddedEditorPanel
                   }}
                   onReveal={async () => {

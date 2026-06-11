@@ -33,7 +33,9 @@ export type ProjectCardProps = {
   onTakeover?: () => void
   /** Stagger index for fade-up animation. */
   /** Whether this is the currently active grove. */
+  /** Whether this is the currently active grove. */
   isActive?: boolean
+  index?: number
 }
 
 export function ProjectCard({
@@ -47,7 +49,7 @@ export function ProjectCard({
 }: ProjectCardProps): JSX.Element {
   const { t } = useTranslation()
   const invalid = !item.valid
-  const { dot, bg } = colorMap[item.color]
+  const { dot } = colorMap[item.color]
   const disabled = invalid
 
   return (

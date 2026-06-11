@@ -5,7 +5,7 @@ import { type ToolStep } from './bubbleSelectors'
 import { formatChatTime } from '@/lib/date-utils'
 import { ApprovalInlineActions } from './ApprovalInlineActions'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Loader2Icon,
@@ -16,7 +16,7 @@ import {
   ChevronRightIcon,
   CheckIcon,
   CopyIcon,
-  RotateCcwIcon,
+
   CornerDownLeftIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -45,7 +45,6 @@ export function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   return (
     <div className="flex flex-col gap-2 mb-4 w-full max-w-2xl">
       {steps.map((s) => {
-        const st = stepStatus(s)
         const [open, setOpen] = useState(false)
         return (
           <Collapsible
@@ -105,17 +104,13 @@ export function MessageFooter({ messageId, isUser }: { messageId: string, isUser
   const messages = useChatStore((s) =>
     activeSessionId ? (s.bySession[activeSessionId]?.messages ?? EMPTY_MESSAGES) : EMPTY_MESSAGES
   )
-  const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const setPendingPromptText = useChatStore((s) => s.setPendingPromptText)
-  const truncateMessagesFrom = useChatStore((s) => s.truncateMessagesFrom)
   const bumpFocusInput = useChatStore((s) => s.bumpFocusInput)
 
   const me = messages.find((m) => m.id === messageId)
   if (!me) return null
 
-  const isLastAssistant =
-    messages[messages.length - 1]?.id === messageId && me.role === 'assistant'
-  const isErrorTail = isLastAssistant && Boolean(me.error || me.status === 'error')
+
 
   const timeStr = me.createdAt 
     ? formatChatTime(me.createdAt)

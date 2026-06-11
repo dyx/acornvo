@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useBrowserStore } from '@/stores/browser'
 import { ipc } from '@/ipc/client'
 import type { Bookmark } from '@shared/browser-types'
-import { Button } from '@/components/ui/button'
-import { MoreVertical, Search, X, Globe, ChevronDown, FolderOpen, Pencil, Trash2 } from 'lucide-react'
+
+import { MoreVertical, Search, Globe, ChevronDown, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ export function BookmarkSidebar(): JSX.Element {
   const tab = useBrowserStore((s) => s.getActiveTab())
   const navigate = useBrowserStore((s) => s.navigate)
   const createTab = useBrowserStore((s) => s.createTab)
-  const setBookmarksOpen = useBrowserStore((s) => s.setBookmarksOpen)
+
   const bookmarksRevision = useBrowserStore((s) => s.bookmarksRevision)
 
   const [items, setItems] = useState<Bookmark[]>([])

@@ -14,7 +14,6 @@ import { setBrowserPort, setBrowserEventPort } from '@/stores/browser'
 import { browserPort, browserEventPort } from '@/ipc/browser-port'
 import { ipc } from '@/ipc/client'
 import { useGroveStore } from '@/stores/grove'
-import { Placeholder } from './pages/Placeholder'
 import { Library } from './pages/Library'
 import { ProjectPicker } from './pages/ProjectPicker'
 import { Settings } from './pages/Settings'
@@ -70,7 +69,7 @@ function BootstrapGate(): JSX.Element | null {
 
   let initial = payload.initialRoute
   if (initial === '/library') {
-    initial = general.defaultMenu || '/browser'
+    initial = (general.defaultMenu || '/browser') as any
   }
 
   return <Navigate to={initial} replace />

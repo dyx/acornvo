@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
 import { useBrowserStore } from '@/stores/browser'
