@@ -4,12 +4,13 @@ import fs from 'node:fs'
 import { dbService } from '../services/db'
 import { getCurrent } from '../services/grove'
 import { parseFile } from '../services/frontmatter'
-import { reviewClip as reviewClipPrompt, AiReviewSchema } from './prompts/review-clip'
+import { reviewClip as reviewClipPrompt, AiReviewSchema, AiReviewStrictSchema } from './prompts/review-clip'
 import { fileHandlers } from '../ipc/file'
 import { buildChatModel, type ResolvedProfile } from './model-factory'
 import { normalizeLLMError } from './normalize-errors'
 import { settingsStore } from '../settings/store'
 import { logger } from '../obs/logger'
+import { tool } from '@langchain/core/tools'
 
 export interface ReviewClipOpts {
   force?: boolean
@@ -248,19 +249,66 @@ export async function reviewClip(
       msg: '[reviewClip] invoking LLM',
       meta: { clipId, provider: profile.provider, model: profile.model }
     })
-    const chatModel = buildChatModel(profile, { temperature: 0.1, maxTokens: 2048 })
-    // openai-compatible providers (e.g. DeepSeek) often don't support
-    // response_format: { type: "json_schema" } (Structured Outputs).
-    // Fall back to jsonMode which uses the widely-supported { type: "json_object" }.
-    const structuredMethod = (profile.provider === 'openai-compatible' || profile.provider === 'openrouter' || profile.provider === 'deepseek') ? 'jsonMode' as const : undefined
-    const structured = chatModel.withStructuredOutput(AiReviewSchema, {
-      includeRaw: true,
-      ...(structuredMethod && { method: structuredMethod })
-    })
-    const out = (await structured.invoke([
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null }
+    
+    let out: { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null }
+    let finalProfile = profile
+    if (profile.provider === 'deepseek') {
+      let baseUrl = profile.baseUrl || 'https://api.deepseek.com'
+      if (!baseUrl.match(/\/beta\/?$/)) {
+        baseUrl = baseUrl.replace(/\/$/, '') + '/beta'
+      }
+      finalProfile = { ...profile, baseUrl }
+      
+      const chatModel = buildChatModel(finalProfile, { temperature: 0.1, maxTokens: 2048 })
+      
+      // 对于 DeepSeek 模型，因为其思考模式(deepseek-reasoner)不支持强制指定 tool_choice
+      // 我们单独使用 bindTools 而不是 withStructuredOutput
+      const reviewTool = tool(async () => {}, {
+        name: 'review_clip',
+        description: 'Review the clip and output the structured result',
+        schema: AiReviewStrictSchema
+      })
+
+      // 绑定工具，开启 strict 模式，但不指定 tool_choice (默认让模型 auto 决定)
+      const boundModel = chatModel.bindTools([reviewTool], { strict: true } as any)
+      const res = await boundModel.invoke([
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ])
+      
+      let toolCall = res.tool_calls?.[0]
+      if (!toolCall && (res as any).additional_kwargs?.tool_calls?.[0]) {
+        const rawToolCall = (res as any).additional_kwargs.tool_calls[0]
+        toolCall = {
+          name: rawToolCall.function.name,
+          args: JSON.parse(rawToolCall.function.arguments),
+          id: rawToolCall.id
+        } as any
+      }
+
+      if (toolCall) {
+        out = { raw: res, parsed: AiReviewStrictSchema.parse(toolCall.args) }
+      } else {
+        // 如果没有调用工具，尝试解析返回的普通文本
+        let text = res.content
+        if (typeof text !== 'string') text = JSON.stringify(text)
+        const m = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+        if (m) text = m[1]
+        out = { raw: res, parsed: AiReviewStrictSchema.parse(JSON.parse(text)) }
+      }
+    } else {
+      const chatModel = buildChatModel(finalProfile, { temperature: 0.1, maxTokens: 2048 })
+      // openai-compatible 和 openrouter 采用 jsonMode，其余采用默认的 functionCalling
+      const structuredMethod = (profile.provider === 'openai-compatible' || profile.provider === 'openrouter') ? 'jsonMode' as const : undefined
+      const structured = chatModel.withStructuredOutput(AiReviewSchema, {
+        includeRaw: true,
+        ...(structuredMethod && { method: structuredMethod })
+      })
+      out = (await structured.invoke([
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ])) as { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null }
+    }
     
     if (!out.parsed) {
       throw new Error(`LLM output failed to parse against schema. Raw: ${JSON.stringify(out.raw)}`)
