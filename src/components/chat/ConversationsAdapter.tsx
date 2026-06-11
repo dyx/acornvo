@@ -63,7 +63,7 @@ export function ConversationsAdapter() {
 
   return (
     <>
-      <div className="flex h-[52px] shrink-0 items-center px-3 bg-transparent">
+      <div className="flex pt-3 pb-2 shrink-0 items-center px-3 bg-transparent">
         <Button
           onClick={() => void createSession()}
           variant="default"

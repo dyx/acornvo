@@ -62,7 +62,7 @@ export function EditorTitleBar({
   )
 
   return (
-    <div className={`flex-none h-10 bg-[color:var(--color-paper)] flex items-center pr-4 relative z-10 border-b border-[color:var(--color-line)] after:content-[''] after:absolute after:top-full after:inset-x-0 after:h-4 after:bg-gradient-to-b after:from-[color:var(--color-paper)] after:to-transparent after:pointer-events-none [-webkit-app-region:drag]`}>
+    <div className={`flex-none h-[44px] bg-[color:var(--color-paper)] flex items-center pr-4 relative z-10 border-b border-[color:var(--color-line)] after:content-[''] after:absolute after:top-full after:inset-x-0 after:h-4 after:bg-gradient-to-b after:from-[color:var(--color-paper)] after:to-transparent after:pointer-events-none [-webkit-app-region:drag]`}>
       <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[60px]'}`} />
       <div className={`flex flex-1 min-w-0 items-center justify-between transition-[padding] duration-300 ${sidebarOpen ? 'pl-4' : 'pl-0'}`}>
         <div className="flex flex-1 items-center gap-3 overflow-hidden min-w-0 pr-4 [-webkit-app-region:no-drag]">

@@ -345,7 +345,7 @@ export function VirtualFileList(): JSX.Element {
   const hasFilters = (filter.tags && filter.tags.length > 0) || filter.category
   
   return <div className="flex w-full flex-1 flex-col overflow-hidden bg-transparent">
-      <div className="flex h-[46px] shrink-0 items-center gap-2 px-3">
+      <div className="flex pt-3 pb-2 shrink-0 items-center gap-2 px-3">
         <div className="flex h-[30px] flex-1 items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
           <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
           <input

@@ -31,8 +31,7 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
         aria-label="settings"
         className="relative flex w-[280px] shrink-0 flex-col overflow-hidden transition-all duration-300"
       >
-        <div className="w-full h-full flex flex-col bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5 py-4">
-          <div className="h-2 shrink-0" />
+        <div className="w-full h-full flex flex-col bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5 pt-3 pb-4">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
