@@ -123,7 +123,7 @@ function ObservabilityAiPanel(): JSX.Element {
       
       const toolMap = new Map<string, number>()
       for (const item of windowItems) {
-        const model = item.modelId || t('obs.ai.unknownModel')
+        const model = item.modelId ? (modelNameMap.get(item.modelId) || item.modelId) : t('obs.ai.unknownModel')
         toolMap.set(model, (toolMap.get(model) ?? 0) + 1)
       }
       const byTool = Array.from(toolMap.entries())
