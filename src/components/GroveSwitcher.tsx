@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useState, useRef, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, FolderOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -23,7 +23,23 @@ export const dotColor: Record<GroveColor, string> = {
   sky: 'var(--color-sky)'
 }
 
-export function GroveSwitcher({ className }: { className?: string }): JSX.Element {
+export function GroveSwitcher({
+  className,
+  customTrigger,
+  side = 'bottom',
+  align = 'center',
+  sideOffset = 4,
+  alignOffset = 0,
+  hoverable = false
+}: {
+  className?: string
+  customTrigger?: React.ReactNode
+  side?: 'top' | 'right' | 'bottom' | 'left'
+  align?: 'start' | 'center' | 'end'
+  sideOffset?: number
+  alignOffset?: number
+  hoverable?: boolean
+}): JSX.Element {
   const { t } = useTranslation()
   const current = useGroveStore((s) => s.current)
   const recent = useGroveStore((s) => s.recent)
@@ -34,6 +50,21 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
 
   const [open, setOpen] = useState(false)
   useNativeBrowserViewOcclusion(open)
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleMouseEnter = () => {
+    if (!hoverable) return
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    if (!hoverable) return
+    timeoutRef.current = setTimeout(() => {
+      setOpen(false)
+    }, 150)
+  }
 
   // 缓存最后一次选择的树林，防止加载时闪烁为空
   const [cachedName, setCachedName] = useState(() => localStorage.getItem('lastGroveName') || '')
@@ -73,7 +104,6 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
   }
 
   async function handleNew(): Promise<void> {
-    navigate('/picker')
     setTimeout(() => window.dispatchEvent(new CustomEvent('acorn:picker:new')), 0)
   }
 
@@ -93,35 +123,46 @@ export function GroveSwitcher({ className }: { className?: string }): JSX.Elemen
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('switcher.ariaLabel')}
-          className={cn(
-            '[-webkit-app-region:no-drag]',
-            'inline-flex items-center gap-1.5',
-            'h-6 px-2 rounded',
-            'text-[12.5px] text-[color:var(--color-ink)]',
-            'hover:bg-[color:var(--color-paper-3)]',
-            'transition-colors',
-            className
-          )}
-        >
-          {current || cachedName ? (
-            <>
-              <span
-                className="h-2 w-2 rounded-[2px]"
-                style={{ background: dotColor[current?.color || cachedColor] }}
-              />
-              <span className={!current ? 'opacity-70' : ''}>{current?.name || cachedName}</span>
-            </>
-          ) : (
-            <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
-          )}
-          <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex">
+        <DropdownMenuTrigger asChild>
+        {customTrigger || (
+          <button
+            type="button"
+            aria-label={t('switcher.ariaLabel')}
+            className={cn(
+              '[-webkit-app-region:no-drag]',
+              'inline-flex items-center gap-1.5',
+              'h-6 px-2 rounded',
+              'text-[12.5px] text-[color:var(--color-ink)]',
+              'hover:bg-[color:var(--color-paper-3)]',
+              'transition-colors',
+              className
+            )}
+          >
+            {current || cachedName ? (
+              <>
+                <span
+                  className="h-2 w-2 rounded-[2px]"
+                  style={{ background: dotColor[current?.color || cachedColor] }}
+                />
+                <span className={!current ? 'opacity-70' : ''}>{current?.name || cachedName}</span>
+              </>
+            ) : (
+              <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
+            )}
+            <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
+          </button>
+        )}
+        </DropdownMenuTrigger>
+      </div>
+      <DropdownMenuContent
+        align={align}
+        side={side}
+        sideOffset={sideOffset}
+        alignOffset={alignOffset}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {recentFiltered.map((item) => (
           <DropdownMenuItem
             key={item.id}

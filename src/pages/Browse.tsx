@@ -91,9 +91,9 @@ export function Browse(): JSX.Element {
   }, [bookmarksOpen, setViewport, sidebarOpen])
 
   return (
-    <div className="flex h-full flex-row bg-transparent pt-3 pb-3 pr-3 gap-3" data-testid="browse-page">
+    <div className="flex h-full flex-row bg-transparent py-3 pr-3" data-testid="browse-page">
       <aside className={`relative flex flex-col shrink-0 overflow-hidden bg-transparent transition-all duration-300 ${
-        sidebarOpen ? 'w-[280px]' : 'w-0'
+        sidebarOpen ? 'w-[280px] mr-3 opacity-100' : 'w-0 mr-0 opacity-0'
       }`}>
         <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
           <BookmarkSidebar />

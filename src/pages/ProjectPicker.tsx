@@ -7,7 +7,6 @@ import { ipc } from '@/ipc/client'
 import { useBootstrap } from '@/hooks/useBootstrap'
 import { AcornLogo } from '@/components/AcornLogo'
 import { ProjectCard } from '@/components/ProjectCard'
-import { NewGroveDialog } from '@/components/NewGroveDialog'
 import { TakeoverDialog } from '@/components/TakeoverDialog'
 import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen } from 'lucide-react'
@@ -27,7 +26,6 @@ export function ProjectPicker(): JSX.Element {
     holder: LockInfo
   } | null>(null)
 
-  const [newOpen, setNewOpen] = useState(false)
   const [takeover, setTakeover] = useState<{ path: string; holder: LockInfo } | null>(null)
   const [takeoverPending, setTakeoverPending] = useState(false)
 
@@ -39,12 +37,6 @@ export function ProjectPicker(): JSX.Element {
     }
     void loadRecent()
   }, [bootstrap, loadRecent])
-
-  useEffect(() => {
-    const onNew = (): void => setNewOpen(true)
-    window.addEventListener('acorn:picker:new', onNew)
-    return () => window.removeEventListener('acorn:picker:new', onNew)
-  }, [])
 
   useEffect(() => {
     const onOpen = async (): Promise<void> => {
@@ -211,11 +203,6 @@ export function ProjectPicker(): JSX.Element {
           </div>
         </section>
       </div>
-      <NewGroveDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        onCreated={() => navigate('/library')}
-      />
       {takeover ? (
         <TakeoverDialog
           open={!!takeover}

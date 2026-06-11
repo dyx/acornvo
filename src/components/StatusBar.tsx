@@ -1,4 +1,5 @@
 import type { JSX } from 'react'
+import { useGroveStore } from '@/stores/grove'
 
 interface StatusBarProps {
   reviewing?: number
@@ -13,6 +14,8 @@ export function StatusBar({
   indexing = null,
   totalDocs = 0
 }: StatusBarProps): JSX.Element {
+  const current = useGroveStore((s) => s.current)
+
   return (
     <div className="flex h-7 shrink-0 items-center gap-4 bg-[color:var(--color-paper-3)] px-4 font-mono text-xs text-[color:var(--color-ink-3)]">
       {indexing ? (
@@ -22,8 +25,8 @@ export function StatusBar({
         </span>
       ) : (
         <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-leaf)]" />
-          已同步
+          <span>🌰</span>
+          {current ? current.name : '未选择果园'}
         </span>
       )}
 

@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { AppRail } from '@/components/AppRail'
@@ -9,6 +9,7 @@ import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { CrashBanner } from '@/components/CrashBanner'
+import { NewGroveDialog } from '@/components/NewGroveDialog'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
@@ -33,14 +34,22 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
 export function App(): JSX.Element {
   const { i18n } = useTranslation()
   const { toast } = useToast()
+  const navigate = useNavigate()
   useGlobalHotkeys()
   const [isRebuilding, setIsRebuilding] = useState(false)
+  const [newOpen, setNewOpen] = useState(false)
   const [indexState, setIndexState] = useState<IndexStateName>('idle')
   const [progress, setProgress] = useState<{
     scanned: number
     total: number
     currentPath?: string
   }>({ scanned: 0, total: 0 })
+
+  useEffect(() => {
+    const onNew = (): void => setNewOpen(true)
+    window.addEventListener('acorn:picker:new', onNew)
+    return () => window.removeEventListener('acorn:picker:new', onNew)
+  }, [])
 
   useEffect(() => {
     ipc.index.status().then((s) => {
@@ -99,6 +108,11 @@ export function App(): JSX.Element {
           total={progress.total}
           currentPath={progress.currentPath}
           onCancel={() => ipc.index.cancelScan()}
+        />
+        <NewGroveDialog
+          open={newOpen}
+          onOpenChange={setNewOpen}
+          onCreated={() => navigate('/library')}
         />
         <Toaster />
       </div>

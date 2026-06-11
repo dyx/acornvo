@@ -194,11 +194,11 @@ export function Chat() {
     <ChatRuntimeProvider>
       <TooltipProvider>
         <div className="flex h-full w-full flex-col bg-transparent" data-testid="chat-page-root">
-          <div className="flex flex-1 overflow-hidden pt-3 pb-3 pr-3 gap-3">
+          <div className="flex flex-1 overflow-hidden py-3 pr-3">
             <aside
               data-testid="chat-session-list"
               className={`relative flex shrink-0 flex-col overflow-hidden bg-transparent transition-all duration-300 ${
-                sidebarOpen ? 'w-[280px]' : 'w-0'
+                sidebarOpen ? 'w-[280px] mr-3 opacity-100' : 'w-0 mr-0 opacity-0'
               }`}
             >
               <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
