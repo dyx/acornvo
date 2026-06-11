@@ -107,7 +107,12 @@ export function ProjectPicker(): JSX.Element {
           className="relative flex w-[420px] shrink-0 flex-col justify-between px-14 py-12"
         >
           {/* Custom vertical line matching AppRail height */}
-          <div className="absolute right-0 top-[40px] bottom-3 w-[1px] bg-[color:var(--color-line)] pointer-events-none" />
+          <div
+            className="absolute right-0 top-[40px] bottom-3 w-[1px] pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, var(--color-line) 15%, var(--color-line) 85%, transparent)'
+            }}
+          />
           <div className="flex flex-col">
             <div className="flex items-center gap-5 mb-10">
               <span className="text-[50px] leading-none select-none shrink-0" style={{ transform: 'translateY(4px)' }}>🌰</span>

@@ -88,7 +88,7 @@ export function App(): JSX.Element {
         <UpdateBanner />
         <div className="flex flex-1 overflow-hidden relative">
           <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
-          <div className="w-[72px] shrink-0 pt-[40px] pb-3 px-3 flex flex-col z-10 pointer-events-none">
+          <div className="w-[76px] shrink-0 pt-[40px] pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none">
             <AppRail />
           </div>
           <main className="flex-1 overflow-hidden relative">
