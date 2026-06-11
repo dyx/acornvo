@@ -125,17 +125,17 @@ function ControlCenterMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 p-1">
-        <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider">排序</div>
+        <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider">{t('library.filter.sort_by', '排序')}</div>
         <DropdownMenuItem onClick={() => void setOrder('clipped_desc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> 最近创建</div>
+          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.clipped_desc', '最近创建')}</div>
           {orderBy === 'clipped_desc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => void setOrder('clipped_asc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> 最早创建</div>
+          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.clipped_asc', '最早创建')}</div>
           {orderBy === 'clipped_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => void setOrder('title_asc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><ArrowDownAZ size={12} className="text-[color:var(--color-ink-4)]"/> 标题 A-Z</div>
+          <div className="flex items-center gap-2"><ArrowDownAZ size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.title_asc', '标题 A-Z')}</div>
           {orderBy === 'title_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
         </DropdownMenuItem>
         
@@ -144,9 +144,9 @@ function ControlCenterMenu() {
         {flattenedCategories.length > 0 && (
           <>
             <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider flex justify-between">
-              分类
+              {t('library.filter.category', '分类')}
               {filter.category && (
-                <button onClick={(e) => { e.stopPropagation(); void setFilter({ category: undefined }) }} className="text-[color:var(--color-acorn)] hover:underline">清除</button>
+                <button onClick={(e) => { e.stopPropagation(); void setFilter({ category: undefined }) }} className="text-[color:var(--color-acorn)] hover:underline">{t('common.clear', '清除')}</button>
               )}
             </div>
             <ScrollArea className="max-h-[140px] px-1">
@@ -174,15 +174,15 @@ function ControlCenterMenu() {
         )}
         
         <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider flex justify-between">
-          标签
+          {t('library.filter.tags', '标签')}
           {activeTags.length > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); void setFilter({ tags: [] }) }} className="text-[color:var(--color-acorn)] hover:underline">清除</button>
+            <button onClick={(e) => { e.stopPropagation(); void setFilter({ tags: [] }) }} className="text-[color:var(--color-acorn)] hover:underline">{t('common.clear', '清除')}</button>
           )}
         </div>
         <div className="px-2 pb-1.5 pt-0.5">
           <input 
             className="w-full text-[11px] bg-[color:var(--color-bg-1)] border rounded-[4px] px-2 py-1 border-[color:var(--color-line)] outline-none focus:border-[color:var(--color-acorn)]"
-            placeholder="搜索标签..."
+            placeholder={t('library.filter.search_tags', '搜索标签...')}
             value={tagSearch}
             onChange={e => setTagSearch(e.target.value)}
             onKeyDown={e => e.stopPropagation()}
@@ -191,7 +191,7 @@ function ControlCenterMenu() {
         </div>
         <ScrollArea className="h-[140px] px-1">
           {filteredTags.length === 0 ? (
-            <div className="text-[11px] text-[color:var(--color-ink-4)] text-center py-4">无匹配标签</div>
+            <div className="text-[11px] text-[color:var(--color-ink-4)] text-center py-4">{t('library.filter.no_tags_found', '无匹配标签')}</div>
           ) : (
             filteredTags.map(t => (
               <DropdownMenuItem 
@@ -215,7 +215,7 @@ function ControlCenterMenu() {
           onClick={() => void setFilter({ pathPrefix: undefined, category: undefined, tags: [] })}
           className="text-xs flex items-center justify-center text-[color:var(--color-ink-3)] py-1.5 cursor-default"
         >
-          重置所有条件
+          {t('library.filter.reset', '重置所有条件')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -331,10 +331,10 @@ export function VirtualFileList(): JSX.Element {
 
   const getSortLabel = (order: OrderBy) => {
     switch (order) {
-      case 'clipped_desc': return '最新创建'
-      case 'clipped_asc': return '最早创建'
-      case 'title_asc': return '标题 A-Z'
-      default: return '排序'
+      case 'clipped_desc': return t('library.filter.clipped_desc_short', '最新创建')
+      case 'clipped_asc': return t('library.filter.clipped_asc_short', '最早创建')
+      case 'title_asc': return t('library.filter.title_asc', '标题 A-Z')
+      default: return t('library.filter.sort_by', '排序')
     }
   }
 
@@ -355,7 +355,7 @@ export function VirtualFileList(): JSX.Element {
             onChange={(e) => setQuery(e.target.value)}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
-            placeholder="搜索标题或内容..."
+            placeholder={t('library.search_placeholder', '搜索标题或内容...')}
             className="flex-1 bg-transparent text-[13px] text-[color:var(--color-ink)] outline-none placeholder:text-[color:var(--color-ink-4)] min-w-0"
           />
         </div>

@@ -25,6 +25,7 @@
     "settings": "Settings"
   },
   "picker": {
+    "brand_name": "Acornvo",
     "title": "Pick a Grove",
     "subtitle": "Like a squirrel — gather, organize, talk. Turn scattered reading into your own knowledge forest.",
     "recentLabel": "Recent",
@@ -72,6 +73,39 @@
     }
   },
   "library": {
+    "trash": {
+      "0": "M",
+      "1": "o",
+      "2": "v",
+      "3": "e",
+      "4": " ",
+      "5": "t",
+      "6": "o",
+      "7": " ",
+      "8": "T",
+      "9": "r",
+      "10": "a",
+      "11": "s",
+      "12": "h",
+      "title": "Move to Trash",
+      "fail_title": "Cannot Move to Trash",
+      "hard_delete": "Delete Permanently",
+      "ack_unrecoverable": "I understand this cannot be recovered"
+    },
+    "filter": {
+      "sort_by": "Sort by",
+      "clipped_desc": "Newest first",
+      "clipped_asc": "Oldest first",
+      "title_asc": "Title A-Z",
+      "category": "Category",
+      "tags": "Tags",
+      "search_tags": "Search tags...",
+      "no_tags_found": "No tags found",
+      "reset": "Reset all filters",
+      "clipped_desc_short": "Newest",
+      "clipped_asc_short": "Oldest"
+    },
+    "search_placeholder": "Search title or content...",
     "views": "Views",
     "all": "All",
     "inbox": "Inbox",
@@ -88,13 +122,30 @@
     "empty_preview": "Pick one to start",
     "open_editor": "Open in Editor",
     "reveal": "Reveal in Finder",
-    "trash": "Move to Trash",
     "banner_scanning": "Indexing — data may be incomplete",
     "banner_error": "Indexing error — some data may be missing",
     "banner_view_logs": "View logs",
     "shown_total": "{{shown}} / {{total}}"
   },
   "editor": {
+    "vditor": {
+      "mode_wysiwyg": "WYSIWYG",
+      "mode_ir": "Instant Rendering",
+      "mode_sv": "Split View"
+    },
+    "markdown": {
+      "guide_title": "Markdown Guide",
+      "guide_desc": "Basic Markdown syntax and shortcuts",
+      "heading": "Heading",
+      "style": "Text Style",
+      "list": "List",
+      "block": "Block Element",
+      "link_img": "Link & Image"
+    },
+    "preview": {
+      "enter_edit": "Enter Edit Mode",
+      "enter_preview": "Preview Document"
+    },
     "loading": "Loading file...",
     "back": "Back to Library",
     "saving": "Saving...",
@@ -357,7 +408,6 @@
       "unavailable": "OS keychain unavailable — cannot save API keys"
     },
     "browser": {
-
       "clipImages": "Localize clipped images",
       "searchEngine": "Search engine",
       "clearCookies": "Clear browser cookies",
@@ -459,6 +509,30 @@
     "clearDone": "Clear completed"
   },
   "chat": {
+    "error": {
+      "http400": "Format Error: Please check the request body according to the error message",
+      "http401": "Auth Failed: Please check if your API key is correct",
+      "http402": "Insufficient Balance",
+      "http422": "Parameter Error: Please check parameters according to the error message",
+      "http429": "Rate limit exceeded, please try again later",
+      "http500": "Server fault: please try again later",
+      "http503": "Server busy: please try again later",
+      "title": "Chat Error",
+      "step_limit": "Reached the 8-step thinking limit.",
+      "missing_profile": "No AI profile is bound to this session.",
+      "missingProfile": "Please configure an AI profile in Settings first",
+      "goToSettings": "Go to Settings",
+      "busy": "This conversation is already running.",
+      "global_busy": "Too many chats are running. Please cancel one and try again.",
+      "user_rejected": "You cancelled this tool call.",
+      "approval_timeout": "Approval timed out after 30 minutes.",
+      "path_escape": "The path leaves the grove and cannot be accessed.",
+      "missing_reason": "A reason is required for this change.",
+      "stepLimit": "Reached the 8-step thinking limit.",
+      "network": "Network error. Please try again later.",
+      "server": "Server error.",
+      "retry": "Retry"
+    },
     "contextDisplay": {
       "usage": "Usage",
       "input": "Input",
@@ -535,22 +609,6 @@
       "confirmDeleteCancel": "Cancel",
       "approvalPending": "Approval pending"
     },
-    "error": {
-      "step_limit": "Reached the 8-step thinking limit.",
-      "missing_profile": "No AI profile is bound to this session.",
-      "missingProfile": "Please configure an AI profile in Settings first",
-      "goToSettings": "Go to Settings",
-      "busy": "This conversation is already running.",
-      "global_busy": "Too many chats are running. Please cancel one and try again.",
-      "user_rejected": "You cancelled this tool call.",
-      "approval_timeout": "Approval timed out after 30 minutes.",
-      "path_escape": "The path leaves the grove and cannot be accessed.",
-      "missing_reason": "A reason is required for this change.",
-      "stepLimit": "Reached the 8-step thinking limit.",
-      "network": "Network error. Please try again later.",
-      "server": "Server error.",
-      "retry": "Retry"
-    },
     "input": {
       "placeholder": "Type a message... (Type @ to mention files, Enter to send)",
       "send": "Send",
@@ -593,5 +651,8 @@
     "upToDate": "Acornvo is up to date",
     "checkFailed": "Update check failed",
     "available": "New version available"
+  },
+  "placeholder": {
+    "no_grove": "No grove opened"
   }
 }

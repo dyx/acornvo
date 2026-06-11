@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import { useSettingsStore } from './settings'
+// import removed
 import { toast } from '@/hooks/use-toast'
 import type { AgentEvent, Session, SessionMessage, Attachment } from '@shared/agent-types'
+import { i18n } from '@/i18n'
 import type { TokenUsage } from '@shared/ai-types'
 
 export interface ChatSession {
@@ -791,13 +792,13 @@ function subscribeSessionStream(sid: string): void {
           
           if (detail && typeof detail === 'object') {
             switch (detail.httpStatus) {
-              case 400: displayMsg = '格式错误：请根据错误信息提示修改请求体'; break;
-              case 401: displayMsg = '认证失败：请检查您的 API key 是否正确'; break;
-              case 402: displayMsg = '余额不足'; break;
-              case 422: displayMsg = '参数错误：请根据错误信息提示修改相关参数'; break;
-              case 429: displayMsg = '请求速率达到上限，请稍后重试'; break;
-              case 500: displayMsg = '服务器故障：请稍后重试'; break;
-              case 503: displayMsg = '服务器繁忙：请稍后重试'; break;
+              case 400: displayMsg = i18n.t('chat.error.http400', '格式错误：请根据错误信息提示修改请求体'); break;
+              case 401: displayMsg = i18n.t('chat.error.http401', '认证失败：请检查您的 API key 是否正确'); break;
+              case 402: displayMsg = i18n.t('chat.error.http402', '余额不足'); break;
+              case 422: displayMsg = i18n.t('chat.error.http422', '参数错误：请根据错误信息提示修改相关参数'); break;
+              case 429: displayMsg = i18n.t('chat.error.http429', '请求速率达到上限，请稍后重试'); break;
+              case 500: displayMsg = i18n.t('chat.error.http500', '服务器故障：请稍后重试'); break;
+              case 503: displayMsg = i18n.t('chat.error.http503', '服务器繁忙：请稍后重试'); break;
               default: displayMsg = detail.message || event.error;
             }
           } else if (typeof event.detail === 'string') {
@@ -807,7 +808,7 @@ function subscribeSessionStream(sid: string): void {
           setTimeout(() => {
             toast({
               variant: 'destructive',
-              title: '松语错误',
+              title: i18n.t('chat.error.title', '松语错误'),
               description: displayMsg
             });
           }, 0);

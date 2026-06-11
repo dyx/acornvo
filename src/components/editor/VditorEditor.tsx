@@ -126,7 +126,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
           '|',
           {
             name: 'mode-wysiwyg',
-            tip: '所见即所得',
+            tip: t('editor.vditor.mode_wysiwyg', '所见即所得'),
             tipPosition: 's',
             icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>',
             click(_event: Event, vditor: any) {
@@ -137,7 +137,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
           },
           {
             name: 'mode-ir',
-            tip: '即时渲染',
+            tip: t('editor.vditor.mode_ir', '即时渲染'),
             tipPosition: 's',
             icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>',
             click(_event: Event, vditor: any) {
@@ -146,7 +146,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
           },
           {
             name: 'mode-sv',
-            tip: '分屏预览',
+            tip: t('editor.vditor.mode_sv', '分屏预览'),
             tipPosition: 's',
             icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>',
             click(_event: Event, vditor: any) {

@@ -62,8 +62,8 @@ export function ClipPreviewDialog(): JSX.Element | null {
                 <div className="mt-1 break-all rounded border bg-[color:var(--color-paper-2)] px-2 py-1.5 text-[11px] leading-relaxed">
                   <div className="font-medium text-[color:var(--color-ink)]">{preview.site}</div>
                   <div className="mt-0.5 opacity-80">{preview.url}</div>
-                  {preview.author && <div className="mt-0.5 opacity-80">作者：{preview.author}</div>}
-                  {preview.publishedTime && <div className="mt-0.5 opacity-80">时间：{preview.publishedTime}</div>}
+                  {preview.author && <div className="mt-0.5 opacity-80">{t('browser.clip.preview.author', '作者：')}{preview.author}</div>}
+                  {preview.publishedTime && <div className="mt-0.5 opacity-80">{t('browser.clip.preview.time', '时间：')}{preview.publishedTime}</div>}
                 </div>
               </label>
 

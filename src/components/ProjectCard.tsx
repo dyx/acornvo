@@ -13,14 +13,14 @@ const colorMap: Record<GroveColor, { dot: string; bg: string }> = {
   sky: { dot: 'var(--color-sky)', bg: 'var(--color-sky-bg)' }
 }
 
-function formatRelative(iso: string): string {
+function formatRelative(iso: string, t: any): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   const diff = Date.now() - d.getTime()
   const days = Math.floor(diff / 86_400_000)
-  if (days <= 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days} 天前`
+  if (days <= 0) return t('common.today', '今天')
+  if (days === 1) return t('common.yesterday', '昨天')
+  if (days < 7) return t('common.days_ago', '{{count}} 天前', { count: days })
   return d.toISOString().slice(0, 10)
 }
 
@@ -102,7 +102,7 @@ export function ProjectCard({
           <div className="serif text-sm text-[color:var(--color-ink-2)]">
             {t('picker.files', { count: item.files_count })}
           </div>
-          <div className="mt-0.5">{formatRelative(item.last_opened_at)}</div>
+          <div className="mt-0.5">{formatRelative(item.last_opened_at, t)}</div>
         </div>
         <ArrowRight
           size={14}

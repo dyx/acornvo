@@ -1,4 +1,5 @@
 import type { JSX } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGroveStore } from '@/stores/grove'
 
 interface StatusBarProps {
@@ -14,6 +15,7 @@ export function StatusBar({
   indexing = null,
   totalDocs = 0
 }: StatusBarProps): JSX.Element {
+  const { t } = useTranslation()
   const current = useGroveStore((s) => s.current)
 
   return (
@@ -21,12 +23,12 @@ export function StatusBar({
       {indexing ? (
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-sky)]" />
-          索引中 {indexing}
+          {t('status.indexing', '索引中 {{indexing}}', { indexing })}
         </span>
       ) : (
         <span className="flex items-center gap-1.5">
           <span>🌰</span>
-          {current ? current.name : '未选择果园'}
+          {current ? current.name : t('status.no_grove', '未选择果园')}
         </span>
       )}
 
@@ -34,7 +36,7 @@ export function StatusBar({
         <span className="flex items-center gap-1.5">
           {/* Sparkles placeholder */}
           <span className="text-xs text-[color:var(--color-acorn)]">✨</span>
-          理果中 {reviewing}
+          {t('status.reviewing', '理果中 {{reviewing}}', { reviewing })}
         </span>
       )}
 
@@ -42,13 +44,13 @@ export function StatusBar({
         <span className="flex items-center gap-1 text-[color:var(--color-berry)]">
           {/* Warn placeholder */}
           <span className="text-xs">⚠️</span>
-          {conflicts} 冲突
+          {t('status.conflicts', '{{count}} 冲突', { count: conflicts })}
         </span>
       )}
 
       <span className="flex-1" />
 
-      <span>{totalDocs} 篇文档</span>
+      <span>{t('status.docs', '{{count}} 篇文档', { count: totalDocs })}</span>
     </div>
   )
 }

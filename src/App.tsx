@@ -16,6 +16,7 @@ import type { IndexStateName } from '@shared/ipc-contract'
 import { useTranslation } from 'react-i18next'
 
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
+  const { t } = useTranslation()
   if (!visible) return null
   return (
     <div
@@ -24,8 +25,8 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
       aria-live="assertive"
     >
       <div className="text-center">
-        <div className="text-lg font-medium">索引损坏，正在重建</div>
-        <div className="mt-2 text-sm text-muted-foreground">这通常只需要几秒钟</div>
+        <div className="text-lg font-medium">{t('app.rebuild_index', '索引损坏，正在重建')}</div>
+        <div className="mt-2 text-sm text-muted-foreground">{t('app.rebuild_index_sub', '这通常只需要几秒钟')}</div>
       </div>
     </div>
   )
@@ -62,8 +63,8 @@ export function App(): JSX.Element {
     const offRebuilt = ipc.on('db:rebuilt', () => {
       setIsRebuilding(false)
       toast({
-        title: '索引已重建',
-        description: '部分数据将在后续步骤中恢复'
+        title: t('app.rebuild_done_title', '索引已重建'),
+        description: t('app.rebuild_done_desc', '部分数据将在后续步骤中恢复')
       })
     })
     return () => {

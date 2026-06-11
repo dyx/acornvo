@@ -124,7 +124,7 @@ export function ProjectPicker(): JSX.Element {
                   <span>v1.0</span>
                 </div>
                 <h1 className="font-review text-[44px] font-medium leading-none tracking-tight text-[color:var(--color-ink)]">
-                  松言果语
+                  {t('picker.brand_name', '松言果语')}
                 </h1>
               </div>
             </div>

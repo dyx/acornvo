@@ -9,6 +9,7 @@ import { useChatStore, type ChatMessage } from '@/stores/chat'
 import { useProvidersStore } from '@/stores/providers'
 import { useToast } from '@/hooks/use-toast'
 import { useFileMentionStore } from '@/components/assistant-ui/file-mention-adapter'
+import { useTranslation } from 'react-i18next'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
@@ -20,6 +21,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   const sendUserMessage = useChatStore((s) => s.sendUserMessage)
   const cancelStream = useChatStore((s) => s.cancelStream)
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   const activeSession = activeSessionId ? bySession[activeSessionId] : null
   const messages = activeSession?.messages ?? EMPTY_MESSAGES
@@ -160,7 +162,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
     if (models.length === 0) {
       toast({
         variant: 'destructive',
-        description: '由于未配置 AI 模型，无法使用当前对话功能。'
+        description: t('chat.error.noModelDesc', '由于未配置 AI 模型，无法使用当前对话功能。')
       });
       return false;
     }
@@ -200,7 +202,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       } catch (err) {
         toast({
           variant: 'destructive',
-          title: '发送失败',
+          title: t('chat.error.sendFailed', '发送失败'),
           description: err instanceof Error ? err.message : String(err)
         });
       }
@@ -223,7 +225,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         console.error('Failed to truncate session:', err);
         toast({
           variant: 'destructive',
-          title: '编辑失败',
+          title: t('chat.error.editFailed', '编辑失败'),
           description: err instanceof Error ? err.message : String(err)
         });
         return;
@@ -244,7 +246,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       } catch (err) {
         toast({
           variant: 'destructive',
-          title: '发送失败',
+          title: t('chat.error.sendFailed', '发送失败'),
           description: err instanceof Error ? err.message : String(err)
         });
       }
@@ -269,7 +271,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         console.error('Failed to truncate session for reload:', err);
         toast({
           variant: 'destructive',
-          title: '重试失败',
+          title: t('chat.error.retryFailed', '重试失败'),
           description: err instanceof Error ? err.message : String(err)
         });
         return;
@@ -283,7 +285,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       } catch (err) {
         toast({
           variant: 'destructive',
-          title: '发送失败',
+          title: t('chat.error.sendFailed', '发送失败'),
           description: err instanceof Error ? err.message : String(err)
         });
       }

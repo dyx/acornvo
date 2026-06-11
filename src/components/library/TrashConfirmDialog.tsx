@@ -12,6 +12,8 @@ export interface TrashConfirmDialogProps {
 
 type Mode = 'confirm' | 'fallback'
 
+import { useTranslation } from 'react-i18next'
+
 export function TrashConfirmDialog({
   open,
   path,
@@ -19,6 +21,7 @@ export function TrashConfirmDialog({
   onConfirm,
   onHardDelete
 }: TrashConfirmDialogProps): JSX.Element {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<Mode>('confirm')
   const [errorMessage, setErrorMessage] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
@@ -81,10 +84,10 @@ export function TrashConfirmDialog({
     <ConfirmDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={isConfirmMode ? '移到废纸篓' : '无法移到废纸篓'}
+      title={isConfirmMode ? t('library.trash.title', '移到废纸篓') : t('library.trash.fail_title', '无法移到废纸篓')}
       description={isConfirmMode ? path : errorMessage}
       destructive
-      confirmText={isConfirmMode ? '确定' : '永久删除'}
+      confirmText={isConfirmMode ? t('common.confirm', '确定') : t('library.trash.hard_delete', '永久删除')}
       disabled={isConfirmMode ? confirming : (!acknowledged || hardDeleting)}
       onConfirm={isConfirmMode ? handleConfirm : handleHardDelete}
       onCancel={handleCancel}
@@ -102,7 +105,7 @@ export function TrashConfirmDialog({
             htmlFor="acknowledge-hard-delete"
             className="text-sm text-[color:var(--color-ink-2)] cursor-pointer"
           >
-            我知道这无法恢复
+            {t('library.trash.ack_unrecoverable', '我知道这无法恢复')}
           </label>
         </div>
       )}

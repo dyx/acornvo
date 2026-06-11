@@ -270,7 +270,7 @@ export async function reviewClip(
       })
 
       // 绑定工具，开启 strict 模式，但不指定 tool_choice (默认让模型 auto 决定)
-      const boundModel = chatModel.bindTools([reviewTool], { strict: true } as any)
+      const boundModel = (chatModel as any).bindTools([reviewTool], { strict: true } as any)
       const res = await boundModel.invoke([
         { role: 'system', content: system },
         { role: 'user', content: user }

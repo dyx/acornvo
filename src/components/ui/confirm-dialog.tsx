@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,14 +30,18 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  cancelText = '取消',
-  confirmText = '确定',
+  cancelText,
+  confirmText,
   onCancel,
   onConfirm,
   disabled = false,
   destructive = false,
   children
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
+  const cText = cancelText || t('common.cancel', '取消')
+  const okText = confirmText || t('common.confirm', '确定')
+
   const handleCancel = () => {
     onCancel?.()
     onOpenChange(false)
@@ -54,14 +59,14 @@ export function ConfirmDialog({
         {children}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleCancel} disabled={disabled}>
-            {cancelText}
+            {cText}
           </AlertDialogCancel>
           <AlertDialogAction
             variant={destructive ? 'destructive' : 'default'}
             onClick={onConfirm}
             disabled={disabled}
           >
-            {confirmText}
+            {okText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

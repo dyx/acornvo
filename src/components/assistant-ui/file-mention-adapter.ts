@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { unstable_useMentionAdapter, type Unstable_TriggerAdapter } from '@assistant-ui/react';
 import type { FileSummary } from '@shared/file-types';
 import { create } from 'zustand';
+import i18next from 'i18next';
 
 export const useFileMentionStore = create<{
   files: FileSummary[];
@@ -17,7 +18,7 @@ export const useFileMentionStore = create<{
     if (state.files.length >= 10) {
       toast({
         variant: "destructive",
-        description: "最多只能选择 10 个文件作为附件。"
+        description: i18next.t('chat.mention.limit', '最多只能选择 10 个文件作为附件。')
       });
       return state;
     }

@@ -1,5 +1,6 @@
 import { format, formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { zhCN, enUS } from 'date-fns/locale'
+import { i18n } from '@/i18n'
 
 export type SessionGroup = 'today' | 'yesterday' | 'thisWeek' | 'earlier'
 
@@ -43,5 +44,6 @@ export function formatDate(ts: number | string | Date): string {
  * Format timestamp as a relative string (e.g., "5 分钟前")
  */
 export function formatRelativeTime(ts: number | string | Date): string {
-  return formatDistanceToNow(new Date(ts), { addSuffix: true, locale: zhCN })
+  const isEn = i18n.language?.startsWith('en')
+  return formatDistanceToNow(new Date(ts), { addSuffix: true, locale: isEn ? enUS : zhCN })
 }

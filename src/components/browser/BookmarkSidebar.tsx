@@ -85,7 +85,7 @@ export function BookmarkSidebar(): JSX.Element {
               <ChevronDown size={14} className="text-[color:var(--color-ink-3)] mr-1 shrink-0" />
               <FolderOpen size={14} className="text-[color:var(--color-acorn)] mr-2 shrink-0" />
               <span className="text-[13px] font-medium text-[color:var(--color-ink-2)] flex-1">
-                书签栏
+                {t('browser.bookmarks.bar', '书签栏')}
               </span>
               <span className="text-[11px] text-[color:var(--color-ink-4)] tabular-nums px-1">
                 ({items.length})
