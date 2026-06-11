@@ -26,7 +26,7 @@ export function NewGroveDialog({
   onCreated
 }: NewGroveDialogProps): JSX.Element {
   const { t } = useTranslation()
-  const [parentDir, setParentDir] = useState<string>('')
+  const [parentDir, setParentDir] = useState<string>(() => localStorage.getItem('acornvo:lastParentDir') || '')
   const [name, setName] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -36,7 +36,6 @@ export function NewGroveDialog({
   if (open !== prevOpen) {
     setPrevOpen(open)
     if (!open) {
-      setParentDir('')
       setName('')
       setError(null)
       setBusy(false)
@@ -45,7 +44,10 @@ export function NewGroveDialog({
 
   async function chooseParent(): Promise<void> {
     const p = await ipc.project.selectDirectory('createParent')
-    if (p) setParentDir(p)
+    if (p) {
+      setParentDir(p)
+      localStorage.setItem('acornvo:lastParentDir', p)
+    }
   }
 
   async function submit(): Promise<void> {

@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { ArrowRight, X } from 'lucide-react'
+import { ArrowRight, X, Trees } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { RecentItemView, GroveColor } from '@shared/grove'
 import { cn } from '@/lib/utils'
@@ -32,12 +32,14 @@ export type ProjectCardProps = {
   onRemove: () => void
   onTakeover?: () => void
   /** Stagger index for fade-up animation. */
-  index?: number
+  /** Whether this is the currently active grove. */
+  isActive?: boolean
 }
 
 export function ProjectCard({
   item,
   locked,
+  isActive,
   onOpen,
   onRemove,
   onTakeover,
@@ -54,7 +56,9 @@ export function ProjectCard({
         'animate-fade-up group flex flex-row items-center gap-4 p-4 transition-all shadow-none',
         invalid
           ? 'opacity-60 border-[color:var(--color-line)] bg-transparent'
-          : 'border-[color:var(--color-line)] bg-transparent hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
+          : isActive
+            ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-paper)] translate-x-0.5'
+            : 'border-[color:var(--color-line)] bg-transparent hover:border-[color:var(--color-line-2)] hover:bg-[color:var(--color-paper)] hover:translate-x-0.5'
       )}
       style={{ animationDelay: `${index * 50}ms` }}
     >
@@ -66,9 +70,8 @@ export function ProjectCard({
       >
         <div
           className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[color:var(--color-line)]"
-          style={{ background: bg }}
         >
-          <div className="h-3 w-3 rounded-[3px]" style={{ background: dot }} />
+          <Trees className="h-5 w-5" style={{ color: dot }} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">

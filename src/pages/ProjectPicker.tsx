@@ -5,7 +5,7 @@ import type { LockInfo } from '@shared/grove'
 import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
 import { useBootstrap } from '@/hooks/useBootstrap'
-import { AcornLogo } from '@/components/AcornLogo'
+
 import { ProjectCard } from '@/components/ProjectCard'
 import { TakeoverDialog } from '@/components/TakeoverDialog'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ export function ProjectPicker(): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const bootstrap = useBootstrap()
-  const { recent, loadRecent, openGroveById, removeFromRecent, openExisting } = useGroveStore()
+  const { current, recent, loadRecent, openGroveById, removeFromRecent, openExisting } = useGroveStore()
 
   // Locked-from-bootstrap highlight (first item cannot be auto-opened).
   const [lockedFromBootstrap, setLockedFromBootstrap] = useState<{
@@ -104,29 +104,28 @@ export function ProjectPicker(): JSX.Element {
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Left brand column */}
         <aside
-          className="flex w-[420px] shrink-0 flex-col justify-between border-r border-[color:var(--color-line)] px-14 py-12"
-          style={{
-            background: 'linear-gradient(180deg, transparent 0%, oklch(0.94 0.02 60 / 0.5) 100%)'
-          }}
+          className="relative flex w-[420px] shrink-0 flex-col justify-between px-14 py-12"
         >
-          <div>
-            <div className="mb-6 flex items-center gap-3">
-              <AcornLogo size={36} />
-              <div>
-                <div className="font-mono text-xs uppercase tracking-[0.15em] text-[color:var(--color-ink-3)]">
-                  Acornvo · v1.0
+          {/* Custom vertical line matching AppRail height */}
+          <div className="absolute right-0 top-[40px] bottom-3 w-[1px] bg-[color:var(--color-line)] pointer-events-none" />
+          <div className="flex flex-col">
+            <div className="flex items-center gap-5 mb-10">
+              <span className="text-[50px] leading-none select-none shrink-0" style={{ transform: 'translateY(4px)' }}>🌰</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 font-review text-[13px] uppercase tracking-[0.25em] text-[color:var(--color-ink-3)] pl-[2px]">
+                  <span>Acornvo</span>
+                  <span className="size-[3px] rounded-full bg-[color:var(--color-ink-4)]" />
+                  <span>v1.0</span>
                 </div>
-                <div className="serif text-3xl font-semibold leading-none tracking-tight">
+                <h1 className="font-review text-[44px] font-medium leading-none tracking-tight text-[color:var(--color-ink)]">
                   松言果语
-                </div>
+                </h1>
               </div>
             </div>
-            <p className="serif mt-7 max-w-[300px] text-base leading-[1.7] text-[color:var(--color-ink-2)]">
+
+            <p className="font-review max-w-[340px] text-[18px] leading-[2.2] text-[color:var(--color-ink-2)]">
               {t('picker.subtitle')}
             </p>
-          </div>
-          <div className="mt-9 font-mono text-xs leading-[1.7] text-[color:var(--color-ink-4)]">
-            ~/.acornvo
           </div>
         </aside>
 
@@ -136,9 +135,6 @@ export function ProjectPicker(): JSX.Element {
             <h2 className="serif m-0 text-2xl font-semibold tracking-tight">
               {t('picker.title')}
             </h2>
-            <div className="font-mono text-xs text-[color:var(--color-ink-3)]">
-              {t('picker.recentCount', { count: recent.length })}
-            </div>
           </div>
 
           <div className="flex-initial overflow-y-auto min-h-0 pr-2 -mr-2 pb-6">
@@ -155,6 +151,7 @@ export function ProjectPicker(): JSX.Element {
                       item={item}
                       index={i}
                       locked={locked}
+                      isActive={current?.id === item.id}
                       onOpen={() => void handleOpen(item.id)}
                       onRemove={() => void removeFromRecent(item.id)}
                       onTakeover={locked ? () => requestTakeover(item.path, locked) : undefined}
