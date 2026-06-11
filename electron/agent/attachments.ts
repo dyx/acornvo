@@ -48,13 +48,43 @@ export async function collectAttachmentContext(
 
   // Phase 2: apply per-attachment truncation and wrap in fences
   const processed: { block: string; charCount: number; singleTruncated: boolean }[] = []
+  
+  const HEAD_SIZE = 12_000
+  const TAIL_SIZE = 4_000
+
   for (const item of raw) {
     let body = item.body
     let singleTruncated = false
 
     if (body.length > SINGLE_LIMIT) {
-      body = body.slice(0, SINGLE_LIMIT) + '\n(当前文本已截断。如果需要探索该文件中未包含的部分，请使用 search_files 工具对该文件进行检索查询。)'
       singleTruncated = true
+      const isMarkdown = item.label.includes('.md') || item.label.includes('.mdx')
+
+      // Find semantic boundaries (newline) instead of hard cutting
+      let headEnd = HEAD_SIZE
+      const lastNewlineInHead = body.lastIndexOf('\n', HEAD_SIZE)
+      if (lastNewlineInHead > HEAD_SIZE - 500) headEnd = lastNewlineInHead // Align to newline if within 500 chars
+
+      let tailStart = body.length - TAIL_SIZE
+      const firstNewlineInTail = body.indexOf('\n', tailStart)
+      if (firstNewlineInTail !== -1 && firstNewlineInTail < tailStart + 500) tailStart = firstNewlineInTail
+
+      const head = body.slice(0, headEnd)
+      const tail = body.slice(tailStart)
+      const omittedLength = tailStart - headEnd
+      
+      let marker = `\n\n... [当前文本过长，中间部分已省略约 ${omittedLength} 字符。如果需要探索中间部分，请使用 search_files 或相应工具] ...\n\n`
+
+      if (isMarkdown && omittedLength > 0) {
+        const middle = body.slice(headEnd, tailStart)
+        // Extract markdown headings (lines starting with 1-6 hashes)
+        const headings = middle.match(/^(#{1,6})\s+(.+)$/gm)
+        if (headings && headings.length > 0) {
+          marker = `\n\n... [当前文本过长，中间部分已省略约 ${omittedLength} 字符。以下是被省略部分包含的章节大纲，供检索参考] ...\n${headings.join('\n')}\n... [省略大纲结束] ...\n\n`
+        }
+      }
+
+      body = head + marker + tail
     }
 
     const block = `--- ${item.label}\n${body}\n---\n`

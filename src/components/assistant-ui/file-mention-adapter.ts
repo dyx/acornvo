@@ -14,10 +14,10 @@ export const useFileMentionStore = create<{
     if (state.files.some(existing => existing.path === f.path)) {
       return state;
     }
-    if (state.files.length >= 5) {
+    if (state.files.length >= 10) {
       toast({
         variant: "destructive",
-        description: "最多只能选择 5 个文件作为附件。"
+        description: "最多只能选择 10 个文件作为附件。"
       });
       return state;
     }
