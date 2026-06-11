@@ -21,7 +21,11 @@ export function toast(input: Omit<ToastItem, 'id' | 'open'>): void {
   // If not running in the toast window, forward to main process
   if (typeof window !== 'undefined' && !window.location.pathname.includes('toast')) {
     const safeInput = { ...input, variant: input.variant ?? undefined }
-    ipc.ui.showToast(safeInput).catch(console.error)
+    if (ipc.ui?.showToast) {
+      ipc.ui.showToast(safeInput).catch(console.error)
+    } else {
+      console.warn('ipc.ui.showToast is not available', safeInput)
+    }
     return
   }
 

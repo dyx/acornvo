@@ -57,16 +57,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   }, [defaultModelId])
 
   const reviewError = detail?.summary.review_error ?? null
-  const prevReviewError = useRef<string | null>(null)
-  useEffect(() => {
-    if (reviewError && reviewError !== prevReviewError.current) {
-      toast({
-        variant: 'destructive',
-        description: reviewError
-      })
-    }
-    prevReviewError.current = reviewError
-  }, [reviewError, toast])
 
   if (!detail || !fm) return null
 

@@ -13,7 +13,9 @@
     "save": "Save",
     "copy": "Copy",
     "coming_soon": "Coming soon",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "rename": "Rename",
+    "delete": "Delete"
   },
   "nav": {
     "home": "Home",
@@ -485,7 +487,8 @@
       "search": "Search bookmarks",
       "expand": "Expand bookmarks",
       "collapse": "Collapse bookmarks",
-      "empty": "No bookmarks yet. Click the star while browsing to bookmark the current page."
+      "empty": "No bookmarks yet. Click the star while browsing to bookmark the current page.",
+      "bar": "Bookmarks Bar"
     },
     "bookmark.save": "Bookmark",
     "bookmark.saved": "Bookmarked",

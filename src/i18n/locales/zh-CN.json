@@ -14,7 +14,9 @@
     "copy": "复制",
     "coming_soon": "即将推出",
     "dismiss": "关闭",
-    "close": "关闭"
+    "close": "关闭",
+    "rename": "重命名",
+    "delete": "删除"
   },
   "nav": {
     "home": "首页",
@@ -506,7 +508,8 @@
       "search": "搜索书签",
       "expand": "展开书签",
       "collapse": "收起书签",
-      "empty": "还没有书签。浏览时点星号收藏当前页面。"
+      "empty": "还没有书签。浏览时点星号收藏当前页面。",
+      "bar": "书签栏"
     },
     "bookmark.save": "加入书签",
     "bookmark.saved": "已加入书签",

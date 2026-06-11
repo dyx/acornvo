@@ -103,7 +103,7 @@ export function FileRow({
               }}
             >
               <Trash2 className="size-4 mr-2" />
-              {t('library.trash', '移到废纸篓')}
+              {t('library.trash.title', '移到废纸篓')}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
