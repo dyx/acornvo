@@ -562,6 +562,9 @@ export type IpcContract = {
   window: {
     themeApplied: (theme: 'light' | 'dark' | 'system') => Promise<void>
   }
+  ui: {
+    showToast: (payload: { title?: string; description?: string; variant?: 'default' | 'destructive' }) => void
+  }
 }
 
 /**
@@ -606,6 +609,7 @@ export type IpcEventContract = {
   'update:error': { message: string }
   'crash:detected': { files: string[] }
   'hotkey:reload': Record<string, never>
+  'ui:showToast': { title?: string; description?: string; variant?: 'default' | 'destructive' }
 }
 
 // --- chat namespace types (phase-16) ---

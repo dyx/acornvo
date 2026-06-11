@@ -1,7 +1,6 @@
 import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
 import { AppRail } from '@/components/AppRail'
 import { StatusBar } from '@/components/StatusBar'
@@ -115,7 +114,6 @@ export function App(): JSX.Element {
           onOpenChange={setNewOpen}
           onCreated={() => navigate('/library')}
         />
-        <Toaster />
       </div>
     </>
   )

@@ -178,5 +178,16 @@ export const ipcHandlers: HandlerMap = {
   update: updateHandlers,
   shell: shellHandlers,
   crash: crashHandlers,
-  window: windowHandlers
+  window: windowHandlers,
+  ui: {
+    showToast: (payload) => {
+      import('../toast-window').then(({ toastWindow }) => {
+        if (toastWindow && !toastWindow.isDestroyed()) {
+          toastWindow.webContents.send('ui:showToast', payload)
+        }
+      }).catch(err => {
+        logger().error('main', { msg: 'Failed to send toast', meta: { error: String(err) } })
+      })
+    }
+  }
 }

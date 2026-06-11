@@ -244,6 +244,8 @@ async function bootstrap(): Promise<void> {
   })
   const bootstrapResult = await runBootstrap()
   mainWindow = createMainWindow()
+  const { createToastWindow } = await import('./toast-window')
+  createToastWindow(mainWindow)
   initBrowserSubsystem(mainWindow)
   const disposeIndexForwarders = attachIndexEventForwarders(mainWindow)
   app.on('will-quit', disposeIndexForwarders)

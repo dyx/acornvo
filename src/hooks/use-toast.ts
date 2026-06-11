@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { ToastVariant } from '@/components/ui/toast'
+import { ipc } from '@/ipc/client'
 
 type ToastItem = {
   id: number
@@ -17,6 +18,13 @@ function emit(): void {
 }
 
 export function toast(input: Omit<ToastItem, 'id' | 'open'>): void {
+  // If not running in the toast window, forward to main process
+  if (typeof window !== 'undefined' && !window.location.pathname.includes('toast')) {
+    const safeInput = { ...input, variant: input.variant ?? undefined }
+    ipc.ui.showToast(safeInput).catch(console.error)
+    return
+  }
+
   // Deduplicate: If there is already an open toast with the same title and description, ignore it.
   const isDuplicate = items.some(
     (t) => t.open && t.title === input.title && t.description === input.description

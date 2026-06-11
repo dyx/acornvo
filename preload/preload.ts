@@ -188,6 +188,9 @@ const request: IpcClient<IpcContract> = {
   },
   window: {
     themeApplied: (effective) => invoke<void>('window.themeApplied', effective)
+  },
+  ui: {
+    showToast: (payload) => invoke('ui.showToast', payload)
   }
 }
 
