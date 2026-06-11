@@ -4,7 +4,6 @@
   <p>
     <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-blue.svg?logo=react" alt="React 19" /></a>
     <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-Desktop-47848f.svg?logo=electron" alt="Electron" /></a>
-    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg?logo=tailwind-css" alt="Tailwind CSS" /></a>
     <a href="https://langchain.com/"><img src="https://img.shields.io/badge/LangChain-AI-1C3C3C.svg" alt="LangChain" /></a>
   </p>
 </div>
@@ -42,7 +41,7 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 
 - **🌲 多「树林」管理 (Workspaces)**：支持多工作区，每个「树林」都是一个独立的本地文件夹，轻松隔离不同领域的知识。
 - **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，云端本地任你选择。
-- **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。支持 `Cmd/Ctrl+P` 快速跳转和 `Cmd/Ctrl+Shift+F` 全局全文检索。
+- **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。
 - **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
 - **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力加密存储。
 
@@ -58,11 +57,8 @@ Acornvo 拒绝黑盒数据库。你的知识库（树林）目录结构清晰可
 ├── tech/                  # 你的自定义分类
 │   └── 2026-AI-Trends.md  # 你的知识，纯粹的 Markdown
 └── .acornvo/              # Acornvo 私有数据缓存
-    ├── index.db           # 缓存数据与 SQLite 索引
-    └── chats/             # 松语对话记录的 Checkpoints
+    └──  index.db           # 缓存数据、SQLite 索引、松语对话记录的 Checkpoints
 ```
-
-你可以随时用 Obsidian 打开 `我的知识库` 目录，两者可以完美并行工作。
 
 ---
 
@@ -74,7 +70,6 @@ Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com
 | :--- | :--- | :--- |
 | **macOS** | `.dmg` | 提供 Apple Silicon (arm64) 和 Intel (x64) 架构 |
 | **Windows** | `.exe` | 一键安装包 |
-| **Linux** | `.AppImage` | 赋予执行权限后直接运行 (`chmod +x`) |
 
 ---
 
@@ -111,7 +106,6 @@ npm run test         # 运行测试
 ```bash
 npm run build:mac    # macOS 打包
 npm run build:win    # Windows 打包
-npm run build:linux  # Linux 打包
 ```
 
 ---

@@ -1,6 +1,6 @@
 import { useState, useEffect, type JSX } from 'react'
 import { useTranslation } from 'react-i18next'
-import { IpcError } from '@shared/ipc-contract'
+import { IpcError, isIpcError } from '@shared/ipc-contract'
 import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
 import {
@@ -62,7 +62,7 @@ export function NewGroveDialog({
       onCreated(g.path)
       onOpenChange(false)
     } catch (err) {
-      if (err instanceof IpcError) {
+      if (isIpcError(err)) {
         if (err.code === 'E_INVALID_ARGS') setError(t('picker.newDialog.errorInvalidName'))
         else if (err.code === 'E_EXISTS') setError(t('picker.newDialog.errorDuplicate'))
         else if (err.code === 'E_PERMISSION') setError(t('picker.newDialog.errorPermission'))

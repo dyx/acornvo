@@ -1,6 +1,6 @@
 // src/ipc/clipper-port.ts
 import type { ClipInput, ClipPreview, ClipResult, ClipRunId } from '@shared/clipper-types'
-import { IpcError, type IpcResult } from '@shared/ipc-contract'
+import { IpcError, isIpcError, type IpcResult } from '@shared/ipc-contract'
 
 export interface ClipperPort {
   clip(args: { tabId: string }): Promise<IpcResult<ClipPreview>>
@@ -33,7 +33,7 @@ async function toResult<T>(fn: () => Promise<T>): Promise<IpcResult<T>> {
   try {
     return { ok: true, data: await fn() }
   } catch (err) {
-    if (err instanceof IpcError) {
+    if (isIpcError(err)) {
       return { ok: false, error: { code: err.code, message: err.message, context: err.context } }
     }
     return {

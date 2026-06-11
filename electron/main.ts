@@ -51,12 +51,13 @@ function createMainWindow(): BrowserWindow {
     show: false,
     titleBarStyle: 'hiddenInset',
     ...(process.platform === 'win32' ? { titleBarOverlay: getOverlayForTheme() } : {}),
-    webPreferences: {
+      webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
       webSecurity: true,
       spellcheck: false,
+      scrollBounce: true,
       preload: join(__dirname, '../preload/preload.js')
     }
   })

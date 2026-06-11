@@ -182,6 +182,10 @@ export class IpcError extends Error {
   }
 }
 
+export function isIpcError(err: unknown): err is IpcError & { code: IpcErrorCode } {
+  return err instanceof IpcError || (err instanceof Error && err.name === 'IpcError')
+}
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 export type DbVersionInfo = {

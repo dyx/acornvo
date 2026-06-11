@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { Frontmatter } from '@shared/frontmatter-schema'
 import type { ConflictState } from '@shared/conflict-types'
 import { ipc } from '@/ipc/client'
-import { IpcError } from '@shared/ipc-contract'
+import { IpcError, isIpcError } from '@shared/ipc-contract'
 
 export type EditorReadyState = {
   kind: 'ready'
@@ -209,7 +209,7 @@ async function _doSave(): Promise<void> {
       }, 0)
     }
   } catch (err) {
-    if (err instanceof IpcError && err.code === 'E_NOT_FOUND') {
+    if (isIpcError(err) && err.code === 'E_NOT_FOUND') {
       useEditorStore.setState({
         state: { kind: 'error', path: cur.path, error: 'E_NOT_FOUND' }
       })
@@ -217,7 +217,7 @@ async function _doSave(): Promise<void> {
     }
     const next = useEditorStore.getState().state
     if (next.kind !== 'ready') return
-    if (err instanceof IpcError && err.code === 'E_MTIME_MISMATCH') {
+    if (isIpcError(err) && err.code === 'E_MTIME_MISMATCH') {
       // Phase-09: enter saveConflict state instead of toast
       try {
         const fresh = await ipc.files.get(path)
@@ -254,7 +254,7 @@ async function _doSave(): Promise<void> {
       }
       return // do NOT count toward retry counter
     }
-    const code = err instanceof IpcError ? err.code : String(err)
+    const code = isIpcError(err) ? err.code : String(err)
     const newCount = next.saveErrorCount + 1
     useEditorStore.setState({
       state: {
@@ -373,7 +373,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         }
       })
     } catch (err) {
-      const code = err instanceof IpcError ? err.code : String(err)
+      const code = isIpcError(err) ? err.code : String(err)
       set({ state: { kind: 'error', path, error: code } })
     }
   },

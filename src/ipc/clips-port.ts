@@ -1,6 +1,6 @@
 // src/ipc/clips-port.ts
 import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from '@shared/clip-types'
-import { IpcError, type IpcResult } from '@shared/ipc-contract'
+import { IpcError, isIpcError, type IpcResult } from '@shared/ipc-contract'
 
 export interface ClipsPort {
   create(input: ClipCreateInput): Promise<IpcResult<{ id: number }>>
@@ -35,7 +35,7 @@ async function toResult<T>(fn: () => Promise<T>): Promise<IpcResult<T>> {
   try {
     return { ok: true, data: await fn() }
   } catch (err) {
-    if (err instanceof IpcError) {
+    if (isIpcError(err)) {
       return { ok: false, error: { code: err.code, message: err.message, context: err.context } }
     }
     return {
