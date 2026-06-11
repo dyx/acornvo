@@ -23,7 +23,7 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig
     apiKeyHelpUrl: 'https://platform.deepseek.com/api_keys',
     testConnectionPath: '/models',
     balancePath: '/user/balance',
-    baseUrl: 'https://api.deepseek.com/beta',
+    baseUrl: 'https://api.deepseek.com',
     models: [
       { name: 'deepseek-v4-flash', displayName: 'DeepSeek-V4-Flash', contextWindow: 1000000 },
       { name: 'deepseek-v4-pro', displayName: 'DeepSeek-V4-Pro', contextWindow: 1000000 }
