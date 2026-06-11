@@ -76,9 +76,14 @@ html {
   --color-line: oklch(0.32 0.015 60);
   --color-line-2: oklch(0.4 0.018 60);
 
+  --color-acorn: oklch(0.6 0.09 48);
+  --color-acorn-2: oklch(0.52 0.1 44);
   --color-acorn-bg: oklch(0.3 0.03 48);
+  --color-leaf: oklch(0.62 0.08 135);
   --color-leaf-bg: oklch(0.3 0.025 135);
+  --color-berry: oklch(0.6 0.14 25);
   --color-berry-bg: oklch(0.3 0.03 25);
+  --color-sky: oklch(0.65 0.06 230);
   --color-sky-bg: oklch(0.3 0.03 230);
 
   --color-destructive: oklch(0.7 0.15 25);

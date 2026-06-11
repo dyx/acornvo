@@ -211,7 +211,7 @@ export function Chat() {
               className="flex min-w-0 flex-1 flex-col overflow-hidden relative bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5"
             >
             <SessionsErrorBanner />
-            <header className={`flex h-10 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag] border-b border-[color:var(--color-line)]`}>
+            <header className={`flex h-10 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag]`}>
               <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[60px]'}`} />
               <h2 className={`text-[15px] font-medium m-0 flex-1 truncate text-foreground [-webkit-app-region:no-drag] transition-[padding] duration-300 ${sidebarOpen ? 'pl-4' : 'pl-0'}`}>
                 {title}

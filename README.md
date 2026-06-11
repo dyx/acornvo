@@ -1,138 +1,129 @@
-# 松言果语 Acornvo
+<div align="center">
+  <h1>🌰 Acornvo 松言果语</h1>
+  <p><b>A Local-First, AI-Native Personal Knowledge Management Desktop App</b></p>
+  <p>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-blue.svg?logo=react" alt="React 19" /></a>
+    <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-Desktop-47848f.svg?logo=electron" alt="Electron" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg?logo=tailwind-css" alt="Tailwind CSS" /></a>
+    <a href="https://langchain.com/"><img src="https://img.shields.io/badge/LangChain-AI-1C3C3C.svg" alt="LangChain" /></a>
+  </p>
+</div>
 
-本地优先的 AI 个人知识管理桌面应用。
+---
 
-Acornvo 帮你把散落在网页、笔记和资料夹里的内容整理成可长期保存、可搜索、可对话的 Markdown 知识库。它围绕「拾果、理果、松语」三段工作流设计：先从网页采集内容，再用 AI 做结构化整理，最后基于本地文件进行对话和写作。
+Acornvo (松言果语) 是一款专注于**本地优先**与 **AI 原生** 的个人知识管理（PKM）桌面应用。它致力于帮助你将散落在网页、笔记和文件夹中的碎片信息，整合为一个可长期保存、全文搜索、并能与之自由对话的 Markdown 知识库。
 
-> 图片占位：后续可将截图放到 `docs/assets/readme/`，并替换下方图片。
+> [!NOTE]
+> **真正的本地优先**：你的所有笔记都以纯 Markdown 文件的形式保存在本地，绝无厂商锁定。Acornvo 只做索引和赋能，你的数据完全兼容 Obsidian、VS Code 等主流编辑器。
 
-![Acornvo 总览](docs/assets/readme/overview.png)
+## 🌟 核心理念：信息管理的三段工作流
 
-## 核心工作流
+Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作流展开，覆盖了从信息收集、整理到消费的完整生命周期。
 
-### 拾果：把网页收入本地
+### 1. 拾果 (Clipper)：将互联网变成你的本地果园
+告别繁琐的复制粘贴。Acornvo 内置了多标签页浏览器，支持一键将任何网页的正文内容深度提取并转换为纯净的 Markdown 文件，直接存入你的本地「树林」中。
+- 内置浏览器，边阅读边剪藏。
+- 自动提取正文，去除广告与干扰元素。
 
-使用内置浏览器阅读网页，一键将文章抽取为 Markdown，保存到当前「树林」中。采集后的内容仍是普通 `.md` 文件，可被 Obsidian、VS Code 或任意文本编辑器打开。
+### 2. 理果 (Reviewer)：让 AI 成为你的私人档案管理员
+面对堆积如山的未读文件？交给 AI 吧。Acornvo 可以自动对你的 Markdown 笔记进行深度审读。
+- 自动生成：摘要、推荐标题、标签、分类、评分。
+- 智能元数据：所有 AI 生成的洞察都会标准化地写入 Markdown 的 Frontmatter (YAML) 中。
+- **人在回路**：你可以一键接受、拒绝或要求 AI 重新生成。
 
-![拾果界面](docs/assets/readme/clipper.png)
+### 3. 松语 (Chat)：与你的知识库面对面交谈
+阅读只是开始。在「松语」界面，你可以直接与你的本地知识库进行对话。
+- **引用本地文件**：让 AI 基于你指定的本地 Markdown 文件回答问题、梳理逻辑或进行深度写作。
+- **极致的对话体验**：基于 `assistant-ui` 和 `LangChain` 构建，提供极速的流式响应和优雅的交互 UI。
 
-### 理果：让 AI 整理笔记
+---
 
-Acornvo 可以对 Markdown 内容进行 AI 审读，生成摘要、建议标题、标签、分类、评分和关键引用，并写入 Frontmatter。你可以接受、拒绝或重新运行 AI 结果。
+## ✨ 核心特性
 
-![理果界面](docs/assets/readme/review.png)
+- **🌲 多「树林」管理 (Workspaces)**：支持多工作区，每个「树林」都是一个独立的本地文件夹，轻松隔离不同领域的知识。
+- **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，云端本地任你选择。
+- **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。支持 `Cmd/Ctrl+P` 快速跳转和 `Cmd/Ctrl+Shift+F` 全局全文检索。
+- **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
+- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力加密存储。
 
-### 松语：和你的知识库对话
+---
 
-在松语中引用本地文件，让 AI 基于你的资料回答问题、梳理观点、生成新文档。数据源来自你的本地 Markdown，而不是被锁进某个云端服务。
+## 🛠️ 数据存储：透明且自由
 
-![松语界面](docs/assets/readme/chat.png)
-
-## 为什么选择 Acornvo
-
-- **本地优先**：Markdown 文件是真实数据源，SQLite 只作为索引、缓存和任务状态。
-- **Obsidian 兼容**：可以直接打开已有 Markdown 目录，也可以把 Acornvo 管理的目录交给 Obsidian 使用。
-- **采集到写作一体化**：内置浏览器、网页剪藏、AI 审读、全文搜索和知识库对话在同一个桌面应用里完成。
-- **中文友好**：内置中文分词搜索，适合中文资料、双语阅读和本地知识库检索。
-- **多模型接入**：通过统一的 AI 配置使用不同提供商与模型，适配云端模型或本地模型。
-- **跨平台桌面应用**：目标支持 macOS、Windows 和 Linux。
-
-## 功能亮点
-
-- 多「树林」管理，每个树林都是一个独立知识库目录。
-- 果仓视图浏览、筛选、预览和搜索 Markdown 文件。
-- 内置多标签浏览器，支持收藏、网页采集和阅读内容抽取。
-- Vditor Markdown 编辑器，支持自动保存和外部修改冲突处理。
-- AI 审读结果可回写 Frontmatter，便于后续分类、检索和复用。
-- 松语对话支持引用本地文件，并通过工具读取、检索和生成 Markdown。
-- `Cmd/Ctrl+P` 快速跳转文件，`Cmd/Ctrl+Shift+F` 全文搜索。
-- API Key 使用系统安全能力存储。
-- 本地日志、诊断包、任务队列和自动更新能力。
-
-## 安装
-
-前往 [Releases](https://github.com/<org>/<repo>/releases) 下载对应平台安装包。
-
-| 平台    | 安装包                                                      | 说明                                      |
-| ------- | ----------------------------------------------------------- | ----------------------------------------- |
-| macOS   | `Acornvo-<version>-arm64.dmg` / `Acornvo-<version>-x64.dmg` | Apple Silicon 选择 arm64，Intel 选择 x64  |
-| Windows | `Acornvo-<version>-setup.exe`                               | 运行安装器即可                            |
-| Linux   | `Acornvo-<version>.AppImage`                                | 执行 `chmod +x Acornvo-*.AppImage` 后运行 |
-
-## 快速开始
-
-1. 启动 Acornvo。
-2. 新建一片「树林」，或打开已有 Markdown 目录。
-3. 在「拾果」中打开网页，采集为 Markdown。
-4. 在「果仓」中浏览、筛选和打开文件。
-5. 配置 AI 提供商后，在编辑器中运行「理果」，或进入「松语」和本地文件对话。
-
-## 数据如何存放
-
-Acornvo 不把你的笔记锁进专有数据库。一个典型树林目录如下：
+Acornvo 拒绝黑盒数据库。你的知识库（树林）目录结构清晰可见：
 
 ```text
-我的树林/
-├── inbox/                 # 果篮：默认采集目录
-├── 技术/
-│   └── 注意力机制综述.md
-├── 产品/
-└── .acornvo/              # Acornvo 私有数据
-    ├── index.db           # 搜索索引、队列、用量等缓存数据
-    ├── bookmarks.json     # 浏览器收藏
-    ├── chats/             # 松语对话记录
-    ├── history/           # Frontmatter 历史
-    └── conflicts/         # 外部修改冲突快照
+我的知识库/
+├── inbox/                 # 果篮：默认的网页剪藏目录
+├── tech/                  # 你的自定义分类
+│   └── 2026-AI-Trends.md  # 你的知识，纯粹的 Markdown
+└── .acornvo/              # Acornvo 私有数据缓存
+    ├── index.db           # 缓存数据与 SQLite 索引
+    └── chats/             # 松语对话记录的 Checkpoints
 ```
 
-真实内容始终是树林中的 Markdown 文件。`.acornvo/` 用于保存应用运行所需的索引和元数据。
+你可以随时用 Obsidian 打开 `我的知识库` 目录，两者可以完美并行工作。
 
-## 开发运行
+---
+
+## 📦 安装与下载
+
+Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com/your-org/acornvo/releases) 页面下载最新版本：
+
+| 平台 | 安装包格式 | 说明 |
+| :--- | :--- | :--- |
+| **macOS** | `.dmg` | 提供 Apple Silicon (arm64) 和 Intel (x64) 架构 |
+| **Windows** | `.exe` | 一键安装包 |
+| **Linux** | `.AppImage` | 赋予执行权限后直接运行 (`chmod +x`) |
+
+---
+
+## 💻 开发者指南
+
+我们非常欢迎开发者参与到 Acornvo 的共建中来。应用基于现代前端与客户端技术栈构建：
+
+**核心技术栈：**
+- **框架**: Electron, React 19, TypeScript, Vite
+- **UI & 样式**: Tailwind CSS v4, shadcn/ui, Radix UI
+- **AI 生态**: assistant-ui, LangChain, LangGraph
+- **本地能力**: better-sqlite3, chokidar, @node-rs/jieba
+
+**本地运行：**
 
 ```bash
+# 1. 安装依赖
 npm install
+
+# 2. 启动开发服务器
 npm run dev
 ```
 
-常用命令：
+**常用命令：**
 
 ```bash
-npm run test
-npm run lint
-npm run typecheck
-npm run build
+npm run lint         # 代码检查
+npm run typecheck    # 类型推断
+npm run test         # 运行测试
 ```
 
-平台打包：
+**打包构建：**
 
 ```bash
-npm run build:mac
-npm run build:win
-npm run build:linux
+npm run build:mac    # macOS 打包
+npm run build:win    # Windows 打包
+npm run build:linux  # Linux 打包
 ```
 
-## 技术栈
+---
 
-- Electron + electron-vite
-- React + TypeScript
-- Vditor Markdown 编辑器
-- SQLite / better-sqlite3
-- @node-rs/jieba 中文分词
-- LangChain / LangGraph
-- Ant Design X
-- Zustand
-- i18next
-- electron-builder
+## 📅 路线图 (Roadmap)
 
-## 当前状态
+Acornvo 正处于快速迭代期，接下来的重点方向包括：
+- [ ] 更智能、更精准的网页正文解析引擎
+- [ ] 完善的 AI 自动标签系统与自动分类
+- [ ] 基于向量数据库的语义搜索 (RAG)
+- [ ] 对话上下文持久化与多轮深度生成能力扩展
 
-Acornvo 仍在快速迭代中。核心方向包括：
+## 📄 许可证 (License)
 
-- 更稳定的网页采集与正文抽取。
-- 更可控的 AI 审读与 Frontmatter 合并。
-- 更完整的本地知识库对话和 Markdown 生成流程。
-- 更好的跨平台安装、更新和诊断体验。
-
-## 许可证
-
-暂未声明许可证。
+未声明许可证 (暂定)。

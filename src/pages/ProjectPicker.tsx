@@ -11,7 +11,7 @@ import { TakeoverDialog } from '@/components/TakeoverDialog'
 import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { LoadingSquirrel } from '@/components/ui/LoadingSquirrel'
+import { HomeSquirrelAnimation } from '@/components/ui/HomeSquirrelAnimation'
 
 import { CozyWindowShade } from '@/components/library/CozyWindowShade'
 
@@ -135,8 +135,8 @@ export function ProjectPicker(): JSX.Element {
           </div>
 
           {/* Squirrel Animation (Encapsulated) */}
-          <div className="hover:opacity-100 transition-opacity duration-500">
-            <LoadingSquirrel className="origin-bottom-left" />
+          <div className="hover:opacity-100 transition-opacity duration-500 w-full flex justify-center">
+            <HomeSquirrelAnimation className="origin-bottom" />
           </div>
         </aside>
 
