@@ -124,9 +124,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
         collapsed ? "w-0 opacity-0 border-l-0" : "w-[340px] opacity-100"
       )}
     >
-      <div className="flex-1 overflow-y-auto px-5 py-6">
+      <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Header section */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between h-10 mb-6">
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-[color:var(--color-acorn)]" />
             <span className="font-serif text-lg text-[color:var(--color-ink)] font-semibold tracking-tight">

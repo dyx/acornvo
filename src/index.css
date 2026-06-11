@@ -226,3 +226,50 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
 }
+
+/* --- Editor Readability Tweaks --- */
+.vditor-reset {
+  line-height: 1.8 !important;
+}
+
+@keyframes sisyphus-squirrel {
+  0%, 10% { transform: translate(0, 0) rotate(0); }
+  15% { transform: translate(2px, 2px) rotate(25deg); }
+  50% { transform: translate(24px, 2px) rotate(35deg); }
+  55% { transform: translate(24px, -6px) rotate(-20deg); }
+  60% { transform: translate(10px, -4px) rotate(-15deg); }
+  65% { transform: translate(-2px, 0) rotate(-5deg); }
+  70% { transform: translate(0, 0) rotate(0); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+
+@keyframes sisyphus-nuts-move {
+  0%, 15% { transform: translateX(0); }
+  50% { transform: translateX(24px); }
+  55% { transform: translateX(24px); }
+  65% { transform: translateX(-2px); }
+  70% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes sisyphus-nut-roll {
+  0%, 15% { transform: rotate(0); }
+  50% { transform: rotate(140deg); }
+  55% { transform: rotate(140deg); }
+  65% { transform: rotate(-10deg); }
+  70% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+.animate-sisyphus-squirrel {
+  animation: sisyphus-squirrel 1.5s linear infinite;
+}
+
+.animate-sisyphus-move {
+  animation: sisyphus-nuts-move 1.5s linear infinite;
+}
+
+.animate-sisyphus-roll {
+  animation: sisyphus-nut-roll 1.5s linear infinite;
+}
+

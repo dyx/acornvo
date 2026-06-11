@@ -11,6 +11,7 @@ import { ipc } from '@/ipc/client'
 import { EditorTitleBar } from '@/components/library/EditorTitleBar'
 import { AiReviewSidebar } from '@/components/library/AiReviewSidebar'
 import { CozyWindowShade } from '@/components/library/CozyWindowShade'
+import { LoadingSquirrel } from '@/components/ui/LoadingSquirrel'
 
 export function EmbeddedEditorPanel(): JSX.Element {
   const { t } = useTranslation()
@@ -76,8 +77,9 @@ export function EmbeddedEditorPanel(): JSX.Element {
 
   if (kind === 'idle' || kind === 'loading') {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-[color:var(--color-ink-3)]">
-        {t('editor.loading')}
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-[color:var(--color-ink-3)]">
+        <LoadingSquirrel scale={1.2} />
+        <span className="font-medium tracking-wide">{t('editor.loading', 'Loading...')}</span>
       </div>
     )
   }

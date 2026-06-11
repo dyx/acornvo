@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Edit3, Eye, PanelRightOpen, PanelRightClose, CircleHelp } from 'lucide-react'
@@ -35,19 +36,51 @@ export function EditorTitleBar({
   )
   const sidebarOpen = useRootStore((s) => s.sidebarOpen)
 
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const [isTruncated, setIsTruncated] = useState(false)
+
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      setIsTruncated(el.scrollWidth > el.clientWidth)
+    })
+    observer.observe(el)
+    setIsTruncated(el.scrollWidth > el.clientWidth)
+    return () => observer.disconnect()
+  }, [])
+
   if (!detail || !fm) return null
 
   const { summary } = detail
+  const displayTitle = summary.title ?? summary.path
+
+  const titleElement = (
+    <h1 ref={titleRef} className="text-[15px] font-medium text-[color:var(--color-ink)] truncate tracking-tight cursor-default max-w-full">
+      {displayTitle}
+    </h1>
+  )
 
   return (
     <div className={`flex-none h-10 bg-[color:var(--color-paper)] flex items-center pr-4 relative z-10 border-b border-[color:var(--color-line)] after:content-[''] after:absolute after:top-full after:inset-x-0 after:h-4 after:bg-gradient-to-b after:from-[color:var(--color-paper)] after:to-transparent after:pointer-events-none [-webkit-app-region:drag]`}>
       <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[60px]'}`} />
-      <div className={`flex flex-1 items-center justify-between transition-[padding] duration-300 ${sidebarOpen ? 'pl-4' : 'pl-0'}`}>
-        <div className="flex items-center gap-3 overflow-hidden [-webkit-app-region:no-drag]">
-        <h1 className="font-serif text-[16px] font-semibold text-[color:var(--color-ink)] truncate tracking-tight">
-          {summary.title ?? summary.path}
-        </h1>
-      </div>
+      <div className={`flex flex-1 min-w-0 items-center justify-between transition-[padding] duration-300 ${sidebarOpen ? 'pl-4' : 'pl-0'}`}>
+        <div className="flex flex-1 items-center gap-3 overflow-hidden min-w-0 pr-4 [-webkit-app-region:no-drag]">
+          <TooltipProvider delayDuration={500}>
+            {isTruncated ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {titleElement}
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start" className="max-w-[400px] break-words">
+                  <p className="text-xs font-serif">{displayTitle}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              titleElement
+            )}
+          </TooltipProvider>
+        </div>
 
       <div className="flex items-center gap-1 shrink-0 [-webkit-app-region:no-drag]">
         <TooltipProvider delayDuration={500}>
