@@ -13,8 +13,8 @@ export function TitleBar(): JSX.Element {
 
   return (
     <header
-      className={`absolute top-0 left-0 h-10 flex items-center pl-[76px] z-50 [-webkit-app-region:drag] transition-all duration-300 border-b ${
-        sidebarOpen ? 'w-[328px] pr-3 border-[color:var(--color-line)]' : 'w-[100px] pr-0 border-transparent'
+      className={`absolute top-0 left-0 h-10 flex items-center pl-[76px] z-50 [-webkit-app-region:drag] transition-all duration-300 bg-[color:var(--color-paper-3)] ${
+        sidebarOpen ? 'w-[328px] pr-3' : 'w-[100px] pr-0'
       }`}
       data-testid="titlebar"
     >

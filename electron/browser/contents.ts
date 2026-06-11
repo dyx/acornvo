@@ -87,6 +87,62 @@ export function attachTabEvents(
   webContents.on('did-navigate', onDidNavigate)
   webContents.on('did-navigate-in-page', onDidNavigateInPage)
 
+  const onDomReady = (): void => {
+    // Inject DOM-based corner masks. This is much more reliable than CSS clip-path on html,
+    // which fails on sites (like Zhihu) that manipulate html/body heights or overflows.
+    const script = `
+      (function() {
+        if (document.getElementById('acornvo-corner-masks')) return;
+        const div = document.createElement('div');
+        div.id = 'acornvo-corner-masks';
+        div.style.cssText = 'position: fixed; inset: 0; pointer-events: none; z-index: 2147483647;';
+        
+        const bl = document.createElement('div');
+        bl.style.cssText = 'position: absolute; left: 0; bottom: 0; width: 11px; height: 11px;';
+        
+        const br = document.createElement('div');
+        br.style.cssText = 'position: absolute; right: 0; bottom: 0; width: 11px; height: 11px;';
+        
+        div.appendChild(bl);
+        div.appendChild(br);
+        
+        function updateColors() {
+          const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          // Use the App's outer background color (--color-paper-2)
+          const bg = isDark ? 'oklch(0.22 0.018 60)' : 'oklch(0.955 0.015 82)';
+          // Use the container's border color (--color-line)
+          const line = isDark ? 'oklch(0.32 0.015 60)' : 'oklch(0.86 0.022 75)';
+          
+          // Draw the transparent cutout, then the 1px border, then fill the rest with the app background.
+          // This creates a perfect illusion of the container's rounded corner that WebContentsView paints over.
+          bl.style.background = \`radial-gradient(circle at 100% 0, transparent 10.5px, \${line} 11px, \${line} 12px, \${bg} 12.5px)\`;
+          br.style.background = \`radial-gradient(circle at 0 0, transparent 10.5px, \${line} 11px, \${line} 12px, \${bg} 12.5px)\`;
+        }
+        
+        updateColors();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColors);
+        
+        const observer = new MutationObserver(() => {
+          if (!document.documentElement.contains(div)) {
+            document.documentElement.appendChild(div);
+          }
+        });
+        
+        if (document.documentElement) {
+          document.documentElement.appendChild(div);
+          observer.observe(document.documentElement, { childList: true });
+        } else {
+          window.addEventListener('DOMContentLoaded', () => {
+            document.documentElement.appendChild(div);
+            observer.observe(document.documentElement, { childList: true });
+          });
+        }
+      })();
+    `;
+    webContents.executeJavaScript(script).catch(() => {})
+  }
+  webContents.on('dom-ready', onDomReady)
+
   return () => {
     webContents.off('did-start-loading', onStartLoading)
     webContents.off('did-stop-loading', onStopLoading)
@@ -94,6 +150,7 @@ export function attachTabEvents(
     webContents.off('page-favicon-updated', onFaviconUpdated)
     webContents.off('did-navigate', onDidNavigate)
     webContents.off('did-navigate-in-page', onDidNavigateInPage)
+    webContents.off('dom-ready', onDomReady)
   }
 }
 

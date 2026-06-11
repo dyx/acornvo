@@ -1,9 +1,8 @@
 import type { JSX } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
-import { TitleBar } from '@/components/TitleBar'
 import { AppRail } from '@/components/AppRail'
 import { StatusBar } from '@/components/StatusBar'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
@@ -14,6 +13,7 @@ import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
 import { ipc } from '@/ipc/client'
 import type { IndexStateName } from '@shared/ipc-contract'
 import { useTranslation } from 'react-i18next'
+
 function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null {
   if (!visible) return null
   return (
@@ -74,12 +74,14 @@ export function App(): JSX.Element {
 
   return (
     <>
-      <div className="flex h-full flex-col bg-[color:var(--color-paper)]">
+      <div className="flex h-full flex-col bg-[color:var(--color-paper-2)]">
         <CrashBanner />
         <UpdateBanner />
         <div className="flex flex-1 overflow-hidden relative">
-          <TitleBar />
-          <AppRail />
+          <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
+          <div className="w-[72px] shrink-0 pt-[40px] pb-3 px-3 flex flex-col z-10 pointer-events-none">
+            <AppRail />
+          </div>
           <main className="flex-1 overflow-hidden relative">
             <Outlet />
           </main>

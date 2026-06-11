@@ -63,7 +63,7 @@ export function ConversationsAdapter() {
 
   return (
     <>
-      <div className="flex h-[52px] shrink-0 items-center px-3 bg-background">
+      <div className="flex h-[52px] shrink-0 items-center px-3 bg-transparent">
         <Button
           onClick={() => void createSession()}
           variant="default"
@@ -74,7 +74,7 @@ export function ConversationsAdapter() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0 bg-background">
+      <ScrollArea className="flex-1 min-h-0 bg-transparent">
         <div className="p-2 pt-2 space-y-2">
           {Object.entries(itemsByGroup).map(([groupName, groupSessions]) => (
             <div key={groupName}>

@@ -32,22 +32,22 @@ export function Library(): JSX.Element {
   }, [refresh])
 
   return (
-    <div className="flex h-full w-full flex-col bg-[color:var(--color-paper)]">
+    <div className="flex h-full w-full flex-col bg-transparent">
       <IndexBanner />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden pt-3 pb-3 pr-3 gap-3">
         {/* Left Column: Combined List with Tabs */}
-        <div
-          className={`relative flex flex-shrink-0 flex-col overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+        <aside
+          className={`relative flex flex-shrink-0 flex-col overflow-hidden bg-transparent transition-all duration-300 ${
             sidebarOpen ? 'w-[280px]' : 'w-0'
           }`}
         >
-          <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
+          <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
             <VirtualFileList />
           </div>
-        </div>
+        </aside>
 
         {/* Right Column: Editor */}
-        <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-bg-1)]">
+        <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
           <EmbeddedEditorPanel />
         </div>
       </div>

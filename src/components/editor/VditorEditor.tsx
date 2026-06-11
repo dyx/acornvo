@@ -78,11 +78,15 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
 
   useEffect(() => {
     if (!elRef.current) return
+    let v: Vditor | null = null
     const isDark = document.documentElement.dataset.theme === 'dark'
-    const v = new Vditor(elRef.current, {
-      mode: 'ir',
-      cdn: '/vditor',
-      theme: isDark ? 'dark' : 'classic',
+    
+    // Defer initialization to allow the route transition (like NavLink active state) to paint first
+    const timer = setTimeout(() => {
+      v = new Vditor(elRef.current!, {
+        mode: 'ir',
+        cdn: '/vditor',
+        theme: isDark ? 'dark' : 'classic',
       preview: {
         mode: 'editor',
         actions: [],
@@ -171,7 +175,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
         }
       },
       after() {
-        useEditorStore.getState().setBody(v.getValue())
+        useEditorStore.getState().setBody(v!.getValue())
         if (isPreviewMode) {
           const vditorInternal = (v as any).vditor;
           vditorInternal.preview.element.style.display = "block";
@@ -191,17 +195,21 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
       }
     })
     vditorRef.current = v
+    }, 16) // ~1 frame delay
 
     const observer = new MutationObserver(() => {
       const dark = document.documentElement.dataset.theme === 'dark'
-      v.setTheme(dark ? 'dark' : 'classic', dark ? 'dark' : 'classic', 'native')
+      if (vditorRef.current) {
+        vditorRef.current.setTheme(dark ? 'dark' : 'classic', dark ? 'dark' : 'classic', 'native')
+      }
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 
     return () => {
+      clearTimeout(timer)
       observer.disconnect()
       try {
-        v.destroy()
+        v?.destroy()
       } catch {
         /* Vditor may throw if its DOM element was already removed */
       }

@@ -91,15 +91,15 @@ export function Browse(): JSX.Element {
   }, [bookmarksOpen, setViewport, sidebarOpen])
 
   return (
-    <div className="flex h-full" data-testid="browse-page">
-      <aside className={`relative flex flex-col shrink-0 overflow-hidden bg-[color:var(--color-paper-2)] pt-10 transition-all duration-300 ${
+    <div className="flex h-full flex-row bg-transparent pt-3 pb-3 pr-3 gap-3" data-testid="browse-page">
+      <aside className={`relative flex flex-col shrink-0 overflow-hidden bg-transparent transition-all duration-300 ${
         sidebarOpen ? 'w-[280px]' : 'w-0'
       }`}>
-        <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
+        <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
           <BookmarkSidebar />
         </div>
       </aside>
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
         <TabBar sidebarOpen={sidebarOpen} />
         <AddressBar />
         <div className="relative flex-1">

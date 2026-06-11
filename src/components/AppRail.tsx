@@ -32,9 +32,8 @@ export function AppRail(): JSX.Element {
     <TooltipProvider delayDuration={1500}>
       <nav
         aria-label="app navigation"
-        className="relative flex w-12 shrink-0 flex-col items-center bg-[color:var(--color-paper-2)] pt-10 pb-2"
+        className="pointer-events-auto relative flex w-12 flex-1 flex-col items-center bg-[color:var(--color-paper)] rounded-xl py-4 shadow-sm border border-[color:var(--color-line)] dark:border-white/5 z-10"
       >
-        <div className="absolute right-0 top-[40px] bottom-0 w-[1px] bg-[color:var(--color-line)]" />
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -79,22 +78,22 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
   const toggleSidebar = useRootStore((s) => s.toggleSidebar)
   
   const baseCls =
-    'flex size-8 shrink-0 items-center justify-center rounded-xl border transition-colors cursor-pointer'
+    'flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors cursor-pointer'
 
   let content = null
   if (entry.disabled || requireGrove) {
     const title = requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon')
     content = (
       <div
-        className={`${baseCls} border-transparent text-muted-foreground/50 cursor-not-allowed`}
+        className={`${baseCls} text-muted-foreground/50 cursor-not-allowed`}
       >
         <entry.Icon size={20} />
       </div>
     )
   } else {
     const activeCls = isActive
-      ? 'border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]'
-      : 'border-transparent text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)]'
+      ? 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)] shadow-sm'
+      : 'text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] hover:text-[color:var(--color-ink)]'
 
     content = (
       <NavLink

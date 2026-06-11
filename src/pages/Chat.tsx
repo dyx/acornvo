@@ -193,22 +193,23 @@ export function Chat() {
   return (
     <ChatRuntimeProvider>
       <TooltipProvider>
-        <div className="flex h-full w-full bg-background" data-testid="chat-page-root">
-          <aside
-            data-testid="chat-session-list"
-            className={`relative flex shrink-0 flex-col bg-muted/20 overflow-hidden pt-10 transition-all duration-300 ${
-              sidebarOpen ? 'w-[280px]' : 'w-0'
-            }`}
-          >
-            <div className="w-[280px] h-full flex flex-col border-r border-[color:var(--color-line)]">
-              <ConversationsAdapter />
-            </div>
-          </aside>
+        <div className="flex h-full w-full flex-col bg-transparent" data-testid="chat-page-root">
+          <div className="flex flex-1 overflow-hidden pt-3 pb-3 pr-3 gap-3">
+            <aside
+              data-testid="chat-session-list"
+              className={`relative flex shrink-0 flex-col overflow-hidden bg-transparent transition-all duration-300 ${
+                sidebarOpen ? 'w-[280px]' : 'w-0'
+              }`}
+            >
+              <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
+                <ConversationsAdapter />
+              </div>
+            </aside>
 
-          <main
-            data-testid="chat-main"
-            className="flex min-w-0 flex-1 flex-col overflow-hidden relative"
-          >
+            <main
+              data-testid="chat-main"
+              className="flex min-w-0 flex-1 flex-col overflow-hidden relative bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5"
+            >
             <SessionsErrorBanner />
             <header className={`flex h-10 shrink-0 items-center gap-3 pr-5 bg-transparent z-10 [-webkit-app-region:drag] border-b border-[color:var(--color-line)]`}>
               <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[60px]'}`} />
@@ -227,6 +228,7 @@ export function Chat() {
               <Thread key={activeSessionId} />
             </section>
           </main>
+          </div>
 
           <ShortcutsModal />
         </div>

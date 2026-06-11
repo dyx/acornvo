@@ -50,7 +50,7 @@ export function BookmarkSidebar(): JSX.Element {
   }, [q, bookmarksRevision])
 
   return (
-    <div className="flex h-full flex-col bg-[color:var(--color-paper-2)] font-sans select-none">
+    <div className="flex h-full flex-col bg-transparent font-sans select-none">
       
       {/* 搜索栏 (高度与右侧 AddressBar 严格保持 48px 一致) */}
       <div className="flex h-[46px] shrink-0 items-center px-3">
