@@ -6,7 +6,7 @@ import { ipc } from '@/ipc/client'
 import { Button } from '@/components/ui/button'
 import { HeatGraph } from '@/components/assistant-ui/heat-graph'
 import { Activity } from 'lucide-react'
-import { formatDate } from '@/lib/date-utils'
+import { formatDate, formatDateTime } from '@/lib/date-utils'
 
 type Panel = 'ai' | 'queue'
 type Window = '24h' | '7d' | '30d'
@@ -358,7 +358,7 @@ function ObservabilityQueuePanel(): JSX.Element {
       <ul data-testid="obs-queue-opslog" className="space-y-1 text-xs text-muted-foreground">
         {recent.opsLog.slice(0, 20).map((r, i) => (
           <li key={i} className="flex gap-2">
-            <span className="tabular-nums">{r.ts}</span>
+            <span className="tabular-nums">{formatDateTime(r.ts)}</span>
             <span>{r.area}</span>
             <span className="flex-1 truncate">{r.message}</span>
           </li>
