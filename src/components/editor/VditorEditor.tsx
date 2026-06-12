@@ -84,14 +84,14 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
     const timer = setTimeout(() => {
       v = new Vditor(elRef.current!, {
         mode: 'ir',
-        cdn: '/vditor',
+        cdn: './vditor',
         theme: isDark ? 'dark' : 'classic',
         preview: {
           mode: 'editor',
           actions: [],
           theme: {
             current: isDark ? 'dark' : 'classic',
-            path: '/vditor/dist/css/content-theme'
+            path: './vditor/dist/css/content-theme'
           }
         },
         value: initialBody,
