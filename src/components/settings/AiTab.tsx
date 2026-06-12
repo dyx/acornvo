@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSettingsStore } from '@/stores/settings'
 import { useProvidersStore } from '@/stores/providers'
 import type { AiProvider, AiModel } from '@shared/settings-types'
 import { ProviderDialog } from './ProviderDialog'
@@ -100,6 +101,8 @@ interface AiTabProps {
 
 export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
   const { t } = useTranslation()
+  const ai = useSettingsStore((s) => s.ai)
+  const setAi = useSettingsStore((s) => s.setAi)
   const providers = useProvidersStore((s) => s.providers)
   const models = useProvidersStore((s) => s.models)
   const refresh = useProvidersStore((s) => s.refresh)
@@ -224,10 +227,42 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                                 className="flex items-center justify-between p-2.5 rounded-md hover:bg-muted/40 group border border-transparent hover:border-border/50 transition-colors"
                               >
                                 <div className="flex flex-col min-w-0">
-                                  <span className="text-sm font-medium truncate text-foreground flex items-center gap-2">
-                                    {m.displayName}
+                                  <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <span className="truncate">{m.displayName}</span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <Badge
+                                        variant={ai.defaultChatModelId === m.id ? 'default' : 'outline'}
+                                        className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                          ai.defaultChatModelId === m.id
+                                            ? ''
+                                            : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                        }`}
+                                        onClick={() => {
+                                          if (!m.enabled) updateModel(m.id, { enabled: true })
+                                          setAi({ defaultChatModelId: m.id })
+                                        }}
+                                        title={t('settings.ai.setSongyuDefault', '设为松语(对话)默认')}
+                                      >
+                                        {t('settings.ai.songyuBadge', '松语')}
+                                      </Badge>
+                                      <Badge
+                                        variant={ai.defaultReviewerModelId === m.id ? 'default' : 'outline'}
+                                        className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                          ai.defaultReviewerModelId === m.id
+                                            ? ''
+                                            : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                        }`}
+                                        onClick={() => {
+                                          if (!m.enabled) updateModel(m.id, { enabled: true })
+                                          setAi({ defaultReviewerModelId: m.id })
+                                        }}
+                                        title={t('settings.ai.setLiguoDefault', '设为理果(评审)默认')}
+                                      >
+                                        {t('settings.ai.liguoBadge', '理果')}
+                                      </Badge>
+                                    </div>
                                     {!m.enabled && (
-                                      <Badge variant="secondary">
+                                      <Badge variant="secondary" className="shrink-0">
                                         {t('settings.ai.disabled', '已禁用')}
                                       </Badge>
                                     )}
