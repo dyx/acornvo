@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Sparkles, RefreshCw, Check, XCircle } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
@@ -56,7 +56,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
       .catch(() => setModelName(null))
   }, [defaultModelId])
 
-  const reviewError = detail?.summary.review_error ?? null
 
   if (!detail || !fm) return null
 
