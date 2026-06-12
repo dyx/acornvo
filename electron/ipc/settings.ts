@@ -23,9 +23,9 @@ export const settingsHandlers = {
   },
   aiProvidersList: () => providersStore.listProviders(),
   aiProvidersCreate: (input) => providersStore.createProvider(input),
-  aiProvidersUpdate: (id, patch) => {
-    providersStore.updateProvider(id, patch)
-    return { ok: true }
+  aiProvidersUpdate: async (id, patch) => {
+    await providersStore.updateProvider(id, patch)
+    return { ok: true as const }
   },
   aiProvidersDelete: (id) => {
     providersStore.deleteProvider(id)

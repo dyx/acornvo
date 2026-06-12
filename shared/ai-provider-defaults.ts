@@ -47,8 +47,8 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig
   ollama: {
     type: 'ollama',
     requiresApiKey: false,
-    testConnectionPath: '/ps',
-    baseUrl: 'http://localhost:11434/api',
+    testConnectionPath: '/api/tags',
+    baseUrl: 'http://localhost:11434',
     models: []
   }
 }

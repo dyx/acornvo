@@ -14,8 +14,10 @@ export interface ResolvedProfile {
   dbModelId: string
 }
 
-export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: number, maxTokens?: number } = {}): BaseChatModel {
-
+export function buildChatModel(
+  profile: ResolvedProfile,
+  opts: { temperature?: number; maxTokens?: number } = {}
+): BaseChatModel {
   logger().info('ai', {
     msg: '[buildChatModel] constructing new model',
     meta: {
@@ -31,15 +33,24 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
   const temperature = opts.temperature ?? 0.3
   const maxTokens = opts.maxTokens ?? 800
 
-  const debugCallbacks = [{
+  const debugCallbacks = [
+    {
       handleLLMEnd(output: any) {
-      try {
-        logger().debug('ai', { msg: '[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' + JSON.stringify(output, null, 2) })
-      } catch (e) {
-        logger().debug('ai', { msg: '[Unified LLM Output] RAW RESPONSE (unstringifiable)', meta: output })
+        try {
+          logger().debug('ai', {
+            msg:
+              '[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' +
+              JSON.stringify(output, null, 2)
+          })
+        } catch (e) {
+          logger().debug('ai', {
+            msg: '[Unified LLM Output] RAW RESPONSE (unstringifiable)',
+            meta: output
+          })
+        }
       }
     }
-  }]
+  ]
 
   let model: BaseChatModel
   switch (profile.provider) {
@@ -64,7 +75,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
         temperature,
         maxTokens,
         maxRetries: 2,
-        baseURL: profile.baseUrl ?? 'https://openrouter.ai/api/v1'
+        baseURL: profile.baseUrl || undefined
       }) as unknown as BaseChatModel
       break
     case 'deepseek':
@@ -84,7 +95,7 @@ export function buildChatModel(profile: ResolvedProfile, opts: { temperature?: n
       model = new ChatOllama({
         callbacks: debugCallbacks,
         model: profile.model,
-        baseUrl: profile.baseUrl ?? 'http://localhost:11434',
+        baseUrl: profile.baseUrl || undefined,
         temperature,
         numPredict: maxTokens,
         maxRetries: 2
