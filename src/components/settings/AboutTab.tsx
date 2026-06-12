@@ -64,7 +64,7 @@ export function AboutTab(): JSX.Element {
       <div className="flex flex-col flex-1 min-h-0">
         <h4 className="text-base font-medium mb-4 shrink-0">{t('about.changelog')}</h4>
         <div className="rounded-md border bg-muted/30 p-4 text-sm flex-1 overflow-y-auto font-medium custom-scrollbar" style={{ fontFamily: 'var(--font-review)' }}>
-          <MessageProvider message={messageObj}>
+          <MessageProvider message={messageObj} index={0}>
             <MessagePrimitive.Content
               components={{
                 Text: (props) => <MarkdownText smooth {...(props as any)} />

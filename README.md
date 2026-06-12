@@ -54,7 +54,6 @@ Acornvo 拒绝黑盒数据库。你的知识库（树林）目录结构清晰可
 ```text
 我的知识库/
 ├── inbox/                 # 果篮：默认的网页剪藏目录
-├── tech/                  # 你的自定义分类
 │   └── 2026-AI-Trends.md  # 你的知识，纯粹的 Markdown
 └── .acornvo/              # Acornvo 私有数据缓存
     └──  index.db           # 缓存数据、SQLite 索引、松语对话记录的 Checkpoints
@@ -66,10 +65,10 @@ Acornvo 拒绝黑盒数据库。你的知识库（树林）目录结构清晰可
 
 Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com/your-org/acornvo/releases) 页面下载最新版本：
 
-| 平台 | 安装包格式 | 说明 |
-| :--- | :--- | :--- |
-| **macOS** | `.dmg` | 提供 Apple Silicon (arm64) 和 Intel (x64) 架构 |
-| **Windows** | `.exe` | 一键安装包 |
+| 平台 | 安装包格式 | 说明                      |
+| :--- | :--- |:------------------------|
+| **macOS** | `.dmg` | 提供 Apple Silicon (arm64) |
+| **Windows** | `.exe` | 一键安装包                |
 
 ---
 
