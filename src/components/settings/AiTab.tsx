@@ -10,6 +10,7 @@ import { ProviderDialog } from './ProviderDialog'
 import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -230,36 +231,53 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
                                   <span className="text-sm font-medium text-foreground flex items-center gap-2">
                                     <span className="truncate">{m.displayName}</span>
                                     <div className="flex items-center gap-1.5 shrink-0">
-                                      <Badge
-                                        variant={ai.defaultChatModelId === m.id ? 'default' : 'outline'}
-                                        className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
-                                          ai.defaultChatModelId === m.id
-                                            ? ''
-                                            : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
-                                        }`}
-                                        onClick={() => {
-                                          if (!m.enabled) updateModel(m.id, { enabled: true })
-                                          setAi({ defaultChatModelId: m.id })
-                                        }}
-                                        title={t('settings.ai.setSongyuDefault', '设为松语(对话)默认')}
-                                      >
-                                        {t('settings.ai.songyuBadge', '松语')}
-                                      </Badge>
-                                      <Badge
-                                        variant={ai.defaultReviewerModelId === m.id ? 'default' : 'outline'}
-                                        className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
-                                          ai.defaultReviewerModelId === m.id
-                                            ? ''
-                                            : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
-                                        }`}
-                                        onClick={() => {
-                                          if (!m.enabled) updateModel(m.id, { enabled: true })
-                                          setAi({ defaultReviewerModelId: m.id })
-                                        }}
-                                        title={t('settings.ai.setLiguoDefault', '设为理果(评审)默认')}
-                                      >
-                                        {t('settings.ai.liguoBadge', '理果')}
-                                      </Badge>
+                                      <TooltipProvider delayDuration={1500}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge
+                                              variant={ai.defaultChatModelId === m.id ? 'default' : 'outline'}
+                                              className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                                ai.defaultChatModelId === m.id
+                                                  ? ''
+                                                  : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                              }`}
+                                              onClick={() => {
+                                                if (!m.enabled) updateModel(m.id, { enabled: true })
+                                                setAi({ defaultChatModelId: m.id })
+                                              }}
+                                            >
+                                              {t('settings.ai.songyuBadge', '松语')}
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top">
+                                            {t('settings.ai.setSongyuDefault', '设为松语默认模型')}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+
+                                      <TooltipProvider delayDuration={1500}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge
+                                              variant={ai.defaultReviewerModelId === m.id ? 'default' : 'outline'}
+                                              className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                                ai.defaultReviewerModelId === m.id
+                                                  ? ''
+                                                  : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                              }`}
+                                              onClick={() => {
+                                                if (!m.enabled) updateModel(m.id, { enabled: true })
+                                                setAi({ defaultReviewerModelId: m.id })
+                                              }}
+                                            >
+                                              {t('settings.ai.liguoBadge', '理果')}
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top">
+                                            {t('settings.ai.setLiguoDefault', '设为理果默认模型')}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     </div>
                                     {!m.enabled && (
                                       <Badge variant="secondary" className="shrink-0">
