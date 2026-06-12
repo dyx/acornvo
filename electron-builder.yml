@@ -28,7 +28,7 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
   target:
     - target: dmg
-      arch: [x64, arm64]
+      arch: [arm64]
   notarize: false
 dmg:
   artifactName: ${name}-${version}-${arch}.${ext}
@@ -49,5 +49,3 @@ npmRebuild: false
 publish:
   provider: generic
   url: https://releases.acornvo.local/
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
