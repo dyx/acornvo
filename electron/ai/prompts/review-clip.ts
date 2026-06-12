@@ -46,26 +46,49 @@ function truncateBody(body: string): string {
 export const AiReviewSchema = z.object({
   _reasoning: z.string().describe('分析文章的核心论点、写作深度以及是否有实际参考价值。'),
   summary: z.string().min(1).describe('用 1-2 句话直接总结文章结论，不使用任何客套话。'),
-  suggestedTitle: z.string().min(1).describe('如果原标题是无意义的默认标题或标题党，请提供一个高信息密度的替换标题；否则复用原标题。'),
-  tags: z.array(z.string()).catch([])
-    .transform(tags => tags.slice(0, 5))
-    .describe('请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'),
-  keyQuotes: z.array(z.string()).catch([])
-    .transform(quotes => quotes.filter(q => q.trim().length > 0).slice(0, 3))
+  suggestedTitle: z
+    .string()
+    .min(1)
+    .describe(
+      '如果原标题是无意义的默认标题或标题党，请提供一个高信息密度的替换标题；否则复用原标题。'
+    ),
+  tags: z
+    .array(z.string())
+    .catch([])
+    .transform((tags) => tags.slice(0, 5))
+    .describe(
+      '请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'
+    ),
+  keyQuotes: z
+    .array(z.string())
+    .catch([])
+    .transform((quotes) => quotes.filter((q) => q.trim().length > 0).slice(0, 3))
     .describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
-  category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other']).optional().catch('Other')
+  category: z
+    .enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other'])
+    .optional()
+    .catch('Other')
     .describe('必须选择最符合的一个大类，如果都不符合请选 Other')
 })
 
 export const AiReviewStrictSchema = z.object({
   _reasoning: z.string().describe('分析文章的核心论点、写作深度以及是否有实际参考价值。'),
   summary: z.string().describe('用 1-2 句话直接总结文章结论，不使用任何客套话。'),
-  suggestedTitle: z.string().describe('如果原标题是无意义的默认标题或标题党，请提供一个高信息密度的替换标题；否则复用原标题。'),
-  tags: z.array(z.string())
-    .describe('请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'),
-  keyQuotes: z.array(z.string())
+  suggestedTitle: z
+    .string()
+    .describe(
+      '如果原标题是无意义的默认标题或标题党，请提供一个高信息密度的替换标题；否则复用原标题。'
+    ),
+  tags: z
+    .array(z.string())
+    .describe(
+      '请提取 2-5 个核心标签。必须且只能使用纯英文，必须使用全小写字母加连字符的格式（kebab-case）。如果是中文特有概念，请翻译为对应的英文缩写。'
+    ),
+  keyQuotes: z
+    .array(z.string())
     .describe('必须 100% 一字不差地从原文摘录最反常识或最具总结性的原话。'),
-  category: z.enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other'])
+  category: z
+    .enum(['Tutorial', 'Insight', 'News', 'Resource', 'Noise', 'Other'])
     .describe('必须选择最符合的一个大类，如果都不符合请选 Other')
 })
 
@@ -74,11 +97,11 @@ export type AiReviewOutput = z.infer<typeof AiReviewSchema>
 export const reviewClip = {
   schema: AiReviewSchema,
 
-  render({ title, url, body }: RenderVars): { system: string; user: string } {
+  render({ title, body }: RenderVars): { system: string; user: string } {
     const system = [
       '你是一位博学的中英双语阅读助手。',
       '你将收到一篇文章，输出对它的结构化评注。',
-      '输出必须是严格的 JSON 格式，匹配指定 schema，由 LangChain 结构化输出机制处理 —— 不要包含任何额外文本，不要使用 markdown code fence。',
+      '输出必须是严格的 JSON 格式，匹配指定 schema，不要包含任何额外文本，不要使用 markdown code fence。',
       'tags 必须使用 kebab-case 英文短词。summary 使用原文主语言（若中英混合则以中文为主）。',
       '',
       '--- 示例 ---',
@@ -98,9 +121,8 @@ export const reviewClip = {
     ].join('\n')
 
     const user = [
-      `# 标题\n${title}`,
-      `# 原始 URL\n${url}`,
-      `# 正文（可能已被截断）\n${truncateBody(body)}`,
+      `# 标题：${title}`,
+      `# 正文：${truncateBody(body)}`,
       '',
       '请按如下步骤生成：',
       '1. 首先在 `_reasoning` 字段中分析文章核心论点和价值。',

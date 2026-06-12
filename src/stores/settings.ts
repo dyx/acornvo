@@ -6,7 +6,6 @@ import type {
   AppearanceSettings,
   AiSettings,
   BrowserSettings,
-  UpdateSettings,
   SettingsChangedPayload
 } from '@shared/settings-types'
 
@@ -14,8 +13,7 @@ const DEFAULTS = {
   general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser' } as GeneralSettings,
   appearance: { theme: 'system', fontScale: 1.0 } as AppearanceSettings,
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 } as AiSettings,
-  browser: { clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings,
-  update: { autoCheck: true } as UpdateSettings
+  browser: { clipImagesLocalize: false, searchEngine: 'google' } as BrowserSettings
 }
 
 interface SettingsState {
@@ -24,13 +22,11 @@ interface SettingsState {
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
-  update: UpdateSettings
   loadAll: () => Promise<void>
   setGeneral: (patch: Partial<GeneralSettings>) => Promise<void>
   setAppearance: (patch: Partial<AppearanceSettings>) => Promise<void>
   setAi: (patch: Partial<AiSettings>) => Promise<void>
   setBrowser: (patch: Partial<BrowserSettings>) => Promise<void>
-  setUpdate: (patch: Partial<UpdateSettings>) => Promise<void>
   _applyChange: (payload: SettingsChangedPayload) => void
 }
 
@@ -39,14 +35,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...DEFAULTS,
 
   async loadAll() {
-    const [general, appearance, ai, browser, update] = await Promise.all([
+    const [general, appearance, ai, browser] = await Promise.all([
       ipc.settings.get('general') as Promise<GeneralSettings>,
       ipc.settings.get('appearance') as Promise<AppearanceSettings>,
       ipc.settings.get('ai') as Promise<AiSettings>,
-      ipc.settings.get('browser') as Promise<BrowserSettings>,
-      ipc.settings.get('update') as Promise<UpdateSettings>
+      ipc.settings.get('browser') as Promise<BrowserSettings>
     ])
-    set({ general, appearance, ai, browser, update, ready: true })
+    set({ general, appearance, ai, browser, ready: true })
   },
 
   async setGeneral(patch) {
@@ -69,11 +64,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ browser: next })
     await ipc.settings.set('browser', patch)
   },
-  async setUpdate(patch) {
-    const next = { ...get().update, ...patch }
-    set({ update: next })
-    await ipc.settings.set('update', patch)
-  },
 
 
   _applyChange({ ns, key, newValue }) {
@@ -85,8 +75,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     else if (ns === 'ai') set({ ai: { ...current.ai, [key]: newValue } as AiSettings })
     else if (ns === 'browser')
       set({ browser: { ...current.browser, [key]: newValue } as BrowserSettings })
-    else if (ns === 'update')
-      set({ update: { ...current.update, [key]: newValue } as UpdateSettings })
   }
 }))
 

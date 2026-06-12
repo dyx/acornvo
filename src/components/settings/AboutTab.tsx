@@ -1,9 +1,8 @@
 import type { JSX } from 'react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
-import { useSettingsStore } from '@/stores/settings'
-import { ExternalLink, RefreshCw } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 
 export function AboutTab(): JSX.Element {
   const { t } = useTranslation()
@@ -49,57 +48,8 @@ export function AboutTab(): JSX.Element {
       </dl>
 
       <footer className="flex gap-3 pt-6 border-t">
-        <CheckUpdateButton />
         <WebsiteLinkButton />
       </footer>
-
-      <AutoCheckToggle />
-    </div>
-  )
-}
-
-function CheckUpdateButton(): JSX.Element {
-  const { t } = useTranslation()
-  const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<{
-    status: 'up-to-date' | 'available' | 'failed'
-    version?: string
-    message?: string
-  } | null>(null)
-
-  const handleCheck = useCallback(async () => {
-    setChecking(true)
-    setResult(null)
-    try {
-      const res = await ipc.update.checkManual()
-      setResult(res)
-    } finally {
-      setChecking(false)
-    }
-  }, [])
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        data-testid="about-check-update"
-        disabled={checking}
-        className="inline-flex items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"
-        onClick={() => {
-          void handleCheck()
-        }}
-      >
-        <RefreshCw className={`size-4 ${checking ? 'animate-spin' : ''}`} />
-        {checking ? t('about.checkUpdateBusy') : t('about.checkUpdate')}
-      </button>
-      {result && (
-        <span data-testid="about-check-update-result" className="text-sm text-muted-foreground">
-          {result.status === 'up-to-date'
-            ? t('about.upToDate')
-            : result.status === 'available'
-              ? t('about.updateAvailable', { version: result.version ?? '' })
-              : t('about.updateFailed')}
-        </span>
-      )}
     </div>
   )
 }
@@ -118,28 +68,5 @@ function WebsiteLinkButton(): JSX.Element {
       <ExternalLink className="size-4" />
       {t('about.website')}
     </button>
-  )
-}
-
-function AutoCheckToggle(): JSX.Element | null {
-  const { t } = useTranslation()
-  const autoCheck = useSettingsStore((s) => s.update.autoCheck)
-  const setUpdate = useSettingsStore((s) => s.setUpdate)
-
-  return (
-    <label
-      data-testid="about-auto-check"
-      className="flex items-center gap-3 text-sm cursor-pointer"
-    >
-      <input
-        type="checkbox"
-        checked={autoCheck}
-        onChange={(e) => {
-          void setUpdate({ autoCheck: e.target.checked })
-        }}
-        className="size-4"
-      />
-      <span>{t('update.autoCheck')}</span>
-    </label>
   )
 }

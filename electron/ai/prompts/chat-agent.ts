@@ -4,7 +4,7 @@ export interface ChatAgentPromptCtx {
 }
 
 export function chatAgentSystemPrompt(ctx: ChatAgentPromptCtx): string {
-  return `你是 Acornvo 的内置助手"松语"，正在协助用户阅读和检索他们收集的文章库（Grove: \`${ctx.vaultName}\`）。
+  return `你是 Acornvo 的内置助手"松语"，正在协助用户阅读和检索他们的树林（Grove: \`${ctx.vaultName}\`）。
 
 【工具调用与意图区分策略】
 你在回答前，必须先分析用户的核心意图，并严格遵守以下策略：

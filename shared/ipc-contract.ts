@@ -64,8 +64,7 @@ export type {
   GeneralSettings,
   AppearanceSettings,
   AiSettings,
-  BrowserSettings,
-  UpdateSettings
+  BrowserSettings
 } from './settings-types'
 
 // --- jobs namespace types (phase-14) ---
@@ -544,14 +543,6 @@ export type IpcContract = {
       locked?: { path: string; holder: LockInfo }
     } | null
   }
-  update: {
-    checkManual: () => Promise<{
-      status: 'up-to-date' | 'available' | 'failed'
-      version?: string
-      message?: string
-    }>
-    installNow: () => Promise<void>
-  }
   shell: {
     openExternal: (url: string) => void
   }
@@ -598,15 +589,6 @@ export type IpcEventContract = {
   'browser:tabStateChanged': TabStateChangedPayload
   'settings:changed': SettingsChangedPayload
   'jobs:changed': Job
-  'update:available': { version: string }
-  'update:download-progress': {
-    percent: number
-    bytesPerSecond: number
-    total: number
-    transferred: number
-  }
-  'update:downloaded': { version: string }
-  'update:error': { message: string }
   'crash:detected': { files: string[] }
   'hotkey:reload': Record<string, never>
   'ui:showToast': { title?: string; description?: string; variant?: 'default' | 'destructive' }

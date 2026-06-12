@@ -35,21 +35,15 @@ export interface BrowserSettings {
   searchEngine: SearchEngine
 }
 
-export interface UpdateSettings {
-  autoCheck: boolean
-}
-
-
 export type SettingsTab = 'general' | 'ai' | 'browser' | 'observability' | 'about'
 
-export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'update'
+export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser'
 
 export type SettingsByNs = {
   general: GeneralSettings
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
-  update: UpdateSettings
 }
 
 export interface AiProvider {

@@ -6,7 +6,6 @@ import { AppRail } from '@/components/AppRail'
 import { StatusBar } from '@/components/StatusBar'
 import { IndexProgressOverlay } from '@/components/IndexProgressOverlay'
 import { IndexBanner } from '@/components/IndexBanner'
-import { UpdateBanner } from '@/components/UpdateBanner'
 import { CrashBanner } from '@/components/CrashBanner'
 import { NewGroveDialog } from '@/components/NewGroveDialog'
 import { useGlobalHotkeys } from '@/hooks/useGlobalHotkeys'
@@ -85,7 +84,6 @@ export function App(): JSX.Element {
     <>
       <div className="flex h-full flex-col bg-[color:var(--color-paper-2)]">
         <CrashBanner />
-        <UpdateBanner />
         <div className="flex flex-1 overflow-hidden relative">
           <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
           <div className="w-[76px] shrink-0 pt-[40px] pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none">

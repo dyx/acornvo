@@ -31,10 +31,8 @@ import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './servi
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
 
-import { settingsStore } from './settings/store'
 import { initSafeStorageAvailability } from './settings/safe-storage-state'
 import { installSettingsBroadcaster } from './settings/broadcast'
-import { initAutoUpdate } from './update/updater'
 import type { QueueRunner } from './queue/runner'
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
@@ -261,15 +259,6 @@ async function bootstrap(): Promise<void> {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('bootstrap:ready', bootstrapResult)
   })
-
-  // Auto-update: check the user's preference; default to enabled.
-  let autoCheck = true
-  try {
-    autoCheck = settingsStore.get('update').autoCheck
-  } catch {
-    // DB may not be ready yet — use default
-  }
-  if (autoCheck) initAutoUpdate()
 }
 
 bootstrap().catch((err) => {

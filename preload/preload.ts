@@ -175,10 +175,6 @@ const request: IpcClient<IpcContract> = {
     runtimeInfo: () => invoke('app.runtimeInfo'),
     getBootstrap: () => invoke('app.getBootstrap')
   },
-  update: {
-    checkManual: () => invoke('update.checkManual'),
-    installNow: () => invoke('update.installNow')
-  },
   shell: {
     openExternal: (url) => invoke('shell.openExternal', url)
   },

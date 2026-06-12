@@ -26,7 +26,6 @@ import { createChatHandlers } from './chat'
 import { createQueueHandlers } from './queue'
 
 import { appHandlers } from './app'
-import { updateHandlers } from './update'
 import { shellHandlers } from './shell'
 import { crashHandlers } from './crash'
 import { windowHandlers } from './window'
@@ -175,7 +174,6 @@ export const ipcHandlers: HandlerMap = {
   queue: queueHandlers,
 
   app: appHandlers,
-  update: updateHandlers,
   shell: shellHandlers,
   crash: crashHandlers,
   window: windowHandlers,
