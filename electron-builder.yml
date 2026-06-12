@@ -12,9 +12,7 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-extraResources:
-  - from: build/licenses.json
-    to: build/licenses.json
+
 asarUnpack:
   - resources/**
 mac:
