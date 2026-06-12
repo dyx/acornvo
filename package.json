@@ -22,8 +22,7 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "dist:mac": "npm run build && electron-builder --mac --arm64",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:all": "npm run build && electron-builder -mw",
-    "notarize:mac": "node scripts/notarize-mac.mjs"
+    "dist:all": "npm run build && electron-builder -mw"
   },
   "dependencies": {
     "@langchain/core": "^1.1.48",
