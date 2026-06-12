@@ -1,3 +1,16 @@
-# Changelog
+# 更新日志 (Changelog)
 
-All notable changes to this project will be documented in this file.
+这里记录本软件的所有重要更新。
+
+## [v1.0.1] - 2026-06-12
+
+### ✨ 新增 (Added)
+- 增加了在“设置 -> 关于”页面中展示更新日志的功能。
+- 支持直接使用 Markdown 格式编写和渲染更新日志。
+
+### 🚀 优化 (Improved)
+- 优化了应用的整体打包体积。
+- 允许用户自定义和管理自己的分类标签。
+
+### 🐛 修复 (Fixed)
+- 修复了可观测性队列中时间戳格式显示不正确的问题。

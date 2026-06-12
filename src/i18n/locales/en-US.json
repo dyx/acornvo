@@ -422,6 +422,7 @@
     "hash": "Build",
     "runtime": "Runtime",
     "platform": "Platform",
+    "changelog": "Changelog",
     "checkUpdate": "Check for Updates",
     "checkUpdateBusy": "Checking...",
     "upToDate": "Acornvo is up to date",

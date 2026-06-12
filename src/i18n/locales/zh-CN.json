@@ -443,6 +443,7 @@
     "hash": "构建",
     "runtime": "运行时",
     "platform": "平台",
+    "changelog": "更新日志",
     "checkUpdate": "检查更新",
     "checkUpdateBusy": "检查中…",
     "upToDate": "Acornvo 已是最新版本",
