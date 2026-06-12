@@ -7,13 +7,11 @@
   "homepage": "https://electron-vite.org",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "start": "electron-vite preview",
     "pretest": "npm rebuild better-sqlite3",
     "predev": "node scripts/copy-sql-migrations.mjs",
     "dev": "electron-vite dev",

@@ -157,7 +157,7 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
             <Input 
               value={form.displayName} 
               onChange={(e) => set('displayName', e.target.value)} 
-              placeholder={form.name || 'Leave empty to use Model Name'}
+              placeholder={form.name || t('settings.ai.modelDisplayNamePlaceholder', 'Leave empty to use Model Name')}
             />
           </div>
           <div className="space-y-1">

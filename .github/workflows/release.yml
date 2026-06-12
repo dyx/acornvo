@@ -19,8 +19,6 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
-      - name: Generate licenses
-        run: npm run generate:licenses
       - name: Build (mac)
         if: matrix.os == 'macos-latest'
         env:

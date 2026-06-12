@@ -21,11 +21,6 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  extendInfo:
-    - NSDocumentsFolderUsageDescription: Acornvo accesses your Documents folder to read and write notes.
-    - NSDownloadsFolderUsageDescription: Acornvo writes diagnostic bundles to your Downloads folder.
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
   target:
     - target: dmg
       arch: [arm64]
