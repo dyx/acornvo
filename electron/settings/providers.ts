@@ -76,7 +76,8 @@ function listProviders(): AiProvider[] {
 async function syncOllamaModels(providerId: string, baseUrl?: string) {
   const db = getGlobalDb()
   // Ensure we get the pure host, then append /api/tags
-  let url = baseUrl || 'http://localhost:11434'
+  let url = baseUrl || AI_PROVIDER_DEFAULTS['ollama']?.baseUrl
+  if (!url) return
   url = url.replace(/\/(?:api|v1)\/?$/, '').replace(/\/+$/, '') + '/api/tags'
 
   try {
