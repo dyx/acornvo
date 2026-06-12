@@ -51,8 +51,8 @@ export function SettingsLayout({ children }: { children: ReactNode }): JSX.Eleme
         </div>
       </nav>
       <section className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
-        <div className="flex-1 overflow-y-auto px-10 pt-4 pb-16">
-          <div className="max-w-screen-sm">{children}</div>
+        <div className="flex-1 overflow-y-auto px-10 pt-4 pb-6">
+          <div className="max-w-screen-sm h-full flex flex-col">{children}</div>
         </div>
       </section>
     </div>
