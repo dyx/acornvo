@@ -31,7 +31,7 @@ html {
   --color-sky: oklch(0.55 0.06 230);
   --color-sky-bg: oklch(0.93 0.02 230);
 
-  --font-serif: var(--font-editor-text, 'Noto Serif SC', 'Source Han Serif', 'Songti SC', Georgia, serif);
+  --font-serif: var(--font-editor-text, 'Noto Sans SC', Georgia, serif);
   --font-sans: var(--font-ui-text, 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif);
   --font-mono: var(--font-editor-code, 'JetBrains Mono', 'SF Mono', Menlo, monospace);
   --font-chat: var(--font-chat-text, var(--font-sans));

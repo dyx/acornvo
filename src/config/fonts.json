@@ -1,6 +1,6 @@
 {
   "editor": {
-    "text": ["Lora", "\"Noto Serif SC\"", "\"Source Han Serif\"", "\"Songti SC\"", "Georgia", "serif"],
+    "text": ["Lora", "\"Noto Sans SC\"", "Georgia", "serif"],
     "code": ["\"JetBrains Mono\"", "\"SF Mono\"", "Menlo", "monospace"]
   },
   "chat": {

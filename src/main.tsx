@@ -27,8 +27,6 @@ import './i18n'
 
 import '@fontsource/lora/400.css'
 import '@fontsource/lora/700.css'
-import '@fontsource/noto-serif-sc/400.css'
-import '@fontsource/noto-serif-sc/700.css'
 import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
