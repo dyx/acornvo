@@ -1,7 +1,6 @@
 import { ipcMain } from 'electron'
 import { logger } from '../obs/logger'
 import {
-  IpcError,
   type IpcContract,
   type IpcErrorShape,
   type IpcResult
@@ -62,11 +61,16 @@ function sanitizeMessage(message: string): string {
 }
 
 export function normalize(err: unknown): IpcErrorShape {
-  if (err instanceof IpcError) {
-    return {
-      code: err.code,
-      message: sanitizeMessage(err.message),
-      ...(err.context ? { context: err.context } : {})
+  if (err && typeof err === 'object' && 'code' in err && 'message' in err) {
+    const code = (err as any).code;
+    const message = (err as any).message;
+    // Duck-type check if it looks like an IpcError
+    if (typeof code === 'string' && typeof message === 'string') {
+      return {
+        code: code as any,
+        message: sanitizeMessage(message),
+        ...('context' in err ? { context: (err as any).context } : {})
+      }
     }
   }
   if (err instanceof Error) {

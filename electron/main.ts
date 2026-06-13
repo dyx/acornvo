@@ -40,7 +40,13 @@ let queueRunner: QueueRunner | null = null
 
 
 function createMainWindow(): BrowserWindow {
+  const iconPath = join(__dirname, '../../resources/icon.png')
+  if (process.platform === 'darwin' && !app.isPackaged) {
+    app.dock?.setIcon(iconPath)
+  }
+
   const win = new BrowserWindow({
+    icon: iconPath,
     width: 1280,
     height: 800,
     minWidth: 960,

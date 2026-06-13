@@ -437,8 +437,11 @@ async function testConnection(input: {
       return { ok: false, message: `${errMsg}${bodyStr ? ' - ' + bodyStr : ''}`.trim() }
     }
   } catch (err: any) {
+    if (err && err.code === 'E_KEYCHAIN_UNAVAILABLE') {
+      throw err;
+    }
     if (err.message === 'fetch failed') {
-      return { ok: false, message: '网络请求失败，请检查网络或 Base URL 是否正确' }
+      return { ok: false, message: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' }
     }
     return { ok: false, message: err.message || String(err) }
   }

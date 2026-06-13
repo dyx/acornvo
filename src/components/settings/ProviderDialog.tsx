@@ -114,6 +114,10 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
     } catch (err: any) {
       setTestStatus('error')
       setTestMessage(err.message || String(err))
+      if (err.code === 'E_KEYCHAIN_UNAVAILABLE') {
+        setErrorCode(err.code)
+        setError(t('settings.secret.unavailable', 'System keychain unavailable: Cannot store API key'))
+      }
     }
   }
 

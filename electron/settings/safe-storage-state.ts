@@ -29,20 +29,13 @@ export function __resetForTest(): void {
 
 export function retrySafeStorageAvailability(): boolean {
   if (process.platform === 'darwin') {
-    const { execSync } = require('child_process')
     const { app } = require('electron')
-    const serviceNames = [`${app.getName()} Safe Storage`, 'Acornvo Safe Storage', 'acornvo Safe Storage']
-    
-    for (const name of new Set(serviceNames)) {
-      try {
-        execSync(`security delete-generic-password -s "${name}"`)
-      } catch {
-        // Ignore if not found
-      }
-    }
-    
-    // If we deleted it, we must relaunch to let safeStorage recreate it and prompt again
-    // Even if we didn't delete it (maybe it wasn't there), we can try relaunching to re-trigger the prompt
+    // We must restart the app because Chromium's OSCrypt caches the denial state
+    // within the process. Upon restart, accessing safeStorage will trigger the
+    // macOS permission prompt again.
+    // NOTE: We absolutely MUST NOT delete the keychain item here, because that
+    // would destroy the master encryption key, rendering all existing API keys
+    // in the database unreadable!
     app.relaunch()
     app.quit()
     return false

@@ -15,7 +15,15 @@ function requireKeychain(): void {
 
 function set(key: string, plain: string): void {
   requireKeychain()
-  const enc = safeStorage.encryptString(plain)
+  let enc: Buffer
+  try {
+    enc = safeStorage.encryptString(plain)
+  } catch (err) {
+    throw new IpcError(
+      'E_KEYCHAIN_UNAVAILABLE',
+      `E_KEYCHAIN_UNAVAILABLE: Keychain error during encryption: ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
   const db = getGlobalDb()
   db.prepare(
     `
@@ -33,7 +41,14 @@ function get(key: string): string | null {
     | { encrypted_value: Buffer }
     | undefined
   if (!row) return null
-  return safeStorage.decryptString(row.encrypted_value)
+  try {
+    return safeStorage.decryptString(row.encrypted_value)
+  } catch (err) {
+    throw new IpcError(
+      'E_KEYCHAIN_UNAVAILABLE',
+      `E_KEYCHAIN_UNAVAILABLE: Keychain error during decryption: ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
 }
 
 /** Idempotent. Allowed even when the keychain is unavailable so callers can
