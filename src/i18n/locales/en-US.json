@@ -412,7 +412,8 @@
     },
     "secret": {
       "saved": "Saved",
-      "unavailable": "OS keychain unavailable — cannot save API keys"
+      "unavailable": "OS keychain unavailable — cannot save API keys",
+      "retry": "Restart to Request Permission"
     },
     "browser": {
       "clipImages": "Localize clipped images",

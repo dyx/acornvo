@@ -460,6 +460,7 @@ export type IpcContract = {
     aiModelsDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
     keychainAvailable: () => boolean
+    keychainRetry: () => boolean
     aiProvidersTestConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
     aiProvidersCheckBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
   }

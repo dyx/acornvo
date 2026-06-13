@@ -17,7 +17,15 @@ function AiTabRoute(): JSX.Element {
   useEffect(() => {
     void ipc.settings.keychainAvailable().then(setKeychainAvailable)
   }, [])
-  return <AiTab keychainAvailable={keychainAvailable} />
+  return (
+    <AiTab
+      keychainAvailable={keychainAvailable}
+      onRetryKeychain={async () => {
+        const available = await ipc.settings.keychainRetry()
+        setKeychainAvailable(available)
+      }}
+    />
+  )
 }
 
 export function Settings(): JSX.Element {

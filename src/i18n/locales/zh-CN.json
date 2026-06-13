@@ -433,7 +433,8 @@
     },
     "secret": {
       "saved": "已保存",
-      "unavailable": "系统密钥环不可用：无法存储 API 密钥。"
+      "unavailable": "系统密钥环不可用：无法存储 API 密钥。",
+      "retry": "重启并重新申请权限"
     },
     "browser": {
       "clipImages": "剪藏图片本地化",

@@ -22,7 +22,33 @@ export function isSafeStorageAvailable(): boolean {
   return cached
 }
 
-/** Test-only escape hatch. */
+/** Test-only escape hatch, but also used when user manually retries keychain access. */
 export function __resetForTest(): void {
   cached = null
+}
+
+export function retrySafeStorageAvailability(): boolean {
+  if (process.platform === 'darwin') {
+    const { execSync } = require('child_process')
+    const { app } = require('electron')
+    const serviceNames = [`${app.getName()} Safe Storage`, 'Acornvo Safe Storage', 'acornvo Safe Storage']
+    
+    for (const name of new Set(serviceNames)) {
+      try {
+        execSync(`security delete-generic-password -s "${name}"`)
+      } catch {
+        // Ignore if not found
+      }
+    }
+    
+    // If we deleted it, we must relaunch to let safeStorage recreate it and prompt again
+    // Even if we didn't delete it (maybe it wasn't there), we can try relaunching to re-trigger the prompt
+    app.relaunch()
+    app.quit()
+    return false
+  }
+
+  cached = null
+  initSafeStorageAvailability()
+  return cached!
 }

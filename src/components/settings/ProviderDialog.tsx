@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { ipc } from '@/ipc/client'
 
 interface ProviderDialogProps {
   provider: AiProvider | null
@@ -59,6 +60,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   const update = useProvidersStore((s) => s.updateProvider)
   const [form, setForm] = useState<FormState>(() => initialState(provider))
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [testMessage, setTestMessage] = useState<string | null>(null)
@@ -118,6 +120,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   async function onSave(): Promise<void> {
     setBusy(true)
     setError(null)
+    setErrorCode(null)
     try {
       const name = form.name.trim()
       
@@ -146,7 +149,8 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
       }
       onClose()
     } catch (err) {
-      const code = (err as { code?: string })?.code
+      const code = (err as { code?: string })?.code || null
+      setErrorCode(code)
       if (code === 'E_DUPLICATE_NAME') setError(t('settings.ai.errorDuplicateName'))
       else if (code === 'E_KEYCHAIN_UNAVAILABLE') setError(t('settings.secret.unavailable'))
       else setError(err instanceof Error ? err.message : String(err))
@@ -233,7 +237,27 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
             />
           </div>
         </div>
-        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="mt-3 text-sm text-destructive flex items-center justify-between">
+            <p>{error}</p>
+            {errorCode === 'E_KEYCHAIN_UNAVAILABLE' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await ipc.settings.keychainRetry()
+                    await onSave()
+                  } catch (e) {
+                    // Ignore, error will be handled by onSave
+                  }
+                }}
+              >
+                {t('settings.secret.retry', 'Request Permission Again')}
+              </Button>
+            )}
+          </div>
+        )}
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center">
             <Button

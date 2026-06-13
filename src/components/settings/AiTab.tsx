@@ -10,6 +10,7 @@ import { ProviderDialog } from './ProviderDialog'
 import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
@@ -98,9 +99,10 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
 
 interface AiTabProps {
   keychainAvailable: boolean
+  onRetryKeychain?: () => void
 }
 
-export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
+export function AiTab({ keychainAvailable, onRetryKeychain }: AiTabProps): JSX.Element {
   const { t } = useTranslation()
   const ai = useSettingsStore((s) => s.ai)
   const setAi = useSettingsStore((s) => s.setAi)
@@ -132,11 +134,18 @@ export function AiTab({ keychainAvailable }: AiTabProps): JSX.Element {
       {!keychainAvailable && (
         <div
           role="alert"
-          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center justify-between"
         >
-          {t(
-            'settings.secret.unavailable',
-            'Keychain is unavailable, secrets cannot be saved securely.'
+          <span>
+            {t(
+              'settings.secret.unavailable',
+              'Keychain is unavailable, secrets cannot be saved securely.'
+            )}
+          </span>
+          {onRetryKeychain && (
+            <Button variant="outline" size="sm" onClick={onRetryKeychain}>
+              {t('settings.secret.retry', 'Request Permission Again')}
+            </Button>
           )}
         </div>
       )}

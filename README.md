@@ -43,7 +43,9 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 - **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，云端本地任你选择。
 - **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。
 - **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
-- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力加密存储。
+- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力（如 macOS Keychain、Windows DPAPI）加密存储。
+  > **为什么在 macOS 上首次使用或保存配置时，系统会弹窗提示：“Acornvo 想要使用你存储在钥匙串的 ‘acornvo SafeStorage’ 中的机密信息”？**
+  > 这是 macOS 系统的原生安全机制。Acornvo 使用 Electron 底层的 `safeStorage` 模块来加密您的 API Key 等敏感配置。加密过程中需要向操作系统的“钥匙串（Keychain）”中写入或读取一个专门用于加解密的秘钥（即 `acornvo SafeStorage`）。应用本身只会获取加密后的密文，明文的秘钥始终由您的操作系统保管，从而最大程度保证您的数据安全。请放心点击“始终允许”或“允许”以授予权限。
 
 ---
 
