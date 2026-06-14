@@ -22,6 +22,8 @@ export function ProjectPicker(): JSX.Element {
   const { current, recent, loadRecent, openGroveById, removeFromRecent, openExisting } =
     useGroveStore()
 
+  const isWin = /windows|win32/i.test(navigator.userAgent)
+
   // Locked-from-bootstrap highlight (first item cannot be auto-opened).
   const [lockedFromBootstrap, setLockedFromBootstrap] = useState<{
     path: string
@@ -108,7 +110,7 @@ export function ProjectPicker(): JSX.Element {
         <aside className="relative flex w-[420px] shrink-0 flex-col justify-between px-14 py-12">
           {/* Custom vertical line matching AppRail height */}
           <div
-            className="absolute right-0 top-[40px] bottom-3 w-[1px] pointer-events-none"
+            className={`absolute right-0 ${isWin ? 'top-[14px]' : 'top-[40px]'} bottom-3 w-[1px] pointer-events-none`}
             style={{
               background:
                 'linear-gradient(to bottom, transparent, var(--color-line) 15%, var(--color-line) 85%, transparent)'

@@ -53,7 +53,7 @@ function createMainWindow(): BrowserWindow {
     minHeight: 600,
     center: true,
     show: false,
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     ...(process.platform === 'win32' ? { titleBarOverlay: getOverlayForTheme() } : {}),
     webPreferences: {
       contextIsolation: true,
