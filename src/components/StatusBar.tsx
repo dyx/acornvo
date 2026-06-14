@@ -8,19 +8,23 @@ interface StatusBarProps {
   conflicts?: number
   indexing?: string | null
   totalDocs?: number
+  className?: string
+  isTitleBar?: boolean
 }
 
 export function StatusBar({
   reviewing = 0,
   conflicts = 0,
   indexing = null,
-  totalDocs = 0
+  totalDocs = 0,
+  className = '',
+  isTitleBar = false
 }: StatusBarProps): JSX.Element {
   const { t } = useTranslation()
   const current = useGroveStore((s) => s.current)
 
   return (
-    <div className="flex h-7 shrink-0 items-center gap-4 bg-[color:var(--color-paper-3)] px-4 font-mono text-xs text-[color:var(--color-ink-3)]">
+    <div className={`flex shrink-0 items-center gap-4 px-4 font-mono text-[color:var(--color-ink-3)] ${isTitleBar ? 'h-full w-full justify-center text-[11px] bg-transparent' : 'h-7 bg-[color:var(--color-paper-3)] text-xs'} ${className}`}>
       {indexing ? (
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-sky)]" />
@@ -49,7 +53,7 @@ export function StatusBar({
         </span>
       )}
 
-      <span className="flex-1" />
+      {!isTitleBar && <span className="flex-1" />}
 
       <span>{t('status.docs', '{{count}} 篇文档', { count: totalDocs })}</span>
     </div>

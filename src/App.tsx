@@ -44,6 +44,8 @@ export function App(): JSX.Element {
     currentPath?: string
   }>({ scanned: 0, total: 0 })
 
+  const isWin = /windows|win32/i.test(navigator.userAgent)
+
   useEffect(() => {
     const onNew = (): void => setNewOpen(true)
     window.addEventListener('acorn:picker:new', onNew)
@@ -85,7 +87,18 @@ export function App(): JSX.Element {
       <div className="flex h-full flex-col bg-[color:var(--color-paper-2)]">
         <CrashBanner />
         <div className="flex flex-1 overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
+          {isWin ? (
+            <div className="absolute top-0 left-0 right-[140px] h-7 z-50 [-webkit-app-region:drag] flex items-center justify-center">
+              <StatusBar
+                indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
+                totalDocs={progress.total}
+                isTitleBar
+                className="pointer-events-none opacity-80"
+              />
+            </div>
+          ) : (
+            <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
+          )}
           <div className="w-[76px] shrink-0 pt-[40px] pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none">
             <AppRail />
           </div>
@@ -93,10 +106,12 @@ export function App(): JSX.Element {
             <Outlet />
           </main>
         </div>
-        <StatusBar
-          indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
-          totalDocs={progress.total}
-        />
+        {!isWin && (
+          <StatusBar
+            indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
+            totalDocs={progress.total}
+          />
+        )}
 
         <IndexBanner />
         <DbRebuildOverlay visible={isRebuilding} />
