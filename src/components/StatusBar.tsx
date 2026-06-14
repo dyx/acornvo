@@ -31,9 +31,10 @@ export function StatusBar({
           {t('status.indexing', '索引中 {{indexing}}', { indexing })}
         </span>
       ) : (
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-1.5" title={isTitleBar ? t('status.docs', '{{count}} 篇文档', { count: totalDocs }) : undefined}>
           <Trees size={14} className="shrink-0" />
           {current ? current.name : t('status.no_grove', '未选择果园')}
+          {isTitleBar && <span className="opacity-70 ml-0.5">({totalDocs})</span>}
         </span>
       )}
 
@@ -53,9 +54,12 @@ export function StatusBar({
         </span>
       )}
 
-      {!isTitleBar && <span className="flex-1" />}
-
-      <span>{t('status.docs', '{{count}} 篇文档', { count: totalDocs })}</span>
+      {!isTitleBar && (
+        <>
+          <span className="flex-1" />
+          <span>{t('status.docs', '{{count}} 篇文档', { count: totalDocs })}</span>
+        </>
+      )}
     </div>
   )
 }

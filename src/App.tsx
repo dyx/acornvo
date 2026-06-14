@@ -86,17 +86,20 @@ export function App(): JSX.Element {
     <>
       <div className="flex h-full flex-col bg-[color:var(--color-paper-2)]">
         <CrashBanner />
+        
+        {isWin && (
+          <div className="h-7 shrink-0 w-full [-webkit-app-region:drag] flex items-center justify-center pr-[140px] z-50 bg-[color:var(--color-paper-3)]">
+            <StatusBar
+              indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
+              totalDocs={progress.total}
+              isTitleBar
+              className="pointer-events-none opacity-80"
+            />
+          </div>
+        )}
+
         <div className="flex flex-1 overflow-hidden relative">
-          {isWin ? (
-            <div className="absolute top-0 left-0 right-[140px] h-7 z-50 [-webkit-app-region:drag] flex items-center justify-center">
-              <StatusBar
-                indexing={indexState === 'scanning' ? `${progress.scanned}/${progress.total}` : null}
-                totalDocs={progress.total}
-                isTitleBar
-                className="pointer-events-none opacity-80"
-              />
-            </div>
-          ) : (
+          {!isWin && (
             <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
           )}
           <div className={`w-[76px] shrink-0 ${isWin ? 'pt-[14px]' : 'pt-[40px]'} pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none`}>
