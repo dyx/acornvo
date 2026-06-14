@@ -1,7 +1,7 @@
-import { app } from 'electron'
 import { mkdirSync, existsSync } from 'node:fs'
 import { appendFile, readdir, stat, unlink, rename } from 'node:fs/promises'
 import { join } from 'node:path'
+import { userAcornDir } from '../services/paths'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -50,7 +50,7 @@ export function __resetLoggerForTests(): void {
 }
 
 export function getLogDir(): string {
-  return join(app.getPath('userData'), 'logs')
+  return join(userAcornDir(), 'logs')
 }
 
 function todayUtc(d: Date): string {

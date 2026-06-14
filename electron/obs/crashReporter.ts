@@ -1,7 +1,7 @@
 import { app, crashReporter as electronCrashReporter } from 'electron'
 import { mkdirSync, writeFileSync, readdirSync, statSync, renameSync, unlinkSync } from 'node:fs'
 import { join, basename } from 'node:path'
-import { logger } from './logger'
+import { logger, getLogDir } from './logger'
 
 export type CrashKind = 'renderer' | 'main' | 'unhandled-rejection'
 
@@ -13,7 +13,7 @@ export interface CrashPayload {
 }
 
 export function getCrashesDir(): string {
-  const dir = join(app.getPath('userData'), 'logs', 'crashes')
+  const dir = join(getLogDir(), 'crashes')
   mkdirSync(dir, { recursive: true })
   return dir
 }
