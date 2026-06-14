@@ -31,6 +31,8 @@ win:
   executableName: acornvo
   target: [nsis]
 nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
