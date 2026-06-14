@@ -1,6 +1,7 @@
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LockInfo } from '@shared/grove'
+import { formatDateTime } from '@/lib/date-utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +44,7 @@ export function TakeoverDialog({
             {t('takeover.held', {
               pid: holder.pid,
               hostname: holder.hostname,
-              startedAt: holder.started_at
+              startedAt: formatDateTime(holder.started_at)
             })}
           </div>
         </div>
