@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGroveStore } from '@/stores/grove'
-import { AcornLogo } from '@/components/AcornLogo'
+import { Trees } from 'lucide-react'
 
 interface StatusBarProps {
   reviewing?: number
@@ -28,7 +28,7 @@ export function StatusBar({
         </span>
       ) : (
         <span className="flex items-center gap-1.5">
-          <AcornLogo size={14} className="shrink-0" />
+          <Trees size={14} className="shrink-0" />
           {current ? current.name : t('status.no_grove', '未选择果园')}
         </span>
       )}
