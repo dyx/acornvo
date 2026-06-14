@@ -18,7 +18,9 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install
-        run: npm ci
+        run: |
+          rm -f .npmrc
+          npm ci
       - name: Build (mac)
         if: matrix.os == 'macos-latest'
         env:
@@ -33,6 +35,7 @@ jobs:
           npm run dist:mac
       - name: Build (win)
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           if [ -n "${{ secrets.WIN_CERT_PFX }}" ]; then
             export CSC_LINK="${{ secrets.WIN_CERT_PFX }}"
