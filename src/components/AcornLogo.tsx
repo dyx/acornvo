@@ -3,12 +3,14 @@ import type { JSX } from 'react'
 export type AcornLogoProps = {
   size?: number
   className?: string
+  style?: React.CSSProperties
   theme?: 'default' | 'mono'
 }
 
 export function AcornLogo({
   size = 28,
   className,
+  style,
   theme = 'default'
 }: AcornLogoProps): JSX.Element {
   const cap = theme === 'mono' ? 'currentColor' : 'var(--color-acorn-2)'
@@ -26,6 +28,7 @@ export function AcornLogo({
       aria-label="Acornvo"
       role="img"
       className={className}
+      style={style}
     >
       <path d="M5 10 Q5 6 9 6 L19 6 Q23 6 23 10 L23 11 L5 11 Z" fill={cap} />
       <path d="M6 11 L22 11 Q22 21 14 23 Q6 21 6 11 Z" fill={body} />
