@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Globe, Warehouse, MessageSquareQuote, Bolt as SettingsIcon, Trees } from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
 import { useRootStore } from '@/stores/root'
-import { dotColor, GroveSwitcher } from './GroveSwitcher'
+import { GroveSwitcher } from './GroveSwitcher'
 import { AcornLogo } from '@/components/AcornLogo'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -29,6 +29,8 @@ export function AppRail(): JSX.Element {
   const { t } = useTranslation()
   const current = useGroveStore((s) => s.current)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isHome = location.pathname === '/picker' || location.pathname === '/'
 
   return (
     <TooltipProvider delayDuration={1500}>
@@ -42,12 +44,11 @@ export function AppRail(): JSX.Element {
               onClick={() => {
                 navigate('/picker')
               }}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-xl border border-[color:var(--color-line-2)] bg-[color:var(--color-acorn-bg)] hover:opacity-90 transition-opacity shrink-0"
-              style={
-                current
-                  ? { background: `color-mix(in oklch, ${dotColor[current.color]} 20%, transparent)` }
-                  : undefined
-              }
+              className={`flex size-8 cursor-pointer items-center justify-center rounded-xl transition-colors shrink-0 ${
+                isHome
+                  ? 'bg-[color:var(--color-acorn-bg)] shadow-sm border border-transparent'
+                  : 'border border-[color:var(--color-line-2)] bg-transparent hover:bg-[color:var(--color-paper-3)]'
+              }`}
             >
               <AcornLogo size={20} />
             </button>
