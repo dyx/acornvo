@@ -193,7 +193,7 @@
     "banner": {
       "external_modified": "This file was modified outside Acornvo.",
       "reload": "Reload (discard my changes)",
-      "ignore": "Ignore (I will handle it)"
+      "ignore": "Overwrite (keep my changes)"
     }
   },
   "search": {

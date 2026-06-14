@@ -213,7 +213,7 @@
     "banner": {
       "external_modified": "这个文件在 Acornvo 之外被修改了。",
       "reload": "重载（丢弃我的修改）",
-      "ignore": "忽略（我自己处理）"
+      "ignore": "覆盖（保留我的修改）"
     }
   },
   "search": {

@@ -13,7 +13,7 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
   return (
     <Alert
       variant="warning"
-      className="rounded-none border-x-0 border-t-0 border-l-4 border-l-[color:var(--color-acorn)] px-4 py-2"
+      className="rounded-none border-x-0 border-t-0 px-4 py-2"
     >
       <AlertDescription className="flex items-center justify-between gap-4">
         <span>📝 {t('conflict.banner.external_modified')}</span>
@@ -28,7 +28,7 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
           <button
             data-testid="banner-ignore"
             className="underline underline-offset-2 text-[color:var(--color-ink-3)] hover:text-[color:var(--color-ink-2)]"
-            onClick={() => useEditorStore.getState().ignoreExternalChange()}
+            onClick={() => useEditorStore.getState().overwriteExternalChange()}
           >
             {t('conflict.banner.ignore')}
           </button>

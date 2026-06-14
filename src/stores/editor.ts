@@ -40,7 +40,7 @@ export type EditorActions = {
   flushSave: () => Promise<void>
   close: () => Promise<void>
   reloadFromDisk: () => Promise<void>
-  ignoreExternalChange: () => void
+  overwriteExternalChange: () => Promise<void>
   keepLocal: () => Promise<void>
   saveAsCopy: () => Promise<void>
   dismissDialog: () => void
@@ -453,12 +453,38 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     })
   },
 
-  ignoreExternalChange: () => {
+  overwriteExternalChange: async () => {
     const cur = get().state
     if (cur.kind !== 'ready') return
+    
     set({
       state: { ...cur, conflictState: { kind: 'none' } }
     })
+
+    try {
+      const r = await ipc.file.writeParsed(cur.path, cur.frontmatter, cur.body, {
+        force: true,
+        rawYaml: cur.rawYaml
+      } as any)
+      
+      const next = get().state
+      if (next.kind !== 'ready' || next.path !== cur.path) return
+      
+      const newDirty = next.body !== cur.body
+      set({
+        state: {
+          ...next,
+          savedBody: cur.body,
+          savedMtimeMs: r.mtimeMs,
+          dirty: newDirty,
+          lastError: null,
+          saveErrorCount: 0,
+          persistentFailure: false
+        }
+      })
+    } catch (err) {
+      console.error('Failed to overwrite external change', err)
+    }
   },
 
   async keepLocal() {
