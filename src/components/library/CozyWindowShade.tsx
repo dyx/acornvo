@@ -288,7 +288,7 @@ function MoonlightOverlay({ active }: { active: boolean }): JSX.Element | null {
             width: '100%',
             height: '100%',
             background:
-              'radial-gradient(ellipse at 210px 45%, rgba(180, 200, 230, 0.035) 0%, rgba(160, 180, 215, 0.012) 35%, transparent 65%)'
+              'radial-gradient(ellipse at 77px 85px, rgba(180, 200, 230, 0.035) 0%, rgba(160, 180, 215, 0.012) 35%, transparent 65%)'
           }}
         />
 
@@ -301,8 +301,8 @@ function MoonlightOverlay({ active }: { active: boolean }): JSX.Element | null {
         <div
           style={{ 
             position: 'absolute', 
-            top: '45%', 
-            left: '210px', 
+            top: '85px', 
+            left: '77px', 
             transform: 'translate(-50%, -50%)',
             width: '90px', 
             height: '90px' 
