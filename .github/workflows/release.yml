@@ -25,15 +25,20 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        run: npm run dist:mac
+        run: |
+          if [ -n "${{ secrets.MAC_CERT_P12 }}" ]; then
+            export CSC_LINK="${{ secrets.MAC_CERT_P12 }}"
+            export CSC_KEY_PASSWORD="${{ secrets.MAC_CERT_PASSWORD }}"
+          fi
+          npm run dist:mac
       - name: Build (win)
         if: matrix.os == 'windows-latest'
-        env:
-          CSC_LINK: ${{ secrets.WIN_CERT_PFX }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
-        run: npm run dist:win
+        run: |
+          if [ -n "${{ secrets.WIN_CERT_PFX }}" ]; then
+            export CSC_LINK="${{ secrets.WIN_CERT_PFX }}"
+            export CSC_KEY_PASSWORD="${{ secrets.WIN_CERT_PASSWORD }}"
+          fi
+          npm run dist:win
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
