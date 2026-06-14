@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useClipperStore } from '@/stores/clipper'
 import { useBrowserStore } from '@/stores/browser'
 import { useNativeBrowserViewOcclusion } from '@/hooks/useNativeBrowserViewOcclusion'
+import { formatDateTime } from '@/lib/date-utils'
 
 export function ClipPreviewDialog(): JSX.Element | null {
   const { t } = useTranslation()
@@ -63,7 +64,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
                   <div className="font-medium text-[color:var(--color-ink)]">{preview.site}</div>
                   <div className="mt-0.5 opacity-80">{preview.url}</div>
                   {preview.author && <div className="mt-0.5 opacity-80">{t('browser.clip.preview.author', '作者：')}{preview.author}</div>}
-                  {preview.publishedTime && <div className="mt-0.5 opacity-80">{t('browser.clip.preview.time', '时间：')}{preview.publishedTime}</div>}
+                  {preview.publishedTime && <div className="mt-0.5 opacity-80">{t('browser.clip.preview.time', '时间：')}{formatDateTime(preview.publishedTime)}</div>}
                 </div>
               </label>
 
