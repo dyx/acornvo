@@ -16,14 +16,7 @@ import { BROWSER_SESSION_PARTITION } from '../browser/init'
 export const newTabId = (): TabId => `tab-${crypto.randomUUID()}`
 export const resolveCreateUrl = (url: string | undefined): string => url ?? 'about:blank'
 
-// --- adoption ---
-function adoptWebContents(webContents: Electron.WebContents): TabId {
-  const id = newTabId()
-  const url = webContents.getURL() || 'about:blank'
-  webContents.close()
-  registerNewTabFromUrl(id, url)
-  return id
-}
+
 
 let _mainWindow: BrowserWindow | null = null
 let _hiddenTabId: TabId | null = null
@@ -40,7 +33,12 @@ function registerNewTabFromUrl(id: TabId, url: string): void {
   })
   attachTabEvents(id, webContents, makeTabStateSender(win))
   attachWindowOpenHandler(webContents, {
-    registerNewTab: (wc) => adoptWebContents(wc)
+    notifyOpenUrl: (urlToOpen) => {
+      const w = _mainWindow
+      if (w && !w.isDestroyed()) {
+        w.webContents.send('browser:openNewTabRequest', { url: urlToOpen })
+      }
+    }
   })
   getManager().register(id, view)
 }

@@ -6,6 +6,7 @@ import { Globe, Warehouse, MessageSquareQuote, Bolt as SettingsIcon, Trees } fro
 import { useGroveStore } from '@/stores/grove'
 import { useRootStore } from '@/stores/root'
 import { dotColor, GroveSwitcher } from './GroveSwitcher'
+import { AcornLogo } from '@/components/AcornLogo'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface RailEntry {
@@ -48,7 +49,7 @@ export function AppRail(): JSX.Element {
                   : undefined
               }
             >
-              <span className="text-lg">🌰</span>
+              <AcornLogo size={20} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">

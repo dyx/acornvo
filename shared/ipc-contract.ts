@@ -588,6 +588,7 @@ export type IpcEventContract = {
   'index:rebuildProgress': { done: number; total: number }
   'index:rebuildDone': { total: number }
   'browser:tabStateChanged': TabStateChangedPayload
+  'browser:openNewTabRequest': { url: string }
   'settings:changed': SettingsChangedPayload
   'jobs:changed': Job
   'crash:detected': { files: string[] }

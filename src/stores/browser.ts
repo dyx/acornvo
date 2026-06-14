@@ -75,14 +75,21 @@ export function setBrowserPort(p: BrowserPort): void {
 export type EventOff = () => void
 export interface BrowserEventPort {
   onTabStateChanged(handler: (payload: TabStateChangedPayload) => void): EventOff
+  onOpenNewTabRequest(handler: (payload: { url: string }) => void): EventOff
 }
 
 let eventOff: EventOff | null = null
+let openTabOff: EventOff | null = null
 
 export function setBrowserEventPort(p: BrowserEventPort): void {
   if (eventOff) eventOff()
   eventOff = p.onTabStateChanged(({ tabId, patch }) => {
     useBrowserStore.getState().applyTabPatch(tabId, patch)
+  })
+
+  if (openTabOff) openTabOff()
+  openTabOff = p.onOpenNewTabRequest(({ url }) => {
+    void useBrowserStore.getState().createTab(url)
   })
 }
 

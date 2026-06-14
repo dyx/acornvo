@@ -35,7 +35,7 @@ export function TabBar({ sidebarOpen = true }: { sidebarOpen?: boolean }): JSX.E
     <div
       role="tablist"
       aria-label="Browser tabs"
-      className={`flex h-[44px] shrink-0 items-end gap-2 bg-[color:var(--color-paper-3)] pr-3 overflow-x-auto [-webkit-app-region:drag]`}
+      className={`flex h-[44px] shrink-0 items-end gap-2 bg-[color:var(--color-paper-3)] pr-3 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-webkit-app-region:drag]`}
       data-testid="tabbar"
     >
       <div className={`shrink-0 h-full [-webkit-app-region:no-drag] transition-[width] duration-300 ${sidebarOpen ? 'w-0' : 'w-[52px]'}`} />

@@ -14,11 +14,15 @@ export function AcornLogo({
   const cap = theme === 'mono' ? 'currentColor' : 'var(--color-acorn-2)'
   const body = theme === 'mono' ? 'currentColor' : 'var(--color-acorn)'
   const highlight = theme === 'mono' ? 'currentColor' : 'var(--color-acorn-bg)'
+  // The actual artwork bounds are roughly X: 5 to 23 (width 18) and Y: 1 to 23 (height 22)
+  const width = size * (18 / 22)
+  const height = size
+
   return (
     <svg
-      width={size}
-      height={size}
-      viewBox="0 0 28 28"
+      width={width}
+      height={height}
+      viewBox="5 1 18 22"
       aria-label="Acornvo"
       role="img"
       className={className}

@@ -169,8 +169,7 @@ export function makeTabStateSender(window: BrowserWindow): SendTabStateChanged {
 // --- Window open handler (task 2.5) ---
 
 export interface AdoptionContext {
-  /** Called by the adoption hook to register a freshly-spawned popup as a new tab. */
-  registerNewTab: (newWebContents: Electron.WebContents) => void
+  notifyOpenUrl: (url: string) => void
 }
 
 /**
@@ -190,28 +189,10 @@ export function attachWindowOpenHandler(
       return { action: 'deny' }
     }
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          show: false, // we never actually show the spawned BrowserWindow; we adopt the WebContents
-          webPreferences: {
-            sandbox: true,
-            contextIsolation: true,
-            nodeIntegration: false
-          }
-        },
-        outlivesOpener: false
-      }
+      ctx.notifyOpenUrl(url)
+      return { action: 'deny' }
     }
     void shell.openExternal(url).catch(() => {})
     return { action: 'deny' }
-  })
-
-  webContents.on('did-create-window', (childWindow) => {
-    // Adopt: hide the auto-spawned window, then register its WebContents as a new tab
-    // and close the BrowserWindow shell. The WebContents stays alive because we keep
-    // a reference to it via the manager.
-    childWindow.hide()
-    ctx.registerNewTab(childWindow.webContents)
   })
 }

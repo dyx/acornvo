@@ -6,6 +6,7 @@ import { useGroveStore } from '@/stores/grove'
 import { ipc } from '@/ipc/client'
 import { useBootstrap } from '@/hooks/useBootstrap'
 
+import { AcornLogo } from '@/components/AcornLogo'
 import { ProjectCard } from '@/components/ProjectCard'
 import { TakeoverDialog } from '@/components/TakeoverDialog'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,8 @@ export function ProjectPicker(): JSX.Element {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const bootstrap = useBootstrap()
-  const { current, recent, loadRecent, openGroveById, removeFromRecent, openExisting } = useGroveStore()
+  const { current, recent, loadRecent, openGroveById, removeFromRecent, openExisting } =
+    useGroveStore()
 
   // Locked-from-bootstrap highlight (first item cannot be auto-opened).
   const [lockedFromBootstrap, setLockedFromBootstrap] = useState<{
@@ -103,19 +105,22 @@ export function ProjectPicker(): JSX.Element {
       <CozyWindowShade active={true} />
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Left brand column */}
-        <aside
-          className="relative flex w-[420px] shrink-0 flex-col justify-between px-14 py-12"
-        >
+        <aside className="relative flex w-[420px] shrink-0 flex-col justify-between px-14 py-12">
           {/* Custom vertical line matching AppRail height */}
           <div
             className="absolute right-0 top-[40px] bottom-3 w-[1px] pointer-events-none"
             style={{
-              background: 'linear-gradient(to bottom, transparent, var(--color-line) 15%, var(--color-line) 85%, transparent)'
+              background:
+                'linear-gradient(to bottom, transparent, var(--color-line) 15%, var(--color-line) 85%, transparent)'
             }}
           />
           <div className="flex flex-col">
             <div className="flex items-center gap-5 mb-10">
-              <span className="text-[50px] leading-none select-none shrink-0" style={{ transform: 'translateY(4px)' }}>🌰</span>
+              <AcornLogo
+                size={64}
+                className="shrink-0 select-none"
+                style={{ transform: 'translateY(4px)' }}
+              />
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 font-review text-[13px] uppercase tracking-[0.25em] text-[color:var(--color-ink-3)] pl-[2px]">
                   <span>Acornvo</span>
@@ -137,9 +142,7 @@ export function ProjectPicker(): JSX.Element {
         {/* Right list + actions column */}
         <section className="flex-1 flex flex-col overflow-hidden px-14 py-12 relative">
           <div className="flex-none mb-6 flex items-baseline justify-between">
-            <h2 className="serif m-0 text-2xl font-semibold tracking-tight">
-              {t('picker.title')}
-            </h2>
+            <h2 className="serif m-0 text-2xl font-semibold tracking-tight">{t('picker.title')}</h2>
           </div>
 
           <div className="flex-initial overflow-y-auto min-h-0 pr-2 -mr-2 pb-6">
