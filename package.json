@@ -1,10 +1,10 @@
 {
   "name": "acornvo",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "A Local-First, AI-Native Personal Knowledge Management Desktop App",
   "main": "./out/main/main.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "dyx",
+  "homepage": "https://github.com/dyx/acornvo",
   "scripts": {
     "test": "vitest run",
     "format": "prettier --write .",
