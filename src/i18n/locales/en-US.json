@@ -601,10 +601,10 @@
     "empty": {
       "heading": "What's on your mind?",
       "subheading": "Try one of these",
-      "card1": "Find notes about attention mechanism",
-      "card2": "Summarize the last 10 clips",
-      "card3": "Set a.md tags to [\"reading\", \"essay\"]",
-      "card4": "Top 10 most frequent tags"
+      "card1": "Search my notes for [some keyword]",
+      "card2": "Based on my notes, summarize the core points of [some topic]",
+      "card3": "List the 10 most recently added notes",
+      "card4": "Find the 5 largest articles"
     },
     "session": {
       "newAria": "New chat",

@@ -42,7 +42,7 @@ export function ClipPreviewDialog(): JSX.Element | null {
       <DialogContent className="flex min-h-[75vh] max-h-[90vh] w-[60vw] max-w-[60vw] sm:max-w-[60vw] flex-col bg-[color:var(--color-paper)] p-5 shadow-2xl rounded-md">
         <DialogHeader className="shrink-0 pb-2 text-left">
           <DialogTitle className="text-lg font-semibold text-[color:var(--color-ink)] pr-8">
-            {t('browser.clip.preview.title', '剪藏预览')}
+            {t('browser.clip.preview.title', '拾果预览')}
           </DialogTitle>
         </DialogHeader>
 

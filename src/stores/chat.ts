@@ -330,18 +330,30 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.warn('[chat-store] sendUserMessage: already streaming → BusyError')
       throw new BusyError()
     }
-    set((s) => ({
-      bySession: {
-        ...s.bySession,
-        [sid]: {
-          ...emptySession(),
-          ...s.bySession[sid],
-          status: 'streaming',
-          error: null,
-          lastUserText: text
+    set((s) => {
+      let nextSessions = s.sessions
+      const currentSession = nextSessions.find(x => x.id === sid)
+      if (currentSession && !currentSession.title) {
+        const TITLE_LIMIT = 40
+        const newTitle = text.trim().slice(0, TITLE_LIMIT)
+        if (newTitle) {
+          nextSessions = nextSessions.map(x => x.id === sid ? { ...x, title: newTitle } : x)
         }
       }
-    }))
+      return {
+        sessions: nextSessions,
+        bySession: {
+          ...s.bySession,
+          [sid]: {
+            ...emptySession(),
+            ...s.bySession[sid],
+            status: 'streaming',
+            error: null,
+            lastUserText: text
+          }
+        }
+      }
+    })
     try {
       console.log('[chat-store] sendUserMessage: calling ipc.chat.sendUserMessage…')
       const result = await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })

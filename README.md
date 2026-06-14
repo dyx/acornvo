@@ -10,6 +10,11 @@
 
 ---
 
+![首页-Light](./docs/assets/screenshot-10.png)
+![首页-Dark](./docs/assets/screenshot-11.png)
+
+---
+
 Acornvo (松言果语) 是一款专注于**本地优先**与 **AI 原生** 的个人知识管理（PKM）桌面应用。它致力于帮助你将散落在网页、笔记和文件夹中的碎片信息，整合为一个可长期保存、全文搜索、并能与之自由对话的 Markdown 知识库。
 
 > [!NOTE]
@@ -24,16 +29,23 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 - 内置浏览器，边阅读边剪藏。
 - 自动提取正文，去除广告与干扰元素。
 
+![拾果](./docs/assets/screenshot-20.png)
+![拾果预览](./docs/assets/screenshot-21.png)
+
 ### 2. 理果 (Reviewer)：让 AI 成为你的私人档案管理员
 面对堆积如山的未读文件？交给 AI 吧。Acornvo 可以自动对你的 Markdown 笔记进行深度审读。
 - 自动生成：摘要、推荐标题、标签、分类、评分。
 - 智能元数据：所有 AI 生成的洞察都会标准化地写入 Markdown 的 Frontmatter (YAML) 中。
 - **人在回路**：你可以一键接受、拒绝或要求 AI 重新生成。
 
+![理果预览](./docs/assets/screenshot-30.png)
+
 ### 3. 松语 (Chat)：与你的知识库面对面交谈
 阅读只是开始。在「松语」界面，你可以直接与你的本地知识库进行对话。
 - **引用本地文件**：让 AI 基于你指定的本地 Markdown 文件回答问题、梳理逻辑或进行深度写作。
 - **极致的对话体验**：基于 `assistant-ui` 和 `LangChain` 构建，提供极速的流式响应和优雅的交互 UI。
+
+![松语预览](./docs/assets/screenshot-40.png)
 
 ---
 
@@ -78,7 +90,7 @@ Acornvo 拒绝黑盒数据库。你的数据分为**树林（工作区）数据*
 
 ## 📦 安装与下载
 
-Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com/your-org/acornvo/releases) 页面下载最新版本：
+Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com/dyx/acornvo/releases) 页面下载最新版本：
 
 | 平台 | 安装包格式 | 说明                      |
 | :--- | :--- |:------------------------|
@@ -88,8 +100,6 @@ Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com
 ---
 
 ## 💻 开发者指南
-
-我们非常欢迎开发者参与到 Acornvo 的共建中来。应用基于现代前端与客户端技术栈构建：
 
 **核心技术栈：**
 - **框架**: Electron, React 19, TypeScript, Vite
