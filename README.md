@@ -13,7 +13,7 @@
 Acornvo (松言果语) 是一款专注于**本地优先**与 **AI 原生** 的个人知识管理（PKM）桌面应用。它致力于帮助你将散落在网页、笔记和文件夹中的碎片信息，整合为一个可长期保存、全文搜索、并能与之自由对话的 Markdown 知识库。
 
 > [!NOTE]
-> **真正的本地优先**：你的所有笔记都以纯 Markdown 文件的形式保存在本地，绝无厂商锁定。Acornvo 只做索引和赋能，你的数据完全兼容 Obsidian、VS Code 等主流编辑器。
+> **真正的本地优先**：你的所有笔记都以纯 Markdown 文件的形式保存在本地。Acornvo 只做索引和赋能，你的数据完全兼容 Obsidian、VS Code 等主流编辑器。
 
 ## 🌟 核心理念：信息管理的三段工作流
 
@@ -44,21 +44,34 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 - **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。
 - **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
 - **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力（如 macOS Keychain、Windows DPAPI）加密存储。
-  > **为什么在 macOS 上首次使用或保存配置时，系统会弹窗提示：“Acornvo 想要使用你存储在钥匙串的 ‘acornvo SafeStorage’ 中的机密信息”？**
-  > 这是 macOS 系统的原生安全机制。Acornvo 使用 Electron 底层的 `safeStorage` 模块来加密您的 API Key 等敏感配置。加密过程中需要向操作系统的“钥匙串（Keychain）”中写入或读取一个专门用于加解密的秘钥（即 `acornvo SafeStorage`）。应用本身只会获取加密后的密文，明文的秘钥始终由您的操作系统保管，从而最大程度保证您的数据安全。请放心点击“始终允许”或“允许”以授予权限。
+  > **关于 macOS 钥匙串弹窗提示：**
+  > 首次运行或保存配置时，系统可能会提示“Acornvo 想要使用钥匙串中的机密信息”。这是系统原生安全机制，用于通过底层 `safeStorage` 加密您的 API Key。秘钥明文由操作系统保管，请放心点击“始终允许”以授权。
 
 ---
 
 ## 🛠️ 数据存储：透明且自由
 
-Acornvo 拒绝黑盒数据库。你的知识库（树林）目录结构清晰可见：
+Acornvo 拒绝黑盒数据库。你的数据分为**树林（工作区）数据**与**全局数据**两部分：
+
+**1. 树林数据（知识库内）**
+你的知识库目录结构清晰可见，笔记与索引均存储在当前树林中，方便随文件夹整体打包或迁移：
 
 ```text
 我的知识库/
 ├── inbox/                 # 果篮：默认的网页剪藏目录
 │   └── 2026-AI-Trends.md  # 你的知识，纯粹的 Markdown
-└── .acornvo/              # Acornvo 私有数据缓存
-    └──  index.db           # 缓存数据、SQLite 索引、松语对话记录的 Checkpoints
+└── .acornvo/              # 工作区级缓存与索引
+    └── index.db           # SQLite 全文索引与缓存数据
+```
+
+**2. 全局数据（系统主目录）**
+应用的全局配置（如最近打开的树林记录、全局配置数据库）和运行日志，统一保存在用户主目录下的 `.acornvo` 文件夹中（macOS / Windows 均为 `~/.acornvo`）：
+
+```text
+~/.acornvo/
+├── logs/                  # 应用运行日志
+├── global.db              # 全局配置数据库
+└── recent-projects.json   # 最近打开的项目列表
 ```
 
 ---
@@ -94,19 +107,11 @@ npm install
 npm run dev
 ```
 
-**常用命令：**
-
-```bash
-npm run lint         # 代码检查
-npm run typecheck    # 类型推断
-npm run test         # 运行测试
-```
-
 **打包构建：**
 
 ```bash
-npm run build:mac    # macOS 打包
-npm run build:win    # Windows 打包
+npm run dist:mac    # macOS 打包
+npm run dist:win    # Windows 打包
 ```
 
 ---
@@ -114,10 +119,15 @@ npm run build:win    # Windows 打包
 ## 📅 路线图 (Roadmap)
 
 Acornvo 正处于快速迭代期，接下来的重点方向包括：
+- [ ] [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)：基于 Andrej Karpathy 提出的概念，利用 AI Agent 持续摄取新内容、维护实体页面并自动建立双向链接，为你构建一个可不断复利增长的结构化个人知识库。
 - [ ] 更智能、更精准的网页正文解析引擎
 - [ ] 完善的 AI 自动标签系统与自动分类
 - [ ] 基于向量数据库的语义搜索 (RAG)
 - [ ] 对话上下文持久化与多轮深度生成能力扩展
+
+## 感谢
+
+- 首页的 Sunny / Moonlight 主题动效代码参考自 [dingyi](https://x.com/dingyi) 的 [Theme Switch](https://theme-switch.pages.dev/) 网站，特此感谢！
 
 ## 📄 许可证 (License)
 

@@ -100,7 +100,7 @@ export function Browse(): JSX.Element {
         </div>
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
-        <TabBar sidebarOpen={sidebarOpen} />
+        <TabBar />
         <AddressBar />
         <div className="relative flex-1">
           <div
