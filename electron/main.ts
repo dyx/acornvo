@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme, powerMonitor, protocol, net } from 'electron'
+import { app, BrowserWindow, nativeTheme, powerMonitor, protocol, net, Menu } from 'electron'
 
 // Enable auto dark mode for WebContents (browser tabs) when themeSource is dark
 app.commandLine.appendSwitch('enable-features', 'WebContentsForceDark')
@@ -140,6 +140,7 @@ app.on('web-contents-created', (_event, wc) => {
 import { initGlobalDb } from './services/global-db'
 
 async function bootstrap(): Promise<void> {
+  Menu.setApplicationMenu(null)
   startElectronCrashReporter()
   await app.whenReady()
 

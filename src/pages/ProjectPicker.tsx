@@ -117,7 +117,7 @@ export function ProjectPicker(): JSX.Element {
           <div className="flex flex-col">
             <div className="flex items-center gap-5 mb-10">
               <AcornLogo
-                size={64}
+                size={54}
                 className="shrink-0 select-none"
                 style={{ transform: 'translateY(4px)' }}
               />
