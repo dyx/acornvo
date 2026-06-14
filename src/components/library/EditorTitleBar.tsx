@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog'
 import { useLibraryStore } from '@/stores/library'
 import { useEditorStore } from '@/stores/editor'
-import { useRootStore } from '@/stores/root'
 
 export interface EditorTitleBarProps {
   collapsed: boolean
