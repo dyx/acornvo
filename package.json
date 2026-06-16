@@ -23,8 +23,10 @@
     "dist:all": "npm run build && electron-builder -mw"
   },
   "dependencies": {
+    "@mixmark-io/domino": "^2.2.0",
     "@node-rs/jieba": "^2.0.1",
-    "better-sqlite3": "^12.9.0"
+    "better-sqlite3": "^12.9.0",
+    "esprima": "^4.0.1"
   },
   "devDependencies": {
     "@assistant-ui/react": "^0.14.14",
