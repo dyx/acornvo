@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+// @ts-ignore: Vite ?raw import is not typed
+import raw from '@mozilla/readability/Readability.js?raw'
 
 /**
  * Marker we install on `window` after injection so a second call to
@@ -8,26 +8,10 @@ import { dirname, join } from 'node:path'
  */
 export const READABILITY_INJECT_MARKER = '__acornvo_readability_injected__'
 
-/**
- * Locate the Readability UMD source. We use `require.resolve` to find the
- * package root and then pick the file Mozilla publishes for browser use.
- *
- * Mozilla publishes `Readability.js` as a standalone UMD bundle; the package's
- * `main` entry (`index.js`) re-exports it. We prefer the standalone file when
- * present because evaluating it on `window` defines `Readability` as a global.
- */
-function locateBundlePath(): string {
-  const pkgPath = require.resolve('@mozilla/readability/package.json')
-  const root = dirname(pkgPath)
-  return join(root, 'Readability.js')
-}
-
 let cached: string | null = null
 
 function loadSource(): string {
   if (cached !== null) return cached
-  const path = locateBundlePath()
-  const raw = readFileSync(path, 'utf8')
   cached = `;(function(){
   if (window['${READABILITY_INJECT_MARKER}'] && typeof window.Readability === 'function') return;
   ${raw}
