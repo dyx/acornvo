@@ -20,6 +20,18 @@ export interface LogPayload {
   meta?: Record<string, unknown>
 }
 
+const SENSITIVE_KEYS = new Set(['apiKey', 'api_key'])
+
+export function redactReplacer(key: string, value: any) {
+  if (value && typeof value === 'string' && SENSITIVE_KEYS.has(key)) {
+    if (value.length <= 8) {
+      return '********'
+    }
+    return `${value.slice(0, 4)}****${value.slice(-4)}`
+  }
+  return value
+}
+
 export interface LogEntry extends LogPayload {
   ts: string
   level: LogLevel
@@ -135,12 +147,15 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
 
     const d = now()
     const entry: LogEntry = { ts: d.toISOString(), level, area, ...payload }
-    buffer.push(JSON.stringify(entry))
+    buffer.push(JSON.stringify(entry, redactReplacer))
 
     if (opts.mirrorConsole) {
       try {
         // eslint-disable-next-line no-console
-        console[level === 'debug' ? 'log' : level](`[${area}]`, payload)
+        console[level === 'debug' ? 'log' : level](
+          `[${area}]`,
+          JSON.parse(JSON.stringify(payload, redactReplacer))
+        )
       } catch {
         // Ignore EIO or other console errors to prevent infinite crash loops
       }
