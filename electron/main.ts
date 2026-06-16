@@ -30,6 +30,7 @@ import { runBootstrap } from './bootstrap'
 import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './services/indexer'
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
+import { settingsStore } from './settings/store'
 
 
 import { installSettingsBroadcaster } from './settings/broadcast'
@@ -197,6 +198,18 @@ async function bootstrap(): Promise<void> {
   installCrashHooks()
   purgeOldAcked()
   rotateOnBoot()
+
+  logger().setGlobalContext({ version: app.getVersion() })
+  const generalSettings = settingsStore.get('general')
+  if (generalSettings.logLevel) {
+    logger().setLevel(generalSettings.logLevel as any)
+  }
+  settingsStore.onChange((ev) => {
+    if (ev.ns === 'general' && ev.key === 'logLevel') {
+      logger().setLevel(ev.newValue as any)
+    }
+  })
+
   logger().info('main', { op: 'boot', meta: { ts: new Date().toISOString() } })
   installCsp()
 
@@ -211,10 +224,12 @@ async function bootstrap(): Promise<void> {
       try {
         if (payload === null) {
           // Grove closed or switching away
+          logger().setGlobalContext({ grove_path: null })
         } else {
           if (dbService.getCurrentGrovePath() !== payload.path) {
             dbService.openForGrove(payload.path)
           }
+          logger().setGlobalContext({ grove_path: payload.path })
 
           const db = dbService.getCurrent()
           if (db) {

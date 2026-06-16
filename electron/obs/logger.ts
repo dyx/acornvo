@@ -1,7 +1,10 @@
 import { mkdirSync, existsSync } from 'node:fs'
 import { appendFile, readdir, stat, unlink, rename } from 'node:fs/promises'
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { userAcornDir } from '../services/paths'
+
+const SESSION_ID = randomUUID()
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -23,6 +26,9 @@ export interface LogPayload {
 const SENSITIVE_KEYS = new Set(['apiKey', 'api_key'])
 
 export function redactReplacer(key: string, value: any) {
+  if (value instanceof Error) {
+    return { name: value.name, message: value.message, stack: value.stack }
+  }
   if (value && typeof value === 'string' && SENSITIVE_KEYS.has(key)) {
     if (value.length <= 8) {
       return '********'
@@ -36,6 +42,9 @@ export interface LogEntry extends LogPayload {
   ts: string
   level: LogLevel
   area: string
+  session_id: string
+  pid: number
+  process_type: string
 }
 
 export interface Logger {
@@ -44,9 +53,11 @@ export interface Logger {
   warn: (area: string, payload?: LogPayload) => void
   error: (area: string, payload?: LogPayload) => void
   flush: () => Promise<void>
+  setLevel: (level: LogLevel) => void
+  setGlobalContext: (ctx: Record<string, any>) => void
 }
 
-const FIVE_MB = 5 * 1024 * 1024
+const TEN_MB = 10 * 1024 * 1024
 
 interface LoggerOpts {
   now?: () => Date
@@ -73,7 +84,11 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
   const now = opts.now ?? (() => new Date())
   const dir = opts.dir ?? getLogDir()
   const minLevel = opts.minLevel ?? (process.env.NODE_ENV === 'development' ? 'debug' : 'info')
-  const minLevelVal = LEVEL_VAL[minLevel]
+  let minLevelVal = LEVEL_VAL[minLevel]
+
+  const PID = process.pid
+  const PROCESS_TYPE = 'main'
+  let globalContext: Record<string, any> = {}
 
   mkdirSync(dir, { recursive: true })
 
@@ -98,7 +113,7 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
 
   async function rotateIfNeeded(filePath: string): Promise<string> {
     await checkInitialSize(filePath)
-    if (currentFileSize < FIVE_MB) return filePath
+    if (currentFileSize < TEN_MB) return filePath
 
     // Rotate: app-YYYY-MM-DD.log -> app-YYYY-MM-DD.<n>.log
     let n = 1
@@ -146,7 +161,16 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
     if (LEVEL_VAL[level] < minLevelVal) return
 
     const d = now()
-    const entry: LogEntry = { ts: d.toISOString(), level, area, ...payload }
+    const entry: LogEntry = { 
+      ts: d.toISOString(), 
+      level, 
+      area, 
+      session_id: SESSION_ID,
+      pid: PID,
+      process_type: PROCESS_TYPE,
+      ...globalContext,
+      ...payload 
+    }
     buffer.push(JSON.stringify(entry, redactReplacer))
 
     if (opts.mirrorConsole) {
@@ -184,6 +208,12 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
       }
       await doFlush()
       if (flushPromise) await flushPromise
+    },
+    setLevel: (level) => {
+      minLevelVal = LEVEL_VAL[level]
+    },
+    setGlobalContext: (ctx) => {
+      globalContext = { ...globalContext, ...ctx }
     }
   }
 }
@@ -194,9 +224,9 @@ export function logger(): Logger {
   return cached
 }
 
-const FOURTEEN_DAYS_MS = 14 * 86400 * 1000
-const ONE_HUNDRED_MB = 100 * 1024 * 1024
-const EIGHTY_MB = 80 * 1024 * 1024
+const THIRTY_DAYS_MS = 30 * 86400 * 1000
+const ONE_GB = 1024 * 1024 * 1024
+const EIGHT_HUNDRED_MB = 800 * 1024 * 1024
 
 export async function rotateOnBoot(opts: { now?: () => Date; dir?: string } = {}): Promise<void> {
   const now = (opts.now ?? (() => new Date()))().getTime()
@@ -209,11 +239,11 @@ export async function rotateOnBoot(opts: { now?: () => Date; dir?: string } = {}
     return
   }
 
-  // Phase 1: drop files older than 14 days.
+  // Phase 1: drop files older than 30 days.
   for (const f of files) {
     try {
       const st = await stat(join(dir, f))
-      if (now - st.mtimeMs > FOURTEEN_DAYS_MS) {
+      if (now - st.mtimeMs > THIRTY_DAYS_MS) {
         await unlink(join(dir, f))
       }
     } catch {
@@ -221,7 +251,7 @@ export async function rotateOnBoot(opts: { now?: () => Date; dir?: string } = {}
     }
   }
 
-  // Phase 2: if total > 100MB, delete oldest until <= 80MB.
+  // Phase 2: if total > 1GB, delete oldest until <= 800MB.
   let survivors: { f: string; full: string; mtime: number; size: number }[] = []
   try {
     const updatedEntries = await readdir(dir)
@@ -242,9 +272,9 @@ export async function rotateOnBoot(opts: { now?: () => Date; dir?: string } = {}
   survivors.sort((a, b) => a.mtime - b.mtime)
 
   let total = survivors.reduce((s, r) => s + r.size, 0)
-  if (total <= ONE_HUNDRED_MB) return
+  if (total <= ONE_GB) return
   for (const r of survivors) {
-    if (total <= EIGHTY_MB) break
+    if (total <= EIGHT_HUNDRED_MB) break
     try {
       await unlink(r.full)
       total -= r.size

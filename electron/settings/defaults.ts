@@ -14,7 +14,7 @@ export const DEFAULTS: {
   ai: AiSettings
   browser: BrowserSettings
 } = {
-  general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser' },
+  general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser', logLevel: 'info' },
   appearance: { theme: 'system', fontScale: 1.0 },
   ai: { defaultChatModelId: null, defaultReviewerModelId: null, bodyMax: 20000 },
   browser: { clipImagesLocalize: false, searchEngine: 'google' }

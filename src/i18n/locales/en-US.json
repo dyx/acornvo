@@ -285,6 +285,7 @@
     }
   },
   "obs": {
+    "logLevel": "Log Level",
     "title": "Observability",
     "tabs": {
       "ai": "AI",

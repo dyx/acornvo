@@ -16,6 +16,7 @@ export interface GeneralSettings {
   locale: Locale
   autoBackup: 'off' | 'daily' | 'weekly'
   defaultMenu: '/browser' | '/library' | '/chat'
+  logLevel: 'debug' | 'info' | 'warn' | 'error'
 }
 
 export interface AppearanceSettings {

@@ -2,11 +2,19 @@ import type { JSX } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ipc } from '@/ipc/client'
+import { useSettingsStore } from '@/stores/settings'
 
 import { Button } from '@/components/ui/button'
 import { HeatGraph } from '@/components/assistant-ui/heat-graph'
 import { Activity } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/date-utils'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 
 type Panel = 'ai' | 'queue'
 type Window = '24h' | '7d' | '30d'
@@ -19,6 +27,8 @@ export function ObservabilityTab(): JSX.Element {
   const { t } = useTranslation()
   const [panel, setPanel] = useState<Panel>('ai')
   const [exporting, setExporting] = useState(false)
+  const general = useSettingsStore((s) => s.general)
+  const setGeneral = useSettingsStore((s) => s.setGeneral)
 
   async function onExport(): Promise<void> {
     setExporting(true)
@@ -54,7 +64,7 @@ export function ObservabilityTab(): JSX.Element {
 
       </div>
 
-      <footer className="mt-4 border-t pt-4">
+      <footer className="mt-4 border-t pt-4 flex items-center justify-between">
         <Button
           data-testid="obs-export-diagnostic"
           disabled={exporting}
@@ -66,6 +76,23 @@ export function ObservabilityTab(): JSX.Element {
           {exporting ? t('obs.export.diagnosticBusy') : t('obs.export.diagnostic')}
         </Button>
 
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">{t('obs.logLevel', 'Log Level')}</span>
+          <Select
+            value={general.logLevel || 'info'}
+            onValueChange={(value: any) => void setGeneral({ logLevel: value })}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="debug">Debug</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="warn">Warn</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </footer>
     </div>
   )

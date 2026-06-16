@@ -38,9 +38,8 @@ export function buildChatModel(
       handleLLMEnd(output: any) {
         try {
           logger().debug('ai', {
-            msg:
-              '[Unified LLM Output] RAW RESPONSE FOR COST TESTING:\n' +
-              JSON.stringify(output, null, 2)
+            msg: '[Unified LLM Output] RAW RESPONSE FOR COST TESTING',
+            meta: output
           })
         } catch (e) {
           logger().debug('ai', {

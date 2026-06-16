@@ -305,6 +305,7 @@
     }
   },
   "obs": {
+    "logLevel": "日志级别",
     "title": "可观测",
     "tabs": {
       "ai": "AI",
