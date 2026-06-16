@@ -360,6 +360,7 @@
       "ai": "Providers",
       "browser": "Browser",
       "library": "Library",
+      "chat": "Chat",
       "observability": "Observability",
       "about": "About"
     },

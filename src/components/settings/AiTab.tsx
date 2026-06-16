@@ -38,7 +38,15 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
         setBalance(res.balance)
         setStatus('success')
       } else {
-        setErrorMsg(res.message || 'Error')
+        let msg = res.message || 'Error'
+        if (msg.startsWith('ERR_AUTH_FAILED:')) {
+          msg = t('settings.ai.errAuthFailed', { defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确', status: msg.split(':')[1] })
+        } else if (msg === 'ERR_NOT_FOUND') {
+          msg = t('settings.ai.errNotFound', { defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL' })
+        } else if (msg === 'ERR_NETWORK') {
+          msg = t('settings.ai.errNetwork', { defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' })
+        }
+        setErrorMsg(msg)
         setStatus('error')
       }
     } catch (err: any) {

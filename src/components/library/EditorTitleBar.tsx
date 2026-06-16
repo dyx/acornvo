@@ -108,23 +108,23 @@ export function EditorTitleBar({
                 <div className="grid grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4 text-[color:var(--color-ink)]">
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-[color:var(--color-ink-2)]">{t('editor.markdown.heading', '标题')}</h3>
-                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{'# 一级标题\n## 二级标题\n### 三级标题'}</pre>
+                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{t('editor.markdown.example_heading', '# 一级标题\n## 二级标题\n### 三级标题')}</pre>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-[color:var(--color-ink-2)]">{t('editor.markdown.style', '文本样式')}</h3>
-                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{'**粗体**\n*斜体*\n~~删除线~~\n`行内代码`'}</pre>
+                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{t('editor.markdown.example_style', '**粗体**\n*斜体*\n~~删除线~~\n`行内代码`')}</pre>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-[color:var(--color-ink-2)]">{t('editor.markdown.list', '列表')}</h3>
-                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{'- 无序列表项\n* 无序列表项\n\n1. 有序列表项\n2. 有序列表项\n\n- [ ] 待办事项\n- [x] 已完成事项'}</pre>
+                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{t('editor.markdown.example_list', '- 无序列表项\n* 无序列表项\n\n1. 有序列表项\n2. 有序列表项\n\n- [ ] 待办事项\n- [x] 已完成事项')}</pre>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-[color:var(--color-ink-2)]">{t('editor.markdown.block', '块级元素')}</h3>
-                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{'> 引用文字\n\n```语言\n代码块\n```\n\n--- (分隔线)'}</pre>
+                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{t('editor.markdown.example_block', '> 引用文字\n\n```语言\n代码块\n```\n\n--- (分隔线)')}</pre>
                   </div>
                   <div className="col-span-2">
                     <h3 className="text-sm font-medium mb-2 text-[color:var(--color-ink-2)]">{t('editor.markdown.link_img', '链接与图片')}</h3>
-                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{'[链接文本](https://example.com)\n![图片描述](https://example.com/image.jpg)'}</pre>
+                    <pre className="text-[13px] font-mono whitespace-pre-wrap break-words bg-[color:var(--color-paper-2)] border border-[color:var(--color-line)] p-3 rounded-md shadow-sm">{t('editor.markdown.example_link', '[链接文本](https://example.com)\n![图片描述](https://example.com/image.jpg)')}</pre>
                   </div>
                 </div>
               </DialogContent>

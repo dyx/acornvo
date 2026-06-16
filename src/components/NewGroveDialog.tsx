@@ -43,7 +43,7 @@ export function NewGroveDialog({
   }
 
   async function chooseParent(): Promise<void> {
-    const p = await ipc.project.selectDirectory('createParent')
+    const p = await ipc.project.selectDirectory({ purpose: 'createParent', title: t('picker.newDialog.select_parent_title', { defaultValue: '选择要在其中创建树林的目录' }), buttonLabel: t('picker.newDialog.select_parent_button', { defaultValue: '选择父目录' }) })
     if (p) {
       setParentDir(p)
       localStorage.setItem('acornvo:lastParentDir', p)

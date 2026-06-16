@@ -114,7 +114,15 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
         setTestMessage(t('settings.ai.testSuccess', 'Connection successful'))
       } else {
         setTestStatus('error')
-        setTestMessage(res.message || t('settings.ai.testError', 'Connection failed'))
+        let msg = res.message || t('settings.ai.testError', 'Connection failed')
+        if (msg.startsWith('ERR_AUTH_FAILED:')) {
+          msg = t('settings.ai.errAuthFailed', { defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确', status: msg.split(':')[1] })
+        } else if (msg === 'ERR_NOT_FOUND') {
+          msg = t('settings.ai.errNotFound', { defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL' })
+        } else if (msg === 'ERR_NETWORK') {
+          msg = t('settings.ai.errNetwork', { defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' })
+        }
+        setTestMessage(msg)
       }
     } catch (err: any) {
       setTestStatus('error')

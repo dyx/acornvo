@@ -412,9 +412,9 @@ async function testConnection(input: {
 
       let errMsg = `HTTP ${res.status} ${res.statusText}`
       if (res.status === 401 || res.status === 403) {
-        errMsg = `鉴权失败 (HTTP ${res.status})，请检查 API Key 是否正确`
+        return { ok: false, message: `ERR_AUTH_FAILED:${res.status}` }
       } else if (res.status === 404) {
-        errMsg = `地址不存在 (HTTP 404)，请检查 Base URL`
+        return { ok: false, message: 'ERR_NOT_FOUND' }
       }
       return { ok: false, message: `${errMsg}${bodyStr ? ' - ' + bodyStr : ''}`.trim() }
     }
@@ -423,7 +423,7 @@ async function testConnection(input: {
       throw err;
     }
     if (err.message === 'fetch failed') {
-      return { ok: false, message: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' }
+      return { ok: false, message: 'ERR_NETWORK' }
     }
     return { ok: false, message: err.message || String(err) }
   }

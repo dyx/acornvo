@@ -330,7 +330,7 @@ export type IpcContract = {
     closeGrove: () => void
     getCurrent: () => GroveSummary | null
     removeFromRecent: (id: string) => void
-    selectDirectory: (purpose: SelectDirectoryPurpose) => string | null
+    selectDirectory: (opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }) => string | null
   }
   db: {
     version: () => DbVersionInfo

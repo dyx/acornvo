@@ -44,7 +44,7 @@ export function ProjectPicker(): JSX.Element {
 
   useEffect(() => {
     const onOpen = async (): Promise<void> => {
-      const path = await ipc.project.selectDirectory('open')
+      const path = await ipc.project.selectDirectory({ purpose: 'open', title: t('picker.select_dir_title', { defaultValue: '选择一个目录作为树林' }), buttonLabel: t('picker.select_dir_button', { defaultValue: '选择树林目录' }) })
       if (!path) return
       const res = await openExisting(path)
       if (res.status === 'opened') {

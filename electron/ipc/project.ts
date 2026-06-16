@@ -63,13 +63,13 @@ async function removeFromRecent(id: string): Promise<void> {
   await recent.removeById(id)
 }
 
-async function selectDirectory(purpose: SelectDirectoryPurpose): Promise<string | null> {
+async function selectDirectory(opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }): Promise<string | null> {
   const properties: Array<'openDirectory' | 'createDirectory'> =
-    purpose === 'createParent' ? ['openDirectory', 'createDirectory'] : ['openDirectory']
+    opts.purpose === 'createParent' ? ['openDirectory', 'createDirectory'] : ['openDirectory']
   const options = {
     properties,
-    buttonLabel: purpose === 'createParent' ? '选择父目录' : '选择树林目录',
-    title: purpose === 'createParent' ? '选择要在其中创建树林的目录' : '选择一个目录作为树林'
+    buttonLabel: opts.buttonLabel,
+    title: opts.title
   } as const
   const result = mainWindow
     ? await dialog.showOpenDialog(mainWindow, options)

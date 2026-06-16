@@ -33,7 +33,7 @@ const request: IpcClient<IpcContract> = {
     closeGrove: () => invoke('project.closeGrove'),
     getCurrent: () => invoke('project.getCurrent'),
     removeFromRecent: (id) => invoke('project.removeFromRecent', id),
-    selectDirectory: (purpose: SelectDirectoryPurpose) => invoke('project.selectDirectory', purpose)
+    selectDirectory: (opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }) => invoke('project.selectDirectory', opts)
   },
   db: {
     version: () => invoke('db.version'),

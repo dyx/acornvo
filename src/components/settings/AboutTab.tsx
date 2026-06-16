@@ -30,7 +30,7 @@ export function AboutTab(): JSX.Element {
   }, [])
 
   const messageObj = useMemo(() => {
-    const cleanText = changelogRaw.replace(/^#\s*更新日志[^\n]*\n+/, '')
+    const cleanText = changelogRaw.replace(/^#\s*(更新日志|Changelog)[^\n]*\n+/i, '')
     return {
       id: 'changelog',
       role: 'assistant',
