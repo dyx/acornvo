@@ -33,7 +33,7 @@ export function StatusBar({
       ) : (
         <span className="flex items-center gap-1.5" title={isTitleBar ? t('status.docs', '{{count}} 篇文档', { count: totalDocs }) : undefined}>
           <Trees size={14} className="shrink-0" />
-          {current ? current.name : t('status.no_grove', '未选择果园')}
+          {current ? current.name : t('status.no_grove', '未选择树林')}
           {isTitleBar && <span className="opacity-70 ml-0.5">({totalDocs})</span>}
         </span>
       )}

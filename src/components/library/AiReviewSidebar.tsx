@@ -32,7 +32,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const [modelName, setModelName] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const isRunning = useEditorStore((s) => (s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false))
+  const isRunning = useEditorStore((s) =>
+    s.state.kind === 'ready' ? !!s.state.aiRerunInflight : false
+  )
 
   const acceptAiReview = useEditorStore((s) => s.acceptAiReview)
   const setAiRerunInflight = useEditorStore((s) => s.setAiRerunInflight)
@@ -41,6 +43,12 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const showLoader = isSubmitting || isRunning
+
+  const [width, setWidth] = useState(() => {
+    const saved = localStorage.getItem('acornvo:ai-sidebar-width')
+    return saved ? parseInt(saved, 10) : 340
+  })
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     if (!defaultModelId) {
@@ -55,7 +63,6 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
       })
       .catch(() => setModelName(null))
   }, [defaultModelId])
-
 
   if (!detail || !fm) return null
 
@@ -88,7 +95,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
     if (models.length === 0 || !defaultModelId) {
       toast({
         variant: 'destructive',
-        description: t('editor.ai.noProfileToast', { defaultValue: '由于未配置默认理果模型，无法使用理果功能。请前往设置添加。' })
+        description: t('editor.ai.noProfileToast', {
+          defaultValue: '由于未配置默认理果模型，无法使用理果功能。请前往设置添加。'
+        })
       })
       return
     }
@@ -106,13 +115,50 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
     }
   }
 
+  // 为了保证响应式，即使读取了较大的本地缓存或进行了缩放，也保证不超过窗口宽度的 40%
+  const safeWidth = typeof window !== 'undefined' ? Math.min(width, window.innerWidth * 0.4) : width
+
   return (
     <div
+      style={{ width: collapsed ? 0 : safeWidth }}
       className={cn(
-        "font-review transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[color:var(--color-paper-2)] border-l border-[color:var(--color-line)] flex flex-col h-full overflow-hidden shrink-0 relative",
-        collapsed ? "w-0 opacity-0 border-l-0" : "w-[340px] opacity-100"
+        'font-review bg-[color:var(--color-paper-3)] border-l border-[color:var(--color-line)] flex flex-col h-full overflow-hidden shrink-0 relative',
+        collapsed ? 'opacity-0 border-l-0' : 'opacity-100',
+        !isDragging && 'transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]'
       )}
     >
+      {!collapsed && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-[color:var(--color-acorn)]/50 active:bg-[color:var(--color-acorn)] z-50 transition-colors"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+            const startX = e.clientX
+            const startWidth = width
+
+            const onPointerMove = (moveEvent: PointerEvent) => {
+              const delta = startX - moveEvent.clientX
+              // 动态计算最大宽度：最大不超过 500px，且不超过当前窗口宽度的 40%
+              const dynamicMaxWidth = Math.min(500, window.innerWidth * 0.4)
+              const newWidth = Math.max(250, Math.min(dynamicMaxWidth, startWidth + delta))
+              setWidth(newWidth)
+            }
+
+            const onPointerUp = () => {
+              setIsDragging(false)
+              window.removeEventListener('pointermove', onPointerMove)
+              window.removeEventListener('pointerup', onPointerUp)
+              setWidth((currentWidth) => {
+                localStorage.setItem('acornvo:ai-sidebar-width', currentWidth.toString())
+                return currentWidth
+              })
+            }
+
+            window.addEventListener('pointermove', onPointerMove)
+            window.addEventListener('pointerup', onPointerUp)
+          }}
+        />
+      )}
       <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Header section */}
         <div className="flex items-center justify-between h-10 mb-6">
@@ -124,7 +170,8 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           </div>
           {fm.ai_reviewed_at && (
             <div className="flex items-center gap-1">
-              {(!fm.ai_review_accepted_at || String(fm.ai_review_accepted_at) < String(fm.ai_reviewed_at)) && (
+              {(!fm.ai_review_accepted_at ||
+                String(fm.ai_review_accepted_at) < String(fm.ai_reviewed_at)) && (
                 <TooltipProvider delayDuration={500}>
                   <Tooltip>
                     <TooltipTrigger
@@ -149,7 +196,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
                     disabled={showLoader}
                     className="flex size-[28px] items-center justify-center rounded-md hover:bg-[color:var(--color-paper-3)] text-[color:var(--color-ink-2)] transition-colors disabled:opacity-50 cursor-pointer"
                   >
-                    <RefreshCw size={15} className={cn(showLoader && "animate-spin")} />
+                    <RefreshCw size={15} className={cn(showLoader && 'animate-spin')} />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs">{t('editor.ai.rerun', { defaultValue: 'Rerun' })}</p>
@@ -162,10 +209,15 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
 
         {/* Metadata section */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-[color:var(--color-ink-3)] mb-8 font-mono">
-          {wordCount > 0 && <span>{wordCount.toLocaleString()} {t('editor.ai.words', { defaultValue: 'Words' })}</span>}
+          {wordCount > 0 && (
+            <span>
+              {wordCount.toLocaleString()} {t('editor.ai.words', { defaultValue: 'Words' })}
+            </span>
+          )}
           {category && (
             <div className="flex items-center gap-0.5">
-              <span>·</span><span className="ml-1">{category}</span>
+              <span>·</span>
+              <span className="ml-1">{category}</span>
             </div>
           )}
         </div>
@@ -173,7 +225,9 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
         {/* Actionable Suggested Title */}
         {suggestedTitle && (
           <div className="mb-8">
-            <p className="font-serif text-[16px] font-semibold text-[color:var(--color-ink)] leading-tight">{suggestedTitle}</p>
+            <p className="font-serif text-[16px] font-semibold text-[color:var(--color-ink)] leading-tight">
+              {suggestedTitle}
+            </p>
           </div>
         )}
 
@@ -196,11 +250,16 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
           </div>
         ) : summary.review_status === 'pending' ? (
           <div className="mb-8 p-5 rounded-lg border border-dashed border-[color:var(--color-line)] text-center flex flex-col items-center justify-center min-h-[100px] gap-3">
-            <span className="text-[color:var(--color-ink-3)] font-serif text-[15px]">{t('library.review_pending')}</span>
+            <span className="text-[color:var(--color-ink-3)] font-serif text-[15px]">
+              {t('library.review_pending')}
+            </span>
           </div>
         ) : summary.review_status === 'failed' || localError ? (
           <div className="mb-8">
-            <Alert variant="destructive" className="w-full border-dashed bg-[color:var(--color-berry)]/5 shadow-sm px-4 py-4 flex flex-col items-center justify-center text-center [&>svg]:hidden">
+            <Alert
+              variant="destructive"
+              className="w-full border-dashed bg-[color:var(--color-berry)]/5 shadow-sm px-4 py-4 flex flex-col items-center justify-center text-center [&>svg]:hidden"
+            >
               <AlertTitle className="text-[13px] mb-3 leading-snug flex items-center justify-center gap-1.5 w-full">
                 <XCircle className="size-4 shrink-0 text-[color:var(--color-berry)]" />
                 <span>{t('library.review_failed', { defaultValue: '理果失败' })}</span>
@@ -211,7 +270,7 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
                   disabled={isRunning}
                   className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded bg-[color:var(--color-berry)] text-white text-xs font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 shadow-sm"
                 >
-                  <RefreshCw size={12} className={cn(isRunning && "animate-spin")} />
+                  <RefreshCw size={12} className={cn(isRunning && 'animate-spin')} />
                   {t('editor.ai.badge.noneTooltip', { defaultValue: '重新理果' })}
                 </button>
               </AlertDescription>
@@ -229,11 +288,13 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
                 disabled={isRunning}
                 className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[color:var(--color-acorn)] text-white text-xs font-medium hover:bg-[color:var(--color-acorn-2)] transition-colors disabled:opacity-50 shadow-sm"
               >
-                <Sparkles size={13} className={cn(isRunning && "animate-spin")} />
+                <Sparkles size={13} className={cn(isRunning && 'animate-spin')} />
                 {t('editor.ai.badge.noneTooltip', { defaultValue: '开始理果' })}
               </button>
             ) : (
-              <span className="mt-2 text-xs text-muted-foreground">{t('editor.ai.noModelDesc', '请前往设置配置默认理果模型')}</span>
+              <span className="mt-2 text-xs text-muted-foreground">
+                {t('editor.ai.noModelDesc', '请前往设置配置默认理果模型')}
+              </span>
             )}
           </div>
         ) : null}
@@ -246,7 +307,10 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
             </h4>
             <ul className="space-y-4">
               {quotes.map((h, i) => (
-                <li key={i} className="text-[color:var(--color-ink-2)] text-[13.5px] leading-relaxed flex items-start">
+                <li
+                  key={i}
+                  className="text-[color:var(--color-ink-2)] text-[13.5px] leading-relaxed flex items-start"
+                >
                   <span className="text-[color:var(--color-acorn)] mr-3 mt-0.5 font-bold">•</span>
                   <span>{h}</span>
                 </li>
