@@ -168,6 +168,8 @@
       "open_logs": "View logs"
     },
     "ai": {
+      "noProfileToast": "Please configure a reviewer model in settings.",
+      "noModelDesc": "No reviewer model configured",
       "title": "AI Analysis",
       "words": "Words",
       "accept": "Accept",
@@ -599,7 +601,10 @@
       "quote": "Quote"
     },
     "empty": {
-      "heading": "What's on your mind?",
+      "noModelTitle": "No Model Configured",
+      "noModelDesc": "Please select a default chat model in settings.",
+      "goToSettings": "Go to Settings",
+      "heading": "What's on your mind today?",
       "subheading": "Try one of these",
       "card1": "Search my notes for [some keyword]",
       "card2": "Based on my notes, summarize the core points of [some topic]",

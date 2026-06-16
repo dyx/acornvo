@@ -161,6 +161,8 @@
       "open_logs": "查看日志"
     },
     "ai": {
+      "noProfileToast": "请先在设置中配置理果模型",
+      "noModelDesc": "未配置理果模型",
       "badge": {
         "label": "AI 审读",
         "reviewedTooltip": "AI 审读结果，点击查看",
@@ -620,6 +622,9 @@
       "quote": "引用"
     },
     "empty": {
+      "noModelTitle": "未配置模型",
+      "noModelDesc": "请先前往设置选择默认对话模型。",
+      "goToSettings": "前往设置",
       "heading": "今天想聊点什么？",
       "subheading": "试试这些常用想法",
       "card1": "帮我在笔记里搜索关于 [某个关键词] 的内容",

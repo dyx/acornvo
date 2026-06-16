@@ -13,6 +13,8 @@ import { useRootStore } from '@/stores/root'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { useNavigate } from 'react-router-dom'
 
 import { TooltipProvider } from '@/components/ui/tooltip'
 
@@ -39,6 +41,24 @@ function SessionsErrorBanner() {
 }
 
 
+
+function NoModelWarning() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full">
+      <div className="bg-muted w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <SparklesIcon className="size-8 text-muted-foreground" />
+      </div>
+      <h2 className="text-xl font-medium mb-2">{t('chat.empty.noModelTitle', '尚未配置默认模型')}</h2>
+      <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+        {t('chat.empty.noModelDesc', '您需要先前往设置添加 AI 供应商并选择一个对话模型才能开始。')}
+      </p>
+      <Button onClick={() => navigate('/settings/ai')}>{t('chat.empty.goToSettings', '前往设置')}</Button>
+    </div>
+  )
+}
 
 function ShortcutsModal() {
   const { t } = useTranslation()
@@ -175,8 +195,11 @@ export function Chat() {
   }, [loadSessions, createSession, refreshProviders])
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null
+  const activeSessionState = useChatStore((s) => activeSessionId ? s.bySession[activeSessionId] : null)
   const title = activeSession?.title || t('chat.untitled')
   const displayModelId = activeSession?.profileId || defaultChatModelId
+  const hasMessages = activeSessionState && activeSessionState.messages && activeSessionState.messages.length > 0
+  const shouldShowWarning = !displayModelId && !hasMessages
 
   return (
     <ChatRuntimeProvider>
@@ -212,7 +235,7 @@ export function Chat() {
             </header>
 
             <section className="flex min-h-0 flex-1 flex-col relative bg-transparent">
-              <Thread key={activeSessionId} />
+              {shouldShowWarning ? <NoModelWarning /> : <Thread key={activeSessionId} />}
             </section>
           </main>
           </div>

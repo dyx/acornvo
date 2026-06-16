@@ -85,10 +85,10 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
   const handleRerun = async () => {
     if (clipId === null) return
     const models = useProvidersStore.getState().models
-    if (models.length === 0) {
+    if (models.length === 0 || !defaultModelId) {
       toast({
         variant: 'destructive',
-        description: t('editor.ai.noProfileToast', { defaultValue: '由于未配置 AI 模型，无法使用理果功能。' })
+        description: t('editor.ai.noProfileToast', { defaultValue: '由于未配置默认理果模型，无法使用理果功能。请前往设置添加。' })
       })
       return
     }
@@ -223,14 +223,18 @@ export function AiReviewSidebar({ collapsed }: AiReviewSidebarProps): JSX.Elemen
             <span className="font-serif text-[15px] text-[color:var(--color-ink-3)]">
               {t('library.unreviewed')}
             </span>
-            <button
-              onClick={() => handleAction(handleRerun)}
-              disabled={isRunning}
-              className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[color:var(--color-acorn)] text-white text-xs font-medium hover:bg-[color:var(--color-acorn-2)] transition-colors disabled:opacity-50 shadow-sm"
-            >
-              <Sparkles size={13} className={cn(isRunning && "animate-spin")} />
-              {t('editor.ai.badge.noneTooltip', { defaultValue: '开始理果' })}
-            </button>
+            {defaultModelId ? (
+              <button
+                onClick={() => handleAction(handleRerun)}
+                disabled={isRunning}
+                className="mt-2 flex items-center gap-1.5 px-4 py-2 rounded-md bg-[color:var(--color-acorn)] text-white text-xs font-medium hover:bg-[color:var(--color-acorn-2)] transition-colors disabled:opacity-50 shadow-sm"
+              >
+                <Sparkles size={13} className={cn(isRunning && "animate-spin")} />
+                {t('editor.ai.badge.noneTooltip', { defaultValue: '开始理果' })}
+              </button>
+            ) : (
+              <span className="mt-2 text-xs text-muted-foreground">{t('editor.ai.noModelDesc', '请前往设置配置默认理果模型')}</span>
+            )}
           </div>
         ) : null}
 

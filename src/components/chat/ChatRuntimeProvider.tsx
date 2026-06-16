@@ -7,6 +7,7 @@ import {
 } from '@assistant-ui/react'
 import { useChatStore, type ChatMessage } from '@/stores/chat'
 import { useProvidersStore } from '@/stores/providers'
+import { useSettingsStore } from '@/stores/settings'
 import { useToast } from '@/hooks/use-toast'
 import { useFileMentionStore } from '@/components/assistant-ui/file-mention-adapter'
 import { useTranslation } from 'react-i18next'
@@ -158,11 +159,24 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
   }, [messages]);
 
   const checkProfilesOrToast = () => {
-    const models = useProvidersStore.getState().models;
-    if (models.length === 0) {
+    const activeSid = useChatStore.getState().activeSessionId;
+    const session = activeSid ? useChatStore.getState().sessions.find(s => s.id === activeSid) : null;
+    const defaultModelId = useSettingsStore.getState().ai.defaultChatModelId;
+    const displayModelId = session?.profileId || defaultModelId;
+
+    if (!displayModelId) {
       toast({
         variant: 'destructive',
-        description: t('chat.error.noModelDesc', '由于未配置 AI 模型，无法使用当前对话功能。')
+        description: t('chat.empty.noModelDesc', '您需要先前往设置添加 AI 供应商并选择一个对话模型才能开始。')
+      });
+      return false;
+    }
+
+    const models = useProvidersStore.getState().models;
+    if (models.length === 0 || !models.find((m) => m.id === displayModelId)) {
+      toast({
+        variant: 'destructive',
+        description: t('chat.error.noModelDesc', '当前模型无效或未配置，请前往设置重新选择。')
       });
       return false;
     }
