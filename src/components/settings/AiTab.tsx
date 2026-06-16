@@ -10,7 +10,7 @@ import { ProviderDialog } from './ProviderDialog'
 import { ModelDialog } from './ModelDialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
@@ -97,12 +97,7 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
   )
 }
 
-interface AiTabProps {
-  keychainAvailable: boolean
-  onRetryKeychain?: () => void
-}
-
-export function AiTab({ keychainAvailable, onRetryKeychain }: AiTabProps): JSX.Element {
+export function AiTab(): JSX.Element {
   const { t } = useTranslation()
   const ai = useSettingsStore((s) => s.ai)
   const setAi = useSettingsStore((s) => s.setAi)
@@ -131,24 +126,7 @@ export function AiTab({ keychainAvailable, onRetryKeychain }: AiTabProps): JSX.E
 
   return (
     <div data-testid="settings-tab-ai" className="space-y-8">
-      {!keychainAvailable && (
-        <div
-          role="alert"
-          className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center justify-between"
-        >
-          <span>
-            {t(
-              'settings.secret.unavailable',
-              'Keychain is unavailable, secrets cannot be saved securely.'
-            )}
-          </span>
-          {onRetryKeychain && (
-            <Button variant="outline" size="sm" onClick={onRetryKeychain}>
-              {t('settings.secret.retry', 'Request Permission Again')}
-            </Button>
-          )}
-        </div>
-      )}
+
 
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -157,7 +135,6 @@ export function AiTab({ keychainAvailable, onRetryKeychain }: AiTabProps): JSX.E
                 type="button"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
                 onClick={() => setDialogProvider('new')}
-                disabled={!keychainAvailable}
               >
                 <PlusIcon className="mr-1.5 h-4 w-4" />
                 {t('settings.ai.addProvider', '添加供应商')}

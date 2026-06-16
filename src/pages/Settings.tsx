@@ -1,6 +1,6 @@
 // src/pages/Settings.tsx
 import type { JSX } from 'react'
-import { useEffect, useState } from 'react'
+
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import { GeneralTab } from '@/components/settings/GeneralTab'
@@ -10,22 +10,10 @@ import { LibraryTab } from '@/components/settings/LibraryTab'
 import { ChatTab } from '@/components/settings/ChatTab'
 import { ObservabilityTab } from '@/components/settings/ObservabilityTab'
 import { AboutTab } from '@/components/settings/AboutTab'
-import { ipc } from '@/ipc/client'
+
 
 function AiTabRoute(): JSX.Element {
-  const [keychainAvailable, setKeychainAvailable] = useState(true)
-  useEffect(() => {
-    void ipc.settings.keychainAvailable().then(setKeychainAvailable)
-  }, [])
-  return (
-    <AiTab
-      keychainAvailable={keychainAvailable}
-      onRetryKeychain={async () => {
-        const available = await ipc.settings.keychainRetry()
-        setKeychainAvailable(available)
-      }}
-    />
-  )
+  return <AiTab />
 }
 
 export function Settings(): JSX.Element {

@@ -3,7 +3,7 @@ import { session } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { settingsStore } from '../settings/store'
 import { providersStore } from '../settings/providers'
-import { isSafeStorageAvailable, retrySafeStorageAvailability } from '../settings/safe-storage-state'
+
 
 const BROWSER_PARTITION = 'persist:browser-default'
 
@@ -47,7 +47,5 @@ export const settingsHandlers = {
     const ses = session.fromPartition(BROWSER_PARTITION)
     await ses.clearStorageData({ storages: ['cookies'] })
     return { ok: true }
-  },
-  keychainAvailable: () => isSafeStorageAvailable(),
-  keychainRetry: () => retrySafeStorageAvailability()
+  }
 } satisfies SettingsHandlers

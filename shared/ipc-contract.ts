@@ -105,7 +105,6 @@ export type IpcErrorCode =
   | 'E_TRANSFORM_FAILED'
   | 'E_WRITE_FAILED'
   | 'E_INDEX_FAILED'
-  | 'E_KEYCHAIN_UNAVAILABLE'
   | 'E_UNKNOWN_NAMESPACE'
   | 'E_DUPLICATE_NAME'
   | 'E_DUPLICATE_DISPLAY_NAME'
@@ -135,7 +134,6 @@ export const IPC_ERROR_CODES = {
   E_TRANSFORM_FAILED: 'E_TRANSFORM_FAILED',
   E_WRITE_FAILED: 'E_WRITE_FAILED',
   E_INDEX_FAILED: 'E_INDEX_FAILED',
-  E_KEYCHAIN_UNAVAILABLE: 'E_KEYCHAIN_UNAVAILABLE',
   E_UNKNOWN_NAMESPACE: 'E_UNKNOWN_NAMESPACE',
   E_DUPLICATE_NAME: 'E_DUPLICATE_NAME',
   E_DUPLICATE_DISPLAY_NAME: 'E_DUPLICATE_DISPLAY_NAME',
@@ -459,8 +457,7 @@ export type IpcContract = {
     aiModelsUpdate: (id: string, patch: ModelUpdateInput) => { ok: true }
     aiModelsDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
-    keychainAvailable: () => boolean
-    keychainRetry: () => boolean
+
     aiProvidersTestConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
     aiProvidersCheckBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
   }

@@ -36,7 +36,7 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 面对堆积如山的未读文件？交给 AI 吧。Acornvo 可以自动对你的 Markdown 笔记进行深度审读。
 - 自动生成：摘要、推荐标题、标签、分类、评分。
 - 智能元数据：所有 AI 生成的洞察都会标准化地写入 Markdown 的 Frontmatter (YAML) 中。
-- **人在回路**：你可以一键接受、拒绝或要求 AI 重新生成。
+- **人在回路**：如果生成不满意，可要求 AI 重新生成。
 
 ![理果预览](./docs/assets/screenshot-30.png)
 
@@ -55,7 +55,7 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 - **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，云端本地任你选择。
 - **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。
 - **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
-- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。API Key 等敏感信息使用操作系统原生安全能力（如 macOS Keychain、Windows DPAPI）安全加密存储。
+- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。
 
 ---
 
@@ -103,33 +103,23 @@ Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com
 >
 > **解决方法：通过系统设置**
 > 1. 正常双击打开应用，看到警告提示后点击“完成”。
+     >
+     >    <img src="./docs/assets/screenshot-100.png" width="250" alt="macOS 安全性设置1" />
 >
->    <img src="./docs/assets/screenshot-100.png" width="250" alt="macOS 安全性设置1" />
->
-> 2. 打开 macOS 的 **“系统设置” -> “隐私与安全性”**，向下滚动找到“安全性”部分。你会看到提示“已阻止使用 Acornvo...”，点击旁边的 **“仍要打开”** 按钮即可（见下图）。
->
->    <img src="./docs/assets/screenshot-101.png" width="500" alt="macOS 安全性设置2" />
+> 2. 打开 macOS 的 **“系统设置” -> “隐私与安全性”**，向下滚动找到“安全性”部分。你会看到提示“已阻止 Acornvo...”，点击旁边的 **“仍要打开”** 按钮即可（见下图）。
+     >
+     >    <img src="./docs/assets/screenshot-101.png" width="500" alt="macOS 安全性设置2" />
 >
 > 3. 会出现一个新的弹窗，选择“仍要打开”。之后输入密码即可。
->
->    <img src="./docs/assets/screenshot-102.png" width="250" alt="macOS 安全性设置3" />
+     >
+     >    <img src="./docs/assets/screenshot-102.png" width="250" alt="macOS 安全性设置3" />
 
-### 2. 密钥存储与系统授权
-
-Acornvo 高度重视您的隐私，不会将 API Key 上传到任何云端，而是使用操作系统原生的安全机制（macOS Keychain 或 Windows DPAPI）进行加密存储。
-
-> [!NOTE]
-> **关于 macOS 钥匙串弹窗提示：**
-> 当您首次在应用内保存 API Key，或应用尝试读取配置时，macOS 系统可能会弹出提示：“**Acornvo 想要使用钥匙串中的机密信息**”。
->
-> 这是系统的正常安全拦截，证明您的密钥正在被安全的底层机制保护。请输入您的 Mac 开机密码，并点击 **“始终允许”**，以免后续频繁弹窗打断您的工作流。
-
-### 3. AI 模型供应商配置
+### 2. AI 模型供应商配置
 
 安装完成后，你需要配置大语言模型 (LLM) 才能使用「理果」和「松语」的核心功能。点击应用左下角的**设置图标**，进入**“模型配置”**：
 
 - **DeepSeek**：输入你的 API Key 即可。
-- **Ollama (本地模型)**：如果你希望完全离线运行，请先在本地安装 [Ollama](https://ollama.com/) 并下载模型（如 `llama3` 或 `qwen2`）。在 Acornvo 中选择 Ollama 服务商，Base URL 默认填入 `http://localhost:11434` 即可。
+- **Ollama (本地模型)**：如果你希望完全离线运行，请先在本地安装 [Ollama](https://ollama.com/) 并下载模型。在 Acornvo 中选择 Ollama 服务商即可。
 - **OpenRouter**：支持自定义配置兼容 OpenAI 格式的 API 接口，实现极高的模型自由度。
 
 > [!IMPORTANT]
@@ -170,16 +160,18 @@ npm run dist:win    # Windows 打包
 ## 📅 路线图 (Roadmap)
 
 Acornvo 正处于快速迭代期，接下来的重点方向包括：
-- [ ] [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)：基于 Andrej Karpathy 提出的概念，利用 AI Agent 持续摄取新内容、维护实体页面并自动建立双向链接，为你构建一个可不断复利增长的结构化个人知识库。
+- [ ] [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)：AI 驱动的自动知识库构建
 - [ ] 更智能、更精准的网页正文解析引擎
 - [ ] 完善的 AI 自动标签系统与自动分类
 - [ ] 基于向量数据库的语义搜索 (RAG)
 - [ ] 对话上下文持久化与多轮深度生成能力扩展
 
-## 感谢
+## 🫶 感谢
 
 - 首页的 Sunny / Moonlight 主题动效代码参考自 [dingyi](https://x.com/dingyi) 的 [Theme Switch](https://theme-switch.pages.dev/) 网站，特此感谢！
 
 ## 📄 许可证 (License)
 
 MIT
+
+---

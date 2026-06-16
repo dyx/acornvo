@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { join } from 'node:path'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, chmodSync } from 'node:fs'
 import { userAcornDir } from './paths'
 
 let globalDb: Database.Database | null = null
@@ -79,6 +79,13 @@ export function initGlobalDb(): void {
   mkdirSync(dir, { recursive: true })
   const dbPath = join(dir, 'global.db')
   const db = new Database(dbPath)
+
+  try {
+    chmodSync(dbPath, 0o600)
+  } catch (err) {
+    console.error('Failed to set global.db permissions', err)
+  }
+
   applyPragmas(db)
   db.exec(GLOBAL_SCHEMA)
 

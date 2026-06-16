@@ -1,29 +1,9 @@
 // electron/settings/secrets.ts
-import { safeStorage } from 'electron'
-import { IpcError } from '@shared/ipc-contract'
 import { getGlobalDb } from '../services/global-db'
-import { isSafeStorageAvailable } from './safe-storage-state'
-
-function requireKeychain(): void {
-  if (!isSafeStorageAvailable()) {
-    throw new IpcError(
-      'E_KEYCHAIN_UNAVAILABLE',
-      'E_KEYCHAIN_UNAVAILABLE: OS keychain (safeStorage) is not available'
-    )
-  }
-}
 
 function set(key: string, plain: string): void {
-  requireKeychain()
-  let enc: Buffer
-  try {
-    enc = safeStorage.encryptString(plain)
-  } catch (err) {
-    throw new IpcError(
-      'E_KEYCHAIN_UNAVAILABLE',
-      `E_KEYCHAIN_UNAVAILABLE: Keychain error during encryption: ${err instanceof Error ? err.message : String(err)}`
-    )
-  }
+  // Store plaintext directly, encoded as a buffer to match the existing BLOB schema
+  const enc = Buffer.from(plain, 'utf-8')
   const db = getGlobalDb()
   db.prepare(
     `
@@ -35,25 +15,15 @@ function set(key: string, plain: string): void {
 }
 
 function get(key: string): string | null {
-  requireKeychain()
   const db = getGlobalDb()
   const row = db.prepare('SELECT encrypted_value FROM settings_secrets WHERE key = ?').get(key) as
     | { encrypted_value: Buffer }
     | undefined
   if (!row) return null
-  try {
-    return safeStorage.decryptString(row.encrypted_value)
-  } catch (err) {
-    throw new IpcError(
-      'E_KEYCHAIN_UNAVAILABLE',
-      `E_KEYCHAIN_UNAVAILABLE: Keychain error during decryption: ${err instanceof Error ? err.message : String(err)}`
-    )
-  }
+  return row.encrypted_value.toString('utf-8')
 }
 
-/** Idempotent. Allowed even when the keychain is unavailable so callers can
- *  clean up orphan rows (e.g. when deleting a profile after a reboot into a
- *  Linux session without libsecret). */
+/** Idempotent. Used to clean up orphan rows. */
 function deleteSecret(key: string): void {
   const db = getGlobalDb()
   db.prepare('DELETE FROM settings_secrets WHERE key = ?').run(key)

@@ -31,7 +31,7 @@ import { setDb as setIndexerDb, startScan, reset as resetIndexer } from './servi
 import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
 
-import { initSafeStorageAvailability } from './settings/safe-storage-state'
+
 import { installSettingsBroadcaster } from './settings/broadcast'
 import type { QueueRunner } from './queue/runner'
 export let mainWindow: BrowserWindow | null = null
@@ -199,7 +199,7 @@ async function bootstrap(): Promise<void> {
   rotateOnBoot()
   logger().info('main', { op: 'boot', meta: { ts: new Date().toISOString() } })
   installCsp()
-  initSafeStorageAvailability()
+
   registerHandlers(ipcHandlers)
   const disposeBroadcaster = installGroveBroadcaster()
   app.on('will-quit', disposeBroadcaster)
