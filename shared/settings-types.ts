@@ -51,7 +51,7 @@ export interface AiProvider {
   name: string
   type: AiProviderKind
   baseUrl: string | null
-  apiKeyRef: string | null
+  apiKey: string | null
   createdAt: string
   updatedAt: string
 }

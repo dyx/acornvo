@@ -13,16 +13,16 @@ import type {
 import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 
 import { getGlobalDb } from '../services/global-db'
-import { secretsStore } from './secrets'
+import { obfuscate } from './obfuscate'
 import { settingsStore } from './store'
-import { getProviderDecryptedKey } from './provider-key'
+import { getProviderApiKey } from './provider-key'
 
 interface ProviderRow {
   id: string
   name: string
   type: string
   base_url: string | null
-  api_key_ref: string | null
+  api_key: string | null
   created_at: string
   updated_at: string
 }
@@ -44,7 +44,7 @@ function rowToProvider(row: ProviderRow): AiProvider {
     name: row.name,
     type: row.type as AiProvider['type'],
     baseUrl: row.base_url,
-    apiKeyRef: row.api_key_ref,
+    apiKey: row.api_key ? '***' : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -117,22 +117,18 @@ async function createProvider(input: ProviderCreateInput): Promise<{ id: string 
   }
 
   const id = uuidv4()
-  const apiKeyRef = input.apiKey && input.apiKey.length > 0 ? `ai.key.${id}` : null
+  const apiKeyObf = input.apiKey && input.apiKey.length > 0 ? obfuscate(input.apiKey) : null
   const now = new Date().toISOString()
-
-  if (apiKeyRef) {
-    secretsStore.set(apiKeyRef, input.apiKey!)
-  }
 
   try {
     db.transaction(() => {
       db.prepare(
         `
         INSERT INTO ai_provider
-          (id, name, type, base_url, api_key_ref, created_at, updated_at)
+          (id, name, type, base_url, api_key, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `
-      ).run(id, input.name, input.type, input.baseUrl ?? null, apiKeyRef, now, now)
+      ).run(id, input.name, input.type, input.baseUrl ?? null, apiKeyObf, now, now)
 
       // Automatically populate built-in models
       const defs = AI_PROVIDER_DEFAULTS[input.type]
@@ -147,7 +143,6 @@ async function createProvider(input: ProviderCreateInput): Promise<{ id: string 
       }
     })()
   } catch (err) {
-    if (apiKeyRef) secretsStore.delete(apiKeyRef)
     throw err
   }
 
@@ -177,15 +172,12 @@ async function updateProvider(id: string, patch: ProviderUpdateInput): Promise<v
     }
   }
 
-  let newApiKeyRef = row.api_key_ref
+  let newApiKey = row.api_key
   if (patch.apiKey !== undefined) {
     if (patch.apiKey === '') {
-      if (row.api_key_ref) secretsStore.delete(row.api_key_ref)
-      newApiKeyRef = null
+      newApiKey = null
     } else {
-      const ref = row.api_key_ref ?? `ai.key.${id}`
-      secretsStore.set(ref, patch.apiKey)
-      newApiKeyRef = ref
+      newApiKey = obfuscate(patch.apiKey)
     }
   }
 
@@ -195,11 +187,11 @@ async function updateProvider(id: string, patch: ProviderUpdateInput): Promise<v
     UPDATE ai_provider SET
       name = COALESCE(?, name),
       base_url = COALESCE(?, base_url),
-      api_key_ref = ?,
+      api_key = ?,
       updated_at = ?
     WHERE id = ?
   `
-  ).run(patch.name ?? null, patch.baseUrl ?? null, newApiKeyRef, now, id)
+  ).run(patch.name ?? null, patch.baseUrl ?? null, newApiKey, now, id)
 
   if (row.type === 'ollama') {
     await syncOllamaModels(id, (patch.baseUrl ?? row.base_url) || undefined)
@@ -208,18 +200,8 @@ async function updateProvider(id: string, patch: ProviderUpdateInput): Promise<v
 
 function deleteProvider(id: string): void {
   const db = getGlobalDb()
-  const row = db.prepare('SELECT api_key_ref FROM ai_provider WHERE id = ?').get(id) as
-    | { api_key_ref: string | null }
-    | undefined
+  const row = db.prepare('SELECT id FROM ai_provider WHERE id = ?').get(id)
   if (!row) throw new IpcError('E_NOT_FOUND', `E_NOT_FOUND: provider ${id} not found`)
-
-  if (row.api_key_ref) {
-    try {
-      secretsStore.delete(row.api_key_ref)
-    } catch {
-      // ignore
-    }
-  }
 
   db.transaction(() => {
     // Determine all models belonging to this provider
@@ -386,7 +368,7 @@ async function testConnection(input: {
   try {
     let key = input.apiKey
     if (!key && input.providerId) {
-      key = getProviderDecryptedKey(input.providerId) ?? undefined
+      key = getProviderApiKey(input.providerId) ?? undefined
     }
 
     if (!input.baseUrl) {
@@ -466,7 +448,7 @@ export async function checkBalance(
       return { ok: false, message: 'Balance check not supported' }
     }
 
-    const key = getProviderDecryptedKey(providerId)
+    const key = getProviderApiKey(providerId)
     if (!key) {
       return { ok: false, message: 'API Key not configured' }
     }

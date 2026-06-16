@@ -86,7 +86,7 @@ function loadMd(rel: string): {
 
 import { getGlobalDb } from '../services/global-db'
 
-import { getProviderDecryptedKey } from '../settings/provider-key'
+import { getProviderApiKey } from '../settings/provider-key'
 
 interface ModelProviderRow {
   provider_id: string
@@ -153,7 +153,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
     throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on provider ${p.provider_id}`)
   }
 
-  const apiKey = p.provider_type === 'ollama' ? null : getProviderDecryptedKey(p.provider_id)
+  const apiKey = p.provider_type === 'ollama' ? null : getProviderApiKey(p.provider_id)
   const hasKey = apiKey != null && apiKey.length > 0
   logger().info('ai', {
     msg: '[resolveProfile] resolved',

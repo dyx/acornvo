@@ -8,6 +8,7 @@ export interface ProviderConfigModel {
 
 export interface ProviderConfig {
   type: AiProviderKind
+  defaultName: string
   requiresApiKey: boolean
   apiKeyHelpUrl?: string
   testConnectionPath?: string
@@ -19,6 +20,7 @@ export interface ProviderConfig {
 export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig>> = {
   deepseek: {
     type: 'deepseek',
+    defaultName: 'DeepSeek',
     requiresApiKey: true,
     apiKeyHelpUrl: 'https://platform.deepseek.com/api_keys',
     testConnectionPath: '/models',
@@ -31,12 +33,14 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig
   },
   'openai-compatible': {
     type: 'openai-compatible',
+    defaultName: 'OpenAI API',
     requiresApiKey: true,
     testConnectionPath: '',
     models: []
   },
   openrouter: {
     type: 'openrouter',
+    defaultName: 'OpenRouter',
     requiresApiKey: true,
     apiKeyHelpUrl: 'https://openrouter.ai/workspaces/default/keys',
     testConnectionPath: '/models',
@@ -46,6 +50,7 @@ export const AI_PROVIDER_DEFAULTS: Partial<Record<AiProviderKind, ProviderConfig
   },
   ollama: {
     type: 'ollama',
+    defaultName: 'Ollama',
     requiresApiKey: false,
     testConnectionPath: '/api/tags',
     baseUrl: 'http://localhost:11434',

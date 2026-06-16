@@ -13,18 +13,14 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (ns, key)
 );
-CREATE TABLE IF NOT EXISTS settings_secrets (
-  key TEXT PRIMARY KEY,
-  encrypted_value BLOB NOT NULL,
-  updated_at TEXT NOT NULL
-);
+
 
 CREATE TABLE IF NOT EXISTS ai_provider (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   type TEXT NOT NULL,
   base_url TEXT,
-  api_key_ref TEXT,
+  api_key TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

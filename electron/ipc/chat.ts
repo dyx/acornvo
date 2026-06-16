@@ -14,7 +14,7 @@ import { IpcError } from '../../shared/ipc-contract'
 import { type ResolvedProfile } from '../ai/model-factory'
 import { writeUsage } from '../ai/usage'
 
-import { getProviderDecryptedKey } from '../settings/provider-key'
+import { getProviderApiKey } from '../settings/provider-key'
 import { getGlobalDb } from '../services/global-db'
 import { settingsStore } from '../settings/store'
 
@@ -69,7 +69,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
 
   if (!p) throw new IpcError('E_MISSING_PROFILE', `model not found: ${id}`)
 
-  const apiKey = p.provider_type === 'ollama' ? null : getProviderDecryptedKey(p.provider_id)
+  const apiKey = getProviderApiKey(p.provider_id)
   return {
     id: p.provider_id,
     provider: p.provider_type as ResolvedProfile['provider'],

@@ -40,7 +40,7 @@ function listSessionsWithCheckpoints(): ThreadCandidate[] {
 
 import { getGlobalDb } from '../services/global-db'
 
-import { getProviderDecryptedKey } from '../settings/provider-key'
+import { getProviderApiKey } from '../settings/provider-key'
 
 function loadProfile(modelId: string): ResolvedProfile | null {
   const db = getGlobalDb()
@@ -64,7 +64,7 @@ function loadProfile(modelId: string): ResolvedProfile | null {
     provider: row.provider as ResolvedProfile['provider'],
     model: row.db_model_id,
     dbModelId: modelId,
-    apiKey: row.provider === 'ollama' ? null : getProviderDecryptedKey(row.provider_id),
+    apiKey: row.provider === 'ollama' ? null : getProviderApiKey(row.provider_id),
     baseUrl: row.base_url ?? undefined
   }
 }

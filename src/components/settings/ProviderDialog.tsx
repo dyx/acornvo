@@ -2,7 +2,7 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { XIcon, ExternalLinkIcon, CheckCircleIcon, XCircleIcon, Loader2Icon } from 'lucide-react'
+import { XIcon, ExternalLinkIcon, CheckCircleIcon, XCircleIcon, Loader2Icon, EyeIcon, EyeOffIcon } from 'lucide-react'
 import { useProvidersStore } from '@/stores/providers'
 import type {
   AiProvider,
@@ -40,7 +40,7 @@ function initialState(provider: AiProvider | null): FormState {
   if (!provider) {
     const defs = AI_PROVIDER_DEFAULTS['deepseek']
     return {
-      name: '',
+      name: defs?.defaultName ?? 'DeepSeek',
       type: 'deepseek',
       baseUrl: defs?.baseUrl ?? '',
       apiKey: ''
@@ -60,6 +60,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
   const update = useProvidersStore((s) => s.updateProvider)
   const [form, setForm] = useState<FormState>(() => initialState(provider))
   const [error, setError] = useState<string | null>(null)
+  const [showApiKey, setShowApiKey] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
@@ -76,7 +77,11 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
     setForm((f) => {
       const next = { ...f, type: p }
       if (!provider) {
+        const prevDefs = AI_PROVIDER_DEFAULTS[f.type]
         const defs = AI_PROVIDER_DEFAULTS[p]
+        if (!f.name || f.name === prevDefs?.defaultName) {
+          next.name = defs?.defaultName ?? p
+        }
         if (defs) {
           next.baseUrl = defs.baseUrl ?? ''
         } else {
@@ -227,13 +232,23 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
                 </a>
               )}
             </div>
-            <Input
-              type="password"
-              autoComplete="off"
-              value={form.apiKey}
-              placeholder={provider ? t('settings.ai.apiKeyKeepEmpty') : ''}
-              onChange={(e) => set('apiKey', e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                type={showApiKey ? 'text' : 'password'}
+                autoComplete="off"
+                value={form.apiKey}
+                placeholder={provider ? t('settings.ai.apiKeyKeepEmpty') : ''}
+                onChange={(e) => set('apiKey', e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         </div>
         {error && (

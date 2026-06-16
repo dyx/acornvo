@@ -1,36 +1,29 @@
 // electron/settings/provider-key.ts
 import { getGlobalDb } from '../services/global-db'
-import { secretsStore } from './secrets'
+import { deobfuscate } from './obfuscate'
 import { logger } from '../obs/logger'
 
-export function getProviderDecryptedKey(providerId: string): string | null {
+export function getProviderApiKey(providerId: string): string | null {
   const db = getGlobalDb()
   const row = db
-    .prepare('SELECT api_key_ref FROM ai_provider WHERE id = ?')
-    .get(providerId) as { api_key_ref: string | null } | undefined
+    .prepare('SELECT api_key FROM ai_provider WHERE id = ?')
+    .get(providerId) as { api_key: string | null } | undefined
   if (!row) {
-    logger().warn('settings', { msg: '[getProviderDecryptedKey] provider row not found', meta: { providerId } })
+    logger().warn('settings', { msg: '[getProviderApiKey] provider row not found', meta: { providerId } })
     return null
   }
-  if (!row.api_key_ref) {
-    logger().debug('settings', { msg: '[getProviderDecryptedKey] no api_key_ref set', meta: { providerId } })
+  if (!row.api_key) {
+    logger().debug('settings', { msg: '[getProviderApiKey] no api_key set', meta: { providerId } })
     return null
   }
-  try {
-    const key = secretsStore.get(row.api_key_ref)
-    const hasKey = key != null && key.length > 0
-    if (!hasKey) {
-      logger().warn('settings', {
-        msg: '[getProviderDecryptedKey] keychain returned empty/null for ref',
-        meta: { providerId, ref: row.api_key_ref }
-      })
-    }
-    return key
-  } catch (err) {
-    logger().error('settings', {
-      msg: '[getProviderDecryptedKey] keychain decryption failed',
-      meta: { providerId, ref: row.api_key_ref, error: (err as Error)?.message?.slice(0, 300) }
+  
+  const key = deobfuscate(row.api_key)
+  const hasKey = key != null && key.length > 0
+  if (!hasKey) {
+    logger().warn('settings', {
+      msg: '[getProviderApiKey] deobfuscation returned empty/null',
+      meta: { providerId }
     })
-    return null
   }
+  return key
 }
