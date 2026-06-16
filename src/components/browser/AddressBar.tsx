@@ -2,7 +2,7 @@
 import type { JSX } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as Dialog from '@radix-ui/react-dialog'
+import { Dialog } from 'radix-ui'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/settings'

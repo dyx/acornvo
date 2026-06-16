@@ -57,8 +57,6 @@
     "@fontsource/lora": "^5.2.8",
     "@fontsource/noto-sans-sc": "^5.2.9",
     "@fontsource/nunito": "^5.2.7",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-toast": "^1.2.15",
     "@tailwindcss/postcss": "^4.2.4",
     "@tanstack/react-virtual": "^3.13.24",
     "@types/archiver": "^7.0.0",
