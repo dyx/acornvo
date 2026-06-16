@@ -25,7 +25,9 @@
     "editor": "编辑器",
     "browser": "拾果",
     "chat": "松语",
-    "settings": "设置"
+    "settings": "设置",
+    "expand": "展开",
+    "collapse": "收起"
   },
   "picker": {
     "brand_name": "松言果语",

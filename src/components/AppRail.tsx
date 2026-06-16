@@ -1,8 +1,7 @@
-// src/components/AppRail.tsx
 import type { JSX } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Globe, Warehouse, MessageSquareQuote, Bolt as SettingsIcon, Trees } from 'lucide-react'
+import { Globe, Warehouse, MessageSquareQuote, Bolt as SettingsIcon, Trees, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
 import { useRootStore } from '@/stores/root'
 import { GroveSwitcher } from './GroveSwitcher'
@@ -99,9 +98,14 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
   const location = useLocation()
   const isActive = location.pathname.startsWith(entry.match)
   const toggleSidebar = useRootStore((s) => s.toggleSidebar)
+  const sidebarOpen = useRootStore((s) => s.sidebarOpen)
   
+  const tooltipLabel = (isActive && !entry.bottom) 
+    ? (sidebarOpen ? t('nav.collapse') : t('nav.expand'))
+    : label
+
   const baseCls =
-    'flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors cursor-pointer'
+    'flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors cursor-pointer relative group'
 
   let content: JSX.Element | null = null
   if (entry.disabled || requireGrove) {
@@ -121,14 +125,21 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
       <NavLink
         to={entry.to}
         className={`${baseCls} ${activeCls}`}
-        onDoubleClick={(e) => {
-          e.preventDefault()
-          if (!entry.bottom) {
+        onClick={(e) => {
+          if (isActive && !entry.bottom) {
+            e.preventDefault()
             toggleSidebar()
           }
         }}
       >
-        <entry.Icon size={20} />
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive && !entry.bottom ? 'group-hover:opacity-0' : 'opacity-100'}`}>
+          <entry.Icon size={20} />
+        </div>
+        {!entry.bottom && (
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
+            {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+          </div>
+        )}
       </NavLink>
     )
   }
@@ -139,7 +150,7 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
         {content}
       </TooltipTrigger>
       <TooltipContent side="right">
-        {entry.disabled || requireGrove ? requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon') : label}
+        {entry.disabled || requireGrove ? requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon') : tooltipLabel}
       </TooltipContent>
     </Tooltip>
   )

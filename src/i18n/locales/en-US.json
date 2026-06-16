@@ -24,7 +24,9 @@
     "editor": "Editor",
     "browser": "Browser",
     "chat": "Chat",
-    "settings": "Settings"
+    "settings": "Settings",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "picker": {
     "brand_name": "Acornvo",
