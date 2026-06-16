@@ -35,7 +35,7 @@ html {
   --font-sans: var(--font-ui-text, 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif);
   --font-mono: var(--font-editor-code, 'JetBrains Mono', 'SF Mono', Menlo, monospace);
   --font-chat: var(--font-chat-text, var(--font-sans));
-  --font-review: var(--font-review-text, 'Nunito', 'LXGW WenKai', sans-serif);
+  --font-review: var(--font-review-text, 'Nunito', 'Source Han Sans SC', 'Source Han Sans CN', 'Noto Sans CJK SC', sans-serif);
 
   /* shadcn/ui mappings to acorn theme */
   --color-background: var(--color-paper);

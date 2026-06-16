@@ -10,6 +10,6 @@
     "text": ["Inter", "\"Noto Sans SC\"", "-apple-system", "BlinkMacSystemFont", "\"Helvetica Neue\"", "\"PingFang SC\"", "sans-serif"]
   },
   "review": {
-    "text": ["Nunito", "\"LXGW WenKai\"", "sans-serif"]
+    "text": ["Nunito", "\"Source Han Sans SC\"", "\"Source Han Sans CN\"", "\"Noto Sans CJK SC\"", "sans-serif"]
   }
 }

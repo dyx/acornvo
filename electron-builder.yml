@@ -43,6 +43,7 @@ linux:
   target: [AppImage]
 appImage:
   artifactName: ${name}-${version}.${ext}
+compression: maximum
 npmRebuild: false
 publish:
   provider: generic

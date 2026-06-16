@@ -36,7 +36,6 @@ import '@fontsource/noto-sans-sc/500.css'
 import '@fontsource/noto-sans-sc/700.css'
 import '@fontsource/nunito/400.css'
 import '@fontsource/nunito/600.css'
-import 'lxgw-wenkai-webfont/style.css'
 import './index.css'
 import fontsConfig from '@/config/fonts.json'
 
