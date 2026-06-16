@@ -33,7 +33,7 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  perMachine: true
+  perMachine: false
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
