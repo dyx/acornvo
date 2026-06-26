@@ -194,7 +194,8 @@ export function createJobStore(db: Database.Database, deps: JobStoreDeps = {}): 
       params.push(filter.status)
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
-    const orderCol = filter.orderBy ?? 'next_run_at'
+    const ALLOWED_ORDER = new Set(['next_run_at', 'created_at', 'updated_at', 'attempts'])
+    const orderCol = ALLOWED_ORDER.has(filter.orderBy as string) ? filter.orderBy! : 'next_run_at'
     const total = (
       db.prepare(`SELECT COUNT(*) AS n FROM jobs ${whereSql}`).get(...params) as { n: number }
     ).n

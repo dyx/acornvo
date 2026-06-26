@@ -31,8 +31,8 @@ function makeService(): TurndownService {
     }
   })
 
-  td.addRule('removeScriptStyleNoscript', {
-    filter: ['script', 'style', 'noscript'] as TurndownService.Filter,
+  td.addRule('removeDangerousTags', {
+    filter: ['script', 'style', 'noscript', 'iframe', 'object', 'embed', 'svg', 'math', 'form'] as TurndownService.Filter,
     replacement: () => ''
   })
   td.addRule('removeComments', {
@@ -83,6 +83,9 @@ function stripUnwantedAttributes(html: string): string {
   s = s.replace(/\sdata-[a-z0-9-]+="[^"]*"/gi, '')
   s = s.replace(/\sstyle="[^"]*"/gi, '')
   s = s.replace(/\ssrcset="[^"]*"/gi, '')
+  s = s.replace(/\son\w+="[^"]*"/gi, '')
+  s = s.replace(/\son\w+='[^']*'/gi, '')
+  s = s.replace(/\son\w+=(?=\s|>)/gi, '')
   s = s.replace(new RegExp(`${PROTECT}="(language-[\\w+-]+)"`, 'gi'), 'class="$1"')
   return s
 }

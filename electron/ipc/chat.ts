@@ -316,7 +316,13 @@ export function createChatHandlers(deps: ChatDeps) {
       if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
       
       if (opts?.editedArgs !== undefined) {
-        db.prepare('UPDATE tool_calls SET approved = 1, args_json = ? WHERE id = ?').run(JSON.stringify(opts.editedArgs), callId)
+        const safeArgs = opts.editedArgs
+        if (typeof safeArgs === 'object' && safeArgs !== null) {
+          if ('__proto__' in safeArgs || 'constructor' in safeArgs) {
+            throw new IpcError('E_INVALID_ARGS', 'invalid tool arguments')
+          }
+        }
+        db.prepare('UPDATE tool_calls SET approved = 1, args_json = ? WHERE id = ?').run(JSON.stringify(safeArgs), callId)
       } else {
         db.prepare('UPDATE tool_calls SET approved = 1 WHERE id = ?').run(callId)
       }

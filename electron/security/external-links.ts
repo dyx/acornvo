@@ -13,15 +13,22 @@ function isInternalUrl(url: string): boolean {
   )
 }
 
+const HTTP_ONLY = /^https?:\/\//i
+
+export function safeOpenExternal(url: string): void {
+  if (!HTTP_ONLY.test(url)) {
+    logger().warn('security', { msg: 'blocked non-http openExternal', meta: { url } })
+    return
+  }
+  void shell.openExternal(url).catch((err) =>
+    logger().warn('security', { msg: 'shell.openExternal failed', meta: { url, error: String(err) } })
+  )
+}
+
 export function installExternalLinkGuards(win: BrowserWindow): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (!isInternalUrl(url)) {
-      void shell.openExternal(url).catch((err) => {
-        logger().warn('security', {
-          msg: 'shell.openExternal failed',
-          meta: { url, error: String(err) }
-        })
-      })
+      safeOpenExternal(url)
     }
     return { action: 'deny' }
   })
@@ -29,12 +36,7 @@ export function installExternalLinkGuards(win: BrowserWindow): void {
   win.webContents.on('will-navigate', (event, url) => {
     if (!isInternalUrl(url)) {
       event.preventDefault()
-      void shell.openExternal(url).catch((err) => {
-        logger().warn('security', {
-          msg: 'shell.openExternal failed',
-          meta: { url, error: String(err) }
-        })
-      })
+      safeOpenExternal(url)
     }
   })
 }

@@ -60,26 +60,32 @@ export function buildSlug(input: BuildSlugInput): string {
     return `clip-${formatDate(clippedAt)}-${hash}`
   }
 
+  let stem: string
+
   if (CJK_RE.test(trimmedTitle)) {
     // Chinese branch — jieba first 3 meaningful words + hash
     // Filter out tokens that are only whitespace or punctuation (e.g. dashes,
     // spaces that jieba produces around Latin text in mixed CJK titles).
     const words = jieba().cut(trimmedTitle).filter(isMeaningfulWord)
     const first3 = words.slice(0, 3)
-    const stem = first3.length > 0 ? first3.join('-') : 'clip'
-    return `${stem}-${hash}`
+    stem = first3.length > 0 ? first3.join('-') : 'clip'
+  } else {
+    // English branch — slugify (≤50 chars) + hash
+    stem = slugifyLib(trimmedTitle, { lower: true, strict: true })
+    if (stem.length > 50) {
+      // Truncate at word boundary when possible
+      const cut = stem.lastIndexOf('-', 50)
+      stem = cut > 0 ? stem.slice(0, cut) : stem.slice(0, 50)
+      // If truncation left a trailing dash, remove it
+      stem = stem.replace(/-$/, '')
+    }
   }
 
-  // English branch — slugify (≤50 chars) + hash
-  let slugged = slugifyLib(trimmedTitle, { lower: true, strict: true })
-  if (slugged.length > 50) {
-    // Truncate at word boundary when possible
-    const cut = slugged.lastIndexOf('-', 50)
-    slugged = cut > 0 ? slugged.slice(0, cut) : slugged.slice(0, 50)
-    // If truncation left a trailing dash, remove it
-    slugged = slugged.replace(/-$/, '')
-  }
-  return `${slugged}-${hash}`
+  // Safety fallback: strip slashes and literal dots to avoid path traversal
+  stem = stem.replace(/[\\/]+/g, '-').replace(/\.\./g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
+  if (!stem) stem = 'clip'
+
+  return `${stem}-${hash}`
 }
 
 function formatDate(isoStr?: string): string {

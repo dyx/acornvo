@@ -1,6 +1,7 @@
 // electron/browser/contents.ts
 import { WebContentsView, BrowserWindow, session, shell } from 'electron'
 import type { TabId, TabPatch, TabStateChangedPayload } from '@shared/browser-types'
+import { safeOpenExternal } from '../security/external-links'
 
 export interface CreateTabViewOpts {
   url: string
@@ -87,6 +88,18 @@ export function attachTabEvents(
   webContents.on('did-navigate', onDidNavigate)
   webContents.on('did-navigate-in-page', onDidNavigateInPage)
 
+  const ALLOWED_NAV_SCHEMES = new Set(['http:', 'https:', 'about:'])
+  const onWillNavigate = (e: Electron.Event, url: string): void => {
+    try {
+      if (!ALLOWED_NAV_SCHEMES.has(new URL(url).protocol)) {
+        e.preventDefault()
+      }
+    } catch {
+      e.preventDefault()
+    }
+  }
+  webContents.on('will-navigate', onWillNavigate)
+
   const onDomReady = (): void => {
     // Inject DOM-based corner masks. This is much more reliable than CSS clip-path on html,
     // which fails on sites (like Zhihu) that manipulate html/body heights or overflows.
@@ -150,6 +163,7 @@ export function attachTabEvents(
     webContents.off('page-favicon-updated', onFaviconUpdated)
     webContents.off('did-navigate', onDidNavigate)
     webContents.off('did-navigate-in-page', onDidNavigateInPage)
+    webContents.off('will-navigate', onWillNavigate)
     webContents.off('dom-ready', onDomReady)
   }
 }
@@ -192,7 +206,7 @@ export function attachWindowOpenHandler(
       ctx.notifyOpenUrl(url)
       return { action: 'deny' }
     }
-    void shell.openExternal(url).catch(() => {})
+    safeOpenExternal(url)
     return { action: 'deny' }
   })
 }

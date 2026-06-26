@@ -13,7 +13,8 @@ export function buildFtsQuery(q: string): string {
 
   // Quoted phrase passthrough
   if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 3) {
-    return trimmed
+    const phrase = trimmed.slice(1, -1)
+    return `"${escapeToken(phrase)}"`
   }
 
   // Segment → drop empties → drop stopwords → drop tokens that are pure punctuation

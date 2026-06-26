@@ -14,7 +14,21 @@ import { BROWSER_SESSION_PARTITION } from '../browser/init'
 
 // --- pure helpers (unit-tested) ---
 export const newTabId = (): TabId => `tab-${crypto.randomUUID()}`
-export const resolveCreateUrl = (url: string | undefined): string => url ?? 'about:blank'
+
+const ALLOWED_NAV_SCHEMES = new Set(['http:', 'https:', 'about:'])
+
+export const resolveCreateUrl = (url: string | undefined): string => {
+  if (!url || url === 'about:blank') return 'about:blank'
+  try {
+    const { protocol } = new URL(url)
+    if (!ALLOWED_NAV_SCHEMES.has(protocol)) {
+      throw new Error(`disallowed scheme: ${protocol}`)
+    }
+    return url
+  } catch (e) {
+    throw new Error(`invalid url: ${url}`)
+  }
+}
 
 
 
@@ -90,7 +104,12 @@ export const browserHandlers: H = {
         _hiddenTabId = null
       }
     }
-    void tab.view.webContents.loadURL(url)
+    try {
+      const resolved = resolveCreateUrl(url)
+      void tab.view.webContents.loadURL(resolved)
+    } catch {
+      // Invalid or disallowed url
+    }
   },
   reload(id) {
     getManager().get(id)?.view.webContents.reload()

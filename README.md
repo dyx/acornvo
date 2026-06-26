@@ -103,20 +103,20 @@ Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com
 >
 > **解决方法：通过系统设置**
 > 1. 正常双击打开应用，看到警告提示后点击“完成”。
-     >
-     >    <img src="./docs/assets/screenshot-100.png" width="250" alt="macOS 安全性设置1" />
+>
+> <img src="./docs/assets/screenshot-100.png" width="250" alt="macOS 安全性设置1" />
 >
 > 2. 打开 macOS 的 **“系统设置” -> “隐私与安全性”**，向下滚动找到“安全性”部分。你会看到提示“已阻止 Acornvo...”，点击旁边的 **“仍要打开”** 按钮即可（见下图）。
-     >
-     >    <img src="./docs/assets/screenshot-101.png" width="500" alt="macOS 安全性设置2" />
+>
+> <img src="./docs/assets/screenshot-101.png" width="500" alt="macOS 安全性设置2" />
 >
 > 3. 会出现一个新的弹窗，选择“仍要打开”。之后输入密码即可。
-     >
-     >    <img src="./docs/assets/screenshot-102.png" width="250" alt="macOS 安全性设置3" />
+>
+>    <img src="./docs/assets/screenshot-102.png" width="250" alt="macOS 安全性设置3" />
 
 ### 2. AI 模型供应商配置
 
-安装完成后，你需要配置大语言模型 (LLM) 才能使用「理果」和「松语」的核心功能。点击应用左下角的**设置图标**，进入**“模型配置”**：
+安装完成后，你需要配置大语言模型 (LLM) 才能使用「理果」和「松语」的核心功能。点击应用左下角的**设置图标**，进入**模型配置**：
 
 - **DeepSeek**：输入你的 API Key 即可。
 - **Ollama (本地模型)**：如果你希望完全离线运行，请先在本地安装 [Ollama](https://ollama.com/) 并下载模型。在 Acornvo 中选择 Ollama 服务商即可。

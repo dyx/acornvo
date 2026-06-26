@@ -4,6 +4,7 @@ import { BrowserWindow } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
 import { join } from 'node:path'
+import { safeResolve } from '../services/path-safety'
 import { stat } from 'node:fs/promises'
 import { logger } from '../obs/logger'
 import { dbHandlers } from './db'
@@ -107,7 +108,7 @@ const clipperPipeline = createPipeline({
   async writeAtomic(path, data) {
     const root = dbService.getCurrentGrovePath()
     if (!root) throw new IpcError('E_NOT_FOUND', 'no grove opened')
-    const abs = join(root, path)
+    const abs = safeResolve(root, path)
     try {
       await stat(abs)
       throw Object.assign(new Error(`${path} already exists`), { code: 'EEXIST' })

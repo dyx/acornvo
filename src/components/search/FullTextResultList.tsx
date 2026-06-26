@@ -9,6 +9,21 @@ interface ResultItem {
   heading_path: string
 }
 
+function renderSnippet(body: string): JSX.Element {
+  const parts: JSX.Element[] = []
+  const re = /<mark>([\s\S]*?)<\/mark>/g
+  let last = 0
+  let m: RegExpExecArray | null
+  let i = 0
+  while ((m = re.exec(body)) !== null) {
+    if (m.index > last) parts.push(<span key={i++}>{body.slice(last, m.index)}</span>)
+    parts.push(<mark key={i++} className="rounded bg-primary/20 px-0.5">{m[1]}</mark>)
+    last = m.index + m[0].length
+  }
+  if (last < body.length) parts.push(<span key={i++}>{body.slice(last)}</span>)
+  return <>{parts}</>
+}
+
 export function FullTextResultList({
   items,
   q,
@@ -55,11 +70,9 @@ export function FullTextResultList({
               </span>
             </div>
             <div className="text-xs text-muted-foreground truncate">{it.summary.path}</div>
-            <div
-              className="mt-2 text-sm leading-relaxed text-foreground"
-              // eslint-disable-next-line react/no-danger
-              dangerouslySetInnerHTML={{ __html: it.body }}
-            />
+            <div className="mt-2 text-sm leading-relaxed text-foreground">
+              {renderSnippet(it.body)}
+            </div>
           </li>
         ))}
       </ul>

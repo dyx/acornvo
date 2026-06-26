@@ -79,6 +79,18 @@ interface FtsHitRow {
   rank: number
 }
 
+function escapeForSnippet(s: string): string {
+  const OPEN = '\u0000MARK_OPEN\u0000'
+  const CLOSE = '\u0000MARK_CLOSE\u0000'
+  return s
+    .replace(/<mark>/g, OPEN)
+    .replace(/<\/mark>/g, CLOSE)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(new RegExp(OPEN, 'g'), '<mark>')
+    .replace(new RegExp(CLOSE, 'g'), '</mark>')
+}
 
 export function fullText(
   db: Database.Database,
@@ -142,7 +154,7 @@ export function fullText(
     .map((hit) => {
       const row = byPath.get(hit.path)
       if (!row) return null
-      return { summary: rowToFileSummary(row), body: hit.body, heading_path: hit.heading_path }
+      return { summary: rowToFileSummary(row), body: escapeForSnippet(hit.body), heading_path: hit.heading_path }
     })
     .filter((x): x is { summary: FileSummary; body: string; heading_path: string } => x !== null)
 
