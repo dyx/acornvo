@@ -45,7 +45,7 @@ import { getProviderApiKey } from '../settings/provider-key'
 function loadProfile(modelId: string): ResolvedProfile | null {
   const db = getGlobalDb()
   const row = db.prepare(`
-    SELECT m.name as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref
+    SELECT m.name as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref, m.context_window
     FROM ai_model m
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
@@ -55,6 +55,7 @@ function loadProfile(modelId: string): ResolvedProfile | null {
     provider: string
     base_url: string | null
     api_key_ref: string | null
+    context_window: number | null
   } | undefined
 
   if (!row) return null
@@ -65,7 +66,8 @@ function loadProfile(modelId: string): ResolvedProfile | null {
     model: row.db_model_id,
     dbModelId: modelId,
     apiKey: row.provider === 'ollama' ? null : getProviderApiKey(row.provider_id),
-    baseUrl: row.base_url ?? undefined
+    baseUrl: row.base_url ?? undefined,
+    contextWindow: row.context_window ?? 128000
   }
 }
 

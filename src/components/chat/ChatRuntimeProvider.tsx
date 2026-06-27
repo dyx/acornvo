@@ -142,7 +142,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       if (mappedRole === 'assistant') {
         const lastResult = result[result.length - 1];
-        if (lastResult && lastResult.role === 'assistant') {
+        if (lastResult && lastResult.role === 'assistant' && (lastResult as any).status?.type === 'running') {
           (lastResult.content as any[]).push(...content);
           (lastResult as any).status = statusMap[msg.status ?? 'done'] || { type: 'complete', reason: 'unknown' };
         } else {

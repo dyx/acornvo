@@ -40,7 +40,8 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
       p.id as provider_id,
       p.type as provider_type,
       p.base_url,
-      m.name
+      m.name,
+      m.context_window
     FROM ai_model m
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
@@ -54,7 +55,8 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
         p.type as provider_type,
         p.base_url,
         m.id as db_model_id,
-        m.name
+        m.name,
+        m.context_window
       FROM ai_model m
       JOIN ai_provider p ON m.provider_id = p.id
       WHERE m.enabled = 1
@@ -76,7 +78,8 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
     model: p.name,
     apiKey,
     baseUrl: p.base_url ?? undefined,
-    dbModelId: id!
+    dbModelId: id!,
+    contextWindow: p.context_window ?? 128000
   }
 }
 

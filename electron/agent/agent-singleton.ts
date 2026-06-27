@@ -5,6 +5,10 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { agentTools } from './tools'
 import { buildChatModel, type ResolvedProfile } from '../ai/model-factory'
 import { dbService } from '../services/db'
+import { microcompactMiddleware } from './middleware/microcompact'
+import { createReactiveGuard } from './middleware/reactive-guard'
+import { createCompactionObserver } from './middleware/compaction-observer'
+import { estimateMessagesTokens } from './middleware/token-estimator'
 
 type AgentInstance = ReturnType<typeof createAgent>
 
@@ -53,10 +57,14 @@ export function getAgentBuilder(): SingletonHandle {
         }
       }
       
+      const contextWindow = profile.contextWindow ?? 128000
+
       const summarizer = summarizationMiddleware({
         model: finalModel,
-        trigger: { messages: 20 },
-        keep: { messages: 6 }
+        trigger: { tokens: Math.floor(contextWindow * 0.8) },
+        keep: { tokens: Math.floor(contextWindow * 0.25) },
+        tokenCounter: estimateMessagesTokens,
+        trimTokensToSummarize: Math.floor(contextWindow * 0.15)
       })
       
       const searchLimiter = toolCallLimitMiddleware({
@@ -65,10 +73,13 @@ export function getAgentBuilder(): SingletonHandle {
         exitBehavior: 'continue'
       })
       
+      const observer = createCompactionObserver(contextWindow)
+      const reactiveGuard = createReactiveGuard(contextWindow)
+
       return createAgent({
         model: finalModel,
         tools: agentTools as any,
-        middleware: [hitl, summarizer, searchLimiter],
+        middleware: [hitl, microcompactMiddleware, observer, reactiveGuard, summarizer, searchLimiter],
         checkpointer: cp
       }) as any
     }

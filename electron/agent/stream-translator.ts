@@ -3,9 +3,7 @@ import {
   AIMessage,
   AIMessageChunk,
   ToolMessage,
-  isAIMessage,
-  isAIMessageChunk,
-  isToolMessage
+  isAIMessageChunk
 } from '@langchain/core/messages'
 import { normalizeLLMError } from '../ai/normalize-errors'
 
@@ -201,8 +199,10 @@ export async function translateStreamEntry(
       const node = nodes[nodeKey]
       const messages: unknown[] = node?.messages ?? []
       for (const m of messages) {
-        if (isAIMessage(m as never)) await handleAssistantMessage(deps, m as AIMessage)
-        else if (isToolMessage(m as never)) await handleToolMessage(deps, m as ToolMessage)
+        if (AIMessage.isInstance(m) && (nodeKey === 'model' || nodeKey === 'agent')) {
+          await handleAssistantMessage(deps, m as AIMessage)
+        }
+        else if (ToolMessage.isInstance(m)) await handleToolMessage(deps, m as ToolMessage)
       }
     }
     return

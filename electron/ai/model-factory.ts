@@ -12,6 +12,7 @@ export interface ResolvedProfile {
   apiKey: string | null
   baseUrl?: string
   dbModelId: string
+  contextWindow: number
 }
 
 export function buildChatModel(
@@ -51,6 +52,24 @@ export function buildChatModel(
     }
   ]
 
+  const customFetch = async (url: any, init?: RequestInit) => {
+    if (init?.body && typeof init.body === 'string') {
+      try {
+        const parsed = JSON.parse(init.body)
+        logger().debug('ai', {
+          msg: `[API PAYLOAD INTERCEPT] -> ${url}`,
+          meta: {
+            messages: JSON.stringify(parsed.messages, null, 2),
+            model: parsed.model
+          }
+        })
+      } catch (e) {
+        // ignore JSON parse error
+      }
+    }
+    return fetch(url, init)
+  }
+
   let model: BaseChatModel
   switch (profile.provider) {
     case 'openai-compatible':
@@ -63,7 +82,7 @@ export function buildChatModel(
         timeout: 120_000,
         maxRetries: 2,
         streamUsage: true,
-        configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+        configuration: { fetch: customFetch, baseURL: profile.baseUrl || undefined }
       }) as unknown as BaseChatModel
       break
     case 'openrouter':
@@ -74,7 +93,8 @@ export function buildChatModel(
         temperature,
         maxTokens,
         maxRetries: 2,
-        baseURL: profile.baseUrl || undefined
+        baseURL: profile.baseUrl || undefined,
+        configuration: { fetch: customFetch }
       }) as unknown as BaseChatModel
       break
     case 'deepseek':
@@ -87,7 +107,7 @@ export function buildChatModel(
         timeout: 120_000,
         maxRetries: 2,
         streamUsage: true,
-        configuration: profile.baseUrl ? { baseURL: profile.baseUrl } : undefined
+        configuration: { fetch: customFetch, baseURL: profile.baseUrl || undefined }
       }) as unknown as BaseChatModel
       break
     case 'ollama':

@@ -1,5 +1,5 @@
 // electron/browser/contents.ts
-import { WebContentsView, BrowserWindow, session, shell } from 'electron'
+import { WebContentsView, BrowserWindow, session } from 'electron'
 import type { TabId, TabPatch, TabStateChangedPayload } from '@shared/browser-types'
 import { safeOpenExternal } from '../security/external-links'
 

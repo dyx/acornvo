@@ -234,10 +234,10 @@ export async function runAgent({
   const newMessages: BaseMessage[] = [
     new SystemMessage({ content: deps.systemPrompt, id: "system-prompt" })
   ]
+  newMessages.push(new HumanMessage({ content: userText }))
   if (preUserBlock) {
     newMessages.push(new HumanMessage({ content: preUserBlock, id: "attachment-context" }))
   }
-  newMessages.push(new HumanMessage({ content: userText }))
 
   try {
     console.log('[runAgent] agent.stream() invoked sid=%s', sessionId)
