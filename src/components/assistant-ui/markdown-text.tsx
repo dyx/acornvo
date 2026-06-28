@@ -17,14 +17,25 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { cn } from "@/lib/utils";
+import { defaultUrlTransform } from "react-markdown";
 
-const MarkdownTextImpl = () => {
+interface MarkdownTextProps {
+  className?: string;
+}
+
+const MarkdownTextImpl = (props: MarkdownTextProps) => {
   return (
     <MarkdownTextPrimitive
       remarkPlugins={[remarkGfm]}
-      className="aui-md"
+      className={cn("aui-md", props.className)}
       components={defaultComponents}
       smooth={true}
+      urlTransform={(value: string) => {
+        if (value.startsWith("acornvo-local://") || value.startsWith("file://")) {
+          return value;
+        }
+        return defaultUrlTransform(value);
+      }}
     />
   );
 };
@@ -145,9 +156,10 @@ const defaultComponents = memoizeMarkdownComponents({
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (onClick) onClick(e)
       if (e.defaultPrevented) return
-      if (!href) return
 
       e.preventDefault()
+
+      if (!href) return
 
       if (href.startsWith('http://') || href.startsWith('https://')) {
         ipc.shell.openExternal(href)
