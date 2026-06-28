@@ -202,7 +202,7 @@ export function Chat() {
   const shouldShowWarning = !displayModelId && !hasMessages
 
   return (
-    <ChatRuntimeProvider>
+    <ChatRuntimeProvider key={activeSessionId || 'empty'}>
       <TooltipProvider>
         <div className="flex h-full w-full flex-col bg-transparent" data-testid="chat-page-root">
           <div className="flex flex-1 overflow-hidden py-3 pr-3">

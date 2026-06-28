@@ -33,6 +33,8 @@ export interface TranslatorDeps {
   seenAiMessageIds: Set<string>
   reasoningState?: { startTime: number; duration?: number; isStandardProvider?: boolean }
   accumulatedText?: string
+  accumulatedReasoning?: string
+  finalUsage?: any
 }
 
 function alreadySeen(seen: Set<string>, msg: AIMessage): boolean {
@@ -59,11 +61,32 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   if (alreadySeen(deps.seenAiMessageIds, msg)) return
 
   const toolCalls = aiMessageToolCalls(msg)
-  let contentStr = typeof msg.content === 'string' ? msg.content : ''
-  const reasoning = msg.additional_kwargs?.reasoning_content
-  if (typeof reasoning === 'string' && reasoning) {
+  
+  // 1. Attempt to parse from standard LangChain API structures (string, array content blocks, additional_kwargs)
+  let contentStr = ''
+  let reasoningStr = ''
+
+  if (typeof msg.content === 'string') {
+    contentStr = msg.content
+  } else if (Array.isArray(msg.content)) {
+    for (const block of msg.content as any[]) {
+      if (block.type === 'text') contentStr += block.text || ''
+      else if (block.type === 'reasoning' || block.type === 'thinking') reasoningStr += block.text || block.reasoning || ''
+    }
+  }
+
+  if (!reasoningStr && msg.additional_kwargs?.reasoning_content) {
+    reasoningStr = msg.additional_kwargs.reasoning_content
+  }
+
+  // 2. Fallback to accumulated stream data if the final AIMessage lost it (due to provider chunk concat bugs)
+  if (!contentStr && deps.accumulatedText) contentStr = deps.accumulatedText
+  if (!reasoningStr && deps.accumulatedReasoning) reasoningStr = deps.accumulatedReasoning
+
+  // 3. Assemble the final output
+  if (typeof reasoningStr === 'string' && reasoningStr && !contentStr.includes('<think')) {
     const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
-    contentStr = `<think${durationAttr}>\n${reasoning}</think>\n\n${contentStr}`
+    contentStr = `<think${durationAttr}>\n${reasoningStr}</think>\n\n${contentStr}`
   } else if (contentStr.includes('<think')) {
     const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
     if (durationAttr) {
@@ -133,124 +156,117 @@ async function handleToolMessage(deps: TranslatorDeps, msg: ToolMessage): Promis
   }
 }
 
-export interface ActionRequest {
-  name: string
-  args: Record<string, unknown>
-  description?: string
-}
 
-export interface InterruptShape {
-  id?: string
-  value?: { actionRequests?: ActionRequest[] }
-  /** Pre-v1 / fallback shapes seen in other LangGraph builds. */
-  actionRequests?: ActionRequest[]
-  action_requests?: ActionRequest[]
-}
 
-/**
- * Scenario 5: interrupt resume needed.
- *
- * Each ActionRequest maps to one of the tool_calls on the immediately-prior
- * assistant message. We use the matching tool_call.id as `callId` so the
- * renderer can fold the approval bubble together with the eventual tool
- * result. `correspondingCallIds[i]` is the tool_call.id for action i — the
- * caller (runner.ts) knows that mapping; we don't try to recover it here.
- */
-export function emitInterrupt(
+export async function processMessages(
+  messages: AsyncIterable<any>,
   deps: TranslatorDeps,
-  interrupt: InterruptShape,
-  correspondingCallIds: string[] = []
-): void {
-  const reqs =
-    interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? []
-  reqs.forEach((action, i) => {
-    const args = (action.args ?? {}) as { reason?: unknown }
-    const callId = correspondingCallIds[i] ?? String(interrupt.id ?? '')
-    const tool =
-      action.name ??
-      (action as unknown as { action?: string; tool?: string }).action ??
-      (action as unknown as { tool?: string }).tool ??
-      ''
-    deps.emit({
-      type: 'tool.approval-needed',
-      callId,
-      tool,
-      args,
-      reason: typeof args.reason === 'string' ? args.reason : undefined
-    })
-  })
-}
-
-/**
- * Translate one LangGraph stream entry. `streamMode` was set to
- * ['updates', 'messages'] so each entry is a tuple `[mode, payload]`.
- */
-export async function translateStreamEntry(
-  deps: TranslatorDeps,
-  entry: unknown,
-  _modelName: string
+  modelName: string
 ): Promise<void> {
-  if (!Array.isArray(entry) || entry.length < 2) return
-  const [mode, payload] = entry as [string, unknown]
+  if (!messages) return
 
-  if (mode === 'updates') {
-    const nodes = (payload ?? {}) as Record<string, { messages?: unknown[] }>
-    for (const nodeKey of Object.keys(nodes)) {
-      const node = nodes[nodeKey]
-      const messages: unknown[] = node?.messages ?? []
-      for (const m of messages) {
-        if (AIMessage.isInstance(m)) {
-          await handleAssistantMessage(deps, m as AIMessage)
+  for await (const message of messages) {
+    if (message.reasoning) {
+      for await (const delta of message.reasoning) {
+        if (typeof delta === 'string' && delta) {
+          if (!deps.reasoningState) {
+            deps.reasoningState = { startTime: Date.now(), isStandardProvider: true }
+          }
+          deps.reasoningState.isStandardProvider = true
+          deps.accumulatedReasoning = (deps.accumulatedReasoning || '') + delta
+          deps.emit({ type: 'reasoning-delta', text: delta } as AgentEvent)
         }
-        else if (ToolMessage.isInstance(m)) await handleToolMessage(deps, m as ToolMessage)
       }
     }
-    return
+
+    if (message.text) {
+      for await (const delta of message.text) {
+        const actualContent = typeof delta === 'string' ? delta : ''
+        if (actualContent) {
+          deps.accumulatedText = (deps.accumulatedText || '') + actualContent
+
+          if (deps.accumulatedText.includes('<think')) {
+            if (!deps.reasoningState) {
+              deps.reasoningState = { startTime: Date.now() }
+            }
+          }
+
+          if (deps.reasoningState && deps.reasoningState.duration === undefined) {
+            if (deps.accumulatedText.includes('</think>')) {
+              deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
+            } else if (deps.reasoningState.isStandardProvider) {
+              deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
+            }
+          }
+          deps.emit({ type: 'text-delta', text: actualContent } as AgentEvent)
+        }
+      }
+    }
+
+    const msg = await message.output
+    if (msg) {
+      let finalUsage = msg.usage_metadata
+      const rawUsage = msg.response_metadata?.usage
+      let rawUsageJson: string | undefined
+
+      if (rawUsage) {
+        try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
+        if (typeof rawUsage.prompt_tokens === 'number') {
+          finalUsage = {
+            input_tokens: rawUsage.prompt_tokens,
+            output_tokens: rawUsage.completion_tokens,
+            total_tokens: rawUsage.total_tokens,
+            input_token_details: rawUsage.prompt_tokens_details ? {
+              cache_read: rawUsage.prompt_tokens_details.cached_tokens
+            } : undefined,
+            output_token_details: rawUsage.completion_tokens_details ? {
+              reasoning: rawUsage.completion_tokens_details.reasoning_tokens
+            } : undefined
+          } as any
+        }
+      }
+      
+      deps.finalUsage = finalUsage
+      const msgId = msg.id || `anon-${Date.now()}`
+      if (!deps.seenAiMessageIds.has(msgId)) {
+        if (deps.recordUsage) deps.recordUsage(finalUsage, modelName, rawUsageJson)
+      }
+
+      await handleAssistantMessage(deps, msg)
+      
+      // Clear accumulated state for the next message in the same run
+      deps.accumulatedText = ''
+      deps.accumulatedReasoning = ''
+      deps.reasoningState = undefined
+    }
   }
+}
 
-  if (mode === 'messages') {
-    const tuple = payload as [unknown, { langgraph_node?: string }]
-    const [chunk, metadata] = tuple
-    
-    // allow 'agent' (createReactAgent) or 'model' or 'model_request'
-    if (metadata?.langgraph_node !== 'model' && metadata?.langgraph_node !== 'agent' && metadata?.langgraph_node !== 'model_request') return
-    if (!isAIMessageChunk(chunk as never)) return
-    
-    const chunkMsg = chunk as AIMessageChunk
-    const reasoning = chunkMsg.additional_kwargs?.reasoning_content
+export async function processToolCalls(
+  toolCalls: AsyncIterable<any>,
+  deps: TranslatorDeps
+): Promise<void> {
+  if (!toolCalls) return
 
-    if (typeof reasoning === 'string' && reasoning) {
-      if (!deps.reasoningState) {
-        deps.reasoningState = { startTime: Date.now(), isStandardProvider: true }
-      }
-      deps.reasoningState.isStandardProvider = true
-      deps.emit({ type: 'reasoning-delta', text: reasoning } as AgentEvent)
+  for await (const call of toolCalls) {
+    deps.emit({
+      type: 'tool.start',
+      tool: call.name,
+      args: call.input,
+      callId: call.id
+    })
+
+    try {
+      const output = await call.output
+      const toolMsg = new ToolMessage({
+        tool_call_id: call.id,
+        name: call.name,
+        content: output
+      })
+      await handleToolMessage(deps, toolMsg)
+    } catch (e) {
+      console.error("[processToolCalls] Error awaiting call.output:", e)
     }
-
-    const content = chunkMsg.content
-    const actualContent = typeof content === 'string' ? content : ''
-    if (actualContent) {
-      deps.accumulatedText = (deps.accumulatedText || '') + actualContent
-
-      if (deps.accumulatedText.includes('<think')) {
-        if (!deps.reasoningState) {
-          deps.reasoningState = { startTime: Date.now() }
-        }
-      }
-
-      if (deps.reasoningState && deps.reasoningState.duration === undefined) {
-        // Stop timer if we see </think>
-        if (deps.accumulatedText.includes('</think>')) {
-          deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
-        } else if (deps.reasoningState.isStandardProvider) {
-          // It's a standard provider (we saw reasoning-delta earlier), and this is the first text-delta!
-          deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
-        }
-      }
-      deps.emit({ type: 'text-delta', text: actualContent } as AgentEvent)
-    }
-
-    return
   }
 }
 

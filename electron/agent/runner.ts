@@ -5,21 +5,16 @@ import type {
   ToolCall,
   ToolResult
 } from '../../shared/agent-types'
-import {
-  HumanMessage,
-  SystemMessage,
-  type BaseMessage
-} from '@langchain/core/messages'
+import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages'
 import { Command } from '@langchain/langgraph'
 import { collectAttachmentContext } from './attachments'
 import { markThreadActive } from './checkpoint-meta'
 import {
-  translateStreamEntry,
+  processMessages,
+  processToolCalls,
   emitError,
   emitCanceled,
   emitDone,
-  emitInterrupt,
-  type InterruptShape,
   type TranslatorDeps
 } from './stream-translator'
 
@@ -52,11 +47,7 @@ export interface RunnerDeps {
   vaultRoot: string
   cancel: AbortSignal
   clipsGet?: (id: number) => Promise<{ body: string } | null>
-  recordUsage: (
-    usage: any,
-    model: string,
-    rawUsageJson?: string
-  ) => void
+  recordUsage: (usage: any, model: string, rawUsageJson?: string) => void
   modelName: string
   profileId?: string
 }
@@ -64,106 +55,32 @@ export interface RunnerDeps {
 type RunAgentArgsInternal = Omit<RunAgentArgs, 'deps' | 'history'> & { deps: RunnerDeps }
 
 async function processStream(
-  stream: AsyncIterable<unknown>,
+  stream: any,
   deps: RunnerDeps,
   sessionId: string,
   translatorDeps: TranslatorDeps
 ) {
-  let entryCount = 0
-  let lastUsage: any
-  let lastAssistantToolCallIds: string[] = []
-  const recordedUsageMsgIds = new Set<string>()
-
   try {
-    for await (const entry of stream) {
-      entryCount++
-      if (entryCount === 1) console.log('[runAgent] first stream entry sid=%s', sessionId)
-      
-      if (deps.cancel.aborted) {
-        console.log('[runAgent] cancel detected sid=%s entryCount=%d', sessionId, entryCount)
-        emitCanceled(translatorDeps)
-        return
+    const p1 = (async () => {
+      try {
+        await processMessages(stream.messages, translatorDeps, deps.modelName)
+      } catch (e) {
+        console.error('Error processing messages', e)
       }
-      
-      await translateStreamEntry(translatorDeps, entry, deps.modelName)
+    })()
 
-      if (Array.isArray(entry) && entry[0] === 'updates') {
-        const payload = entry[1] as Record<string, unknown> | undefined
-
-        let modelNode: { messages?: unknown[] } | undefined
-        if (payload) {
-          if (payload.model) modelNode = payload.model as any
-          else if (payload.agent) modelNode = payload.agent as any
-          else {
-            for (const val of Object.values(payload)) {
-              if (val && typeof val === 'object' && Array.isArray((val as any).messages)) {
-                modelNode = val as any
-                break
-              }
-            }
-          }
-        }
-        if (modelNode?.messages) {
-          let latestAi: any = null
-          for (const m of modelNode.messages) {
-            const ai = m as {
-              id?: string
-              usage_metadata?: { input_tokens?: number; output_tokens?: number }
-              response_metadata?: { usage?: any }
-              tool_calls?: Array<{ id?: string }>
-            }
-            if (ai.usage_metadata || ai.response_metadata?.usage) {
-              latestAi = ai
-            }
-            if (Array.isArray(ai.tool_calls) && ai.tool_calls.length > 0) {
-              lastAssistantToolCallIds = ai.tool_calls.map((tc) => String(tc.id ?? ''))
-            }
-          }
-
-          if (latestAi) {
-            let finalUsage = latestAi.usage_metadata
-            const rawUsage = latestAi.response_metadata?.usage
-            let rawUsageJson: string | undefined
-            
-            if (rawUsage) {
-              try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
-              if (typeof rawUsage.prompt_tokens === 'number') {
-                finalUsage = {
-                  input_tokens: rawUsage.prompt_tokens,
-                  output_tokens: rawUsage.completion_tokens,
-                  total_tokens: rawUsage.total_tokens,
-                  input_token_details: rawUsage.prompt_tokens_details ? {
-                    cache_read: rawUsage.prompt_tokens_details.cached_tokens
-                  } : undefined,
-                  output_token_details: rawUsage.completion_tokens_details ? {
-                    reasoning: rawUsage.completion_tokens_details.reasoning_tokens
-                  } : undefined
-                } as any
-              }
-            }
-            lastUsage = finalUsage
-            const msgId = latestAi.id || `anon-${entryCount}`
-            if (!recordedUsageMsgIds.has(msgId)) {
-              recordedUsageMsgIds.add(msgId)
-              deps.recordUsage(finalUsage, deps.modelName, rawUsageJson)
-            }
-          }
-        }
-
-        const interrupts = payload?.__interrupt__ as InterruptShape[] | undefined
-        if (Array.isArray(interrupts) && interrupts.length > 0) {
-          for (const ir of interrupts) {
-            emitInterrupt(translatorDeps, ir, lastAssistantToolCallIds)
-            // Pending states are now queried directly from DB and checkpointer. 
-            // We no longer populate pendingInterrupts here.
-          }
-          return
-        }
+    const p2 = (async () => {
+      try {
+        await processToolCalls(stream.toolCalls, translatorDeps)
+      } catch (e) {
+        console.error('Error processing tool calls', e)
       }
-    }
+    })()
 
-    console.log('[runAgent] stream finished normally sid=%s entries=%d', sessionId, entryCount)
-    emitDone(translatorDeps, lastUsage, deps.modelName)
+    await Promise.all([p1, p2])
+
+    console.log('[runAgent] stream finished normally sid=%s', sessionId)
+    emitDone(translatorDeps, translatorDeps.finalUsage, deps.modelName)
   } catch (err) {
     const e = err as { name?: string; code?: string; message?: string }
     console.error(
@@ -222,8 +139,14 @@ export async function runAgent({
       appendMessage: (m) => deps.sessions.appendMessage(sessionId, m),
       recordToolCall: (tc, opts) => deps.sessions.recordToolCall(sessionId, tc, opts),
       finishToolCall: (rowId, fields) => deps.sessions.finishToolCall(rowId, fields),
-      hasToolCall: (id) => typeof deps.sessions.hasToolCall === 'function' ? deps.sessions.hasToolCall(id) : Promise.resolve(false),
-      updateLastAssistantUsage: (usage) => typeof deps.sessions.updateLastAssistantUsage === 'function' ? deps.sessions.updateLastAssistantUsage(sessionId, usage) : Promise.resolve()
+      hasToolCall: (id) =>
+        typeof deps.sessions.hasToolCall === 'function'
+          ? deps.sessions.hasToolCall(id)
+          : Promise.resolve(false),
+      updateLastAssistantUsage: (usage) =>
+        typeof deps.sessions.updateLastAssistantUsage === 'function'
+          ? deps.sessions.updateLastAssistantUsage(sessionId, usage)
+          : Promise.resolve()
     },
     recordUsage: deps.recordUsage,
     seenAiMessageIds: new Set()
@@ -232,20 +155,22 @@ export async function runAgent({
   // Construct only the new messages to send to the LangGraph Checkpointer.
   // The system prompt gets a fixed ID so it overwrites any existing system prompt.
   const newMessages: BaseMessage[] = [
-    new SystemMessage({ content: deps.systemPrompt, id: "system-prompt" })
+    new SystemMessage({ content: deps.systemPrompt, id: 'system-prompt' })
   ]
   newMessages.push(new HumanMessage({ content: userText }))
   if (preUserBlock) {
-    newMessages.push(new HumanMessage({ content: preUserBlock, id: "attachment-context" }))
+    newMessages.push(new HumanMessage({ content: preUserBlock, id: 'attachment-context' }))
   }
 
   try {
-    console.log('[runAgent] agent.stream() invoked sid=%s', sessionId)
-    const stream = await deps.agent.stream(
+    console.log('[runAgent] agent.streamEvents() invoked sid=%s', sessionId)
+    const agent = deps.agent as any
+    const stream = await agent.streamEvents(
       { messages: newMessages },
       {
+        version: 'v3',
+        recursionLimit: 256,
         configurable: { thread_id: sessionId, vaultRoot: deps.vaultRoot },
-        streamMode: ['updates', 'messages'],
         signal: deps.cancel
       }
     )
@@ -281,8 +206,14 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
       appendMessage: (m) => args.sessions.appendMessage(args.sessionId, m),
       recordToolCall: (tc, opts) => args.sessions.recordToolCall(args.sessionId, tc, opts),
       finishToolCall: (rowId, fields) => args.sessions.finishToolCall(rowId, fields),
-      hasToolCall: (id) => typeof args.sessions.hasToolCall === 'function' ? args.sessions.hasToolCall(id) : Promise.resolve(false),
-      updateLastAssistantUsage: (usage) => typeof args.sessions.updateLastAssistantUsage === 'function' ? args.sessions.updateLastAssistantUsage(args.sessionId, usage) : Promise.resolve()
+      hasToolCall: (id) =>
+        typeof args.sessions.hasToolCall === 'function'
+          ? args.sessions.hasToolCall(id)
+          : Promise.resolve(false),
+      updateLastAssistantUsage: (usage) =>
+        typeof args.sessions.updateLastAssistantUsage === 'function'
+          ? args.sessions.updateLastAssistantUsage(args.sessionId, usage)
+          : Promise.resolve()
     },
     recordUsage: args.recordUsage,
     seenAiMessageIds: new Set()
@@ -290,21 +221,25 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
 
   // Map AgentDecision to LangChain's HITL response formats
   // Although humanInTheLoopMiddleware accepts 'approve', 'edit', 'reject' via HITLResponse,
-  // we can also pass the raw values to resume. 
+  // we can also pass the raw values to resume.
   // Wait, `humanInTheLoopMiddleware` resume format depends on the middleware implementation.
   // Actually, we can just pass the array directly since we mapped them to what we need.
-  const mappedDecisions = args.decisions.map(d => {
+  const mappedDecisions = args.decisions.map((d) => {
     if (d.type === 'accept') return { type: 'approve' }
-    if (d.type === 'edit') return { type: 'edit', args: d.args } // wait, hitl expects editedAction? No, editedAction is { name, args } maybe? Actually 'args' or 'editedArgs' is fine depending on version, but the middleware standard is 'edit' with args. 
+    if (d.type === 'edit') return { type: 'edit', args: d.args } // wait, hitl expects editedAction? No, editedAction is { name, args } maybe? Actually 'args' or 'editedArgs' is fine depending on version, but the middleware standard is 'edit' with args.
     return { type: 'reject', message: d.message }
   })
 
   try {
-    const stream = await args.agent.stream(new Command({ resume: { decisions: mappedDecisions } }), {
-      configurable: { thread_id: args.sessionId, vaultRoot: args.vaultRoot },
-      streamMode: ['updates', 'messages'],
-      signal: args.cancel
-    })
+    const agent = args.agent as any
+    const stream = await agent.streamEvents(
+      new Command({ resume: { decisions: mappedDecisions } }),
+      {
+        version: 'v3',
+        configurable: { thread_id: args.sessionId, vaultRoot: args.vaultRoot },
+        signal: args.cancel
+      }
+    )
 
     const depsDummy: RunnerDeps = {
       agent: args.agent,

@@ -36,6 +36,7 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 面对堆积如山的未读文件？交给 AI 吧。Acornvo 可以自动对你的 Markdown 笔记进行深度审读。
 - 自动生成：摘要、推荐标题、标签、分类、评分。
 - 智能元数据：所有 AI 生成的洞察都会标准化地写入 Markdown 的 Frontmatter (YAML) 中。
+- 更稳的结构化输出：根据不同模型供应商的能力自动选择合适的结构化生成策略，降低解析失败和格式漂移。
 - **人在回路**：如果生成不满意，可要求 AI 重新生成。
 
 ![理果预览](./docs/assets/screenshot-30.png)
@@ -43,7 +44,7 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 ### 3. 松语 (Chat)：与你的知识库面对面交谈
 阅读只是开始。在「松语」界面，你可以直接与你的本地知识库进行对话。
 - **引用本地文件**：让 AI 基于你指定的本地 Markdown 文件回答问题、梳理逻辑或进行深度写作。
-- **极致的对话体验**：基于 `assistant-ui` 和 `LangChain` 构建，提供极速的流式响应和优雅的交互 UI。
+- **稳定的多轮对话**：基于 `assistant-ui` 和 `LangChain` 构建，提供流式响应、消息持久化和长上下文保护，减少重复输出与消息丢失。
 
 ![松语预览](./docs/assets/screenshot-40.png)
 
@@ -52,10 +53,11 @@ Acornvo 的设计围绕着 **「拾果、理果、松语」** 三段核心工作
 ## ✨ 核心特性
 
 - **🌲 多「树林」管理 (Workspaces)**：支持多工作区，每个「树林」都是一个独立的本地文件夹，轻松隔离不同领域的知识。
-- **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，云端本地任你选择。
-- **⚡ 闪电搜索 (Fast Search)**：内置基于 SQLite 和 `@node-rs/jieba` 中文分词的强大搜索引擎。
+- **🤖 模型自由 (Model Agnostic)**：自带统一大模型配置。原生支持 OpenAI、Ollama（本地运行）、DeepSeek、OpenRouter 等，并针对不同供应商的结构化输出能力自动适配。
+- **⚡ 混合搜索 (Hybrid Search)**：结合 SQLite FTS、`@node-rs/jieba` 中文分词、`sqlite-vec` 向量检索和本地 `bge-small-zh-v1.5` 语义模型，同时支持关键词命中与语义相似度排序。
 - **📝 现代编辑器 (Vditor)**：集成 Vditor Markdown 编辑器，所见即所得，自动保存，并能优雅处理外部修改冲突。
-- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步。
+- **🔧 可维护索引 (Rebuildable Index)**：可在设置中手动重建全文索引与向量索引，便于升级后恢复搜索质量或修复异常状态。
+- **🔒 隐私与安全 (Privacy)**：不强制要求任何云同步；剪藏内容会清理危险标签与事件属性，外链打开也会做安全限制。
 
 ---
 
@@ -71,7 +73,7 @@ Acornvo 拒绝黑盒数据库。你的数据分为**树林（工作区）数据*
 ├── inbox/                 # 果篮：默认的网页剪藏目录
 │   └── 2026-AI-Trends.md  # 你的知识，纯粹的 Markdown
 └── .acornvo/              # 工作区级缓存与索引
-    └── index.db           # SQLite 全文索引与缓存数据
+    └── index.db           # SQLite 全文索引、向量索引与缓存数据
 ```
 
 **2. 全局数据（系统主目录）**
@@ -136,7 +138,7 @@ Acornvo 支持主流桌面操作系统。请前往 [Releases](https://github.com
 - **框架**: Electron, React 19, TypeScript, Vite
 - **UI & 样式**: Tailwind CSS v4, shadcn/ui, Radix UI
 - **AI 生态**: assistant-ui, LangChain, LangGraph
-- **本地能力**: better-sqlite3, chokidar, @node-rs/jieba
+- **本地能力**: better-sqlite3, sqlite-vec, chokidar, @node-rs/jieba, @huggingface/transformers, onnxruntime-node
 
 **本地运行：**
 
@@ -163,8 +165,7 @@ Acornvo 正处于快速迭代期，接下来的重点方向包括：
 - [ ] [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)：AI 驱动的自动知识库构建
 - [ ] 更智能、更精准的网页正文解析引擎
 - [ ] 完善的 AI 自动标签系统与自动分类
-- [ ] 基于向量数据库的语义搜索 (RAG)
-- [ ] 对话上下文持久化与多轮深度生成能力扩展
+- [ ] 多轮对话深度生成能力扩展
 
 ## 🫶 感谢
 
