@@ -37,23 +37,28 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
     throw err
   }
 
-  const tx = db.transaction(() => {
-    const upd = db.prepare('UPDATE chunks SET model_id = ?, embedded_at = ? WHERE chunk_id = ?')
-    for (let i = 0; i < chunks.length; i++) {
-      if (vecs[i] && vecs[i].length === dim) {
-        upd.run(modelId, new Date().toISOString(), chunks[i].chunk_id)
+  try {
+    const tx = db.transaction(() => {
+      const upd = db.prepare('UPDATE chunks SET model_id = ?, embedded_at = ? WHERE chunk_id = ?')
+      for (let i = 0; i < chunks.length; i++) {
+        if (vecs[i] && vecs[i].length === dim) {
+          upd.run(modelId, new Date().toISOString(), chunks[i].chunk_id)
+        }
       }
-    }
-  })
-  tx()
+    })
+    tx()
 
-  const vs = getVectorStore()
-  if (vs) {
-    for (let i = 0; i < chunks.length; i++) {
-      if (vecs[i] && vecs[i].length === dim) {
-        vs.upsert(chunks[i].chunk_id, new Float32Array(vecs[i]))
+    const vs = getVectorStore()
+    if (vs) {
+      for (let i = 0; i < chunks.length; i++) {
+        if (vecs[i] && vecs[i].length === dim) {
+          vs.upsert(chunks[i].chunk_id, new Float32Array(vecs[i]))
+        }
       }
     }
+  } catch (err) {
+    logger().error('embed', { msg: 'database update failed', meta: { path, error: String(err), stack: (err as any).stack } })
+    throw err
   }
 
   logger().info('embed', { msg: 'file embedded successfully', meta: { path } })

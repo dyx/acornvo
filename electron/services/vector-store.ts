@@ -11,7 +11,8 @@ export interface VectorStore {
 export function createVecStore(db: Database.Database): VectorStore {
   // 预编译 statement 缓存
   const getRowIdStmt = db.prepare('SELECT rowid FROM chunks WHERE chunk_id = ?')
-  const upsertStmt = db.prepare('INSERT OR REPLACE INTO chunk_vectors(rowid, embedding) VALUES (?, ?)')
+  const deleteStmt = db.prepare('DELETE FROM chunk_vectors WHERE rowid = ?')
+  const insertStmt = db.prepare('INSERT INTO chunk_vectors(rowid, embedding) VALUES (?, ?)')
   const delStmt = db.prepare('DELETE FROM chunk_vectors WHERE rowid IN (SELECT rowid FROM chunks WHERE chunk_id IN (SELECT value FROM json_each(?)))')
   const knnStmt = db.prepare('SELECT c.chunk_id, v.distance FROM chunk_vectors v JOIN chunks c ON c.rowid = v.rowid WHERE v.embedding MATCH ? AND k=? ORDER BY v.distance')
   
@@ -19,7 +20,9 @@ export function createVecStore(db: Database.Database): VectorStore {
     upsert: (id, v) => {
       const row = getRowIdStmt.get(id) as { rowid: number | bigint } | undefined
       if (row) {
-        upsertStmt.run(BigInt(row.rowid), Buffer.from(v.buffer, v.byteOffset, v.byteLength))
+        const rowId = BigInt(row.rowid)
+        deleteStmt.run(rowId)
+        insertStmt.run(rowId, Buffer.from(v.buffer, v.byteOffset, v.byteLength))
       }
     },
     delete: (ids) => {

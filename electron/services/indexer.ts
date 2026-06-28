@@ -217,6 +217,7 @@ export async function startScan(groveRoot: string): Promise<void> {
           }
 
           upsertFts(db, row.path, extractedTitle, chunks)
+          logger().info('search', { msg: 'fts indexed file', meta: { path: row.path } })
           
           // Semantic Search: save chunk metadata and enqueue embedding job
           upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
@@ -296,6 +297,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
         }
 
         upsertFts(db, row.path, extractedTitle, chunks)
+        logger().info('search', { msg: 'fts indexed file', meta: { path: row.path } })
 
         // Semantic Search: save chunk metadata and enqueue embedding job
         upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())

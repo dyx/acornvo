@@ -114,6 +114,8 @@ export async function rebuildFts(
           title = String(r.frontmatter.title)
         }
         upsertFts(db, r.row.path, title, chunks)
+        logger().info('search', { msg: 'fts indexed file', meta: { path: r.row.path } })
+        
         upsertChunks(db, r.row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
         
         const q = getQueueBootstrap()

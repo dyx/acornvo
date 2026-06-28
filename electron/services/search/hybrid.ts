@@ -111,7 +111,7 @@ export async function hybridSearch(query: string, ftsWeight = 1.0, vecWeight = 1
   const ids = top.map(t => t.chunk_id)
   const placeholders = ids.map(() => '?').join(',')
   const hydrateStmt = db.prepare(`SELECT chunk_id, path, heading_path, body FROM chunks WHERE chunk_id IN (${placeholders})`)
-  const rows = hydrateStmt.all(ids) as { chunk_id: string, path: string, heading_path: string, body: string }[]
+  const rows = hydrateStmt.all(...ids) as { chunk_id: string, path: string, heading_path: string, body: string }[]
   const rowMap = new Map(rows.map(r => [r.chunk_id, r]))
 
   const pathSet = new Set(rows.map(r => r.path))
