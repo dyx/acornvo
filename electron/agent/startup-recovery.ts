@@ -28,7 +28,7 @@ function listSessionsWithCheckpoints(): ThreadCandidate[] {
   const db = dbService.requireCurrent()
   const rows = db
     .prepare(
-      `SELECT s.id AS session_id, s.model_id AS model_id
+      `SELECT s.id AS session_id, s.profile_id AS model_id
        FROM sessions s
        WHERE EXISTS (SELECT 1 FROM checkpoints c WHERE c.thread_id = s.id)`
     )
