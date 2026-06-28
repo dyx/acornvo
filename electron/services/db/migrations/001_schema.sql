@@ -28,14 +28,13 @@ CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 -- ============================================================
 -- files_fts — full-text search (trigram tokenizer)
 -- ============================================================
-DROP TABLE IF EXISTS files_fts;
-CREATE VIRTUAL TABLE files_fts USING fts5(
+CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
   chunk_id UNINDEXED,
   path UNINDEXED,
   heading_path,
   title,
   body,
-  tokenize='trigram'
+  tokenize='unicode61 remove_diacritics 1'
 );
 
 -- ============================================================
@@ -63,8 +62,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vectors USING vec0(
 -- ============================================================
 -- bookmarks — saved URLs (final phase-11 schema)
 -- ============================================================
-DROP TABLE IF EXISTS bookmarks;
-CREATE TABLE bookmarks (
+CREATE TABLE IF NOT EXISTS bookmarks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   url TEXT UNIQUE NOT NULL,
   title TEXT,
@@ -90,12 +88,6 @@ CREATE TABLE IF NOT EXISTS ops_log (
 );
 CREATE INDEX IF NOT EXISTS idx_ops_log_ts ON ops_log(ts DESC);
 CREATE INDEX IF NOT EXISTS idx_ops_log_op_ts ON ops_log(op, ts DESC);
-
--- ============================================================
--- clips — web clipper captures (phase-12)
--- REMOVED: Clips are now just .md documents tracked in files table.
--- ============================================================
-DROP TABLE IF EXISTS clips;
 
 
 -- ============================================================

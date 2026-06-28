@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import { segment } from './search/jiebaSegment'
 
 export interface FileRow {
   path: string
@@ -84,7 +85,9 @@ export function upsertFts(db: Database.Database, path: string, title: string, ch
     db.prepare('DELETE FROM files_fts WHERE path=?').run(path)
     const insertStmt = db.prepare('INSERT INTO files_fts(chunk_id, path, heading_path, title, body) VALUES (?, ?, ?, ?, ?)')
     for (const chunk of chunks) {
-      insertStmt.run(chunk.id, path, chunk.heading_path, title, escapeForFts(chunk.body))
+      const spacedTitle = segment(title).join(' ')
+      const spacedBody = segment(chunk.body).join(' ')
+      insertStmt.run(chunk.id, path, chunk.heading_path, spacedTitle, escapeForFts(spacedBody))
     }
   })
   tx()

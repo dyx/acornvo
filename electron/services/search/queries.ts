@@ -154,7 +154,11 @@ export function fullText(
     .map((hit) => {
       const row = byPath.get(hit.path)
       if (!row) return null
-      return { summary: rowToFileSummary(row), body: escapeForSnippet(hit.body), heading_path: hit.heading_path }
+      let cleanBody = hit.body
+        .replace(/([^\x00-\x7F])\s+(?=<mark>)/gu, '$1')
+        .replace(/(<\/mark>)\s+([^\x00-\x7F])/gu, '$1$2')
+        .replace(/([^\x00-\x7F])\s+([^\x00-\x7F])/gu, '$1$2')
+      return { summary: rowToFileSummary(row), body: escapeForSnippet(cleanBody), heading_path: hit.heading_path }
     })
     .filter((x): x is { summary: FileSummary; body: string; heading_path: string } => x !== null)
 
