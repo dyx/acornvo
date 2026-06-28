@@ -175,6 +175,13 @@ const defaultComponents = memoizeMarkdownComponents({
             targetPath = targetPath.substring(1) // Acornvo paths are relative to grove root
           }
         }
+        
+        try {
+          targetPath = decodeURI(targetPath)
+        } catch (e) {
+          // ignore malformed URI errors
+        }
+        
         useEditorStore.getState().open(targetPath)
         navigate('/library')
       }
