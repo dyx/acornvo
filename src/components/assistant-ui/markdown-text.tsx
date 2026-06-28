@@ -157,6 +157,12 @@ const defaultComponents = memoizeMarkdownComponents({
         if (targetPath.startsWith('file://')) {
           targetPath = targetPath.replace('file://', '')
         }
+        if (targetPath.startsWith('acornvo-local://')) {
+          targetPath = targetPath.replace('acornvo-local://', '')
+          if (targetPath.startsWith('/')) {
+            targetPath = targetPath.substring(1) // Acornvo paths are relative to grove root
+          }
+        }
         useEditorStore.getState().open(targetPath)
         navigate('/library')
       }
