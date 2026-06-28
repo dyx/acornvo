@@ -234,76 +234,6 @@
     "phrase_hint": "输入 \"xxxx\" 做精确短语搜索",
     "rebuilding": "索引构建中 {{done}} / {{total}}"
   },
-  "history": {
-    "tabs": {
-      "trash": "废纸篓",
-      "conflicts": "冲突",
-      "ops": "操作记录"
-    },
-    "trash": {
-      "notice": "系统回收站中删除的文件会在此显示，保留 90 天。"
-    },
-    "conflicts": {
-      "clearAll": "清空所有快照",
-      "clearAllConfirm": "确定要删除所有冲突快照吗？此操作不可撤销。",
-      "clearAllSuccess": "所有冲突快照已删除",
-      "emptyTitle": "没有冲突",
-      "emptyDescription": "系统会自动检测冲突文件"
-    },
-    "jobs": {
-      "tabLabel": "任务",
-      "empty": "没有待办任务",
-      "kindFilterLabel": "类型",
-      "statusFilterLabel": "状态",
-      "statusDefault": "进行中（默认）",
-      "statusAll": "全部",
-      "kindAll": "全部类型",
-      "kind": {
-        "ai-review-clip": "AI 审读",
-        "index-retry": "索引重试"
-      },
-      "summary": {
-        "aiReview": "AI 审读",
-        "indexRetry": "索引重试"
-      },
-      "clearDoneConfirm": "确认清除所有已完成的任务？已失败的任务会保留。"
-    }
-  },
-  "trash": {
-    "confirmTitle": "移到废纸篓？",
-    "confirmButton": "移到废纸篓",
-    "cancelButton": "取消",
-    "fallbackTitle": "无法移到系统回收站",
-    "fallbackCheckbox": "我知道这无法恢复",
-    "fallbackButton": "永久删除",
-    "permanentlyDeleted": "已永久删除"
-  },
-  "diff": {
-    "view": {
-      "local": "本地",
-      "remote": "远端",
-      "base": "基准",
-      "stats": "添加了 {{added}} 行，删除了 {{removed}} 行",
-      "empty": "没有差异",
-      "sideSelector": "对比视图",
-      "localRemote": "本地-远端",
-      "localBase": "本地-基准",
-      "remoteBase": "远端-基准",
-      "openFile": "打开文件",
-      "deleteSnapshot": "删除此快照",
-      "deleteSnapshotConfirm": "确定要删除此冲突快照吗？",
-      "close": "关闭"
-    }
-  },
-  "ops": {
-    "op": {
-      "trash": "移到废纸篓",
-      "hard_delete": "永久删除",
-      "conflict_resolve": "冲突解决",
-      "conflict_delete": "冲突删除",
-      "rename": "重命名"
-    }
-  },
   "obs": {
     "logLevel": "日志级别",
     "title": "可观测",
@@ -384,6 +314,7 @@
       "rebuildIndexDesc": "强制清空并重新构建全文索引与向量索引。此过程在后台运行，且会占用较多的系统资源。",
       "rebuilding": "正在重建...",
       "rebuildAction": "重建索引",
+      "rebuildConfirmDesc": "确定要重新构建所有搜索索引吗？此操作可能会在后台消耗一定的系统资源。",
       "rebuildFts": "正在扫描并重建全文索引...",
       "rebuildVector": "正在后台生成向量索引...",
       "rebuildDone": "重建索引已全部完成",
@@ -545,20 +476,6 @@
     "bookmark.delete_confirm": "确认删除这个书签？",
     "bookmark.empty": "还没有书签"
   },
-  "jobs": {
-    "status": {
-      "pending": "等待中",
-      "running": "进行中",
-      "done": "已完成",
-      "failed": "失败",
-      "canceled": "已取消"
-    },
-    "action": {
-      "retry": "重试",
-      "cancel": "取消"
-    },
-    "clearDone": "清除已完成"
-  },
   "chat": {
     "error": {
       "http400": "格式错误：请根据错误信息提示修改请求体",
@@ -692,19 +609,6 @@
     "viewLogs": "查看日志",
     "exportDiag": "导出诊断",
     "ignore": "忽略"
-  },
-  "telemetry": {
-    "enable": "启用遥测",
-    "description": "每日汇总匿名使用统计（AI 请求数、Token 数、剪藏数、性能数据）。数据不会离开你的设备。"
-  },
-  "update": {
-    "newVersion": "新版本 {{version}} 已就绪",
-    "installNow": "立即安装",
-    "later": "稍后",
-    "autoCheck": "自动检查更新",
-    "upToDate": "Acornvo 已是最新版本",
-    "checkFailed": "检查更新失败",
-    "available": "发现新版本"
   },
   "placeholder": {
     "no_grove": "未打开任何树林"

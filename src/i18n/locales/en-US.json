@@ -214,76 +214,6 @@
     "phrase_hint": "Type \"...\" for exact phrase search",
     "rebuilding": "Rebuilding index {{done}} / {{total}}"
   },
-  "history": {
-    "tabs": {
-      "trash": "Trash",
-      "conflicts": "Conflicts",
-      "ops": "Operation Log"
-    },
-    "trash": {
-      "notice": "Files deleted from the system trash will appear here and are kept for 90 days."
-    },
-    "conflicts": {
-      "clearAll": "Clear all snapshots",
-      "clearAllConfirm": "Delete all conflict snapshots? This cannot be undone.",
-      "clearAllSuccess": "All conflict snapshots deleted",
-      "emptyTitle": "No conflicts",
-      "emptyDescription": "The system will automatically detect conflicting files"
-    },
-    "jobs": {
-      "tabLabel": "Jobs",
-      "empty": "No pending jobs",
-      "kindFilterLabel": "Kind",
-      "statusFilterLabel": "Status",
-      "statusDefault": "In progress (default)",
-      "statusAll": "All",
-      "kindAll": "All kinds",
-      "kind": {
-        "ai-review-clip": "AI Review",
-        "index-retry": "Index Retry"
-      },
-      "summary": {
-        "aiReview": "AI Review",
-        "indexRetry": "Index Retry"
-      },
-      "clearDoneConfirm": "Clear all completed jobs? Failed jobs will be kept."
-    }
-  },
-  "trash": {
-    "confirmTitle": "Move to Trash?",
-    "confirmButton": "Move to Trash",
-    "cancelButton": "Cancel",
-    "fallbackTitle": "Cannot move to system trash",
-    "fallbackCheckbox": "I understand this cannot be recovered",
-    "fallbackButton": "Delete permanently",
-    "permanentlyDeleted": "Permanently deleted"
-  },
-  "diff": {
-    "view": {
-      "local": "Local",
-      "remote": "Remote",
-      "base": "Base",
-      "stats": "Added {{added}} lines, removed {{removed}} lines",
-      "empty": "No differences",
-      "sideSelector": "Compare view",
-      "localRemote": "Local-Remote",
-      "localBase": "Local-Base",
-      "remoteBase": "Remote-Base",
-      "openFile": "Open file",
-      "deleteSnapshot": "Delete this snapshot",
-      "deleteSnapshotConfirm": "Delete this conflict snapshot?",
-      "close": "Close"
-    }
-  },
-  "ops": {
-    "op": {
-      "trash": "Moved to trash",
-      "hard_delete": "Permanently deleted",
-      "conflict_resolve": "Conflict resolved",
-      "conflict_delete": "Conflict deleted",
-      "rename": "Renamed"
-    }
-  },
   "obs": {
     "logLevel": "Log Level",
     "title": "Observability",
@@ -364,6 +294,7 @@
       "rebuildIndexDesc": "Forces a full rebuild of the Full-Text Search and Vector Embedding indices. This process runs in the background and may consume significant CPU resources.",
       "rebuilding": "Rebuilding...",
       "rebuildAction": "Rebuild Index",
+      "rebuildConfirmDesc": "Are you sure you want to rebuild all search indices? This process may consume significant system resources.",
       "rebuildFts": "Scanning and rebuilding FTS...",
       "rebuildVector": "Generating vector embeddings...",
       "rebuildDone": "Index rebuild completed",
@@ -525,20 +456,6 @@
     "bookmark.delete_confirm": "Delete this bookmark?",
     "bookmark.empty": "No bookmarks yet"
   },
-  "jobs": {
-    "status": {
-      "pending": "Pending",
-      "running": "Running",
-      "done": "Done",
-      "failed": "Failed",
-      "canceled": "Canceled"
-    },
-    "action": {
-      "retry": "Retry",
-      "cancel": "Cancel"
-    },
-    "clearDone": "Clear completed"
-  },
   "chat": {
     "error": {
       "http400": "Format Error: Please check the request body according to the error message",
@@ -672,19 +589,6 @@
     "viewLogs": "View Logs",
     "exportDiag": "Export Diagnostic",
     "ignore": "Ignore"
-  },
-  "telemetry": {
-    "enable": "Enable telemetry",
-    "description": "Aggregate anonymous usage stats (AI requests, tokens, clips, performance) daily. Data never leaves your device."
-  },
-  "update": {
-    "newVersion": "New version {{version}} is ready",
-    "installNow": "Install now",
-    "later": "Later",
-    "autoCheck": "Check for updates automatically",
-    "upToDate": "Acornvo is up to date",
-    "checkFailed": "Update check failed",
-    "available": "New version available"
   },
   "placeholder": {
     "no_grove": "No grove opened"
