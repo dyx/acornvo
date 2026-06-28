@@ -779,8 +779,9 @@ function subscribeSessionStream(sid: string): void {
               // assistant-ui's MessageRepository to create a duplicate branch
               // under the same parent, inflating BranchPicker counts.
               toolCalls: incoming.toolCalls ?? last.toolCalls,
-              text: last.text || incoming.text,
-              status: last.status
+              text: incoming.text || last.text,
+              reasoningText: undefined, // Clear it because incoming.text already contains <think> tags serialized by handleAssistantMessage
+              status: 'done' // Change to done since it's appended
             }
             return {
               bySession: {
