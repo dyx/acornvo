@@ -8,6 +8,9 @@ import {
   unstable_memoizeMarkdownComponents as memoizeMarkdownComponents,
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
+import { useNavigate } from "react-router-dom";
+import { ipc } from "@/ipc/client";
+import { useEditorStore } from "@/stores/editor";
 import remarkGfm from "remark-gfm";
 import { type FC, memo, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -136,15 +139,41 @@ const defaultComponents = memoizeMarkdownComponents({
       {...props}
     />
   ),
-  a: ({ className, ...props }) => (
-    <a
-      className={cn(
-        "aui-md-a text-primary hover:text-primary/80 underline underline-offset-2",
-        className,
-      )}
-      {...props}
-    />
-  ),
+  a: function Anchor({ className, href, onClick, ...props }) {
+    const navigate = useNavigate()
+    
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (onClick) onClick(e)
+      if (e.defaultPrevented) return
+      if (!href) return
+
+      e.preventDefault()
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        ipc.shell.openExternal(href)
+      } else {
+        // For local files or doc IDs
+        let targetPath = href
+        if (targetPath.startsWith('file://')) {
+          targetPath = targetPath.replace('file://', '')
+        }
+        useEditorStore.getState().open(targetPath)
+        navigate('/library')
+      }
+    }
+
+    return (
+      <a
+        href={href}
+        onClick={handleClick}
+        className={cn(
+          "aui-md-a text-primary hover:text-primary/80 underline underline-offset-2 cursor-pointer",
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
   blockquote: ({ className, ...props }) => (
     <blockquote
       className={cn(
