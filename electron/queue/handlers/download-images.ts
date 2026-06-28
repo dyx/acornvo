@@ -62,7 +62,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
     }
 
     let newBody = body
-    let downloadedCount = 0
+    const replacements: Array<{ old: string; new: string }> = []
 
     for (const match of matches) {
       const fullMatch = match[0]
@@ -99,24 +99,42 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
         const newImgTag = `![${alt}](${newRelUrl})`
         
         newBody = newBody.replace(fullMatch, newImgTag)
-        downloadedCount++
+        replacements.push({ old: fullMatch, new: newImgTag })
       } catch (err) {
         logger().warn('queue', { msg: '[download-clip-images] error downloading image', meta: { url, error: (err as Error).message } })
       }
     }
 
-    if (downloadedCount > 0 && newBody !== body) {
-      try {
-        await fileHandlers.writeParsed(relPath, frontmatter as Record<string, unknown>, newBody, {
-          expectedMtime: stat.mtimeMs
-        })
-        log('info', `download-clip-images ok path=${relPath} downloaded=${downloadedCount}`)
-      } catch (e) {
-        const code = (e as { code?: string })?.code
-        if (code === 'E_MTIME_MISMATCH') {
-          throw new Error('E_MTIME_CONFLICT')
+    if (replacements.length > 0) {
+      let currentStat = stat
+      let currentFrontmatter = frontmatter as Record<string, unknown>
+      let currentBody = newBody
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await fileHandlers.writeParsed(relPath, currentFrontmatter, currentBody, {
+            expectedMtime: currentStat.mtimeMs
+          })
+          log('info', `download-clip-images ok path=${relPath} downloaded=${replacements.length}`)
+          break
+        } catch (e) {
+          const code = (e as { code?: string })?.code
+          if (code === 'E_MTIME_MISMATCH' && attempt < 2) {
+            log('warn', `download-clip-images mtime mismatch, reloading to retry path=${relPath}`)
+            currentStat = fs.statSync(absPath)
+            const raw = fs.readFileSync(absPath, 'utf8')
+            const parsed = parseFile(raw)
+            currentFrontmatter = parsed.frontmatter as Record<string, unknown>
+            currentBody = parsed.body
+            for (const r of replacements) {
+              currentBody = currentBody.replace(r.old, r.new)
+            }
+            continue
+          }
+          if (code === 'E_MTIME_MISMATCH') {
+            throw new Error('E_MTIME_CONFLICT')
+          }
+          throw e
         }
-        throw e
       }
     } else {
       log('info', `download-clip-images skipped or no successful downloads path=${relPath}`)

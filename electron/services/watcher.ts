@@ -364,7 +364,7 @@ async function flush(): Promise<void> {
       const { bodyChanged } = upsertFileWithBodyDelta(_db!, row)
 
       if (bodyChanged) {
-        const chunks = chunkMarkdown(ev.body!)
+        const chunks = chunkMarkdown(ev.body!, row.path)
         let extractedTitle = ''
         if (typeof ev.frontmatter.title === 'string') {
           extractedTitle = ev.frontmatter.title

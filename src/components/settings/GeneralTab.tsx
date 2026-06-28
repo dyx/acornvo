@@ -14,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { CheckCircle2Icon, RefreshCwIcon } from 'lucide-react'
+import { ipc } from '@/ipc/client'
+import { Progress } from '@/components/ui/progress'
+
+type RebuildPhase = 'idle' | 'fts' | 'vector' | 'done'
 
 
 
@@ -41,6 +47,67 @@ export function GeneralTab(): JSX.Element {
   const setAppearance = useSettingsStore((s) => s.setAppearance)
 
   const [localScale, setLocalScale] = useState(appearance.fontScale)
+  const [rebuildPhase, setRebuildPhase] = useState<RebuildPhase>('idle')
+  const [ftsProgress, setFtsProgress] = useState({ done: 0, total: 0 })
+  const [vectorRemaining, setVectorRemaining] = useState(0)
+
+  const handleRebuild = async () => {
+    if (rebuildPhase !== 'idle' && rebuildPhase !== 'done') return
+    setRebuildPhase('fts')
+    setFtsProgress({ done: 0, total: 0 })
+    try {
+      await ipc.search.rebuild()
+      setRebuildPhase('vector')
+    } catch (err) {
+      console.error(err)
+      setRebuildPhase('idle')
+    }
+  }
+
+  useEffect(() => {
+    // Attempt to recover vector phase state on mount
+    ipc.queue.health().then(health => {
+      if (health.pending > 0 || health.running > 0) {
+        setRebuildPhase((prev) => prev === 'idle' ? 'vector' : prev)
+        setVectorRemaining(health.pending)
+      }
+    }).catch(() => {})
+
+    const unsubProgress = ipc.on('index:rebuildProgress', (p) => {
+      setRebuildPhase('fts')
+      setFtsProgress({ done: p.done, total: p.total })
+    })
+    const unsubDone = ipc.on('index:rebuildDone', (p) => {
+      setRebuildPhase('vector')
+      setFtsProgress({ done: p.total, total: p.total })
+    })
+    return () => {
+      unsubProgress()
+      unsubDone()
+    }
+  }, [])
+
+  useEffect(() => {
+    let timer: number
+    if (rebuildPhase === 'vector') {
+      const checkHealth = async () => {
+        try {
+          const health = await ipc.queue.health()
+          setVectorRemaining(health.pending)
+          if (health.pending === 0 && health.running === 0) {
+            setRebuildPhase('done')
+            timer = window.setTimeout(() => setRebuildPhase('idle'), 3000)
+          } else {
+            timer = window.setTimeout(checkHealth, 1000)
+          }
+        } catch {
+          // ignore
+        }
+      }
+      void checkHealth()
+    }
+    return () => clearTimeout(timer)
+  }, [rebuildPhase])
 
   useEffect(() => {
     setLocalScale(appearance.fontScale)
@@ -164,6 +231,60 @@ export function GeneralTab(): JSX.Element {
         </div>
       </div>
 
+      <div className="space-y-4 pt-6 border-t border-border">
+        <div className="space-y-2">
+          <span className="block text-sm font-medium">{t('settings.search.rebuildIndex')}</span>
+          <p className="text-xs text-muted-foreground">
+            {t('settings.search.rebuildIndexDesc')}
+          </p>
+        </div>
+
+        {rebuildPhase !== 'idle' && (
+          <div
+            className={`p-4 rounded-lg border border-border bg-muted/30 space-y-3 transition-all duration-500 overflow-hidden ${
+              rebuildPhase === 'done' ? 'opacity-0 h-0 p-0 border-transparent' : 'opacity-100 h-[80px]'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                {rebuildPhase === 'fts' ? t('settings.search.rebuildFts') :
+                 rebuildPhase === 'vector' ? t('settings.search.rebuildVector') :
+                 t('settings.search.rebuildDone')}
+              </span>
+              {rebuildPhase === 'fts' && (
+                <span className="text-sm font-medium tabular-nums text-foreground">
+                  {ftsProgress.done} / {ftsProgress.total}
+                </span>
+              )}
+              {rebuildPhase === 'vector' && (
+                <span className="text-sm font-medium tabular-nums text-foreground">
+                  {t('settings.search.remaining')}: {vectorRemaining}
+                </span>
+              )}
+              {rebuildPhase === 'done' && (
+                <CheckCircle2Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              )}
+            </div>
+
+            {(rebuildPhase === 'fts' || rebuildPhase === 'vector') && (
+              <Progress
+                value={rebuildPhase === 'fts' && ftsProgress.total > 0 ? (ftsProgress.done / ftsProgress.total) * 100 : 100}
+                className={`h-2 ${rebuildPhase === 'vector' ? 'animate-pulse' : ''}`}
+              />
+            )}
+          </div>
+        )}
+
+        <Button 
+          onClick={handleRebuild} 
+          disabled={rebuildPhase !== 'idle' && rebuildPhase !== 'done'} 
+          className="gap-2" 
+          variant="outline"
+        >
+          <RefreshCwIcon className={`w-4 h-4 ${rebuildPhase !== 'idle' && rebuildPhase !== 'done' ? 'animate-spin' : ''}`} />
+          {rebuildPhase !== 'idle' && rebuildPhase !== 'done' ? t('settings.search.rebuilding') : t('settings.search.rebuildAction')}
+        </Button>
+      </div>
 
     </div>
   )

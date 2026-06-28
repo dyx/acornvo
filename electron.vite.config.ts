@@ -60,10 +60,13 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: ['better-sqlite3']
+        external: ['better-sqlite3', 'sqlite-vec']
       },
       lib: {
-        entry: resolve(__dirname, 'electron/main.ts')
+        entry: {
+          main: resolve(__dirname, 'electron/main.ts'),
+          'embed-worker-main': resolve(__dirname, 'electron/ai/embed-worker-main.ts')
+        }
       }
     }
   },

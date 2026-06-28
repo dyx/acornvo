@@ -395,7 +395,14 @@ export type IpcContract = {
     openSnapshotFile: (id: string, side: 'local' | 'remote' | 'base') => { ok: true }
   }
   search: {
-
+    hybrid: (
+      q: string,
+      opts?: { ftsWeight?: number; vecWeight?: number; limit?: number }
+    ) => {
+      items: { summary: FileSummary; body: string; heading_path: string; score?: number; source?: 'fts' | 'semantic' | 'hybrid' }[]
+      total: number
+      pending: boolean
+    }
     fullText: (
       q: string,
       opts?: { limit?: number; offset?: number }

@@ -82,8 +82,10 @@ export const useGroveStore = create<GroveState>((set, get) => ({
   async createGrove(parentDir, name) {
     const g = await ipc.project.createGrove(parentDir, name)
     // Open as a separate step so the lock is consistently acquired
-    await get().openExisting(g.path)
+    const res = await get().openExisting(g.path)
     await get().loadRecent()
+    if (res.status === 'error') throw new Error(res.message)
+    if (res.status === 'locked') throw new Error('locked')
     return g
   },
 

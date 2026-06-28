@@ -67,9 +67,16 @@ export type OrderBy =
   | 'title_desc'
 
 export interface Pagination {
-  limit: number
-  offset: number
-  orderBy: OrderBy
+  limit?: number
+  offset?: number
+}
+
+export interface HybridSearchResult {
+  chunk_id: string
+  path: string
+  heading_path: string
+  body: string
+  score: number
 }
 
 export interface CategoryNode {

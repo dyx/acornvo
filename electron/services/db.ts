@@ -7,6 +7,29 @@ import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
 import { maybeRebuildFts } from './search/index'
 import { createJobStore } from '../queue/store'
+import { getLoadablePath } from 'sqlite-vec'
+import { logger } from '../obs/logger'
+
+let _vecOk = false
+export function isVecAvailable(): boolean { return _vecOk }
+
+function loadVecExtension(db: Database.Database): void {
+  try {
+    db.loadExtension(getLoadablePath())
+    _vecOk = true
+    try {
+      logger().info('db', { msg: 'sqlite-vec loaded' })
+    } catch { /* ignore if logger not ready */ }
+  } catch (err) {
+    _vecOk = false
+    try {
+      logger().warn('db', { msg: 'sqlite-vec load failed; semantic search degrades to FTS-only', meta: { error: String(err) } })
+    } catch { 
+      // eslint-disable-next-line no-console
+      console.warn('sqlite-vec load failed', err) 
+    }
+  }
+}
 
 let current: Database.Database | null = null
 let currentGrovePath: string | null = null
@@ -137,11 +160,13 @@ export function openForGrove(grovePath: string): void {
   const file = join(grovePath, '.acornvo', 'index.db')
   let db = new Database(file)
   applyPragmas(db)
+  loadVecExtension(db)
   if (integrityCheck(db) !== 'ok') {
     db.close()
     backupCorruptDb(grovePath)
     db = new Database(file)
     applyPragmas(db)
+    loadVecExtension(db)
     runMigrations(db, migrationsDir())
     // phase-14: reset jobs left in 'running' status from a previous crash
     try {

@@ -3,6 +3,7 @@ import { requireCurrent, getCurrentGrovePath } from '../services/db'
 import { rebuildFts } from '../services/search/rebuild'
 import { isRebuilding, _setRebuildingForTest } from '../services/search/index'
 import { fullText, suggest } from '../services/search/queries'
+import { hybridSearch } from '../services/search/hybrid'
 import { stats } from '../services/search/stats'
 import type { FileSummary } from '@shared/file-types'
 
@@ -27,6 +28,9 @@ export const searchHandlers: SearchHandlers = {
       _setRebuildingForTest(false)
     }
     return { ok: true } as const
+  },
+  hybrid: async (q, opts) => {
+    return hybridSearch(q, opts?.ftsWeight, opts?.vecWeight, opts?.limit)
   },
   fullText: (
     q: string,

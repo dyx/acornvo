@@ -6,6 +6,7 @@ import { createIndexRetryHandler } from './handlers/index-retry'
 import { aiReviewClipHandler } from './handlers/ai-review-clip'
 
 import { downloadClipImagesHandler } from './handlers/download-images'
+import { embedFileHandler } from './handlers/embed-file'
 
 export interface QueueBootstrap {
   store: JobStore
@@ -60,12 +61,19 @@ export function bootstrapQueueRunner(
   })
 
 
-  // Register download-clip-images handler
   runner.register({
     kind: 'download-clip-images',
     concurrency: 3,
     minGapMs: 0,
     handler: downloadClipImagesHandler
+  })
+
+  // Register embed-file handler
+  runner.register({
+    kind: 'embed-file',
+    concurrency: 1, // To avoid overloading CPU/RAM for local embeddings
+    minGapMs: 100,
+    handler: embedFileHandler
   })
 
   bootstrap = { store, runner }

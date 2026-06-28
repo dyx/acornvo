@@ -82,7 +82,7 @@ const request: IpcClient<IpcContract> = {
   },
   search: {
     rebuild: () => invoke('search.rebuild'),
-
+    hybrid: (q, opts) => invoke('search.hybrid', q, opts),
     fullText: (q, opts) => invoke('search.fullText', q, opts),
     suggest: (q) => invoke('search.suggest', q),
     stats: () => invoke('search.stats')

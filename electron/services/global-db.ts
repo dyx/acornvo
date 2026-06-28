@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS ai_model (
   provider_id TEXT NOT NULL,
   name TEXT NOT NULL,
   display_name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'chat',
+  embedding_dim INTEGER,
   enabled INTEGER NOT NULL DEFAULT 1,
   context_window INTEGER DEFAULT 128000,
   created_at TEXT NOT NULL,
@@ -91,8 +93,14 @@ export function initGlobalDb(): void {
     if (!columns.find((c) => c.name === 'context_window')) {
       db.exec('ALTER TABLE ai_model ADD COLUMN context_window INTEGER DEFAULT 128000')
     }
+    if (!columns.find((c) => c.name === 'kind')) {
+      db.exec("ALTER TABLE ai_model ADD COLUMN kind TEXT NOT NULL DEFAULT 'chat'")
+    }
+    if (!columns.find((c) => c.name === 'embedding_dim')) {
+      db.exec('ALTER TABLE ai_model ADD COLUMN embedding_dim INTEGER')
+    }
   } catch (err) {
-    console.error('Failed to migrate ai_model context_window', err)
+    console.error('Failed to migrate ai_model schema', err)
   }
 
   globalDb = db

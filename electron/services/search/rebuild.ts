@@ -5,7 +5,10 @@ import type Database from 'better-sqlite3'
 import { logger } from '../../obs/logger'
 import { parseFile } from '../frontmatter'
 import { writeRebuildTimestamp } from './stats'
-import { escapeForFts } from '../index-queries'
+import { upsertFts, upsertChunks } from '../index-queries'
+import { chunkMarkdown } from '../chunker'
+import { getVectorStore } from '../vector-store'
+import { getQueueBootstrap } from '../../queue'
 
 function broadcastEvent(channel: string, payload: unknown): void {
   try {
@@ -75,9 +78,9 @@ export async function rebuildFts(
   let done = 0
   let lastEmittedPct = -1
 
-  const insert = db.prepare(
-    'INSERT OR REPLACE INTO files_fts(rowid, path, title, body) VALUES (?, ?, ?, ?)'
-  )
+  // Clear old FTS and chunks just in case
+  db.prepare('DELETE FROM files_fts').run()
+  db.prepare('DELETE FROM chunks').run()
 
   // Process in batches to keep transactions short and progress smooth.
   for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
@@ -85,23 +88,16 @@ export async function rebuildFts(
 
     interface ReadResult {
       row: FileRow
-      rowid: number
       body: string
+      frontmatter: Record<string, unknown>
     }
     const readResults: ReadResult[] = []
     for (const row of batch) {
       try {
         const abs = join(groveRoot, row.path)
         const raw = await readFile(abs, 'utf8')
-        const { body } = parseFile(raw)
-        const rowidRow = db.prepare('SELECT rowid FROM files WHERE path=?').get(row.path) as
-          | { rowid: number }
-          | undefined
-        if (!rowidRow) {
-          logger().warn('search', { msg: '[search] rebuild: rowid missing for path', meta: { path: row.path } })
-          continue
-        }
-        readResults.push({ row, rowid: rowidRow.rowid, body })
+        const { body, frontmatter } = parseFile(raw)
+        readResults.push({ row, body, frontmatter })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         logger().warn('search', { msg: '[search] rebuild: read failed', meta: { path: row.path, msg } })
@@ -110,7 +106,24 @@ export async function rebuildFts(
 
     const tx = db.transaction(() => {
       for (const r of readResults) {
-        insert.run(r.rowid, r.row.path, r.row.title ?? '', escapeForFts(r.body))
+        const chunks = chunkMarkdown(r.body, r.row.path)
+        let title = ''
+        if (typeof r.frontmatter.title === 'string') {
+          title = r.frontmatter.title
+        } else if (r.frontmatter.title) {
+          title = String(r.frontmatter.title)
+        }
+        upsertFts(db, r.row.path, title, chunks)
+        upsertChunks(db, r.row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
+        
+        const q = getQueueBootstrap()
+        if (q) {
+          try {
+            q.store.enqueue('embed-file', { path: r.row.path }, { dedupeKey: `embed:${r.row.path}` })
+          } catch (err) {
+            // ignore enqueue err
+          }
+        }
       }
     })
     tx()

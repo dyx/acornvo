@@ -27,6 +27,7 @@ export interface AppearanceSettings {
 export interface AiSettings {
   defaultChatModelId: string | null
   defaultReviewerModelId: string | null
+  defaultEmbeddingModelId: string | null
   bodyMax: number
 }
 
@@ -35,16 +36,22 @@ export interface BrowserSettings {
   clipImagesLocalize: boolean
   searchEngine: SearchEngine
 }
+export interface SearchSettings {
+  hybridEnabled: boolean
+  ftsWeight: number
+  vecWeight: number
+}
 
-export type SettingsTab = 'general' | 'ai' | 'browser' | 'observability' | 'about'
+export type SettingsTab = 'general' | 'ai' | 'browser' | 'search' | 'observability' | 'about'
 
-export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser'
+export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser' | 'search'
 
 export type SettingsByNs = {
   general: GeneralSettings
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
+  search: SearchSettings
 }
 
 export interface AiProvider {

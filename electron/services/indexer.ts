@@ -6,10 +6,12 @@ import { walk, DEFAULT_SKIP_SET } from './walker'
 import {
   upsertFileWithBodyDelta,
   upsertFts,
+  upsertChunks,
   listAllPaths,
   deleteFile,
   type FileRow
 } from './index-queries'
+import { getVectorStore } from './vector-store'
 import { parseFile } from './frontmatter'
 import { chunkMarkdown } from './chunker'
 import { getQueueBootstrap } from '../queue'
@@ -205,7 +207,7 @@ export async function startScan(groveRoot: string): Promise<void> {
       if (result !== 'unchanged') {
 
         if (bodyChanged) {
-          const chunks = chunkMarkdown(body)
+          const chunks = chunkMarkdown(body, row.path)
           
           let extractedTitle = ''
           if (typeof frontmatter.title === 'string') {
@@ -215,6 +217,18 @@ export async function startScan(groveRoot: string): Promise<void> {
           }
 
           upsertFts(db, row.path, extractedTitle, chunks)
+          
+          // Semantic Search: save chunk metadata and enqueue embedding job
+          upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
+          
+          const q = getQueueBootstrap()
+          if (q) {
+            try {
+              q.store.enqueue('embed-file', { path: row.path }, { dedupeKey: `embed:${row.path}` })
+            } catch (err) {
+              logger().warn('indexer', { msg: 'enqueue embed-file failed', meta: { path: row.path, error: String(err) } })
+            }
+          }
         }
       }
       seen.add(entry.relPath)
@@ -272,7 +286,7 @@ export async function upsertFromFs(relPath: string): Promise<void> {
     if (result !== 'unchanged') {
 
       if (bodyChanged) {
-        const chunks = chunkMarkdown(body)
+        const chunks = chunkMarkdown(body, row.path)
         
         let extractedTitle = ''
         if (typeof frontmatter.title === 'string') {
@@ -282,6 +296,18 @@ export async function upsertFromFs(relPath: string): Promise<void> {
         }
 
         upsertFts(db, row.path, extractedTitle, chunks)
+
+        // Semantic Search: save chunk metadata and enqueue embedding job
+        upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
+        
+        const q = getQueueBootstrap()
+        if (q) {
+          try {
+            q.store.enqueue('embed-file', { path: row.path }, { dedupeKey: `embed:${row.path}` })
+          } catch (err) {
+            logger().warn('indexer', { msg: 'enqueue embed-file failed', meta: { path: row.path, error: String(err) } })
+          }
+        }
       }
     }
 

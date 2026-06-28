@@ -330,21 +330,6 @@ export async function reviewClip(
     reviewedAt: new Date().toISOString()
   }
 
-  const nextFrontmatter = {
-    ...md.frontmatter,
-    // 以 AI 为准，直接覆盖正式字段
-    title: result.suggestedTitle,
-    summary: result.summary,
-    category: result.category,
-    tags: result.tags,
-    highlights: result.keyQuotes, // keyQuotes 映射到 highlights
-
-    // 保留 AI 专属或元数据字段
-    ai_suggested_title: result.suggestedTitle,
-    ai_reviewed_at: result.reviewedAt,
-    ai_review_accepted_at: result.reviewedAt // 自动采纳
-  }
-
   const latencyMs = Date.now() - t0
   const llmCall = {
     modelId: profile.dbModelId,
@@ -354,26 +339,50 @@ export async function reviewClip(
     rawUsageJson: rawUsageJson ?? null
   }
 
-  try {
-    logger().debug('ai', {
-      msg: '[reviewClip] writing back frontmatter',
-      meta: { clipId, path: clip.path, expectedMtime: md.mtimeMs }
-    })
-    await fileHandlers.writeParsed(clip.path, nextFrontmatter, md.body, {
-      expectedMtime: md.mtimeMs
-    })
-    logger().info('ai', { msg: '[reviewClip] writeback done', meta: { clipId, path: clip.path } })
-  } catch (e) {
-    const code = (e as { code?: string })?.code
-    logger().error('ai', {
-      msg: '[reviewClip] writeback failed',
-      meta: { clipId, path: clip.path, code, message: (e as Error)?.message?.slice(0, 300) }
-    })
-    if (code === 'E_MTIME_MISMATCH') {
-      throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback', { llmCall })
+  let currentMd = md
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const nextFrontmatter = {
+      ...currentMd.frontmatter,
+      // 以 AI 为准，直接覆盖正式字段
+      title: result.suggestedTitle,
+      summary: result.summary,
+      category: result.category,
+      tags: result.tags,
+      highlights: result.keyQuotes, // keyQuotes 映射到 highlights
+
+      // 保留 AI 专属或元数据字段
+      ai_suggested_title: result.suggestedTitle,
+      ai_reviewed_at: result.reviewedAt,
+      ai_review_accepted_at: result.reviewedAt // 自动采纳
     }
-    Object.assign(e as any, { llmCall })
-    throw e
+
+    try {
+      logger().debug('ai', {
+        msg: '[reviewClip] writing back frontmatter',
+        meta: { clipId, path: clip.path, expectedMtime: currentMd.mtimeMs, attempt }
+      })
+      await fileHandlers.writeParsed(clip.path, nextFrontmatter, currentMd.body, {
+        expectedMtime: currentMd.mtimeMs
+      })
+      logger().info('ai', { msg: '[reviewClip] writeback done', meta: { clipId, path: clip.path } })
+      break
+    } catch (e) {
+      const code = (e as { code?: string })?.code
+      if (code === 'E_MTIME_MISMATCH' && attempt < 2) {
+        logger().warn('ai', { msg: '[reviewClip] mtime mismatch, reloading file to retry', meta: { clipId, path: clip.path } })
+        currentMd = loadMd(clip.path)
+        continue
+      }
+      logger().error('ai', {
+        msg: '[reviewClip] writeback failed',
+        meta: { clipId, path: clip.path, code, message: (e as Error)?.message?.slice(0, 300) }
+      })
+      if (code === 'E_MTIME_MISMATCH') {
+        throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback', { llmCall })
+      }
+      Object.assign(e as any, { llmCall })
+      throw e
+    }
   }
 
   logger().info('ai', { msg: '[reviewClip] completed', meta: { clipId, latencyMs, model: profile.model } })

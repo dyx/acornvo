@@ -375,11 +375,26 @@
       "fontScale": "UI字号",
       "editorFont": "编辑器字体"
     },
+    "search": {
+      "hybridSearch": "混合搜索 (全文 + 向量)",
+      "hybridSearchDesc": "结合关键词匹配与语义向量检索，获得更精准的结果。",
+      "ftsWeight": "全文搜索权重",
+      "vecWeight": "向量搜索权重",
+      "rebuildIndex": "重建搜索索引",
+      "rebuildIndexDesc": "强制清空并重新构建全文索引与向量索引。此过程在后台运行，且会占用较多的系统资源。",
+      "rebuilding": "正在重建...",
+      "rebuildAction": "重建索引",
+      "rebuildFts": "正在扫描并重建全文索引...",
+      "rebuildVector": "正在后台生成向量索引...",
+      "rebuildDone": "重建索引已全部完成",
+      "remaining": "剩余任务"
+    },
     "tab": {
       "general": "通用",
       "appearance": "外观",
       "ai": "供应商",
-      "browser": "浏览器",
+      "browser": "拾果",
+      "search": "搜索",
       "library": "理果",
       "chat": "松语",
       "observability": "可观测",

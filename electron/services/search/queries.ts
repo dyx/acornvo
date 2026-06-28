@@ -3,7 +3,7 @@ import type { FileSummary } from '@shared/file-types'
 import { logger } from '../../obs/logger'
 import { buildFtsQuery } from './queryBuilder'
 
-interface SummaryRow {
+export interface SummaryRow {
   path: string
   title: string | null
   category: string | null
@@ -13,7 +13,7 @@ interface SummaryRow {
   tags_json: string | null
 }
 
-function rowToFileSummary(row: SummaryRow): FileSummary {
+export function rowToFileSummary(row: SummaryRow): FileSummary {
   let tags: string[] = []
   if (row.tags_json) {
     try {
@@ -79,7 +79,7 @@ interface FtsHitRow {
   rank: number
 }
 
-function escapeForSnippet(s: string): string {
+export function escapeForSnippet(s: string): string {
   const OPEN = '\u0000MARK_OPEN\u0000'
   const CLOSE = '\u0000MARK_CLOSE\u0000'
   return s

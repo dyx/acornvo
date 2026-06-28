@@ -27,15 +27,37 @@ CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 
 -- ============================================================
 -- files_fts — full-text search (trigram tokenizer)
--- Replaces the phase-05 simple-tokenizer version via DROP IF EXISTS.
 -- ============================================================
 DROP TABLE IF EXISTS files_fts;
 CREATE VIRTUAL TABLE files_fts USING fts5(
+  chunk_id UNINDEXED,
   path UNINDEXED,
   heading_path,
   title,
   body,
   tokenize='trigram'
+);
+
+-- ============================================================
+-- chunks & chunk_vectors — semantic search
+-- ============================================================
+CREATE TABLE IF NOT EXISTS chunks (
+  chunk_id TEXT PRIMARY KEY,
+  path TEXT NOT NULL,
+  ordinal INTEGER NOT NULL,
+  heading_path TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL,
+  char_count INTEGER NOT NULL DEFAULT 0,
+  model_id TEXT,
+  embedded_at TEXT,
+  FOREIGN KEY(path) REFERENCES files(path) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_chunks_path ON chunks(path);
+CREATE INDEX IF NOT EXISTS idx_chunks_unembedded ON chunks(path) WHERE embedded_at IS NULL;
+
+CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vectors USING vec0(
+  rowid INTEGER PRIMARY KEY,
+  embedding FLOAT[512] distance_metric=cosine
 );
 
 -- ============================================================
@@ -175,3 +197,20 @@ CREATE TABLE IF NOT EXISTS checkpoint_meta (
 );
 
 CREATE INDEX IF NOT EXISTS idx_checkpoint_meta_canceled ON checkpoint_meta(canceled_at);
+
+-- ============================================================
+-- compaction_events (phase-16 context management)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS compaction_events (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  pre_message_count INTEGER NOT NULL,
+  post_message_count INTEGER NOT NULL,
+  pre_token_est INTEGER NOT NULL,
+  post_token_est INTEGER NOT NULL,
+  trigger TEXT,
+  reason TEXT,
+  token_method TEXT NOT NULL DEFAULT 'acornvo.estimateTokens.v1',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_compaction_events_session ON compaction_events(session_id);

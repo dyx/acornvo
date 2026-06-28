@@ -15,6 +15,10 @@ files:
 
 asarUnpack:
   - resources/**
+  - '**/*.node'
+  - '**/*.dylib'
+  - '**/*.so'
+  - '**/*.dll'
 mac:
   category: public.app-category.productivity
   hardenedRuntime: true

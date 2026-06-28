@@ -218,6 +218,9 @@ async function bootstrap(): Promise<void> {
   app.on('will-quit', disposeBroadcaster)
   const disposeSettingsBroadcaster = installSettingsBroadcaster()
   app.on('will-quit', disposeSettingsBroadcaster)
+  
+  const { disposeEmbedWorker } = await import('./ai/embed-worker')
+  app.on('will-quit', disposeEmbedWorker)
 
   const disposeDbSubscriber = groveService.onChange((payload) => {
     void (async () => {

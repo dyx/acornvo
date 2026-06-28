@@ -55,8 +55,7 @@ export interface LibraryState {
 
 const DEFAULT_PAGINATION: Pagination = {
   limit: 10000,
-  offset: 0,
-  orderBy: 'clipped_desc'
+  offset: 0
 }
 
 const initialState = {
@@ -234,7 +233,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const items = applyLocalQuery(allItems, filter, orderBy, ftsMatchedPaths)
     set({
       orderBy,
-      pagination: { ...get().pagination, orderBy, offset: 0 },
+      pagination: { ...get().pagination, offset: 0 },
       items,
       total: items.length
     })

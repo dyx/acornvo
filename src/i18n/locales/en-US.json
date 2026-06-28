@@ -355,11 +355,26 @@
       "fontScale": "Font size",
       "editorFont": "Editor font"
     },
+    "search": {
+      "hybridSearch": "Hybrid Search (FTS + Vector)",
+      "hybridSearchDesc": "Combine keyword matching with semantic vector search.",
+      "ftsWeight": "FTS Weight",
+      "vecWeight": "Vector Weight",
+      "rebuildIndex": "Rebuild Search Index",
+      "rebuildIndexDesc": "Forces a full rebuild of the Full-Text Search and Vector Embedding indices. This process runs in the background and may consume significant CPU resources.",
+      "rebuilding": "Rebuilding...",
+      "rebuildAction": "Rebuild Index",
+      "rebuildFts": "Scanning and rebuilding FTS...",
+      "rebuildVector": "Generating vector embeddings...",
+      "rebuildDone": "Index rebuild completed",
+      "remaining": "Remaining"
+    },
     "tab": {
       "general": "General",
       "appearance": "Appearance",
       "ai": "Providers",
-      "browser": "Browser",
+      "browser": "Shiguo",
+      "search": "Search",
       "library": "Library",
       "chat": "Chat",
       "observability": "Observability",
