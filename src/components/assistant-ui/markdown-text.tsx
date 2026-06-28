@@ -10,7 +10,7 @@ import {
 } from "@assistant-ui/react-markdown";
 import { useNavigate } from "react-router-dom";
 import { ipc } from "@/ipc/client";
-import { useEditorStore } from "@/stores/editor";
+import { useLibraryStore } from "@/stores/library";
 import remarkGfm from "remark-gfm";
 import { type FC, memo, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -182,7 +182,7 @@ const defaultComponents = memoizeMarkdownComponents({
           // ignore malformed URI errors
         }
         
-        useEditorStore.getState().open(targetPath)
+        useLibraryStore.getState().select(targetPath)
         navigate('/library')
       }
     }
