@@ -142,9 +142,13 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       if (mappedRole === 'assistant') {
         const lastResult = result[result.length - 1];
-        if (lastResult && lastResult.role === 'assistant' && (lastResult as any).status?.type === 'running') {
+        if (lastResult && lastResult.role === 'assistant') {
           (lastResult.content as any[]).push(...content);
-          (lastResult as any).status = statusMap[msg.status ?? 'done'] || { type: 'complete', reason: 'unknown' };
+          (lastResult as any).status =
+            (lastResult as any).status?.type === 'running'
+              ? (lastResult as any).status
+              : statusMap[msg.status ?? 'done'] || { type: 'complete', reason: 'unknown' };
+          continue;
         } else {
           result.push({
             ...threadMsg,
@@ -234,7 +238,10 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       // 1. Truncate DB messages and clear LangGraph state
       try {
-        await (window as any).api.chat['sessions.truncate'](activeSid, message.sourceId);
+        const session = useChatStore.getState().bySession[activeSid];
+        const targetMsg = session?.messages?.find(m => String(m.id) === String(message.sourceId));
+        const trueDbId = targetMsg?.dbId || targetMsg?.id || message.sourceId;
+        await (window as any).api.chat['sessions.truncate'](activeSid, trueDbId);
       } catch (err) {
         console.error('Failed to truncate session:', err);
         toast({
@@ -278,9 +285,10 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
 
       const parentMessage = session.messages.find(m => String(m.id) === String(parentId));
       if (!parentMessage || parentMessage.role !== 'user') return;
+      const trueDbId = parentMessage.dbId || parentMessage.id || parentId;
 
       try {
-        await (window as any).api.chat['sessions.truncate'](activeSid, parentId);
+        await (window as any).api.chat['sessions.truncate'](activeSid, trueDbId);
       } catch (err) {
         console.error('Failed to truncate session for reload:', err);
         toast({

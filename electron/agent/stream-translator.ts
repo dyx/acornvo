@@ -199,7 +199,7 @@ export async function translateStreamEntry(
       const node = nodes[nodeKey]
       const messages: unknown[] = node?.messages ?? []
       for (const m of messages) {
-        if (AIMessage.isInstance(m) && (nodeKey === 'model' || nodeKey === 'agent')) {
+        if (AIMessage.isInstance(m)) {
           await handleAssistantMessage(deps, m as AIMessage)
         }
         else if (ToolMessage.isInstance(m)) await handleToolMessage(deps, m as ToolMessage)

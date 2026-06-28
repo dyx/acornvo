@@ -17,6 +17,7 @@ export interface ChatSession {
 
 export interface ChatMessage {
   id: string
+  dbId?: string
   role: 'user' | 'assistant' | 'tool' | 'system'
   text: string
   reasoningText?: string
@@ -68,6 +69,7 @@ function toChatSession(s: Session): ChatSession {
 function toChatMessage(m: SessionMessage): ChatMessage {
   return {
     id: String(m.id),
+    dbId: String(m.id),
     role: m.role,
     text: m.content ?? '',
     toolCalls: m.toolCalls,
@@ -330,6 +332,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.warn('[chat-store] sendUserMessage: already streaming → BusyError')
       throw new BusyError()
     }
+    
+    const optimisticMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      text: text,
+      attachments,
+      createdAt: Date.now(),
+      status: 'done'
+    }
+    
     set((s) => {
       let nextSessions = s.sessions
       const currentSession = nextSessions.find(x => x.id === sid)
@@ -347,6 +359,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           [sid]: {
             ...emptySession(),
             ...s.bySession[sid],
+            messages: [...(s.bySession[sid]?.messages || []), optimisticMsg],
             status: 'streaming',
             error: null,
             lastUserText: text
@@ -356,8 +369,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     })
     try {
       console.log('[chat-store] sendUserMessage: calling ipc.chat.sendUserMessage…')
-      const result = await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
-      console.log('[chat-store] sendUserMessage: IPC returned', result)
+      await ipc.chat.sendUserMessage({ sessionId: sid, text, attachments })
     } catch (err) {
       console.error('[chat-store] sendUserMessage: IPC threw', err)
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -740,6 +752,17 @@ function subscribeSessionStream(sid: string): void {
           const post = useChatStore.getState().bySession[sid] ?? cur
           const incoming = toChatMessage(event.message)
           if (incoming.role !== 'assistant') {
+            const lastUserIdx = post.messages.findLastIndex(m => m.role === 'user' && !m.dbId)
+            if (lastUserIdx !== -1) {
+              const updatedMessages = [...post.messages]
+              updatedMessages[lastUserIdx] = { ...updatedMessages[lastUserIdx], dbId: incoming.id }
+              return {
+                bySession: {
+                  ...s.bySession,
+                  [sid]: { ...post, messages: updatedMessages }
+                }
+              }
+            }
             return {
               bySession: {
                 ...s.bySession,
