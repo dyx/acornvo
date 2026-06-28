@@ -1,9 +1,8 @@
 import type { AgentEvent, SessionMessage, ToolCall, ToolResult } from '../../shared/agent-types'
+
 import {
   AIMessage,
-  AIMessageChunk,
-  ToolMessage,
-  isAIMessageChunk
+  ToolMessage
 } from '@langchain/core/messages'
 import { normalizeLLMError } from '../ai/normalize-errors'
 
@@ -76,7 +75,7 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   }
 
   if (!reasoningStr && msg.additional_kwargs?.reasoning_content) {
-    reasoningStr = msg.additional_kwargs.reasoning_content
+    reasoningStr = msg.additional_kwargs.reasoning_content as string
   }
 
   // 2. Fallback to accumulated stream data if the final AIMessage lost it (due to provider chunk concat bugs)
@@ -207,10 +206,8 @@ export async function processMessages(
     if (msg) {
       let finalUsage = msg.usage_metadata
       const rawUsage = msg.response_metadata?.usage
-      let rawUsageJson: string | undefined
 
       if (rawUsage) {
-        try { rawUsageJson = JSON.stringify(rawUsage) } catch {}
         if (typeof rawUsage.prompt_tokens === 'number') {
           finalUsage = {
             input_tokens: rawUsage.prompt_tokens,
@@ -229,7 +226,7 @@ export async function processMessages(
       deps.finalUsage = finalUsage
       const msgId = msg.id || `anon-${Date.now()}`
       if (!deps.seenAiMessageIds.has(msgId)) {
-        if (deps.recordUsage) deps.recordUsage(finalUsage, modelName, rawUsageJson)
+        if (deps.recordUsage) deps.recordUsage(finalUsage, modelName)
       }
 
       await handleAssistantMessage(deps, msg)
@@ -312,4 +309,51 @@ export function emitDone(
     type: 'done',
     usage: usageShape
   } as AgentEvent)
+}
+
+export interface ActionRequest {
+  name?: string
+  args?: unknown
+}
+
+export interface InterruptShape {
+  id?: string
+  value?: { actionRequests?: ActionRequest[] }
+  /** Pre-v1 / fallback shapes seen in other LangGraph builds. */
+  actionRequests?: ActionRequest[]
+  action_requests?: ActionRequest[]
+}
+
+/**
+ * Scenario 5: interrupt resume needed.
+ *
+ * Each ActionRequest maps to one of the tool_calls on the immediately-prior
+ * assistant message. We use the matching tool_call.id as `callId` so the
+ * renderer can fold the approval bubble together with the eventual tool
+ * result. `correspondingCallIds[i]` is the tool_call.id for action i — the
+ * caller (runner.ts) knows that mapping; we don't try to recover it here.
+ */
+export function emitInterrupt(
+  deps: TranslatorDeps,
+  interrupt: InterruptShape,
+  correspondingCallIds: string[] = []
+): void {
+  const reqs =
+    interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? []
+  reqs.forEach((action, i) => {
+    const args = (action.args ?? {}) as { reason?: unknown }
+    const callId = correspondingCallIds[i] ?? String(interrupt.id ?? '')
+    const tool =
+      action.name ??
+      (action as unknown as { action?: string; tool?: string }).action ??
+      (action as unknown as { tool?: string }).tool ??
+      ''
+    deps.emit({
+      type: 'tool.approval-needed',
+      callId,
+      tool,
+      args,
+      reason: typeof args.reason === 'string' ? args.reason : undefined
+    })
+  })
 }
