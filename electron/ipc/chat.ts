@@ -266,7 +266,6 @@ export function createChatHandlers(deps: ChatDeps) {
           sessions: deps.sessions,
           systemPrompt: chatAgentSystemPrompt({
             vaultName: basenameOf(deps.vaultRoot()),
-            locale: 'zh'
           }),
           vaultRoot: deps.vaultRoot(),
           cancel: ctl.signal,

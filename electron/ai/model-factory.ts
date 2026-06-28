@@ -4,6 +4,7 @@ import { ChatOpenRouter } from '@langchain/openrouter'
 import { ChatOllama } from '@langchain/ollama'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { logger } from '../obs/logger'
+import type { ProviderCaps } from './capabilities'
 
 export interface ResolvedProfile {
   id: string
@@ -17,7 +18,7 @@ export interface ResolvedProfile {
 
 export function buildChatModel(
   profile: ResolvedProfile,
-  opts: { temperature?: number; maxTokens?: number } = {}
+  opts: { temperature?: number; maxTokens?: number; caps?: ProviderCaps } = {}
 ): BaseChatModel {
   logger().info('ai', {
     msg: '[buildChatModel] constructing new model',
@@ -32,7 +33,19 @@ export function buildChatModel(
   })
 
   const temperature = opts.temperature ?? 0.3
-  const maxTokens = opts.maxTokens ?? 800
+  let maxTokens = opts.maxTokens ?? 800
+
+  if (opts.caps?.maxTokensIncludesReasoning && maxTokens < 4096) {
+    maxTokens = Math.max(maxTokens * 2, 4096)
+  }
+
+  let finalBaseUrl = profile.baseUrl
+  if (opts.caps?.betaUrlSuffix) {
+    let base = finalBaseUrl || 'https://api.deepseek.com'
+    if (!base.endsWith(opts.caps.betaUrlSuffix) && !base.endsWith(opts.caps.betaUrlSuffix + '/')) {
+      finalBaseUrl = base.replace(/\/$/, '') + opts.caps.betaUrlSuffix
+    }
+  }
 
   const debugCallbacks = [
     {
@@ -82,7 +95,7 @@ export function buildChatModel(
         timeout: 120_000,
         maxRetries: 2,
         streamUsage: true,
-        configuration: { fetch: customFetch, baseURL: profile.baseUrl || undefined }
+        configuration: { fetch: customFetch, baseURL: finalBaseUrl || undefined }
       }) as unknown as BaseChatModel
       break
     case 'openrouter':
@@ -93,9 +106,9 @@ export function buildChatModel(
         temperature,
         maxTokens,
         maxRetries: 2,
-        baseURL: profile.baseUrl || undefined,
+        baseURL: finalBaseUrl || undefined,
         configuration: { fetch: customFetch }
-      }) as unknown as BaseChatModel
+      } as any) as unknown as BaseChatModel
       break
     case 'deepseek':
       model = new ChatDeepSeek({
@@ -107,14 +120,14 @@ export function buildChatModel(
         timeout: 120_000,
         maxRetries: 2,
         streamUsage: true,
-        configuration: { fetch: customFetch, baseURL: profile.baseUrl || undefined }
+        configuration: { fetch: customFetch, baseURL: finalBaseUrl || undefined }
       }) as unknown as BaseChatModel
       break
     case 'ollama':
       model = new ChatOllama({
         callbacks: debugCallbacks,
         model: profile.model,
-        baseUrl: profile.baseUrl || undefined,
+        baseUrl: finalBaseUrl || undefined,
         temperature,
         numPredict: maxTokens,
         maxRetries: 2

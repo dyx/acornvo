@@ -1,4 +1,4 @@
-import { ToolMessage, isToolMessage } from '@langchain/core/messages'
+import { ToolMessage } from '@langchain/core/messages'
 
 const KEEP_RECENT = 6
 const MIN_CLEAR_CHARS = 512

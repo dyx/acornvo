@@ -1,6 +1,7 @@
+import { ACORNVO_PREAMBLE } from './_common'
+
 export interface ChatAgentPromptCtx {
   vaultName: string
-  locale?: 'zh' | 'en'
 }
 
 export function chatAgentSystemPrompt(ctx: ChatAgentPromptCtx): string {
@@ -24,5 +25,6 @@ export function chatAgentSystemPrompt(ctx: ChatAgentPromptCtx): string {
 【回答原则】
 - 保持回答简洁流畅。
 - 在基于搜索结果回答时，尽量提及文章的来源标题，以增加可信度。
-- **严禁在调用工具前输出任何解释性废话（如“我来帮你搜一下”）。** 如果你需要调用工具，请直接（或在 <think> 思考完毕后）发起调用，不要在工具调用前输出任何普通文本。`
+- **严禁在调用工具前输出任何解释性废话（如“我来帮你搜一下”）。** 如果你需要调用工具，请直接（或在 <think> 思考完毕后）发起调用，不要在工具调用前输出任何普通文本。
+${ACORNVO_PREAMBLE}`
 }

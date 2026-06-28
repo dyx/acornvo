@@ -11,7 +11,7 @@ const SearchFilesSchema = z.object({
     .array(z.string())
     .min(1)
     .describe(
-      `Provide 1-${MAX_QUERIES} different search queries (synonyms, different angles) to maximize search recall. FTS5 query — use words from the user's question; for phrases use double quotes.`
+      `提供 1-${MAX_QUERIES} 个不同的搜索词（如同义词、不同角度）以最大化召回率。FTS5 搜索——使用用户问题中的词语；对于短语使用双引号。`
     )
 })
 
@@ -34,7 +34,7 @@ export const searchFilesTool = tool(
       if (totalChars + itemChars > MAX_CHARS) {
         items.push({
           type: 'system_warning',
-          message: 'Context limit reached. Some results were truncated. Adjust your queries if you need more.'
+          message: '上下文限制已到达，部分结果被截断。如果需要更多结果请调整搜索词。'
         })
         break
       }
@@ -55,7 +55,7 @@ export const searchFilesTool = tool(
   {
     name: 'search_files',
     description:
-      "Full-text multi-query search the user's grove. Use this ONLY when the user is explicitly or implicitly asking about contents in their collection. Do NOT use this for general conversational queries. Returns matching markdown chunks with their heading context. Provide multiple queries to maximize recall. CRITICAL: When using these search results to answer, you MUST cite your sources using Markdown footnotes or inline links, pointing to the provided path (e.g. `[1]` or `[Title](file:///path)`). This helps the user verify the source.",
+      "对用户知识库进行全文多词搜索。仅当用户明确或隐含地询问其收藏内容时才使用此工具。请勿用于通用对话。返回匹配的 Markdown 块及其标题上下文。提供多个搜索词以最大化召回率。极其重要：在使用搜索结果回答时，必须使用 Markdown 脚注或内联链接引用来源，指向提供的路径（例如 `[1]` 或 `[标题](acornvo-local:///path)`）。这有助于用户验证来源。",
     schema: SearchFilesSchema
   }
 )
