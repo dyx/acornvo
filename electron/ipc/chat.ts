@@ -331,7 +331,7 @@ export function createChatHandlers(deps: ChatDeps) {
       if (opts?.editedArgs !== undefined) {
         const safeArgs = opts.editedArgs
         if (typeof safeArgs === 'object' && safeArgs !== null) {
-          if ('__proto__' in safeArgs || 'constructor' in safeArgs) {
+          if (Object.hasOwn(safeArgs, '__proto__') || Object.hasOwn(safeArgs, 'constructor')) {
             throw new IpcError('E_INVALID_ARGS', 'invalid tool arguments')
           }
         }

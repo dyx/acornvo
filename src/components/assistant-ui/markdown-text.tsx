@@ -152,7 +152,7 @@ const defaultComponents = memoizeMarkdownComponents({
 
       if (!href) return
 
-      if (href.startsWith('http://') || href.startsWith('https://')) {
+      if (/^https?:\/\//i.test(href)) {
         ipc.shell.openExternal(href)
       } else {
         // For local files or doc IDs

@@ -126,12 +126,17 @@ export async function runChain<T>(
       lastError = e
 
       const errorMsg = e.message || ''
-      // For network errors or API errors like 401/429, we should probably not fallback
+      // For network errors or API errors like 5xx/timeout/401/429, we should probably not fallback
       // but for parsing errors or tool choice errors, fallback is good.
       if (
         errorMsg.includes('fetch failed') ||
         errorMsg.includes('401') ||
-        errorMsg.includes('429')
+        errorMsg.includes('429') ||
+        errorMsg.includes('500') ||
+        errorMsg.includes('502') ||
+        errorMsg.includes('503') ||
+        errorMsg.includes('504') ||
+        errorMsg.toLowerCase().includes('timeout')
       ) {
         throw e
       }

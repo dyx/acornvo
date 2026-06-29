@@ -41,24 +41,19 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
   }
 
   try {
+    const vs = getVectorStore()
     const tx = db.transaction(() => {
       const upd = db.prepare('UPDATE chunks SET model_id = ?, embedded_at = ? WHERE chunk_id = ?')
       for (let i = 0; i < chunks.length; i++) {
         if (vecs[i] && vecs[i].length === dim) {
           upd.run(modelId, new Date().toISOString(), chunks[i].chunk_id)
+          if (vs) {
+            vs.upsert(chunks[i].chunk_id, new Float32Array(vecs[i]))
+          }
         }
       }
     })
     tx()
-
-    const vs = getVectorStore()
-    if (vs) {
-      for (let i = 0; i < chunks.length; i++) {
-        if (vecs[i] && vecs[i].length === dim) {
-          vs.upsert(chunks[i].chunk_id, new Float32Array(vecs[i]))
-        }
-      }
-    }
   } catch (err) {
     logger().error('embed', {
       msg: 'database update failed',

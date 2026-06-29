@@ -46,6 +46,7 @@ export async function embedBatchLocal(texts: string[]): Promise<number[][]> {
         resolved = true
         worker?.off('message', onMsg)
         worker?.off('exit', onExit)
+        disposeEmbedWorker()
         reject(new Error('embed timeout'))
       }
     }, 600_000) // 10 minutes timeout for large files on CPU
