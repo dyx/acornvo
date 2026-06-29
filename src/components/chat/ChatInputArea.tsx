@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { useChatStore, BusyError } from '@/stores/chat'
 import { useToast } from '@/hooks/use-toast'
 
-
 export function ChatInputArea() {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -73,9 +72,7 @@ export function ChatInputArea() {
         />
 
         <div className="flex items-center justify-between px-4 pb-4 pt-0">
-          <div className="flex items-center gap-1">
-
-          </div>
+          <div className="flex items-center gap-1"></div>
 
           {isStreaming ? (
             <Button variant="default" size="sm" onClick={cancelStream} className="h-8">

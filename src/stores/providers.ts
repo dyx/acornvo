@@ -21,7 +21,12 @@ interface ProvidersState {
   createModel: (input: ModelCreateInput) => Promise<{ id: string }>
   updateModel: (id: string, patch: ModelUpdateInput) => Promise<void>
   removeModel: (id: string) => Promise<void>
-  testConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
+  testConnection: (input: {
+    baseUrl?: string
+    apiKey?: string
+    providerId?: string
+    testPath?: string
+  }) => Promise<{ ok: boolean; message?: string }>
   checkBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
 }
 

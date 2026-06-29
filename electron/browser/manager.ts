@@ -38,7 +38,7 @@ export function createManager(deps: ManagerDeps): Manager {
     if (!tab) return
     tab.lastActiveAt = deps.nowMs()
     if (attachedId === tabId) return
-    
+
     if (attachedId) {
       const prev = tabs.get(attachedId)
       if (prev) deps.getContentView().removeChildView(prev.view)

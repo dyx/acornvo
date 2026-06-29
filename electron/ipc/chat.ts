@@ -2,11 +2,7 @@ import type { ConcurrencyGate } from '../agent/concurrency'
 import type { SessionsDao } from '../agent/sessions'
 import type { RendererTarget } from '../agent/streamWriter'
 import { createStreamWriter } from '../agent/streamWriter'
-import {
-  runAgent as runAgentNew,
-  resumeAgent,
-  type AgentDecision
-} from '../agent/runner'
+import { runAgent as runAgentNew, resumeAgent, type AgentDecision } from '../agent/runner'
 import { getAgentBuilder } from '../agent/agent-singleton'
 import { markThreadCanceled } from '../agent/checkpoint-meta'
 import { chatAgentSystemPrompt } from '../ai/prompts/chat-agent'
@@ -33,7 +29,8 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
     const ai = settingsStore.get('ai')
     id = ai?.defaultChatModelId ?? undefined
   }
-  if (!id) throw new IpcError('E_MISSING_PROFILE', 'no modelId; settings.ai.defaultChatModelId is null')
+  if (!id)
+    throw new IpcError('E_MISSING_PROFILE', 'no modelId; settings.ai.defaultChatModelId is null')
 
   const query = `
     SELECT
@@ -49,7 +46,9 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
   let p = db.prepare(query).get(id) as any | undefined
 
   if (!p && !modelIdParam) {
-    p = db.prepare(`
+    p = db
+      .prepare(
+        `
       SELECT
         p.id as provider_id,
         p.type as provider_type,
@@ -61,7 +60,9 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
       JOIN ai_provider p ON m.provider_id = p.id
       WHERE m.enabled = 1
       ORDER BY m.created_at ASC LIMIT 1
-    `).get() as any | undefined
+    `
+      )
+      .get() as any | undefined
 
     if (p) {
       settingsStore.set('ai', { defaultChatModelId: p.db_model_id })
@@ -94,7 +95,9 @@ export function createChatHandlers(deps: ChatDeps) {
 
   async function checkAndResume(sessionId: string) {
     const db = getGlobalDb()
-    const profileIdRow = db.prepare('SELECT profile_id FROM sessions WHERE id = ?').get(sessionId) as any
+    const profileIdRow = db
+      .prepare('SELECT profile_id FROM sessions WHERE id = ?')
+      .get(sessionId) as any
     if (!profileIdRow || !profileIdRow.profile_id) return
     const profile = resolveProfile(profileIdRow.profile_id)
     const agent = getAgentBuilder().buildForProfile(profile)
@@ -103,7 +106,8 @@ export function createChatHandlers(deps: ChatDeps) {
     if (!currentTask || !currentTask.interrupts || currentTask.interrupts.length === 0) return
 
     const interrupt = currentTask.interrupts[0]
-    const reqs = interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? []
+    const reqs =
+      interrupt.value?.actionRequests ?? interrupt.actionRequests ?? interrupt.action_requests ?? []
     if (reqs.length === 0) return
 
     const messages = state.values?.messages ?? []
@@ -122,9 +126,12 @@ export function createChatHandlers(deps: ChatDeps) {
     for (let i = 0; i < reqs.length; i++) {
       const callId = lastAssistantToolCallIds[i] ?? ''
       if (!callId) {
-        allResolved = false; break;
+        allResolved = false
+        break
       }
-      const row = db.prepare('SELECT approved, args_json FROM tool_calls WHERE id = ?').get(callId) as any
+      const row = db
+        .prepare('SELECT approved, args_json FROM tool_calls WHERE id = ?')
+        .get(callId) as any
       if (!row || row.approved === null) {
         allResolved = false
         break
@@ -141,7 +148,7 @@ export function createChatHandlers(deps: ChatDeps) {
     const ctl = aborts.get(sessionId) ?? new AbortController()
     aborts.set(sessionId, ctl)
     const writer = createStreamWriter(sessionId, deps.getTargets)
-    
+
     void resumeAgent({
       sessionId,
       agent: agent as unknown as Parameters<typeof resumeAgent>[0]['agent'],
@@ -161,7 +168,11 @@ export function createChatHandlers(deps: ChatDeps) {
   }
 
   function buildRecordUsage(profile: ResolvedProfile, sessionId: string) {
-    return (u: { input_tokens?: number; output_tokens?: number } | undefined, _model: string, rawUsageJson?: string) => {
+    return (
+      u: { input_tokens?: number; output_tokens?: number } | undefined,
+      _model: string,
+      rawUsageJson?: string
+    ) => {
       try {
         writeUsage({
           modelId: profile.dbModelId,
@@ -265,7 +276,7 @@ export function createChatHandlers(deps: ChatDeps) {
           agent: agent as unknown as Parameters<typeof runAgentNew>[0]['deps']['agent'],
           sessions: deps.sessions,
           systemPrompt: chatAgentSystemPrompt({
-            vaultName: basenameOf(deps.vaultRoot()),
+            vaultName: basenameOf(deps.vaultRoot())
           }),
           vaultRoot: deps.vaultRoot(),
           cancel: ctl.signal,
@@ -316,7 +327,7 @@ export function createChatHandlers(deps: ChatDeps) {
       const db = getGlobalDb()
       const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
       if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
-      
+
       if (opts?.editedArgs !== undefined) {
         const safeArgs = opts.editedArgs
         if (typeof safeArgs === 'object' && safeArgs !== null) {
@@ -324,22 +335,25 @@ export function createChatHandlers(deps: ChatDeps) {
             throw new IpcError('E_INVALID_ARGS', 'invalid tool arguments')
           }
         }
-        db.prepare('UPDATE tool_calls SET approved = 1, args_json = ? WHERE id = ?').run(JSON.stringify(safeArgs), callId)
+        db.prepare('UPDATE tool_calls SET approved = 1, args_json = ? WHERE id = ?').run(
+          JSON.stringify(safeArgs),
+          callId
+        )
       } else {
         db.prepare('UPDATE tool_calls SET approved = 1 WHERE id = ?').run(callId)
       }
-      
+
       await checkAndResume(row.session_id)
       return { ok: true } as const
     },
-    
+
     rejectTool: async (callId: string) => {
       const db = getGlobalDb()
       const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
       if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
-      
+
       db.prepare('UPDATE tool_calls SET approved = 0 WHERE id = ?').run(callId)
-      
+
       await checkAndResume(row.session_id)
       return { ok: true } as const
     },

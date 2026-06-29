@@ -74,7 +74,10 @@ export async function acquire(
     }
   }
   if (existing && opts.force) {
-    logger().warn('fs', { msg: 'force-acquired grove lock', meta: { grove: grovePath, previous: existing } })
+    logger().warn('fs', {
+      msg: 'force-acquired grove lock',
+      meta: { grove: grovePath, previous: existing }
+    })
   }
   return { status: 'acquired' }
 }

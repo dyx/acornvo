@@ -19,7 +19,11 @@ function renderSnippet(body: string): JSX.Element {
   let i = 0
   while ((m = re.exec(body)) !== null) {
     if (m.index > last) parts.push(<span key={i++}>{body.slice(last, m.index)}</span>)
-    parts.push(<mark key={i++} className="rounded bg-primary/20 px-0.5">{m[1]}</mark>)
+    parts.push(
+      <mark key={i++} className="rounded bg-primary/20 px-0.5">
+        {m[1]}
+      </mark>
+    )
     last = m.index + m[0].length
   }
   if (last < body.length) parts.push(<span key={i++}>{body.slice(last)}</span>)
@@ -69,11 +73,15 @@ export function FullTextResultList({
               <span className="font-medium truncate">{it.summary.title ?? it.summary.path}</span>
               <div className="flex items-center gap-2">
                 {it.source && (
-                  <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
-                    it.source === 'hybrid' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                    it.source === 'semantic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                    'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
-                  }`}>
+                  <span
+                    className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                      it.source === 'hybrid'
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        : it.source === 'semantic'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
+                    }`}
+                  >
                     {it.source}
                   </span>
                 )}
@@ -89,7 +97,9 @@ export function FullTextResultList({
             </div>
             <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
               {it.summary.path}
-              {it.heading_path && <span className="text-muted-foreground/60">→ {it.heading_path}</span>}
+              {it.heading_path && (
+                <span className="text-muted-foreground/60">→ {it.heading_path}</span>
+              )}
             </div>
             <div className="mt-2 text-sm leading-relaxed text-foreground">
               {renderSnippet(it.body)}

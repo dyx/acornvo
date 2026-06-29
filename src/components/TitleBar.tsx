@@ -20,7 +20,9 @@ export function TitleBar(): JSX.Element {
     >
       {!isPicker && (
         <div className="flex w-full items-center justify-end gap-2 [-webkit-app-region:no-drag]">
-          <div className={`flex justify-end overflow-hidden transition-all duration-300 ${sidebarOpen ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0'}`}>
+          <div
+            className={`flex justify-end overflow-hidden transition-all duration-300 ${sidebarOpen ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0'}`}
+          >
             <GroveSwitcher />
           </div>
           {!isSettings && (

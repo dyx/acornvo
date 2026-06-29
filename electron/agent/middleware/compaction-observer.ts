@@ -28,15 +28,15 @@ export function createCompactionObserver(contextWindow: number) {
     afterModel: async (state: any, config?: any) => {
       const thread_id = config?.configurable?.thread_id
       if (!thread_id) return {}
-      
+
       const pre = stateMap.get(thread_id)
       stateMap.delete(thread_id)
-      
+
       if (!pre) return {}
 
       const postCount = state.messages.length
       const postTokenEst = estimateMessagesTokens(state.messages)
-      
+
       if (postCount < pre.count) {
         // Compression happened
         let lastAiUsage = 0
@@ -47,17 +47,19 @@ export function createCompactionObserver(contextWindow: number) {
             break
           }
         }
-        
+
         const trigger = lastAiUsage > contextWindow * 0.9 ? 'reactive_overflow' : 'token_pressure'
         const reason = `postCount(${postCount}) < preCount(${pre.count})`
-        
+
         try {
           const db = dbService.requireCurrent()
-          db.prepare(`
+          db.prepare(
+            `
             INSERT INTO compaction_events 
             (id, session_id, pre_message_count, post_message_count, pre_token_est, post_token_est, trigger, reason, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(
+          `
+          ).run(
             randomUUID(),
             thread_id,
             pre.count,
@@ -71,10 +73,20 @@ export function createCompactionObserver(contextWindow: number) {
 
           logger().info('agent', {
             msg: 'compaction event recorded',
-            meta: { session_id: thread_id, trigger, preTokenEst: pre.tokenEst, postTokenEst, preCount: pre.count, postCount }
+            meta: {
+              session_id: thread_id,
+              trigger,
+              preTokenEst: pre.tokenEst,
+              postTokenEst,
+              preCount: pre.count,
+              postCount
+            }
           })
         } catch (err) {
-          logger().error('agent', { msg: 'Failed to record compaction event', meta: err as Record<string, unknown> })
+          logger().error('agent', {
+            msg: 'Failed to record compaction event',
+            meta: err as Record<string, unknown>
+          })
         }
       }
       return {}

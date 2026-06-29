@@ -1,10 +1,6 @@
 import { ipcMain } from 'electron'
 import { logger } from '../obs/logger'
-import {
-  type IpcContract,
-  type IpcErrorShape,
-  type IpcResult
-} from '@shared/ipc-contract'
+import { type IpcContract, type IpcErrorShape, type IpcResult } from '@shared/ipc-contract'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -62,8 +58,8 @@ function sanitizeMessage(message: string): string {
 
 export function normalize(err: unknown): IpcErrorShape {
   if (err && typeof err === 'object' && 'code' in err && 'message' in err) {
-    const code = (err as any).code;
-    const message = (err as any).message;
+    const code = (err as any).code
+    const message = (err as any).message
     // Duck-type check if it looks like an IpcError
     if (typeof code === 'string' && typeof message === 'string') {
       return {

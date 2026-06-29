@@ -56,7 +56,11 @@ export function createBookmarkHandlers(deps: BookmarkDeps): IpcContract['bookmar
 
   return {
     create(input: BookmarkInput): Bookmark {
-      try { new URL(input.url) } catch { throw new IpcError('E_INVALID_ARGS', 'Invalid URL') }
+      try {
+        new URL(input.url)
+      } catch {
+        throw new IpcError('E_INVALID_ARGS', 'Invalid URL')
+      }
       const db = deps.getDb()
       const existing = getExistingByUrl(input.url)
       if (existing) {

@@ -13,9 +13,13 @@ export function createVecStore(db: Database.Database): VectorStore {
   const getRowIdStmt = db.prepare('SELECT rowid FROM chunks WHERE chunk_id = ?')
   const deleteStmt = db.prepare('DELETE FROM chunk_vectors WHERE rowid = ?')
   const insertStmt = db.prepare('INSERT INTO chunk_vectors(rowid, embedding) VALUES (?, ?)')
-  const delStmt = db.prepare('DELETE FROM chunk_vectors WHERE rowid IN (SELECT rowid FROM chunks WHERE chunk_id IN (SELECT value FROM json_each(?)))')
-  const knnStmt = db.prepare('SELECT c.chunk_id, v.distance FROM chunk_vectors v JOIN chunks c ON c.rowid = v.rowid WHERE v.embedding MATCH ? AND k=? ORDER BY v.distance')
-  
+  const delStmt = db.prepare(
+    'DELETE FROM chunk_vectors WHERE rowid IN (SELECT rowid FROM chunks WHERE chunk_id IN (SELECT value FROM json_each(?)))'
+  )
+  const knnStmt = db.prepare(
+    'SELECT c.chunk_id, v.distance FROM chunk_vectors v JOIN chunks c ON c.rowid = v.rowid WHERE v.embedding MATCH ? AND k=? ORDER BY v.distance'
+  )
+
   return {
     upsert: (id, v) => {
       const row = getRowIdStmt.get(id) as { rowid: number | bigint } | undefined
@@ -30,8 +34,11 @@ export function createVecStore(db: Database.Database): VectorStore {
       delStmt.run(JSON.stringify(ids))
     },
     knn: (q, k) => {
-      const rows = knnStmt.all(Buffer.from(q.buffer, q.byteOffset, q.byteLength), k) as { chunk_id: string; distance: number }[]
-      return rows.map(r => ({ chunkId: r.chunk_id, distance: r.distance }))
+      const rows = knnStmt.all(Buffer.from(q.buffer, q.byteOffset, q.byteLength), k) as {
+        chunk_id: string
+        distance: number
+      }[]
+      return rows.map((r) => ({ chunkId: r.chunk_id, distance: r.distance }))
     }
   }
 }

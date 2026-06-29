@@ -48,7 +48,7 @@ export async function collectAttachmentContext(
 
   // Phase 2: apply per-attachment truncation and wrap in fences
   const processed: { block: string; charCount: number; singleTruncated: boolean }[] = []
-  
+
   const HEAD_SIZE = 12_000
   const TAIL_SIZE = 4_000
 
@@ -67,12 +67,13 @@ export async function collectAttachmentContext(
 
       let tailStart = body.length - TAIL_SIZE
       const firstNewlineInTail = body.indexOf('\n', tailStart)
-      if (firstNewlineInTail !== -1 && firstNewlineInTail < tailStart + 500) tailStart = firstNewlineInTail
+      if (firstNewlineInTail !== -1 && firstNewlineInTail < tailStart + 500)
+        tailStart = firstNewlineInTail
 
       const head = body.slice(0, headEnd)
       const tail = body.slice(tailStart)
       const omittedLength = tailStart - headEnd
-      
+
       let marker = `\n\n... [当前文本过长，中间部分已省略约 ${omittedLength} 字符。如果需要探索中间部分，请使用 search_files 或相应工具] ...\n\n`
 
       if (isMarkdown && omittedLength > 0) {

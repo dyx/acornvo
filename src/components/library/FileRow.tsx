@@ -37,14 +37,19 @@ export function FileRow({
       onDoubleClick={onDoubleClick}
       className={cn(
         'group relative flex items-center justify-between cursor-pointer px-3 py-2.5 transition-all duration-200 mb-0.5 rounded-md',
-        active
-          ? 'bg-[color:var(--color-acorn)]/10'
-          : 'hover:bg-[color:var(--color-paper-3)]'
+        active ? 'bg-[color:var(--color-acorn)]/10' : 'hover:bg-[color:var(--color-paper-3)]'
       )}
     >
       <div className="flex flex-col flex-1 min-w-0 pr-1">
         <div className="flex items-center gap-2 mb-[2px]">
-          <span className={cn('truncate text-[13px] tracking-tight', active ? 'font-semibold text-[color:var(--color-ink)]' : 'font-medium text-[color:var(--color-ink-2)] group-hover:text-[color:var(--color-ink)]')}>
+          <span
+            className={cn(
+              'truncate text-[13px] tracking-tight',
+              active
+                ? 'font-semibold text-[color:var(--color-ink)]'
+                : 'font-medium text-[color:var(--color-ink-2)] group-hover:text-[color:var(--color-ink)]'
+            )}
+          >
             {file.title ?? file.path}
           </span>
           {file.is_reviewing ? (
@@ -62,12 +67,19 @@ export function FileRow({
               {t('library.reviewed', 'AI 已理果')}
             </span>
           ) : (
-            <span className={cn('text-[10px] font-medium shrink-0', file.review_status === 'failed' ? 'text-[color:var(--color-berry)]' : 'text-[color:var(--color-ink-4)]')}>
-              {file.review_status === 'failed' ? t('library.review_failed', '理果失败') : t('library.unreviewed', '待理果')}
+            <span
+              className={cn(
+                'text-[10px] font-medium shrink-0',
+                file.review_status === 'failed'
+                  ? 'text-[color:var(--color-berry)]'
+                  : 'text-[color:var(--color-ink-4)]'
+              )}
+            >
+              {file.review_status === 'failed'
+                ? t('library.review_failed', '理果失败')
+                : t('library.unreviewed', '待理果')}
             </span>
           )}
-
-
         </div>
       </div>
 

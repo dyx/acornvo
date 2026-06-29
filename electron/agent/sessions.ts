@@ -117,13 +117,18 @@ export function createSessions(): SessionsDao {
       const d = db()
       const tx = d.transaction(() => {
         const numId = Number(messageId)
-        
+
         // Delete dependent tool_calls first to avoid FOREIGN KEY constraint violation
-        d.prepare('DELETE FROM tool_calls WHERE message_id IN (SELECT id FROM session_messages WHERE session_id = ? AND id >= ?)').run(sessionId, numId)
+        d.prepare(
+          'DELETE FROM tool_calls WHERE message_id IN (SELECT id FROM session_messages WHERE session_id = ? AND id >= ?)'
+        ).run(sessionId, numId)
 
         // Delete messages from target ID onwards
-        d.prepare('DELETE FROM session_messages WHERE session_id = ? AND id >= ?').run(sessionId, numId)
-        
+        d.prepare('DELETE FROM session_messages WHERE session_id = ? AND id >= ?').run(
+          sessionId,
+          numId
+        )
+
         // Delete checkpointer state for this thread to prevent LangGraph from resurrecting deleted messages
         d.prepare('DELETE FROM checkpoints WHERE thread_id = ?').run(sessionId)
         d.prepare('DELETE FROM writes WHERE thread_id = ?').run(sessionId)
@@ -178,7 +183,9 @@ export function createSessions(): SessionsDao {
 
     async updateLastAssistantUsage(sessionId, usage) {
       if (!usage) return
-      db().prepare(`
+      db()
+        .prepare(
+          `
         UPDATE session_messages 
         SET usage_json = ? 
         WHERE id = (
@@ -186,7 +193,9 @@ export function createSessions(): SessionsDao {
           WHERE session_id = ? AND role = 'assistant' 
           ORDER BY id DESC LIMIT 1
         )
-      `).run(JSON.stringify(usage), sessionId)
+      `
+        )
+        .run(JSON.stringify(usage), sessionId)
     },
 
     async recordToolCall(sessionId, tc, opts) {
@@ -214,7 +223,7 @@ export function createSessions(): SessionsDao {
       const query = hasApproved
         ? 'UPDATE tool_calls SET result_json = ?, approved = ?, finished_at = ?, error = ? WHERE id = ?'
         : 'UPDATE tool_calls SET result_json = ?, finished_at = ?, error = ? WHERE id = ?'
-        
+
       const params = hasApproved
         ? [
             fields.result === undefined ? null : JSON.stringify(fields.result),
@@ -229,8 +238,10 @@ export function createSessions(): SessionsDao {
             fields.error ?? null,
             rowId
           ]
-          
-      db().prepare(query).run(...params)
+
+      db()
+        .prepare(query)
+        .run(...params)
     },
 
     async hasToolCall(id) {

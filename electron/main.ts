@@ -32,13 +32,11 @@ import { start as watcherStart, stop as watcherStop } from './services/watcher'
 import { initBrowserSubsystem } from './browser/init'
 import { settingsStore } from './settings/store'
 
-
 import { installSettingsBroadcaster } from './settings/broadcast'
 import type { QueueRunner } from './queue/runner'
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
 let queueRunner: QueueRunner | null = null
-
 
 function createMainWindow(): BrowserWindow {
   const iconPath = join(__dirname, '../../resources/icon.png')
@@ -137,7 +135,6 @@ app.on('web-contents-created', (_event, wc) => {
   })
 })
 
-
 import { initGlobalDb } from './services/global-db'
 
 async function bootstrap(): Promise<void> {
@@ -190,7 +187,9 @@ async function bootstrap(): Promise<void> {
     } catch {
       return new Response('Not Found', { status: 404 })
     }
-    const fileUri = absolutePath.startsWith('/') ? `file://${absolutePath}` : `file:///${absolutePath}`
+    const fileUri = absolutePath.startsWith('/')
+      ? `file://${absolutePath}`
+      : `file:///${absolutePath}`
     return net.fetch(fileUri)
   })
 
@@ -218,7 +217,7 @@ async function bootstrap(): Promise<void> {
   app.on('will-quit', disposeBroadcaster)
   const disposeSettingsBroadcaster = installSettingsBroadcaster()
   app.on('will-quit', disposeSettingsBroadcaster)
-  
+
   const { disposeEmbedWorker } = await import('./ai/embed-worker')
   app.on('will-quit', disposeEmbedWorker)
 
@@ -239,7 +238,6 @@ async function bootstrap(): Promise<void> {
             setIndexerDb(db)
             await startScan(payload.path)
             await watcherStart(payload.path, db)
-
 
             if (queueRunner) {
               queueRunner.stop()
@@ -270,7 +268,6 @@ async function bootstrap(): Promise<void> {
     resetIndexer()
   })
   appLifecycle.onBeforeQuit(async () => {
-
     if (queueRunner) {
       try {
         await queueRunner.drainOnQuit(5_000)

@@ -151,7 +151,7 @@ export function attachTabEvents(
           });
         }
       })();
-    `;
+    `
     webContents.executeJavaScript(script).catch(() => {})
   }
   webContents.on('dom-ready', onDomReady)

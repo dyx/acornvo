@@ -456,7 +456,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   overwriteExternalChange: async () => {
     const cur = get().state
     if (cur.kind !== 'ready') return
-    
+
     set({
       state: { ...cur, conflictState: { kind: 'none' } }
     })
@@ -466,10 +466,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         force: true,
         rawYaml: cur.rawYaml
       } as any)
-      
+
       const next = get().state
       if (next.kind !== 'ready' || next.path !== cur.path) return
-      
+
       const newDirty = next.body !== cur.body
       set({
         state: {
@@ -610,7 +610,11 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const s = get().state
     if (s.kind !== 'ready') return
     const titleNext = String(s.frontmatter.ai_suggested_title ?? s.frontmatter.title ?? '')
-    const tagsNext = Array.isArray(s.frontmatter.ai_tags) ? (s.frontmatter.ai_tags as string[]) : (Array.isArray(s.frontmatter.tags) ? (s.frontmatter.tags as string[]) : [])
+    const tagsNext = Array.isArray(s.frontmatter.ai_tags)
+      ? (s.frontmatter.ai_tags as string[])
+      : Array.isArray(s.frontmatter.tags)
+        ? (s.frontmatter.tags as string[])
+        : []
     set({
       state: {
         ...s,
@@ -618,7 +622,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
           ...s.frontmatter,
           title: titleNext,
           tags: tagsNext,
-          category: typeof s.frontmatter.ai_category === 'string' && s.frontmatter.ai_category ? s.frontmatter.ai_category : s.frontmatter.category,
+          category:
+            typeof s.frontmatter.ai_category === 'string' && s.frontmatter.ai_category
+              ? s.frontmatter.ai_category
+              : s.frontmatter.category,
           ai_review_accepted_at: new Date().toISOString()
         },
         dirty: true

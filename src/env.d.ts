@@ -3,4 +3,4 @@
 interface Window {
   api: import('../preload/preload').PreloadApi
 }
-declare module '*.mp4';
+declare module '*.mp4'

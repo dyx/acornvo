@@ -1,4 +1,3 @@
-
 import { IpcError } from '@shared/ipc-contract'
 import { logger } from '../obs/logger'
 import { aiUsage } from '../ai/usage'
@@ -17,7 +16,10 @@ export const aiHandlers = {
     logger().info('ai', { msg: '[ai.reviewClip] called', meta: { clipId, opts } })
 
     const modelId = settingsStore.get('ai').defaultReviewerModelId
-    logger().debug('ai', { msg: '[ai.reviewClip] defaultReviewerModelId resolved', meta: { modelId } })
+    logger().debug('ai', {
+      msg: '[ai.reviewClip] defaultReviewerModelId resolved',
+      meta: { modelId }
+    })
     if (!modelId) {
       logger().error('ai', { msg: '[ai.reviewClip] no AI model configured' })
       throw new IpcError('E_MISSING_PROFILE', 'No AI provider model configured')
@@ -39,7 +41,10 @@ export const aiHandlers = {
       { clipId, path: row.path, force },
       { dedupeKey }
     )
-    logger().info('ai', { msg: '[ai.reviewClip] job enqueued', meta: { jobId: id, clipId, force, dedupeKey } })
+    logger().info('ai', {
+      msg: '[ai.reviewClip] job enqueued',
+      meta: { jobId: id, clipId, force, dedupeKey }
+    })
     return { jobId: id }
   },
 
@@ -47,7 +52,12 @@ export const aiHandlers = {
     return aiUsage.summary(opts)
   },
 
-  async ['usage.list'](opts: { limit: number; offset: number; modelId?: string; okOnly?: boolean }) {
+  async ['usage.list'](opts: {
+    limit: number
+    offset: number
+    modelId?: string
+    okOnly?: boolean
+  }) {
     return aiUsage.list(opts)
   }
 }

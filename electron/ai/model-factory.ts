@@ -41,7 +41,7 @@ export function buildChatModel(
 
   let finalBaseUrl = profile.baseUrl
   if (opts.caps?.betaUrlSuffix) {
-    let base = finalBaseUrl || 'https://api.deepseek.com'
+    const base = finalBaseUrl || 'https://api.deepseek.com'
     if (!base.endsWith(opts.caps.betaUrlSuffix) && !base.endsWith(opts.caps.betaUrlSuffix + '/')) {
       finalBaseUrl = base.replace(/\/$/, '') + opts.caps.betaUrlSuffix
     }

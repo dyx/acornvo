@@ -60,23 +60,26 @@ export interface FileFilter {
   q?: string
 }
 
-export type OrderBy = 
-  | 'clipped_desc' 
-  | 'clipped_asc'
-  | 'title_asc'
-  | 'title_desc'
+export type OrderBy = 'clipped_desc' | 'clipped_asc' | 'title_asc' | 'title_desc'
 
 export interface Pagination {
   limit?: number
   offset?: number
 }
 
-export interface HybridSearchResult {
-  chunk_id: string
-  path: string
-  heading_path: string
+export interface HybridSearchResultItem {
+  summary: FileSummary
   body: string
+  heading_path: string
   score: number
+  source: 'fts' | 'semantic' | 'hybrid'
+}
+
+export interface HybridSearchResult {
+  items: HybridSearchResultItem[]
+  total: number
+  pending: boolean
+  error?: string
 }
 
 export interface CategoryNode {
@@ -86,4 +89,3 @@ export interface CategoryNode {
   count: number
   children: CategoryNode[]
 }
-

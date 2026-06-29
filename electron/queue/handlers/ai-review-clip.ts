@@ -63,11 +63,17 @@ export const aiReviewClipHandler: JobHandler = async (ctx) => {
 
     // Only 429 / 503 (both mapped to E_RATE) are retryable
     if (code === 'E_RATE') {
-      logger().warn('queue', { msg: '[ai-review-clip] rate limited / server busy, will retry in 60s', meta: { jobId: job.id, clipId } })
+      logger().warn('queue', {
+        msg: '[ai-review-clip] rate limited / server busy, will retry in 60s',
+        meta: { jobId: job.id, clipId }
+      })
       return { kind: 'retry', delayMs: 60_000, reason: 'rate-limited' }
     }
     if (code === 'E_MTIME_CONFLICT') {
-      logger().warn('queue', { msg: '[ai-review-clip] mtime conflict, will retry in 60s', meta: { jobId: job.id, clipId } })
+      logger().warn('queue', {
+        msg: '[ai-review-clip] mtime conflict, will retry in 60s',
+        meta: { jobId: job.id, clipId }
+      })
       return { kind: 'retry', delayMs: 60_000, reason: 'mtime-conflict' }
     }
 

@@ -12,8 +12,12 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
   const db = dbService.getCurrent()
   if (!db) throw new Error('No grove open')
 
-  const chunks = db.prepare('SELECT chunk_id, ordinal, heading_path, body, char_count FROM chunks WHERE path = ? ORDER BY ordinal ASC').all(path) as any[]
-  
+  const chunks = db
+    .prepare(
+      'SELECT chunk_id, ordinal, heading_path, body, char_count FROM chunks WHERE path = ? ORDER BY ordinal ASC'
+    )
+    .all(path) as any[]
+
   if (chunks.length === 0) {
     logger().info('embed', { msg: 'skip empty file', meta: { path } })
     return { kind: 'ok' }
@@ -22,16 +26,15 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
   logger().info('embed', { msg: 'start embedding file', meta: { path, chunks: chunks.length } })
 
   const { model, dim, modelId, isLocal } = resolveEmbeddings()
-  const texts = chunks.map(c => c.heading_path ? `${c.heading_path}\n${c.body}` : c.body)
+  const texts = chunks.map((c) => (c.heading_path ? `${c.heading_path}\n${c.body}` : c.body))
 
   let vecs: number[][]
   try {
-  if (isLocal) {
-    vecs = await embedBatchLocal(texts)
-  } else {
-    vecs = await model!.embedDocuments(texts)
-  }
-
+    if (isLocal) {
+      vecs = await embedBatchLocal(texts)
+    } else {
+      vecs = await model!.embedDocuments(texts)
+    }
   } catch (err) {
     logger().error('embed', { msg: 'file embedding failed', meta: { path, error: String(err) } })
     throw err
@@ -57,7 +60,10 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
       }
     }
   } catch (err) {
-    logger().error('embed', { msg: 'database update failed', meta: { path, error: String(err), stack: (err as any).stack } })
+    logger().error('embed', {
+      msg: 'database update failed',
+      meta: { path, error: String(err), stack: (err as any).stack }
+    })
     throw err
   }
 

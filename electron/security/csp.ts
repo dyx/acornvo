@@ -6,9 +6,7 @@ import { app, session } from 'electron'
  * `vditor-editor-autosave` (phase-03) can tighten this further.
  */
 const isDev = !app.isPackaged
-const scriptSrc = isDev
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-  : "script-src 'self'"
+const scriptSrc = isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self'"
 const connectSrc = isDev
   ? "connect-src 'self' ws: http://localhost:* https://localhost:*"
   : "connect-src 'self'"

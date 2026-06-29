@@ -14,7 +14,6 @@ import { resolveCapabilities } from './capabilities'
 import { toSendSchema } from './schema-utils'
 import { buildChain, runChain } from './structured-strategy'
 
-
 export interface ReviewClipOpts {
   force?: boolean
 }
@@ -38,8 +37,6 @@ interface ClipRow {
   title: string | null
   excerpt: string | null
 }
-
-
 
 type ReviewerErrCode = 'E_CLIP_NOT_FOUND' | 'E_FILE_NOT_FOUND' | 'E_MTIME_CONFLICT' | LlmErrorCode
 
@@ -105,7 +102,10 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
   if (!id) {
     const ai = settingsStore.get('ai')
     id = ai?.defaultReviewerModelId ?? undefined
-    logger().debug('ai', { msg: '[resolveProfile] using defaultReviewerModelId from settings', meta: { defaultReviewerModelId: id } })
+    logger().debug('ai', {
+      msg: '[resolveProfile] using defaultReviewerModelId from settings',
+      meta: { defaultReviewerModelId: id }
+    })
   }
   if (!id) {
     logger().error('ai', { msg: '[resolveProfile] no modelId available' })
@@ -126,8 +126,13 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
   let p = db.prepare(query).get(id) as ModelProviderRow | undefined
 
   if (!p && !modelIdParam) {
-    logger().warn('ai', { msg: '[resolveProfile] default model not found, falling back to first enabled', meta: { id } })
-    p = db.prepare(`
+    logger().warn('ai', {
+      msg: '[resolveProfile] default model not found, falling back to first enabled',
+      meta: { id }
+    })
+    p = db
+      .prepare(
+        `
       SELECT
         p.id as provider_id,
         p.type as provider_type,
@@ -139,23 +144,34 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
       JOIN ai_provider p ON m.provider_id = p.id
       WHERE m.enabled = 1
       ORDER BY m.created_at ASC LIMIT 1
-    `).get() as (ModelProviderRow & { db_model_id: string }) | undefined
+    `
+      )
+      .get() as (ModelProviderRow & { db_model_id: string }) | undefined
 
     if (p) {
       settingsStore.set('ai', { defaultReviewerModelId: (p as any).db_model_id })
       id = (p as any).db_model_id
-      logger().info('ai', { msg: '[resolveProfile] auto-fixed defaultReviewerModelId', meta: { newId: id } })
+      logger().info('ai', {
+        msg: '[resolveProfile] auto-fixed defaultReviewerModelId',
+        meta: { newId: id }
+      })
     }
   }
-  
+
   if (!p) {
     logger().error('ai', { msg: '[resolveProfile] model not found in DB', meta: { id } })
     throw rerr('E_MISSING_PROFILE', `model not found: ${id}`)
   }
 
   if (p.provider_type === 'openai-compatible' && !p.base_url) {
-    logger().error('ai', { msg: '[resolveProfile] openai-compatible missing baseUrl', meta: { id: p.provider_id } })
-    throw rerr('E_CONFIG', `provider 'openai-compatible' requires baseUrl on provider ${p.provider_id}`)
+    logger().error('ai', {
+      msg: '[resolveProfile] openai-compatible missing baseUrl',
+      meta: { id: p.provider_id }
+    })
+    throw rerr(
+      'E_CONFIG',
+      `provider 'openai-compatible' requires baseUrl on provider ${p.provider_id}`
+    )
   }
 
   const apiKey = p.provider_type === 'ollama' ? null : getProviderApiKey(p.provider_id)
@@ -170,7 +186,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
       hasApiKey: hasKey
     }
   })
-  
+
   if (!hasKey && p.provider_type !== 'ollama') {
     logger().warn('ai', {
       msg: '[resolveProfile] API key is empty — LLM call will likely fail with E_AUTH',
@@ -202,7 +218,10 @@ export async function reviewClip(
   logger().info('ai', { msg: '[reviewClip] start', meta: { clipId, force: opts.force } })
 
   const clip = loadClip(clipId)
-  logger().debug('ai', { msg: '[reviewClip] clip loaded', meta: { clipId, url: clip.url, path: clip.path } })
+  logger().debug('ai', {
+    msg: '[reviewClip] clip loaded',
+    meta: { clipId, url: clip.url, path: clip.path }
+  })
 
   const md = loadMd(clip.path)
   logger().debug('ai', {
@@ -228,7 +247,8 @@ export async function reviewClip(
       keyQuotes: Array.isArray(md.frontmatter.ai_key_quotes)
         ? (md.frontmatter.ai_key_quotes as string[])
         : [],
-      category: typeof md.frontmatter.ai_category === 'string' ? md.frontmatter.ai_category : undefined,
+      category:
+        typeof md.frontmatter.ai_category === 'string' ? md.frontmatter.ai_category : undefined,
       reviewedAt: String(md.frontmatter.ai_reviewed_at)
     }
     return { result: cached, cacheHit: true }
@@ -255,33 +275,38 @@ export async function reviewClip(
       msg: '[reviewClip] invoking LLM',
       meta: { clipId, provider: profile.provider, model: profile.model }
     })
-    
+
     const caps = resolveCapabilities(profile.provider)
     const chatModel = buildChatModel(profile, { temperature: 0.1, maxTokens: 2048, caps })
     const sendSchema = toSendSchema(AiReviewSchema, caps)
-    const chain = buildChain<ReturnType<typeof AiReviewSchema.parse>>(caps, AiReviewSchema, sendSchema)
-    
-    let out: { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null } = await runChain(
-      chain,
-      chatModel,
-      [
+    const chain = buildChain<ReturnType<typeof AiReviewSchema.parse>>(
+      caps,
+      AiReviewSchema,
+      sendSchema
+    )
+
+    const out: { raw: unknown; parsed: ReturnType<typeof AiReviewSchema.parse> | null } =
+      await runChain(chain, chatModel, [
         { role: 'system', content: system },
         { role: 'user', content: user }
-      ]
-    )
-    
+      ])
+
     if (!out.parsed) {
       throw new Error(`LLM output failed to parse against schema. Raw: ${JSON.stringify(out.raw)}`)
     }
-    
+
     parsed = out.parsed
     usage = readUsage(out.raw)
-    
+
     const rawAi = out.raw as any
     if (rawAi?.response_metadata?.usage) {
-      try { rawUsageJson = JSON.stringify(rawAi.response_metadata.usage) } catch {}
+      try {
+        rawUsageJson = JSON.stringify(rawAi.response_metadata.usage)
+      } catch {}
     } else if (rawAi?.usage_metadata) {
-      try { rawUsageJson = JSON.stringify(rawAi.usage_metadata) } catch {}
+      try {
+        rawUsageJson = JSON.stringify(rawAi.usage_metadata)
+      } catch {}
     }
 
     logger().info('ai', {
@@ -316,7 +341,10 @@ export async function reviewClip(
     if (!quote.trim()) return false
     const found = md.body.includes(quote)
     if (!found) {
-      logger().warn('ai', { msg: '[reviewClip] dropping hallucinated quote', meta: { clipId, quote: quote.slice(0, 50) } })
+      logger().warn('ai', {
+        msg: '[reviewClip] dropping hallucinated quote',
+        meta: { clipId, quote: quote.slice(0, 50) }
+      })
     }
     return found
   })
@@ -369,7 +397,10 @@ export async function reviewClip(
     } catch (e) {
       const code = (e as { code?: string })?.code
       if (code === 'E_MTIME_MISMATCH' && attempt < 2) {
-        logger().warn('ai', { msg: '[reviewClip] mtime mismatch, reloading file to retry', meta: { clipId, path: clip.path } })
+        logger().warn('ai', {
+          msg: '[reviewClip] mtime mismatch, reloading file to retry',
+          meta: { clipId, path: clip.path }
+        })
         currentMd = loadMd(clip.path)
         continue
       }
@@ -385,7 +416,10 @@ export async function reviewClip(
     }
   }
 
-  logger().info('ai', { msg: '[reviewClip] completed', meta: { clipId, latencyMs, model: profile.model } })
+  logger().info('ai', {
+    msg: '[reviewClip] completed',
+    meta: { clipId, latencyMs, model: profile.model }
+  })
   return {
     result,
     cacheHit: false,

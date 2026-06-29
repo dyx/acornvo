@@ -126,7 +126,6 @@ export function AddressBar(): JSX.Element {
   return (
     <div className="flex h-[48px] shrink-0 items-center gap-[10px] border-b-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-[14px]">
       <div className="flex gap-[2px]">
-
         <button
           type="button"
           aria-label={t('browser.back', 'back')}

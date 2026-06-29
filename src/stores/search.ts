@@ -6,11 +6,15 @@ import type { FileSummary } from '@shared/file-types'
 const FULL_TEXT_LIMIT = 50
 const RECENT_SEARCHES_MAX = 5
 
-
-
 interface FullTextSlice {
   q: string
-  items: { summary: FileSummary; body: string; heading_path: string; score?: number; source?: 'fts' | 'semantic' | 'hybrid' }[]
+  items: {
+    summary: FileSummary
+    body: string
+    heading_path: string
+    score?: number
+    source?: 'fts' | 'semantic' | 'hybrid'
+  }[]
   total: number
   pending: boolean
   syntaxError: boolean
@@ -27,7 +31,6 @@ interface SearchStore {
 }
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
-
   fullText: {
     q: '',
     items: [],
@@ -65,7 +68,7 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
             offset: opts.offset ?? 0
           })
         }
-        
+
         if (get().fullText.requestId !== myId) return
         set((prev) => ({
           fullText: {

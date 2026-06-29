@@ -1,94 +1,87 @@
-"use client";
+'use client'
 
-import { memo, useRef, type ComponentPropsWithoutRef, type FC } from "react";
+import { memo, useRef, type ComponentPropsWithoutRef, type FC } from 'react'
 import {
   ComposerPrimitive,
   unstable_defaultDirectiveFormatter,
   type Unstable_DirectiveFormatter,
-  type Unstable_TriggerItem,
-} from "@assistant-ui/react";
-import { ChevronLeftIcon, ChevronRightIcon, SparklesIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+  type Unstable_TriggerItem
+} from '@assistant-ui/react'
+import { ChevronLeftIcon, ChevronRightIcon, SparklesIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-type IconComponent = FC<{ className?: string }>;
+type IconComponent = FC<{ className?: string }>
 
 type DirectiveBehaviorProps = {
   /** Formatter used to serialize the selected item into composer text. */
-  formatter?: Unstable_DirectiveFormatter | undefined;
+  formatter?: Unstable_DirectiveFormatter | undefined
   /** Called after the directive text has been inserted into the composer. */
-  onInserted?: ((item: Unstable_TriggerItem) => void) | undefined;
-};
+  onInserted?: ((item: Unstable_TriggerItem) => void) | undefined
+}
 
 type ActionBehaviorProps = {
   /** Formatter used to serialize the audit-trail chip (when `removeOnExecute` is false). */
-  formatter?: Unstable_DirectiveFormatter | undefined;
+  formatter?: Unstable_DirectiveFormatter | undefined
   /** Invoked with the selected item at the moment of selection. */
-  onExecute: (item: Unstable_TriggerItem) => void;
+  onExecute: (item: Unstable_TriggerItem) => void
   /** If `true`, strip the trigger text from the composer after executing. @default false */
-  removeOnExecute?: boolean | undefined;
-};
+  removeOnExecute?: boolean | undefined
+}
 
 type ComposerTriggerPopoverBaseProps = Omit<
   ComponentPropsWithoutRef<typeof ComposerPrimitive.Unstable_TriggerPopover>,
-  "children"
+  'children'
 > & {
   /**
    * Maps icon keys to components. Items look up via `item.metadata?.icon`
    * (string); categories look up via their `id`.
    */
-  iconMap?: Record<string, IconComponent>;
+  iconMap?: Record<string, IconComponent>
   /** Fallback icon when no entry in `iconMap` matches. */
-  fallbackIcon?: IconComponent;
+  fallbackIcon?: IconComponent
   /** Label shown on the back button. @default "Back" */
-  backLabel?: string;
+  backLabel?: string
   /** Label shown when no categories are available. @default "No items available" */
-  emptyCategoriesLabel?: string;
+  emptyCategoriesLabel?: string
   /** Label shown when no items match. @default "No matching items" */
-  emptyItemsLabel?: string;
-};
+  emptyItemsLabel?: string
+}
 
 type ComposerTriggerPopoverProps = ComposerTriggerPopoverBaseProps &
   (
     | {
         /** Insert-directive behavior. */
-        directive: DirectiveBehaviorProps;
-        action?: never;
+        directive: DirectiveBehaviorProps
+        action?: never
       }
     | {
         /** Action behavior. */
-        action: ActionBehaviorProps;
-        directive?: never;
+        action: ActionBehaviorProps
+        directive?: never
       }
-  );
+  )
 
 function resolveIcon(
   iconKey: string | undefined,
   iconMap: Record<string, IconComponent> | undefined,
-  fallback: IconComponent,
+  fallback: IconComponent
 ): IconComponent {
-  if (iconKey && iconMap?.[iconKey]) return iconMap[iconKey]!;
-  return fallback;
+  if (iconKey && iconMap?.[iconKey]) return iconMap[iconKey]!
+  return fallback
 }
 
 type CategoriesProps = {
-  iconMap: Record<string, IconComponent> | undefined;
-  fallbackIcon: IconComponent;
-  emptyLabel: string;
-};
+  iconMap: Record<string, IconComponent> | undefined
+  fallbackIcon: IconComponent
+  emptyLabel: string
+}
 
-const Categories: FC<CategoriesProps> = ({
-  iconMap,
-  fallbackIcon,
-  emptyLabel,
-}) => (
+const Categories: FC<CategoriesProps> = ({ iconMap, fallbackIcon, emptyLabel }) => (
   <ComposerPrimitive.Unstable_TriggerPopoverCategories>
     {(categories) => (
-      <div
-        data-slot="composer-trigger-popover-categories"
-        className="flex flex-col py-1"
-      >
+      <div data-slot="composer-trigger-popover-categories" className="flex flex-col py-1">
         {categories.map((cat) => {
-          const Icon = resolveIcon(cat.id, iconMap, fallbackIcon);
+          const Icon = resolveIcon(cat.id, iconMap, fallbackIcon)
           return (
             <ComposerPrimitive.Unstable_TriggerPopoverCategoryItem
               key={cat.id}
@@ -101,38 +94,28 @@ const Categories: FC<CategoriesProps> = ({
               </span>
               <ChevronRightIcon className="text-muted-foreground size-4" />
             </ComposerPrimitive.Unstable_TriggerPopoverCategoryItem>
-          );
+          )
         })}
         {categories.length === 0 && (
-          <div className="text-muted-foreground px-3 py-2 text-sm">
-            {emptyLabel}
-          </div>
+          <div className="text-muted-foreground px-3 py-2 text-sm">{emptyLabel}</div>
         )}
       </div>
     )}
   </ComposerPrimitive.Unstable_TriggerPopoverCategories>
-);
+)
 
 type ItemsProps = {
-  iconMap: Record<string, IconComponent> | undefined;
-  fallbackIcon: IconComponent;
-  backLabel: string;
-  emptyLabel: string;
-};
+  iconMap: Record<string, IconComponent> | undefined
+  fallbackIcon: IconComponent
+  backLabel: string
+  emptyLabel: string
+}
 
-const Items: FC<ItemsProps> = ({
-  iconMap,
-  fallbackIcon,
-  backLabel,
-  emptyLabel,
-}) => {
+const Items: FC<ItemsProps> = ({ iconMap, fallbackIcon, backLabel, emptyLabel }) => {
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverItems>
       {(items) => (
-        <div
-          data-slot="composer-trigger-popover-items"
-          className="flex flex-col"
-        >
+        <div data-slot="composer-trigger-popover-items" className="flex flex-col">
           <ComposerPrimitive.Unstable_TriggerPopoverBack className="text-muted-foreground hover:bg-accent flex cursor-pointer items-center gap-1.5 border-b px-3 py-2 text-xs tracking-wide uppercase transition-colors">
             <ChevronLeftIcon className="size-3.5" />
             {backLabel}
@@ -141,10 +124,8 @@ const Items: FC<ItemsProps> = ({
           <div className="py-1">
             {items.map((item, index) => {
               const iconKey =
-                typeof item.metadata?.icon === "string"
-                  ? item.metadata.icon
-                  : undefined;
-              const Icon = resolveIcon(iconKey, iconMap, fallbackIcon);
+                typeof item.metadata?.icon === 'string' ? item.metadata.icon : undefined
+              const Icon = resolveIcon(iconKey, iconMap, fallbackIcon)
               return (
                 <ComposerPrimitive.Unstable_TriggerPopoverItem
                   key={item.id}
@@ -162,19 +143,17 @@ const Items: FC<ItemsProps> = ({
                     </span>
                   )}
                 </ComposerPrimitive.Unstable_TriggerPopoverItem>
-              );
+              )
             })}
             {items.length === 0 && (
-              <div className="text-muted-foreground px-3 py-2 text-sm">
-                {emptyLabel}
-              </div>
+              <div className="text-muted-foreground px-3 py-2 text-sm">{emptyLabel}</div>
             )}
           </div>
         </div>
       )}
     </ComposerPrimitive.Unstable_TriggerPopoverItems>
-  );
-};
+  )
+}
 
 /**
  * Pre-built popover UI for a trigger-driven picker (mentions, slash commands, etc).
@@ -183,32 +162,32 @@ const Items: FC<ItemsProps> = ({
 const ComposerTriggerPopoverImpl: FC<ComposerTriggerPopoverProps> = ({
   iconMap,
   fallbackIcon = SparklesIcon,
-  backLabel = "Back",
-  emptyCategoriesLabel = "No items available",
-  emptyItemsLabel = "No matching items",
+  backLabel = 'Back',
+  emptyCategoriesLabel = 'No items available',
+  emptyItemsLabel = 'No matching items',
   className,
   directive,
   action,
   ...props
 }) => {
-  const warnedRef = useRef(false);
+  const warnedRef = useRef(false)
   if (
-    process.env.NODE_ENV !== "production" &&
+    process.env.NODE_ENV !== 'production' &&
     !warnedRef.current &&
     Boolean(directive) === Boolean(action)
   ) {
-    warnedRef.current = true;
+    warnedRef.current = true
     console.warn(
-      "[assistant-ui] ComposerTriggerPopover requires exactly one of `directive` or `action` props.",
-    );
+      '[assistant-ui] ComposerTriggerPopover requires exactly one of `directive` or `action` props.'
+    )
   }
 
   return (
     <ComposerPrimitive.Unstable_TriggerPopover
       data-slot="composer-trigger-popover"
       className={cn(
-        "aui-composer-trigger-popover bg-popover text-popover-foreground absolute start-0 bottom-full z-50 mb-2 w-64 overflow-hidden rounded-xl border shadow-lg",
-        className,
+        'aui-composer-trigger-popover bg-popover text-popover-foreground absolute start-0 bottom-full z-50 mb-2 w-64 overflow-hidden rounded-xl border shadow-lg',
+        className
       )}
       {...props}
     >
@@ -224,11 +203,7 @@ const ComposerTriggerPopoverImpl: FC<ComposerTriggerPopoverProps> = ({
           removeOnExecute={action.removeOnExecute}
         />
       ) : null}
-      <Categories
-        iconMap={iconMap}
-        fallbackIcon={fallbackIcon}
-        emptyLabel={emptyCategoriesLabel}
-      />
+      <Categories iconMap={iconMap} fallbackIcon={fallbackIcon} emptyLabel={emptyCategoriesLabel} />
       <Items
         iconMap={iconMap}
         fallbackIcon={fallbackIcon}
@@ -236,10 +211,10 @@ const ComposerTriggerPopoverImpl: FC<ComposerTriggerPopoverProps> = ({
         emptyLabel={emptyItemsLabel}
       />
     </ComposerPrimitive.Unstable_TriggerPopover>
-  );
-};
-ComposerTriggerPopoverImpl.displayName = "ComposerTriggerPopover";
+  )
+}
+ComposerTriggerPopoverImpl.displayName = 'ComposerTriggerPopover'
 
 export const ComposerTriggerPopover = memo(
-  ComposerTriggerPopoverImpl,
-) as FC<ComposerTriggerPopoverProps>;
+  ComposerTriggerPopoverImpl
+) as FC<ComposerTriggerPopoverProps>

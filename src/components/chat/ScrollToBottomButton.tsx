@@ -49,7 +49,10 @@ export function ScrollToBottomButton({
         if (!el) return
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       }}
-      className={className ?? "absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background hover:bg-muted border"}
+      className={
+        className ??
+        'absolute right-4 bottom-4 z-10 rounded-full shadow-md bg-background hover:bg-muted border'
+      }
     >
       <ArrowDownIcon className="size-4" />
     </Button>

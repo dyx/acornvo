@@ -20,7 +20,7 @@ export function stripUnsupported(schema: any): any {
 
 export function ensureAllRequired(schema: any): any {
   if (!schema || typeof schema !== 'object') return schema
-  
+
   const next = { ...schema }
   if (next.type === 'object' && next.properties) {
     next.required = Object.keys(next.properties)
@@ -35,7 +35,7 @@ export function ensureAllRequired(schema: any): any {
 
 export function ensureAdditionalPropertiesFalse(schema: any): any {
   if (!schema || typeof schema !== 'object') return schema
-  
+
   const next = { ...schema }
   if (next.type === 'object') {
     next.additionalProperties = false
@@ -52,14 +52,14 @@ export function ensureAdditionalPropertiesFalse(schema: any): any {
 
 export function toSendSchema(schema: any, profile: ProviderCaps): Record<string, unknown> {
   let js = zodToJsonSchema(schema, { target: 'jsonSchema7' }) as Record<string, unknown>
-  
+
   if (profile.schemaProfile !== 'strict_subset') {
     return js
   }
-  
+
   js = stripUnsupported(js)
   js = ensureAllRequired(js)
   js = ensureAdditionalPropertiesFalse(js)
-  
+
   return js
 }

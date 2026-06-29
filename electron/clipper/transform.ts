@@ -32,7 +32,17 @@ function makeService(): TurndownService {
   })
 
   td.addRule('removeDangerousTags', {
-    filter: ['script', 'style', 'noscript', 'iframe', 'object', 'embed', 'svg', 'math', 'form'] as TurndownService.Filter,
+    filter: [
+      'script',
+      'style',
+      'noscript',
+      'iframe',
+      'object',
+      'embed',
+      'svg',
+      'math',
+      'form'
+    ] as TurndownService.Filter,
     replacement: () => ''
   })
   td.addRule('removeComments', {

@@ -209,7 +209,14 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
         set((s) => ({
           tabs: s.tabs.map((t) =>
             t.id === id
-              ? { ...t, url: BLANK_URL, savedUrl: BLANK_URL, title: '', favicon: null, isClipped: false }
+              ? {
+                  ...t,
+                  url: BLANK_URL,
+                  savedUrl: BLANK_URL,
+                  title: '',
+                  favicon: null,
+                  isClipped: false
+                }
               : t
           )
         }))
@@ -219,7 +226,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
 
     await port.closeTab(id)
     const remaining = tabs.filter((t) => t.id !== id)
-    
+
     let nextActive = activeTabId
     if (activeTabId === id) {
       const after = tabs[idx + 1]

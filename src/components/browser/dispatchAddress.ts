@@ -10,7 +10,7 @@ export function dispatchAddress(raw: string, engine: SearchEngine = 'google'): A
   if (looksLikeDomain(trimmed)) {
     return { kind: 'url', url: 'https://' + trimmed }
   }
-  
+
   const q = encodeURIComponent(trimmed)
   let url = `https://www.google.com/search?q=${q}`
   if (engine === 'bing') {

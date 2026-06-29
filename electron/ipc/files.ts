@@ -1,10 +1,6 @@
 import { dbService } from '../services/db'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  FileSummary,
-  IpcContract,
-  CategoryNode
-} from '@shared/ipc-contract'
+import type { FileSummary, IpcContract, CategoryNode } from '@shared/ipc-contract'
 import type { ReviewStatus } from '@shared/file-types'
 import { fileHandlers } from './file'
 import type { Frontmatter } from '@shared/frontmatter-schema'
@@ -32,10 +28,7 @@ interface FileRow {
   job_error: string | null
 }
 
-function deriveReviewStatus(
-  hasSummary: boolean,
-  jobStatus: string | null
-): ReviewStatus {
+function deriveReviewStatus(hasSummary: boolean, jobStatus: string | null): ReviewStatus {
   if (hasSummary) return 'done'
   if (jobStatus === 'running') return 'running'
   if (jobStatus === 'pending') return 'pending'
@@ -87,7 +80,9 @@ async function getAll(): Promise<FileSummary[]> {
       try {
         const parsed = JSON.parse(r.tags_json)
         if (Array.isArray(parsed)) tags = parsed.filter((t) => typeof t === 'string')
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     return {
       path: r.path,
@@ -151,13 +146,15 @@ async function get(path: string): Promise<{
   const parsed = await fileHandlers.readParsed(path)
   const hasSummary = row.has_summary === 1
   const reviewStatus = deriveReviewStatus(hasSummary, row.job_status)
-  
+
   let tags: string[] = []
   if (row.tags_json) {
     try {
       const p = JSON.parse(row.tags_json)
       if (Array.isArray(p)) tags = p.filter((t) => typeof t === 'string')
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const summary: FileSummary = {
@@ -213,8 +210,6 @@ async function getCategoryTree(): Promise<CategoryNode[]> {
   }
   return root.children
 }
-
-
 
 function requireGroveRoot(): string {
   const grove = groveSvc.getCurrent()

@@ -97,4 +97,3 @@ export async function updateFilesCount(id: string, count: number): Promise<void>
     await save({ schema_version: 1, items: nextItems })
   }
 }
-

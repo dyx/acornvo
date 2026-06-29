@@ -61,7 +61,11 @@ export function installCrashHooks(): void {
   process.on('unhandledRejection', (reason) => {
     try {
       const msg = reason instanceof Error ? reason.message : String(reason)
-      const file = writeCrash({ kind: 'unhandled-rejection', reason: msg, details: { reason: msg } })
+      const file = writeCrash({
+        kind: 'unhandled-rejection',
+        reason: msg,
+        details: { reason: msg }
+      })
       logger().error('crash', { op: 'unhandled-rejection', meta: { file } })
     } catch {
       // Prevent infinite loops if crash reporting itself fails

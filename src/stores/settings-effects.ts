@@ -21,7 +21,6 @@ function applyFontScale(scale: number): void {
   document.documentElement.style.setProperty('--font-scale', String(scale))
 }
 
-
 function applyLocale(locale: Locale): void {
   if (i18n.language !== locale) {
     void i18n.changeLanguage(locale)
@@ -44,7 +43,7 @@ export function installSettingsEffects(): () => void {
   installed = true
 
   const { appearance, general } = useSettingsStore.getState()
-  
+
   if (typeof window !== 'undefined') {
     mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
     mediaQueryList.addEventListener('change', handleSystemThemeChange)

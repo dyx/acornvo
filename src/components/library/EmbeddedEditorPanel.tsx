@@ -20,8 +20,6 @@ export function EmbeddedEditorPanel(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false)
   const [isPreviewMode, setIsPreviewMode] = useState(true)
 
-
-
   useEffect(() => {
     if (!selectedPath) return
     void useEditorStore.getState().open(selectedPath)
@@ -82,11 +80,11 @@ export function EmbeddedEditorPanel(): JSX.Element {
         <div className="flex-none">
           <ExternalModifiedBanner />
           <ConflictDialog />
-          <EditorTitleBar 
-            collapsed={collapsed} 
+          <EditorTitleBar
+            collapsed={collapsed}
             isPreviewMode={isPreviewMode}
             onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
-            onToggleCollapse={() => setCollapsed(!collapsed)} 
+            onToggleCollapse={() => setCollapsed(!collapsed)}
             onOpenSidebar={() => setCollapsed(false)}
           />
         </div>

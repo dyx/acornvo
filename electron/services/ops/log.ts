@@ -52,7 +52,11 @@ export function record(input: OpsLogRecordInput): void {
   } catch (err) {
     logger().warn('fs', {
       msg: 'opsLog.record failed (non-fatal)',
-      meta: { op: input.op, path: input.path, message: err instanceof Error ? err.message : String(err) }
+      meta: {
+        op: input.op,
+        path: input.path,
+        message: err instanceof Error ? err.message : String(err)
+      }
     })
   }
 }
@@ -96,7 +100,12 @@ export function list(opts: OpsLogListOptions): OpsLogListResult {
   } catch (err) {
     logger().warn('fs', {
       msg: 'opsLog.list failed (non-fatal)',
-      meta: { op: opts.op, limit: opts.limit, offset: opts.offset, message: err instanceof Error ? err.message : String(err) }
+      meta: {
+        op: opts.op,
+        limit: opts.limit,
+        offset: opts.offset,
+        message: err instanceof Error ? err.message : String(err)
+      }
     })
     return { items: [], total: 0 }
   }

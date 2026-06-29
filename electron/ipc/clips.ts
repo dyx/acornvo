@@ -1,18 +1,18 @@
 // electron/ipc/clips.ts — phase-12 clips CRUD handlers
 import type Database from 'better-sqlite3'
 import { IpcError } from '@shared/ipc-contract'
-import type {
-  Clip,
-  ClipCreateInput,
-  ClipsListOpts,
-  IpcContract
-} from '@shared/ipc-contract'
+import type { Clip, ClipCreateInput, ClipsListOpts, IpcContract } from '@shared/ipc-contract'
 interface ClipDeps {
   getDb: () => Database.Database
   nowIso: () => string
 }
 
-function rowToClip(rowid: number, path: string, created_at: number, frontmatter_json: string): Clip {
+function rowToClip(
+  rowid: number,
+  path: string,
+  created_at: number,
+  frontmatter_json: string
+): Clip {
   let fm: any = {}
   try {
     fm = JSON.parse(frontmatter_json)
@@ -45,7 +45,9 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
       const offset = Math.max(0, opts.offset)
       const orderBy = opts.orderBy === 'title' ? 'title COLLATE NOCASE ASC' : 'clipped_at DESC'
 
-      const where: string[] = ["(json_extract(frontmatter_json, '$.source_type') = 'article' OR category = 'inbox')"]
+      const where: string[] = [
+        "(json_extract(frontmatter_json, '$.source_type') = 'article' OR category = 'inbox')"
+      ]
       const params: Record<string, unknown> = {}
       if (opts.q && opts.q.trim().length > 0) {
         where.push(
@@ -54,7 +56,7 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
         params.q = `%${opts.q.trim()}%`
       }
       if (opts.site && opts.site.trim().length > 0) {
-        where.push('json_extract(frontmatter_json, \'$.site\') = @site')
+        where.push("json_extract(frontmatter_json, '$.site') = @site")
         params.site = opts.site.trim()
       }
       const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
@@ -69,22 +71,31 @@ export function createClipsHandlers(deps: ClipDeps): IpcContract['clips'] {
         >(`SELECT rowid, path, frontmatter_json, created_at FROM files ${whereSql} ORDER BY ${orderBy} LIMIT @__limit OFFSET @__offset`)
         .all({ ...params, __limit: limit, __offset: offset })
 
-      return { items: items.map(r => rowToClip(r.rowid, r.path, r.created_at, r.frontmatter_json)), total: totalRow?.n ?? 0 }
+      return {
+        items: items.map((r) => rowToClip(r.rowid, r.path, r.created_at, r.frontmatter_json)),
+        total: totalRow?.n ?? 0
+      }
     },
 
     getByUrl(url: string) {
       const db = deps.getDb()
-      const row = db.prepare<[string], { rowid: number; path: string; frontmatter_json: string; created_at: number }>(
-        'SELECT rowid, path, frontmatter_json, created_at FROM files WHERE url = ?'
-      ).get(url)
+      const row = db
+        .prepare<
+          [string],
+          { rowid: number; path: string; frontmatter_json: string; created_at: number }
+        >('SELECT rowid, path, frontmatter_json, created_at FROM files WHERE url = ?')
+        .get(url)
       return row ? rowToClip(row.rowid, row.path, row.created_at, row.frontmatter_json) : null
     },
 
     getById(id: number) {
       const db = deps.getDb()
-      const row = db.prepare<[number], { rowid: number; path: string; frontmatter_json: string; created_at: number }>(
-        'SELECT rowid, path, frontmatter_json, created_at FROM files WHERE rowid = ?'
-      ).get(id)
+      const row = db
+        .prepare<
+          [number],
+          { rowid: number; path: string; frontmatter_json: string; created_at: number }
+        >('SELECT rowid, path, frontmatter_json, created_at FROM files WHERE rowid = ?')
+        .get(id)
       return row ? rowToClip(row.rowid, row.path, row.created_at, row.frontmatter_json) : null
     },
 

@@ -70,9 +70,7 @@ export function ProjectCard({
         disabled={disabled}
         className="flex flex-1 items-center gap-4 bg-transparent text-left min-w-0"
       >
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[color:var(--color-line)]"
-        >
+        <div className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-[color:var(--color-line)]">
           <Trees className="h-5 w-5" style={{ color: dot }} />
         </div>
         <div className="flex-1 min-w-0">
@@ -81,9 +79,7 @@ export function ProjectCard({
               {item.name}
             </span>
             {item.pinned ? (
-              <span className="text-xs font-mono text-[color:var(--color-acorn-2)]">
-                ·pinned
-              </span>
+              <span className="text-xs font-mono text-[color:var(--color-acorn-2)]">·pinned</span>
             ) : null}
             {invalid ? (
               <span className="text-xs font-mono text-[color:var(--color-berry)]">

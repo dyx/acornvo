@@ -216,7 +216,7 @@ export function createPipeline(deps: PipelineDeps) {
     } catch {
       // non-blocking
     }
-    
+
     const rowid = (await deps.getFileRowId(path)) ?? -1
 
     // Ops log (best-effort)
@@ -276,7 +276,7 @@ export function createPipeline(deps: PipelineDeps) {
       logger().warn('clipper', {
         op: 'enqueue-review',
         ok: false,
-        msg: 'queue bootstrap unavailable; ai-review-clip not enqueued',
+        msg: 'queue bootstrap unavailable; ai-review-clip not enqueued'
       })
     }
 

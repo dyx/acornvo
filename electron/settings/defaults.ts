@@ -18,7 +18,12 @@ export const DEFAULTS: {
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser', logLevel: 'info' },
   appearance: { theme: 'system', fontScale: 1.0 },
-  ai: { defaultChatModelId: null, defaultReviewerModelId: null, defaultEmbeddingModelId: null, bodyMax: 20000 },
+  ai: {
+    defaultChatModelId: null,
+    defaultReviewerModelId: null,
+    defaultEmbeddingModelId: null,
+    bodyMax: 20000
+  },
   browser: { clipImagesLocalize: false, searchEngine: 'google' },
   search: { hybridEnabled: true, ftsWeight: 1.0, vecWeight: 1.0 }
 }

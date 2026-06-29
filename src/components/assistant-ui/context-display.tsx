@@ -1,41 +1,41 @@
-"use client";
+'use client'
 
-import { useTranslation } from "react-i18next";
-import { useAuiState } from "@assistant-ui/react";
-import { useChatStore } from "@/stores/chat";
+import { useTranslation } from 'react-i18next'
+import { useAuiState } from '@assistant-ui/react'
+import { useChatStore } from '@/stores/chat'
 
 export interface ThreadTokenUsage {
-  promptTokens?: number;
-  completionTokens?: number;
-  totalTokens?: number;
-  cachedTokens?: number;
-  reasoningTokens?: number;
+  promptTokens?: number
+  completionTokens?: number
+  totalTokens?: number
+  cachedTokens?: number
+  reasoningTokens?: number
 }
 
 function useThreadTokenUsage(): ThreadTokenUsage | undefined {
-  const activeSessionId = useChatStore((s) => s.activeSessionId);
-  const bySession = useChatStore((s) => s.bySession);
-  
-  const messages = activeSessionId ? bySession[activeSessionId]?.messages : undefined;
-  if (!messages || messages.length === 0) return undefined;
+  const activeSessionId = useChatStore((s) => s.activeSessionId)
+  const bySession = useChatStore((s) => s.bySession)
 
-  let promptTokens = 0;
-  let completionTokens = 0;
-  let totalTokens = 0;
-  let cachedTokens = 0;
-  let reasoningTokens = 0;
+  const messages = activeSessionId ? bySession[activeSessionId]?.messages : undefined
+  if (!messages || messages.length === 0) return undefined
+
+  let promptTokens = 0
+  let completionTokens = 0
+  let totalTokens = 0
+  let cachedTokens = 0
+  let reasoningTokens = 0
 
   for (const m of messages) {
     if (m.usage) {
-      promptTokens += m.usage.promptTokens ?? 0;
-      completionTokens += m.usage.completionTokens ?? 0;
-      totalTokens += m.usage.totalTokens ?? 0;
-      cachedTokens += m.usage.cachedTokens ?? 0;
-      reasoningTokens += m.usage.reasoningTokens ?? 0;
+      promptTokens += m.usage.promptTokens ?? 0
+      completionTokens += m.usage.completionTokens ?? 0
+      totalTokens += m.usage.totalTokens ?? 0
+      cachedTokens += m.usage.cachedTokens ?? 0
+      reasoningTokens += m.usage.reasoningTokens ?? 0
     }
   }
 
-  if (totalTokens === 0) return undefined;
+  if (totalTokens === 0) return undefined
 
   return {
     promptTokens,
@@ -43,14 +43,10 @@ function useThreadTokenUsage(): ThreadTokenUsage | undefined {
     totalTokens,
     cachedTokens: cachedTokens > 0 ? cachedTokens : undefined,
     reasoningTokens: reasoningTokens > 0 ? reasoningTokens : undefined
-  };
+  }
 }
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import {
   createContext,
   useContext,
@@ -58,93 +54,88 @@ import {
   useMemo,
   useState,
   type FC,
-  type ReactNode,
-} from "react";
+  type ReactNode
+} from 'react'
 
 const formatTokenCount = (tokens: number): string => {
-  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
-  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}k`;
-  return `${tokens}`;
-};
+  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`
+  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}k`
+  return `${tokens}`
+}
 
-const getUsagePercent = (
-  totalTokens: number | undefined,
-  modelContextWindow: number,
-): number => {
-  if (!totalTokens) return 0;
-  return Math.min((totalTokens / modelContextWindow) * 100, 100);
-};
+const getUsagePercent = (totalTokens: number | undefined, modelContextWindow: number): number => {
+  if (!totalTokens) return 0
+  return Math.min((totalTokens / modelContextWindow) * 100, 100)
+}
 
-type UsageSeverity = "normal" | "warning" | "critical";
+type UsageSeverity = 'normal' | 'warning' | 'critical'
 
 const getUsageSeverity = (percent: number): UsageSeverity => {
-  if (percent > 85) return "critical";
-  if (percent >= 65) return "warning";
-  return "normal";
-};
+  if (percent > 85) return 'critical'
+  if (percent >= 65) return 'warning'
+  return 'normal'
+}
 
 const getStrokeColor = (percent: number): string => {
-  const severity = getUsageSeverity(percent);
-  if (severity === "critical") return "stroke-red-500";
-  if (severity === "warning") return "stroke-amber-500";
-  return "stroke-emerald-500";
-};
+  const severity = getUsageSeverity(percent)
+  if (severity === 'critical') return 'stroke-red-500'
+  if (severity === 'warning') return 'stroke-amber-500'
+  return 'stroke-emerald-500'
+}
 
 const getBarColor = (percent: number): string => {
-  const severity = getUsageSeverity(percent);
-  if (severity === "critical") return "bg-red-500";
-  if (severity === "warning") return "bg-amber-500";
-  return "bg-emerald-500";
-};
+  const severity = getUsageSeverity(percent)
+  if (severity === 'critical') return 'bg-red-500'
+  if (severity === 'warning') return 'bg-amber-500'
+  return 'bg-emerald-500'
+}
 
 type ContextDisplayContextValue = {
-  usage: ThreadTokenUsage | undefined;
-  totalTokens: number;
-  percent: number;
-  modelContextWindow: number;
-};
+  usage: ThreadTokenUsage | undefined
+  totalTokens: number
+  percent: number
+  modelContextWindow: number
+}
 
-const ContextDisplayContext = createContext<ContextDisplayContextValue | null>(
-  null,
-);
+const ContextDisplayContext = createContext<ContextDisplayContextValue | null>(null)
 
 function useContextDisplay(): ContextDisplayContextValue {
-  const ctx = useContext(ContextDisplayContext);
+  const ctx = useContext(ContextDisplayContext)
   if (!ctx) {
-    throw new Error("ContextDisplay.* must be used within ContextDisplay.Root");
+    throw new Error('ContextDisplay.* must be used within ContextDisplay.Root')
   }
-  return ctx;
+  return ctx
 }
 
 type PresetProps = {
-  modelContextWindow: number;
-  className?: string;
-  side?: "top" | "bottom" | "left" | "right";
-  usage?: ThreadTokenUsage | undefined;
-};
+  modelContextWindow: number
+  className?: string
+  side?: 'top' | 'bottom' | 'left' | 'right'
+  usage?: ThreadTokenUsage | undefined
+}
 
 type ContextDisplayRootProps = {
-  modelContextWindow: number;
-  children: ReactNode;
-  usage?: ThreadTokenUsage | undefined;
-};
+  modelContextWindow: number
+  children: ReactNode
+  usage?: ThreadTokenUsage | undefined
+}
 
 function ContextDisplayRootBase({
   modelContextWindow,
   children,
-  usage,
+  usage
 }: {
-  modelContextWindow: number;
-  children: ReactNode;
-  usage: ThreadTokenUsage | undefined;
+  modelContextWindow: number
+  children: ReactNode
+  usage: ThreadTokenUsage | undefined
 }) {
-  const threadId = useAuiState((s) => s.threadListItem.id);
-  const rawTokens = usage?.totalTokens ?? 0;
+  const threadId = useAuiState((s) => s.threadListItem.id)
+  const rawTokens = usage?.totalTokens ?? 0
   const [tokenState, setTokenState] = useState({
     threadId,
     totalTokens: rawTokens > 0 ? rawTokens : 0,
-    usage,
-  });
+    usage
+  })
 
   useEffect(() => {
     setTokenState((prev) => {
@@ -152,108 +143,94 @@ function ContextDisplayRootBase({
         return {
           threadId,
           totalTokens: rawTokens > 0 ? rawTokens : 0,
-          usage,
-        };
+          usage
+        }
       }
       if (rawTokens > 0 && rawTokens !== prev.totalTokens) {
-        return { ...prev, totalTokens: rawTokens, usage };
+        return { ...prev, totalTokens: rawTokens, usage }
       }
       if (usage !== prev.usage) {
-        return { ...prev, usage };
+        return { ...prev, usage }
       }
-      return prev;
-    });
-  }, [threadId, rawTokens, usage]);
+      return prev
+    })
+  }, [threadId, rawTokens, usage])
 
-  const totalTokens = tokenState.totalTokens;
-  const percent = getUsagePercent(totalTokens, modelContextWindow);
+  const totalTokens = tokenState.totalTokens
+  const percent = getUsagePercent(totalTokens, modelContextWindow)
 
   const contextValue = useMemo(
     () => ({
       usage: tokenState.usage,
       totalTokens,
       percent,
-      modelContextWindow,
+      modelContextWindow
     }),
-    [tokenState.usage, totalTokens, percent, modelContextWindow],
-  );
+    [tokenState.usage, totalTokens, percent, modelContextWindow]
+  )
 
   return (
     <ContextDisplayContext.Provider value={contextValue}>
       <Tooltip>{children}</Tooltip>
     </ContextDisplayContext.Provider>
-  );
+  )
 }
 
 function ContextDisplayRootInternal({
   modelContextWindow,
-  children,
+  children
 }: {
-  modelContextWindow: number;
-  children: ReactNode;
+  modelContextWindow: number
+  children: ReactNode
 }) {
-  const usage = useThreadTokenUsage();
+  const usage = useThreadTokenUsage()
   return (
-    <ContextDisplayRootBase
-      modelContextWindow={modelContextWindow}
-      usage={usage}
-    >
+    <ContextDisplayRootBase modelContextWindow={modelContextWindow} usage={usage}>
       {children}
     </ContextDisplayRootBase>
-  );
+  )
 }
 
 function ContextDisplayRoot(props: ContextDisplayRootProps) {
   if (props.usage !== undefined) {
     return (
-      <ContextDisplayRootBase
-        modelContextWindow={props.modelContextWindow}
-        usage={props.usage}
-      >
+      <ContextDisplayRootBase modelContextWindow={props.modelContextWindow} usage={props.usage}>
         {props.children}
       </ContextDisplayRootBase>
-    );
+    )
   }
   return (
     <ContextDisplayRootInternal modelContextWindow={props.modelContextWindow}>
       {props.children}
     </ContextDisplayRootInternal>
-  );
+  )
 }
 
-function ContextDisplayTrigger({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"button">) {
+function ContextDisplayTrigger({ className, children, ...props }: React.ComponentProps<'button'>) {
   return (
     <TooltipTrigger asChild>
       <button
         type="button"
         data-slot="context-display-trigger"
-        className={cn(
-          "inline-flex items-center rounded-md transition-colors",
-          className,
-        )}
+        className={cn('inline-flex items-center rounded-md transition-colors', className)}
         {...props}
       >
         {children}
       </button>
     </TooltipTrigger>
-  );
+  )
 }
 
 function ContextDisplayContent({
-  side = "top",
-  className,
+  side = 'top',
+  className
 }: {
-  side?: "top" | "bottom" | "left" | "right" | undefined;
-  className?: string;
+  side?: 'top' | 'bottom' | 'left' | 'right' | undefined
+  className?: string
 }) {
-  const { usage: rawUsage, totalTokens, percent, modelContextWindow } =
-    useContextDisplay();
-  const usage = rawUsage as any;
-  const { t } = useTranslation();
+  const { usage: rawUsage, totalTokens, percent, modelContextWindow } = useContextDisplay()
+  const usage = rawUsage as any
+  const { t } = useTranslation()
 
   return (
     <TooltipContent
@@ -261,35 +238,30 @@ function ContextDisplayContent({
       sideOffset={8}
       data-slot="context-display-popover"
       className={cn(
-        "bg-popover text-popover-foreground rounded-lg border px-3 py-2 shadow-md [&_span>svg]:hidden!",
-        className,
+        'bg-popover text-popover-foreground rounded-lg border px-3 py-2 shadow-md [&_span>svg]:hidden!',
+        className
       )}
     >
       <div className="grid min-w-40 gap-1.5 text-xs">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">{t("chat.contextDisplay.usage")}</span>
+          <span className="text-muted-foreground">{t('chat.contextDisplay.usage')}</span>
           <span className="font-mono tabular-nums">{Math.round(percent)}%</span>
         </div>
         {usage?.promptTokens !== undefined && (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">{t("chat.contextDisplay.input")}</span>
-            <span className="font-mono tabular-nums">
-              {formatTokenCount(usage.promptTokens)}
-            </span>
+            <span className="text-muted-foreground">{t('chat.contextDisplay.input')}</span>
+            <span className="font-mono tabular-nums">{formatTokenCount(usage.promptTokens)}</span>
           </div>
         )}
-        {usage?.cachedTokens !== undefined &&
-          usage.cachedTokens > 0 && (
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">{t("chat.contextDisplay.cached")}</span>
-              <span className="font-mono tabular-nums">
-                {formatTokenCount(usage.cachedTokens)}
-              </span>
-            </div>
-          )}
+        {usage?.cachedTokens !== undefined && usage.cachedTokens > 0 && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground">{t('chat.contextDisplay.cached')}</span>
+            <span className="font-mono tabular-nums">{formatTokenCount(usage.cachedTokens)}</span>
+          </div>
+        )}
         {usage?.completionTokens !== undefined && (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">{t("chat.contextDisplay.output")}</span>
+            <span className="text-muted-foreground">{t('chat.contextDisplay.output')}</span>
             <span className="font-mono tabular-nums">
               {formatTokenCount(usage.completionTokens)}
             </span>
@@ -297,7 +269,7 @@ function ContextDisplayContent({
         )}
         {usage?.reasoningTokens !== undefined && usage.reasoningTokens > 0 && (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">{t("chat.contextDisplay.reasoning")}</span>
+            <span className="text-muted-foreground">{t('chat.contextDisplay.reasoning')}</span>
             <span className="font-mono tabular-nums">
               {formatTokenCount(usage.reasoningTokens)}
             </span>
@@ -305,25 +277,24 @@ function ContextDisplayContent({
         )}
         <div className="mt-0.5 border-t pt-1.5">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">{t("chat.contextDisplay.total")}</span>
+            <span className="text-muted-foreground">{t('chat.contextDisplay.total')}</span>
             <span className="font-mono tabular-nums">
-              {formatTokenCount(totalTokens)} /{" "}
-              {formatTokenCount(modelContextWindow)}
+              {formatTokenCount(totalTokens)} / {formatTokenCount(modelContextWindow)}
             </span>
           </div>
         </div>
       </div>
     </TooltipContent>
-  );
+  )
 }
 
-const RING_SIZE = 24;
-const RING_STROKE = 3;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const RING_SIZE = 24
+const RING_STROKE = 3
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 
 function RingVisual() {
-  const { percent } = useContextDisplay();
+  const { percent } = useContextDisplay()
 
   return (
     <svg
@@ -349,46 +320,33 @@ function RingVisual() {
         strokeWidth={RING_STROKE}
         strokeLinecap="round"
         strokeDasharray={RING_CIRCUMFERENCE}
-        strokeDashoffset={
-          RING_CIRCUMFERENCE - (percent / 100) * RING_CIRCUMFERENCE
-        }
+        strokeDashoffset={RING_CIRCUMFERENCE - (percent / 100) * RING_CIRCUMFERENCE}
         className={cn(
-          "transition-[stroke-dashoffset,stroke] duration-300",
-          getStrokeColor(percent),
+          'transition-[stroke-dashoffset,stroke] duration-300',
+          getStrokeColor(percent)
         )}
       />
     </svg>
-  );
+  )
 }
 
-const ContextDisplayRing: FC<PresetProps> = ({
-  modelContextWindow,
-  className,
-  side,
-  usage,
-}) => (
+const ContextDisplayRing: FC<PresetProps> = ({ modelContextWindow, className, side, usage }) => (
   <ContextDisplayRoot modelContextWindow={modelContextWindow} usage={usage}>
-    <ContextDisplayTrigger
-      className={cn("p-1", className)}
-      aria-label="Context usage"
-    >
+    <ContextDisplayTrigger className={cn('p-1', className)} aria-label="Context usage">
       <RingVisual />
     </ContextDisplayTrigger>
     <ContextDisplayContent side={side} />
   </ContextDisplayRoot>
-);
+)
 
 function BarVisual() {
-  const { percent, totalTokens } = useContextDisplay();
+  const { percent, totalTokens } = useContextDisplay()
 
   return (
     <div className="flex items-center gap-2">
       <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
         <div
-          className={cn(
-            "h-full rounded-full transition-all duration-300",
-            getBarColor(percent),
-          )}
+          className={cn('h-full rounded-full transition-all duration-300', getBarColor(percent))}
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -396,71 +354,58 @@ function BarVisual() {
         {formatTokenCount(totalTokens)} ({Math.round(percent)}%)
       </span>
     </div>
-  );
+  )
 }
 
-const ContextDisplayBar: FC<PresetProps> = ({
-  modelContextWindow,
-  className,
-  side,
-  usage,
-}) => (
+const ContextDisplayBar: FC<PresetProps> = ({ modelContextWindow, className, side, usage }) => (
   <ContextDisplayRoot modelContextWindow={modelContextWindow} usage={usage}>
-    <ContextDisplayTrigger
-      className={cn("px-2 py-1", className)}
-      aria-label="Context usage"
-    >
+    <ContextDisplayTrigger className={cn('px-2 py-1', className)} aria-label="Context usage">
       <BarVisual />
     </ContextDisplayTrigger>
     <ContextDisplayContent side={side} />
   </ContextDisplayRoot>
-);
+)
 
 function TextVisual() {
-  const { totalTokens, modelContextWindow } = useContextDisplay();
+  const { totalTokens, modelContextWindow } = useContextDisplay()
 
   return (
     <>
       {formatTokenCount(totalTokens)} / {formatTokenCount(modelContextWindow)}
     </>
-  );
+  )
 }
 
-const ContextDisplayText: FC<PresetProps> = ({
-  modelContextWindow,
-  className,
-  side,
-  usage,
-}) => (
+const ContextDisplayText: FC<PresetProps> = ({ modelContextWindow, className, side, usage }) => (
   <ContextDisplayRoot modelContextWindow={modelContextWindow} usage={usage}>
     <ContextDisplayTrigger
       aria-label="Context usage"
       className={cn(
-        "text-muted-foreground hover:bg-accent hover:text-accent-foreground px-2 py-1 font-mono text-xs tabular-nums",
-        className,
+        'text-muted-foreground hover:bg-accent hover:text-accent-foreground px-2 py-1 font-mono text-xs tabular-nums',
+        className
       )}
     >
       <TextVisual />
     </ContextDisplayTrigger>
     <ContextDisplayContent side={side} />
   </ContextDisplayRoot>
-);
+)
 
 const ContextDisplay = {} as {
-  Root: typeof ContextDisplayRoot;
-  Trigger: typeof ContextDisplayTrigger;
-  Content: typeof ContextDisplayContent;
-  Ring: typeof ContextDisplayRing;
-  Bar: typeof ContextDisplayBar;
-  Text: typeof ContextDisplayText;
-};
+  Root: typeof ContextDisplayRoot
+  Trigger: typeof ContextDisplayTrigger
+  Content: typeof ContextDisplayContent
+  Ring: typeof ContextDisplayRing
+  Bar: typeof ContextDisplayBar
+  Text: typeof ContextDisplayText
+}
 
-ContextDisplay.Root = ContextDisplayRoot;
-ContextDisplay.Trigger = ContextDisplayTrigger;
-ContextDisplay.Content = ContextDisplayContent;
-ContextDisplay.Ring = ContextDisplayRing;
-ContextDisplay.Bar = ContextDisplayBar;
-ContextDisplay.Text = ContextDisplayText;
+ContextDisplay.Root = ContextDisplayRoot
+ContextDisplay.Trigger = ContextDisplayTrigger
+ContextDisplay.Content = ContextDisplayContent
+ContextDisplay.Ring = ContextDisplayRing
+ContextDisplay.Bar = ContextDisplayBar
+ContextDisplay.Text = ContextDisplayText
 
 export {
   ContextDisplay,
@@ -469,5 +414,5 @@ export {
   ContextDisplayContent,
   ContextDisplayRing,
   ContextDisplayBar,
-  ContextDisplayText,
-};
+  ContextDisplayText
+}

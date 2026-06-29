@@ -108,7 +108,11 @@ export function GroveSwitcher({
   }
 
   async function handleOpen(): Promise<void> {
-    const path = await ipc.project.selectDirectory({ purpose: 'open', title: t('picker.select_dir_title', { defaultValue: '选择一个目录作为树林' }), buttonLabel: t('picker.select_dir_button', { defaultValue: '选择树林目录' }) })
+    const path = await ipc.project.selectDirectory({
+      purpose: 'open',
+      title: t('picker.select_dir_title', { defaultValue: '选择一个目录作为树林' }),
+      buttonLabel: t('picker.select_dir_button', { defaultValue: '选择树林目录' })
+    })
     if (!path) return
     const res = await openExisting(path)
     if (res.status === 'opened') {
@@ -125,34 +129,36 @@ export function GroveSwitcher({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex">
         <DropdownMenuTrigger asChild>
-        {customTrigger || (
-          <button
-            type="button"
-            aria-label={t('switcher.ariaLabel')}
-            className={cn(
-              '[-webkit-app-region:no-drag]',
-              'inline-flex items-center gap-1.5',
-              'h-6 px-2 rounded',
-              'text-[12.5px] text-[color:var(--color-ink)]',
-              'hover:bg-[color:var(--color-paper-3)]',
-              'transition-colors',
-              className
-            )}
-          >
-            {current || cachedName ? (
-              <>
-                <span
-                  className="h-2 w-2 rounded-[2px]"
-                  style={{ background: dotColor[current?.color || cachedColor] }}
-                />
-                <span className={!current ? 'opacity-70' : ''}>{current?.name || cachedName}</span>
-              </>
-            ) : (
-              <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
-            )}
-            <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
-          </button>
-        )}
+          {customTrigger || (
+            <button
+              type="button"
+              aria-label={t('switcher.ariaLabel')}
+              className={cn(
+                '[-webkit-app-region:no-drag]',
+                'inline-flex items-center gap-1.5',
+                'h-6 px-2 rounded',
+                'text-[12.5px] text-[color:var(--color-ink)]',
+                'hover:bg-[color:var(--color-paper-3)]',
+                'transition-colors',
+                className
+              )}
+            >
+              {current || cachedName ? (
+                <>
+                  <span
+                    className="h-2 w-2 rounded-[2px]"
+                    style={{ background: dotColor[current?.color || cachedColor] }}
+                  />
+                  <span className={!current ? 'opacity-70' : ''}>
+                    {current?.name || cachedName}
+                  </span>
+                </>
+              ) : (
+                <span className="text-[color:var(--color-ink-3)]">{t('switcher.selectGrove')}</span>
+              )}
+              <ChevronDown className="h-3 w-3 text-[color:var(--color-ink-3)]" />
+            </button>
+          )}
         </DropdownMenuTrigger>
       </div>
       <DropdownMenuContent

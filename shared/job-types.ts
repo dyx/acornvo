@@ -11,7 +11,12 @@ export function isJobStatus(v: unknown): v is JobStatus {
 }
 
 /** Phase-14 ships these two; later phases may register more. */
-export const JOB_KINDS = ['ai-review-clip', 'index-retry', 'download-clip-images', 'embed-file'] as const
+export const JOB_KINDS = [
+  'ai-review-clip',
+  'index-retry',
+  'download-clip-images',
+  'embed-file'
+] as const
 export type JobKind = (typeof JOB_KINDS)[number]
 
 export function isJobKind(v: unknown): v is JobKind {

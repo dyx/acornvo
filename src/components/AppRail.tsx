@@ -1,7 +1,15 @@
 import type { JSX } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Globe, Warehouse, MessageSquareQuote, Bolt as SettingsIcon, Trees, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import {
+  Globe,
+  Warehouse,
+  MessageSquareQuote,
+  Bolt as SettingsIcon,
+  Trees,
+  PanelLeftClose,
+  PanelLeftOpen
+} from 'lucide-react'
 import { useGroveStore } from '@/stores/grove'
 import { useRootStore } from '@/stores/root'
 import { GroveSwitcher } from './GroveSwitcher'
@@ -21,7 +29,13 @@ const ENTRIES: RailEntry[] = [
   { to: '/browser', match: '/browser', labelKey: 'nav.browser', Icon: Globe },
   { to: '/library', match: '/library', labelKey: 'nav.library', Icon: Warehouse },
   { to: '/chat', match: '/chat', labelKey: 'nav.chat', Icon: MessageSquareQuote },
-  { to: '/settings/general', match: '/settings', labelKey: 'nav.settings', Icon: SettingsIcon, bottom: true }
+  {
+    to: '/settings/general',
+    match: '/settings',
+    labelKey: 'nav.settings',
+    Icon: SettingsIcon,
+    bottom: true
+  }
 ]
 
 export function AppRail(): JSX.Element {
@@ -56,7 +70,7 @@ export function AppRail(): JSX.Element {
             {current ? `${current.name} — ${t('switcher.ariaLabel')}` : t('switcher.ariaLabel')}
           </TooltipContent>
         </Tooltip>
-        
+
         <div className="mt-4 mb-2 h-[1px] shrink-0 w-6 bg-[color:var(--color-line)]" />
 
         <div className="flex flex-col gap-2 w-full items-center">
@@ -80,9 +94,7 @@ export function AppRail(): JSX.Element {
             align="end"
             sideOffset={16}
             customTrigger={
-              <button
-                className="flex size-8 shrink-0 items-center justify-center rounded-xl text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] hover:text-[color:var(--color-ink)] transition-colors cursor-pointer"
-              >
+              <button className="flex size-8 shrink-0 items-center justify-center rounded-xl text-[color:var(--color-ink-2)] hover:bg-[color:var(--color-paper-3)] hover:text-[color:var(--color-ink)] transition-colors cursor-pointer">
                 <Trees size={20} />
               </button>
             }
@@ -93,16 +105,23 @@ export function AppRail(): JSX.Element {
   )
 }
 
-function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; requireGrove?: boolean }): JSX.Element {
+function RailBtn({
+  entry,
+  t,
+  requireGrove
+}: {
+  entry: RailEntry
+  t: any
+  requireGrove?: boolean
+}): JSX.Element {
   const label = t(entry.labelKey)
   const location = useLocation()
   const isActive = location.pathname.startsWith(entry.match)
   const toggleSidebar = useRootStore((s) => s.toggleSidebar)
   const sidebarOpen = useRootStore((s) => s.sidebarOpen)
-  
-  const tooltipLabel = (isActive && !entry.bottom) 
-    ? (sidebarOpen ? t('nav.collapse') : t('nav.expand'))
-    : label
+
+  const tooltipLabel =
+    isActive && !entry.bottom ? (sidebarOpen ? t('nav.collapse') : t('nav.expand')) : label
 
   const baseCls =
     'flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors cursor-pointer relative group'
@@ -110,9 +129,7 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
   let content: JSX.Element | null = null
   if (entry.disabled || requireGrove) {
     content = (
-      <div
-        className={`${baseCls} text-muted-foreground/50 cursor-not-allowed`}
-      >
+      <div className={`${baseCls} text-muted-foreground/50 cursor-not-allowed`}>
         <entry.Icon size={20} />
       </div>
     )
@@ -132,11 +149,15 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
           }
         }}
       >
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive && !entry.bottom ? 'group-hover:opacity-0' : 'opacity-100'}`}>
+        <div
+          className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive && !entry.bottom ? 'group-hover:opacity-0' : 'opacity-100'}`}
+        >
           <entry.Icon size={20} />
         </div>
         {!entry.bottom && (
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'}`}>
+          <div
+            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${isActive ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'}`}
+          >
             {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
           </div>
         )}
@@ -146,11 +167,13 @@ function RailBtn({ entry, t, requireGrove }: { entry: RailEntry; t: any; require
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        {content}
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent side="right">
-        {entry.disabled || requireGrove ? requireGrove ? t('switcher.noGrove') : t('settings.common.comingSoon') : tooltipLabel}
+        {entry.disabled || requireGrove
+          ? requireGrove
+            ? t('switcher.noGrove')
+            : t('settings.common.comingSoon')
+          : tooltipLabel}
       </TooltipContent>
     </Tooltip>
   )

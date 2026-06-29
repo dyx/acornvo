@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { memo, type FC } from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { memo, type FC } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import {
   FileIcon,
   FileTextIcon,
@@ -9,83 +9,76 @@ import {
   MusicIcon,
   VideoIcon,
   BracesIcon,
-  DownloadIcon,
-} from "lucide-react";
-import type { FileMessagePartComponent } from "@assistant-ui/react";
-import { cn } from "@/lib/utils";
+  DownloadIcon
+} from 'lucide-react'
+import type { FileMessagePartComponent } from '@assistant-ui/react'
+import { cn } from '@/lib/utils'
 
 const fileVariants = cva(
-  "aui-file-root inline-flex items-center gap-3 rounded-lg transition-colors",
+  'aui-file-root inline-flex items-center gap-3 rounded-lg transition-colors',
   {
     variants: {
       variant: {
-        outline: "border-border hover:bg-muted/50 border",
-        ghost: "hover:bg-muted/50",
-        muted: "bg-muted/50 hover:bg-muted/70",
+        outline: 'border-border hover:bg-muted/50 border',
+        ghost: 'hover:bg-muted/50',
+        muted: 'bg-muted/50 hover:bg-muted/70'
       },
       size: {
-        sm: "px-2.5 py-1.5 text-xs",
-        default: "px-3 py-2 text-sm",
-        lg: "px-4 py-3 text-base",
-      },
+        sm: 'px-2.5 py-1.5 text-xs',
+        default: 'px-3 py-2 text-sm',
+        lg: 'px-4 py-3 text-base'
+      }
     },
     defaultVariants: {
-      variant: "outline",
-      size: "default",
-    },
-  },
-);
+      variant: 'outline',
+      size: 'default'
+    }
+  }
+)
 
 function getMimeTypeIcon(mimeType: string): FC<{ className?: string }> {
-  if (mimeType.startsWith("image/")) {
-    return ImageIcon;
+  if (mimeType.startsWith('image/')) {
+    return ImageIcon
   }
-  if (mimeType === "application/pdf") {
-    return FileTextIcon;
+  if (mimeType === 'application/pdf') {
+    return FileTextIcon
   }
-  if (mimeType === "application/json") {
-    return BracesIcon;
+  if (mimeType === 'application/json') {
+    return BracesIcon
   }
-  if (mimeType.startsWith("text/")) {
-    return FileTextIcon;
+  if (mimeType.startsWith('text/')) {
+    return FileTextIcon
   }
-  if (mimeType.startsWith("audio/")) {
-    return MusicIcon;
+  if (mimeType.startsWith('audio/')) {
+    return MusicIcon
   }
-  if (mimeType.startsWith("video/")) {
-    return VideoIcon;
+  if (mimeType.startsWith('video/')) {
+    return VideoIcon
   }
-  return FileIcon;
+  return FileIcon
 }
 
 function getBase64Size(base64?: string): number {
-  if (!base64) return 0;
-  const commaIndex = base64.indexOf(",");
-  const base64Data = commaIndex >= 0 ? base64.slice(commaIndex + 1) : base64;
-  const padding = (base64Data.match(/=/g) || []).length;
-  return Math.floor((base64Data.length * 3) / 4) - padding;
+  if (!base64) return 0
+  const commaIndex = base64.indexOf(',')
+  const base64Data = commaIndex >= 0 ? base64.slice(commaIndex + 1) : base64
+  const padding = (base64Data.match(/=/g) || []).length
+  return Math.floor((base64Data.length * 3) / 4) - padding
 }
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) {
-    return `${bytes} B`;
+    return `${bytes} B`
   }
   if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024).toFixed(1)} KB`
   }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export type FileRootProps = React.ComponentProps<"div"> &
-  VariantProps<typeof fileVariants>;
+export type FileRootProps = React.ComponentProps<'div'> & VariantProps<typeof fileVariants>
 
-function FileRoot({
-  className,
-  variant,
-  size,
-  children,
-  ...props
-}: FileRootProps) {
+function FileRoot({ className, variant, size, children, ...props }: FileRootProps) {
   return (
     <div
       data-slot="file-root"
@@ -96,69 +89,60 @@ function FileRoot({
     >
       {children}
     </div>
-  );
+  )
 }
 
-type FileIconDisplayProps = React.ComponentProps<"span"> & {
-  mimeType?: string;
-};
+type FileIconDisplayProps = React.ComponentProps<'span'> & {
+  mimeType?: string
+}
 
-function FileIconDisplay({
-  mimeType,
-  className,
-  children,
-  ...props
-}: FileIconDisplayProps) {
-  const IconComponent = mimeType ? getMimeTypeIcon(mimeType) : FileIcon;
+function FileIconDisplay({ mimeType, className, children, ...props }: FileIconDisplayProps) {
+  const IconComponent = mimeType ? getMimeTypeIcon(mimeType) : FileIcon
 
   return (
     <span
       data-slot="file-icon"
-      className={cn("text-muted-foreground shrink-0", className)}
+      className={cn('text-muted-foreground shrink-0', className)}
       {...props}
     >
       {children ?? <IconComponent className="size-5" />}
     </span>
-  );
+  )
 }
 
-function FileName({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"span">) {
+function FileName({ className, children, ...props }: React.ComponentProps<'span'>) {
   return (
     <span
       data-slot="file-name"
-      className={cn("min-w-0 flex-1 truncate font-medium", className)}
+      className={cn('min-w-0 flex-1 truncate font-medium', className)}
       {...props}
     >
-      {children || "Unnamed file"}
+      {children || 'Unnamed file'}
     </span>
-  );
+  )
 }
 
-type FileSizeProps = React.ComponentProps<"span"> & {
-  bytes: number;
-};
+type FileSizeProps = React.ComponentProps<'span'> & {
+  bytes: number
+}
 
 function FileSize({ bytes, className, ...props }: FileSizeProps) {
   return (
     <span
       data-slot="file-size"
-      className={cn("text-muted-foreground shrink-0", className)}
+      className={cn('text-muted-foreground shrink-0', className)}
       {...props}
     >
       {formatFileSize(bytes)}
     </span>
-  );
+  )
 }
 
-type FileDownloadProps = Omit<React.ComponentProps<"a">, "href"> & {
-  data: string;
-  mimeType: string;
-  filename?: string;
-};
+type FileDownloadProps = Omit<React.ComponentProps<'a'>, 'href'> & {
+  data: string
+  mimeType: string
+  filename?: string
+}
 
 function FileDownload({
   data,
@@ -168,28 +152,26 @@ function FileDownload({
   children,
   ...props
 }: FileDownloadProps) {
-  const href = data.startsWith("data:")
-    ? data
-    : `data:${mimeType};base64,${data}`;
+  const href = data.startsWith('data:') ? data : `data:${mimeType};base64,${data}`
 
   return (
     <a
       data-slot="file-download"
       href={href}
-      download={filename || "download"}
+      download={filename || 'download'}
       className={cn(
-        "text-muted-foreground hover:bg-accent hover:text-accent-foreground shrink-0 rounded-md p-1 transition-colors",
-        className,
+        'text-muted-foreground hover:bg-accent hover:text-accent-foreground shrink-0 rounded-md p-1 transition-colors',
+        className
       )}
       {...props}
     >
       {children || <DownloadIcon className="size-4" />}
     </a>
-  );
+  )
 }
 
 const FileImpl: FileMessagePartComponent = ({ filename, data, mimeType }) => {
-  const bytes = getBase64Size(data);
+  const bytes = getBase64Size(data)
 
   return (
     <FileRoot>
@@ -201,28 +183,28 @@ const FileImpl: FileMessagePartComponent = ({ filename, data, mimeType }) => {
       {data && (
         <FileDownload
           data={data}
-          mimeType={mimeType || ""}
+          mimeType={mimeType || ''}
           {...(filename !== undefined && { filename })}
         />
       )}
     </FileRoot>
-  );
-};
+  )
+}
 
 const File = memo(FileImpl) as unknown as FileMessagePartComponent & {
-  Root: typeof FileRoot;
-  Icon: typeof FileIconDisplay;
-  Name: typeof FileName;
-  Size: typeof FileSize;
-  Download: typeof FileDownload;
-};
+  Root: typeof FileRoot
+  Icon: typeof FileIconDisplay
+  Name: typeof FileName
+  Size: typeof FileSize
+  Download: typeof FileDownload
+}
 
-File.displayName = "File";
-File.Root = FileRoot;
-File.Icon = FileIconDisplay;
-File.Name = FileName;
-File.Size = FileSize;
-File.Download = FileDownload;
+File.displayName = 'File'
+File.Root = FileRoot
+File.Icon = FileIconDisplay
+File.Name = FileName
+File.Size = FileSize
+File.Download = FileDownload
 
 export {
   File,
@@ -234,5 +216,5 @@ export {
   fileVariants,
   getMimeTypeIcon,
   getBase64Size,
-  formatFileSize,
-};
+  formatFileSize
+}

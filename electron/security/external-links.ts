@@ -21,7 +21,10 @@ export function safeOpenExternal(url: string): void {
     return
   }
   void shell.openExternal(url).catch((err) =>
-    logger().warn('security', { msg: 'shell.openExternal failed', meta: { url, error: String(err) } })
+    logger().warn('security', {
+      msg: 'shell.openExternal failed',
+      meta: { url, error: String(err) }
+    })
   )
 }
 

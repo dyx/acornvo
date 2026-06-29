@@ -4,7 +4,6 @@ import type { IpcContract } from '@shared/ipc-contract'
 import { settingsStore } from '../settings/store'
 import { providersStore } from '../settings/providers'
 
-
 const BROWSER_PARTITION = 'persist:browser-default'
 
 type SettingsHandlers = {

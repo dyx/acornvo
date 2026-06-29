@@ -18,7 +18,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-
 export function LibraryTab(): JSX.Element {
   const { t } = useTranslation()
   const ai = useSettingsStore((s) => s.ai)

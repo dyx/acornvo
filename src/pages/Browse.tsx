@@ -24,7 +24,7 @@ export function Browse(): JSX.Element {
 
   // Auto-create the first tab
   const viewportRef = useRef<HTMLDivElement>(null)
-  
+
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined
   const isBlank = !activeTab || (activeTab.savedUrl === 'about:blank' && activeTab.title === '')
 
@@ -92,9 +92,11 @@ export function Browse(): JSX.Element {
 
   return (
     <div className="flex h-full flex-row bg-transparent py-3 pr-3" data-testid="browse-page">
-      <aside className={`relative flex flex-col shrink-0 overflow-hidden bg-transparent transition-all duration-300 ${
-        sidebarOpen ? 'w-[280px] mr-3 opacity-100' : 'w-0 mr-0 opacity-0'
-      }`}>
+      <aside
+        className={`relative flex flex-col shrink-0 overflow-hidden bg-transparent transition-all duration-300 ${
+          sidebarOpen ? 'w-[280px] mr-3 opacity-100' : 'w-0 mr-0 opacity-0'
+        }`}
+      >
         <div className="w-full h-full flex flex-col overflow-hidden bg-[color:var(--color-paper)] rounded-xl shadow-sm border border-[color:var(--color-line)] dark:border-white/5">
           <BookmarkSidebar />
         </div>

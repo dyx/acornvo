@@ -44,19 +44,25 @@ import { getProviderApiKey } from '../settings/provider-key'
 
 function loadProfile(modelId: string): ResolvedProfile | null {
   const db = getGlobalDb()
-  const row = db.prepare(`
+  const row = db
+    .prepare(
+      `
     SELECT m.name as db_model_id, p.id as provider_id, p.type as provider, p.base_url, p.api_key_ref, m.context_window
     FROM ai_model m
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
-  `).get(modelId) as {
-    db_model_id: string
-    provider_id: string
-    provider: string
-    base_url: string | null
-    api_key_ref: string | null
-    context_window: number | null
-  } | undefined
+  `
+    )
+    .get(modelId) as
+    | {
+        db_model_id: string
+        provider_id: string
+        provider: string
+        base_url: string | null
+        api_key_ref: string | null
+        context_window: number | null
+      }
+    | undefined
 
   if (!row) return null
 

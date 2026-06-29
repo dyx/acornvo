@@ -55,7 +55,7 @@ import { LoadingSquirrel } from '@/components/ui/LoadingSquirrel'
 function BootstrapGate(): JSX.Element | null {
   const payload = useBootstrap()
   const general = useSettingsStore((s) => s.general)
-  
+
   if (!payload) {
     return (
       <div className="flex h-screen w-full flex-col gap-6 items-center justify-center bg-[color:var(--color-paper)]">

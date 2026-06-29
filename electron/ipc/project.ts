@@ -63,7 +63,11 @@ async function removeFromRecent(id: string): Promise<void> {
   await recent.removeById(id)
 }
 
-async function selectDirectory(opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }): Promise<string | null> {
+async function selectDirectory(opts: {
+  purpose: SelectDirectoryPurpose
+  title?: string
+  buttonLabel?: string
+}): Promise<string | null> {
   const properties: Array<'openDirectory' | 'createDirectory'> =
     opts.purpose === 'createParent' ? ['openDirectory', 'createDirectory'] : ['openDirectory']
   const options = {

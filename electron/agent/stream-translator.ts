@@ -1,9 +1,6 @@
 import type { AgentEvent, SessionMessage, ToolCall, ToolResult } from '../../shared/agent-types'
 
-import {
-  AIMessage,
-  ToolMessage
-} from '@langchain/core/messages'
+import { AIMessage, ToolMessage } from '@langchain/core/messages'
 import { normalizeLLMError } from '../ai/normalize-errors'
 
 const TOOL_RESULT_BUDGET = 8000
@@ -24,10 +21,7 @@ export interface TranslatorPersistence {
 export interface TranslatorDeps {
   emit: (e: AgentEvent) => void
   persist: TranslatorPersistence
-  recordUsage: (
-    usage: any,
-    model: string
-  ) => void
+  recordUsage: (usage: any, model: string) => void
   /** AIMessage.id values already persisted; used to skip duplicates after HITL resume. */
   seenAiMessageIds: Set<string>
   reasoningState?: { startTime: number; duration?: number; isStandardProvider?: boolean }
@@ -60,7 +54,7 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   if (alreadySeen(deps.seenAiMessageIds, msg)) return
 
   const toolCalls = aiMessageToolCalls(msg)
-  
+
   // 1. Attempt to parse from standard LangChain API structures (string, array content blocks, additional_kwargs)
   let contentStr = ''
   let reasoningStr = ''
@@ -70,7 +64,8 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   } else if (Array.isArray(msg.content)) {
     for (const block of msg.content as any[]) {
       if (block.type === 'text') contentStr += block.text || ''
-      else if (block.type === 'reasoning' || block.type === 'thinking') reasoningStr += block.text || block.reasoning || ''
+      else if (block.type === 'reasoning' || block.type === 'thinking')
+        reasoningStr += block.text || block.reasoning || ''
     }
   }
 
@@ -84,10 +79,14 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
 
   // 3. Assemble the final output
   if (typeof reasoningStr === 'string' && reasoningStr && !contentStr.includes('<think')) {
-    const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
+    const durationAttr = deps.reasoningState?.duration
+      ? ` duration="${deps.reasoningState.duration}"`
+      : ''
     contentStr = `<think${durationAttr}>\n${reasoningStr}</think>\n\n${contentStr}`
   } else if (contentStr.includes('<think')) {
-    const durationAttr = deps.reasoningState?.duration ? ` duration="${deps.reasoningState.duration}"` : ''
+    const durationAttr = deps.reasoningState?.duration
+      ? ` duration="${deps.reasoningState.duration}"`
+      : ''
     if (durationAttr) {
       contentStr = contentStr.replace(/<think>/, `<think${durationAttr}>`)
     }
@@ -97,7 +96,9 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   if (toolCalls.length > 0 && deps.persist.hasToolCall) {
     const exists = await deps.persist.hasToolCall(toolCalls[0].id)
     if (exists) {
-      console.log(`[translator] skipping duplicate historical message with tool call ${toolCalls[0].id}`)
+      console.log(
+        `[translator] skipping duplicate historical message with tool call ${toolCalls[0].id}`
+      )
       return
     }
   }
@@ -155,8 +156,6 @@ async function handleToolMessage(deps: TranslatorDeps, msg: ToolMessage): Promis
   }
 }
 
-
-
 export async function processMessages(
   messages: AsyncIterable<any>,
   deps: TranslatorDeps,
@@ -192,9 +191,15 @@ export async function processMessages(
 
           if (deps.reasoningState && deps.reasoningState.duration === undefined) {
             if (deps.accumulatedText.includes('</think>')) {
-              deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
+              deps.reasoningState.duration = Math.max(
+                1,
+                Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+              )
             } else if (deps.reasoningState.isStandardProvider) {
-              deps.reasoningState.duration = Math.max(1, Math.round((Date.now() - deps.reasoningState.startTime) / 1000))
+              deps.reasoningState.duration = Math.max(
+                1,
+                Math.round((Date.now() - deps.reasoningState.startTime) / 1000)
+              )
             }
           }
           deps.emit({ type: 'text-delta', text: actualContent } as AgentEvent)
@@ -213,16 +218,20 @@ export async function processMessages(
             input_tokens: rawUsage.prompt_tokens,
             output_tokens: rawUsage.completion_tokens,
             total_tokens: rawUsage.total_tokens,
-            input_token_details: rawUsage.prompt_tokens_details ? {
-              cache_read: rawUsage.prompt_tokens_details.cached_tokens
-            } : undefined,
-            output_token_details: rawUsage.completion_tokens_details ? {
-              reasoning: rawUsage.completion_tokens_details.reasoning_tokens
-            } : undefined
+            input_token_details: rawUsage.prompt_tokens_details
+              ? {
+                  cache_read: rawUsage.prompt_tokens_details.cached_tokens
+                }
+              : undefined,
+            output_token_details: rawUsage.completion_tokens_details
+              ? {
+                  reasoning: rawUsage.completion_tokens_details.reasoning_tokens
+                }
+              : undefined
           } as any
         }
       }
-      
+
       deps.finalUsage = finalUsage
       const msgId = msg.id || `anon-${Date.now()}`
       if (!deps.seenAiMessageIds.has(msgId)) {
@@ -230,7 +239,7 @@ export async function processMessages(
       }
 
       await handleAssistantMessage(deps, msg)
-      
+
       // Clear accumulated state for the next message in the same run
       deps.accumulatedText = ''
       deps.accumulatedReasoning = ''
@@ -262,7 +271,7 @@ export async function processToolCalls(
       })
       await handleToolMessage(deps, toolMsg)
     } catch (e) {
-      console.error("[processToolCalls] Error awaiting call.output:", e)
+      console.error('[processToolCalls] Error awaiting call.output:', e)
     }
   }
 }
@@ -270,7 +279,11 @@ export async function processToolCalls(
 export function emitError(deps: TranslatorDeps, err: unknown): void {
   try {
     const norm = normalizeLLMError(err)
-    deps.emit({ type: 'error', error: norm.code, detail: { message: norm.message, httpStatus: norm.httpStatus } })
+    deps.emit({
+      type: 'error',
+      error: norm.code,
+      detail: { message: norm.message, httpStatus: norm.httpStatus }
+    })
   } catch {
     // AbortError fell through normalizeLLMError's throw — runner should call emitCanceled instead.
     deps.emit({ type: 'canceled' })
@@ -281,18 +294,14 @@ export function emitCanceled(deps: TranslatorDeps): void {
   deps.emit({ type: 'canceled' })
 }
 
-export function emitDone(
-  deps: TranslatorDeps,
-  finalUsage: any,
-  _modelName: string
-): void {
+export function emitDone(deps: TranslatorDeps, finalUsage: any, _modelName: string): void {
   const promptTokens = finalUsage?.input_tokens ?? 0
   const completionTokens = finalUsage?.output_tokens ?? 0
-  
+
   const usageShape = finalUsage
-    ? { 
-        promptTokens, 
-        completionTokens, 
+    ? {
+        promptTokens,
+        completionTokens,
         totalTokens: promptTokens + completionTokens,
         cachedTokens: finalUsage.input_token_details?.cache_read,
         reasoningTokens: finalUsage.output_token_details?.reasoning
@@ -300,7 +309,7 @@ export function emitDone(
     : undefined
 
   if (usageShape && deps.persist.updateLastAssistantUsage) {
-    deps.persist.updateLastAssistantUsage(usageShape).catch(err => {
+    deps.persist.updateLastAssistantUsage(usageShape).catch((err) => {
       console.error('[emitDone] failed to update usage in db', err)
     })
   }

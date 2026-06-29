@@ -3,7 +3,7 @@
 // search.fullText (Plan 2 task 4.3) can early-return pending:true.
 
 import type Database from 'better-sqlite3'
-import { maybeRebuildFts as _maybeRebuildFts } from './rebuild'
+import { maybeRebuildFts as _maybeRebuildFts, rebuildFts as _rebuildFts } from './rebuild'
 
 let _isRebuilding = false
 
@@ -21,6 +21,16 @@ export async function maybeRebuildFts(db: Database.Database, groveRoot: string):
   _isRebuilding = true
   try {
     await _maybeRebuildFts(db, groveRoot)
+  } finally {
+    _isRebuilding = false
+  }
+}
+
+export async function forceRebuildFts(db: Database.Database, groveRoot: string): Promise<void> {
+  if (_isRebuilding) return
+  _isRebuilding = true
+  try {
+    await _rebuildFts(db, groveRoot)
   } finally {
     _isRebuilding = false
   }

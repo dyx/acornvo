@@ -82,7 +82,11 @@ export function buildSlug(input: BuildSlugInput): string {
   }
 
   // Safety fallback: strip slashes and literal dots to avoid path traversal
-  stem = stem.replace(/[\\/]+/g, '-').replace(/\.\./g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
+  stem = stem
+    .replace(/[\\/]+/g, '-')
+    .replace(/\.\./g, '')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-|-$/g, '')
   if (!stem) stem = 'clip'
 
   return `${stem}-${hash}`

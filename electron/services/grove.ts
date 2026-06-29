@@ -109,7 +109,10 @@ export async function initialize(grovePath: string): Promise<InitializeResult> {
 
   if (existing === 'corrupt') {
     await backupProjectJson(grovePath)
-    logger().warn('grove', { msg: 'project.json corrupt; backing up and rewriting', meta: { grove: grovePath } })
+    logger().warn('grove', {
+      msg: 'project.json corrupt; backing up and rewriting',
+      meta: { grove: grovePath }
+    })
   }
 
   if (existing !== 'missing' && existing !== 'corrupt') {

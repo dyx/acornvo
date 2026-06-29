@@ -1,15 +1,20 @@
 import { utilityProcess, type UtilityProcess } from 'electron'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { BGE_QUERY_INSTRUCTION } from './bge-instruction'
 
 let worker: UtilityProcess | null = null
 
 export function ensureEmbedWorker(): void {
   if (worker) return
-  worker = utilityProcess.fork(join(__dirname, 'embed-worker-main.js'), [], { serviceName: 'acornvo-embed', stdio: 'pipe' })
-  worker.stdout?.on('data', (d) => console.log(`[Worker STDOUT] ${d}`))
+  worker = utilityProcess.fork(join(__dirname, 'embed-worker-main.js'), [], {
+    serviceName: 'acornvo-embed',
+    stdio: 'pipe'
+  })
   worker.stderr?.on('data', (d) => console.error(`[Worker STDERR] ${d}`))
-  worker.on('exit', () => { worker = null })
+  worker.on('exit', () => {
+    worker = null
+  })
 }
 
 export async function embedBatchLocal(texts: string[]): Promise<number[][]> {
@@ -18,7 +23,6 @@ export async function embedBatchLocal(texts: string[]): Promise<number[][]> {
   return new Promise((resolve, reject) => {
     let resolved = false
     const onMsg = (m: any) => {
-      console.log('[Main] Worker message received:', typeof m === 'object' ? Object.keys(m) : m)
       if (m && m.batchId === batchId) {
         resolved = true
         worker?.off('message', onMsg)
@@ -36,7 +40,7 @@ export async function embedBatchLocal(texts: string[]): Promise<number[][]> {
     worker!.on('message', onMsg)
     worker!.on('exit', onExit)
     worker!.postMessage({ batchId, texts })
-    
+
     setTimeout(() => {
       if (!resolved) {
         resolved = true
@@ -53,4 +57,9 @@ export function disposeEmbedWorker(): void {
     worker.kill()
     worker = null
   }
+}
+
+export async function embedQueryLocal(query: string): Promise<number[]> {
+  const vecs = await embedBatchLocal([BGE_QUERY_INSTRUCTION + query])
+  return vecs[0]
 }

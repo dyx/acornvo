@@ -12,12 +12,7 @@ import type {
   BookmarkListOpts,
   BookmarkListResult
 } from './browser-types'
-import type {
-  ClipRunId,
-  ClipInput,
-  ClipResult,
-  ClipPreview
-} from './clipper-types'
+import type { ClipRunId, ClipInput, ClipResult, ClipPreview } from './clipper-types'
 import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 export type { GroveSummary, LockInfo } from './grove'
@@ -30,12 +25,7 @@ export type {
   BookmarkListOpts,
   BookmarkListResult
 } from './browser-types'
-export type {
-  ClipRunId,
-  ClipInput,
-  ClipResult,
-  ClipPreview
-} from './clipper-types'
+export type { ClipRunId, ClipInput, ClipResult, ClipPreview } from './clipper-types'
 export type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from './clip-types'
 
 import type {
@@ -196,13 +186,7 @@ import type { Frontmatter } from './frontmatter-schema'
 import type { FileSummary, CategoryNode } from './file-types'
 import type { Op, OpsItem } from './ops-types'
 
-export type {
-  FileSummary,
-  OrderBy,
-  CategoryNode,
-  FileFilter,
-  Pagination
-} from './file-types'
+export type { FileSummary, OrderBy, CategoryNode, FileFilter, Pagination } from './file-types'
 
 export type EolStyle = 'lf' | 'crlf' | 'mixed'
 export type FileEncoding = 'utf8' | 'gbk'
@@ -330,7 +314,11 @@ export type IpcContract = {
     closeGrove: () => void
     getCurrent: () => GroveSummary | null
     removeFromRecent: (id: string) => void
-    selectDirectory: (opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }) => string | null
+    selectDirectory: (opts: {
+      purpose: SelectDirectoryPurpose
+      title?: string
+      buttonLabel?: string
+    }) => string | null
   }
   db: {
     version: () => DbVersionInfo
@@ -399,7 +387,13 @@ export type IpcContract = {
       q: string,
       opts?: { ftsWeight?: number; vecWeight?: number; limit?: number }
     ) => {
-      items: { summary: FileSummary; body: string; heading_path: string; score?: number; source?: 'fts' | 'semantic' | 'hybrid' }[]
+      items: {
+        summary: FileSummary
+        body: string
+        heading_path: string
+        score?: number
+        source?: 'fts' | 'semantic' | 'hybrid'
+      }[]
       total: number
       pending: boolean
     }
@@ -465,8 +459,15 @@ export type IpcContract = {
     aiModelsDelete: (id: string) => { ok: true }
     browserClearCookies: () => { ok: true }
 
-    aiProvidersTestConnection: (input: { baseUrl?: string; apiKey?: string; providerId?: string; testPath?: string }) => Promise<{ ok: boolean; message?: string }>
-    aiProvidersCheckBalance: (providerId: string) => Promise<{ ok: boolean; message?: string; balance?: string }>
+    aiProvidersTestConnection: (input: {
+      baseUrl?: string
+      apiKey?: string
+      providerId?: string
+      testPath?: string
+    }) => Promise<{ ok: boolean; message?: string }>
+    aiProvidersCheckBalance: (
+      providerId: string
+    ) => Promise<{ ok: boolean; message?: string; balance?: string }>
   }
   jobs: {
     list: (filter: JobListFilter) => JobsListResult
@@ -483,12 +484,7 @@ export type IpcContract = {
       totalTokens: number
       byProvider: Record<string, { calls: number; tokens: number }>
     }
-    'usage.list': (opts: {
-      limit: number
-      offset: number
-      modelId?: string
-      okOnly?: boolean
-    }) => {
+    'usage.list': (opts: { limit: number; offset: number; modelId?: string; okOnly?: boolean }) => {
       items: Array<{
         id?: number
         jobId: string | null
@@ -559,7 +555,11 @@ export type IpcContract = {
     themeApplied: (theme: 'light' | 'dark' | 'system') => Promise<void>
   }
   ui: {
-    showToast: (payload: { title?: string; description?: string; variant?: 'default' | 'destructive' }) => void
+    showToast: (payload: {
+      title?: string
+      description?: string
+      variant?: 'default' | 'destructive'
+    }) => void
   }
 }
 

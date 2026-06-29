@@ -75,7 +75,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await ipc.settings.set('search', patch)
   },
 
-
   _applyChange({ ns, key, newValue }) {
     const current = get()
     if (ns === 'general')

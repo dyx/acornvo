@@ -1,4 +1,9 @@
-import { createAgent, humanInTheLoopMiddleware, summarizationMiddleware, toolCallLimitMiddleware } from 'langchain'
+import {
+  createAgent,
+  humanInTheLoopMiddleware,
+  summarizationMiddleware,
+  toolCallLimitMiddleware
+} from 'langchain'
 import { SqliteSaver } from '@langchain/langgraph-checkpoint-sqlite'
 import type { BaseCheckpointSaver } from '@langchain/langgraph'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
@@ -47,16 +52,19 @@ export function getAgentBuilder(): SingletonHandle {
 
   handle = {
     buildForProfile: (profile: ResolvedProfile) => {
-      const model = buildChatModel(profile, { temperature: 0.3, maxTokens: 4096 }) as unknown as BaseChatModel
-      
-      let finalModel = model
+      const model = buildChatModel(profile, {
+        temperature: 0.3,
+        maxTokens: 4096
+      }) as unknown as BaseChatModel
+
+      const finalModel = model
       if (profile.provider === 'deepseek' && finalModel.bindTools) {
         const originalBindTools = finalModel.bindTools.bind(finalModel)
         finalModel.bindTools = (tools: any, kwargs: any) => {
           return originalBindTools(tools, { ...kwargs, strict: true })
         }
       }
-      
+
       const contextWindow = profile.contextWindow ?? 128000
 
       const summarizer = summarizationMiddleware({
@@ -66,20 +74,27 @@ export function getAgentBuilder(): SingletonHandle {
         tokenCounter: estimateMessagesTokens,
         trimTokensToSummarize: Math.floor(contextWindow * 0.15)
       })
-      
+
       const searchLimiter = toolCallLimitMiddleware({
         toolName: 'search_files',
         runLimit: 2,
         exitBehavior: 'continue'
       })
-      
+
       const observer = createCompactionObserver(contextWindow)
       const reactiveGuard = createReactiveGuard(contextWindow)
 
       return createAgent({
         model: finalModel,
         tools: agentTools as any,
-        middleware: [hitl, microcompactMiddleware, observer, reactiveGuard, summarizer, searchLimiter],
+        middleware: [
+          hitl,
+          microcompactMiddleware,
+          observer,
+          reactiveGuard,
+          summarizer,
+          searchLimiter
+        ],
         checkpointer: cp
       }) as any
     }

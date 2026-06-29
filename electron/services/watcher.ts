@@ -5,12 +5,7 @@ import { createHash } from 'node:crypto'
 import { relative } from 'node:path'
 import { EventEmitter } from 'node:events'
 import type Database from 'better-sqlite3'
-import {
-  upsertFileWithBodyDelta,
-  upsertFts,
-  deleteFile,
-  renameFile
-} from './index-queries'
+import { upsertFileWithBodyDelta, upsertFts, deleteFile, renameFile } from './index-queries'
 import { parseFile } from './frontmatter'
 import { chunkMarkdown } from './chunker'
 import { _setStateForTest as _indexerSetState } from './indexer'

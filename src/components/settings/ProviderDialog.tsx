@@ -2,7 +2,15 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { XIcon, ExternalLinkIcon, CheckCircleIcon, XCircleIcon, Loader2Icon, EyeIcon, EyeOffIcon } from 'lucide-react'
+import {
+  XIcon,
+  ExternalLinkIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  Loader2Icon,
+  EyeIcon,
+  EyeOffIcon
+} from 'lucide-react'
 import { useProvidersStore } from '@/stores/providers'
 import type {
   AiProvider,
@@ -20,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-
 
 interface ProviderDialogProps {
   provider: AiProvider | null
@@ -96,12 +103,12 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
     const now = Date.now()
     if (now - lastTestTime < 2000) return
     setLastTestTime(now)
-    
+
     setTestStatus('testing')
     setTestMessage(null)
     const defs = AI_PROVIDER_DEFAULTS[form.type]
     const baseUrl = form.baseUrl.trim().length > 0 ? form.baseUrl.trim() : undefined
-    
+
     try {
       const res = await testConnection({
         baseUrl,
@@ -116,18 +123,24 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
         setTestStatus('error')
         let msg = res.message || t('settings.ai.testError', 'Connection failed')
         if (msg.startsWith('ERR_AUTH_FAILED:')) {
-          msg = t('settings.ai.errAuthFailed', { defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确', status: msg.split(':')[1] })
+          msg = t('settings.ai.errAuthFailed', {
+            defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确',
+            status: msg.split(':')[1]
+          })
         } else if (msg === 'ERR_NOT_FOUND') {
-          msg = t('settings.ai.errNotFound', { defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL' })
+          msg = t('settings.ai.errNotFound', {
+            defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL'
+          })
         } else if (msg === 'ERR_NETWORK') {
-          msg = t('settings.ai.errNetwork', { defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' })
+          msg = t('settings.ai.errNetwork', {
+            defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。'
+          })
         }
         setTestMessage(msg)
       }
     } catch (err: any) {
       setTestStatus('error')
       setTestMessage(err.message || String(err))
-
     }
   }
 
@@ -136,7 +149,7 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
     setError(null)
     try {
       const name = form.name.trim()
-      
+
       if (!name) {
         setError(t('settings.ai.errorNameRequired', 'Provider name is required'))
         setBusy(false)
@@ -164,7 +177,6 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
     } catch (err) {
       const code = (err as { code?: string })?.code || null
       if (code === 'E_DUPLICATE_NAME') setError(t('settings.ai.errorDuplicateName'))
-
       else setError(err instanceof Error ? err.message : String(err))
     } finally {
       setBusy(false)
@@ -188,7 +200,9 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
           <span className="sr-only">Close</span>
         </button>
         <h3 className="mb-4 text-lg font-medium pr-8">
-          {provider ? t('settings.ai.editProvider', 'Edit Provider') : t('settings.ai.addProvider', 'Add Provider')}
+          {provider
+            ? t('settings.ai.editProvider', 'Edit Provider')
+            : t('settings.ai.addProvider', 'Add Provider')}
         </h3>
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
@@ -214,7 +228,10 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
             <span className="block font-medium">{t('settings.ai.name')}</span>
             <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
           </div>
-          {(form.type === 'openai-compatible' || form.type === 'ollama' || form.type === 'openrouter' || form.type === 'deepseek') && (
+          {(form.type === 'openai-compatible' ||
+            form.type === 'ollama' ||
+            form.type === 'openrouter' ||
+            form.type === 'deepseek') && (
             <div className="space-y-1">
               <span className="block font-medium">{t('settings.ai.baseUrl')}</span>
               <Input
@@ -262,7 +279,6 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
         {error && (
           <div className="mt-3 text-sm text-destructive flex items-center justify-between">
             <p>{error}</p>
-
           </div>
         )}
         <div className="mt-6 flex items-center justify-between">
@@ -272,7 +288,11 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
               variant="outline"
               size="sm"
               onClick={() => void handleTestConnection()}
-              disabled={busy || testStatus === 'testing' || (!form.baseUrl && !AI_PROVIDER_DEFAULTS[form.type]?.baseUrl)}
+              disabled={
+                busy ||
+                testStatus === 'testing' ||
+                (!form.baseUrl && !AI_PROVIDER_DEFAULTS[form.type]?.baseUrl)
+              }
             >
               {testStatus === 'testing' && <Loader2Icon className="mr-2 size-4 animate-spin" />}
               {t('settings.ai.testConnection', 'Test Connection')}
@@ -284,7 +304,10 @@ export function ProviderDialog({ provider, onClose }: ProviderDialogProps): JSX.
               </span>
             )}
             {testStatus === 'error' && (
-              <span className="ml-3 flex items-center text-sm text-destructive" title={testMessage ?? ''}>
+              <span
+                className="ml-3 flex items-center text-sm text-destructive"
+                title={testMessage ?? ''}
+              >
                 <XCircleIcon className="mr-1 size-4 flex-shrink-0" />
                 <span className="max-w-[250px] line-clamp-2 leading-tight">{testMessage}</span>
               </span>

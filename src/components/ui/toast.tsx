@@ -42,11 +42,7 @@ export const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, children, ...props }, ref) => (
-  <ToastPrimitives.Root
-    ref={ref}
-    className={cn(toastVariants({ variant }), className)}
-    {...props}
-  >
+  <ToastPrimitives.Root ref={ref} className={cn(toastVariants({ variant }), className)} {...props}>
     {variant === 'destructive' && (
       <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--color-berry)]" />
     )}
@@ -59,17 +55,20 @@ export const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close> & { variant?: ToastVariant }
 >(({ className, variant, ...props }, ref) => {
-  if (variant === 'destructive') return null;
+  if (variant === 'destructive') return null
   return (
     <ToastPrimitives.Close
       ref={ref}
       toast-close=""
-      className={cn('absolute right-2 top-2 rounded-md p-1 opacity-60 hover:opacity-100', className)}
+      className={cn(
+        'absolute right-2 top-2 rounded-md p-1 opacity-60 hover:opacity-100',
+        className
+      )}
       {...props}
     >
       <X className="h-4 w-4" />
     </ToastPrimitives.Close>
-  );
+  )
 })
 ToastClose.displayName = ToastPrimitives.Close.displayName
 

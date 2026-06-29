@@ -35,7 +35,11 @@ export const searchHandlers: SearchHandlers = {
   fullText: (
     q: string,
     opts?: { limit?: number; offset?: number }
-  ): { items: { summary: FileSummary; body: string; heading_path: string }[]; total: number; pending: boolean } => {
+  ): {
+    items: { summary: FileSummary; body: string; heading_path: string }[]
+    total: number
+    pending: boolean
+  } => {
     if (isRebuilding()) {
       return { items: [], total: 0, pending: true }
     }

@@ -31,7 +31,7 @@ function parseToolResultText(text: string): ToolStep['result'] {
 
 function cleanAssistantText(text: string | undefined): string {
   if (!text) return ''
-  return text.replace(/<details[\s\S]*?(?:<\/details>|$)/ig, '')
+  return text.replace(/<details[\s\S]*?(?:<\/details>|$)/gi, '')
 }
 
 export function deriveBubbleItems(
@@ -43,18 +43,23 @@ export function deriveBubbleItems(
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i]
     if (m.role === 'user') {
-      items.push({ key: m.id.toString(), role: 'user', content: m.text, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
+      items.push({
+        key: m.id.toString(),
+        role: 'user',
+        content: m.text,
+        createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined
+      })
       continue
     }
     if (m.role === 'assistant') {
       const status = m.status ?? 'done'
       const streaming = status === 'streaming'
-      
+
       let fullText = m.text || ''
       if (m.reasoningText) {
         fullText = `<think>\n${m.reasoningText}\n</think>\n\n${fullText}`
       }
-      
+
       const loading = streaming && !fullText && (!m.toolCalls || m.toolCalls.length === 0)
       if (m.toolCalls && m.toolCalls.length > 0) {
         const toolSteps: ToolStep[] = m.toolCalls.map((tc) => {
@@ -72,7 +77,14 @@ export function deriveBubbleItems(
           createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined
         })
       } else {
-        items.push({ key: m.id.toString(), role: 'assistant', content: cleanAssistantText(fullText), streaming, loading, createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined })
+        items.push({
+          key: m.id.toString(),
+          role: 'assistant',
+          content: cleanAssistantText(fullText),
+          streaming,
+          loading,
+          createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : undefined
+        })
       }
       continue
     }

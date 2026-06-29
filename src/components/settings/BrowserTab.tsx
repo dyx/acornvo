@@ -24,7 +24,6 @@ export function BrowserTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-browser" className="space-y-8">
-
       <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.browser.searchEngine')}</span>
         <Select
@@ -55,10 +54,7 @@ export function BrowserTab(): JSX.Element {
       </div>
 
       <div>
-        <Button
-          variant="destructive"
-          onClick={() => setShowClearCookies(true)}
-        >
+        <Button variant="destructive" onClick={() => setShowClearCookies(true)}>
           {t('settings.browser.clearCookies')}
         </Button>
 

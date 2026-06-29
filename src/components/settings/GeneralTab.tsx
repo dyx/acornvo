@@ -22,8 +22,6 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 type RebuildPhase = 'idle' | 'fts' | 'vector' | 'done'
 
-
-
 function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return
   const effective =
@@ -68,12 +66,15 @@ export function GeneralTab(): JSX.Element {
 
   useEffect(() => {
     // Attempt to recover vector phase state on mount
-    ipc.queue.health().then(health => {
-      if (health.pending > 0 || health.running > 0) {
-        setRebuildPhase((prev) => prev === 'idle' ? 'vector' : prev)
-        setVectorRemaining(health.pending)
-      }
-    }).catch(() => {})
+    ipc.queue
+      .health()
+      .then((health) => {
+        if (health.pending > 0 || health.running > 0) {
+          setRebuildPhase((prev) => (prev === 'idle' ? 'vector' : prev))
+          setVectorRemaining(health.pending)
+        }
+      })
+      .catch(() => {})
 
     const unsubProgress = ipc.on('index:rebuildProgress', (p) => {
       setRebuildPhase('fts')
@@ -121,8 +122,6 @@ export function GeneralTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-general" className="space-y-8">
-
-
       <div className="space-y-2">
         <span className="block text-sm font-medium">{t('settings.general.locale')}</span>
         <Select
@@ -236,22 +235,24 @@ export function GeneralTab(): JSX.Element {
       <div className="pt-6 border-t border-border">
         <div className="space-y-2 mb-4">
           <span className="block text-sm font-medium">{t('settings.search.rebuildIndex')}</span>
-          <p className="text-xs text-muted-foreground">
-            {t('settings.search.rebuildIndexDesc')}
-          </p>
+          <p className="text-xs text-muted-foreground">{t('settings.search.rebuildIndexDesc')}</p>
         </div>
 
         {rebuildPhase !== 'idle' && (
           <div
             className={`rounded-lg border border-border bg-muted/30 transition-all duration-500 overflow-hidden ${
-              rebuildPhase === 'done' ? 'opacity-0 h-0 p-0 mb-0 border-transparent' : 'opacity-100 h-[80px] p-4 mb-4'
+              rebuildPhase === 'done'
+                ? 'opacity-0 h-0 p-0 mb-0 border-transparent'
+                : 'opacity-100 h-[80px] p-4 mb-4'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-muted-foreground">
-                {rebuildPhase === 'fts' ? t('settings.search.rebuildFts') :
-                 rebuildPhase === 'vector' ? t('settings.search.rebuildVector') :
-                 t('settings.search.rebuildDone')}
+                {rebuildPhase === 'fts'
+                  ? t('settings.search.rebuildFts')
+                  : rebuildPhase === 'vector'
+                    ? t('settings.search.rebuildVector')
+                    : t('settings.search.rebuildDone')}
               </span>
               {rebuildPhase === 'fts' && (
                 <span className="text-sm font-medium tabular-nums text-foreground">
@@ -270,27 +271,38 @@ export function GeneralTab(): JSX.Element {
 
             {(rebuildPhase === 'fts' || rebuildPhase === 'vector') && (
               <Progress
-                value={rebuildPhase === 'fts' && ftsProgress.total > 0 ? (ftsProgress.done / ftsProgress.total) * 100 : 100}
+                value={
+                  rebuildPhase === 'fts' && ftsProgress.total > 0
+                    ? (ftsProgress.done / ftsProgress.total) * 100
+                    : 100
+                }
                 className={`h-2 ${rebuildPhase === 'vector' ? 'animate-pulse' : ''}`}
               />
             )}
           </div>
         )}
 
-        <Button 
-          onClick={() => setIsConfirmOpen(true)} 
-          disabled={rebuildPhase !== 'idle' && rebuildPhase !== 'done'} 
-          className="gap-2" 
+        <Button
+          onClick={() => setIsConfirmOpen(true)}
+          disabled={rebuildPhase !== 'idle' && rebuildPhase !== 'done'}
+          className="gap-2"
           variant="outline"
         >
-          <RefreshCwIcon className={`w-4 h-4 ${rebuildPhase !== 'idle' && rebuildPhase !== 'done' ? 'animate-spin' : ''}`} />
-          {rebuildPhase !== 'idle' && rebuildPhase !== 'done' ? t('settings.search.rebuilding') : t('settings.search.rebuildAction')}
+          <RefreshCwIcon
+            className={`w-4 h-4 ${rebuildPhase !== 'idle' && rebuildPhase !== 'done' ? 'animate-spin' : ''}`}
+          />
+          {rebuildPhase !== 'idle' && rebuildPhase !== 'done'
+            ? t('settings.search.rebuilding')
+            : t('settings.search.rebuildAction')}
         </Button>
         <ConfirmDialog
           open={isConfirmOpen}
           onOpenChange={setIsConfirmOpen}
           title={t('settings.search.rebuildAction', '重建索引')}
-          description={t('settings.search.rebuildConfirmDesc', '确定要重新构建所有搜索索引吗？此操作可能会在后台消耗一定的系统资源。')}
+          description={t(
+            'settings.search.rebuildConfirmDesc',
+            '确定要重新构建所有搜索索引吗？此操作可能会在后台消耗一定的系统资源。'
+          )}
           onConfirm={() => {
             setIsConfirmOpen(false)
             handleRebuild()
@@ -298,7 +310,6 @@ export function GeneralTab(): JSX.Element {
           destructive
         />
       </div>
-
     </div>
   )
 }

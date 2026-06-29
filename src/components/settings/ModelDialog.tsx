@@ -5,11 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { XIcon, InfoIcon } from 'lucide-react'
 import { useProvidersStore } from '@/stores/providers'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type {
-  AiModel,
-  ModelCreateInput,
-  ModelUpdateInput
-} from '@shared/settings-types'
+import type { AiModel, ModelCreateInput, ModelUpdateInput } from '@shared/settings-types'
 import { AI_PROVIDER_DEFAULTS } from '@shared/ai-provider-defaults'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -32,8 +28,11 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
   const create = useProvidersStore((s) => s.createModel)
   const update = useProvidersStore((s) => s.updateModel)
   const providers = useProvidersStore((s) => s.providers)
-  
-  const provider = useMemo(() => providers.find(p => p.id === providerId), [providers, providerId])
+
+  const provider = useMemo(
+    () => providers.find((p) => p.id === providerId),
+    [providers, providerId]
+  )
 
   const [form, setForm] = useState<FormState>(() => {
     if (!model) {
@@ -63,20 +62,25 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
     try {
       const name = form.name.trim()
       let displayName = form.displayName.trim()
-      
+
       if (!name) {
         setError(t('settings.ai.errorNameRequired', 'Model Name is required'))
         setBusy(false)
         return
       }
-      
+
       if (!displayName) {
         displayName = name
       }
-      
+
       const cw = Number(form.contextWindow)
       if (isNaN(cw) || cw < 128000 || cw > 1000000) {
-        setError(t('settings.ai.errorContextWindowRange', 'Context Window must be between 128,000 and 1,000,000'))
+        setError(
+          t(
+            'settings.ai.errorContextWindowRange',
+            'Context Window must be between 128,000 and 1,000,000'
+          )
+        )
         setBusy(false)
         return
       }
@@ -100,8 +104,10 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
       onClose()
     } catch (err) {
       const code = (err as { message?: string })?.message ?? ''
-      if (code.includes('E_DUPLICATE_NAME')) setError(t('settings.ai.errorDuplicateName', 'Model name already exists'))
-      else if (code.includes('E_DUPLICATE_DISPLAY_NAME')) setError(t('settings.ai.errorDuplicateDisplayName', 'Display name already exists'))
+      if (code.includes('E_DUPLICATE_NAME'))
+        setError(t('settings.ai.errorDuplicateName', 'Model name already exists'))
+      else if (code.includes('E_DUPLICATE_DISPLAY_NAME'))
+        setError(t('settings.ai.errorDuplicateDisplayName', 'Display name already exists'))
       else setError(err instanceof Error ? err.message : String(err))
     } finally {
       setBusy(false)
@@ -127,12 +133,20 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
           <span className="sr-only">Close</span>
         </button>
         <h3 className="mb-4 text-lg font-medium pr-8">
-          {model ? t('settings.ai.editModel', 'Edit Model') : t('settings.ai.addModel', 'Add Model')}
+          {model
+            ? t('settings.ai.editModel', 'Edit Model')
+            : t('settings.ai.addModel', 'Add Model')}
         </h3>
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.modelName', 'Model Name (e.g. gpt-4)')}</span>
-            <Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. gpt-4" />
+            <span className="block font-medium">
+              {t('settings.ai.modelName', 'Model Name (e.g. gpt-4)')}
+            </span>
+            <Input
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="e.g. gpt-4"
+            />
             {defaultModels && defaultModels.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {defaultModels.map((m) => (
@@ -153,11 +167,16 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
             )}
           </div>
           <div className="space-y-1">
-            <span className="block font-medium">{t('settings.ai.modelDisplayName', 'Display Name')}</span>
-            <Input 
-              value={form.displayName} 
-              onChange={(e) => set('displayName', e.target.value)} 
-              placeholder={form.name || t('settings.ai.modelDisplayNamePlaceholder', 'Leave empty to use Model Name')}
+            <span className="block font-medium">
+              {t('settings.ai.modelDisplayName', 'Display Name')}
+            </span>
+            <Input
+              value={form.displayName}
+              onChange={(e) => set('displayName', e.target.value)}
+              placeholder={
+                form.name ||
+                t('settings.ai.modelDisplayNamePlaceholder', 'Leave empty to use Model Name')
+              }
             />
           </div>
           <div className="space-y-1">
@@ -174,13 +193,13 @@ export function ModelDialog({ model, providerId, onClose }: ModelDialogProps): J
                 </Tooltip>
               </TooltipProvider>
             </span>
-            <Input 
+            <Input
               type="number"
               min="128000"
               max="1000000"
               step="1000"
-              value={form.contextWindow} 
-              onChange={(e) => set('contextWindow', e.target.value)} 
+              value={form.contextWindow}
+              onChange={(e) => set('contextWindow', e.target.value)}
               onBlur={() => {
                 let cw = Number(form.contextWindow)
                 if (isNaN(cw) || cw < 128000) cw = 128000

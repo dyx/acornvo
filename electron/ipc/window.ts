@@ -7,7 +7,8 @@ export const windowHandlers = {
     nativeTheme.themeSource = theme
     if (process.platform !== 'win32') return
     if (!mainWindow || mainWindow.isDestroyed()) return
-    const effective = theme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme
+    const effective =
+      theme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme
     mainWindow.setTitleBarOverlay(effective === 'dark' ? OVERLAY_DARK : OVERLAY_LIGHT)
   }
 }

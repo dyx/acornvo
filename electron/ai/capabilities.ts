@@ -1,16 +1,16 @@
 export interface ProviderCaps {
   structuredMethod: 'function_calling' | 'json_mode' | 'text_parse'
   strictMode: 'none' | 'openai_strict' | 'deepseek_beta'
-  canForceToolChoice: boolean        // 能否 tool_choice=specific
-  thinking: boolean                  // reasoner：推理 token 吃 maxTokens 预算
-  schemaProfile: 'full' | 'strict_subset'  // strict 时哪些 JSON Schema 关键字能活
-  betaUrlSuffix?: string             // '/beta' 这类 opt-in 入口
+  canForceToolChoice: boolean // 能否 tool_choice=specific
+  thinking: boolean // reasoner：推理 token 吃 maxTokens 预算
+  schemaProfile: 'full' | 'strict_subset' // strict 时哪些 JSON Schema 关键字能活
+  betaUrlSuffix?: string // '/beta' 这类 opt-in 入口
   maxTokensIncludesReasoning: boolean
-  stability: 'stable' | 'beta'       // beta 仅用于设置页可见，降级自动
+  stability: 'stable' | 'beta' // beta 仅用于设置页可见，降级自动
 }
 
 export const DEFAULT_CAPS: Record<string, ProviderCaps> = {
-  'deepseek': {
+  deepseek: {
     structuredMethod: 'function_calling',
     strictMode: 'deepseek_beta',
     canForceToolChoice: false, // deepseek-reasoner doesn't support forced tool choice reliably yet
@@ -29,7 +29,7 @@ export const DEFAULT_CAPS: Record<string, ProviderCaps> = {
     maxTokensIncludesReasoning: false,
     stability: 'stable'
   },
-  'openrouter': {
+  openrouter: {
     structuredMethod: 'function_calling',
     strictMode: 'none',
     canForceToolChoice: true,
@@ -38,7 +38,7 @@ export const DEFAULT_CAPS: Record<string, ProviderCaps> = {
     maxTokensIncludesReasoning: false,
     stability: 'stable'
   },
-  'ollama': {
+  ollama: {
     structuredMethod: 'function_calling',
     strictMode: 'none',
     canForceToolChoice: false,

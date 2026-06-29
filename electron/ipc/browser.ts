@@ -30,8 +30,6 @@ export const resolveCreateUrl = (url: string | undefined): string => {
   }
 }
 
-
-
 let _mainWindow: BrowserWindow | null = null
 let _hiddenTabId: TabId | null = null
 export function setMainWindowForBrowser(win: BrowserWindow): void {

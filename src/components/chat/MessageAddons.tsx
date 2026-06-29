@@ -16,7 +16,6 @@ import {
   ChevronRightIcon,
   CheckIcon,
   CopyIcon,
-
   CornerDownLeftIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -97,7 +96,7 @@ export function ToolStepsChain({ steps }: { steps: ToolStep[] }) {
   )
 }
 
-export function MessageFooter({ messageId, isUser }: { messageId: string, isUser: boolean }) {
+export function MessageFooter({ messageId, isUser }: { messageId: string; isUser: boolean }) {
   const { t } = useTranslation()
   const [isCopied, setIsCopied] = useState(false)
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -110,17 +109,15 @@ export function MessageFooter({ messageId, isUser }: { messageId: string, isUser
   const me = messages.find((m) => m.id === messageId)
   if (!me) return null
 
-
-
-  const timeStr = me.createdAt 
-    ? formatChatTime(me.createdAt)
-    : ''
+  const timeStr = me.createdAt ? formatChatTime(me.createdAt) : ''
 
   return (
-    <div className={cn(
-      "flex items-center opacity-50 hover:opacity-100 transition-opacity text-[11px] text-muted-foreground",
-      isUser ? "justify-end gap-3 shrink-0" : "justify-between w-full mt-2"
-    )}>
+    <div
+      className={cn(
+        'flex items-center opacity-50 hover:opacity-100 transition-opacity text-[11px] text-muted-foreground',
+        isUser ? 'justify-end gap-3 shrink-0' : 'justify-between w-full mt-2'
+      )}
+    >
       {!isUser && timeStr && <span>{timeStr}</span>}
       <div className="flex items-center gap-1">
         {isUser && timeStr && <span>{timeStr}</span>}
@@ -137,7 +134,6 @@ export function MessageFooter({ messageId, isUser }: { messageId: string, isUser
         >
           {isCopied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
         </Button>
-
 
         {!isUser && (
           <Button

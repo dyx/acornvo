@@ -7,7 +7,9 @@ const ClipSummarySchema = z.object({
     .string()
     .min(1)
     .describe('Clip ID — find these by searching files where frontmatter.kind === "clip".'),
-  force: z.boolean().describe('Re-run review even if cached. Pass false normally, pass true to force re-run.')
+  force: z
+    .boolean()
+    .describe('Re-run review even if cached. Pass false normally, pass true to force re-run.')
 })
 
 export const clipSummaryTool = tool(

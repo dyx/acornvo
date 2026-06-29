@@ -25,8 +25,14 @@ export interface AiUsageSummary {
   totalTokens: number
   totalCacheReadTokens: number
   totalReasoningTokens: number
-  byProvider: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }>
-  byGrove: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }>
+  byProvider: Record<
+    string,
+    { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }
+  >
+  byGrove: Record<
+    string,
+    { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }
+  >
 }
 
 export interface AiUsageListOpts {
@@ -105,22 +111,28 @@ export const aiUsage = {
     )
     const totalCacheReadTokens = rows.reduce((s, r) => s + (r.cache_read_tokens ?? 0), 0)
     const totalReasoningTokens = rows.reduce((s, r) => s + (r.reasoning_tokens ?? 0), 0)
-    const byProvider: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
-    const byGrove: Record<string, { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }> = {}
+    const byProvider: Record<
+      string,
+      { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }
+    > = {}
+    const byGrove: Record<
+      string,
+      { calls: number; tokens: number; cacheReadTokens: number; reasoningTokens: number }
+    > = {}
     for (const r of rows) {
       const pKey = r.model_id ?? 'unknown'
       byProvider[pKey] ??= { calls: 0, tokens: 0, cacheReadTokens: 0, reasoningTokens: 0 }
       byProvider[pKey].calls += 1
       byProvider[pKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
-      byProvider[pKey].cacheReadTokens += (r.cache_read_tokens ?? 0)
-      byProvider[pKey].reasoningTokens += (r.reasoning_tokens ?? 0)
+      byProvider[pKey].cacheReadTokens += r.cache_read_tokens ?? 0
+      byProvider[pKey].reasoningTokens += r.reasoning_tokens ?? 0
 
       const gKey = r.grove_id ?? 'unknown'
       byGrove[gKey] ??= { calls: 0, tokens: 0, cacheReadTokens: 0, reasoningTokens: 0 }
       byGrove[gKey].calls += 1
       byGrove[gKey].tokens += (r.prompt_tokens ?? 0) + (r.completion_tokens ?? 0)
-      byGrove[gKey].cacheReadTokens += (r.cache_read_tokens ?? 0)
-      byGrove[gKey].reasoningTokens += (r.reasoning_tokens ?? 0)
+      byGrove[gKey].cacheReadTokens += r.cache_read_tokens ?? 0
+      byGrove[gKey].reasoningTokens += r.reasoning_tokens ?? 0
     }
     return {
       totalCalls,

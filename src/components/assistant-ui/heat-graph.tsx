@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import * as HeatGraphPrimitive from "heat-graph";
-import { formatDate } from '@/lib/date-utils';
+import * as HeatGraphPrimitive from 'heat-graph'
+import { formatDate } from '@/lib/date-utils'
 
 const COLORS = [
-  "var(--color-paper-3)",
-  "oklch(0.85 0.04 50)",
-  "oklch(0.75 0.06 48)",
-  "oklch(0.65 0.08 48)",
-  "var(--color-primary)"
-];
+  'var(--color-paper-3)',
+  'oklch(0.85 0.04 50)',
+  'oklch(0.75 0.06 48)',
+  'oklch(0.65 0.08 48)',
+  'var(--color-primary)'
+]
 
-export function HeatGraph({ 
+export function HeatGraph({
   data,
   start,
   end
-}: { 
+}: {
   data: HeatGraphPrimitive.DataPoint[]
   start?: Date
   end?: Date
@@ -37,7 +37,7 @@ export function HeatGraph({
       <GraphLegend />
       <CellTooltip />
     </HeatGraphPrimitive.Root>
-  );
+  )
 }
 
 function MonthLabels() {
@@ -54,7 +54,7 @@ function MonthLabels() {
         )}
       </HeatGraphPrimitive.MonthLabels>
     </div>
-  );
+  )
 }
 
 function DayLabels() {
@@ -63,24 +63,20 @@ function DayLabels() {
       <HeatGraphPrimitive.DayLabels>
         {({ label }) => (
           <span className="flex h-[13px] items-center text-xs text-gray-500">
-            {label.row % 2 === 0
-              ? HeatGraphPrimitive.DAY_SHORT[label.dayOfWeek]
-              : ""}
+            {label.row % 2 === 0 ? HeatGraphPrimitive.DAY_SHORT[label.dayOfWeek] : ''}
           </span>
         )}
       </HeatGraphPrimitive.DayLabels>
     </div>
-  );
+  )
 }
 
 function CellGrid() {
   return (
     <HeatGraphPrimitive.Grid className="gap-[3px]">
-      {() => (
-        <HeatGraphPrimitive.Cell className="w-3 h-3 rounded-sm" />
-      )}
+      {() => <HeatGraphPrimitive.Cell className="w-3 h-3 rounded-sm" />}
     </HeatGraphPrimitive.Grid>
-  );
+  )
 }
 
 function CellTooltip() {
@@ -88,12 +84,11 @@ function CellTooltip() {
     <HeatGraphPrimitive.Tooltip className="pointer-events-none rounded-md bg-gray-900 px-3 py-1.5 text-xs whitespace-nowrap text-white shadow-lg">
       {({ cell }) => (
         <>
-          <strong>{cell.count} tokens</strong> on{" "}
-          {formatDate(cell.date)}
+          <strong>{cell.count} tokens</strong> on {formatDate(cell.date)}
         </>
       )}
     </HeatGraphPrimitive.Tooltip>
-  );
+  )
 }
 
 function GraphLegend() {
@@ -101,11 +96,9 @@ function GraphLegend() {
     <div className="ms-auto flex items-center gap-1 text-xs text-gray-500">
       <span>Less</span>
       <HeatGraphPrimitive.Legend>
-        {() => (
-          <HeatGraphPrimitive.LegendLevel className="h-[13px] w-[13px] rounded-sm" />
-        )}
+        {() => <HeatGraphPrimitive.LegendLevel className="h-[13px] w-[13px] rounded-sm" />}
       </HeatGraphPrimitive.Legend>
       <span>More</span>
     </div>
-  );
+  )
 }

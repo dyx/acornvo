@@ -14,23 +14,23 @@ export function HomeSquirrelAnimation({ className = '' }: HomeSquirrelAnimationP
     let fadeTimer: ReturnType<typeof setTimeout>
     let hideTimer: ReturnType<typeof setTimeout>
     let switchTimer: ReturnType<typeof setTimeout>
-    
+
     // Custom durations for each scene to cut EXACTLY when the action finishes
     const durations = [
       3400, // Scene 1: Squirrel lands after jumping at 75% of 4.5s = ~3.37s
       3850, // Scene 2: Squirrel lands after placing at 85% of 4.5s = ~3.82s
-      4000, // Scene 3: Bubbles disappear at 85% of 4.5s = ~3.82s
+      4000 // Scene 3: Bubbles disappear at 85% of 4.5s = ~3.82s
     ]
 
     fadeTimer = setTimeout(() => {
       // 1. Start fading out
       setIsFadingOut(true)
-      
+
       // 2. Wait 500ms for fade out to complete
       hideTimer = setTimeout(() => {
         setIsHidden(true)
         setIsFadingOut(false)
-        
+
         // 3. Keep it completely empty for a random beat (1s - 3s) before the next scene pops in
         const randomGap = Math.floor(Math.random() * 2000) + 1000
         switchTimer = setTimeout(() => {

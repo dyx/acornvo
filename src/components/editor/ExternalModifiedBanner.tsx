@@ -11,10 +11,7 @@ export function ExternalModifiedBanner(): React.JSX.Element | null {
   )
   if (conflictState.kind !== 'externalModified') return null
   return (
-    <Alert
-      variant="warning"
-      className="rounded-none border-x-0 border-t-0 px-4 py-2"
-    >
+    <Alert variant="warning" className="rounded-none border-x-0 border-t-0 px-4 py-2">
       <AlertDescription className="flex items-center justify-between gap-4">
         <span>📝 {t('conflict.banner.external_modified')}</span>
         <div className="flex gap-3 font-medium">

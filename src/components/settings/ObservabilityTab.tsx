@@ -41,8 +41,6 @@ export function ObservabilityTab(): JSX.Element {
 
   return (
     <div data-testid="settings-tab-observability" className="flex h-full flex-col">
-
-
       <div role="tablist" className="flex gap-2 border-b">
         {(['ai', 'queue'] as Panel[]).map((p) => (
           <button
@@ -61,7 +59,6 @@ export function ObservabilityTab(): JSX.Element {
       <div className="flex-1 overflow-y-auto py-4">
         {panel === 'ai' && <ObservabilityAiPanel />}
         {panel === 'queue' && <ObservabilityQueuePanel />}
-
       </div>
 
       <footer className="mt-4 border-t pt-4 flex items-center justify-between">
@@ -77,7 +74,9 @@ export function ObservabilityTab(): JSX.Element {
         </Button>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">{t('obs.logLevel', 'Log Level')}</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('obs.logLevel', 'Log Level')}
+          </span>
           <Select
             value={general.logLevel || 'info'}
             onValueChange={(value: any) => void setGeneral({ logLevel: value })}
@@ -108,7 +107,6 @@ interface AiPanelData {
   heatGraphData: { date: Date; count: number }[]
 }
 
-
 function ObservabilityAiPanel(): JSX.Element {
   const { t } = useTranslation()
   const [windowSel, setWindowSel] = useState<Window>('24h')
@@ -126,19 +124,22 @@ function ObservabilityAiPanel(): JSX.Element {
       ])
       if (cancelled) return
 
-
       const modelNameMap = new Map(models.map((m: any) => [m.id, m.displayName]))
       const groveNameMap = new Map(recentProjects.map((g: any) => [g.id, g.name]))
 
       const byProfile = Object.entries(summary.byProvider).map(([modelId, v]) => ({
-        profileId: modelId === 'unknown' ? t('obs.ai.unknownProfile') : (modelNameMap.get(modelId) || modelId),
+        profileId:
+          modelId === 'unknown' ? t('obs.ai.unknownProfile') : modelNameMap.get(modelId) || modelId,
         requests: v.calls,
         tokens: v.tokens
       }))
 
       const byGrove = Object.entries((summary as any).byGrove ?? {}).map(
         ([groveId, v]: [string, any]) => ({
-          groveId: groveId === 'unknown' ? t('obs.ai.unknownGrove', 'Unknown Project') : (groveNameMap.get(groveId) || groveId),
+          groveId:
+            groveId === 'unknown'
+              ? t('obs.ai.unknownGrove', 'Unknown Project')
+              : groveNameMap.get(groveId) || groveId,
           requests: v.calls,
           tokens: v.tokens
         })
@@ -146,10 +147,12 @@ function ObservabilityAiPanel(): JSX.Element {
 
       const cutoff = new Date(Date.now() - sinceDays * 86400000).toISOString()
       const windowItems = list.items.filter((item: any) => item.createdAt >= cutoff)
-      
+
       const toolMap = new Map<string, number>()
       for (const item of windowItems) {
-        const model = item.modelId ? (modelNameMap.get(item.modelId) || item.modelId) : t('obs.ai.unknownModel')
+        const model = item.modelId
+          ? modelNameMap.get(item.modelId) || item.modelId
+          : t('obs.ai.unknownModel')
         toolMap.set(model, (toolMap.get(model) ?? 0) + 1)
       }
       const byTool = Array.from(toolMap.entries())
@@ -180,15 +183,15 @@ function ObservabilityAiPanel(): JSX.Element {
     }
   }, [windowSel, t])
 
-  const totals = data?.totals || { requests: 0, tokens: 0 };
-  const heatGraphData = data?.heatGraphData || [];
-  const byTool = data?.byTool || [];
-  const byProject = data?.byGrove || [];
-  const totalRequests = totals.requests || 1;
-  const byToolWithPercentage = byTool.map(item => ({
+  const totals = data?.totals || { requests: 0, tokens: 0 }
+  const heatGraphData = data?.heatGraphData || []
+  const byTool = data?.byTool || []
+  const byProject = data?.byGrove || []
+  const totalRequests = totals.requests || 1
+  const byToolWithPercentage = byTool.map((item) => ({
     ...item,
     percentage: Math.round((item.count / totalRequests) * 100)
-  }));
+  }))
 
   return (
     <div data-testid="obs-panel-ai" className="space-y-6">
@@ -200,8 +203,8 @@ function ObservabilityAiPanel(): JSX.Element {
               data-testid={`obs-ai-window-${w}`}
               aria-pressed={w === windowSel}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ${
-                w === windowSel 
-                  ? 'bg-background text-foreground shadow-sm' 
+                w === windowSel
+                  ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => setWindowSel(w)}
@@ -221,7 +224,9 @@ function ObservabilityAiPanel(): JSX.Element {
           </h2>
           <div className="flex justify-between items-end mb-8">
             <div>
-              <div className="text-4xl font-light tracking-tight">{totals.requests.toLocaleString()}</div>
+              <div className="text-4xl font-light tracking-tight">
+                {totals.requests.toLocaleString()}
+              </div>
               <div className="text-muted-foreground mt-1">{t('obs.ai.totalRequests')}</div>
             </div>
             <div className="text-right">
@@ -233,8 +238,8 @@ function ObservabilityAiPanel(): JSX.Element {
           </div>
           <div className="overflow-x-auto pb-2 custom-scrollbar">
             {heatGraphData.length > 0 ? (
-              <HeatGraph 
-                data={heatGraphData} 
+              <HeatGraph
+                data={heatGraphData}
                 start={new Date(Date.now() - 254 * 86400000)}
                 end={new Date()}
               />
@@ -250,18 +255,27 @@ function ObservabilityAiPanel(): JSX.Element {
           <div className="rounded-xl bg-card border shadow-sm p-5">
             <h3 className="font-medium mb-4 flex items-center justify-between">
               {t('obs.ai.models')}
-              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{byTool.length} {t('obs.ai.active')}</span>
+              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {byTool.length} {t('obs.ai.active')}
+              </span>
             </h3>
             <div className="space-y-4">
-              {byToolWithPercentage.length === 0 && <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>}
+              {byToolWithPercentage.length === 0 && (
+                <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>
+              )}
               {byToolWithPercentage.map((item, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="font-medium truncate pr-2" title={item.tool}>{item.tool}</span>
+                    <span className="font-medium truncate pr-2" title={item.tool}>
+                      {item.tool}
+                    </span>
                     <span className="text-muted-foreground">{item.percentage}%</span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${item.percentage}%` }} />
+                    <div
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${item.percentage}%` }}
+                    />
                   </div>
                 </div>
               ))}
@@ -272,23 +286,34 @@ function ObservabilityAiPanel(): JSX.Element {
           <div className="rounded-xl bg-card border shadow-sm p-5">
             <h3 className="font-medium mb-4 flex items-center justify-between">
               {t('obs.ai.topProjects')}
-              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{t('obs.ai.byTokens')}</span>
+              <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {t('obs.ai.byTokens')}
+              </span>
             </h3>
             <div className="space-y-3">
-              {byProject.length === 0 && <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>}
-              {byProject.sort((a, b) => b.tokens - a.tokens).slice(0, 10).map((proj, i) => (
-                <div key={i} className="flex justify-between items-center group" title={proj.groveId}>
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">
-                      {i + 1}
+              {byProject.length === 0 && (
+                <div className="text-xs text-muted-foreground italic">{t('obs.ai.noData')}</div>
+              )}
+              {byProject
+                .sort((a, b) => b.tokens - a.tokens)
+                .slice(0, 10)
+                .map((proj, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center group"
+                    title={proj.groveId}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-medium shrink-0">
+                        {i + 1}
+                      </div>
+                      <span className="truncate text-sm">{proj.groveId}</span>
                     </div>
-                    <span className="truncate text-sm">{proj.groveId}</span>
+                    <span className="text-xs font-mono text-muted-foreground shrink-0 ml-2">
+                      {proj.tokens >= 1000 ? (proj.tokens / 1000).toFixed(1) + 'k' : proj.tokens}
+                    </span>
                   </div>
-                  <span className="text-xs font-mono text-muted-foreground shrink-0 ml-2">
-                    {proj.tokens >= 1000 ? (proj.tokens / 1000).toFixed(1) + 'k' : proj.tokens}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>
@@ -394,4 +419,3 @@ function ObservabilityQueuePanel(): JSX.Element {
     </div>
   )
 }
-

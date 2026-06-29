@@ -15,8 +15,6 @@ export function getInboxPath(): string {
   return INBOX_PATH
 }
 
-
-
 export function getSearchEngineUrl(query: string): string {
   const engine = settingsStore.get('browser').searchEngine
   return SEARCH_ENGINE_URLS[engine](query)

@@ -5,13 +5,16 @@ import { join } from 'node:path'
 import { IpcError } from '@shared/ipc-contract'
 import { runMigrations } from './db/migrations'
 import { migrationsDir } from './db/migrations/index'
-import { maybeRebuildFts } from './search/index'
+import { maybeRebuildFts, forceRebuildFts } from './search/index'
+import { readRebuildState, CURRENT_CHUNKER_VERSION } from './search/stats'
 import { createJobStore } from '../queue/store'
 import { getLoadablePath } from 'sqlite-vec'
 import { logger } from '../obs/logger'
 
 let _vecOk = false
-export function isVecAvailable(): boolean { return _vecOk }
+export function isVecAvailable(): boolean {
+  return _vecOk
+}
 
 function loadVecExtension(db: Database.Database): void {
   try {
@@ -19,14 +22,18 @@ function loadVecExtension(db: Database.Database): void {
     _vecOk = true
     try {
       logger().info('db', { msg: 'sqlite-vec loaded' })
-    } catch { /* ignore if logger not ready */ }
+    } catch {
+      /* ignore if logger not ready */
+    }
   } catch (err) {
     _vecOk = false
     try {
-      logger().warn('db', { msg: 'sqlite-vec load failed; semantic search degrades to FTS-only', meta: { error: String(err) } })
-    } catch { 
-      // eslint-disable-next-line no-console
-      console.warn('sqlite-vec load failed', err) 
+      logger().warn('db', {
+        msg: 'sqlite-vec load failed; semantic search degrades to FTS-only',
+        meta: { error: String(err) }
+      })
+    } catch {
+      console.warn('sqlite-vec load failed', err)
     }
   }
 }
@@ -179,11 +186,20 @@ export function openForGrove(grovePath: string): void {
     current = db
     currentGrovePath = grovePath
     emitRebuilt()
-    void maybeRebuildFts(db, grovePath).catch((err) => {
-      const msg = err instanceof Error ? err.message : String(err)
-      // eslint-disable-next-line no-console
-      console.error('[db] maybeRebuildFts failed', msg)
-    })
+    const state = readRebuildState(grovePath)
+    if (state.chunker_version < CURRENT_CHUNKER_VERSION) {
+      void forceRebuildFts(db, grovePath).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err)
+
+        console.error('[db] forceRebuildFts failed', msg)
+      })
+    } else {
+      void maybeRebuildFts(db, grovePath).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err)
+
+        console.error('[db] maybeRebuildFts failed', msg)
+      })
+    }
     return
   }
   runMigrations(db, migrationsDir())
@@ -197,9 +213,18 @@ export function openForGrove(grovePath: string): void {
   }
   current = db
   currentGrovePath = grovePath
-  void maybeRebuildFts(db, grovePath).catch((err) => {
-    const msg = err instanceof Error ? err.message : String(err)
-    // eslint-disable-next-line no-console
-    console.error('[db] maybeRebuildFts failed', msg)
-  })
+  const state = readRebuildState(grovePath)
+  if (state.chunker_version < CURRENT_CHUNKER_VERSION) {
+    void forceRebuildFts(db, grovePath).catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err)
+
+      console.error('[db] forceRebuildFts failed', msg)
+    })
+  } else {
+    void maybeRebuildFts(db, grovePath).catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err)
+
+      console.error('[db] maybeRebuildFts failed', msg)
+    })
+  }
 }

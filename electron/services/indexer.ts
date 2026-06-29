@@ -163,19 +163,18 @@ export async function startScan(groveRoot: string): Promise<void> {
   const seen = new Set<string>()
   let lastEmit = Date.now()
 
-
-
   for await (const entry of walk(groveRoot)) {
     if (_abort) {
-
       setState('idle')
       return
     }
     _currentPath = entry.relPath
     try {
       const stat = await fsStat(entry.absPath)
-      const existing = db.prepare('SELECT mtime, size_bytes FROM files WHERE path=?').get(entry.relPath) as { mtime: number, size_bytes: number } | undefined
-      
+      const existing = db
+        .prepare('SELECT mtime, size_bytes FROM files WHERE path=?')
+        .get(entry.relPath) as { mtime: number; size_bytes: number } | undefined
+
       if (existing && existing.mtime === stat.mtimeMs && existing.size_bytes === stat.size) {
         // fast path: unchanged
         seen.add(entry.relPath)
@@ -199,16 +198,17 @@ export async function startScan(groveRoot: string): Promise<void> {
         size_bytes: stat.size,
         frontmatter_json: JSON.stringify(frontmatter),
         created_at:
-          typeof frontmatter.created_at === 'number' ? frontmatter.created_at : (stat.birthtimeMs || stat.mtimeMs),
+          typeof frontmatter.created_at === 'number'
+            ? frontmatter.created_at
+            : stat.birthtimeMs || stat.mtimeMs,
         updated_at: stat.mtimeMs
       }
 
       const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
       if (result !== 'unchanged') {
-
         if (bodyChanged) {
           const chunks = chunkMarkdown(body, row.path)
-          
+
           let extractedTitle = ''
           if (typeof frontmatter.title === 'string') {
             extractedTitle = frontmatter.title
@@ -218,16 +218,27 @@ export async function startScan(groveRoot: string): Promise<void> {
 
           upsertFts(db, row.path, extractedTitle, chunks)
           logger().info('search', { msg: 'fts indexed file', meta: { path: row.path } })
-          
+
           // Semantic Search: save chunk metadata and enqueue embedding job
-          upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
-          
+          upsertChunks(
+            db,
+            row.path,
+            chunks,
+            new Array(chunks.length).fill(null),
+            '',
+            512,
+            getVectorStore()
+          )
+
           const q = getQueueBootstrap()
           if (q) {
             try {
               q.store.enqueue('embed-file', { path: row.path }, { dedupeKey: `embed:${row.path}` })
             } catch (err) {
-              logger().warn('indexer', { msg: 'enqueue embed-file failed', meta: { path: row.path, error: String(err) } })
+              logger().warn('indexer', {
+                msg: 'enqueue embed-file failed',
+                meta: { path: row.path, error: String(err) }
+              })
             }
           }
         }
@@ -265,8 +276,6 @@ export async function upsertFromFs(relPath: string): Promise<void> {
   const db = getDb()
   const absPath = `${groveRoot}/${relPath}`
 
-
-
   try {
     const raw = await readFile(absPath, 'utf8')
     const { body, frontmatter } = parseFile(raw)
@@ -279,16 +288,18 @@ export async function upsertFromFs(relPath: string): Promise<void> {
       mtime: st.mtimeMs,
       size_bytes: st.size,
       frontmatter_json: JSON.stringify(frontmatter),
-      created_at: typeof frontmatter.created_at === 'number' ? frontmatter.created_at : (st.birthtimeMs || st.mtimeMs),
+      created_at:
+        typeof frontmatter.created_at === 'number'
+          ? frontmatter.created_at
+          : st.birthtimeMs || st.mtimeMs,
       updated_at: st.mtimeMs
     }
 
     const { result, bodyChanged } = upsertFileWithBodyDelta(db, row)
     if (result !== 'unchanged') {
-
       if (bodyChanged) {
         const chunks = chunkMarkdown(body, row.path)
-        
+
         let extractedTitle = ''
         if (typeof frontmatter.title === 'string') {
           extractedTitle = frontmatter.title
@@ -300,19 +311,29 @@ export async function upsertFromFs(relPath: string): Promise<void> {
         logger().info('search', { msg: 'fts indexed file', meta: { path: row.path } })
 
         // Semantic Search: save chunk metadata and enqueue embedding job
-        upsertChunks(db, row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
-        
+        upsertChunks(
+          db,
+          row.path,
+          chunks,
+          new Array(chunks.length).fill(null),
+          '',
+          512,
+          getVectorStore()
+        )
+
         const q = getQueueBootstrap()
         if (q) {
           try {
             q.store.enqueue('embed-file', { path: row.path }, { dedupeKey: `embed:${row.path}` })
           } catch (err) {
-            logger().warn('indexer', { msg: 'enqueue embed-file failed', meta: { path: row.path, error: String(err) } })
+            logger().warn('indexer', {
+              msg: 'enqueue embed-file failed',
+              meta: { path: row.path, error: String(err) }
+            })
           }
         }
       }
     }
-
   } catch (e) {
     const code = (e as NodeJS.ErrnoException)?.code
     if (code === 'ENOENT') {

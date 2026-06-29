@@ -11,8 +11,12 @@ export function groupSession(updatedAt: number): SessionGroup {
   // ISO week: Monday is the first day. Day-of-week 0=Sun..6=Sat.
   const dayOfWeek = now.getDay() // 0..6, 0=Sun
   const daysSinceMonday = (dayOfWeek + 6) % 7
-  const mondayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday).getTime()
-  
+  const mondayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - daysSinceMonday
+  ).getTime()
+
   if (updatedAt >= today0) return 'today'
   if (updatedAt >= yesterday0) return 'yesterday'
   if (updatedAt >= mondayStart) return 'thisWeek'

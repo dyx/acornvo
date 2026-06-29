@@ -25,17 +25,17 @@ export class LocalEmbeddings extends Embeddings {
     const out = await p(text, { pooling: 'mean', normalize: true })
     return Array.from(out.data as Float32Array)
   }
-  
+
   async embedDocuments(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) return []
     const p = await getPipe()
-    
+
     // Batch processing to prevent OOM
-    const BATCH_SIZE = 4;
+    const BATCH_SIZE = 4
     const allVecs: number[][] = []
-    
+
     for (let i = 0; i < texts.length; i += BATCH_SIZE) {
-      const batchTexts = texts.slice(i, i + BATCH_SIZE);
+      const batchTexts = texts.slice(i, i + BATCH_SIZE)
       const out = await p(batchTexts, { pooling: 'mean', normalize: true })
       const vecs = splitBatch(Array.from(out.data as Float32Array), batchTexts.length, DIM)
       allVecs.push(...vecs)

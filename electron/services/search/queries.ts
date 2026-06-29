@@ -19,7 +19,9 @@ export function rowToFileSummary(row: SummaryRow): FileSummary {
     try {
       const parsed = JSON.parse(row.tags_json)
       if (Array.isArray(parsed)) tags = parsed.filter((t) => typeof t === 'string')
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   let site: string | null = null
   if (row.frontmatter_json) {
@@ -42,7 +44,8 @@ export function rowToFileSummary(row: SummaryRow): FileSummary {
     title: row.title ?? null,
     category: row.category ?? null,
     clipped_at: row.clipped_at ?? null,
-    mtime: 0, created_at: 0,
+    mtime: 0,
+    created_at: 0,
     site,
     has_summary: row.summary !== null && row.summary !== '',
     tags,
@@ -59,7 +62,6 @@ const SUMMARY_BASE = `
     json_extract(files.frontmatter_json, '$.tags') AS tags_json
   FROM files
 `
-
 
 export interface FullTextOpts {
   limit?: number
@@ -92,17 +94,57 @@ export function escapeForSnippet(s: string): string {
     .replace(new RegExp(CLOSE, 'g'), '</mark>')
 }
 
+export function cleanFtsSnippet(body: string): string {
+  const cleanBody = body
+    .replace(/([^\x00-\x7F])\s+(?=<mark>)/gu, '$1')
+    .replace(/(<\/mark>)\s+([^\x00-\x7F])/gu, '$1$2')
+    .replace(/([^\x00-\x7F])\s+([^\x00-\x7F])/gu, '$1$2')
+  return escapeForSnippet(cleanBody)
+}
+
+/** 对 FTS 命中的 chunk_id 集合，返回带 <mark> 高亮的摘要（与 fullText 同源）。 */
+export function hydrateSnippets(
+  db: Database.Database,
+  ftsExpr: string,
+  chunkIds: string[]
+): Map<string, string> {
+  if (chunkIds.length === 0 || !ftsExpr) return new Map()
+  const ph = chunkIds.map(() => '?').join(',')
+  const rows = db
+    .prepare(
+      `SELECT chunk_id,
+            snippet(files_fts, -1, '<mark>', '</mark>', '...', 64) AS snip
+     FROM files_fts
+     WHERE files_fts MATCH ? AND chunk_id IN (${ph})`
+    )
+    .all(ftsExpr, ...chunkIds) as { chunk_id: string; snip: string }[]
+  return new Map(rows.map((r) => [r.chunk_id, cleanFtsSnippet(r.snip)]))
+}
+
+export function truncateForPreview(body: string, maxLen: number): string {
+  if (body.length <= maxLen) return body
+  const paragraphIndex = body.indexOf('\n\n', maxLen * 0.5)
+  if (paragraphIndex !== -1 && paragraphIndex <= maxLen) {
+    return body.slice(0, paragraphIndex) + '...'
+  }
+  const sentenceMatch = body.slice(Math.floor(maxLen * 0.5), maxLen).match(/[。！？.!?]/)
+  if (sentenceMatch && sentenceMatch.index !== undefined) {
+    return body.slice(0, Math.floor(maxLen * 0.5) + sentenceMatch.index + 1) + '...'
+  }
+  return body.slice(0, maxLen) + '...'
+}
+
 export function fullText(
   db: Database.Database,
   q: string | string[],
   opts: FullTextOpts = {}
 ): FullTextResult {
   const queries = Array.isArray(q) ? q : [q]
-  const exprs = queries.map(query => buildFtsQuery(query)).filter(e => e.length > 0)
+  const exprs = queries.map((query) => buildFtsQuery(query)).filter((e) => e.length > 0)
   if (exprs.length === 0) {
     return { items: [], total: 0, pending: false }
   }
-  const expr = exprs.map(e => `(${e})`).join(' OR ')
+  const expr = exprs.map((e) => `(${e})`).join(' OR ')
 
   const limit = opts.limit ?? 50
   const offset = opts.offset ?? 0
@@ -115,8 +157,8 @@ export function fullText(
       .get(expr) as { c: number }
 
     hits = db
-        .prepare(
-          `SELECT path,
+      .prepare(
+        `SELECT path,
                 heading_path,
                 snippet(files_fts, -1, '<mark>', '</mark>', '...', 64) AS body,
                 rank
@@ -125,7 +167,7 @@ export function fullText(
            AND rank MATCH 'bm25(0.0, 5.0, 10.0, 1.0)'
          ORDER BY rank
          LIMIT ? OFFSET ?`
-        )
+      )
       .all(expr, limit, offset) as FtsHitRow[]
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
@@ -154,11 +196,11 @@ export function fullText(
     .map((hit) => {
       const row = byPath.get(hit.path)
       if (!row) return null
-      let cleanBody = hit.body
-        .replace(/([^\x00-\x7F])\s+(?=<mark>)/gu, '$1')
-        .replace(/(<\/mark>)\s+([^\x00-\x7F])/gu, '$1$2')
-        .replace(/([^\x00-\x7F])\s+([^\x00-\x7F])/gu, '$1$2')
-      return { summary: rowToFileSummary(row), body: escapeForSnippet(cleanBody), heading_path: hit.heading_path }
+      return {
+        summary: rowToFileSummary(row),
+        body: cleanFtsSnippet(hit.body),
+        heading_path: hit.heading_path
+      }
     })
     .filter((x): x is { summary: FileSummary; body: string; heading_path: string } => x !== null)
 
@@ -175,7 +217,7 @@ export function suggest(db: Database.Database, q: string): FileSummary[] {
     const rows = db.prepare(sql).all() as SummaryRow[]
     return rows.map(rowToFileSummary)
   }
-  
+
   // Use files_fts with trigram tokenizer for ultra-fast substring matching
   const sql = `
     SELECT

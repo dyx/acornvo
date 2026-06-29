@@ -83,11 +83,17 @@ export function TrashConfirmDialog({
     <ConfirmDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={isConfirmMode ? t('library.trash.title', '移到废纸篓') : t('library.trash.fail_title', '无法移到废纸篓')}
+      title={
+        isConfirmMode
+          ? t('library.trash.title', '移到废纸篓')
+          : t('library.trash.fail_title', '无法移到废纸篓')
+      }
       description={isConfirmMode ? path : errorMessage}
       destructive
-      confirmText={isConfirmMode ? t('common.confirm', '确定') : t('library.trash.hard_delete', '永久删除')}
-      disabled={isConfirmMode ? confirming : (!acknowledged || hardDeleting)}
+      confirmText={
+        isConfirmMode ? t('common.confirm', '确定') : t('library.trash.hard_delete', '永久删除')
+      }
+      disabled={isConfirmMode ? confirming : !acknowledged || hardDeleting}
       onConfirm={isConfirmMode ? handleConfirm : handleHardDelete}
       onCancel={handleCancel}
     >

@@ -8,7 +8,7 @@ interface LoadingSquirrelProps {
 
 export function LoadingSquirrel({ className = '', scale = 1 }: LoadingSquirrelProps): JSX.Element {
   return (
-    <div 
+    <div
       className={`flex items-center gap-1.5 opacity-60 transition-opacity duration-500 cursor-default pointer-events-none ${className}`}
       title="Loading..."
       style={scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'center' } : undefined}

@@ -255,9 +255,9 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
       if (state.state.kind === 'ready' && vditorRef.current) {
         const currentVditorValue = vditorRef.current.getValue()
         const newLocalBody = rewriteImagesToLocal(state.state.body, state.state.path)
-        
+
         const normalize = (s: string) => s.replace(/\r\n/g, '\n')
-        
+
         if (normalize(currentVditorValue) !== normalize(newLocalBody)) {
           vditorRef.current.setValue(newLocalBody)
           // Ensure preview updates if we're in preview mode

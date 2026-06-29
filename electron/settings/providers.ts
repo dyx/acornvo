@@ -410,7 +410,7 @@ async function testConnection(input: {
         bodyStr = await res.text().catch(() => '')
       }
 
-      let errMsg = `HTTP ${res.status} ${res.statusText}`
+      const errMsg = `HTTP ${res.status} ${res.statusText}`
       if (res.status === 401 || res.status === 403) {
         return { ok: false, message: `ERR_AUTH_FAILED:${res.status}` }
       } else if (res.status === 404) {
@@ -420,7 +420,7 @@ async function testConnection(input: {
     }
   } catch (err: any) {
     if (err && err.code === 'E_KEYCHAIN_UNAVAILABLE') {
-      throw err;
+      throw err
     }
     if (err.message === 'fetch failed') {
       return { ok: false, message: 'ERR_NETWORK' }

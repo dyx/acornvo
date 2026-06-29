@@ -54,7 +54,10 @@ export async function maybeRebuildFts(db: Database.Database, groveRoot: string):
   const ftsCount = (db.prepare('SELECT COUNT(*) AS c FROM files_fts').get() as FilesCountRow).c
 
   if (filesCount === 0 || ftsCount > 0) {
-    logger().info('search', { msg: '[search] maybeRebuildFts: skip', meta: { filesCount, ftsCount } })
+    logger().info('search', {
+      msg: '[search] maybeRebuildFts: skip',
+      meta: { filesCount, ftsCount }
+    })
     return false
   }
 
@@ -100,7 +103,10 @@ export async function rebuildFts(
         readResults.push({ row, body, frontmatter })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        logger().warn('search', { msg: '[search] rebuild: read failed', meta: { path: row.path, msg } })
+        logger().warn('search', {
+          msg: '[search] rebuild: read failed',
+          meta: { path: row.path, msg }
+        })
       }
     }
 
@@ -115,13 +121,25 @@ export async function rebuildFts(
         }
         upsertFts(db, r.row.path, title, chunks)
         logger().info('search', { msg: 'fts indexed file', meta: { path: r.row.path } })
-        
-        upsertChunks(db, r.row.path, chunks, new Array(chunks.length).fill(null), '', 512, getVectorStore())
-        
+
+        upsertChunks(
+          db,
+          r.row.path,
+          chunks,
+          new Array(chunks.length).fill(null),
+          '',
+          512,
+          getVectorStore()
+        )
+
         const q = getQueueBootstrap()
         if (q) {
           try {
-            q.store.enqueue('embed-file', { path: r.row.path }, { dedupeKey: `embed:${r.row.path}` })
+            q.store.enqueue(
+              'embed-file',
+              { path: r.row.path },
+              { dedupeKey: `embed:${r.row.path}` }
+            )
           } catch (err) {
             // ignore enqueue err
           }

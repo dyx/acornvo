@@ -92,10 +92,10 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
 
   mkdirSync(dir, { recursive: true })
 
-  let buffer: string[] = []
+  const buffer: string[] = []
   let flushPromise: Promise<void> | null = null
   let flushTimeout: NodeJS.Timeout | null = null
-  
+
   let currentFilePath = ''
   let currentFileSize = 0
 
@@ -143,7 +143,7 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
       currentFileSize += Buffer.byteLength(content, 'utf8')
     } catch {
       // fallback console
-      // eslint-disable-next-line no-console
+
       console.error('[logger] flush failed')
     }
   }
@@ -161,21 +161,20 @@ export function createLogger(opts: LoggerOpts = {}): Logger {
     if (LEVEL_VAL[level] < minLevelVal) return
 
     const d = now()
-    const entry: LogEntry = { 
-      ts: d.toISOString(), 
-      level, 
-      area, 
+    const entry: LogEntry = {
+      ts: d.toISOString(),
+      level,
+      area,
       session_id: SESSION_ID,
       pid: PID,
       process_type: PROCESS_TYPE,
       ...globalContext,
-      ...payload 
+      ...payload
     }
     buffer.push(JSON.stringify(entry, redactReplacer))
 
     if (opts.mirrorConsole) {
       try {
-        // eslint-disable-next-line no-console
         console[level === 'debug' ? 'log' : level](
           `[${area}]`,
           JSON.parse(JSON.stringify(payload, redactReplacer))
@@ -252,7 +251,7 @@ export async function rotateOnBoot(opts: { now?: () => Date; dir?: string } = {}
   }
 
   // Phase 2: if total > 1GB, delete oldest until <= 800MB.
-  let survivors: { f: string; full: string; mtime: number; size: number }[] = []
+  const survivors: { f: string; full: string; mtime: number; size: number }[] = []
   try {
     const updatedEntries = await readdir(dir)
     const valid = updatedEntries.filter((f) => f.endsWith('.log'))

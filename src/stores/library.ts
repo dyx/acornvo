@@ -84,7 +84,7 @@ function applyLocalQuery(
   let qText = filter.q?.toLowerCase() ?? ''
   const qTags: string[] = []
   const qCategories: string[] = []
-  
+
   if (qText) {
     const tokens = qText.split(/\s+/)
     const remaining: string[] = []
@@ -104,7 +104,10 @@ function applyLocalQuery(
   items = items.filter((f) => {
     // category filter (UI + inline)
     const categoryFilter = filter.category ?? (qCategories.length > 0 ? qCategories[0] : null)
-    if (categoryFilter && !(f.category === categoryFilter || f.category?.startsWith(categoryFilter + '/'))) {
+    if (
+      categoryFilter &&
+      !(f.category === categoryFilter || f.category?.startsWith(categoryFilter + '/'))
+    ) {
       return false
     }
 
@@ -195,7 +198,7 @@ async function fetchFtsPaths(qText: string): Promise<Set<string> | undefined> {
 
   try {
     const res = await ipc.search.fullText(cleanQ, { limit: 1000 })
-    return new Set(res.items.map(i => i.summary.path))
+    return new Set(res.items.map((i) => i.summary.path))
   } catch (err) {
     console.warn('FTS failed', err)
     return undefined
@@ -211,7 +214,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     for (const [k, v] of Object.entries(merged)) {
       if (v !== undefined) (filter as Record<string, unknown>)[k] = v
     }
-    
+
     let ftsMatchedPaths = get().ftsMatchedPaths
     if (partial.q !== undefined) {
       ftsMatchedPaths = await fetchFtsPaths(partial.q || '')
@@ -246,7 +249,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       const { filter, orderBy } = get()
       const ftsMatchedPaths = await fetchFtsPaths(filter.q || '')
       const items = applyLocalQuery(allItems, filter, orderBy, ftsMatchedPaths)
-      
+
       const tagMap = new Map<string, number>()
       for (const item of allItems) {
         for (const tag of item.tags) {
@@ -292,7 +295,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
   removeItem(path) {
     const { allItems, filter, orderBy, selectedPath, detailsByPath, ftsMatchedPaths } = get()
-    const nextAllItems = allItems.filter(i => i.path !== path)
+    const nextAllItems = allItems.filter((i) => i.path !== path)
     const nextItems = applyLocalQuery(nextAllItems, filter, orderBy, ftsMatchedPaths)
     const nextDetails = new Map(detailsByPath)
     nextDetails.delete(path)
@@ -357,7 +360,6 @@ export function installLibrarySubscriber(): () => void {
   })
 
   const offProject = ipc.on('project:changed', (payload) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if ((payload as GroveSummary | null) === null) return // grove closed — wait for the real open event
     useLibraryStore.setState({
       filter: {},

@@ -11,7 +11,6 @@ import { ChatTab } from '@/components/settings/ChatTab'
 import { ObservabilityTab } from '@/components/settings/ObservabilityTab'
 import { AboutTab } from '@/components/settings/AboutTab'
 
-
 function AiTabRoute(): JSX.Element {
   return <AiTab />
 }

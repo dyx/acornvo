@@ -110,19 +110,18 @@ function MessageFooter({ item }: { item: BubbleItem }) {
 
   const me = messages.find((m) => m.id === item.key)
   const isUser = item.role === 'user'
-  const isLastAssistant =
-    messages[messages.length - 1]?.id === item.key && me?.role === 'assistant'
+  const isLastAssistant = messages[messages.length - 1]?.id === item.key && me?.role === 'assistant'
   const isErrorTail = isLastAssistant && Boolean(me?.error || me?.status === 'error')
 
-  const timeStr = item.createdAt 
-    ? formatChatTime(item.createdAt)
-    : ''
+  const timeStr = item.createdAt ? formatChatTime(item.createdAt) : ''
 
   return (
-    <div className={cn(
-      "flex items-center opacity-50 hover:opacity-100 transition-opacity text-[11px] text-muted-foreground",
-      isUser ? "justify-end gap-3 shrink-0" : "justify-between w-full mt-2"
-    )}>
+    <div
+      className={cn(
+        'flex items-center opacity-50 hover:opacity-100 transition-opacity text-[11px] text-muted-foreground',
+        isUser ? 'justify-end gap-3 shrink-0' : 'justify-between w-full mt-2'
+      )}
+    >
       {!isUser && timeStr && <span>{timeStr}</span>}
       <div className="flex items-center gap-1">
         {isUser && timeStr && <span>{timeStr}</span>}
@@ -215,14 +214,8 @@ export function BubbleListAdapter() {
         const toolSteps = typeof item.content !== 'string' ? item.content.toolSteps : []
 
         return (
-          <div
-            key={item.key}
-            className="flex w-full max-w-3xl mx-auto"
-          >
-
-            <div
-              className="flex flex-col min-w-0 flex-1 items-stretch"
-            >
+          <div key={item.key} className="flex w-full max-w-3xl mx-auto">
+            <div className="flex flex-col min-w-0 flex-1 items-stretch">
               {toolSteps.length > 0 && <ToolStepsChain steps={toolSteps} />}
 
               {contentStr && (
@@ -235,27 +228,39 @@ export function BubbleListAdapter() {
                   )}
                 >
                   {isUser ? (
-                    <div className="whitespace-pre-wrap break-words text-left text-[15px] max-w-full flex-1 min-w-[50%]">{contentStr}</div>
+                    <div className="whitespace-pre-wrap break-words text-left text-[15px] max-w-full flex-1 min-w-[50%]">
+                      {contentStr}
+                    </div>
                   ) : (
                     <MessageProvider
                       index={index}
-                      message={{
-                        id: item.key,
-                        role: 'assistant',
-                        content: [{ type: 'text', text: contentStr }],
-                        status: item.loading ? { type: 'running' } : { type: 'complete', reason: 'unknown' },
-                        createdAt: new Date(),
-                      } as any}
+                      message={
+                        {
+                          id: item.key,
+                          role: 'assistant',
+                          content: [{ type: 'text', text: contentStr }],
+                          status: item.loading
+                            ? { type: 'running' }
+                            : { type: 'complete', reason: 'unknown' },
+                          createdAt: new Date()
+                        } as any
+                      }
                     >
                       <MessagePrimitive.Content
                         components={{
-                          Text: (props) => <MarkdownText smooth {...props as any} components={XMARKDOWN_COMPONENTS} />
+                          Text: (props) => (
+                            <MarkdownText
+                              smooth
+                              {...(props as any)}
+                              components={XMARKDOWN_COMPONENTS}
+                            />
+                          )
                         }}
                       />
                     </MessageProvider>
                   )}
-                  
-                  <div className={cn(isUser ? "ml-auto" : "w-full")}>
+
+                  <div className={cn(isUser ? 'ml-auto' : 'w-full')}>
                     <MessageFooter item={item} />
                   </div>
                 </div>

@@ -32,7 +32,6 @@ export interface AiSettings {
 }
 
 export interface BrowserSettings {
-
   clipImagesLocalize: boolean
   searchEngine: SearchEngine
 }

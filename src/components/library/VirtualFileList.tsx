@@ -26,7 +26,10 @@ const ROW_HEIGHT_ESTIMATE = 76
 const OVERSCAN = 10
 const SEARCH_DEBOUNCE_MS = 150
 
-function flattenCategories(nodes: CategoryNode[], prefix = ''): { path: string; label: string; count: number }[] {
+function flattenCategories(
+  nodes: CategoryNode[],
+  prefix = ''
+): { path: string; label: string; count: number }[] {
   const result: { path: string; label: string; count: number }[] = []
   for (const node of nodes) {
     const currentPath = prefix ? `${prefix}/${node.name}` : node.name
@@ -79,10 +82,13 @@ function TruncatedTooltip({
   return (
     <TooltipProvider>
       <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          {inner}
-        </TooltipTrigger>
-        <TooltipContent hideArrow side="bottom" align="start" className="max-w-[240px] p-1.5 bg-[color:var(--color-paper)] border border-[color:var(--color-line)] shadow-sm text-[10px] text-[color:var(--color-ink-2)] flex flex-wrap gap-1">
+        <TooltipTrigger asChild>{inner}</TooltipTrigger>
+        <TooltipContent
+          hideArrow
+          side="bottom"
+          align="start"
+          className="max-w-[240px] p-1.5 bg-[color:var(--color-paper)] border border-[color:var(--color-line)] shadow-sm text-[10px] text-[color:var(--color-ink-2)] flex flex-wrap gap-1"
+        >
           {content}
         </TooltipContent>
       </Tooltip>
@@ -99,25 +105,27 @@ function ControlCenterMenu() {
   const tagCloud = useLibraryStore((s) => s.tagCloud)
   const categoryTree = useLibraryStore((s) => s.categoryTree)
   const flattenedCategories = useMemo(() => flattenCategories(categoryTree), [categoryTree])
-  
+
   const [tagSearch, setTagSearch] = useState('')
 
   const activeTags = filter.tags || []
-  
+
   const toggleTag = (tag: string) => {
     if (activeTags.includes(tag)) {
-      setFilter({ tags: activeTags.filter(t => t !== tag) })
+      setFilter({ tags: activeTags.filter((t) => t !== tag) })
     } else {
       setFilter({ tags: [...activeTags, tag] })
     }
   }
 
-  const filteredTags = tagCloud.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase()))
+  const filteredTags = tagCloud.filter((t) =>
+    t.name.toLowerCase().includes(tagSearch.toLowerCase())
+  )
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button 
+        <button
           className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] shadow-sm text-[color:var(--color-ink-4)] hover:text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)] transition-colors shrink-0 cursor-pointer"
           title={t('common.filter', '筛选/排序')}
         >
@@ -125,93 +133,151 @@ function ControlCenterMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 p-1">
-        <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider">{t('library.filter.sort_by', '排序')}</div>
-        <DropdownMenuItem onClick={() => void setOrder('clipped_desc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.clipped_desc', '最近创建')}</div>
-          {orderBy === 'clipped_desc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
+        <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider">
+          {t('library.filter.sort_by', '排序')}
+        </div>
+        <DropdownMenuItem
+          onClick={() => void setOrder('clipped_desc')}
+          className="text-xs flex justify-between cursor-default"
+        >
+          <div className="flex items-center gap-2">
+            <Clock size={12} className="text-[color:var(--color-ink-4)]" />{' '}
+            {t('library.filter.clipped_desc', '最近创建')}
+          </div>
+          {orderBy === 'clipped_desc' && (
+            <Check size={12} className="text-[color:var(--color-acorn)]" />
+          )}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void setOrder('clipped_asc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><Clock size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.clipped_asc', '最早创建')}</div>
-          {orderBy === 'clipped_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
+        <DropdownMenuItem
+          onClick={() => void setOrder('clipped_asc')}
+          className="text-xs flex justify-between cursor-default"
+        >
+          <div className="flex items-center gap-2">
+            <Clock size={12} className="text-[color:var(--color-ink-4)]" />{' '}
+            {t('library.filter.clipped_asc', '最早创建')}
+          </div>
+          {orderBy === 'clipped_asc' && (
+            <Check size={12} className="text-[color:var(--color-acorn)]" />
+          )}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void setOrder('title_asc')} className="text-xs flex justify-between cursor-default">
-          <div className="flex items-center gap-2"><ArrowDownAZ size={12} className="text-[color:var(--color-ink-4)]"/> {t('library.filter.title_asc', '标题 A-Z')}</div>
-          {orderBy === 'title_asc' && <Check size={12} className="text-[color:var(--color-acorn)]" />}
+        <DropdownMenuItem
+          onClick={() => void setOrder('title_asc')}
+          className="text-xs flex justify-between cursor-default"
+        >
+          <div className="flex items-center gap-2">
+            <ArrowDownAZ size={12} className="text-[color:var(--color-ink-4)]" />{' '}
+            {t('library.filter.title_asc', '标题 A-Z')}
+          </div>
+          {orderBy === 'title_asc' && (
+            <Check size={12} className="text-[color:var(--color-acorn)]" />
+          )}
         </DropdownMenuItem>
-        
+
         <div className="h-px bg-[color:var(--color-line)] my-1" />
-        
+
         {flattenedCategories.length > 0 && (
           <>
             <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider flex justify-between">
               {t('library.filter.category', '分类')}
               {filter.category && (
-                <button onClick={(e) => { e.stopPropagation(); void setFilter({ category: undefined }) }} className="text-[color:var(--color-acorn)] hover:underline">{t('common.clear', '清除')}</button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void setFilter({ category: undefined })
+                  }}
+                  className="text-[color:var(--color-acorn)] hover:underline"
+                >
+                  {t('common.clear', '清除')}
+                </button>
               )}
             </div>
             <ScrollArea className="max-h-[140px] px-1">
-              {flattenedCategories.map(c => (
-                <DropdownMenuItem 
+              {flattenedCategories.map((c) => (
+                <DropdownMenuItem
                   key={c.path}
-                  onClick={(e) => { 
+                  onClick={(e) => {
                     e.preventDefault()
                     void setFilter({ category: filter.category === c.path ? undefined : c.path })
-                  }} 
+                  }}
                   className="text-xs flex justify-between cursor-default py-1.5"
                 >
-                  <div className="flex items-center gap-2 text-[color:var(--color-ink-2)] truncate max-w-[160px]" title={c.path}>
-                    <Folder size={12} className="text-[color:var(--color-ink-4)] shrink-0"/> 
+                  <div
+                    className="flex items-center gap-2 text-[color:var(--color-ink-2)] truncate max-w-[160px]"
+                    title={c.path}
+                  >
+                    <Folder size={12} className="text-[color:var(--color-ink-4)] shrink-0" />
                     <span className="truncate">{c.label}</span>
-                    <span className="text-[9px] text-[color:var(--color-ink-4)] ml-1 shrink-0">{c.count}</span>
+                    <span className="text-[9px] text-[color:var(--color-ink-4)] ml-1 shrink-0">
+                      {c.count}
+                    </span>
                   </div>
-                  {filter.category === c.path && <Check size={12} className="text-[color:var(--color-acorn)] shrink-0" />}
+                  {filter.category === c.path && (
+                    <Check size={12} className="text-[color:var(--color-acorn)] shrink-0" />
+                  )}
                 </DropdownMenuItem>
               ))}
             </ScrollArea>
-            
+
             <div className="h-px bg-[color:var(--color-line)] my-1" />
           </>
         )}
-        
+
         <div className="text-[10px] font-semibold text-[color:var(--color-ink-3)] px-2 py-1 uppercase tracking-wider flex justify-between">
           {t('library.filter.tags', '标签')}
           {activeTags.length > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); void setFilter({ tags: [] }) }} className="text-[color:var(--color-acorn)] hover:underline">{t('common.clear', '清除')}</button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                void setFilter({ tags: [] })
+              }}
+              className="text-[color:var(--color-acorn)] hover:underline"
+            >
+              {t('common.clear', '清除')}
+            </button>
           )}
         </div>
         <div className="px-2 pb-1.5 pt-0.5">
-          <input 
+          <input
             className="w-full text-[11px] bg-[color:var(--color-bg-1)] border rounded-[4px] px-2 py-1 border-[color:var(--color-line)] outline-none focus:border-[color:var(--color-acorn)]"
             placeholder={t('library.filter.search_tags', '搜索标签...')}
             value={tagSearch}
-            onChange={e => setTagSearch(e.target.value)}
-            onKeyDown={e => e.stopPropagation()}
-            onClick={e => e.stopPropagation()}
+            onChange={(e) => setTagSearch(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
         <ScrollArea className="h-[140px] px-1">
           {filteredTags.length === 0 ? (
-            <div className="text-[11px] text-[color:var(--color-ink-4)] text-center py-4">{t('library.filter.no_tags_found', '无匹配标签')}</div>
+            <div className="text-[11px] text-[color:var(--color-ink-4)] text-center py-4">
+              {t('library.filter.no_tags_found', '无匹配标签')}
+            </div>
           ) : (
-            filteredTags.map(t => (
-              <DropdownMenuItem 
+            filteredTags.map((t) => (
+              <DropdownMenuItem
                 key={t.name}
-                onClick={(e) => { e.preventDefault(); toggleTag(t.name) }} 
+                onClick={(e) => {
+                  e.preventDefault()
+                  toggleTag(t.name)
+                }}
                 className="text-xs flex justify-between cursor-default py-1.5"
               >
                 <div className="flex items-center flex-1 min-w-0 pr-2 text-[color:var(--color-ink-2)]">
-                  <Hash size={12} className="text-[color:var(--color-ink-4)] mr-2 shrink-0"/> 
+                  <Hash size={12} className="text-[color:var(--color-ink-4)] mr-2 shrink-0" />
                   <span className="truncate">{t.name}</span>
-                  <span className="text-[9px] text-[color:var(--color-ink-4)] ml-1 shrink-0">{t.usage_count}</span>
+                  <span className="text-[9px] text-[color:var(--color-ink-4)] ml-1 shrink-0">
+                    {t.usage_count}
+                  </span>
                 </div>
-                {activeTags.includes(t.name) && <Check size={12} className="text-[color:var(--color-acorn)] shrink-0" />}
+                {activeTags.includes(t.name) && (
+                  <Check size={12} className="text-[color:var(--color-acorn)] shrink-0" />
+                )}
               </DropdownMenuItem>
             ))
           )}
         </ScrollArea>
-        
+
         <div className="h-px bg-[color:var(--color-line)] my-1" />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={() => void setFilter({ pathPrefix: undefined, category: undefined, tags: [] })}
           className="text-xs flex items-center justify-center text-[color:var(--color-ink-3)] py-1.5 cursor-default"
         >
@@ -329,20 +395,23 @@ export function VirtualFileList(): JSX.Element {
 
   const getSortLabel = (order: OrderBy) => {
     switch (order) {
-      case 'clipped_desc': return t('library.filter.clipped_desc_short', '最新创建')
-      case 'clipped_asc': return t('library.filter.clipped_asc_short', '最早创建')
-      case 'title_asc': return t('library.filter.title_asc', '标题 A-Z')
-      default: return t('library.filter.sort_by', '排序')
+      case 'clipped_desc':
+        return t('library.filter.clipped_desc_short', '最新创建')
+      case 'clipped_asc':
+        return t('library.filter.clipped_asc_short', '最早创建')
+      case 'title_asc':
+        return t('library.filter.title_asc', '标题 A-Z')
+      default:
+        return t('library.filter.sort_by', '排序')
     }
   }
 
-  const SortIcon = orderBy === 'clipped_desc' || orderBy === 'clipped_asc' 
-    ? Clock
-    : ArrowDownAZ
+  const SortIcon = orderBy === 'clipped_desc' || orderBy === 'clipped_asc' ? Clock : ArrowDownAZ
 
   const hasFilters = (filter.tags && filter.tags.length > 0) || filter.category
-  
-  return <div className="flex w-full flex-1 flex-col overflow-hidden bg-transparent">
+
+  return (
+    <div className="flex w-full flex-1 flex-col overflow-hidden bg-transparent">
       <div className="flex pt-3 pb-2 shrink-0 items-center gap-2 px-3">
         <div className="flex h-[30px] flex-1 items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
           <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
@@ -362,16 +431,19 @@ export function VirtualFileList(): JSX.Element {
 
       <div className="flex h-8 shrink-0 items-center justify-between px-4 pb-1 pt-1.5 overflow-hidden">
         <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden pr-4">
-          <span className={`text-[10px] font-medium text-[color:var(--color-ink-3)] whitespace-nowrap shrink-0 flex items-center gap-1 ${hasFilters ? 'pr-1.5 border-r border-[color:var(--color-line)] mr-0.5' : ''}`}>
-            <SortIcon size={10} className="text-[color:var(--color-ink-4)]"/> {getSortLabel(orderBy)}
+          <span
+            className={`text-[10px] font-medium text-[color:var(--color-ink-3)] whitespace-nowrap shrink-0 flex items-center gap-1 ${hasFilters ? 'pr-1.5 border-r border-[color:var(--color-line)] mr-0.5' : ''}`}
+          >
+            <SortIcon size={10} className="text-[color:var(--color-ink-4)]" />{' '}
+            {getSortLabel(orderBy)}
           </span>
-          
+
           {filter.category && (
-            <TruncatedTooltip 
+            <TruncatedTooltip
               className="text-[10px] text-[color:var(--color-ink-2)] flex items-center gap-1 shrink min-w-0 cursor-default"
               content={filter.category}
             >
-              <Folder size={8} className="shrink-0"/>
+              <Folder size={8} className="shrink-0" />
               <span className="truncate">{filter.category}</span>
             </TruncatedTooltip>
           )}
@@ -379,17 +451,22 @@ export function VirtualFileList(): JSX.Element {
             <TruncatedTooltip
               className="text-[10px] text-[color:var(--color-ink-2)] flex items-center gap-0.5 shrink min-w-0 cursor-default"
               alwaysShow={filter.tags.length > 1}
-              content={
-                filter.tags.map(tag => (
-                  <span key={tag} className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] whitespace-nowrap">
-                    #{tag}
-                  </span>
-                ))
-              }
+              content={filter.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-[color:var(--color-leaf-bg)] border-[0.5px] border-[color:var(--color-line)] px-1.5 py-[1px] font-mono text-[9px] text-[color:var(--color-ink-3)] whitespace-nowrap"
+                >
+                  #{tag}
+                </span>
+              ))}
             >
-              <Hash size={8} className="text-[color:var(--color-ink-4)] shrink-0"/>
+              <Hash size={8} className="text-[color:var(--color-ink-4)] shrink-0" />
               <span className="truncate">{filter.tags[0]}</span>
-              {filter.tags.length > 1 && <span className="text-[color:var(--color-ink-4)] ml-0.5 font-mono shrink-0">+{filter.tags.length - 1}</span>}
+              {filter.tags.length > 1 && (
+                <span className="text-[color:var(--color-ink-4)] ml-0.5 font-mono shrink-0">
+                  +{filter.tags.length - 1}
+                </span>
+              )}
             </TruncatedTooltip>
           )}
         </div>
@@ -458,4 +535,5 @@ export function VirtualFileList(): JSX.Element {
         />
       )}
     </div>
+  )
 }

@@ -13,10 +13,18 @@ import { Badge } from '@/components/ui/badge'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
-import { PlusIcon, PencilIcon, TrashIcon, WalletIcon, Loader2Icon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react'
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  WalletIcon,
+  Loader2Icon,
+  RefreshCwIcon,
+  AlertCircleIcon
+} from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
-function ProviderBalance({ providerId, type }: { providerId: string, type: AiProvider['type'] }) {
+function ProviderBalance({ providerId, type }: { providerId: string; type: AiProvider['type'] }) {
   const { t } = useTranslation()
   const checkBalance = useProvidersStore((s) => s.checkBalance)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -40,11 +48,18 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
       } else {
         let msg = res.message || 'Error'
         if (msg.startsWith('ERR_AUTH_FAILED:')) {
-          msg = t('settings.ai.errAuthFailed', { defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确', status: msg.split(':')[1] })
+          msg = t('settings.ai.errAuthFailed', {
+            defaultValue: '鉴权失败 (HTTP {{status}})，请检查 API Key 是否正确',
+            status: msg.split(':')[1]
+          })
         } else if (msg === 'ERR_NOT_FOUND') {
-          msg = t('settings.ai.errNotFound', { defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL' })
+          msg = t('settings.ai.errNotFound', {
+            defaultValue: '地址不存在 (HTTP 404)，请检查 Base URL'
+          })
         } else if (msg === 'ERR_NETWORK') {
-          msg = t('settings.ai.errNetwork', { defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。' })
+          msg = t('settings.ai.errNetwork', {
+            defaultValue: '网络请求失败，请检查 Base URL 是否正确或网络是否连通。'
+          })
         }
         setErrorMsg(msg)
         setStatus('error')
@@ -64,7 +79,9 @@ function ProviderBalance({ providerId, type }: { providerId: string, type: AiPro
           title={t('settings.ai.checkBalance', 'Check Balance')}
         >
           <WalletIcon className="h-4 w-4 mr-1.5 group-hover:text-primary transition-colors" />
-          <span className="text-xs font-medium">{t('settings.ai.checkBalance', 'Check Balance')}</span>
+          <span className="text-xs font-medium">
+            {t('settings.ai.checkBalance', 'Check Balance')}
+          </span>
         </button>
       )}
       {status === 'loading' && (
@@ -116,7 +133,6 @@ export function AiTab(): JSX.Element {
   const updateModel = useProvidersStore((s) => s.updateModel)
   const removeModel = useProvidersStore((s) => s.removeModel)
 
-
   const [dialogProvider, setDialogProvider] = useState<AiProvider | null | 'new'>(null)
   const [providerToDelete, setProviderToDelete] = useState<AiProvider | null>(null)
 
@@ -129,199 +145,198 @@ export function AiTab(): JSX.Element {
     void refresh()
   }, [refresh])
 
-
-
-
   return (
     <div data-testid="settings-tab-ai" className="space-y-8">
-
-
       <div>
         <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
-                onClick={() => setDialogProvider('new')}
-              >
-                <PlusIcon className="mr-1.5 h-4 w-4" />
-                {t('settings.ai.addProvider', '添加供应商')}
-              </button>
-            </div>
+          <h3 className="text-lg font-medium">{t('settings.ai.providersTab', '供应商')}</h3>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none"
+            onClick={() => setDialogProvider('new')}
+          >
+            <PlusIcon className="mr-1.5 h-4 w-4" />
+            {t('settings.ai.addProvider', '添加供应商')}
+          </button>
+        </div>
 
-            {providers.length === 0 ? (
-              <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30">
-                <p className="text-sm text-muted-foreground">
-                  {t('settings.ai.emptyProviders', '暂无供应商')}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {providers.map((p) => {
-                  const providerModels = models.filter((m) => m.providerId === p.id)
-                  return (
-                    <div key={p.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                      <div className="flex items-center justify-between bg-muted/40 px-4 py-3 border-b">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-base text-card-foreground flex items-center gap-2">
-                            {p.name}
-                            <Badge>
-                              {p.type}
-                            </Badge>
-                          </span>
-                          {p.baseUrl && (
-                            <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <ProviderBalance providerId={p.id} type={p.type} />
-                          <div className="w-px h-4 bg-border mx-1"></div>
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                            onClick={() => setDialogProvider(p)}
-                            title={t('settings.ai.editProvider', '编辑供应商')}
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => setProviderToDelete(p)}
-                            title={t('settings.ai.deleteProvider', '删除供应商')}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-medium text-muted-foreground">
-                            {t('settings.ai.models', '模型')}
-                          </h4>
-                          <button
-                            type="button"
-                            className="inline-flex items-center text-xs font-medium text-primary hover:underline"
-                            onClick={() => setDialogModel({ isNew: true, providerId: p.id })}
-                          >
-                            <PlusIcon className="mr-1 h-3 w-3" />
-                            {t('settings.ai.addModel', '添加模型')}
-                          </button>
-                        </div>
-
-                        {providerModels.length === 0 ? (
-                          <p className="text-sm text-muted-foreground py-2 text-center bg-muted/20 rounded-md border border-dashed border-border/50">
-                            {t('settings.ai.emptyModels', '该供应商下暂无模型')}
-                          </p>
-                        ) : (
-                          <ul className="space-y-2">
-                            {providerModels.map((m) => (
-                              <li
-                                key={m.id}
-                                className="flex items-center justify-between p-2.5 rounded-md hover:bg-muted/40 group border border-transparent hover:border-border/50 transition-colors"
-                              >
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <span className="truncate">{m.displayName}</span>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <TooltipProvider delayDuration={1500}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Badge
-                                              variant={ai.defaultChatModelId === m.id ? 'default' : 'outline'}
-                                              className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
-                                                ai.defaultChatModelId === m.id
-                                                  ? ''
-                                                  : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
-                                              }`}
-                                              onClick={() => {
-                                                if (!m.enabled) updateModel(m.id, { enabled: true })
-                                                setAi({ defaultChatModelId: m.id })
-                                              }}
-                                            >
-                                              {t('settings.ai.songyuBadge', '松语')}
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top">
-                                            {t('settings.ai.setSongyuDefault', '设为松语默认模型')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-
-                                      <TooltipProvider delayDuration={1500}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Badge
-                                              variant={ai.defaultReviewerModelId === m.id ? 'default' : 'outline'}
-                                              className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
-                                                ai.defaultReviewerModelId === m.id
-                                                  ? ''
-                                                  : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
-                                              }`}
-                                              onClick={() => {
-                                                if (!m.enabled) updateModel(m.id, { enabled: true })
-                                                setAi({ defaultReviewerModelId: m.id })
-                                              }}
-                                            >
-                                              {t('settings.ai.liguoBadge', '理果')}
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top">
-                                            {t('settings.ai.setLiguoDefault', '设为理果默认模型')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    </div>
-                                    {!m.enabled && (
-                                      <Badge variant="secondary" className="shrink-0">
-                                        {t('settings.ai.disabled', '已禁用')}
-                                      </Badge>
-                                    )}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground truncate">
-                                    {m.name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <div className="flex items-center gap-2 mr-2">
-                                    <Switch
-                                      checked={m.enabled}
-                                      onCheckedChange={(checked) =>
-                                        updateModel(m.id, { enabled: checked })
-                                      }
-                                      className="scale-75 data-[state=checked]:bg-primary"
-                                      title={t('settings.ai.toggleModel', '切换模型状态')}
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="text-muted-foreground hover:text-foreground"
-                                    onClick={() => setDialogModel(m)}
-                                    title={t('settings.ai.editModel', '编辑模型')}
-                                  >
-                                    <PencilIcon className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="text-muted-foreground hover:text-destructive"
-                                    onClick={() => setModelToDelete(m)}
-                                    title={t('settings.ai.deleteModel', '删除模型')}
-                                  >
-                                    <TrashIcon className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+        {providers.length === 0 ? (
+          <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30">
+            <p className="text-sm text-muted-foreground">
+              {t('settings.ai.emptyProviders', '暂无供应商')}
+            </p>
           </div>
+        ) : (
+          <div className="space-y-6">
+            {providers.map((p) => {
+              const providerModels = models.filter((m) => m.providerId === p.id)
+              return (
+                <div key={p.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between bg-muted/40 px-4 py-3 border-b">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-base text-card-foreground flex items-center gap-2">
+                        {p.name}
+                        <Badge>{p.type}</Badge>
+                      </span>
+                      {p.baseUrl && (
+                        <span className="text-xs text-muted-foreground mt-0.5">{p.baseUrl}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <ProviderBalance providerId={p.id} type={p.type} />
+                      <div className="w-px h-4 bg-border mx-1"></div>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                        onClick={() => setDialogProvider(p)}
+                        title={t('settings.ai.editProvider', '编辑供应商')}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => setProviderToDelete(p)}
+                        title={t('settings.ai.deleteProvider', '删除供应商')}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-muted-foreground">
+                        {t('settings.ai.models', '模型')}
+                      </h4>
+                      <button
+                        type="button"
+                        className="inline-flex items-center text-xs font-medium text-primary hover:underline"
+                        onClick={() => setDialogModel({ isNew: true, providerId: p.id })}
+                      >
+                        <PlusIcon className="mr-1 h-3 w-3" />
+                        {t('settings.ai.addModel', '添加模型')}
+                      </button>
+                    </div>
+
+                    {providerModels.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2 text-center bg-muted/20 rounded-md border border-dashed border-border/50">
+                        {t('settings.ai.emptyModels', '该供应商下暂无模型')}
+                      </p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {providerModels.map((m) => (
+                          <li
+                            key={m.id}
+                            className="flex items-center justify-between p-2.5 rounded-md hover:bg-muted/40 group border border-transparent hover:border-border/50 transition-colors"
+                          >
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <span className="truncate">{m.displayName}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <TooltipProvider delayDuration={1500}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge
+                                          variant={
+                                            ai.defaultChatModelId === m.id ? 'default' : 'outline'
+                                          }
+                                          className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                            ai.defaultChatModelId === m.id
+                                              ? ''
+                                              : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                          }`}
+                                          onClick={() => {
+                                            if (!m.enabled) updateModel(m.id, { enabled: true })
+                                            setAi({ defaultChatModelId: m.id })
+                                          }}
+                                        >
+                                          {t('settings.ai.songyuBadge', '松语')}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">
+                                        {t('settings.ai.setSongyuDefault', '设为松语默认模型')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider delayDuration={1500}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge
+                                          variant={
+                                            ai.defaultReviewerModelId === m.id
+                                              ? 'default'
+                                              : 'outline'
+                                          }
+                                          className={`cursor-pointer transition-all px-1.5 py-0 text-[10px] ${
+                                            ai.defaultReviewerModelId === m.id
+                                              ? ''
+                                              : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                          }`}
+                                          onClick={() => {
+                                            if (!m.enabled) updateModel(m.id, { enabled: true })
+                                            setAi({ defaultReviewerModelId: m.id })
+                                          }}
+                                        >
+                                          {t('settings.ai.liguoBadge', '理果')}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">
+                                        {t('settings.ai.setLiguoDefault', '设为理果默认模型')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                                {!m.enabled && (
+                                  <Badge variant="secondary" className="shrink-0">
+                                    {t('settings.ai.disabled', '已禁用')}
+                                  </Badge>
+                                )}
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate">
+                                {m.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center gap-2 mr-2">
+                                <Switch
+                                  checked={m.enabled}
+                                  onCheckedChange={(checked) =>
+                                    updateModel(m.id, { enabled: checked })
+                                  }
+                                  className="scale-75 data-[state=checked]:bg-primary"
+                                  title={t('settings.ai.toggleModel', '切换模型状态')}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={() => setDialogModel(m)}
+                                title={t('settings.ai.editModel', '编辑模型')}
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => setModelToDelete(m)}
+                                title={t('settings.ai.deleteModel', '删除模型')}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {dialogProvider !== null && (
         <ProviderDialog

@@ -63,9 +63,10 @@ export const fileHandlers = {
     const parsed = parseFile(r.content)
     let clip: { id: number } | undefined
     try {
-      clip = dbService.requireCurrent().prepare('SELECT rowid as id FROM files WHERE path = ?').get(rel) as
-        | { id: number }
-        | undefined
+      clip = dbService
+        .requireCurrent()
+        .prepare('SELECT rowid as id FROM files WHERE path = ?')
+        .get(rel) as { id: number } | undefined
     } catch {
       clip = undefined
     }

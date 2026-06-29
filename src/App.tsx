@@ -24,7 +24,9 @@ function DbRebuildOverlay({ visible }: { visible: boolean }): JSX.Element | null
     >
       <div className="text-center">
         <div className="text-lg font-medium">{t('app.rebuild_index', '索引损坏，正在重建')}</div>
-        <div className="mt-2 text-sm text-muted-foreground">{t('app.rebuild_index_sub', '这通常只需要几秒钟')}</div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          {t('app.rebuild_index_sub', '这通常只需要几秒钟')}
+        </div>
       </div>
     </div>
   )
@@ -54,7 +56,12 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     ipc.index.status().then((s) => {
-      setProgress((prev) => ({ ...prev, scanned: s.scanned, total: s.total, currentPath: s.currentPath }))
+      setProgress((prev) => ({
+        ...prev,
+        scanned: s.scanned,
+        total: s.total,
+        currentPath: s.currentPath
+      }))
     })
 
     const offRebuilding = ipc.on('db:rebuilding', () => {
@@ -86,7 +93,7 @@ export function App(): JSX.Element {
     <>
       <div className="flex h-full flex-col bg-[color:var(--color-paper-2)]">
         <CrashBanner />
-        
+
         {isWin && (
           <div className="h-7 shrink-0 w-full [-webkit-app-region:drag] flex items-center justify-center pr-[140px] z-50 bg-[color:var(--color-paper-3)]">
             <StatusBar
@@ -102,7 +109,9 @@ export function App(): JSX.Element {
           {!isWin && (
             <div className="absolute top-0 left-0 right-0 h-6 z-50 [-webkit-app-region:drag]" />
           )}
-          <div className={`w-[76px] shrink-0 ${isWin ? 'pt-[14px]' : 'pt-[40px]'} pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none`}>
+          <div
+            className={`w-[76px] shrink-0 ${isWin ? 'pt-[14px]' : 'pt-[40px]'} pb-3 px-[14px] flex flex-col items-center z-10 pointer-events-none`}
+          >
             <AppRail />
           </div>
           <main className="flex-1 overflow-hidden relative">

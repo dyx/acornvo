@@ -28,10 +28,10 @@ function SunnyOverlay({ active }: { active: boolean }): JSX.Element | null {
         muted
         loop
         playsInline
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          objectFit: 'cover', 
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
           mixBlendMode: 'multiply',
           opacity: 0.5
         }}
@@ -299,13 +299,13 @@ function MoonlightOverlay({ active }: { active: boolean }): JSX.Element | null {
 
         {/* Moon and Halo */}
         <div
-          style={{ 
-            position: 'absolute', 
-            top: '85px', 
-            left: '77px', 
+          style={{
+            position: 'absolute',
+            top: '85px',
+            left: '77px',
             transform: 'translate(-50%, -50%)',
-            width: '90px', 
-            height: '90px' 
+            width: '90px',
+            height: '90px'
           }}
         >
           <div

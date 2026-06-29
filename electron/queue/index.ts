@@ -60,7 +60,6 @@ export function bootstrapQueueRunner(
     handler: aiReviewClipHandler
   })
 
-
   runner.register({
     kind: 'download-clip-images',
     concurrency: 3,

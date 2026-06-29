@@ -51,7 +51,6 @@ export function BookmarkSidebar(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col bg-transparent font-sans select-none">
-      
       {/* 搜索栏 (高度与右侧 AddressBar 严格保持 48px 一致) */}
       <div className="flex pt-3 pb-2 shrink-0 items-center px-3">
         <div className="flex h-[30px] w-full items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
@@ -77,7 +76,6 @@ export function BookmarkSidebar(): JSX.Element {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto px-2 pb-4">
-          
           {/* 分组标题与列表项容器 */}
           <div className="flex flex-col gap-[2px]">
             {/* 模拟一个默认的“书签栏”文件夹节点，增强树形结构视觉感（可选，这里直接展示列表但也保留一点缩进感） */}
@@ -97,7 +95,7 @@ export function BookmarkSidebar(): JSX.Element {
               {items.map((b) => {
                 // 当前标签页如果是这个书签的地址，我们可以让它稍微高亮
                 const isActive = tab?.url === b.url
-                
+
                 return (
                   <div
                     key={b.id}
@@ -110,8 +108,8 @@ export function BookmarkSidebar(): JSX.Element {
                       if (tab) void navigate(tab.id, b.url)
                     }}
                     className={`group relative flex items-center justify-between pl-6 pr-1 py-1.5 rounded-md cursor-pointer transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]' 
+                      isActive
+                        ? 'bg-[color:var(--color-acorn-bg)] text-[color:var(--color-acorn-2)]'
                         : 'text-[color:var(--color-ink)] hover:bg-[color:var(--color-paper-3)]'
                     }`}
                   >
@@ -123,33 +121,39 @@ export function BookmarkSidebar(): JSX.Element {
                     {/* 图标与标题 */}
                     <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
                       {b.favicon ? (
-                        <img 
-                          src={b.favicon} 
-                          alt="" 
-                          className="w-[14px] h-[14px] shrink-0 object-contain rounded-sm shadow-sm" 
+                        <img
+                          src={b.favicon}
+                          alt=""
+                          className="w-[14px] h-[14px] shrink-0 object-contain rounded-sm shadow-sm"
                         />
                       ) : (
-                        <Globe size={14} className={`shrink-0 ${isActive ? 'text-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)]'}`} />
+                        <Globe
+                          size={14}
+                          className={`shrink-0 ${isActive ? 'text-[color:var(--color-acorn)]' : 'text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)]'}`}
+                        />
                       )}
-                      
+
                       <div className="flex flex-col min-w-0 flex-1">
                         <span className="text-[13px] truncate">{b.title || b.url}</span>
                         {/* 如果想的话，可以把域名放小字在下面，不过单行截断更干净，我们可以放在 tooltip 里或者像原来那样 */}
                         {!isActive && (
                           <span className="text-[10px] truncate text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)] transition-colors">
                             {(() => {
-                              try { return new URL(b.url).hostname }
-                              catch { return b.url }
+                              try {
+                                return new URL(b.url).hostname
+                              } catch {
+                                return b.url
+                              }
                             })()}
                           </span>
                         )}
                       </div>
                     </div>
-                    
+
                     {/* 操作按钮区 */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button 
+                        <button
                           className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-sm shadow-sm border border-[color:var(--color-line)]/50 transition-all duration-200 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 bg-[color:var(--color-paper)] text-[color:var(--color-ink-3)]"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -157,10 +161,12 @@ export function BookmarkSidebar(): JSX.Element {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-32">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingBookmark(b)
-                        }}>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingBookmark(b)
+                          }}
+                        >
                           <Pencil className="size-4 mr-2 text-[color:var(--color-ink-3)]" />
                           {t('common.rename', '编辑...')}
                         </DropdownMenuItem>

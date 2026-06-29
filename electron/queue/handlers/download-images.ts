@@ -27,7 +27,10 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
   const { job, payload, log } = ctx
   const relPath = payload.path as string
 
-  logger().info('queue', { msg: '[download-clip-images] handler start', meta: { jobId: job.id, path: relPath, attempt: job.attempts } })
+  logger().info('queue', {
+    msg: '[download-clip-images] handler start',
+    meta: { jobId: job.id, path: relPath, attempt: job.attempts }
+  })
 
   try {
     const grove = getCurrent()
@@ -71,37 +74,44 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
 
       try {
         const urlHash = crypto.createHash('md5').update(url).digest('hex').slice(0, 8)
-        
+
         // Fetch image
         const resp = await fetch(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
           }
         })
 
         if (!resp.ok) {
-          logger().warn('queue', { msg: '[download-clip-images] failed to fetch image', meta: { url, status: resp.status } })
+          logger().warn('queue', {
+            msg: '[download-clip-images] failed to fetch image',
+            meta: { url, status: resp.status }
+          })
           continue
         }
 
         const buffer = await resp.arrayBuffer()
         const mime = resp.headers.get('content-type')
         const ext = getExtFromMime(mime)
-        
+
         const filename = `${urlHash}${ext}`
         const fileAbsPath = path.join(assetsAbsDir, filename)
-        
+
         fs.writeFileSync(fileAbsPath, Buffer.from(buffer))
 
         // Replace in body. We use encodeURI for the path just in case
         const newRelUrl = path.posix.join('.assets', parsedPath.name, filename)
         const newImgTag = `![${alt}](${newRelUrl})`
-        
+
         newBody = newBody.replace(fullMatch, newImgTag)
         replacements.push({ old: fullMatch, new: newImgTag })
       } catch (err) {
-        logger().warn('queue', { msg: '[download-clip-images] error downloading image', meta: { url, error: (err as Error).message } })
+        logger().warn('queue', {
+          msg: '[download-clip-images] error downloading image',
+          meta: { url, error: (err as Error).message }
+        })
       }
     }
 

@@ -119,7 +119,9 @@ const clipperPipeline = createPipeline({
   indexUpsert: (path) => upsertFromFs(path),
   getFileRowId: async (path) => {
     const db = dbService.requireCurrent()
-    const row = db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as { rowid: number } | undefined
+    const row = db.prepare('SELECT rowid FROM files WHERE path=?').get(path) as
+      | { rowid: number }
+      | undefined
     return row ? row.rowid : null
   },
   opsLog: (opts) => opsLogRecord({ op: opts.op as any, path: opts.path, meta: opts.meta }),
@@ -179,13 +181,15 @@ export const ipcHandlers: HandlerMap = {
   window: windowHandlers,
   ui: {
     showToast: (payload) => {
-      import('../toast-window').then(({ toastWindow }) => {
-        if (toastWindow && !toastWindow.isDestroyed()) {
-          toastWindow.webContents.send('ui:showToast', payload)
-        }
-      }).catch(err => {
-        logger().error('main', { msg: 'Failed to send toast', meta: { error: String(err) } })
-      })
+      import('../toast-window')
+        .then(({ toastWindow }) => {
+          if (toastWindow && !toastWindow.isDestroyed()) {
+            toastWindow.webContents.send('ui:showToast', payload)
+          }
+        })
+        .catch((err) => {
+          logger().error('main', { msg: 'Failed to send toast', meta: { error: String(err) } })
+        })
     }
   }
 }

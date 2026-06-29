@@ -9,24 +9,27 @@ import { getProviderApiKey } from '../settings/provider-key'
 import { IpcError } from '../../shared/ipc-contract'
 
 export function buildEmbeddings(profile: ResolvedProfile): Embeddings {
-  const customFetch = async (url: any, init?: RequestInit) => { return fetch(url, init) }
+  const customFetch = async (url: any, init?: RequestInit) => {
+    return fetch(url, init)
+  }
   const finalBaseUrl = profile.baseUrl
-  
+
   switch (profile.provider) {
-    case 'ollama': return new OllamaEmbeddings({ model: profile.model, baseUrl: finalBaseUrl || undefined })
+    case 'ollama':
+      return new OllamaEmbeddings({ model: profile.model, baseUrl: finalBaseUrl || undefined })
     case 'openai-compatible':
     case 'openrouter':
     case 'deepseek':
-      return new OpenAIEmbeddings({ 
-        model: profile.model, 
-        apiKey: profile.apiKey ?? '', 
-        configuration: { fetch: customFetch, baseURL: finalBaseUrl || undefined } 
+      return new OpenAIEmbeddings({
+        model: profile.model,
+        apiKey: profile.apiKey ?? '',
+        configuration: { fetch: customFetch, baseURL: finalBaseUrl || undefined }
       })
     case 'local' as any:
       return new LocalEmbeddings({ modelName: profile.model })
-    default: { 
+    default: {
       const _x: never = profile.provider as never
-      throw new Error(`unsupported embedding provider: ${_x}`) 
+      throw new Error(`unsupported embedding provider: ${_x}`)
     }
   }
 }
@@ -91,9 +94,17 @@ export function resolveEmbeddings(): ResolvedEmbeddings {
   if (id && id !== 'local:bge-small-zh') {
     try {
       const profile = resolveEmbeddingProfile(id)
-      return { model: buildEmbeddings(profile), dim: profile.embeddingDim, modelId: id, isLocal: false }
+      return {
+        model: buildEmbeddings(profile),
+        dim: profile.embeddingDim,
+        modelId: id,
+        isLocal: false
+      }
     } catch (err) {
-      logger().warn('ai', { msg: 'failed to resolve embedding profile, falling back to local', meta: { id, error: String(err) } })
+      logger().warn('ai', {
+        msg: 'failed to resolve embedding profile, falling back to local',
+        meta: { id, error: String(err) }
+      })
     }
   }
   // isLocal: true => use embedWorker, so model can be null here to avoid loading onnx in main thread

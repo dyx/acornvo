@@ -24,14 +24,21 @@ export function StatusBar({
   const current = useGroveStore((s) => s.current)
 
   return (
-    <div className={`flex shrink-0 items-center gap-4 px-4 font-mono text-[color:var(--color-ink-3)] ${isTitleBar ? 'h-full w-full justify-center text-[11px] bg-transparent' : 'h-7 bg-[color:var(--color-paper-3)] text-xs'} ${className}`}>
+    <div
+      className={`flex shrink-0 items-center gap-4 px-4 font-mono text-[color:var(--color-ink-3)] ${isTitleBar ? 'h-full w-full justify-center text-[11px] bg-transparent' : 'h-7 bg-[color:var(--color-paper-3)] text-xs'} ${className}`}
+    >
       {indexing ? (
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--color-sky)]" />
           {t('status.indexing', '索引中 {{indexing}}', { indexing })}
         </span>
       ) : (
-        <span className="flex items-center gap-1.5" title={isTitleBar ? t('status.docs', '{{count}} 篇文档', { count: totalDocs }) : undefined}>
+        <span
+          className="flex items-center gap-1.5"
+          title={
+            isTitleBar ? t('status.docs', '{{count}} 篇文档', { count: totalDocs }) : undefined
+          }
+        >
           <Trees size={14} className="shrink-0" />
           {current ? current.name : t('status.no_grove', '未选择树林')}
           {isTitleBar && <span className="opacity-70 ml-0.5">({totalDocs})</span>}

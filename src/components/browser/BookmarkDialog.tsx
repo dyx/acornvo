@@ -95,10 +95,7 @@ export function BookmarkDialog(props: BookmarkDialogProps): JSX.Element {
             <label className="text-sm font-medium text-[color:var(--color-ink-2)]">
               {t('browser.bookmark_dialog.title', 'Title')}
             </label>
-            <Input 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-            />
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
         </div>
         <DialogFooter>

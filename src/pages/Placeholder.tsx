@@ -13,7 +13,9 @@ export function Placeholder({ name }: { name: string }): JSX.Element {
           {JSON.stringify(current, null, 2)}
         </pre>
       ) : (
-        <p className="text-sm text-[color:var(--color-ink-3)]">{t('placeholder.no_grove', '未打开任何树林')}</p>
+        <p className="text-sm text-[color:var(--color-ink-3)]">
+          {t('placeholder.no_grove', '未打开任何树林')}
+        </p>
       )}
     </div>
   )

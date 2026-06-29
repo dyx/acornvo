@@ -33,7 +33,11 @@ const request: IpcClient<IpcContract> = {
     closeGrove: () => invoke('project.closeGrove'),
     getCurrent: () => invoke('project.getCurrent'),
     removeFromRecent: (id) => invoke('project.removeFromRecent', id),
-    selectDirectory: (opts: { purpose: SelectDirectoryPurpose; title?: string; buttonLabel?: string }) => invoke('project.selectDirectory', opts)
+    selectDirectory: (opts: {
+      purpose: SelectDirectoryPurpose
+      title?: string
+      buttonLabel?: string
+    }) => invoke('project.selectDirectory', opts)
   },
   db: {
     version: () => invoke('db.version'),
@@ -152,7 +156,8 @@ const request: IpcClient<IpcContract> = {
       invoke('chat.sessions.create', opts),
     'sessions.delete': (id: string) => invoke('chat.sessions.delete', id),
     'sessions.rename': (id: string, title: string) => invoke('chat.sessions.rename', id, title),
-    'sessions.truncate': (sessionId: string, messageId: string) => invoke('chat.sessions.truncate', sessionId, messageId),
+    'sessions.truncate': (sessionId: string, messageId: string) =>
+      invoke('chat.sessions.truncate', sessionId, messageId),
     'sessions.getMessages': (id: string) => invoke('chat.sessions.getMessages', id),
     'sessions.updateProfile': (id: string, profileId: string | null) =>
       invoke('chat.sessions.updateProfile', id, profileId),

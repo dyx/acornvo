@@ -126,35 +126,35 @@ const emptySession = (): SessionState => ({
 function revertNewSessionFailure(sid: string, errorMsg: string) {
   ipc.chat['sessions.delete'](sid).catch(() => {})
   useChatStore.setState((s) => {
-    const newSessions = s.sessions.filter(x => x.id !== sid)
+    const newSessions = s.sessions.filter((x) => x.id !== sid)
     const newBy = { ...s.bySession }
     const failedState = newBy[sid]
     delete newBy[sid]
-    
-    let tempSession = newSessions.find(x => x.id === 'temp-session')
+
+    let tempSession = newSessions.find((x) => x.id === 'temp-session')
     if (!tempSession) {
-       tempSession = {
-         id: 'temp-session',
-         title: '',
-         createdAt: Date.now(),
-         updatedAt: Date.now(),
-         profileId: null,
-         messageCount: 0
-       }
-       newSessions.unshift(tempSession)
+      tempSession = {
+        id: 'temp-session',
+        title: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        profileId: null,
+        messageCount: 0
+      }
+      newSessions.unshift(tempSession)
     }
-    
+
     return {
       activeSessionId: s.activeSessionId === sid ? 'temp-session' : s.activeSessionId,
       sessions: newSessions,
       bySession: {
-         ...newBy,
-         ['temp-session']: {
-            ...(newBy['temp-session'] ?? emptySession()),
-            pendingPromptText: failedState?.lastUserText ?? '',
-            status: 'idle',
-            error: errorMsg
-         }
+        ...newBy,
+        ['temp-session']: {
+          ...(newBy['temp-session'] ?? emptySession()),
+          pendingPromptText: failedState?.lastUserText ?? '',
+          status: 'idle',
+          error: errorMsg
+        }
       }
     }
   })
@@ -238,7 +238,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       return {
         activeSessionId: 'temp-session',
-        sessions: [tempSession, ...s.sessions.filter(x => x.id !== 'temp-session')],
+        sessions: [tempSession, ...s.sessions.filter((x) => x.id !== 'temp-session')],
         bySession: {
           ...s.bySession,
           ['temp-session']: { ...emptySession(), loaded: true }
@@ -264,7 +264,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       await ipc.chat['sessions.delete'](id)
       const curActive = get().activeSessionId
       let nextActive = curActive
-      
+
       set((s) => {
         const remaining = s.sessions.filter((ses) => ses.id !== id)
         if (curActive === id) {
@@ -291,18 +291,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     let cur = get()
     const originalSid = cur.activeSessionId
     let sid = originalSid
-    console.log(
-      '[chat-store] sendUserMessage: sid=%s textLen=%d',
-      sid,
-      text.length
-    )
+    console.log('[chat-store] sendUserMessage: sid=%s textLen=%d', sid, text.length)
     if (!sid) {
       console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
       return
     }
     if (sid === 'temp-session') {
       try {
-        const tempSessionState = cur.sessions.find(x => x.id === 'temp-session')
+        const tempSessionState = cur.sessions.find((x) => x.id === 'temp-session')
         const targetProfileId = tempSessionState?.profileId ?? null
 
         const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
@@ -313,7 +309,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           const newBySession = { ...s.bySession }
           delete newBySession['temp-session']
           return {
-            sessions: [session, ...s.sessions.filter(x => x.id !== 'temp-session')],
+            sessions: [session, ...s.sessions.filter((x) => x.id !== 'temp-session')],
             activeSessionId: session.id,
             bySession: {
               ...newBySession,
@@ -332,7 +328,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.warn('[chat-store] sendUserMessage: already streaming → BusyError')
       throw new BusyError()
     }
-    
+
     const optimisticMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -341,15 +337,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       createdAt: Date.now(),
       status: 'done'
     }
-    
+
     set((s) => {
       let nextSessions = s.sessions
-      const currentSession = nextSessions.find(x => x.id === sid)
+      const currentSession = nextSessions.find((x) => x.id === sid)
       if (currentSession && !currentSession.title) {
         const TITLE_LIMIT = 40
         const newTitle = text.trim().slice(0, TITLE_LIMIT)
         if (newTitle) {
-          nextSessions = nextSessions.map(x => x.id === sid ? { ...x, title: newTitle } : x)
+          nextSessions = nextSessions.map((x) => (x.id === sid ? { ...x, title: newTitle } : x))
         }
       }
       return {
@@ -373,7 +369,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     } catch (err) {
       console.error('[chat-store] sendUserMessage: IPC threw', err)
       const errorMsg = err instanceof Error ? err.message : String(err)
-      
+
       if (originalSid === 'temp-session') {
         revertNewSessionFailure(sid, errorMsg)
         return
@@ -387,8 +383,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ...s.bySession[sid],
             status: 'error',
             error: errorMsg,
-            messages: s.bySession[sid].messages.map(m =>
-              m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+            messages: s.bySession[sid].messages.map((m) =>
+              m.status === 'streaming' || m.status === 'pending'
+                ? { ...m, status: 'error' as const }
+                : m
             )
           }
         }
@@ -405,11 +403,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       return {
         bySession: {
           ...s.bySession,
-          [sid]: { 
-            ...cur, 
+          [sid]: {
+            ...cur,
             status: 'idle' as const,
-            messages: cur.messages.map(m =>
-              m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+            messages: cur.messages.map((m) =>
+              m.status === 'streaming' || m.status === 'pending'
+                ? { ...m, status: 'error' as const }
+                : m
             )
           }
         }
@@ -466,7 +466,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       if (id === 'temp-session') {
         set((s) => ({
-          sessions: s.sessions.map((ses) => (ses.id === 'temp-session' ? { ...ses, profileId } : ses))
+          sessions: s.sessions.map((ses) =>
+            ses.id === 'temp-session' ? { ...ses, profileId } : ses
+          )
         }))
         return
       }
@@ -476,7 +478,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         targetId = await get().createSession()
         if (!targetId || targetId === 'temp-session') return
       }
-      
+
       await ipc.chat['sessions.updateProfile'](targetId, profileId)
       set((s) => ({
         sessions: s.sessions.map((ses) => (ses.id === targetId ? { ...ses, profileId } : ses))
@@ -500,7 +502,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }
     }))
   },
-
 
   bumpFocusInput() {
     set((s) => ({ focusInputBump: s.focusInputBump + 1 }))
@@ -559,22 +560,22 @@ function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'te
           const reasoningStartTime = m.reasoningStartTime || Date.now()
           return { ...m, reasoningText: (m.reasoningText || '') + txt, reasoningStartTime }
         } else {
-          const newText = m.text + txt;
-          let reasoningStartTime = m.reasoningStartTime;
-          let reasoningDuration = m.reasoningDuration;
+          const newText = m.text + txt
+          let reasoningStartTime = m.reasoningStartTime
+          let reasoningDuration = m.reasoningDuration
 
           // If provider sends <think> via text-delta and we haven't started yet
           if (!reasoningStartTime && newText.includes('<think')) {
-            reasoningStartTime = Date.now();
+            reasoningStartTime = Date.now()
           }
 
           // If reasoning was started (either via reasoning-delta or the <think> check above)
           if (reasoningStartTime && !reasoningDuration) {
             // If the text contains </think>, or if it's a standard provider starting actual text
             if (m.reasoningText && m.reasoningText.length > 0) {
-               reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000));
+              reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000))
             } else if (newText.includes('</think>')) {
-               reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000));
+              reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000))
             }
           }
 
@@ -752,7 +753,7 @@ function subscribeSessionStream(sid: string): void {
           const post = useChatStore.getState().bySession[sid] ?? cur
           const incoming = toChatMessage(event.message)
           if (incoming.role !== 'assistant') {
-            const lastUserIdx = post.messages.findLastIndex(m => m.role === 'user' && !m.dbId)
+            const lastUserIdx = post.messages.findLastIndex((m) => m.role === 'user' && !m.dbId)
             if (lastUserIdx !== -1) {
               const updatedMessages = [...post.messages]
               updatedMessages[lastUserIdx] = { ...updatedMessages[lastUserIdx], dbId: incoming.id }
@@ -821,24 +822,42 @@ function subscribeSessionStream(sid: string): void {
             }
           }
         case 'error': {
-          const isFirstTurn = cur.messages.filter(m => m.role !== 'user').length === 0
-          
-          let displayMsg = event.error;
-          const detail = event.detail as { message?: string, httpStatus?: number } | undefined;
-          
+          const isFirstTurn = cur.messages.filter((m) => m.role !== 'user').length === 0
+
+          let displayMsg = event.error
+          const detail = event.detail as { message?: string; httpStatus?: number } | undefined
+
           if (detail && typeof detail === 'object') {
             switch (detail.httpStatus) {
-              case 400: displayMsg = i18n.t('chat.error.http400', '格式错误：请根据错误信息提示修改请求体'); break;
-              case 401: displayMsg = i18n.t('chat.error.http401', '认证失败：请检查您的 API key 是否正确'); break;
-              case 402: displayMsg = i18n.t('chat.error.http402', '余额不足'); break;
-              case 422: displayMsg = i18n.t('chat.error.http422', '参数错误：请根据错误信息提示修改相关参数'); break;
-              case 429: displayMsg = i18n.t('chat.error.http429', '请求速率达到上限，请稍后重试'); break;
-              case 500: displayMsg = i18n.t('chat.error.http500', '服务器故障：请稍后重试'); break;
-              case 503: displayMsg = i18n.t('chat.error.http503', '服务器繁忙：请稍后重试'); break;
-              default: displayMsg = detail.message || event.error;
+              case 400:
+                displayMsg = i18n.t('chat.error.http400', '格式错误：请根据错误信息提示修改请求体')
+                break
+              case 401:
+                displayMsg = i18n.t('chat.error.http401', '认证失败：请检查您的 API key 是否正确')
+                break
+              case 402:
+                displayMsg = i18n.t('chat.error.http402', '余额不足')
+                break
+              case 422:
+                displayMsg = i18n.t(
+                  'chat.error.http422',
+                  '参数错误：请根据错误信息提示修改相关参数'
+                )
+                break
+              case 429:
+                displayMsg = i18n.t('chat.error.http429', '请求速率达到上限，请稍后重试')
+                break
+              case 500:
+                displayMsg = i18n.t('chat.error.http500', '服务器故障：请稍后重试')
+                break
+              case 503:
+                displayMsg = i18n.t('chat.error.http503', '服务器繁忙：请稍后重试')
+                break
+              default:
+                displayMsg = detail.message || event.error
             }
           } else if (typeof event.detail === 'string') {
-            displayMsg = event.detail;
+            displayMsg = event.detail
           }
 
           setTimeout(() => {
@@ -846,8 +865,8 @@ function subscribeSessionStream(sid: string): void {
               variant: 'destructive',
               title: i18n.t('chat.error.title', '松语错误'),
               description: displayMsg
-            });
-          }, 0);
+            })
+          }, 0)
 
           if (isFirstTurn) {
             setTimeout(() => revertNewSessionFailure(sid, event.error), 0)
@@ -862,7 +881,9 @@ function subscribeSessionStream(sid: string): void {
                 status: 'error',
                 error: event.error,
                 messages: cur.messages.map((m) =>
-                  m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+                  m.status === 'streaming' || m.status === 'pending'
+                    ? { ...m, status: 'error' as const }
+                    : m
                 )
               }
             }
@@ -876,7 +897,9 @@ function subscribeSessionStream(sid: string): void {
                 ...cur,
                 status: 'idle',
                 messages: cur.messages.map((m) =>
-                  m.status === 'streaming' || m.status === 'pending' ? { ...m, status: 'error' as const } : m
+                  m.status === 'streaming' || m.status === 'pending'
+                    ? { ...m, status: 'error' as const }
+                    : m
                 )
               }
             }
