@@ -13,8 +13,8 @@ export interface Extractor {
 
 /**
  * The snippet evaluated inside the tab. Calls `Readability(...).parse()`.
- * When `parse()` returns null we surface ok:false so the caller can decide
- * whether to fall back to body.innerHTML (handled in task 2.3).
+ * When `parse()` returns null we fall back to document.body.innerHTML directly
+ * within the snippet.
  */
 const PARSE_SNIPPET = `
 (function(){

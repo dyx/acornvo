@@ -6,7 +6,7 @@ export interface ProviderCaps {
   schemaProfile: 'full' | 'strict_subset' // strict 时哪些 JSON Schema 关键字能活
   betaUrlSuffix?: string // '/beta' 这类 opt-in 入口
   maxTokensIncludesReasoning: boolean
-  stability: 'stable' | 'beta' // beta 仅用于设置页可见，降级自动
+  stability: 'stable' | 'beta'
 }
 
 export const DEFAULT_CAPS: Record<string, ProviderCaps> = {

@@ -571,7 +571,7 @@ function applyToken(sid: string, txt: string, target: 'text' | 'reasoning' = 'te
 
           // If reasoning was started (either via reasoning-delta or the <think> check above)
           if (reasoningStartTime && !reasoningDuration) {
-            // If the text contains </think>, or if it's a standard provider starting actual text
+            // If the text contains </think>
             if (m.reasoningText && m.reasoningText.length > 0) {
               reasoningDuration = Math.max(1, Math.round((Date.now() - reasoningStartTime) / 1000))
             } else if (newText.includes('</think>')) {

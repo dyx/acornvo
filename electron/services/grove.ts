@@ -91,7 +91,7 @@ export interface InitializeResult {
 }
 
 /**
- * Idempotent initializer. Creates `.acornvo/`, `project.json`, `inbox/`, `assets/`,
+ * Idempotent initializer. Creates `.acornvo/`, `project.json`, `inbox/`, `assets/`, `conflicts/`,
  * `.nosync`, `.icloud`. Never overwrites a valid `project.json` — corrupt files are
  * backed up and rewritten. Returns whether the project was freshly created.
  */
@@ -227,9 +227,7 @@ export async function openGrove(
   if (currentGrove && currentGrove.path !== path) {
     await lockfile.release(currentGrove.path)
     currentGrove = null
-    // Await cleanup of old grove BEFORE opening new one. The onChange
-    // subscribers rely on these side effects having completed when they
-    // receive the null notification.
+    // Await cleanup of old grove.
     try {
       const { stop: watcherStop } = await import('./watcher')
       await watcherStop()

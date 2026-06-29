@@ -51,7 +51,7 @@ export function BookmarkSidebar(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col bg-transparent font-sans select-none">
-      {/* 搜索栏 (高度与右侧 AddressBar 严格保持 48px 一致) */}
+      {/* 搜索栏 */}
       <div className="flex pt-3 pb-2 shrink-0 items-center px-3">
         <div className="flex h-[30px] w-full items-center gap-1.5 rounded-[8px] border-[0.5px] border-[color:var(--color-line)] bg-[color:var(--color-paper)] px-2.5 transition-colors focus-within:border-[color:var(--color-acorn)] focus-within:ring-1 focus-within:ring-[color:var(--color-acorn)] shadow-sm">
           <Search size={14} className="text-[color:var(--color-ink-3)] shrink-0" />
@@ -135,7 +135,7 @@ export function BookmarkSidebar(): JSX.Element {
 
                       <div className="flex flex-col min-w-0 flex-1">
                         <span className="text-[13px] truncate">{b.title || b.url}</span>
-                        {/* 如果想的话，可以把域名放小字在下面，不过单行截断更干净，我们可以放在 tooltip 里或者像原来那样 */}
+
                         {!isActive && (
                           <span className="text-[10px] truncate text-[color:var(--color-ink-4)] group-hover:text-[color:var(--color-ink-3)] transition-colors">
                             {(() => {

@@ -270,7 +270,7 @@ async function _doSave(): Promise<void> {
 
 /**
  * Minimal markdown frontmatter + body composer for conflict snapshot texts.
- * Produces ---\n<yaml>\n---\n<body> when frontmatter is non-empty, else plain body.
+ * Produces ---\n<yaml>\n---\n\n<body> when frontmatter is non-empty, else plain body.
  */
 function stringify(fm: Frontmatter, body: string): string {
   if (!fm || Object.keys(fm).length === 0) return body
@@ -310,7 +310,7 @@ function buildCopyPath(originalPath: string, ts: string): string {
 }
 
 async function findFreeCopyPath(basePath: string): Promise<string> {
-  // Check if ipc.file.exists is available; if not, probe by trying to read
+  // Fallback: always use the first candidate
   if (typeof (ipc.file as any).exists === 'function') {
     if (!(await (ipc.file as any).exists(basePath))) return basePath
   }

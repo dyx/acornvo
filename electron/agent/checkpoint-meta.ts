@@ -14,8 +14,7 @@ export function markThreadActive(threadId: string): void {
 }
 
 /**
- * Marks a thread as canceled at "now". The 24h retention sweeper (Plan 5)
- * deletes checkpointer rows where canceled_at + 24h < now.
+ * Marks a thread as canceled at "now".
  */
 export function markThreadCanceled(threadId: string): void {
   const db = dbService.requireCurrent()

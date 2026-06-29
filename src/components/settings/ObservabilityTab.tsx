@@ -322,7 +322,7 @@ function ObservabilityAiPanel(): JSX.Element {
   )
 }
 
-// Replaced by Variant D layout in ObservabilityAiPanel
+
 
 // --- Queue Panel ---
 

@@ -8,7 +8,7 @@ import { useGroveStore } from '@/stores/grove'
  *
  * - Cmd/Ctrl+, → navigate to /settings
  * - Cmd/Ctrl+N → create new chat session (when on /chat)
- * - Cmd/Ctrl+K → focus + clear chat input (when on /chat)
+ * - Cmd/Ctrl+K → focus chat input (when on /chat)
  * - Cmd/Ctrl+/ → open shortcuts dialog (when on /chat)
  */
 export function useGlobalHotkeys(): void {

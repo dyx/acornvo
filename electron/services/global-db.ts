@@ -87,7 +87,7 @@ export function initGlobalDb(): void {
   applyPragmas(db)
   db.exec(GLOBAL_SCHEMA)
 
-  // Migration: add context_window if it doesn't exist
+  // Migration: add context_window, kind, and embedding_dim if they don't exist
   try {
     const columns = db.pragma('table_info(ai_model)') as any[]
     if (!columns.find((c) => c.name === 'context_window')) {

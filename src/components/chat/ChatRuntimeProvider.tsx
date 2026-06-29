@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 
-// convertMessage is no longer used, as we pre-process messages in useMemo now.
+
 
 export function ChatRuntimeProvider({ children }: { children: React.ReactNode }) {
   const activeSessionId = useChatStore((s) => s.activeSessionId)

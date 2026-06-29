@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_files_content_hash ON files(content_hash);
 
 
 -- ============================================================
--- files_fts — full-text search (trigram tokenizer)
+-- files_fts — full-text search (unicode61 tokenizer)
 -- ============================================================
 CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
   chunk_id UNINDEXED,

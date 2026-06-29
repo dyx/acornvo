@@ -22,7 +22,7 @@ export function Browse(): JSX.Element {
 
   const isOccluded = useBrowserStore((s) => s.isOccluded)
 
-  // Auto-create the first tab
+
   const viewportRef = useRef<HTMLDivElement>(null)
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined

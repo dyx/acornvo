@@ -328,7 +328,7 @@ export function installLibrarySubscriber(): () => void {
 
   const offChanged = ipc.on('index:fileChanged', () => {
     // payload might contain path, but if not we can just refresh
-    // Wait, index:fileChanged has no payload in type?
+
     // Let's check type, but safely just refresh
     void useLibraryStore.getState().refresh()
   })

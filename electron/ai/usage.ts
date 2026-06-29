@@ -192,8 +192,7 @@ export interface WriteUsageArgs {
   rawUsageJson?: string | null
   sessionId?: string
   jobId?: string | null
-  /** Pre-known token counts when the call site already has them (e.g. the
-   *  legacy queue handler reads them off `out.llmCall.{promptTokens,completionTokens}`). */
+  /** Pre-known token counts when the call site already has them. */
   promptTokens?: number | null
   completionTokens?: number | null
   cacheReadTokens?: number | null

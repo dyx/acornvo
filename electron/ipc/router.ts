@@ -58,14 +58,15 @@ function sanitizeMessage(message: string): string {
 
 export function normalize(err: unknown): IpcErrorShape {
   if (err && typeof err === 'object' && 'code' in err && 'message' in err) {
-    const code = (err as any).code
-    const message = (err as any).message
+    const errObj = err as Record<string, unknown>
+    const code = errObj.code
+    const message = errObj.message
     // Duck-type check if it looks like an IpcError
     if (typeof code === 'string' && typeof message === 'string') {
       return {
-        code: code as any,
+        code: code as IpcErrorShape['code'],
         message: sanitizeMessage(message),
-        ...('context' in err ? { context: (err as any).context } : {})
+        ...('context' in errObj ? { context: errObj.context as Record<string, unknown> } : {})
       }
     }
   }

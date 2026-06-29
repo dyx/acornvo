@@ -211,7 +211,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
             }
             vditorInternal.preview.render(vditorInternal)
           }
-          // Vditor is initialized, but its async markdown parsing and DOM painting take ~100ms.
+          // Vditor is initialized, but its async markdown parsing and DOM painting take 1000ms.
           // We delay the removal of the loading screen to prevent the white screen flash.
           setTimeout(() => {
             setIsReady(true)

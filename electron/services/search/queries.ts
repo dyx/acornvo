@@ -218,7 +218,7 @@ export function suggest(db: Database.Database, q: string): FileSummary[] {
     return rows.map(rowToFileSummary)
   }
 
-  // Use files_fts with trigram tokenizer for ultra-fast substring matching
+  // Use files_fts with unicode61 tokenizer for ultra-fast substring matching
   const sql = `
     SELECT
       files.path, files.title, files.category, files.clipped_at,

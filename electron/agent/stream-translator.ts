@@ -2,6 +2,7 @@ import type { AgentEvent, SessionMessage, ToolCall, ToolResult } from '../../sha
 
 import { AIMessage, ToolMessage } from '@langchain/core/messages'
 import { normalizeLLMError } from '../ai/normalize-errors'
+import { logger } from '../obs/logger'
 
 const TOOL_RESULT_BUDGET = 8000
 
@@ -96,9 +97,9 @@ async function handleAssistantMessage(deps: TranslatorDeps, msg: AIMessage): Pro
   if (toolCalls.length > 0 && deps.persist.hasToolCall) {
     const exists = await deps.persist.hasToolCall(toolCalls[0].id)
     if (exists) {
-      console.log(
-        `[translator] skipping duplicate historical message with tool call ${toolCalls[0].id}`
-      )
+      logger().info('agent', {
+        msg: `[translator] skipping duplicate historical message with tool call ${toolCalls[0].id}`
+      })
       return
     }
   }
@@ -271,7 +272,10 @@ export async function processToolCalls(
       })
       await handleToolMessage(deps, toolMsg)
     } catch (e) {
-      console.error('[processToolCalls] Error awaiting call.output:', e)
+      logger().error('agent', {
+        msg: '[processToolCalls] Error awaiting call.output',
+        meta: { error: e instanceof Error ? e.message : String(e) }
+      })
     }
   }
 }
@@ -310,7 +314,10 @@ export function emitDone(deps: TranslatorDeps, finalUsage: any, _modelName: stri
 
   if (usageShape && deps.persist.updateLastAssistantUsage) {
     deps.persist.updateLastAssistantUsage(usageShape).catch((err) => {
-      console.error('[emitDone] failed to update usage in db', err)
+      logger().error('agent', {
+        msg: '[emitDone] failed to update usage in db',
+        meta: { error: err instanceof Error ? err.message : String(err) }
+      })
     })
   }
 

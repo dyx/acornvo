@@ -31,10 +31,9 @@ export type ProjectCardProps = {
   onOpen: () => void
   onRemove: () => void
   onTakeover?: () => void
-  /** Stagger index for fade-up animation. */
-  /** Whether this is the currently active grove. */
   /** Whether this is the currently active grove. */
   isActive?: boolean
+  /** Stagger index for fade-up animation. */
   index?: number
 }
 

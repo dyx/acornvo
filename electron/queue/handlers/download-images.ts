@@ -103,7 +103,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
 
         // Replace in body. We use encodeURI for the path just in case
         const newRelUrl = path.posix.join('.assets', parsedPath.name, filename)
-        const newImgTag = `![${alt}](${newRelUrl})`
+        const newImgTag = `![${alt}](${encodeURI(newRelUrl)})`
 
         newBody = newBody.replace(fullMatch, newImgTag)
         replacements.push({ old: fullMatch, new: newImgTag })

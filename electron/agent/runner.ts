@@ -220,10 +220,6 @@ export async function resumeAgent(args: ResumeAgentArgs): Promise<void> {
   }
 
   // Map AgentDecision to LangChain's HITL response formats
-  // Although humanInTheLoopMiddleware accepts 'approve', 'edit', 'reject' via HITLResponse,
-  // we can also pass the raw values to resume.
-  // Wait, `humanInTheLoopMiddleware` resume format depends on the middleware implementation.
-  // Actually, we can just pass the array directly since we mapped them to what we need.
   const mappedDecisions = args.decisions.map((d) => {
     if (d.type === 'accept') return { type: 'approve' }
     if (d.type === 'edit') return { type: 'edit', args: d.args } // wait, hitl expects editedAction? No, editedAction is { name, args } maybe? Actually 'args' or 'editedArgs' is fine depending on version, but the middleware standard is 'edit' with args.

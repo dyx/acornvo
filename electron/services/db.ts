@@ -179,8 +179,7 @@ export function openForGrove(grovePath: string): void {
     try {
       createJobStore(db).recoverRunning()
     } catch {
-      /* table may not exist on a fresh corrupt rebuild before its migration runs;
-         the runMigrations call above guarantees it does, so this catch is purely
+      /* the runMigrations call above guarantees the table exists, so this catch is purely
          defensive against future ordering changes. */
     }
     current = db
@@ -207,8 +206,7 @@ export function openForGrove(grovePath: string): void {
   try {
     createJobStore(db).recoverRunning()
   } catch {
-    /* table may not exist on a fresh corrupt rebuild before its migration runs;
-       the runMigrations call above guarantees it does, so this catch is purely
+    /* the runMigrations call above guarantees the table exists, so this catch is purely
        defensive against future ordering changes. */
   }
   current = db

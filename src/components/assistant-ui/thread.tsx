@@ -253,7 +253,7 @@ const AssistantMessage: FC = () => {
   // reserves space for action bar and compensates with `-mb` for consistent msg spacing
   // keeps hovered action bar from shifting layout (autohide doesn't support absolute positioning well)
   // for pt-[n] use -mb-[n + 6] & min-h-[n + 6] to preserve compensation
-  // removed unused action bar constants
+
 
   const parts = useAuiState((s) => s.message.parts)
   const content = useAuiState((s) => s.message.content) as any[]
