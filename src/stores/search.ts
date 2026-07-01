@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { ipc } from '@/ipc/client'
-import { useSettingsStore } from './settings'
 import type { FileSummary } from '@shared/file-types'
 
 const FULL_TEXT_LIMIT = 50
@@ -12,8 +11,6 @@ interface FullTextSlice {
     summary: FileSummary
     body: string
     heading_path: string
-    score?: number
-    source?: 'fts' | 'semantic' | 'hybrid'
   }[]
   total: number
   pending: boolean
@@ -54,20 +51,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
         return
       }
       try {
-        const searchSettings = useSettingsStore.getState().search
-        let result
-        if (searchSettings?.hybridEnabled) {
-          result = await ipc.search.hybrid(q, {
-            limit: opts.limit ?? FULL_TEXT_LIMIT,
-            ftsWeight: searchSettings.ftsWeight ?? 1.0,
-            vecWeight: searchSettings.vecWeight ?? 1.0
-          })
-        } else {
-          result = await ipc.search.fullText(q, {
-            limit: opts.limit ?? FULL_TEXT_LIMIT,
-            offset: opts.offset ?? 0
-          })
-        }
+        const result = await ipc.search.fullText(q, {
+          limit: opts.limit ?? FULL_TEXT_LIMIT,
+          offset: opts.offset ?? 0
+        })
 
         if (get().fullText.requestId !== myId) return
         set((prev) => ({

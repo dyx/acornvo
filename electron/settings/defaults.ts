@@ -4,7 +4,6 @@ import type {
   AppearanceSettings,
   AiSettings,
   BrowserSettings,
-  SearchSettings,
   SettingsNamespace,
   SettingsByNs
 } from '@shared/settings-types'
@@ -14,7 +13,6 @@ export const DEFAULTS: {
   appearance: AppearanceSettings
   ai: AiSettings
   browser: BrowserSettings
-  search: SearchSettings
 } = {
   general: { locale: 'zh-CN', autoBackup: 'off', defaultMenu: '/browser', logLevel: 'info' },
   appearance: { theme: 'system', fontScale: 1.0 },
@@ -24,16 +22,14 @@ export const DEFAULTS: {
     defaultEmbeddingModelId: null,
     bodyMax: 20000
   },
-  browser: { clipImagesLocalize: false, searchEngine: 'google' },
-  search: { hybridEnabled: true, ftsWeight: 1.0, vecWeight: 1.0 }
+  browser: { clipImagesLocalize: false, searchEngine: 'google' }
 }
 
 const KNOWN_NAMESPACES: ReadonlyArray<SettingsNamespace> = [
   'general',
   'appearance',
   'ai',
-  'browser',
-  'search'
+  'browser'
 ]
 
 export function isKnownNamespace(value: unknown): value is SettingsNamespace {

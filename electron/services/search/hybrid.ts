@@ -3,7 +3,7 @@ import { getVectorStore } from '../vector-store'
 import { resolveEmbeddings } from '../../ai/embeddings'
 import { embedQueryLocal } from '../../ai/embed-worker'
 import { logger } from '../../obs/logger'
-import type { HybridSearchResult, HybridSearchResultItem } from '@shared/file-types'
+import type { FileSummary } from '@shared/file-types'
 import {
   rowToFileSummary,
   hydrateSnippets,
@@ -12,6 +12,21 @@ import {
   type SummaryRow
 } from './queries'
 import { buildFtsQuery } from './queryBuilder'
+
+export interface HybridSearchResultItem {
+  summary: FileSummary
+  body: string
+  heading_path: string
+  score: number
+  source: 'fts' | 'semantic' | 'hybrid'
+}
+
+export interface HybridSearchResult {
+  items: HybridSearchResultItem[]
+  total: number
+  pending: boolean
+  error?: string
+}
 
 // RRF constant (typically 60)
 const K = 60

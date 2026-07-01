@@ -67,21 +67,6 @@ export interface Pagination {
   offset?: number
 }
 
-export interface HybridSearchResultItem {
-  summary: FileSummary
-  body: string
-  heading_path: string
-  score: number
-  source: 'fts' | 'semantic' | 'hybrid'
-}
-
-export interface HybridSearchResult {
-  items: HybridSearchResultItem[]
-  total: number
-  pending: boolean
-  error?: string
-}
-
 export interface CategoryNode {
   /** Last segment after `/`. Top-level nodes use the full first segment. */
   name: string

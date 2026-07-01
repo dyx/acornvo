@@ -306,10 +306,7 @@
       "editorFont": "编辑器字体"
     },
     "search": {
-      "hybridSearch": "混合搜索 (全文 + 向量)",
-      "hybridSearchDesc": "结合关键词匹配与语义向量检索，获得更精准的结果。",
-      "ftsWeight": "全文搜索权重",
-      "vecWeight": "向量搜索权重",
+
       "rebuildIndex": "重建搜索索引",
       "rebuildIndexDesc": "强制清空并重新构建全文索引与向量索引。此过程在后台运行，且会占用较多的系统资源。",
       "rebuilding": "正在重建...",

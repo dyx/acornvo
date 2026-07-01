@@ -7,8 +7,7 @@ interface ResultItem {
   summary: FileSummary
   body: string
   heading_path: string
-  score?: number
-  source?: 'fts' | 'semantic' | 'hybrid'
+
 }
 
 function renderSnippet(body: string): JSX.Element {
@@ -72,24 +71,7 @@ export function FullTextResultList({
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium truncate">{it.summary.title ?? it.summary.path}</span>
               <div className="flex items-center gap-2">
-                {it.source && (
-                  <span
-                    className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
-                      it.source === 'hybrid'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        : it.source === 'semantic'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
-                    }`}
-                  >
-                    {it.source}
-                  </span>
-                )}
-                {it.score !== undefined && (
-                  <span className="text-[10px] text-muted-foreground tabular-nums">
-                    Score: {it.score.toFixed(4)}
-                  </span>
-                )}
+
                 <span className="text-xs text-muted-foreground shrink-0">
                   {it.summary.clipped_at ?? ''}
                 </span>
