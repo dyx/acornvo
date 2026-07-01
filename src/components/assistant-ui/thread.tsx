@@ -254,7 +254,6 @@ const AssistantMessage: FC = () => {
   // keeps hovered action bar from shifting layout (autohide doesn't support absolute positioning well)
   // for pt-[n] use -mb-[n + 6] & min-h-[n + 6] to preserve compensation
 
-
   const parts = useAuiState((s) => s.message.parts)
   const content = useAuiState((s) => s.message.content) as any[]
   const messageId = useAuiState((s) => s.message.id)

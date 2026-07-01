@@ -1,4 +1,5 @@
 import { app, session } from 'electron'
+import { ACORNVO_LOCAL_PROTOCOL } from '@shared/scheme'
 
 /**
  * Baseline CSP for the main window. Intentionally permissive on script/style
@@ -15,7 +16,7 @@ const CSP_BASELINE = [
   "default-src 'self'",
   scriptSrc,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https: acornvo-local:",
+  `img-src 'self' data: https: ${ACORNVO_LOCAL_PROTOCOL}`,
   "font-src 'self' data:",
   connectSrc
 ].join('; ')

@@ -1,6 +1,7 @@
 // src/ipc/clipper-port.ts
 import type { ClipInput, ClipPreview, ClipResult, ClipRunId } from '@shared/clipper-types'
 import { isIpcError, type IpcResult } from '@shared/ipc-contract'
+import { ipc } from './client'
 
 export interface ClipperPort {
   clip(args: { tabId: string }): Promise<IpcResult<ClipPreview>>
@@ -17,8 +18,8 @@ export function setClipperPort(port: ClipperPort): void {
 
 export function getClipperPort(): ClipperPort {
   if (portRef) return portRef
-  if (typeof window !== 'undefined' && (window as any).api?.clipper) {
-    const api = (window as any).api.clipper
+  if (typeof window !== 'undefined' && ipc.clipper) {
+    const api = ipc.clipper
     return {
       clip: (args) => toResult(() => api.clip(args.tabId)),
       saveClip: (input) => toResult(() => api.saveClip(input)),

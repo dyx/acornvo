@@ -6,6 +6,8 @@ import type { AgentEvent, Session, SessionMessage, Attachment } from '@shared/ag
 import { i18n } from '@/i18n'
 import type { TokenUsage } from '@shared/ai-types'
 
+export const TEMP_SESSION_ID = 'temp-session'
+
 export interface ChatSession {
   id: string
   title: string
@@ -131,10 +133,10 @@ function revertNewSessionFailure(sid: string, errorMsg: string) {
     const failedState = newBy[sid]
     delete newBy[sid]
 
-    let tempSession = newSessions.find((x) => x.id === 'temp-session')
+    let tempSession = newSessions.find((x) => x.id === TEMP_SESSION_ID)
     if (!tempSession) {
       tempSession = {
-        id: 'temp-session',
+        id: TEMP_SESSION_ID,
         title: '',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -145,12 +147,12 @@ function revertNewSessionFailure(sid: string, errorMsg: string) {
     }
 
     return {
-      activeSessionId: s.activeSessionId === sid ? 'temp-session' : s.activeSessionId,
+      activeSessionId: s.activeSessionId === sid ? TEMP_SESSION_ID : s.activeSessionId,
       sessions: newSessions,
       bySession: {
         ...newBy,
-        ['temp-session']: {
-          ...(newBy['temp-session'] ?? emptySession()),
+        [TEMP_SESSION_ID]: {
+          ...(newBy[TEMP_SESSION_ID] ?? emptySession()),
           pendingPromptText: failedState?.lastUserText ?? '',
           status: 'idle',
           error: errorMsg
@@ -228,7 +230,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   async createSession() {
     set((s) => {
       const tempSession: ChatSession = {
-        id: 'temp-session',
+        id: TEMP_SESSION_ID,
         title: '',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -237,15 +239,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       }
 
       return {
-        activeSessionId: 'temp-session',
-        sessions: [tempSession, ...s.sessions.filter((x) => x.id !== 'temp-session')],
+        activeSessionId: TEMP_SESSION_ID,
+        sessions: [tempSession, ...s.sessions.filter((x) => x.id !== TEMP_SESSION_ID)],
         bySession: {
           ...s.bySession,
-          ['temp-session']: { ...emptySession(), loaded: true }
+          [TEMP_SESSION_ID]: { ...emptySession(), loaded: true }
         }
       }
     })
-    return 'temp-session'
+    return TEMP_SESSION_ID
   },
 
   async renameSession(id, title) {
@@ -296,20 +298,20 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.warn('[chat-store] sendUserMessage: no activeSessionId, abort')
       return
     }
-    if (sid === 'temp-session') {
+    if (sid === TEMP_SESSION_ID) {
       try {
-        const tempSessionState = cur.sessions.find((x) => x.id === 'temp-session')
+        const tempSessionState = cur.sessions.find((x) => x.id === TEMP_SESSION_ID)
         const targetProfileId = tempSessionState?.profileId ?? null
 
         const raw = await ipc.chat['sessions.create']({ profileId: targetProfileId })
         const session = toChatSession(raw)
         sid = session.id
-        const tempState = cur.bySession['temp-session']
+        const tempState = cur.bySession[TEMP_SESSION_ID]
         set((s) => {
           const newBySession = { ...s.bySession }
-          delete newBySession['temp-session']
+          delete newBySession[TEMP_SESSION_ID]
           return {
-            sessions: [session, ...s.sessions.filter((x) => x.id !== 'temp-session')],
+            sessions: [session, ...s.sessions.filter((x) => x.id !== TEMP_SESSION_ID)],
             activeSessionId: session.id,
             bySession: {
               ...newBySession,
@@ -370,7 +372,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.error('[chat-store] sendUserMessage: IPC threw', err)
       const errorMsg = err instanceof Error ? err.message : String(err)
 
-      if (originalSid === 'temp-session') {
+      if (originalSid === TEMP_SESSION_ID) {
         revertNewSessionFailure(sid, errorMsg)
         return
       }
@@ -464,10 +466,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   async updateSessionProfile(id, profileId) {
     try {
-      if (id === 'temp-session') {
+      if (id === TEMP_SESSION_ID) {
         set((s) => ({
           sessions: s.sessions.map((ses) =>
-            ses.id === 'temp-session' ? { ...ses, profileId } : ses
+            ses.id === TEMP_SESSION_ID ? { ...ses, profileId } : ses
           )
         }))
         return
@@ -476,7 +478,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       let targetId = id
       if (!targetId) {
         targetId = await get().createSession()
-        if (!targetId || targetId === 'temp-session') return
+        if (!targetId || targetId === TEMP_SESSION_ID) return
       }
 
       await ipc.chat['sessions.updateProfile'](targetId, profileId)

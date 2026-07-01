@@ -48,7 +48,16 @@ function resolveEmbeddingProfile(modelIdParam: string): ResolvedProfile & { embe
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
   `
-  const p = db.prepare(query).get(modelIdParam) as any | undefined
+  const p = db.prepare(query).get(modelIdParam) as
+    | {
+        provider_id: string
+        provider_type: string
+        base_url: string | null
+        name: string
+        context_window: number | null
+        embedding_dim: number | null
+      }
+    | undefined
 
   if (!p) throw new IpcError('E_MISSING_PROFILE', `model not found: ${modelIdParam}`)
 

@@ -10,6 +10,7 @@ import { parseFile } from './frontmatter'
 import { chunkMarkdown } from './chunker'
 import { _setStateForTest as _indexerSetState } from './indexer'
 import * as opsLog from './ops/log'
+import { logger } from '../obs/logger'
 
 const SELF_WRITE_TTL_MS = 3000
 const MTIME_TOLERANCE_MS = 50
@@ -293,10 +294,10 @@ async function flush(): Promise<void> {
       const content_hash = createHash('sha256').update(body).digest('hex')
       enriched.push({ ...ev, body, frontmatter, content_hash, mtimeMs: st.mtimeMs, size: st.size })
     } catch (err) {
-      console.error(
-        `[watcher] failed to process ${ev.rel}:`,
-        err instanceof Error ? err.message : String(err)
-      )
+      logger().error('watcher', {
+        msg: `failed to process ${ev.rel}`,
+        meta: { error: err instanceof Error ? err.message : String(err) }
+      })
     }
   }
 

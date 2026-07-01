@@ -59,7 +59,14 @@ export function createSessions(): SessionsDao {
         ORDER BY s.updated_at DESC
       `
         )
-        .all() as any[]
+        .all() as {
+        id: string
+        title: string | null
+        profile_id: string | null
+        created_at: string
+        updated_at: string
+        message_count: number
+      }[]
       return rows.map((r) => ({
         id: r.id,
         title: r.title,
@@ -99,7 +106,17 @@ export function createSessions(): SessionsDao {
         .prepare(
           'SELECT id, session_id, role, content, tool_calls_json, tool_call_id, usage_json, attachments_json, created_at FROM session_messages WHERE session_id = ? ORDER BY id ASC'
         )
-        .all(sessionId) as any[]
+        .all(sessionId) as {
+        id: number
+        session_id: string
+        role: 'user' | 'assistant' | 'system' | 'tool'
+        content: string | null
+        tool_calls_json: string | null
+        tool_call_id: string | null
+        usage_json: string | null
+        attachments_json: string | null
+        created_at: string
+      }[]
       return rows.map((r) => ({
         id: r.id,
         sessionId: r.session_id,

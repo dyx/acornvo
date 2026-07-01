@@ -60,7 +60,7 @@ export async function hybridSearch(
   let ftsRows: { chunk_id: string; raw_score: number }[] = []
   if (ftsWeight > 0 && ftsQuery) {
     try {
-      ftsRows = ftsStmt.all(ftsQuery) as any
+      ftsRows = ftsStmt.all(ftsQuery) as { chunk_id: string; raw_score: number }[]
     } catch (err) {
       logger().warn('hybrid', { msg: 'FTS search failed', meta: { query, err: String(err) } })
     }

@@ -1,6 +1,7 @@
 // src/ipc/clips-port.ts
 import type { Clip, ClipCreateInput, ClipsListOpts, ClipsListResult } from '@shared/clip-types'
 import { isIpcError, type IpcResult } from '@shared/ipc-contract'
+import { ipc } from './client'
 
 export interface ClipsPort {
   create(input: ClipCreateInput): Promise<IpcResult<{ id: number }>>
@@ -18,14 +19,14 @@ export function setClipsPort(p: ClipsPort): void {
 
 export function getClipsPort(): ClipsPort {
   if (portRef) return portRef
-  if (typeof window !== 'undefined' && (window as any).api?.clips) {
-    const api = (window as any).api.clips
+  if (typeof window !== 'undefined' && ipc.clips) {
+    const api = ipc.clips
     return {
       create: (input) => toResult(() => api.create(input)),
       list: (opts) => toResult(() => api.list(opts)),
       getByUrl: (args) => toResult(() => api.getByUrl(args.url)),
       getById: (args) => toResult(() => api.getById(args.id)),
-      delete: (args) => toResult(() => api.delete(args.id))
+      delete: (args) => toResult(() => api.delete(args.id).then(() => undefined))
     }
   }
   throw new Error('clips port not configured')

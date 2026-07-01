@@ -322,8 +322,6 @@ function ObservabilityAiPanel(): JSX.Element {
   )
 }
 
-
-
 // --- Queue Panel ---
 
 function ObservabilityQueuePanel(): JSX.Element {

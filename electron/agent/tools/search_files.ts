@@ -1,5 +1,6 @@
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
+import { ACORNVO_LOCAL_PREFIX } from '@shared/scheme'
 import { hybridSearch } from '../../services/search/hybrid'
 
 const MAX_LIMIT = 20
@@ -51,8 +52,7 @@ export const searchFilesTool = tool(
   },
   {
     name: 'search_files',
-    description:
-      '对用户知识库进行混合检索（关键词 + 语义向量）。仅当用户明确或隐含地询问其收藏内容时才使用此工具。请勿用于通用对话。返回匹配的 Markdown 块及其标题上下文。用一句自然语言描述要找的内容即可。极其重要：在使用搜索结果回答时，必须使用 Markdown 脚注或内联链接引用来源，指向提供的路径（例如 `[1]` 或 `[标题](acornvo-local:///path)`）。这有助于用户验证来源。',
+    description: `对用户知识库进行混合检索（关键词 + 语义向量）。仅当用户明确或隐含地询问其收藏内容时才使用此工具。请勿用于通用对话。返回匹配的 Markdown 块及其标题上下文。用一句自然语言描述要找的内容即可。极其重要：在使用搜索结果回答时，必须使用 Markdown 脚注或内联链接引用来源，指向提供的路径（例如 \`[1]\` 或 \`[标题](${ACORNVO_LOCAL_PREFIX}path)\`）。这有助于用户验证来源。`,
     schema: SearchFilesSchema
   }
 )

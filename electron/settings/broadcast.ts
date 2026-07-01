@@ -2,6 +2,7 @@
 import { webContents } from 'electron'
 import { logger } from '../obs/logger'
 import { settingsStore } from './store'
+import { sendEvent } from '../ipc/events'
 
 const CHANNEL = 'settings:changed'
 
@@ -11,7 +12,7 @@ export function installSettingsBroadcaster(): () => void {
     for (const wc of webContents.getAllWebContents()) {
       if (wc.isDestroyed()) continue
       try {
-        wc.send(CHANNEL, payload)
+        sendEvent(wc, CHANNEL, payload)
       } catch (err) {
         logger().warn('settings', {
           msg: 'settings:changed send failed',

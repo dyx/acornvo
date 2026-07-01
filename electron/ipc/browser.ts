@@ -1,6 +1,7 @@
 // electron/ipc/browser.ts — implemented in Plan 2 task 5.3
 import type { BrowserWindow } from 'electron'
 import type { IpcContract, TabId, SetViewportArgs } from '@shared/ipc-contract'
+import { sendEvent } from './events'
 import { logger } from '../obs/logger'
 import {
   createTabView,
@@ -48,7 +49,7 @@ function registerNewTabFromUrl(id: TabId, url: string): void {
     notifyOpenUrl: (urlToOpen) => {
       const w = _mainWindow
       if (w && !w.isDestroyed()) {
-        w.webContents.send('browser:openNewTabRequest', { url: urlToOpen })
+        sendEvent(w.webContents, 'browser:openNewTabRequest', { url: urlToOpen })
       }
     }
   })

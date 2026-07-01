@@ -1,6 +1,6 @@
 import type { AiReviewResult, LlmErrorCode } from '@shared/ai-types'
-import path from 'node:path'
 import fs from 'node:fs'
+import { safeResolve } from '../services/path-safety'
 import { dbService } from '../services/db'
 import { getCurrent } from '../services/grove'
 import { parseFile } from '../services/frontmatter'
@@ -66,7 +66,7 @@ function loadMd(rel: string): {
   const grove = getCurrent()
   if (!grove) throw rerr('E_FILE_NOT_FOUND', 'no grove opened')
   const root = grove.path
-  const abs = path.join(root, rel)
+  const abs = safeResolve(root, rel)
   let stat: fs.Stats
   try {
     stat = fs.statSync(abs)
@@ -93,6 +93,7 @@ interface ModelProviderRow {
   provider_type: string
   base_url: string | null
   name: string
+  context_window: number | null
 }
 
 function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: string } {
@@ -123,7 +124,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
   `
-  let p = db.prepare(query).get(id) as ModelProviderRow | undefined
+  let p = db.prepare(query).get(id) as (ModelProviderRow & { db_model_id?: string }) | undefined
 
   if (!p && !modelIdParam) {
     logger().warn('ai', {
@@ -149,8 +150,8 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
       .get() as (ModelProviderRow & { db_model_id: string }) | undefined
 
     if (p) {
-      settingsStore.set('ai', { defaultReviewerModelId: (p as any).db_model_id })
-      id = (p as any).db_model_id
+      settingsStore.set('ai', { defaultReviewerModelId: p.db_model_id })
+      id = p.db_model_id
       logger().info('ai', {
         msg: '[resolveProfile] auto-fixed defaultReviewerModelId',
         meta: { newId: id }
@@ -201,7 +202,7 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile & { dbModelId: s
     baseUrl: p.base_url ?? undefined,
     apiKey,
     dbModelId: id!,
-    contextWindow: (p as any).context_window ?? 128000
+    contextWindow: p.context_window ?? 128000
   }
 }
 
@@ -298,15 +299,22 @@ export async function reviewClip(
     parsed = out.parsed
     usage = readUsage(out.raw)
 
-    const rawAi = out.raw as any
+    const rawAi = out.raw as
+      | { response_metadata?: { usage?: any }; usage_metadata?: any }
+      | undefined
+      | null
     if (rawAi?.response_metadata?.usage) {
       try {
         rawUsageJson = JSON.stringify(rawAi.response_metadata.usage)
-      } catch {}
+      } catch (e) {
+        logger().warn('ai', { msg: 'usage stringify failed', meta: { error: String(e) } })
+      }
     } else if (rawAi?.usage_metadata) {
       try {
         rawUsageJson = JSON.stringify(rawAi.usage_metadata)
-      } catch {}
+      } catch (e) {
+        logger().warn('ai', { msg: 'usage stringify failed', meta: { error: String(e) } })
+      }
     }
 
     logger().info('ai', {
@@ -367,8 +375,9 @@ export async function reviewClip(
     rawUsageJson: rawUsageJson ?? null
   }
 
+  const MTIME_RETRY_MAX = 3
   let currentMd = md
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < MTIME_RETRY_MAX; attempt++) {
     const nextFrontmatter = {
       ...currentMd.frontmatter,
       // 以 AI 为准，直接覆盖正式字段
@@ -396,7 +405,7 @@ export async function reviewClip(
       break
     } catch (e) {
       const code = (e as { code?: string })?.code
-      if (code === 'E_MTIME_MISMATCH' && attempt < 2) {
+      if (code === 'E_MTIME_MISMATCH' && attempt < MTIME_RETRY_MAX - 1) {
         logger().warn('ai', {
           msg: '[reviewClip] mtime mismatch, reloading file to retry',
           meta: { clipId, path: clip.path }
@@ -411,7 +420,7 @@ export async function reviewClip(
       if (code === 'E_MTIME_MISMATCH') {
         throw rerr('E_MTIME_CONFLICT', 'mtime conflict on writeback', { llmCall })
       }
-      Object.assign(e as any, { llmCall })
+      Object.assign(e as Error, { llmCall })
       throw e
     }
   }

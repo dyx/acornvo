@@ -13,6 +13,7 @@ import { writeUsage } from '../ai/usage'
 import { getProviderApiKey } from '../settings/provider-key'
 import { getGlobalDb } from '../services/global-db'
 import { settingsStore } from '../settings/store'
+import { logger } from '../obs/logger'
 
 export interface ChatDeps {
   concurrency: ConcurrencyGate
@@ -43,7 +44,16 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
     JOIN ai_provider p ON m.provider_id = p.id
     WHERE m.id = ?
   `
-  let p = db.prepare(query).get(id) as any | undefined
+  let p = db.prepare(query).get(id) as
+    | {
+        provider_id: string
+        provider_type: string
+        base_url: string | null
+        name: string
+        context_window: number | null
+        db_model_id?: string
+      }
+    | undefined
 
   if (!p && !modelIdParam) {
     p = db
@@ -62,7 +72,16 @@ function resolveProfile(modelIdParam?: string): ResolvedProfile {
       ORDER BY m.created_at ASC LIMIT 1
     `
       )
-      .get() as any | undefined
+      .get() as
+      | {
+          provider_id: string
+          provider_type: string
+          base_url: string | null
+          name: string
+          context_window: number | null
+          db_model_id: string
+        }
+      | undefined
 
     if (p) {
       settingsStore.set('ai', { defaultChatModelId: p.db_model_id })
@@ -97,7 +116,7 @@ export function createChatHandlers(deps: ChatDeps) {
     const db = getGlobalDb()
     const profileIdRow = db
       .prepare('SELECT profile_id FROM sessions WHERE id = ?')
-      .get(sessionId) as any
+      .get(sessionId) as { profile_id: string | null } | undefined
     if (!profileIdRow || !profileIdRow.profile_id) return
     const profile = resolveProfile(profileIdRow.profile_id)
     const agent = getAgentBuilder().buildForProfile(profile)
@@ -131,7 +150,7 @@ export function createChatHandlers(deps: ChatDeps) {
       }
       const row = db
         .prepare('SELECT approved, args_json FROM tool_calls WHERE id = ?')
-        .get(callId) as any
+        .get(callId) as { approved: number | null; args_json: string | null } | undefined
       if (!row || row.approved === null) {
         allResolved = false
         break
@@ -217,18 +236,24 @@ export function createChatHandlers(deps: ChatDeps) {
       profileId?: string
       attachments?: import('../../shared/agent-types').Attachment[]
     }) => {
-      console.log('[ipc.chat] sendUserMessage: sid=%s textLen=%d', opts.sessionId, opts.text.length)
+      logger().info('chat', {
+        msg: 'sendUserMessage start',
+        meta: { sessionId: opts.sessionId, textLen: opts.text.length }
+      })
       const list = await deps.sessions.list()
       const sess = list.find((s) => s.id === opts.sessionId)
       if (!sess) {
-        console.warn('[ipc.chat] sendUserMessage: session %s not found in DB', opts.sessionId)
+        logger().warn('chat', {
+          msg: 'sendUserMessage: session not found in DB',
+          meta: { sessionId: opts.sessionId }
+        })
         throw new IpcError('E_NOT_FOUND', 'session not found')
       }
       const profileId = opts.profileId ?? sess.profileId ?? undefined
-      console.log('[ipc.chat] sendUserMessage: resolved profileId=%s', profileId)
+      logger().info('chat', { msg: 'sendUserMessage: resolved profileId', meta: { profileId } })
 
       const ack = deps.concurrency.tryAcquire(opts.sessionId)
-      console.log('[ipc.chat] sendUserMessage: concurrency ack=%s', ack)
+      logger().info('chat', { msg: 'sendUserMessage: concurrency ack', meta: { ack } })
       if (ack === 'busy') throw new IpcError('E_BUSY', 'a loop is already running for this session')
       if (ack === 'global-busy')
         throw new IpcError('E_GLOBAL_BUSY', 'too many concurrent agent loops')
@@ -237,11 +262,10 @@ export function createChatHandlers(deps: ChatDeps) {
       aborts.set(opts.sessionId, ctl)
       const writer = createStreamWriter(opts.sessionId, deps.getTargets)
       const targets = deps.getTargets()
-      console.log(
-        '[ipc.chat] sendUserMessage: streamWriter channel=%s targets=%d',
-        writer.channel,
-        targets.length
-      )
+      logger().info('chat', {
+        msg: 'sendUserMessage: streamWriter',
+        meta: { channel: writer.channel, targets: targets.length }
+      })
 
       let profile: ReturnType<typeof resolveProfile>
       let agent: ReturnType<ReturnType<typeof getAgentBuilder>['buildForProfile']>
@@ -250,24 +274,29 @@ export function createChatHandlers(deps: ChatDeps) {
         if (!sess.profileId) {
           await deps.sessions.updateProfile(opts.sessionId, profile.dbModelId)
         }
-        console.log(
-          '[ipc.chat] sendUserMessage: profile=%s provider=%s model=%s baseUrl=%s hasKey=%s',
-          profile.id,
-          profile.provider,
-          profile.model,
-          profile.baseUrl ?? '(none)',
-          profile.apiKey ? 'yes' : 'no'
-        )
+        logger().debug('chat', {
+          msg: 'sendUserMessage: profile',
+          meta: {
+            id: profile.id,
+            provider: profile.provider,
+            model: profile.model,
+            baseUrl: profile.baseUrl ?? '(none)',
+            hasKey: profile.apiKey ? 'yes' : 'no'
+          }
+        })
         agent = getAgentBuilder().buildForProfile(profile)
-        console.log('[ipc.chat] sendUserMessage: agent built')
+        logger().info('chat', { msg: 'sendUserMessage: agent built' })
       } catch (err) {
-        console.error('[ipc.chat] sendUserMessage: profile/agent build failed', err)
+        logger().error('chat', {
+          msg: 'sendUserMessage: profile/agent build failed',
+          meta: { error: String(err) }
+        })
         deps.concurrency.release(opts.sessionId)
         aborts.delete(opts.sessionId)
         throw err
       }
 
-      console.log('[ipc.chat] sendUserMessage: dispatching runAgent…')
+      logger().info('chat', { msg: 'sendUserMessage: dispatching runAgent' })
       void runAgentNew({
         sessionId: opts.sessionId,
         userText: opts.text,
@@ -289,14 +318,16 @@ export function createChatHandlers(deps: ChatDeps) {
         attachments: opts.attachments
       })
         .then(() => {
-          console.log('[ipc.chat] sendUserMessage: runAgent resolved for sid=%s', opts.sessionId)
+          logger().info('chat', {
+            msg: 'sendUserMessage: runAgent resolved',
+            meta: { sessionId: opts.sessionId }
+          })
         })
         .catch((err: any) => {
-          console.error(
-            '[ipc.chat] sendUserMessage: runAgent rejected for sid=%s',
-            opts.sessionId,
-            err
-          )
+          logger().error('chat', {
+            msg: 'sendUserMessage: runAgent rejected',
+            meta: { sessionId: opts.sessionId, error: String(err) }
+          })
           writer.write({
             type: 'error',
             error: err?.code ?? 'E_AGENT_FAILURE',
@@ -304,7 +335,10 @@ export function createChatHandlers(deps: ChatDeps) {
           })
         })
         .finally(() => {
-          console.log('[ipc.chat] sendUserMessage: runAgent finally for sid=%s', opts.sessionId)
+          logger().info('chat', {
+            msg: 'sendUserMessage: runAgent finally',
+            meta: { sessionId: opts.sessionId }
+          })
           aborts.delete(opts.sessionId)
           deps.concurrency.release(opts.sessionId)
         })
@@ -325,7 +359,9 @@ export function createChatHandlers(deps: ChatDeps) {
 
     approveTool: async (callId: string, opts?: { editedArgs?: unknown }) => {
       const db = getGlobalDb()
-      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
+      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as
+        | { session_id: string }
+        | undefined
       if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
 
       if (opts?.editedArgs !== undefined) {
@@ -349,7 +385,9 @@ export function createChatHandlers(deps: ChatDeps) {
 
     rejectTool: async (callId: string) => {
       const db = getGlobalDb()
-      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as any
+      const row = db.prepare('SELECT session_id FROM tool_calls WHERE id = ?').get(callId) as
+        | { session_id: string }
+        | undefined
       if (!row) throw new IpcError('E_NOT_FOUND', `no pending approval for callId ${callId}`)
 
       db.prepare('UPDATE tool_calls SET approved = 0 WHERE id = ?').run(callId)

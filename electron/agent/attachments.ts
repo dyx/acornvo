@@ -1,5 +1,5 @@
-import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
+import { safeResolve } from '../services/path-safety'
 import type { Attachment } from '../../shared/agent-types'
 
 export interface CollectContext {
@@ -115,16 +115,6 @@ export async function collectAttachmentContext(
 }
 
 async function readFileSafe(rel: string, root: string): Promise<string> {
-  const normalizedRoot = path.resolve(root)
-  let abs = path.resolve(path.join(normalizedRoot, rel))
-  try {
-    abs = await fs.realpath(abs)
-  } catch {
-    // If realpath fails (e.g. file doesn't exist), fallback to the resolved path.
-    // The subsequent fs.readFile will throw a standard ENOENT error.
-  }
-  if (!abs.startsWith(normalizedRoot + path.sep) && abs !== normalizedRoot) {
-    throw new Error(`path escape: ${rel}`)
-  }
+  const abs = safeResolve(root, rel, { realpath: true })
   return fs.readFile(abs, 'utf-8')
 }

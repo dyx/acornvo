@@ -7,7 +7,6 @@ interface ResultItem {
   summary: FileSummary
   body: string
   heading_path: string
-
 }
 
 function renderSnippet(body: string): JSX.Element {
@@ -71,7 +70,6 @@ export function FullTextResultList({
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium truncate">{it.summary.title ?? it.summary.path}</span>
               <div className="flex items-center gap-2">
-
                 <span className="text-xs text-muted-foreground shrink-0">
                   {it.summary.clipped_at ?? ''}
                 </span>

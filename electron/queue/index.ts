@@ -7,6 +7,7 @@ import { aiReviewClipHandler } from './handlers/ai-review-clip'
 
 import { downloadClipImagesHandler } from './handlers/download-images'
 import { embedFileHandler } from './handlers/embed-file'
+import { sendEvent } from '../ipc/events'
 
 export interface QueueBootstrap {
   store: JobStore
@@ -31,7 +32,7 @@ export function bootstrapQueueRunner(
   store.events.on('stateChanged', ({ job }) => {
     for (const wc of opts.getRenderers()) {
       try {
-        wc.send('jobs:changed', job)
+        sendEvent(wc, 'jobs:changed', job)
       } catch {
         /* renderer may have been destroyed; safe to ignore */
       }

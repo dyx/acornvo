@@ -2,6 +2,7 @@ import { webContents } from 'electron'
 import type { GroveSummary } from '@shared/grove'
 import { onChange } from './grove'
 import { logger } from '../obs/logger'
+import { sendEvent } from '../ipc/events'
 
 const CHANNEL = 'project:changed'
 
@@ -14,7 +15,7 @@ export function installGroveBroadcaster(): () => void {
     for (const wc of webContents.getAllWebContents()) {
       if (wc.isDestroyed()) continue
       try {
-        wc.send(CHANNEL, payload)
+        sendEvent(wc, CHANNEL, payload)
       } catch (err) {
         logger().warn('grove', {
           msg: 'project:changed send failed',

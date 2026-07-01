@@ -36,9 +36,6 @@ export interface BrowserSettings {
   searchEngine: SearchEngine
 }
 
-
-export type SettingsTab = 'general' | 'ai' | 'browser' | 'observability' | 'about'
-
 export type SettingsNamespace = 'general' | 'appearance' | 'ai' | 'browser'
 
 export type SettingsByNs = {

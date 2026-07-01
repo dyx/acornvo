@@ -17,6 +17,7 @@ import {
   emitDone,
   type TranslatorDeps
 } from './stream-translator'
+import { logger } from '../obs/logger'
 
 export interface RunnerDeps {
   agent: {
@@ -65,7 +66,7 @@ async function processStream(
       try {
         await processMessages(stream.messages, translatorDeps, deps.modelName)
       } catch (e) {
-        console.error('Error processing messages', e)
+        logger().error('runner', { msg: 'Error processing messages', meta: { error: String(e) } })
       }
     })()
 
@@ -73,24 +74,26 @@ async function processStream(
       try {
         await processToolCalls(stream.toolCalls, translatorDeps)
       } catch (e) {
-        console.error('Error processing tool calls', e)
+        logger().error('runner', { msg: 'Error processing tool calls', meta: { error: String(e) } })
       }
     })()
 
     await Promise.all([p1, p2])
 
-    console.log('[runAgent] stream finished normally sid=%s', sessionId)
+    logger().info('runner', { msg: '[runAgent] stream finished normally', meta: { sessionId } })
     emitDone(translatorDeps, translatorDeps.finalUsage, deps.modelName)
   } catch (err) {
     const e = err as { name?: string; code?: string; message?: string }
-    console.error(
-      '[runAgent] caught error sid=%s name=%s code=%s msg=%s',
-      sessionId,
-      e?.name,
-      e?.code,
-      e?.message,
-      err
-    )
+    logger().error('runner', {
+      msg: '[runAgent] caught error',
+      meta: {
+        sessionId,
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        error: String(err)
+      }
+    })
     if (e?.name === 'AbortError' || deps.cancel.aborted) {
       emitCanceled(translatorDeps)
       return
@@ -106,7 +109,10 @@ export async function runAgent({
   streamWriter,
   attachments
 }: RunAgentArgsInternal): Promise<void> {
-  console.log('[runAgent] start sid=%s model=%s', sessionId, deps.modelName)
+  logger().info('runner', {
+    msg: '[runAgent] start',
+    meta: { sessionId, modelName: deps.modelName }
+  })
   const emit = (e: AgentEvent) => streamWriter.write(e)
 
   // Persist + emit the user message immediately (truth source).
@@ -116,10 +122,15 @@ export async function runAgent({
     attachments
   })
   emit({ type: 'message.appended', message: userMsg })
-  console.log('[runAgent] user message appended sid=%s', sessionId)
+  logger().info('runner', { msg: '[runAgent] user message appended', meta: { sessionId } })
   try {
     markThreadActive(sessionId)
-  } catch {}
+  } catch (e) {
+    logger().warn('runner', {
+      msg: 'markThreadActive failed',
+      meta: { sessionId, error: String(e) }
+    })
+  }
 
   // Collect attachments → synthesize a pre-user block (NOT persisted in session_messages).
   let preUserBlock: string | null = null
@@ -163,7 +174,7 @@ export async function runAgent({
   }
 
   try {
-    console.log('[runAgent] agent.streamEvents() invoked sid=%s', sessionId)
+    logger().info('runner', { msg: '[runAgent] agent.streamEvents() invoked', meta: { sessionId } })
     const agent = deps.agent as any
     const stream = await agent.streamEvents(
       { messages: newMessages },

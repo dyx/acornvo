@@ -16,7 +16,13 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
     .prepare(
       'SELECT chunk_id, ordinal, heading_path, body, char_count FROM chunks WHERE path = ? ORDER BY ordinal ASC'
     )
-    .all(path) as any[]
+    .all(path) as {
+    chunk_id: string
+    ordinal: number
+    heading_path: string | null
+    body: string
+    char_count: number
+  }[]
 
   if (chunks.length === 0) {
     logger().info('embed', { msg: 'skip empty file', meta: { path } })
@@ -57,7 +63,7 @@ export const embedFileHandler: JobHandler = async (ctx: HandlerCtx) => {
   } catch (err) {
     logger().error('embed', {
       msg: 'database update failed',
-      meta: { path, error: String(err), stack: (err as any).stack }
+      meta: { path, error: String(err), stack: err instanceof Error ? err.stack : undefined }
     })
     throw err
   }

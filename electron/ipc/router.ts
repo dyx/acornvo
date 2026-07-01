@@ -1,6 +1,11 @@
 import { ipcMain } from 'electron'
 import { logger } from '../obs/logger'
-import { type IpcContract, type IpcErrorShape, type IpcResult } from '@shared/ipc-contract'
+import {
+  isIpcError,
+  type IpcContract,
+  type IpcErrorShape,
+  type IpcResult
+} from '@shared/ipc-contract'
 
 type HandlerMap = {
   [NS in keyof IpcContract]: {
@@ -57,17 +62,11 @@ function sanitizeMessage(message: string): string {
 }
 
 export function normalize(err: unknown): IpcErrorShape {
-  if (err && typeof err === 'object' && 'code' in err && 'message' in err) {
-    const errObj = err as Record<string, unknown>
-    const code = errObj.code
-    const message = errObj.message
-    // Duck-type check if it looks like an IpcError
-    if (typeof code === 'string' && typeof message === 'string') {
-      return {
-        code: code as IpcErrorShape['code'],
-        message: sanitizeMessage(message),
-        ...('context' in errObj ? { context: errObj.context as Record<string, unknown> } : {})
-      }
+  if (isIpcError(err)) {
+    return {
+      code: err.code,
+      message: sanitizeMessage(err.message),
+      ...(err.context !== undefined ? { context: err.context } : {})
     }
   }
   if (err instanceof Error) {

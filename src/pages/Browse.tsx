@@ -22,7 +22,6 @@ export function Browse(): JSX.Element {
 
   const isOccluded = useBrowserStore((s) => s.isOccluded)
 
-
   const viewportRef = useRef<HTMLDivElement>(null)
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : undefined

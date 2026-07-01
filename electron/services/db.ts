@@ -10,6 +10,7 @@ import { readRebuildState, CURRENT_CHUNKER_VERSION } from './search/stats'
 import { createJobStore } from '../queue/store'
 import { getLoadablePath } from 'sqlite-vec'
 import { logger } from '../obs/logger'
+import { sendEvent } from '../ipc/events'
 
 let _vecOk = false
 export function isVecAvailable(): boolean {
@@ -117,7 +118,9 @@ function getMainWindow(): WindowLike | null {
 function emit(channel: 'db:rebuilding' | 'db:rebuilt'): void {
   const win = getMainWindow()
   try {
-    win?.webContents.send(channel)
+    if (win) {
+      sendEvent(win.webContents as any, channel)
+    }
   } catch {
     /* renderer may have been destroyed; safe to ignore */
   }
@@ -190,13 +193,21 @@ export function openForGrove(grovePath: string): void {
       void forceRebuildFts(db, grovePath).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err)
 
-        console.error('[db] forceRebuildFts failed', msg)
+        try {
+          logger().error('db', { msg: 'forceRebuildFts failed', meta: { error: msg } })
+        } catch {
+          console.error('[db] forceRebuildFts failed', msg)
+        }
       })
     } else {
       void maybeRebuildFts(db, grovePath).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err)
 
-        console.error('[db] maybeRebuildFts failed', msg)
+        try {
+          logger().error('db', { msg: 'maybeRebuildFts failed', meta: { error: msg } })
+        } catch {
+          console.error('[db] maybeRebuildFts failed', msg)
+        }
       })
     }
     return
@@ -216,13 +227,21 @@ export function openForGrove(grovePath: string): void {
     void forceRebuildFts(db, grovePath).catch((err) => {
       const msg = err instanceof Error ? err.message : String(err)
 
-      console.error('[db] forceRebuildFts failed', msg)
+      try {
+        logger().error('db', { msg: 'forceRebuildFts failed', meta: { error: msg } })
+      } catch {
+        console.error('[db] forceRebuildFts failed', msg)
+      }
     })
   } else {
     void maybeRebuildFts(db, grovePath).catch((err) => {
       const msg = err instanceof Error ? err.message : String(err)
 
-      console.error('[db] maybeRebuildFts failed', msg)
+      try {
+        logger().error('db', { msg: 'maybeRebuildFts failed', meta: { error: msg } })
+      } catch {
+        console.error('[db] maybeRebuildFts failed', msg)
+      }
     })
   }
 }

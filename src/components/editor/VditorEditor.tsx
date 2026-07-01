@@ -6,6 +6,7 @@ import { useEditorStore } from '@/stores/editor'
 import { LoadingSquirrel } from '@/components/ui/LoadingSquirrel'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
+import { ACORNVO_LOCAL_PREFIX, ACORNVO_LOCAL_SCHEME } from '@shared/scheme'
 
 interface VditorEditorProps {
   isPreviewMode?: boolean
@@ -185,7 +186,7 @@ export function VditorEditor({ isPreviewMode = false }: VditorEditorProps): JSX.
 
                   await window.api.file.writeBinary(relImagePath, uint8)
 
-                  const insertText = `![${file.name}](acornvo-local://${relImagePath})\n`
+                  const insertText = `![${file.name}](${ACORNVO_LOCAL_PREFIX}${relImagePath})\n`
                   if (v) {
                     v.insertValue(insertText)
                   }
@@ -299,18 +300,18 @@ function rewriteImagesToLocal(markdown: string, docPath: string): string {
     const parts = urlPart.trim().split(/\s+/)
     const url = parts[0]
     const rest = parts.slice(1).join(' ')
-    if (url.match(/^(https?|data|acornvo-local|file):/i)) return match
+    if (url.match(new RegExp(`^(https?|data|${ACORNVO_LOCAL_SCHEME}|file):`, 'i'))) return match
     const resolvedPath = url.startsWith('/') ? url.substring(1) : `${prefix}${url}`
     const newUrlPart = rest
-      ? `acornvo-local://${resolvedPath} ${rest}`
-      : `acornvo-local://${resolvedPath}`
+      ? `${ACORNVO_LOCAL_PREFIX}${resolvedPath} ${rest}`
+      : `${ACORNVO_LOCAL_PREFIX}${resolvedPath}`
     return `![${alt}](${newUrlPart})`
   })
 
   result = result.replace(/<img([^>]*)src="([^"]+)"([^>]*)>/g, (match, p1, url, p2) => {
-    if (url.match(/^(https?|data|acornvo-local|file):/i)) return match
+    if (url.match(new RegExp(`^(https?|data|${ACORNVO_LOCAL_SCHEME}|file):`, 'i'))) return match
     const resolvedPath = url.startsWith('/') ? url.substring(1) : `${prefix}${url}`
-    return `<img${p1}src="acornvo-local://${resolvedPath}"${p2}>`
+    return `<img${p1}src="${ACORNVO_LOCAL_PREFIX}${resolvedPath}"${p2}>`
   })
 
   return result
@@ -326,8 +327,8 @@ function rewriteImagesToRelative(markdown: string, docPath: string): string {
     const parts = urlPart.trim().split(/\s+/)
     const url = parts[0]
     const rest = parts.slice(1).join(' ')
-    if (url.startsWith('acornvo-local://')) {
-      const resolvedPath = url.replace('acornvo-local://', '')
+    if (url.startsWith(ACORNVO_LOCAL_PREFIX)) {
+      const resolvedPath = url.replace(ACORNVO_LOCAL_PREFIX, '')
       let relUrl = resolvedPath
       if (prefix && resolvedPath.startsWith(prefix)) {
         relUrl = resolvedPath.substring(prefix.length)
@@ -341,8 +342,8 @@ function rewriteImagesToRelative(markdown: string, docPath: string): string {
   })
 
   result = result.replace(/<img([^>]*)src="([^"]+)"([^>]*)>/g, (match, p1, url, p2) => {
-    if (url.startsWith('acornvo-local://')) {
-      const resolvedPath = url.replace('acornvo-local://', '')
+    if (url.startsWith(ACORNVO_LOCAL_PREFIX)) {
+      const resolvedPath = url.replace(ACORNVO_LOCAL_PREFIX, '')
       let relUrl = resolvedPath
       if (prefix && resolvedPath.startsWith(prefix)) {
         relUrl = resolvedPath.substring(prefix.length)

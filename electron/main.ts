@@ -3,8 +3,14 @@ import { app, BrowserWindow, nativeTheme, powerMonitor, protocol, net, Menu } fr
 // Enable auto dark mode for WebContents (browser tabs) when themeSource is dark
 app.commandLine.appendSwitch('enable-features', 'WebContentsForceDark')
 
+import { ACORNVO_LOCAL_SCHEME } from '@shared/scheme'
+const ACORNVO_LOCAL_PREFIX_REGEX = new RegExp(`^${ACORNVO_LOCAL_SCHEME}:\\/\\/`, 'i')
+
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'acornvo-local', privileges: { secure: true, standard: true, supportFetchAPI: true } }
+  {
+    scheme: ACORNVO_LOCAL_SCHEME,
+    privileges: { secure: true, standard: true, supportFetchAPI: true }
+  }
 ])
 
 import { getOverlayForTheme } from './window/title-bar-theme'
@@ -21,6 +27,7 @@ import { installCsp } from './security/csp'
 import { installExternalLinkGuards } from './security/external-links'
 import { registerHandlers } from './ipc/router'
 import { ipcHandlers } from './ipc/handlers'
+import { sendEvent } from './ipc/events'
 import { appLifecycle } from './app-lifecycle'
 import { installGroveBroadcaster } from './services/grove-broadcast'
 import { attachIndexEventForwarders } from './ipc/index'
@@ -34,6 +41,7 @@ import { settingsStore } from './settings/store'
 
 import { installSettingsBroadcaster } from './settings/broadcast'
 import type { QueueRunner } from './queue/runner'
+import type { LogLevel } from '@shared/ipc-contract'
 export let mainWindow: BrowserWindow | null = null
 let isQuitting = false
 let queueRunner: QueueRunner | null = null
@@ -74,7 +82,7 @@ function createMainWindow(): BrowserWindow {
   win.once('ready-to-show', () => {
     const files = checkLastRun()
     if (files.length > 0) {
-      win.webContents.send('crash:detected', { files })
+      sendEvent(win.webContents, 'crash:detected', { files })
     }
     win.show()
     logger().info('main', {
@@ -129,7 +137,7 @@ app.on('web-contents-created', (_event, wc) => {
     ) {
       e.preventDefault()
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('hotkey:reload', {})
+        sendEvent(mainWindow.webContents, 'hotkey:reload', {})
       }
     }
   })
@@ -176,20 +184,20 @@ async function bootstrap(): Promise<void> {
   startElectronCrashReporter()
   await app.whenReady()
 
-  protocol.handle('acornvo-local', (request) => {
-    const rawUrl = request.url.replace(/^acornvo-local:\/\//i, '')
-    const relPath = decodeURIComponent(rawUrl)
+  protocol.handle(ACORNVO_LOCAL_SCHEME, (request) => {
+    const rawUrl = request.url.replace(ACORNVO_LOCAL_PREFIX_REGEX, '')
     const grovePath = dbService.getCurrentGrovePath()
     if (!grovePath) return new Response('Not Found', { status: 404 })
     let absolutePath: string
     try {
+      const relPath = decodeURIComponent(rawUrl)
       absolutePath = safeResolve(grovePath, relPath)
     } catch {
       return new Response('Not Found', { status: 404 })
     }
     const fileUri = absolutePath.startsWith('/')
       ? `file://${absolutePath}`
-      : `file:///${absolutePath}`
+      : `file:///${absolutePath.replace(/\\/g, '/')}`
     return net.fetch(fileUri)
   })
 
@@ -201,11 +209,11 @@ async function bootstrap(): Promise<void> {
   logger().setGlobalContext({ version: app.getVersion() })
   const generalSettings = settingsStore.get('general')
   if (generalSettings.logLevel) {
-    logger().setLevel(generalSettings.logLevel as any)
+    logger().setLevel(generalSettings.logLevel as LogLevel)
   }
   settingsStore.onChange((ev) => {
     if (ev.ns === 'general' && ev.key === 'logLevel') {
-      logger().setLevel(ev.newValue as any)
+      logger().setLevel(ev.newValue as LogLevel)
     }
   })
 
@@ -313,7 +321,7 @@ async function bootstrap(): Promise<void> {
 
   mainWindow.webContents.once('did-finish-load', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return
-    mainWindow.webContents.send('bootstrap:ready', bootstrapResult)
+    sendEvent(mainWindow.webContents, 'bootstrap:ready', bootstrapResult)
   })
 }
 

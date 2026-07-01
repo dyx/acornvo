@@ -2,6 +2,7 @@
 // Implemented in Plan 3 of phase-04-file-io-atomic (tasks 4.1-4.4).
 import matter from 'gray-matter'
 import { FrontmatterSchema, type Frontmatter } from '@shared/frontmatter-schema'
+import { logger } from '../obs/logger'
 
 export interface ParsedFile {
   frontmatter: Frontmatter
@@ -16,7 +17,7 @@ export function parseFile(raw: string): ParsedFile {
     // Invalid frontmatter fields — fall back to empty frontmatter so the file
     // still gets indexed. The raw YAML is preserved for the editor.
     const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')
-    console.warn(`[frontmatter] parse warnings in file: ${issues}`)
+    logger().warn('frontmatter', { msg: 'parse warnings in file', meta: { issues } })
     return {
       frontmatter: {},
       body: m.content,

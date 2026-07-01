@@ -11,10 +11,9 @@ import { useSettingsStore } from '@/stores/settings'
 import { useToast } from '@/hooks/use-toast'
 import { useFileMentionStore } from '@/components/assistant-ui/file-mention-adapter'
 import { useTranslation } from 'react-i18next'
+import { ipc } from '@/ipc/client'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
-
-
 
 export function ChatRuntimeProvider({ children }: { children: React.ReactNode }) {
   const activeSessionId = useChatStore((s) => s.activeSessionId)
@@ -265,7 +264,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
         const session = useChatStore.getState().bySession[activeSid]
         const targetMsg = session?.messages?.find((m) => String(m.id) === String(message.sourceId))
         const trueDbId = targetMsg?.dbId || targetMsg?.id || message.sourceId
-        await (window as any).api.chat['sessions.truncate'](activeSid, trueDbId)
+        await ipc.chat['sessions.truncate'](activeSid, trueDbId)
       } catch (err) {
         console.error('Failed to truncate session:', err)
         toast({
@@ -312,7 +311,7 @@ export function ChatRuntimeProvider({ children }: { children: React.ReactNode })
       const trueDbId = parentMessage.dbId || parentMessage.id || parentId
 
       try {
-        await (window as any).api.chat['sessions.truncate'](activeSid, trueDbId)
+        await ipc.chat['sessions.truncate'](activeSid, trueDbId)
       } catch (err) {
         console.error('Failed to truncate session for reload:', err)
         toast({

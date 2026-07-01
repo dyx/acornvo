@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { IpcError } from '@shared/ipc-contract'
+import { IpcError, type IpcErrorCode } from '@shared/ipc-contract'
 import type {
   ClipRunId,
   ClipInput,
@@ -112,7 +112,7 @@ export function createPipeline(deps: PipelineDeps) {
     message: string,
     context?: Record<string, unknown>
   ): IpcError {
-    return new IpcError(code as any, message, context)
+    return new IpcError(code as IpcErrorCode, message, context)
   }
 
   async function clip(webContents: WebContents): Promise<ClipStartResult> {

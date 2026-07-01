@@ -47,7 +47,23 @@ export interface AiUsageListResult {
   total: number
 }
 
-function rowFromDb(r: any): AiUsageRow {
+export interface RawUsageRow {
+  id: number
+  job_id: string | null
+  model_id: string | null
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  cache_read_tokens: number | null
+  reasoning_tokens: number | null
+  latency_ms: number | null
+  ok: 0 | 1
+  error: string | null
+  session_id?: string | null
+  grove_id?: string | null
+  created_at?: string
+}
+
+function rowFromDb(r: RawUsageRow): AiUsageRow {
   return {
     id: r.id,
     jobId: r.job_id,
@@ -102,7 +118,7 @@ export const aiUsage = {
       FROM ai_usage WHERE created_at >= ?
     `
       )
-      .all(since) as any[]
+      .all(since) as RawUsageRow[]
     const totalCalls = rows.length
     const okCount = rows.filter((r) => r.ok === 1).length
     const totalTokens = rows.reduce(
@@ -170,7 +186,7 @@ export const aiUsage = {
       LIMIT ? OFFSET ?
     `
       )
-      .all(...params, opts.limit, opts.offset) as any[]
+      .all(...params, opts.limit, opts.offset) as RawUsageRow[]
     return { items: items.map(rowFromDb), total }
   }
 }

@@ -18,6 +18,7 @@ import { CheckIcon, CopyIcon } from 'lucide-react'
 import { TooltipIconButton } from '@/components/assistant-ui/tooltip-icon-button'
 import { cn } from '@/lib/utils'
 import { defaultUrlTransform } from 'react-markdown'
+import { ACORNVO_LOCAL_PREFIX } from '@shared/scheme'
 
 interface MarkdownTextProps {
   className?: string
@@ -31,7 +32,7 @@ const MarkdownTextImpl = (props: MarkdownTextProps) => {
       components={defaultComponents}
       smooth={true}
       urlTransform={(value: string) => {
-        if (value.startsWith('acornvo-local://') || value.startsWith('file://')) {
+        if (value.startsWith(ACORNVO_LOCAL_PREFIX) || value.startsWith('file://')) {
           return value
         }
         return defaultUrlTransform(value)
@@ -160,8 +161,8 @@ const defaultComponents = memoizeMarkdownComponents({
         if (targetPath.startsWith('file://')) {
           targetPath = targetPath.replace('file://', '')
         }
-        if (targetPath.startsWith('acornvo-local://')) {
-          targetPath = targetPath.replace('acornvo-local://', '')
+        if (targetPath.startsWith(ACORNVO_LOCAL_PREFIX)) {
+          targetPath = targetPath.replace(ACORNVO_LOCAL_PREFIX, '')
           if (targetPath.startsWith('/')) {
             targetPath = targetPath.substring(1) // Acornvo paths are relative to grove root
           }

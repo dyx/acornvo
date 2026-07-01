@@ -1,8 +1,9 @@
-import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import { BrowserWindow } from 'electron'
 import type { IpcContract } from '@shared/ipc-contract'
 import { IpcError } from '@shared/ipc-contract'
+import type { Op } from '@shared/ops-types'
+import { sendEvent } from './events'
 import { safeResolve } from '../services/path-safety'
 import { stat } from 'node:fs/promises'
 import { logger } from '../obs/logger'
@@ -82,12 +83,16 @@ const chatHandlers = createChatHandlers({
     if (!row) return null
     const groveRoot = dbService.getCurrentGrovePath()
     if (!groveRoot) return null
-    const abs = path.resolve(path.join(groveRoot, row.path))
-    if (!abs.startsWith(groveRoot + path.sep) && abs !== groveRoot) return null
+    let abs: string
     try {
+      abs = safeResolve(groveRoot, row.path)
       const body = await fs.readFile(abs, 'utf-8')
       return { body }
-    } catch {
+    } catch (e) {
+      logger().warn('chat', {
+        msg: 'clipsGet read failed',
+        meta: { path: row.path, error: String(e) }
+      })
       return null
     }
   }
@@ -124,7 +129,7 @@ const clipperPipeline = createPipeline({
       | undefined
     return row ? row.rowid : null
   },
-  opsLog: (opts) => opsLogRecord({ op: opts.op as any, path: opts.path, meta: opts.meta }),
+  opsLog: (opts) => opsLogRecord({ op: opts.op as Op, path: opts.path, meta: opts.meta }),
   nowIso: () => new Date().toISOString(),
   nowDate: () => new Date().toISOString().slice(0, 10),
   extractTimeoutMs: 5000
@@ -184,7 +189,7 @@ export const ipcHandlers: HandlerMap = {
       import('../toast-window')
         .then(({ toastWindow }) => {
           if (toastWindow && !toastWindow.isDestroyed()) {
-            toastWindow.webContents.send('ui:showToast', payload)
+            sendEvent(toastWindow.webContents, 'ui:showToast', payload)
           }
         })
         .catch((err) => {

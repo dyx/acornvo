@@ -9,18 +9,20 @@ import { upsertFts, upsertChunks } from '../index-queries'
 import { chunkMarkdown } from '../chunker'
 import { getVectorStore } from '../vector-store'
 import { getQueueBootstrap } from '../../queue'
+import { sendEvent } from '../../ipc/events'
+import type { IpcEventChannel, IpcEventContract } from '@shared/ipc-contract'
 
-function broadcastEvent(channel: string, payload: unknown): void {
+function broadcastEvent<K extends IpcEventChannel>(channel: K, payload: IpcEventContract[K]): void {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const electron = require('electron') as {
       BrowserWindow: {
-        getAllWindows: () => { webContents: { send: (c: string, p: unknown) => void } }[]
+        getAllWindows: () => { webContents: Electron.WebContents }[]
       }
     }
     for (const win of electron.BrowserWindow.getAllWindows()) {
       try {
-        win.webContents.send(channel, payload)
+        sendEvent(win.webContents, channel, payload as any)
       } catch {
         /* destroyed */
       }

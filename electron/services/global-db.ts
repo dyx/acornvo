@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { join } from 'node:path'
 import { mkdirSync, chmodSync } from 'node:fs'
 import { userAcornDir } from './paths'
+import { logger } from '../obs/logger'
 
 let globalDb: Database.Database | null = null
 
@@ -81,7 +82,14 @@ export function initGlobalDb(): void {
   try {
     chmodSync(dbPath, 0o600)
   } catch (err) {
-    console.error('Failed to set global.db permissions', err)
+    try {
+      logger().error('db', {
+        msg: 'Failed to set global.db permissions',
+        meta: { error: String(err) }
+      })
+    } catch {
+      console.error('Failed to set global.db permissions', err)
+    }
   }
 
   applyPragmas(db)
@@ -89,7 +97,7 @@ export function initGlobalDb(): void {
 
   // Migration: add context_window, kind, and embedding_dim if they don't exist
   try {
-    const columns = db.pragma('table_info(ai_model)') as any[]
+    const columns = db.pragma('table_info(ai_model)') as { name: string }[]
     if (!columns.find((c) => c.name === 'context_window')) {
       db.exec('ALTER TABLE ai_model ADD COLUMN context_window INTEGER DEFAULT 128000')
     }
@@ -100,7 +108,14 @@ export function initGlobalDb(): void {
       db.exec('ALTER TABLE ai_model ADD COLUMN embedding_dim INTEGER')
     }
   } catch (err) {
-    console.error('Failed to migrate ai_model schema', err)
+    try {
+      logger().error('db', {
+        msg: 'Failed to migrate ai_model schema',
+        meta: { error: String(err) }
+      })
+    } catch {
+      console.error('Failed to migrate ai_model schema', err)
+    }
   }
 
   globalDb = db

@@ -1,6 +1,7 @@
 // electron/browser/contents.ts
 import { WebContentsView, BrowserWindow, session } from 'electron'
 import type { TabId, TabPatch, TabStateChangedPayload } from '@shared/browser-types'
+import { sendEvent } from '../ipc/events'
 import { safeOpenExternal } from '../security/external-links'
 
 export interface CreateTabViewOpts {
@@ -174,9 +175,7 @@ export const TAB_STATE_CHANGED_CHANNEL = 'browser:tabStateChanged' as const
 
 export function makeTabStateSender(window: BrowserWindow): SendTabStateChanged {
   return (payload) => {
-    if (!window.isDestroyed()) {
-      window.webContents.send(TAB_STATE_CHANGED_CHANNEL, payload)
-    }
+    sendEvent(window.webContents, TAB_STATE_CHANGED_CHANNEL, payload)
   }
 }
 

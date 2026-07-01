@@ -1,4 +1,5 @@
 import type { AgentEvent } from '../../shared/agent-types'
+import { logger } from '../obs/logger'
 
 export interface RendererTarget {
   send(channel: string, payload: unknown): void
@@ -22,7 +23,7 @@ export function createStreamWriter(
       const live = targets.filter((w) => !w.isDestroyed())
 
       if (live.length === 0) {
-        console.warn('[streamWriter] write: NO live targets — event will be dropped')
+        logger().warn('streamWriter', { msg: 'write: NO live targets — event will be dropped' })
       }
       for (const w of live) {
         w.send(channel, e)

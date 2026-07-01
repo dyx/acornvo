@@ -1,0 +1,3 @@
+export const ACORNVO_LOCAL_SCHEME = 'acornvo-local'
+export const ACORNVO_LOCAL_PROTOCOL = `${ACORNVO_LOCAL_SCHEME}:`
+export const ACORNVO_LOCAL_PREFIX = `${ACORNVO_LOCAL_SCHEME}://`

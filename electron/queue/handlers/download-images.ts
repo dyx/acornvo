@@ -4,6 +4,7 @@ import { parseFile } from '../../services/frontmatter'
 import { fileHandlers } from '../../ipc/file'
 import { logger } from '../../obs/logger'
 import path from 'node:path'
+import { safeResolve } from '../../services/path-safety'
 import fs from 'node:fs'
 import crypto from 'node:crypto'
 
@@ -23,6 +24,9 @@ function getExtFromMime(mime: string | null): string {
   return '.png'
 }
 
+const CLIPPER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
 export const downloadClipImagesHandler: JobHandler = async (ctx) => {
   const { job, payload, log } = ctx
   const relPath = payload.path as string
@@ -36,7 +40,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
     const grove = getCurrent()
     if (!grove) throw new Error('E_FILE_NOT_FOUND no grove opened')
 
-    const absPath = path.join(grove.path, relPath)
+    const absPath = safeResolve(grove.path, relPath)
     if (!fs.existsSync(absPath)) {
       throw new Error('E_FILE_NOT_FOUND file not found')
     }
@@ -58,7 +62,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
     // Prepare assets directory: .assets/<filename-without-ext>/
     const parsedPath = path.parse(relPath)
     const assetsRelDir = path.posix.join(parsedPath.dir, '.assets', parsedPath.name)
-    const assetsAbsDir = path.join(grove.path, assetsRelDir)
+    const assetsAbsDir = safeResolve(grove.path, assetsRelDir)
 
     if (!fs.existsSync(assetsAbsDir)) {
       fs.mkdirSync(assetsAbsDir, { recursive: true })
@@ -78,8 +82,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
         // Fetch image
         const resp = await fetch(url, {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': CLIPPER_UA,
             Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
           }
         })
@@ -119,7 +122,8 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
       let currentStat = stat
       let currentFrontmatter = frontmatter as Record<string, unknown>
       let currentBody = newBody
-      for (let attempt = 0; attempt < 3; attempt++) {
+      const MTIME_RETRY_MAX = 3
+      for (let attempt = 0; attempt < MTIME_RETRY_MAX; attempt++) {
         try {
           await fileHandlers.writeParsed(relPath, currentFrontmatter, currentBody, {
             expectedMtime: currentStat.mtimeMs
@@ -128,7 +132,7 @@ export const downloadClipImagesHandler: JobHandler = async (ctx) => {
           break
         } catch (e) {
           const code = (e as { code?: string })?.code
-          if (code === 'E_MTIME_MISMATCH' && attempt < 2) {
+          if (code === 'E_MTIME_MISMATCH' && attempt < MTIME_RETRY_MAX - 1) {
             log('warn', `download-clip-images mtime mismatch, reloading to retry path=${relPath}`)
             currentStat = fs.statSync(absPath)
             const raw = fs.readFileSync(absPath, 'utf8')

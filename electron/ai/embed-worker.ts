@@ -2,6 +2,7 @@ import { utilityProcess, type UtilityProcess } from 'electron'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { BGE_QUERY_INSTRUCTION } from './bge-instruction'
+import { logger } from '../obs/logger'
 
 let worker: UtilityProcess | null = null
 
@@ -11,7 +12,9 @@ export function ensureEmbedWorker(): void {
     serviceName: 'acornvo-embed',
     stdio: 'pipe'
   })
-  worker.stderr?.on('data', (d) => console.error(`[Worker STDERR] ${d}`))
+  worker.stderr?.on('data', (d) =>
+    logger().error('embed', { msg: 'Worker STDERR', meta: { data: String(d) } })
+  )
   worker.on('exit', () => {
     worker = null
   })
